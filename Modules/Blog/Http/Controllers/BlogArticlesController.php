@@ -1,0 +1,344 @@
+<?php
+
+namespace Modules\Blog\Http\Controllers;
+
+use App\Models\Parameter;
+use Illuminate\Contracts\Support\Renderable;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Inertia\Inertia;
+use Modules\Blog\Entities\BlogArticle;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Modules\Blog\Entities\BlogCategory;
+use Modules\Blog\Entities\BlogComment;
+
+class BlogArticlesController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     * @return Renderable
+     */
+    use ValidatesRequests;
+
+    protected $P000010; ///token Tiny
+
+    public function __construct()
+    {
+        $this->P000010  = Parameter::where('parameter_code', 'P000010')->value('value_default');
+    }
+
+    public function index()
+    {
+        $articles = (new BlogArticle())->newQuery();
+
+        if (request()->has('search')) {
+            $articles->where('title', 'Like', '%' . request()->input('search') . '%');
+        }
+
+        if (request()->query('sort')) {
+            $attribute = request()->query('sort');
+            $sort_order = 'ASC';
+            if (strncmp($attribute, '-', 1) === 0) {
+                $sort_order = 'DESC';
+                $attribute = substr($attribute, 1);
+            }
+            $articles->orderBy($attribute, $sort_order);
+        } else {
+            $articles->latest();
+        }
+
+        $articles = $articles->paginate(10)->onEachSide(2)->appends(request()->query());
+
+        return Inertia::render('Blog::articles/List', [
+            'articles' => $articles,
+            'filters' => request()->all('search')
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     * @return Renderable
+     */
+    public function create()
+    {
+        $categories = BlogCategory::all();
+        return Inertia::render('Blog::articles/Create', [
+            'tiny_api_key' => $this->P000010,
+            'categories' => $categories
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     * @param Request $request
+     * @return Renderable
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'title' => 'required|max:255|unique:blog_articles,title',
+            'content_text' => 'required',
+            'description' => 'required|max:255',
+            'category_id' => 'required'
+        ]);
+
+        $path = 'img/imagen-no-disponible.jpeg';
+        $destination = 'uploads/blog/articles';
+        $file = $request->file('file');
+
+        if ($file) {
+            $original_name = strtolower(trim($file->getClientOriginalName()));
+            $original_name = str_replace(" ", "_", $original_name);
+            $extension = $file->getClientOriginalExtension();
+            $file_name = $request->get('id') . '.' . $extension;
+            $path = $request->file('file')->storeAs(
+                $destination,
+                $file_name,
+                'public'
+            );
+        }
+
+        $baseUrl = env('APP_URL'); // Ruta base de tu aplicación
+        $content = $request->get('content_text');
+        // Reemplazar las rutas de imágenes en el contenido
+        $contentWithAbsoluteImagePaths = preg_replace('/src="\/storage\/articles\/([^"]+)"/', 'src="' . $baseUrl . '/storage/articles/$1"', $content);
+        $contentWithAbsoluteImagePaths = preg_replace('/src="..\/..\/storage\/articles\/([^"]+)"/', 'src="' . $baseUrl . '/storage/articles/$1"', $contentWithAbsoluteImagePaths);
+        $contentWithAbsoluteImagePaths = preg_replace('/src="..\/..\/..\/storage\/articles\/([^"]+)"/', 'src="' . $baseUrl . '/storage/articles/$1"', $contentWithAbsoluteImagePaths);
+
+
+        BlogArticle::create([
+            'title'         => $request->get('title'),
+            'content_text'  => htmlentities($contentWithAbsoluteImagePaths, ENT_QUOTES, "UTF-8"),
+            'url'           => Str::slug($request->get('title')),
+            'short_description'   => $request->get('description'),
+            'status'        => $request->get('status'),
+            'category_id'   => $request->get('category_id'),
+            'imagen'        => $path,
+            'user_id'       => Auth::id(),
+            'keywords'      => $request->get('keywords') ? json_encode($request->get('keywords')) : null
+        ]);
+
+        return redirect()->route('blog-article.index')
+            ->with('message', 'Articulo creado con éxito.');
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     * @param int $id
+     * @return Renderable
+     */
+    public function edit(BlogArticle $blogArticle)
+    {
+        $categories = BlogCategory::all();
+        return Inertia::render('Blog::articles/Edit', [
+            'tiny_api_key' => $this->P000010,
+            'categories' => $categories,
+            'article' => $blogArticle
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     * @param Request $request
+     * @param int $id
+     * @return Renderable
+     */
+    public function update(Request $request, BlogArticle $blogArticle)
+    {
+        //dd($request->all());
+        $this->validate($request, [
+            'title' => 'required|max:255|unique:blog_articles,url,' . $blogArticle->id,
+            'content_text' => 'required',
+            'description' => 'required|max:255',
+            'category_id' => 'required'
+        ]);
+
+        $path = 'img/imagen-no-disponible.jpeg';
+        $destination = 'uploads/blog/articles';
+        $file = $request->file('file');
+
+        if ($file) {
+            $original_name = strtolower(trim($file->getClientOriginalName()));
+            $original_name = str_replace(" ", "_", $original_name);
+            $extension = $file->getClientOriginalExtension();
+            $file_name = $request->get('id') . '.' . $extension;
+            $path = $request->file('file')->storeAs(
+                $destination,
+                $file_name,
+                'public'
+            );
+        }
+
+        $blogArticle->update([
+            'title'         => $request->get('title'),
+            'content_text'  => htmlentities($request->get('content_text'), ENT_QUOTES, "UTF-8"),
+            'short_description'   => $request->get('description'),
+            'url'           => Str::slug($request->get('title')),
+            'status'        => $request->get('status'),
+            'category_id'   => $request->get('category_id'),
+            'imagen'        => $path,
+            'user_id'       => Auth::id(),
+            'keywords'      => $request->get('keywords') ? json_encode($request->get('keywords')) : null
+        ]);
+
+        return redirect()->route('blog-article.edit', $blogArticle->id)
+            ->with('message', 'Categoria updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     * @param int $id
+     * @return Renderable
+     */
+    public function destroy(BlogArticle $blogArticle)
+    {
+        $blogArticle->delete();
+
+        return redirect()->route('blog-article.index')
+            ->with('message', __('Artículo eliminado con éxito'));
+    }
+    public function updateArticle(Request $request)
+    {
+        $blogArticle = BlogArticle::find($request->get('id'));
+
+        $this->validate($request, [
+            'title' => 'required|max:255|unique:blog_articles,title,' . $blogArticle->id,
+            'content_text' => 'required',
+        ]);
+
+        $baseUrl = env('APP_URL'); // Ruta base de tu aplicación
+        $content = $request->get('content_text');
+        // Reemplazar las rutas de imágenes en el contenido
+        $contentWithAbsoluteImagePaths = preg_replace('/src="\/storage\/articles\/([^"]+)"/', 'src="' . $baseUrl . '/storage/articles/$1"', $content);
+        $contentWithAbsoluteImagePaths = preg_replace('/src="..\/..\/storage\/articles\/([^"]+)"/', 'src="' . $baseUrl . '/storage/articles/$1"', $contentWithAbsoluteImagePaths);
+        $contentWithAbsoluteImagePaths = preg_replace('/src="..\/..\/..\/storage\/articles\/([^"]+)"/', 'src="' . $baseUrl . '/storage/articles/$1"', $contentWithAbsoluteImagePaths);
+
+
+        $blogArticle->title = $request->get('title');
+        $blogArticle->content_text = htmlentities($contentWithAbsoluteImagePaths, ENT_QUOTES, "UTF-8");
+        $blogArticle->url = Str::slug($request->get('title'));
+        $blogArticle->short_description = $request->get('description');
+        $blogArticle->status = $request->get('status');
+        $blogArticle->category_id = $request->get('category_id');
+        $blogArticle->keywords = $request->get('keywords') ? json_encode($request->get('keywords')) : null;
+
+        $path = 'img/imagen-no-disponible.jpeg';
+        $destination = 'uploads/blog/articles';
+        $file = $request->file('file');
+
+        if ($file) {
+            $original_name = strtolower(trim($file->getClientOriginalName()));
+            $original_name = str_replace(" ", "_", $original_name);
+            $extension = $file->getClientOriginalExtension();
+            $file_name = $request->get('id') . '.' . $extension;
+            $path = $request->file('file')->storeAs(
+                $destination,
+                $file_name,
+                'public'
+            );
+
+            $blogArticle->imagen = $path;
+        }
+
+
+
+        $blogArticle->save();
+
+        return redirect()->route('blog-article.edit', $blogArticle->id)
+            ->with('message', 'Categoria updated successfully.');
+    }
+
+    public function uploadImageCkeditor(Request $request)
+    {
+        //dd($request->all());
+        $file = $request->file('file');
+        $file_name = str_replace(' ', '_', $file->getClientOriginalName());
+
+        //indicamos que queremos guardar un nuevo archivo en el disco local
+        $path = $request->file('file')->storeAs(
+            'articles',
+            $file_name,
+            'public'
+        );
+
+        $url = asset('storage/' . $path);
+
+        return response()->json(['location' =>  $url]);
+    }
+
+
+    public function show($url)
+    {
+        $article = BlogArticle::with('category')
+            ->withCount('comments')
+            ->with('author')
+            ->where('url', $url)->first();
+
+        $categories = BlogCategory::where('status', true)->get();
+
+        $articles = BlogArticle::orderByDesc('views')->take(4)->get();
+
+        $archives = BlogArticle::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total_articles')
+            ->groupBy('year', 'month')
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get();
+
+        $relatedArticles = BlogArticle::where('category_id', $article->category_id)->take(4)->get();
+        //dd($relatedArticles);
+        $comments = BlogComment::with('person')
+            ->with('comments.person')
+            ->where('article_id', $article->id)
+            ->whereNull('comment_id')
+            ->get();
+
+        $article->increment('views');
+
+        return Inertia::render('Blog::articles/Show', [
+            'article' => $article,
+            'categories' => $categories,
+            'articles' => $articles,
+            'archives' => $archives,
+            'comments' => $comments,
+            'relatedArticles' => $relatedArticles
+        ]);
+    }
+
+    public function searchArticles(Request $request)
+    {
+        $search = $request->get('search');
+        $articles = BlogArticle::with('author')->whereLike('title', '%' . $search . '%')->get();
+
+        return response()->json([
+            'articles' => $articles
+        ]);
+    }
+
+    public function articlesArchive($year, $month)
+    {
+        $articlesArchive = BlogArticle::with(['author', 'comments'])
+            ->withCount('comments')
+            ->whereYear('created_at', $year) // Filtrar por año
+            ->whereMonth('created_at', $month) // Filtrar por mes
+            ->get();
+
+        $categories = BlogCategory::where('status', true)->get();
+
+        $articles = BlogArticle::orderByDesc('views')->take(4)->get();
+
+        $archives = BlogArticle::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total_articles')
+            ->groupBy('year', 'month')
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->get();
+
+        return Inertia::render('Blog::articles/ShowArchives', [
+            'articlesArchive' => $articlesArchive,
+            'categories' => $categories,
+            'articles' => $articles,
+            'archives' => $archives
+        ]);
+    }
+}
