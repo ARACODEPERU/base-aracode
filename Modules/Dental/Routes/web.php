@@ -30,4 +30,5 @@ Route::middleware(['auth', 'verified'])->prefix('dental')->group(function () {
     Route::get('attention/list', [DentAttentionController::class, 'index'])->name('odontology_attention_list');
     Route::get('attention/table', [DentAttentionController::class, 'getTable'])->name('odontology_attention_table');
     Route::get('attention/create', [DentAttentionController::class, 'create'])->name('odontology_attention_create');
+    Route::post('attention/store', [DentAttentionController::class, 'store'])->name('odontology_attention_store');
 });
