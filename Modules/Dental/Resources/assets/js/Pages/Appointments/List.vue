@@ -200,42 +200,41 @@ const deleteNote = (note) => {
         },
         buttonsStyling: false,
     });
-    swalConfirm
-        .fire({
-            title: "¿Estas seguro?",
-            text: "¡No podrás revertir esto!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "¡Sí, Eliminar!",
-            cancelButtonText: "Cancelar",
-            showLoaderOnConfirm: true,
-            reverseButtons: true,
-            padding: "2em",
-            preConfirm: () => {
-                return axios
-                    .delete(route("odontology_appointments_destroy", note.id))
-                    .then((res) => {
-                        if (!res.data.success) {
-                            Swal2.showValidationMessage(res.data.message);
-                        }
-                        return res;
-                    });
-            },
-            allowOutsideClick: () => !Swal2.isLoading(),
-        })
-        .then((result) => {
-            if (result.isConfirmed) {
-                showMessage("La cita se Eliminó correctamente.");
-                router.visit(route("odontology_appointments_list"), {
-                    replace: true,
-                    method: "get",
-                    preserveState: true,
-                    preserveScroll: true,
+    swalConfirm.fire({
+        title: "¿Estas seguro?",
+        text: "¡No podrás revertir esto!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "¡Sí, Eliminar!",
+        cancelButtonText: "Cancelar",
+        showLoaderOnConfirm: true,
+        reverseButtons: true,
+        padding: "2em",
+        preConfirm: () => {
+            return axios
+                .delete(route("odontology_appointments_destroy", note.id))
+                .then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message);
+                    }
+                    return res;
                 });
-            }
-        });
+        },
+        allowOutsideClick: () => !Swal2.isLoading(),
+    })
+    .then((result) => {
+        if (result.isConfirmed) {
+            showMessage("La cita se Eliminó correctamente.");
+            router.visit(route("odontology_appointments_list"), {
+                replace: true,
+                method: "get",
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }
+    });
 };
 
 const showMessage = (msg = "", type = "success") => {

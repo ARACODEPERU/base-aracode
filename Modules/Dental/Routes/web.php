@@ -33,4 +33,5 @@ Route::middleware(['auth', 'verified'])->prefix('dental')->group(function () {
     Route::post('attention/store', [DentAttentionController::class, 'store'])->name('odontology_attention_store');
     Route::get('attention/{id}/edit', [DentAttentionController::class, 'edit'])->name('odontology_attention_edit');
     Route::put('attention/{id}/update', [DentAttentionController::class, 'update'])->name('odontology_attention_update');
+    Route::delete('attention/{id}/destroy', [DentAttentionController::class, 'destroy'])->name('odontology_attention_destroy');
 });

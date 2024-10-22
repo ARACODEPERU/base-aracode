@@ -13,6 +13,7 @@ use Modules\Dental\Entities\DentAttention;
 use Modules\Health\Entities\HealDoctor;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealHistory;
 use Modules\Health\Entities\HealPatient;
@@ -253,7 +254,10 @@ class DentAttentionController extends Controller
             $nta = $request->get('next_time_appointment');
 
             if ($ndi && $nda && $nta) {
-                DentAppointment::where('id', $attention->next_appointment_id)->delete();
+
+                if ($attention->next_appointment_id) {
+                    DentAppointment::where('id', $attention->next_appointment_id)->delete();
+                }
 
                 $ddate = $request->get('next_date_appointment') . ' ' . $request->get('next_time_appointment');
                 $initialDateTime = Carbon::parse($ddate);
@@ -300,6 +304,33 @@ class DentAttentionController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $message = null;
+        $success = false;
+        try {
+
+            DB::beginTransaction();
+            $attention = DentAttention::findOrFail($id);
+            // Verificamos si existe.
+            // $appointment = DentAppointment::findOrFail($attention->next_appointment_id);
+
+            // $appointment->delete();
+
+            $attention->delete();
+
+            DB::commit();
+
+            $message =  'Cita eliminada correctamente';
+            $success = true;
+        } catch (\Exception $e) {
+
+            DB::rollback();
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
     }
 }

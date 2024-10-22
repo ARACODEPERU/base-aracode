@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import { ref, onMounted } from "vue";
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Keypad from '@/Components/Keypad.vue';
 import iconAward from '@/Components/vristo/icon/icon-award.vue';
@@ -13,6 +13,7 @@ import 'datatables.net-responsive';
 import '@/Components/vristo/datatables/datatables.css'
 import '@/Components/vristo/datatables/style.css'
 import es_PE from '@/Components/vristo/datatables/datatables-es.js'
+import Swal2 from "sweetalert2";
 
 DataTable.use(DataTablesCore);
 
@@ -49,6 +50,68 @@ DataTable.use(DataTablesCore);
         return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     }
 
+    const deleteAttention = (attention) => {
+        const swalConfirm = Swal2.mixin({
+            customClass: {
+                popup: "sweet-alerts",
+                confirmButton: "btn btn-secondary",
+                cancelButton: "btn btn-dark ltr:mr-3 rtl:ml-3",
+            },
+            buttonsStyling: false,
+        });
+        swalConfirm.fire({
+            title: "¿Estas seguro?",
+            text: "¡No podrás revertir esto!",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "¡Sí, Eliminar!",
+            cancelButtonText: "Cancelar",
+            showLoaderOnConfirm: true,
+            reverseButtons: true,
+            padding: "2em",
+            preConfirm: () => {
+                return axios.delete(route("odontology_attention_destroy", attention.id)).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message);
+                    }
+                    return res;
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading(),
+        }).then((result) => {
+            if (result.isConfirmed) {
+                showMessage("Se Eliminó correctamente.");
+                refreshTable();
+            }
+        });
+
+    };
+
+    const showMessage = (msg = "", type = "success") => {
+        const toast = Swal2.mixin({
+            toast: true,
+            position: "top",
+            showConfirmButton: false,
+            timer: 3000,
+            customClass: { container: "toast" },
+        });
+        toast.fire({
+            icon: type,
+            title: msg,
+            padding: "10px 20px",
+        });
+    };
+
+    const odontologyTable = ref(null);
+
+    const refreshTable = () => {
+    const dataTableInstance = odontologyTable.value?.dt; // accede a la instancia del DataTable
+        if (dataTableInstance) {
+            dataTableInstance.ajax.reload();
+        }
+    };
 </script>
 <template>
     <AppLayout title="Atencion">
@@ -75,17 +138,20 @@ DataTable.use(DataTablesCore);
                 </div>
             </div>
             <div class="panel pb-1.5 mt-6">
-                <DataTable :options="options" :ajax="route('odontology_attention_table')" :columns="columns">
+                <DataTable ref="odontologyTable" :options="options" :ajax="route('odontology_attention_table')" :columns="columns">
                     <template #action="props">
                         <div class="flex gap-1 items-center justify-center">
-                            <Link :href="route('odontology_attention_edit',props.rowData.id)" v-tippy:editar type="button" class="btn btn-sm btn-outline-primary" @click="editAttention(props.rowData.id)">
+                            <Link :href="route('odontology_attention_edit',props.rowData.id)" 
+                                v-tippy="{ content: 'Editar', placement: 'bottom' }" 
+                                type="button" class="btn btn-sm btn-outline-primary" @click="editAttention(props.rowData.id)">
                                 <font-awesome-icon  :icon="faPencil"  />
                             </Link>
-                            <tippy target="editar" placement="bottom">Editar</tippy>
-                            <button v-tippy:eliminar type="button" class="btn btn-sm btn-outline-danger" @click="deleteAttention(props.rowData.id)">
+                            <button v-if="props.rowData.signed_accepted" v-tippy="{ content: 'Eliminar', placement: 'bottom' }"  type="button" class="btn btn-sm btn-outline-danger" @click="showMessage('No se puede eliminar, ya a sido aceptada','error')">
                                 <font-awesome-icon :icon="faTrash"  />
                             </button>
-                            <tippy target="eliminar" placement="bottom">Eliminar</tippy>
+                            <button v-else v-tippy="{ content: 'Eliminar', placement: 'bottom' }"  type="button" class="btn btn-sm btn-outline-danger" @click="deleteAttention(props.rowData)">
+                                <font-awesome-icon :icon="faTrash"  />
+                            </button>
                         </div>
                     </template>
                     <template #date_time_attention="props">

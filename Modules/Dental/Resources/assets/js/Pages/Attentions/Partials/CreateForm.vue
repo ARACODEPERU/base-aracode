@@ -363,7 +363,7 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.current_illness" />
                                 <InputError :message="form.errors.current_illness" class="mt-1" />
                             </div>
-                            <div class="col-span-6 sm:col-span-1">
+                            <div class="col-span-6 sm:col-span-2">
                                 <InputLabel value="FECHA" />
                                 <flat-pickr v-model="form.date_time_attention" class="form-input" :config="dateTime"></flat-pickr>
                                 <InputError :message="form.errors.date_time_attention" class="mt-1" />
@@ -372,13 +372,13 @@ function calcularEdad(fechaNacimiento) {
                                 <InputLabel value="PESO" />
                                 <TextInput v-model="form.pex_peso" />
                             </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="TALLA" />
-                                <TextInput v-model="form.pex_talla" />
-                            </div>
                             <div class="col-span-6 sm:col-span-3">
                                 <InputLabel value="MOTIVO DE CONSULTA" />
                                 <TextInput v-model="form.reason_consultation" />
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <InputLabel value="TALLA" />
+                                <TextInput v-model="form.pex_talla" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="APETITO" />
@@ -388,15 +388,15 @@ function calcularEdad(fechaNacimiento) {
                                 <InputLabel value="SED" />
                                 <TextInput v-model="form.thirst" />
                             </div>
-                            <div class="col-span-3 sm:col-span-1">
-                                <InputLabel value="SUEÑO" />
-                                <TextInput v-model="form.dream" />
-                            </div>
+                            
                             <div class="col-span-6 sm:col-span-3">
                                 <InputLabel value="TIEMPO DE ENFERMEDAD" />
                                 <TextInput v-model="form.sick_time" />
                             </div>
-                            
+                            <div class="col-span-3 sm:col-span-1">
+                                <InputLabel value="SUEÑO" />
+                                <TextInput v-model="form.dream" />
+                            </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="ESTADO DE ANIMO" />
                                 <TextInput v-model="form.mood" />
