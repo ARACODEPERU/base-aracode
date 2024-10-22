@@ -125,8 +125,10 @@ class ReportController extends Controller
                     'sale_products.saleProduct as saleProduct',
                     'sale_products.total as product_total'
                 )
-                ->whereDate('sales.created_at', '>=', $start)
-                ->whereDate('sales.created_at', '<=', $end)
+                ->where(function ($query) use ($start, $end) {
+                    $query->whereDate('sales.created_at', '>=', $start)
+                        ->whereDate('sales.created_at', '<=', $end);
+                })
                 ->where('sales.status', '=', 1)
                 ->orderBy('sales.id')
                 ->get();
@@ -290,10 +292,15 @@ class ReportController extends Controller
 
     public function dataPaymentMethodTotals(Request $request)
     {
+        $start = $request->input('start');
+        $end = $request->input('end');
 
         $payments = Sale::select('payments')->where('local_id', $request->input('local_id'))
-            ->whereDate('created_at', '>=', $request->input('start'))
-            ->whereDate('created_at', '<=', $request->input('end'))
+            ->where(function ($query) use ($start, $end) {
+                $query->whereDate('created_at', '>=', $start)
+                    ->whereDate('created_at', '<=', $end);
+            })
+            ->where('status', 1)
             ->get();
 
         //$array = json_decode($payments, true);

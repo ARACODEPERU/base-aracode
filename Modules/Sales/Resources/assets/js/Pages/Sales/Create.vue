@@ -75,9 +75,15 @@
     }
 
     const removeProduct = (key) => {
+        form.payments = [];
         let t = parseFloat(form.products[key].total);
         form.total = parseFloat(form.total) - t;
         form.products.splice(key,1);
+        form.payments.push({
+            type:1,
+            reference: null,
+            amount: form.total
+        });
     }
 
     const addPayment = () => {
@@ -259,6 +265,7 @@
                         <div class="flex items-center me-4 mt-4 justify-between">
                             <label for="sale_date" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Fecha de venta: </label>
                             <input v-model="form.sale_date" id="sale_date" type="date" class="form-input" placeholder="Select date">
+                            <InputError :message="form.errors.sale_date" class="mt-2" />
                         </div>
 
                         <div class="mt-4">

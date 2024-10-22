@@ -20,43 +20,55 @@ const props = defineProps({
     doctors: {
         type: Object,
         default: () => ({})
+    },
+    attention: {
+        type: Object,
+        default: () => ({}),
     }
 });
 
 const form = useForm({
-    date_time_attention: null,
-    current_illness: null,
-    reason_consultation: null,
-    sick_time: null,
-    appetite: null,
-    thirst: null,
-    dream: null,
-    mood: null,
-    urine: null,
-    depositions: null,
-    weight_loss: null,
-    pex_tem: null,
-    pex_pa: null,
-    pex_fc: null,
-    pex_fr: null,
-    pex_peso: null,
-    pex_talla: null,
-    pex_imc: null,
-    treatment: null,
-    pex_aux_examination: {
-        description: null,
-        reference: null
+    id: props.attention.id,
+    date_time_attention: props.attention.date_time_attention,
+    current_illness: props.attention.current_illness,
+    reason_consultation: props.attention.reason_consultation,
+    sick_time: props.attention.sick_time,
+    appetite: props.attention.appetite,
+    thirst: props.attention.thirst,
+    dream: props.attention.dream,
+    mood: props.attention.mood,
+    urine: props.attention.urine,
+    depositions: props.attention.depositions,
+    weight_loss: props.attention.weight_loss,
+    pex_tem: props.attention.pex_tem,
+    pex_pa: props.attention.pex_pa,
+    pex_fc: props.attention.pex_fc,
+    pex_fr: props.attention.pex_fr,
+    pex_peso: props.attention.pex_peso,
+    pex_talla: props.attention.pex_talla,
+    pex_imc: props.attention.pex_imc,
+    treatment: props.attention.treatment,
+    pex_aux_examination: JSON.parse(props.attention.pex_aux_examination),
+    doctor_id: {
+        code: props.attention.doctor.id,
+        name: props.attention.doctor.person.full_name,
+        email: props.attention.doctor.person.email,
+        telephone: props.attention.doctor.person.telephone,
     },
-    doctor_id: null,
-    patient_id: null,
-    appointment_id: null,
-    signed_accepted: null,
-    observations: null,
-    next_appointmen_doctor_id: null,
-    next_date_appointment: null,
-    next_time_appointment: null,
-    next_time_end_appointment: null,
-    age: null,
+    patient_id: props.attention.patient_id,
+    appointment_id: props.attention.appointment_id,
+    signed_accepted: props.attention.signed_accepted == 1 ? true : false,
+    observations: props.attention.observations,
+    next_appointmen_doctor_id: props.attention.nextappointment ? {
+        code: props.attention.nextappointment.doctor.id,
+        name: props.attention.nextappointment.doctor.full_name,
+        email: props.attention.nextappointment.doctor.email,
+        telephone: props.attention.nextappointment.doctor.telephone,
+    } : null,
+    next_date_appointment: props.attention.nextappointment ? props.attention.nextappointment.date_appointmen : null,
+    next_time_appointment: props.attention.nextappointment ? props.attention.nextappointment.time_appointmen : null,
+    next_time_end_appointment: props.attention.nextappointment ? props.attention.nextappointment.time_end_appointmen : null,
+    age: props.attention.age,
 
 });
 
@@ -84,7 +96,7 @@ let intervalId;
 
 onMounted(() => {
     // Inicializar el valor de date_attention con la fecha y hora actual
-    form.date_time_attention = getCurrentDateTime();
+    // form.date_time_attention = getCurrentDateTime();
 
     // Actualizar la fecha y hora cada minuto
     intervalId = setInterval(() => {
@@ -97,11 +109,11 @@ onUnmounted(() => {
 });
 
 const seeker = reactive({
-    search: null,
+    search: props.attention.patient.person.full_name,
     loading: false,
     several: false,
     patients: [],
-    patient: null
+    patient: props.attention.patient
 });
 
 const searchPatients = (event) => {
@@ -258,15 +270,13 @@ function calcularEdad(fechaNacimiento) {
     };
 
     const saveAttention = () => {
-        form.post(route('odontology_attention_store'), {
+        form.put(route('odontology_attention_update',form.id), {
             preserveScroll: true,
             onSuccess: () => {
-                form.reset();
-
                 Swal.fire({
                     icon: 'success',
                     title: 'Enhorabuena',
-                    text: 'Se registro correctamente',
+                    text: 'Se actualizado correctamente',
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
@@ -363,15 +373,12 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.current_illness" />
                                 <InputError :message="form.errors.current_illness" class="mt-1" />
                             </div>
-                            <div class="col-span-6 sm:col-span-1">
+                            <div class="col-span-6 sm:col-span-2">
                                 <InputLabel value="FECHA" />
                                 <flat-pickr v-model="form.date_time_attention" class="form-input" :config="dateTime"></flat-pickr>
                                 <InputError :message="form.errors.date_time_attention" class="mt-1" />
                             </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="PESO" />
-                                <TextInput v-model="form.pex_peso" />
-                            </div>
+                            
                             <div class="col-span-2 sm:col-span-1">
                                 <InputLabel value="TALLA" />
                                 <TextInput v-model="form.pex_talla" />
@@ -379,6 +386,10 @@ function calcularEdad(fechaNacimiento) {
                             <div class="col-span-6 sm:col-span-3">
                                 <InputLabel value="MOTIVO DE CONSULTA" />
                                 <TextInput v-model="form.reason_consultation" />
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <InputLabel value="PESO" />
+                                <TextInput v-model="form.pex_peso" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="APETITO" />
@@ -388,15 +399,15 @@ function calcularEdad(fechaNacimiento) {
                                 <InputLabel value="SED" />
                                 <TextInput v-model="form.thirst" />
                             </div>
-                            <div class="col-span-3 sm:col-span-1">
-                                <InputLabel value="SUEÑO" />
-                                <TextInput v-model="form.dream" />
-                            </div>
+                            
                             <div class="col-span-6 sm:col-span-3">
                                 <InputLabel value="TIEMPO DE ENFERMEDAD" />
                                 <TextInput v-model="form.sick_time" />
                             </div>
-                            
+                            <div class="col-span-3 sm:col-span-1">
+                                <InputLabel value="SUEÑO" />
+                                <TextInput v-model="form.dream" />
+                            </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="ESTADO DE ANIMO" />
                                 <TextInput v-model="form.mood" />
@@ -573,7 +584,7 @@ function calcularEdad(fechaNacimiento) {
                                 <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                 <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                             </svg>
-                            Guardar
+                            Actualizar
                         </PrimaryButton>
                         <Link :href="route('odontology_attention_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
                     </template>

@@ -210,7 +210,7 @@ const es_PE = {
     "zeroRecords": "No se encontraron coincidencias",
     "info": "Mostrando _START_ a _END_ de _TOTAL_ entradas",
     "infoFiltered": "(Filtrado de _MAX_ total de entradas)",
-    "lengthMenu": "Mostrar entradas<br> _MENU_ ",
+    "lengthMenu": "_MENU_ Mostrar entradas",
     "stateRestore": {
         "removeTitle": "Eliminar",
         "creationModal": {
