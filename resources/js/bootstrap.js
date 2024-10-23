@@ -59,5 +59,5 @@ window.axios.interceptors.response.use(
 // });
 
 import io from 'socket.io-client';
-const socketIoHost = import.meta.env.SOCKET_IO_SERVER ?? 'https://localhost:3000';
+const socketIoHost = import.meta.env.VITE_SOCKET_IO_SERVER ?? 'https://localhost:3000';
 window.socketIo = io(socketIoHost);
