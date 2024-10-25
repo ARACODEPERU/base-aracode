@@ -6,6 +6,7 @@ use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
+use Modules\Health\Entities\HealAllergy;
 use Modules\Health\Entities\HealPatient;
 
 class HealHistoryController extends Controller
@@ -25,8 +26,13 @@ class HealHistoryController extends Controller
             ->where('id', $id)
             ->first();
 
+        $allergies = $allergies = HealAllergy::with(['allergyPatient' => function ($query) use ($id) {
+            $query->where('patient_id', $id);
+        }])->get();
+
         return Inertia::render('Health::History/PatientStory', [
-            'patient' => $patient
+            'patient' => $patient,
+            'allergies' => $allergies
         ]);
     }
 }

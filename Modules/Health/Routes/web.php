@@ -33,4 +33,7 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::get('patients/medical/{id}/record', 'HealHistoryController@patientStory')->name('heal_patients_story');
 
     Route::post('patients/search', 'HealPatientController@searchPatient')->name('heal_patients_search');
+
+    Route::post('allergies/store', 'HealAllergyPatientController@store')->name('heal_allergies_store');
+    Route::delete('allergies/{id}/destroy', 'HealAllergyPatientController@destroy')->name('heal_allergies_destroy');
 });

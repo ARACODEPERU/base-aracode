@@ -7,9 +7,18 @@
     import iconVenusMars from '@/Components/vristo/icon/icon-venus-mars.vue';
     import iconAddressCard from '@/Components/vristo/icon/icon-address-card.vue';
     import iconCalendarDay from '@/Components/vristo/icon/icon-calendar-day.vue';
+    import iconPlus from '@/Components/vristo/icon/icon-plus.vue';
+    import iconBug from '@/Components/vristo/icon/icon-bug.vue';
+    import iconX from '@/Components/vristo/icon/icon-x.vue';
+    import { ref } from 'vue';
+    import Allergies from './Partials/Allergies.vue';
 
     const props = defineProps({
         patient: {
+            type: Object,
+            default: () => ({})
+        },
+        allergies: {
             type: Object,
             default: () => ({})
         }
@@ -35,9 +44,12 @@
 
         return edad;
     }
+
+
+    
 </script>
 <template>
-    <AppLayout>
+    <AppLayout title="Historia">
         <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
                 <Link :href="route('heal_patients_list')" class="text-primary hover:underline">Pacientes</Link>
@@ -80,9 +92,16 @@
                         </ul>
                     </div>
                 </div>
-                <div class="panel lg:col-span-2 xl:col-span-3">
-                    <div class="mb-5">
-                        <h5 class="font-semibold text-lg dark:text-white-light">Task</h5>
+                <div class="col-span-4 sm:col-span-3">
+                    <div class="grid grid-cols-4 gap-5">
+                        <div class="panel sm:col-span-2 p-0">
+                            <div class="flex items-center border-b justify-between px-5 py-2.5 dark:border-gray-800" >
+                                <h6 class="text-[#0e1726] font-semibold text-base dark:text-white-light">ANTECEDENTES</h6>
+                            </div>
+                            <div class="p-5">
+                                <Allergies :allergies="allergies" :patient="patient" /> 
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

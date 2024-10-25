@@ -22,6 +22,7 @@ class UserRole extends Seeder
         $role = Role::create(['name' => 'admin']);
 
         $permissions = [];
+
         array_push($permissions, Permission::create(['name' => 'dashboard']));
         array_push($permissions, Permission::create(['name' => 'configuracion']));
         array_push($permissions, Permission::create(['name' => 'empresa']));
@@ -69,16 +70,6 @@ class UserRole extends Seeder
         array_push($permissions, Permission::create(['name' => 'invo_documento_envio_sunat']));
         array_push($permissions, Permission::create(['name' => 'invo_resumenes_lista']));
         array_push($permissions, Permission::create(['name' => 'invo_comunicacion_baja']));
-
-        array_push($permissions, Permission::create(['name' => 'blog_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias_editar']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos_editar']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos_eliminar']));
 
 
         foreach ($permissions as $permission) {

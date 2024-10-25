@@ -107,7 +107,7 @@ DataTable.use(DataTablesCore);
     const odontologyTable = ref(null);
 
     const refreshTable = () => {
-    const dataTableInstance = odontologyTable.value?.dt; // accede a la instancia del DataTable
+        const dataTableInstance = odontologyTable.value?.dt; // accede a la instancia del DataTable
         if (dataTableInstance) {
             dataTableInstance.ajax.reload();
         }
