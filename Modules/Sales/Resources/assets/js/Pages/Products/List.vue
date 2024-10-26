@@ -632,12 +632,6 @@
                     </tbody>
                   </table>
             </template>
-
-            <template #footer>
-                <SecondaryButton @click="closeModalDetailsProduct">
-                    Cancel
-                </SecondaryButton>
-            </template>
         </ModalLargeX>
 
         <DialogModal
@@ -883,7 +877,7 @@
                 </div>
             </template>
 
-            <template #footer>
+            <template #buttons>
                 <DangerButton
                     :class="{ 'opacity-25': formReLocate.processing }"
                     :disabled="formReLocate.processing"
@@ -895,9 +889,6 @@
                   </svg>
                   Guardar
                 </DangerButton>
-                <SecondaryButton class="ml-3" @click="closeModalTrasladoMercaderia()">
-                    Cancel
-                </SecondaryButton>
             </template>
         </DialogModal>
         <ModalLarge

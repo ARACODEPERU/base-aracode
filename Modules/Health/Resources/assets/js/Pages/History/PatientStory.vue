@@ -12,6 +12,7 @@
     import iconX from '@/Components/vristo/icon/icon-x.vue';
     import { ref } from 'vue';
     import Allergies from './Partials/Allergies.vue';
+    import PathologicalHistory from './Partials/PathologicalHistory.vue';
 
     const props = defineProps({
         patient: {
@@ -99,7 +100,10 @@
                                 <h6 class="text-[#0e1726] font-semibold text-base dark:text-white-light">ANTECEDENTES</h6>
                             </div>
                             <div class="p-5">
-                                <Allergies :allergies="allergies" :patient="patient" /> 
+                                <div class="space-y-2 font-semibold">
+                                    <Allergies :allergies="allergies" :patient="patient" /> 
+                                    <PathologicalHistory />
+                                </div>
                             </div>
                         </div>
                     </div>
