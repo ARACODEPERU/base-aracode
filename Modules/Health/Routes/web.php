@@ -11,6 +11,7 @@
 |
 */
 
+use Modules\Health\Http\Controllers\HealHistoryController;
 use Modules\Health\Http\Controllers\Odontology\HealOdoAppointmentController;
 
 Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
@@ -36,4 +37,5 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
 
     Route::post('allergies/store', 'HealAllergyPatientController@store')->name('heal_allergies_store');
     Route::delete('allergies/{id}/destroy', 'HealAllergyPatientController@destroy')->name('heal_allergies_destroy');
+    Route::get('patients/vitals/last/{id}', [HealHistoryController::class, 'lastVitalSigns'])->name('heal_patients_vitals_last');
 });

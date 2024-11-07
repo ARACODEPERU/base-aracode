@@ -275,8 +275,8 @@ function calcularEdad(fechaNacimiento) {
     }
 </script>
 <template>
-    <div class="space-y-6">
-        <form @submit.prevent="saveAttention">
+    <div >
+        <form @submit.prevent="saveAttention" class="space-y-6">
             <div class="panel">
                 <div class="grid grid-cols-5 gap-4">
                     <div class="col-span-6 sm:col-span-1">
@@ -398,8 +398,8 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.dream" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
-                                <InputLabel value="ESTADO DE ANIMO" />
-                                <TextInput v-model="form.mood" />
+                                <InputLabel value="EST. ANIMO" />
+                                <TextInput v-model="form.mood" v-tippy="{ content: 'Estado de animo', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="ORINA" />
@@ -410,29 +410,28 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.depositions" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
-                                <InputLabel value="PERDIDA DE PESO" />
-                                <TextInput v-model="form.weight_loss" />
+                                <InputLabel value="PER. PESO" />
+                                <TextInput v-model="form.weight_loss" v-tippy="{ content: 'Perdida de peso', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="T°" />
-                                <TextInput v-model="form.pex_tem" />
+                                <InputLabel value="T°" title="Temperatura" />
+                                <TextInput v-model="form.pex_tem" v-tippy="{ content: 'Temperatura', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="PA" />
-                                <TextInput v-model="form.pex_pa" />
+                                <InputLabel value="PA"  />
+                                <TextInput v-model="form.pex_pa" v-tippy="{ content: 'Presión arterial', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
                                 <InputLabel value="FC" />
-                                <TextInput v-model="form.pex_fc" />
+                                <TextInput v-model="form.pex_fc" v-tippy="{ content: 'Frecuencia cardiaca', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
                                 <InputLabel value="FR" />
-                                <TextInput v-model="form.pex_fr" />
+                                <TextInput v-model="form.pex_fr" v-tippy="{ content: 'Frecuencia respiratoria', placement: 'bottom' }" />
                             </div>
-                            
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="IMC" />
-                                <TextInput v-model="form.pex_imc" />
+                                <InputLabel value="IMC"  />
+                                <TextInput v-model="form.pex_imc" v-tippy="{ content: 'Indice de masa corporal', placement: 'bottom' }" />
                             </div>
                         </div>
                     </div>
@@ -489,7 +488,7 @@ function calcularEdad(fechaNacimiento) {
                                 </label>
                             </div>
                             <div class="col-span-2">
-                                <div class="rounded-md border border-gray-200 dark:border-gray-700 px-4 py-2">
+                                <div class="rounded-md bg-white-light dark:bg-gray-800 dark:border-gray-700 px-4 py-2">
                                     <h3 class="m-0 dark:text-white-dark">PROGRAMAR PROXIMA CITA (opcional)</h3>
                                     <div class="mt-5 mb-5">
                                         <label for="doctor_id" >Doctor</label>

@@ -6,6 +6,7 @@ use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
+use Modules\Dental\Entities\DentAttention;
 use Modules\Health\Entities\HealAllergy;
 use Modules\Health\Entities\HealPatient;
 
@@ -33,6 +34,19 @@ class HealHistoryController extends Controller
         return Inertia::render('Health::History/PatientStory', [
             'patient' => $patient,
             'allergies' => $allergies
+        ]);
+    }
+
+    public function lastVitalSigns($id)
+    {
+        ///ultimos estudios odontologicos
+
+        $vitals = DentAttention::where('patient_id', $id)
+            ->orderByDesc('date_time_attention')
+            ->first();
+        //dd($vitals);
+        return response()->json([
+            'vitals' => $vitals
         ]);
     }
 }

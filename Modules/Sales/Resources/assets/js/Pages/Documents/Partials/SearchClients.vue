@@ -12,6 +12,9 @@
     import Swal2 from 'sweetalert2';
     import Multiselect from "@suadelabs/vue3-multiselect";
     import "@suadelabs/vue3-multiselect/dist/vue3-multiselect.css";
+    import iconDatabaseSearch from '@/Components/vristo/icon/icon-database-search.vue';
+    import iconCompany from '@/Components/vristo/icon/icon-company.vue';
+    import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
         clientDefault: {
@@ -132,6 +135,32 @@
         form.ubigeo = item.district_id;
         searchUbigeos.value = []; // Limpiar la lista de búsqueda después de seleccionar una ciudad
     }
+
+    const apiesLoading = ref(false);
+
+    const searchApispe = () => {
+        apiesLoading.value = true;
+        axios.post(route('sales_search_person_apies'), form).then((res) => {
+            
+            if(res.data.success){
+                form.full_name =  res.data.person['razonSocial'];
+                form.email = null;
+                form.address = null;
+                //form.search = res.data.person['razonSocial'];
+            }else{
+                console.log(res.data)
+                Swal2.fire({
+                    icon: 'error',
+                    text: res.data.error,
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                })
+            }
+
+        }).finally(()=> {
+            apiesLoading.value = false;
+        });
+    }
 </script>
 
 <template>
@@ -208,6 +237,12 @@
                 </div>
             </template>
             <template #buttons>
+                <button @click="searchApispe" v-if="form.document_type != 0" type="button" class="btn btn-primary text-xs uppercase">
+                    <icon-loader v-if="apiesLoading" class="animate-spin mr-1" /> 
+                    <icon-company v-else class="w-4 h-4 mr-1" /> 
+                    <span v-if="form.document_type == 6">SUNAT</span>
+                    <span v-else-if="form.document_type == 1">RENIEC</span>
+                </button>
                 <RedButton @click="modalNewSearchClient()" >Buscar</RedButton>
                 <PrimaryButton @click="saveNewSearchClient()" >
                     Guardar

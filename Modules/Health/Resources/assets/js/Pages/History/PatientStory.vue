@@ -7,12 +7,13 @@
     import iconVenusMars from '@/Components/vristo/icon/icon-venus-mars.vue';
     import iconAddressCard from '@/Components/vristo/icon/icon-address-card.vue';
     import iconCalendarDay from '@/Components/vristo/icon/icon-calendar-day.vue';
-    import iconPlus from '@/Components/vristo/icon/icon-plus.vue';
-    import iconBug from '@/Components/vristo/icon/icon-bug.vue';
-    import iconX from '@/Components/vristo/icon/icon-x.vue';
+
+
+
     import { ref } from 'vue';
     import Allergies from './Partials/Allergies.vue';
     import PathologicalHistory from './Partials/PathologicalHistory.vue';
+    import LastVitalSigns from './Partials/LastVitalSigns.vue';
 
     const props = defineProps({
         patient: {
@@ -97,7 +98,7 @@
                     <div class="grid grid-cols-4 gap-5">
                         <div class="panel sm:col-span-2 p-0">
                             <div class="flex items-center border-b justify-between px-5 py-2.5 dark:border-gray-800" >
-                                <h6 class="text-[#0e1726] font-semibold text-base dark:text-white-light">ANTECEDENTES</h6>
+                                <h5 class="font-semibold text-lg">ANTECEDENTES</h5>
                             </div>
                             <div class="p-5">
                                 <div class="space-y-2 font-semibold">
@@ -106,6 +107,7 @@
                                 </div>
                             </div>
                         </div>
+                        <LastVitalSigns :patient="patient" />
                     </div>
                 </div>
             </div>
