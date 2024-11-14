@@ -8,7 +8,7 @@
     import iconAddressCard from '@/Components/vristo/icon/icon-address-card.vue';
     import iconCalendarDay from '@/Components/vristo/icon/icon-calendar-day.vue';
 
-
+    import OdontogramaDiagram from 'Modules/Dental/Resources/assets/js/Pages/Odontograma/Diagram.vue';
 
     import { ref } from 'vue';
     import Allergies from './Partials/Allergies.vue';
@@ -111,6 +111,15 @@
                     </div>
                 </div>
             </div>
+            <div class="panel p-0 mt-6">
+                <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 items-center gap-2">
+                        <!-- Icon Block -->
+                        <odontograma-diagram />
+                    </div>
+                </div>
+            </div>
+
         </div>
     </AppLayout>
 </template>
