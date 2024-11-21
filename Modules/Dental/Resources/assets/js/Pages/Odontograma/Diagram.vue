@@ -11,6 +11,10 @@
     import diente28 from './Partials/diente28.vue';
     import diente15 from './Partials/diente15.vue';
     import diente14 from './Partials/diente14.vue';
+    import diente54 from './Partials/diente54.vue';
+    import diente64 from './Partials/diente64.vue';
+    import diente65 from './Partials/diente65.vue';
+    import diente55 from './Partials/diente55.vue';
     import diente13 from './Partials/diente13.vue';
     import diente48 from './Partials/diente48.vue';
     import diente45 from './Partials/diente45.vue';
@@ -176,7 +180,10 @@
                                 </tr>
                                 <tr style="border: none;">
                                     <td class="p-0">
-                                        <diente18 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
+                                        <diente18 
+                                            :rectangulo="true"
+                                            class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" 
+                                        />
                                     </td>
                                     <td class="p-0">
                                         <diente17 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
@@ -253,10 +260,10 @@
                                     <td></td>
                                     <td></td>
                                     <td class="p-0 pt-4">
-                                        <diente18 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
+                                        <diente55 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
                                     </td>
                                     <td class="p-0 pt-4">
-                                        <diente18 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
+                                        <diente54 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
                                     </td>
                                     <td class="p-0 pt-4">
                                         <diente13 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
@@ -277,10 +284,10 @@
                                         <diente13 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
                                     </td>
                                     <td class="p-0 pt-4">
-                                        <diente18 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
+                                        <diente64 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
                                     </td>
                                     <td class="p-0 pt-4">
-                                        <diente18 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
+                                        <diente65 class="dark:text-white" :class="`w-${sizeDiente} h-${sizeDiente}`" />
                                     </td>
                                     <td></td>
                                     <td></td>
