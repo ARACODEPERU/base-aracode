@@ -13,7 +13,21 @@ const xassetUrl = assetUrl;
 
 </script>
 <template>
-    <Head title="Landing" />
+    <Head>
+        <title>Landing</title>
+        <!-- Meta para Facturación Electrónica -->
+        <meta name="description" content="Simplifica tu facturación electrónica con nuestra solución. Envía facturas y boletas electrónicas a SUNAT de forma rápida, segura y eficiente.">
+        <meta name="keywords" content="facturación electrónica, enviar facturas SUNAT, boletas electrónicas, software SUNAT, sistema de facturación Perú, boletas Perú, SUNAT online">
+
+        <!-- Meta para Desarrollo Web a Medida -->
+        <meta name="description" content="Desarrollamos sitios web a medida y aplicaciones personalizadas según las necesidades de tu negocio. Soluciones modernas y adaptadas a tus objetivos.">
+        <meta name="keywords" content="desarrollo web a medida, diseño web profesional, creación de sitios web, aplicaciones personalizadas, desarrollo de software, soluciones digitales, páginas web empresariales, desarrollo web Perú">
+
+        <meta name="author" content="Aracode">
+        <meta name="robots" content="index, follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    </Head>
     <Header />
 
     <!-- hero section -->
