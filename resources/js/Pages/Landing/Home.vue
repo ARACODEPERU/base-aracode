@@ -8,6 +8,7 @@ import Customers from './Components/Customers.vue';
 import Footer from './Components/Footer.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import FacturacionPrices from './Components/FacturacionPrices.vue';
+import Teams from './Components/Teams.vue';
 
 const xassetUrl = assetUrl;
 
@@ -114,6 +115,8 @@ const xassetUrl = assetUrl;
             </div>
         </div>
     </section> -->
+
+    <Teams />
 
     <!-- contact -->
     <section id="contact" class="section-contact 2xl:py-[80px] py-[70px]">

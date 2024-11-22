@@ -44,10 +44,10 @@ const xassetUrl = assetUrl;
                         </li>
                         <li class="nav-item">
                             <a href="#portfolio" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Cartera</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="#news" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Blog</a>
                         </li> -->
+                        <li class="nav-item">
+                            <Link :href="route('blog_main')" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Blog</Link>
+                        </li>
                         <li class="nav-item">
                             <a href="#contact" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Contacta con nosotros</a>
                         </li>

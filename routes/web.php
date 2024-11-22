@@ -26,6 +26,7 @@ use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 
 Route::get('/', [LandingController::class, 'index'])->name('index_main');
+Route::get('/news', [LandingController::class, 'blog'])->name('blog_main');
 Route::get('/computer/store', [LandingController::class, 'computerStore'])->name('index_computer_store');
 
 Route::get('/curso-descripcion/{id}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
@@ -37,11 +38,11 @@ Route::get('/ask/product/{id}', [LandingController::class, 'redirectToWhatsApp']
 Route::get('/find/invoice', [SalesController::class, 'findInvoice'])->name('find_electronic_invoice');
 Route::post('/find/invoice', [SalesController::class, 'clientSearchDocument'])->name('client_search_electronic_invoice');
 
-Route::get('/blog/home', [BlogController::class, 'index'])->name('blog_principal');
-Route::get('/article/{url}', [BlogController::class, 'article'])->name('blog_article_by_url');
-Route::get('/category/{id}', [BlogController::class, 'category'])->name('blog_category');
-Route::get('/policies', [BlogController::class, 'policies'])->name('blog_policies');
-Route::get('/contact-us', [BlogController::class, 'contactUs'])->name('blog_contact_us');
+// Route::get('/blog/home', [BlogController::class, 'index'])->name('blog_principal');
+// Route::get('/article/{url}', [BlogController::class, 'article'])->name('blog_article_by_url');
+// Route::get('/category/{id}', [BlogController::class, 'category'])->name('blog_category');
+// Route::get('/policies', [BlogController::class, 'policies'])->name('blog_policies');
+// Route::get('/contact-us', [BlogController::class, 'contactUs'])->name('blog_contact_us');
 
 Route::get('/stories/article/{url}', [BlogController::class, 'storiesArticle'])->name('blog_stories_article_by_url');
 Route::get('/stories/policies', [BlogController::class, 'storiesPolicies'])->name('blog_stories_policies');

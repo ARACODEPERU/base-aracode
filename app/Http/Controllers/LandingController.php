@@ -41,6 +41,11 @@ class LandingController extends Controller
         ]);
     }
 
+    public function blog()
+    {
+        return Inertia::render('Landing/Blog');
+    }
+
     public function computerStore()
     {
         $categories = OnliItem::select('category_description')->groupBy('category_description')->get();
