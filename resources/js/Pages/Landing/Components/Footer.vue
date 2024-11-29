@@ -25,7 +25,7 @@
             <div
                 class="lg:w-1/2 text-white font-normal text-[12px] flex 2xl:justify-end xl:justify-end lg:justify-end justify-between">
                 <a href="javascript:void(0)" class="pr-10 hover:text-white">política de privacidad</a>
-                <a href="javascript:void(0)" class="hover:text-white">Términos y condiciones</a>
+                <Link :href="route('terms_main')" class="hover:text-white">Términos y condiciones</Link>
             </div>
         </div>
     </footer>

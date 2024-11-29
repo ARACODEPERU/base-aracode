@@ -73,4 +73,9 @@ class LandingController extends Controller
 
         return redirect()->away($urlWhatsApp);
     }
+
+    public function terms()
+    {
+        return Inertia::render('Landing/TermsConditions');
+    }
 }
