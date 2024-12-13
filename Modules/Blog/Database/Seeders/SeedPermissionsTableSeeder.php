@@ -21,7 +21,7 @@ class SeedPermissionsTableSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'blog_dashboard']));
+        // array_push($permissions, Permission::create(['name' => 'blog_dashboard']));
         array_push($permissions, Permission::create(['name' => 'blog_categorias']));
         array_push($permissions, Permission::create(['name' => 'blog_categorias_nuevo']));
         array_push($permissions, Permission::create(['name' => 'blog_categorias_editar']));
