@@ -19,7 +19,7 @@ class OnliItemController extends Controller
 {
     use ValidatesRequests;
 
-    protected $P000009;
+    protected $P000009; //tipo de negocio
     protected $P000010; ///token Tiny
 
     public function __construct()
@@ -82,6 +82,11 @@ class OnliItemController extends Controller
                     ->where('onli_items.entitie', 'App-Models-Product');
             })->orderBy('id', 'DESC')->get();
 
+        if ($this->P000009 == 1) {
+            $products = [];
+        } else if ($this->P000009 == 2) {
+            $courses = [];
+        }
 
         return Inertia::render('Onlineshop::Items/Create', [
             'courses'   => $courses,
