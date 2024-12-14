@@ -24,7 +24,7 @@ const xassetUrl = assetUrl;
                             <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
                         </li>
                         <li>
-                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog</a>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog 3</a>
                         </li>
                         <li>
                             <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
@@ -38,7 +38,6 @@ const xassetUrl = assetUrl;
                     </ul>
                 </div>
                 <div class="block lg:hidden w-1/6 lg:w-4/6">
-                    <a href="" class="text-white block p-5 font-bold hover:text-blue-500" id="mobile-menu">Menú</a>
                     <ul class="mobile-links hidden w-full absolute z-50 left-0 text-center bg-gray-800">
                         <li>
                             <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
@@ -47,7 +46,7 @@ const xassetUrl = assetUrl;
                             <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
                         </li>
                         <li>
-                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog</a>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog 2</a>
                         </li>
                         <li>
                             <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
