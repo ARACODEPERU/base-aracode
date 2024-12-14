@@ -9,58 +9,60 @@ const xassetUrl = assetUrl;
 </script>
 <template>
 
-    <div class="mx-auto">
-        <nav class=" bg-gray-800 flex justify-between lg:justify-start items-center">
-            <div class="logo p-2 w-1/6">
-                <img src="img/isotipo.png" width="100" alt="">
-            </div>
-            <div class="links lg:block hidden w-1/6 md:w-4/6">
-                <ul class="menu flex items-center justify-center gap-6">
-                    <li>
-                        <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
-                    </li>
-                    <li>
-                        <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
-                    </li>
-                    <li>
-                        <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog</a>
-                    </li>
-                    <li>
-                        <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
-                    </li>
-                    <li>
-                        <a href="" class="rounded-full bg-red-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500">Campus Online</a>
-                    </li>
-                    <li>
-                        <a href=""class="rounded-full bg-blue-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500"><i class="fas fa-shopping-cart mr-2"></i>S</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="block lg:hidden w-1/6 lg:w-4/6">
-                <a href="" class="text-white block p-5 font-bold hover:text-blue-500" id="mobile-menu">Menú</a>
-                <ul class="mobile-links hidden w-full absolute z-50 left-0 text-center bg-gray-800">
-                    <li>
-                        <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
-                    </li>
-                    <li>
-                        <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
-                    </li>
-                    <li>
-                        <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog</a>
-                    </li>
-                    <li>
-                        <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
-                    </li>
-                    <li>
-                        <a href="" class="rounded-full bg-red-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500">Campus Online</a>
-                    </li>
-                    <li>
-                        <a href=""class="rounded-full bg-blue-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500"><i class="fas fa-shopping-cart mr-2"></i>S</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </div>
+    <header class="bg-gray-800 w-full py-0">
+        <div class="container">
+            <nav class=" bg-gray-800 flex justify-between lg:justify-start items-center">
+                <div class="logo p-0 w-1/6">
+                    <img src="img/isotipo.png" width="100" alt="">
+                </div>
+                <div class="links lg:block hidden w-1/6 md:w-4/6">
+                    <ul class="menu flex items-center justify-center gap-6">
+                        <li>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
+                        </li>
+                        <li>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
+                        </li>
+                        <li>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog</a>
+                        </li>
+                        <li>
+                            <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
+                        </li>
+                        <li>
+                            <a href="" class="rounded-full bg-red-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500">Campus Online</a>
+                        </li>
+                        <li>
+                            <a href=""class="rounded-full bg-blue-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500"><i class="fas fa-shopping-cart mr-2"></i>S</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="block lg:hidden w-1/6 lg:w-4/6">
+                    <a href="" class="text-white block p-5 font-bold hover:text-blue-500" id="mobile-menu">Menú</a>
+                    <ul class="mobile-links hidden w-full absolute z-50 left-0 text-center bg-gray-800">
+                        <li>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
+                        </li>
+                        <li>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
+                        </li>
+                        <li>
+                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog</a>
+                        </li>
+                        <li>
+                            <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
+                        </li>
+                        <li>
+                            <a href="" class="rounded-full bg-red-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500">Campus Online</a>
+                        </li>
+                        <li>
+                            <a href=""class="rounded-full bg-blue-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500"><i class="fas fa-shopping-cart mr-2"></i>S</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </header>
 
     <!-- header -->
     <header class="bg-[#f6f8ff] w-full bx-static">
