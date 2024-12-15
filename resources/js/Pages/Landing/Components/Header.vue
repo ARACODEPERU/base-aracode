@@ -300,7 +300,7 @@ const xassetUrl = assetUrl;
     </header>
 </template>
     
-<script>
+<!-- <script>
     const menuButton = document.querySelector('#mobile-menu');
 
     menuButton.addEventListener('click', e => {
@@ -308,4 +308,4 @@ const xassetUrl = assetUrl;
 
         menu.classList.toogle('hidden');
     });
-</script>
+</script> -->
