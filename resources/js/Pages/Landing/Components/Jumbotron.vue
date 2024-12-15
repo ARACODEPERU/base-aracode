@@ -43,13 +43,13 @@ const scrollToContact = () => {
                     </button>
                 </div>
             </div>
-            <div class="w-1/2 hidden px-2 2xl:block xl:block lg:block md:block z-10">
+            <div class="w-1/2 hidden px-2 2xl:block xl:block lg:block md:block ">
                 <img :src="`${xassetUrl}themes/vristo/images/app-development-rafiki.svg`" alt="girl" class="max-h-full">
             </div>
         </div>
         <div class="relative">
             <img :src="`${xassetUrl}themes/personalLanding/assets/img/shape/hero-shape.png`" alt="hero-shape"
-                class="absolute bottom-0 left-0 right-0 w-full z-10 bg-center bg-cover"
+                class="absolute bottom-0 left-0 right-0 w-full bg-center bg-cover"
                 >
         </div>
     </section>
