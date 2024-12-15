@@ -36,6 +36,7 @@
     <script>
         window.assetUrl = @json(asset(''));
     </script>
+    
 </body>
 
 </html>
