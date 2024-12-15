@@ -1,23 +1,14 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
-import { Dropdown } from 'flowbite-vue';
+import { 
+    faBars, 
+ } from "@fortawesome/free-solid-svg-icons";
 
 const user = usePage().props.auth.user;
 const company = usePage().props.company;
 const xassetUrl = assetUrl;
 
-
-
-
-const menuButton = ref(null);
-
-function toggleMenu() {
-  const menu = document.querySelector('.mobile-links');
-  if (menu) {
-    menu.classList.toggle('hidden');
-  }
-}
 
 
 </script>
@@ -36,26 +27,25 @@ function toggleMenu() {
                             <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
                         </li>
                         <li>
-                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
+                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
                         </li>
                         <li>
-                            <a href="" class="text-white block p-5 font-bold hover:text-blue-500">Blog 3</a>
+                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Blog 3</a>
                         </li>
                         <li>
-                            <a href="" class="border-2 border-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
+                            <a href="" class="text-gray-800 dark:text-white border-2 border-blue-500 font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
                         </li>
                         <li>
-                            <a href="" class="rounded-full bg-red-500 font-bold px-4 py-2 text-white hover:text-black hover:bg-white transition duration-500">Campus Online</a>
+                            <a href="" class="text-white rounded-full bg-red-500 font-bold px-4 py-2 hover:text-black hover:bg-white transition duration-500">Campus Online</a>
                         </li>
                     </ul>
                 </div>
                 <div class="block sm:hidden w-1/6 sm:w-4/6">
-                    
                     <div class="dropdown">
                         <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
-                                               
-                            <a href="#" class="dark:text-white block p-5 font-bold hover:text-blue-500" id="mobile-menu">
-                                Menú
+         
+                            <a href="#" class="text-gray-800 dark:text-white p-5 font-bold hover:text-blue-500">
+                                <font-awesome-icon :icon="faBars" class="fill-current" />
                             </a>
                             <template #content="{ close }">
                                 <ul @click="close()" class="menu flex items-center justify-center gap-5">
@@ -125,12 +115,3 @@ function toggleMenu() {
     </header> -->
 </template>
     
-<!-- <script>
-    const menuButton = document.querySelector('#mobile-menu');
-
-    menuButton.addEventListener('click', e => {
-        const menu = document.querySelector('.mobile-links');
-
-        menu.classList.toogle('hidden');
-    });
-</script>  -->
