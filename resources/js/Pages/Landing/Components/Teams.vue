@@ -12,7 +12,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="flex flex-col rounded-xl p-4 md:p-6 bg-white border border-gray-200 dark:bg-neutral-900 dark:border-neutral-700">
                 <div class="flex items-center gap-x-4">
-                    <img class="rounded-full size-20" src="https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=320&h=320&q=80" alt="Avatar">
+                    <img class="rounded-full size-20" src="/img/socios/jose.jpg" alt="Avatar">
                     <div class="grow">
                         <h3 class="font-medium text-gray-800 dark:text-neutral-200">
                             Jose Alarcon
@@ -51,7 +51,7 @@
 
             <div class="flex flex-col rounded-xl p-4 md:p-6 bg-white border border-gray-200 dark:bg-neutral-900 dark:border-neutral-700">
                 <div class="flex items-center gap-x-4">
-                    <img class="rounded-full size-20" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=320&h=320&q=80" alt="Avatar">
+                    <img class="rounded-full size-20" src="/img/socios/jesus.jpg" alt="Avatar">
                     <div class="grow">
                         <h3 class="font-medium text-gray-800 dark:text-neutral-200">
                             Jesus Anaya
@@ -90,7 +90,7 @@
 
             <div class="flex flex-col rounded-xl p-4 md:p-6 bg-white border border-gray-200 dark:bg-neutral-900 dark:border-neutral-700">
                 <div class="flex items-center gap-x-4">
-                    <img class="rounded-full size-20" src="https://images.unsplash.com/photo-1548142813-c348350df52b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=2&w=320&h=320&q=80" alt="Avatar">
+                    <img class="rounded-full size-20" src="/img/socios/elmer.jpg" alt="Avatar">
                     <div class="grow">
                         <h3 class="font-medium text-gray-800 dark:text-neutral-200">
                             Elmer Rodriguez
