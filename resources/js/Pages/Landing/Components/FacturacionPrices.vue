@@ -9,10 +9,10 @@
             <div class="overflow-hidden">
                 <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
                     <!-- Title -->
-                    <div class="mx-auto max-w-2xl mb-8 lg:mb-14 text-center">
-                        <h2 class="text-3xl lg:text-4xl text-gray-800 font-bold dark:text-neutral-200">
-                            planes por mes o al año, envía tus facturas y boletas electrónicas a SUNAT fácilmente
-                        </h2>
+                    
+                    <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
+                        <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">NUESTROS PLANES</h2>
+                        <p class="mt-1 text-gray-600 dark:text-neutral-400">planes por mes o al año, envía tus facturas y boletas electrónicas a SUNAT fácilmente</p>
                     </div>
                     <!-- End Title -->
 
