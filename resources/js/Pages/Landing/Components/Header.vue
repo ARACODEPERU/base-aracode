@@ -27,13 +27,13 @@ const xassetUrl = assetUrl;
                             <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
                         </li>
                         <li>
-                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
+                            <a href="#about" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
                         </li>
                         <li>
-                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Blog 3</a>
+                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Blog</a>
                         </li>
                         <li>
-                            <a href="" class="text-gray-800 dark:text-white border-2 border-blue-500 font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
+                            <a href="#contact" class="text-gray-800 dark:text-white border-2 border-blue-500 font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
                         </li>
                         <li>
                             <a href="" class="text-white rounded-full bg-red-500 font-bold px-4 py-2 hover:text-black hover:bg-white transition duration-500">Campus Online</a>
@@ -51,7 +51,7 @@ const xassetUrl = assetUrl;
                                 <ul @click="close()" class="menu flex items-center justify-center gap-5">
                                     <li>
                                         <Link href="#"  class="dark:text-white block p-5 font-bold hover:text-blue-500">
-                                            Bog 2
+                                            Bog
                                         </Link>
                                     </li>
                                 </ul>
