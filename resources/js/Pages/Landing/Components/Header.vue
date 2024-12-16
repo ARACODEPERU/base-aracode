@@ -15,25 +15,34 @@ const xassetUrl = assetUrl;
 
 <template>
 
-    <header class="bg-white w-full py-0 my-0 dark:bg-gray-800">
+    <header class="bg-white w-full py-0 my-0 dark:bg-gray-800 fixed z-50">
         <div class="container">
             <nav class=" flex justify-between lg:justify-start items-center">
                 <div class="logo p-0 w-1/6">
                     <img src="img/isotipo.png" width="80" alt="">
                 </div>
-                <div class="links sm:block hidden w-1/6 md:w-4/6">
-                    <ul class="menu flex items-center justify-center gap-5">
+                <div class="links sm:block hidden w-1/6 md:w-5/6 right-0">
+                    <ul class="menu flex items-center justify-center gap-5 ">
                         <li>
-                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Inicio</a>
+                            <Link href="#" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">
+                                Inicio
+                            </Link>
                         </li>
                         <li>
-                            <a href="#about" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Nosotros</a>
+                            <Link href="#about" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">
+                                Nosotros
+                            </Link>
                         </li>
                         <li>
-                            <a href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">Blog</a>
+                            <Link href="" class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">
+                                Blog
+                            </Link>
                         </li>
                         <li>
-                            <a href="#contact" class="text-gray-800 dark:text-white border-2 border-blue-500 font-bold py-2 px-4 rounded-full hover:bg-white hover:text-black transition duration-500">Contactanos</a>
+                            <Link href="#contact" class="text-gray-800 dark:text-white border-2 border-blue-500 font-bold py-2 px-4 rounded-full
+                                                         hover:bg-white hover:text-black transition duration-500">
+                                Contactanos
+                            </Link>
                         </li>
                         <li>
                             <a href="" class="text-white rounded-full bg-red-500 font-bold px-4 py-2 hover:text-black hover:bg-white transition duration-500">Campus Online</a>
@@ -43,14 +52,23 @@ const xassetUrl = assetUrl;
                 <div class="block sm:hidden w-1/6 sm:w-4/6">
                     <div class="dropdown">
                         <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
-         
                             <a href="#" class="text-gray-800 dark:text-white p-5 font-bold hover:text-blue-500">
                                 <font-awesome-icon :icon="faBars" class="fill-current" />
                             </a>
                             <template #content="{ close }">
                                 <ul @click="close()" class="menu flex items-center justify-center gap-5">
                                     <li>
-                                        <Link href="#"  class="dark:text-white block p-5 font-bold hover:text-blue-500">
+                                        <Link href="#"  class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">
+                                            Inicio
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="#about"  class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">
+                                            Nosotros
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link href="#"  class="text-gray-800 dark:text-white block p-5 font-bold hover:text-blue-500">
                                             Bog
                                         </Link>
                                     </li>

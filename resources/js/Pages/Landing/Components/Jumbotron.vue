@@ -25,7 +25,7 @@ const scrollToContact = () => {
         <img class="shape5 absolute w-12 bottom-48 right-12 parallax bottom sm:block hidden" :src="`${xassetUrl}themes/personalLanding/assets/img/shape/shape-5.png`"
             alt="shape-5">
         <div
-            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] py-[80px] px-4">
+            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] ">
             <div class="w-full 2xl:h-[90vh] lg:h-[80vh] h-[70vh] max-[320px]:h-[50vh] flex items-center px-2 2xl:max-w-lg xl:max-w-lg lg:max-w-lg lg:w-1/2 lg:mx-0 md:max-w-lg md:w-1/2 md:mx-0 2xl:w-1/2 xl:w-1/2 sm:items-center">
                 <div class="text-center 2xl:text-left xl:text-left lg:text-left md:text-left h-72">
                     <span class="text-[#7963e0] text-[18px] font-bold">Hola, bienvenido a</span>
