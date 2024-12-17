@@ -9,7 +9,13 @@ const user = usePage().props.auth.user;
 const company = usePage().props.company;
 const xassetUrl = assetUrl;
 
-
+const props = defineProps({
+    dataHeader: {
+        type: Object,
+        default: () => ({})
+    }
+});
+ 
 
 </script>
 
@@ -19,7 +25,7 @@ const xassetUrl = assetUrl;
         <div class="container">
             <nav class=" flex justify-between lg:justify-start items-center">
                 <div class="logo p-0 w-1/6">
-                    <img src="img/isotipo.png" width="80" alt="">
+                    <img :src="`${xassetUrl}storage/${dataHeader.items[0].item.content}`" width="80" alt="">
                 </div>
                 <div class="links sm:block hidden w-1/6 md:w-5/6 right-0">
                     <ul class="menu flex items-center justify-center gap-5 ">

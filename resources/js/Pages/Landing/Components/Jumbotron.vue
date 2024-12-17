@@ -13,6 +13,14 @@ const scrollToContact = () => {
         element.scrollIntoView({ behavior: 'smooth' });
     }
 }
+
+const props = defineProps({
+    dataWelcome: {
+        type: Object,
+        default: () => ({})
+    }
+});
+
 </script>
 <template>
     <section id="home" class="section-hero bg-[#f6f8ff] relative">
@@ -25,17 +33,17 @@ const scrollToContact = () => {
         <img class="shape5 absolute w-12 bottom-48 right-12 parallax bottom sm:block hidden" :src="`${xassetUrl}themes/personalLanding/assets/img/shape/shape-5.png`"
             alt="shape-5">
         <div
-            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] ">
+            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] z-10">
             <div class="w-full 2xl:h-[90vh] lg:h-[80vh] h-[70vh] max-[320px]:h-[50vh] flex items-center px-2 2xl:max-w-lg xl:max-w-lg lg:max-w-lg lg:w-1/2 lg:mx-0 md:max-w-lg md:w-1/2 md:mx-0 2xl:w-1/2 xl:w-1/2 sm:items-center">
                 <div class="text-center 2xl:text-left xl:text-left lg:text-left md:text-left h-72">
-                    <span class="text-[#7963e0] text-[18px] font-bold">Hola, bienvenido a</span>
+                    <span class="text-[#7963e0] text-[18px] font-bold">{{ dataWelcome.items[0].item.content }}</span>
                     <h1
                         class="text-dark-800 2xl:text-[60px] xl:text-[55px] lg:text-[50px] md:text-[45px] text-[40px] font-bold">
-                        {{ company.name }}
+                        {{ dataWelcome.items[1].item.content }}
                     </h1>
-                    <h2 class="py-2 text-dark-800 text-[20px] font-bold">Nos especializamos</h2>
+                    <h2 class="py-2 text-dark-800 text-[20px] font-bold">{{ dataWelcome.items[2].item.content }}</h2>
                     <p class="pt-2 text-gray-500 text-base">
-                        En el desarrollo a medida de software. Además, brindamos servicios de alquiler de sistema facturador, permitiendo a las empresas acceder a tecnología sin la necesidad de inversiones iniciales elevadas. Nuestro compromiso es ayudar a nuestros clientes a optimizar sus procesos.
+                        {{ dataWelcome.items[3].item.content }}
                     </p>
                     <button @click="scrollToContact" type="button"
                         class="text-white mt-4 bg-[#7963e0] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700">
@@ -43,13 +51,13 @@ const scrollToContact = () => {
                     </button>
                 </div>
             </div>
-            <div class="w-1/2 hidden px-2 2xl:block xl:block lg:block md:block ">
-                <img :src="`${xassetUrl}themes/vristo/images/app-development-rafiki.svg`" alt="girl" class="max-h-full">
+            <div class="w-1/2 hidden px-2 2xl:block xl:block lg:block md:block z-10">
+                <img :src="`${xassetUrl}storage/${dataWelcome.items[4].item.content}`" alt="girl" class="max-h-full">
             </div>
         </div>
         <div class="relative">
             <img :src="`${xassetUrl}themes/personalLanding/assets/img/shape/hero-shape.png`" alt="hero-shape"
-                class="absolute bottom-0 left-0 right-0 w-full bg-center bg-cover"
+                class="absolute bottom-0 left-0 right-0 w-full bg-center bg-cover z-10"
                 >
         </div>
     </section>

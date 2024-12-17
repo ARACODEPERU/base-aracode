@@ -20,23 +20,27 @@ class LandingController extends Controller
 {
     public function index()
     {
-        $jumbotron = CmsSection::where('component_id', 'jumbotron_1')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-            ->select(
-                'cms_items.content',
-                'cms_section_items.position'
-            )
-            ->orderBy('cms_section_items.position')
-            ->get();
+        $header = CmsSection::with(['items' => function ($query) {
+            $query->orderBy('position');
+        }, 'items.item'])
+            ->where('component_id', 'encabezado_2')
+            ->first();
 
+        $welcome = CmsSection::with(['items' => function ($query) {
+            $query->orderBy('position');
+        }, 'items.item'])
+            ->where('component_id', 'bienvenida_3')
+            ->first();
 
         return Inertia::render('Landing/Home', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
-            'jumbotron' => $jumbotron,
+            'dataHome' => [
+                'welcome' => $welcome,
+                'header' => $header
+            ],
             'pageActive' => 'home'
         ]);
     }

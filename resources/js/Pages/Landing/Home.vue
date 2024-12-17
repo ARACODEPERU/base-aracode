@@ -12,6 +12,13 @@ import Teams from './Components/Teams.vue';
 
 const xassetUrl = assetUrl;
 
+defineProps({
+    dataHome: {
+        type: Object,
+        default: () => ({})
+    }
+});
+
 </script>
 <template>
     <Head>
@@ -29,10 +36,10 @@ const xassetUrl = assetUrl;
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     </Head>
-    <Header />
+    <Header :dataHeader="dataHome.header" />
 
     <!-- hero section -->
-    <Jumbotron />
+    <Jumbotron :dataWelcome="dataHome.welcome" />
 
     <!-- service -->
     
