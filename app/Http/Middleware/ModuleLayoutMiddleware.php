@@ -17,7 +17,7 @@ class ModuleLayoutMiddleware
     public function handle(Request $request, Closure $next): Response
     {
 
-        Inertia::setRootView('layouts.blog');
+        Inertia::setRootView('layouts.landing');
 
         return $next($request);
     }

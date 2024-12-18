@@ -33,8 +33,8 @@
                         >
                             <icon-x class="w-5 h-5" />
                         </a>
-                        <h4 class="mb-1 dark:text-white">TEMPLATE CUSTOMIZER</h4>
-                        <p class="text-white-dark">Set preferences that will be cookied for your live preview demonstration.</p>
+                        <h4 class="mb-1 dark:text-white">PERSONALIZADOR DE PLANTILLAS</h4>
+                        <p class="text-white-dark">Establezca las preferencias que se almacenarán en cookies para su demostración de vista previa en vivo.</p>
                     </div>
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
                         <h5 class="mb-1 text-base dark:text-white leading-none">Color Scheme</h5>

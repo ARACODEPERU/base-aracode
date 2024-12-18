@@ -7,11 +7,6 @@
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
     <link rel="icon" href="{{ asset('img/isotipo.png') }}">
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Scripts -->
     @routes
@@ -24,14 +19,16 @@
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
     @endif
     @inertiaHead
-    <style>
-        .swal2-container {
-            z-index: 99999999 !important;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('themes/personalLanding/assets/font/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/personalLanding/assets/css/aos.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/personalLanding/assets/css/owl.carousel.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/personalLanding/assets/css/jquery.fancybox.min.css') }}">
+
+    <!-- main style -->
+    <link rel="stylesheet" href="{{ asset('themes/personalLanding/assets/css/style.css') }}">
 </head>
 
-<body>
+<body class="overflow-x-hidden">
     @inertia
     <script>
         window.assetUrl = @json(asset(''));
