@@ -1,8 +1,12 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import iconUser from '@/Components/vristo/icon/icon-user.vue';
+import { useAppStore } from '@/stores/index';
+
 const company = usePage().props.company;
 const xassetUrl = assetUrl;
+
+const store = useAppStore();
 </script>
 <template>
     <!-- Content -->
@@ -10,11 +14,18 @@ const xassetUrl = assetUrl;
         <div class="py-10 lg:py-14">
             <!-- Title -->
             <div class="max-w-4xl px-4 sm:px-6 lg:px-8 mx-auto text-center">
-                <Link :href="route('index_main')" class="inline-block mb-4 flex-none focus:outline-none focus:opacity-80" aria-label="Preline">
-                    <img v-if="company.logo == '/img/logo176x32.png'" :src="company.logo" class=" h-auto mx-auto" style="width: 250px;">
-                    <img v-else :src="`${xassetUrl}storage/${company.logo}` " class="h-auto mx-auto" style="width: 250px;">
-                </Link>
-
+                <template v-if="store.theme === 'light'">
+                    <Link :href="route('index_main')" class="inline-block mb-4 flex-none focus:outline-none focus:opacity-80" aria-label="Preline">
+                        <img v-if="company.logo == '/img/logo176x32.png'" :src="company.logo" class=" h-auto mx-auto" style="width: 250px;">
+                        <img v-else :src="`${xassetUrl}storage/${company.logo}` " class="h-auto mx-auto" style="width: 250px;">
+                    </Link>
+                </template>
+                <template v-else>
+                    <Link :href="route('index_main')" class="inline-block mb-4 flex-none focus:outline-none focus:opacity-80" aria-label="Preline">
+                        <img v-if="company.logo == '/img/logo176x32.png'" :src="company.logo" class=" h-auto mx-auto" style="width: 250px;">
+                        <img v-else :src="`${xassetUrl}storage/${company.isotipo_dark}` " class="h-auto mx-auto" style="width: 250px;">
+                    </Link>
+                </template>
                 <h1 class="text-3xl font-bold text-gray-800 sm:text-4xl dark:text-white">
                     Términos y condiciones
                 </h1>
@@ -89,7 +100,7 @@ const xassetUrl = assetUrl;
                         </li>
                         <li class="flex gap-x-2 sm:gap-x-4">
                             <svg class="shrink-0 size-[38px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c-9.4 9.4-9.4 24.6 0 33.9l47 47-47 47c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l47-47 47 47c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-47-47 47-47c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-47 47-47-47c-9.4-9.4-24.6-9.4-33.9 0z"/>
+                                <path fill="currentColor" d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c-9.4 9.4-9.4 24.6 0 33.9l47 47-47 47c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l47-47 47 47c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-47-47 47-47c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-47 47-47-47c-9.4-9.4-24.6-9.4-33.9 0z"/>
                             </svg>
 
                             <div class="space-y-3">
@@ -123,7 +134,7 @@ const xassetUrl = assetUrl;
                         </li>
                         <li class="flex gap-x-2 sm:gap-x-4">
                             <svg class="shrink-0 size-[38px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                <path d="M256 0c53 0 96 43 96 96l0 3.6c0 15.7-12.7 28.4-28.4 28.4l-135.1 0c-15.7 0-28.4-12.7-28.4-28.4l0-3.6c0-53 43-96 96-96zM41.4 105.4c12.5-12.5 32.8-12.5 45.3 0l64 64c.7 .7 1.3 1.4 1.9 2.1c14.2-7.3 30.4-11.4 47.5-11.4l112 0c17.1 0 33.2 4.1 47.5 11.4c.6-.7 1.2-1.4 1.9-2.1l64-64c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-64 64c-.7 .7-1.4 1.3-2.1 1.9c6.2 12 10.1 25.3 11.1 39.5l64.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c0 24.6-5.5 47.8-15.4 68.6c2.2 1.3 4.2 2.9 6 4.8l64 64c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0l-63.1-63.1c-24.5 21.8-55.8 36.2-90.3 39.6L272 240c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 239.2c-34.5-3.4-65.8-17.8-90.3-39.6L86.6 502.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l64-64c1.9-1.9 3.9-3.4 6-4.8C101.5 367.8 96 344.6 96 320l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l64.3 0c1.1-14.1 5-27.5 11.1-39.5c-.7-.6-1.4-1.2-2.1-1.9l-64-64c-12.5-12.5-12.5-32.8 0-45.3z"/>
+                                <path fill="currentColor" d="M256 0c53 0 96 43 96 96l0 3.6c0 15.7-12.7 28.4-28.4 28.4l-135.1 0c-15.7 0-28.4-12.7-28.4-28.4l0-3.6c0-53 43-96 96-96zM41.4 105.4c12.5-12.5 32.8-12.5 45.3 0l64 64c.7 .7 1.3 1.4 1.9 2.1c14.2-7.3 30.4-11.4 47.5-11.4l112 0c17.1 0 33.2 4.1 47.5 11.4c.6-.7 1.2-1.4 1.9-2.1l64-64c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3l-64 64c-.7 .7-1.4 1.3-2.1 1.9c6.2 12 10.1 25.3 11.1 39.5l64.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c0 24.6-5.5 47.8-15.4 68.6c2.2 1.3 4.2 2.9 6 4.8l64 64c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0l-63.1-63.1c-24.5 21.8-55.8 36.2-90.3 39.6L272 240c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 239.2c-34.5-3.4-65.8-17.8-90.3-39.6L86.6 502.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3l64-64c1.9-1.9 3.9-3.4 6-4.8C101.5 367.8 96 344.6 96 320l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l64.3 0c1.1-14.1 5-27.5 11.1-39.5c-.7-.6-1.4-1.2-2.1-1.9l-64-64c-12.5-12.5-12.5-32.8 0-45.3z"/>
                             </svg>
                             <div class="space-y-3">
                                 <h2 class="text-lg text-gray-800 font-bold dark:text-white">
@@ -141,7 +152,7 @@ const xassetUrl = assetUrl;
                         </li>
                         <li class="flex gap-x-2 sm:gap-x-4">
                             <svg class="shrink-0 size-[38px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                <path d="M448 80l0 48c0 44.2-100.3 80-224 80S0 172.2 0 128L0 80C0 35.8 100.3 0 224 0S448 35.8 448 80zM393.2 214.7c20.8-7.4 39.9-16.9 54.8-28.6L448 288c0 44.2-100.3 80-224 80S0 332.2 0 288L0 186.1c14.9 11.8 34 21.2 54.8 28.6C99.7 230.7 159.5 240 224 240s124.3-9.3 169.2-25.3zM0 346.1c14.9 11.8 34 21.2 54.8 28.6C99.7 390.7 159.5 400 224 400s124.3-9.3 169.2-25.3c20.8-7.4 39.9-16.9 54.8-28.6l0 85.9c0 44.2-100.3 80-224 80S0 476.2 0 432l0-85.9z"/>
+                                <path fill="currentColor" d="M448 80l0 48c0 44.2-100.3 80-224 80S0 172.2 0 128L0 80C0 35.8 100.3 0 224 0S448 35.8 448 80zM393.2 214.7c20.8-7.4 39.9-16.9 54.8-28.6L448 288c0 44.2-100.3 80-224 80S0 332.2 0 288L0 186.1c14.9 11.8 34 21.2 54.8 28.6C99.7 230.7 159.5 240 224 240s124.3-9.3 169.2-25.3zM0 346.1c14.9 11.8 34 21.2 54.8 28.6C99.7 390.7 159.5 400 224 400s124.3-9.3 169.2-25.3c20.8-7.4 39.9-16.9 54.8-28.6l0 85.9c0 44.2-100.3 80-224 80S0 476.2 0 432l0-85.9z"/>
                             </svg>
                             <div class="space-y-3">
                                 <h2 class="text-lg text-gray-800 font-bold dark:text-white">
@@ -159,7 +170,7 @@ const xassetUrl = assetUrl;
                         </li>
                         <li class="flex gap-x-2 sm:gap-x-4">
                             <svg class="shrink-0 size-[38px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                <path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/>
+                                <path fill="currentColor" d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/>
                             </svg>
                             <div class="space-y-3">
                                 <h2 class="text-lg text-gray-800 font-bold dark:text-white">
@@ -204,7 +215,7 @@ const xassetUrl = assetUrl;
                         </li> -->
                         <li class="flex gap-x-2 sm:gap-x-4">
                             <svg class="shrink-0 size-[38px]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                <path d="M64 112c-8.8 0-16 7.2-16 16l0 22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1l0-22.1c0-8.8-7.2-16-16-16L64 112zM48 212.2L48 384c0 8.8 7.2 16 16 16l384 0c8.8 0 16-7.2 16-16l0-171.8L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128z"/>
+                                <path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16l0 22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1l0-22.1c0-8.8-7.2-16-16-16L64 112zM48 212.2L48 384c0 8.8 7.2 16 16 16l384 0c8.8 0 16-7.2 16-16l0-171.8L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64l384 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128z"/>
                             </svg>
                             <div class="space-y-3">
                                 <h2 class="text-lg text-gray-800 font-bold dark:text-white">
