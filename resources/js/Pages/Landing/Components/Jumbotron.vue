@@ -46,8 +46,16 @@ const handleMouseMove = (event) => {
     const mouseY = event.clientY - centerY;
 
     parallaxElements.forEach(({ ref, rate }) => {
-        if (ref.value) {
-            ref.value.style.transform = `translate(${mouseX * rate}px, ${mouseY * rate}px)`;
+        if (ref.value && isElementVisible(ref.value)) {
+            // Limitar el desplazamiento al ancho y alto de la pantalla
+            const maxX = innerWidth / 2; // Máximo desplazamiento en X
+            const maxY = innerHeight / 2; // Máximo desplazamiento en Y
+
+            const translateX = Math.min(Math.max(mouseX * rate, -maxX), maxX);
+            const translateY = Math.min(Math.max(mouseY * rate, -maxY), maxY);
+
+            // Aplicar transformación limitada
+            ref.value.style.transform = `translate(${translateX}px, ${translateY}px)`;
         }
     });
 };
