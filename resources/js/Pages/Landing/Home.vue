@@ -188,9 +188,7 @@ defineProps({
         </div>
     </section> -->
 
-    <!-- Portfolio -->
-    <!--  -->
-    <!-- <Customers /> -->
+    <Customers />
     <!-- News -->
     <!-- <section id="news" class="section-news bg-[#f6f8ff]">
         <div class="relative pt-[60px]">
