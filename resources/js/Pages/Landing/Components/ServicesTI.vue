@@ -15,8 +15,8 @@ const pathImage = xtassetUrl;
                 <span class="text-[#0188ee]">ofrecemos</span>
             </h2>
         </div>
-        <div
-            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px] px-6">
+        <div class="flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] 
+                    lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px] px-6">
             <div class="grid lg:grid-cols-3 md:grid-cols-1 gap-[30px]">
                 <div class="transition-all rounded flex justify-start items-start" data-aos="fade-up"
                     data-aos-duration="2000" data-aos-delay="300">
@@ -65,7 +65,20 @@ const pathImage = xtassetUrl;
                 </div>
             </div>
         </div>
-        <div class="2xl:border-b 2xl:pt-24 lg:border-b dark:2xl:border-[#27213b] dark:lg:border-b dark:lg:border-[#27213b] lg:pt-12 pt-0 flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] px-6"
-            data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300"></div>
+
+        <br>
+        <div class="flex justify-center">
+            <div>
+                <a href="#contact" type="button"
+                        class=" text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block">
+                        Obtenga una cotización
+                </a>
+            </div>
+        </div>
+        <div class="2xl:border-b 2xl:pt-12 lg:border-b dark:2xl:border-[#27213b] dark:lg:border-b dark:lg:border-[#27213b] 
+            lg:pt-12 pt-0 flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] 
+            lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] px-6"
+            data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
+        </div>
     </section>
 </template>

@@ -47,15 +47,15 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">
-                                                https://kentha.cl/
+                                            <a href="https://kentha.cl/" class="text-white text-sm flex items-center">
+                                                kentha.cl
                                             </a>
-                                            <a :href="`${xassetUrl}img/Landing/customers/LogoKentha.png`" data-fancybox="gallery"
+                                            <a href="https://kentha.cl/" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
                                                 <span
-                                                    class="bg-[#7963e0] h-8 w-8 flex justify-center items-center rounded-md">
-                                                    <i class="fa-solid fa-arrow-right"></i>
+                                                    class="bg-[#0188ee] h-8 w-8 flex justify-center items-center rounded-md text-white">
+                                                    <icon-sun class="w-4 h-4 text-white" />
                                                 </span>
                                             </a>
                                         </div>
@@ -74,10 +74,10 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">
-                                                https://zoelifeinternational.com/
+                                            <a href="https://zoelifeinternational.com/" class="text-white text-sm flex items-center">
+                                                ZoeLife International
                                             </a>
-                                            <a href="assets/img/portfolio/img-2.jpg" data-fancybox="gallery"
+                                            <a href="https://zoelifeinternational.com/" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
                                                 <span
