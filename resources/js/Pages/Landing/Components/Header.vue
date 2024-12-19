@@ -38,19 +38,19 @@ const store = useAppStore();
                     <div class="flex gap-2">
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2.5"
-                            :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-primary']"
+                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600]"
+                            :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('light')"
                             >
-                            <icon-sun class="w-4 h-4 text-white dark:text-[#0188ee]" />
+                            <icon-sun class="w-4 h-4 text-white dark:text-[#0188ee] " />
                         </button>
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2"
-                            :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-primary']"
+                            class="btn rounded-full py-2 px-2 hover:bg-[#F11600] hover:text-white"
+                            :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('dark')"
                         >
-                            <icon-moon class="w-5 h-5 text-[#0188ee] dark:text-white" />
+                            <icon-moon class="w-5 h-5 text-[#0188ee] dark:text-white hover:text-white" />
                         </button>
                     </div>
                     <button type="button" id="dropdown-toggle"

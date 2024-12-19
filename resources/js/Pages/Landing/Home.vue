@@ -19,6 +19,7 @@ defineProps({
 });
 
 </script>
+
 <template>
     <Head>
         <title>Landing</title>

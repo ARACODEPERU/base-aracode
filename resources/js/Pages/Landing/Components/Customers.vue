@@ -1,6 +1,8 @@
 <script setup>
 const xassetUrl = assetUrl;
 
+import iconHome from '@/Components/vristo/icon/icon-home.vue';
+
 </script>
 <template>
     <section id="portfolio" class="section-Portfolio 2xl:py-[80px] py-[70px]">
@@ -52,10 +54,10 @@ const xassetUrl = assetUrl;
                                             </a>
                                             <a href="https://kentha.cl/" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
-                                                <p class="hidden">.</p>
-                                                <span
-                                                    class="bg-[#0188ee] h-8 w-8 flex justify-center items-center rounded-md text-white">
-                                                    <icon-sun class="w-4 h-4 text-white" />
+                                                <p class="hidden"></p>
+                                                <span class="bg-[#0188ee] h-8 w-8 flex justify-center 
+                                                items-center rounded-md">
+                                                    <iconHome class="w-4 h-4 text-white font-medium" />
                                                 </span>
                                             </a>
                                         </div>
