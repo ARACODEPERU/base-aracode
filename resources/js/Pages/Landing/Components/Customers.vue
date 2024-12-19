@@ -5,10 +5,10 @@ const xassetUrl = assetUrl;
 <template>
     <section id="portfolio" class="section-Portfolio 2xl:py-[80px] py-[70px]">
         <div class="banner text-center mb-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
-            <span class="text-[14px] text-[#777]">PORTFOLIO</span>
+            <span class="text-[14px] text-[#777]">PORTAFOLIO</span>
             <h2
                 class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold">
-                My <span class="text-[#7963e0]"> PORTFOLIO</span></h2>
+                ALGUNOS <span class="text-[#7963e0]"> PROYECTOS</span></h2>
         </div>
         <div
             class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px] px-6">
@@ -35,7 +35,7 @@ const xassetUrl = assetUrl;
                         <div class="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-[30px]">
                             <div class="mix graphics templates">
                                 <div class="portfolio-img truncate rounded-2xl relative">
-                                    <img :src="`${xassetUrl}img/Landing/customers/LogoKentha.png`" style="width: 400px;"
+                                    <img :src="`${xassetUrl}img/Landing/customers/Portafolio_Kentha.jpg`" style="width: 400px;"
                                         class="w-full transform hover:bg-blue-600 transition duration-500 hover:-rotate-12 hover:scale-125">
                                     <h3 class="top-contain absolute top-[15px] right-[15px]">
                                         <span
@@ -64,7 +64,7 @@ const xassetUrl = assetUrl;
                             </div>
                             <div class="mix design">
                                 <div class="portfolio-img truncate rounded-2xl relative">
-                                    <img :src="`${xassetUrl}img/Landing/customers/logoGrande.png`" alt="design"
+                                    <img :src="`${xassetUrl}img/Landing/customers/Portafolio_ZoeLife.jpg`" alt="design"
                                         class="w-full transform hover:bg-blue-600 transition duration-500 hover:-rotate-12 hover:scale-125">
                                     <h3 class="top-contain absolute top-[15px] right-[15px]">
                                         <span
@@ -90,7 +90,7 @@ const xassetUrl = assetUrl;
                             </div>
                             <div class="mix design">
                                 <div class="portfolio-img truncate rounded-2xl relative">
-                                    <img :src="`${xassetUrl}img/Landing/customers/capperu.png`" alt="design"
+                                    <img :src="`${xassetUrl}img/Landing/customers/Portafolio_Capperu.jpg`" alt="design"
                                         class="w-full transform hover:bg-blue-600 transition duration-500 hover:-rotate-12 hover:scale-125">
                                     <h3 class="top-contain absolute top-[15px] right-[15px]">
                                         <span
