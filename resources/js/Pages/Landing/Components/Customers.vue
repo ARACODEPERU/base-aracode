@@ -28,7 +28,7 @@ const xassetUrl = assetUrl;
                             <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#7963e0] cursor-pointer inline-block"
                                 data-filter=".ecomerce">E-COMMERCE</li>
                             <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#7963e0] cursor-pointer inline-block"
-                                data-filter=".templates">Templates</li>
+                                data-filter=".sistemas">SISTEMAS WEBS</li>
                         </ul>
                     </div>
                     <div class="portfolio-content-items">
@@ -47,8 +47,9 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">Boros -
-                                                Artificial Intelligence</a>
+                                            <a href="#" class="text-white text-sm flex items-center">
+                                                https://kentha.cl/
+                                            </a>
                                             <a :href="`${xassetUrl}img/Landing/customers/LogoKentha.png`" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
@@ -73,8 +74,9 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">Boros -
-                                                Artificial Intelligence</a>
+                                            <a href="#" class="text-white text-sm flex items-center">
+                                                https://zoelifeinternational.com/
+                                            </a>
                                             <a href="assets/img/portfolio/img-2.jpg" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
@@ -98,8 +100,9 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">Mila - Virtual
-                                                Reality</a>
+                                            <a href="#" class="text-white text-sm flex items-center">
+                                                https://capperu.com/
+                                            </a>
                                             <a href="assets/img/portfolio/img-3.jpg" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
@@ -122,8 +125,9 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">Sen - Hotel
-                                                Website</a>
+                                            <a href="#" class="text-white text-sm flex items-center">
+                                                https://celmovil.pe/
+                                            </a>
                                             <a href="assets/img/portfolio/img-4.jpg" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
@@ -150,8 +154,9 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">Ekka -
-                                                eCommerce template</a>
+                                            <a href="#" class="text-white text-sm flex items-center">
+                                                https://marketingdespega.com/
+                                            </a>
                                             <a href="assets/img/portfolio/img-1.jpg" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
@@ -166,7 +171,7 @@ const xassetUrl = assetUrl;
                             </div>
                             <div class="mix development graphics">
                                 <div class="portfolio-img truncate rounded-2xl relative">
-                                    <img :src="`${xassetUrl}img/Landing/customers/Portafolio_Despega.jpg`" alt="development"
+                                    <img :src="`${xassetUrl}img/Landing/customers/Portafolio_ERP.jpg`" alt="development"
                                         class="w-full transform hover:bg-blue-600 transition duration-500 hover:-rotate-12 hover:scale-125">
                                     <!-- <h3 class="top-contain absolute top-[15px] right-[15px]">
                                         <span
@@ -178,8 +183,9 @@ const xassetUrl = assetUrl;
                                     <div class="bottom-contain absolute bottom-4 left-4 right-4">
                                         <div
                                             class="overlay-info px-4 py-2 bg-black bg-opacity-60 rounded-xl grid grid-cols-2 gap-[30px] place-content-between">
-                                            <a href="#" class="text-white text-sm flex items-center">Bukki - Teck
-                                                crafts</a>
+                                            <a href="#" class="text-white text-sm flex items-center">
+                                                https://marketingdespega.com/login
+                                            </a>
                                             <a href="assets/img/portfolio/img-2.jpg" data-fancybox="gallery"
                                                 class="text-white text-sm grid justify-items-end">
                                                 <p class="hidden">.</p>
