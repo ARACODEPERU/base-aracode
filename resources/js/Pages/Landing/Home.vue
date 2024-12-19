@@ -10,6 +10,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import Teams from './Components/Teams.vue';
 import FacturacionPrices from './Components/FacturacionPrices.vue';
 const xassetUrl = assetUrl;
+import { ref, onMounted, onUnmounted } from 'vue';
+import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
 
 defineProps({
     dataHome: {
@@ -17,6 +19,29 @@ defineProps({
         default: () => ({})
     }
 });
+
+    // Estado para controlar la visibilidad del botón
+    const isVisible = ref(false);
+
+    // Función para controlar el scroll
+    const handleScroll = () => {
+        isVisible.value = window.scrollY > 300;
+    };
+
+    // Función para desplazarse al inicio de la página
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Configurar el evento de scroll al montar el componente
+    onMounted(() => {
+        window.addEventListener('scroll', handleScroll);
+    });
+
+    // Limpiar el evento al desmontar el componente
+    onUnmounted(() => {
+        window.removeEventListener('scroll', handleScroll);
+    });
 
 </script>
 
@@ -319,7 +344,9 @@ defineProps({
     <Footer />
     <!-- scroll Top -->
     <div id="scrollup"
+        @click="scrollToTop" 
+        :class="{ show: isVisible }"
         class="fixed bg-[#7963e0] text-white rounded-full flex justify-center text-center items-center p-2 right-6 cursor-pointer bottom-6 h-10 w-10 z-20">
-        <i class="fa fa-arrow-up" aria-hidden="true"></i>
+        <icon-arrow-left class="-rotate-90" />
     </div>
 </template>
