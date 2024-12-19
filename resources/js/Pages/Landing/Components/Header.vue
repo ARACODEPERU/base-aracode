@@ -22,7 +22,7 @@ const store = useAppStore();
 <template>
 
     <!-- header -->
-    <header class="bg-[#f6f8ff] w-full bx-static dark:bg-[#1d1a29]">
+    <header class="bg-[#f6f8ff] w-full bx-fixed dark:bg-[#1d1a29]">
         <nav class="border-gray-200 py-2">
             <div
                 class="flex flex-wrap justify-between items-center px-6 mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
@@ -32,25 +32,25 @@ const store = useAppStore();
                 </Link>
                 <div class="flex items-center lg:order-2">
                     <a href="#contact" type="button"
-                        class="text-white bg-[#7963e0] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block">
-                        Obtenga una cotización h
+                        class="text-white bg-[#0188ee] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block">
+                        Obtenga una cotización
                     </a>
                     <div class="flex gap-2">
                         <button
                             type="button"
                             class="btn rounded-full py-2 px-2.5"
-                            :class="[store.theme === 'light' ? 'btn-primary' : 'btn-outline-primary']"
+                            :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-primary']"
                             @click="store.toggleTheme('light')"
                             >
-                            <icon-sun class="w-4 h-4" />
+                            <icon-sun class="w-4 h-4 text-white dark:text-[#0188ee]" />
                         </button>
                         <button
                             type="button"
                             class="btn rounded-full py-2 px-2"
-                            :class="[store.theme === 'dark' ? 'btn-primary' : 'btn-outline-primary']"
+                            :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-primary']"
                             @click="store.toggleTheme('dark')"
                         >
-                            <icon-moon class="w-5 h-5" />
+                            <icon-moon class="w-5 h-5 text-[#0188ee] dark:text-white" />
                         </button>
                     </div>
                     <button type="button" id="dropdown-toggle"

@@ -84,7 +84,7 @@ onUnmounted(() => {
             class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] py-[80px] px-4">
             <div class="w-full 2xl:h-[90vh] lg:h-[80vh] h-[70vh] max-[320px]:h-[50vh] flex items-center px-2 2xl:max-w-lg xl:max-w-lg lg:max-w-lg lg:w-1/2 lg:mx-0 md:max-w-lg md:w-1/2 md:mx-0 2xl:w-1/2 xl:w-1/2 sm:items-center">
                 <div class="text-center 2xl:text-left xl:text-left lg:text-left md:text-left h-72">
-                    <span class="text-[#7963e0] text-[18px] font-bold">{{ dataWelcome.items[0].item.content }}</span>
+                    <span class="text-[#0188ee] text-[18px] font-bold">{{ dataWelcome.items[0].item.content }}</span>
                     <h1
                         class="text-dark-800 dark:text-[#fff] 2xl:text-[60px] xl:text-[55px] lg:text-[50px] md:text-[45px] text-[40px] font-bold">
                         {{ dataWelcome.items[1].item.content }}
@@ -94,7 +94,7 @@ onUnmounted(() => {
                         {{ dataWelcome.items[3].item.content }}
                     </p>
                     <button @click="scrollToContact" type="button"
-                        class="text-white mt-4 bg-[#7963e0] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 dark:bg-blue-600 dark:hover:bg-blue-700">
+                        class="text-white mt-4 bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2">
                         Escribenos
                     </button>
                 </div>

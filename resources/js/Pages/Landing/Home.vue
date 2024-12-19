@@ -267,7 +267,7 @@ defineProps({
             <h2
                 class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold dark:text-[#fff]">
                 Ponte en contacto con 
-                <span class="text-[#7963e0]">NOSOTROS</span>
+                <span class="text-[#0188ee]">NOSOTROS</span>
             </h2>
         </div>
         <form>
@@ -303,7 +303,7 @@ defineProps({
                                     id="exampleFormControlTextarea1" rows="8" placeholder="Mensaje"></textarea>
                             </div>
                             <button type="button"
-                                class="text-white bg-[#7963e0] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2">
+                                class="text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2">
                                 Enviar
                             </button>
                         </div>

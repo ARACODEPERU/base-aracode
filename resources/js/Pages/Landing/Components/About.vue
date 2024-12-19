@@ -21,7 +21,7 @@ const pathImage = xtassetUrl;
                         <h2
                             class="mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold dark:text-white">
                             Impulsamos tu éxito con soluciones 
-                            <span class="text-[#7963e0]">tecnológicas a medida.</span>
+                            <span class="text-[#0188ee]">tecnológicas a medida.</span>
                         </h2>
                     </div>
                     <p class="text-[16px] text-[#777] mb-[30px]">

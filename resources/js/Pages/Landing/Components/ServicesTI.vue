@@ -12,7 +12,7 @@ const pathImage = xtassetUrl;
             <h2
                 class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold dark:text-[#ddd]">
                 Soluciones de TI que 
-                <span class="text-[#7963e0]">ofrecemos</span>
+                <span class="text-[#0188ee]">ofrecemos</span>
             </h2>
         </div>
         <div
@@ -20,8 +20,8 @@ const pathImage = xtassetUrl;
             <div class="grid lg:grid-cols-3 md:grid-cols-1 gap-[30px]">
                 <div class="transition-all rounded flex justify-start items-start" data-aos="fade-up"
                     data-aos-duration="2000" data-aos-delay="300">
-                    <div class="pr-6 border-r border-[#7963e0] max-[480px]:hidden">
-                        <h6 class="2xl:text-[50px] lg:text-[40px] text-[35px] font-bold text-[#7963e0] 2xl:w-[60px] xl:w-[60px] lg:w-[50px] w-[40px] opacity-50">01</h6>
+                    <div class="pr-6 border-r border-[#0188ee] max-[480px]:hidden">
+                        <h6 class="2xl:text-[50px] lg:text-[40px] text-[35px] font-bold text-[#0188ee] 2xl:w-[60px] xl:w-[60px] lg:w-[50px] w-[40px] opacity-80">01</h6>
                     </div>
                     <div class="pl-6 border-l dark:border-[#27213b]">
                         <div class="flex">
@@ -35,8 +35,8 @@ const pathImage = xtassetUrl;
                 </div>
                 <div class="transition-all rounded flex justify-start items-start" data-aos="fade-up"
                     data-aos-duration="2000" data-aos-delay="300">
-                    <div class="pr-6 border-r border-[#7963e0] max-[480px]:hidden">
-                        <h6 class="2xl:text-[50px] lg:text-[40px] text-[35px] font-bold text-[#7963e0] 2xl:w-[60px] xl:w-[60px] lg:w-[50px] w-[40px] opacity-50">02</h6>
+                    <div class="pr-6 border-r border-[#0188ee] max-[480px]:hidden">
+                        <h6 class="2xl:text-[50px] lg:text-[40px] text-[35px] font-bold text-[#0188ee] 2xl:w-[60px] xl:w-[60px] lg:w-[50px] w-[40px] opacity-80">02</h6>
                     </div>
                     <div class="pl-6 border-l dark:border-[#27213b]">
                         <div class="flex">
@@ -50,8 +50,8 @@ const pathImage = xtassetUrl;
                 </div>
                 <div class="transition-all rounded flex justify-start items-start" data-aos="fade-up"
                     data-aos-duration="2000" data-aos-delay="300">
-                    <div class="pr-6 border-r border-[#7963e0] max-[480px]:hidden">
-                        <h6 class="2xl:text-[50px] lg:text-[40px] text-[35px] font-bold text-[#7963e0] 2xl:w-[60px] xl:w-[60px] lg:w-[50px] w-[40px] opacity-50">03</h6>
+                    <div class="pr-6 border-r border-[#0188ee] max-[480px]:hidden">
+                        <h6 class="2xl:text-[50px] lg:text-[40px] text-[35px] font-bold text-[#0188ee] 2xl:w-[60px] xl:w-[60px] lg:w-[50px] w-[40px] opacity-80">03</h6>
                     </div>
                     <div class="pl-6 border-l dark:border-[#27213b]">
                         <div class="flex">

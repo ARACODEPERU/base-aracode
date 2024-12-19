@@ -295,7 +295,7 @@ h2, h3, h4, h5, h6 {
   border-radius: 50%;
   display: inline-block;
   position: relative;
-  color: #7963e0;
+  color: #0188ee;
   left: -100px;
   -webkit-animation: shadowRolling 2s linear infinite;
           animation: shadowRolling 2s linear infinite;
@@ -303,7 +303,7 @@ h2, h3, h4, h5, h6 {
 
 /* Header */
 #top-menu li.active a {
-  color: #7963e0;
+  color: #0188ee;
 }
 
 .bx-static {
@@ -350,7 +350,7 @@ h2, h3, h4, h5, h6 {
 
 /* portfolio */
 .portfolio-tabs ul .active {
-  color: #7963e0 !important;
+  color: #0188ee !important;
 }
 
 .portfolio-img .bottom-contain {
