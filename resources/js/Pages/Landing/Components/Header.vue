@@ -27,8 +27,8 @@ const store = useAppStore();
             <div
                 class="flex flex-wrap justify-between items-center px-6 mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
                 <Link :href="route('index_main')" class="flex items-center">
-                    <img v-if="company.isotipo == '/img/isotipo.png'" :src="company.isotipo" class="w-auto h-[70px]" alt="Logo">
-                    <img v-else :src="`${xassetUrl}storage/${dataHeader.items[0].item.content}`" class="w-auto h-[70px]" alt="Logo2">
+                    <img v-if="company.isotipo == '/img/isotipo.png'" :src="company.isotipo" class="w-auto h-[60px]" alt="Logo">
+                    <img v-else :src="`${xassetUrl}storage/${dataHeader.items[0].item.content}`" class="w-auto h-[60px]" alt="Logo2">
                 </Link>
                 <div class="flex items-center lg:order-2">
                     <a href="#contact" type="button"
