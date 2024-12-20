@@ -5,11 +5,13 @@
 </script>
 
 <template>
-    <section class="mx-auto bg-[#f6f8ff] ">
+    <section class="mx-auto bg-[#f6f8ff] dark:bg-[#161321] pt-[80px] pb-[80px]">
         <!-- Team -->
         <div id="teams" class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
             <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
-                <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">Nuestro equipo</h2>
+                <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
+                    NUESTRO <span class="text-[#0188ee]">EQUIPO</span> 
+                </h2>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">Gente creativa</p>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -9,8 +9,10 @@ import iconEye from '@/Components/vristo/icon/icon-eye.vue';
         <div class="banner text-center mb-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
             <span class="text-[14px] text-[#777]">PORTAFOLIO</span>
             <h2
-                class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold">
-                ALGUNOS <span class="text-[#0188ee]"> PROYECTOS</span></h2>
+                class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] 
+                text-[22px] font-bold dark:text-white">
+                ALGUNOS <span class="text-[#0188ee]"> PROYECTOS</span>
+            </h2>
         </div>
         <div
             class="flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px] px-6">
