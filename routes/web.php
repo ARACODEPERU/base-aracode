@@ -26,6 +26,7 @@ use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 
 Route::get('/', [LandingController::class, 'index'])->name('index_main');
+Route::get('/facturador', [LandingController::class, 'biller'])->name('biller_main');
 Route::get('/news', [LandingController::class, 'blog'])->name('blog_main');
 Route::get('/terms', [LandingController::class, 'terms'])->name('terms_main');
 Route::get('/computer/store', [LandingController::class, 'computerStore'])->name('index_computer_store');

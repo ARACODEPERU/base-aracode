@@ -45,6 +45,26 @@ class LandingController extends Controller
         ]);
     }
 
+    public function biller()
+    {
+        $header = CmsSection::with(['items' => function ($query) {
+            $query->orderBy('position');
+        }, 'items.item'])
+            ->where('component_id', 'encabezado_2')
+            ->first();
+
+        return Inertia::render('Landing/Biller', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'laravelVersion' => Application::VERSION,
+            'phpVersion' => PHP_VERSION,
+            'dataHome' => [
+                'header' => $header
+            ],
+            'pageActive' => 'home'
+        ]);
+    }
+
     public function blog()
     {
         return Inertia::render('Landing/Blog');

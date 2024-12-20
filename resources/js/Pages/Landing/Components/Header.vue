@@ -37,19 +37,19 @@ const store = useAppStore();
                     <div class="flex gap-2">
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2.5"
-                            :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-primary']"
+                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600]"
+                            :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('light')"
                             >
-                            <icon-sun class="w-4 h-4 text-white dark:text-[#0188ee]" />
+                            <iconSun class="w-4 h-4 text-white dark:text-[#0188ee] " />
                         </button>
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2"
-                            :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-primary']"
+                            class="btn rounded-full py-2 px-2 hover:bg-[#F11600] hover:text-white"
+                            :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('dark')"
                         >
-                            <icon-moon class="w-5 h-5 text-[#0188ee] dark:text-white" />
+                            <iconMoon class="w-5 h-5 text-[#0188ee] dark:text-white hover:text-white" />
                         </button>
                     </div>
                     <button type="button" id="dropdown-toggle"
@@ -65,10 +65,13 @@ const store = useAppStore();
                     <ul class="flex flex-col font-medium lg:flex-row lg:space-x-8 2xl:border-0 lg:border-0 border lg:mt-0 lg-mb-4 lg:p-[0] lg:border-none lg:rounded-[0] lg:text-[15px] mt-4 p-[15px] 2xl:mb-0 xl:mb-0 lg:mb-0 mb-2 border-[#eee] rounded-[30px] text-[13px]"
                         id="top-menu">
                         <li class="nav-item active">
-                            <a href="#home" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Inicio</a>
+                            <a href="/" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Inicio</a>
                         </li>
                         <li class="nav-item">
                             <a href="#about" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Acerca de Nosotros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/facturador" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Facturador</a>
                         </li>
                         <!-- <li class="nav-item">
                             <a href="#experience" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Experiencia</a>
