@@ -63,7 +63,8 @@ defineProps({
     <Header :dataHeader="dataHome.header" />
     
 
-    <section class="bg-center bg-no-repeat bg-[url('img/Landing/bg/portadaWeb.jpg')] bg-gray-700 bg-blend-multiply">
+    <section class="bg-center bg-no-repeat bg-[url('./img/Landing/bg/portadaWeb.jpg')] bg-gray-700 bg-blend-multiply">
+         
         <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
                 Haz Crecer Tu Negocio con Sistemas Web que Generan Resultados
