@@ -68,7 +68,7 @@ const store = useAppStore();
                             <a href="/" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Inicio</a>
                         </li>
                         <li class="nav-item">
-                            <a href="#about" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Acerca de Nosotros</a>
+                            <a href="#about" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Nosotros</a>
                         </li>
                         <li class="nav-item">
                             <a href="/facturador" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Facturador</a>
@@ -83,7 +83,7 @@ const store = useAppStore();
                             <a href="#news" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Blog</a>
                         </li> -->
                         <li class="nav-item">
-                            <a href="#contact" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Contacta con nosotros</a>
+                            <a href="#contact" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Contactanos</a>
                         </li>
                         
                     </ul>

@@ -47,6 +47,10 @@ const pathImage = xtassetUrl;
                             <span class="detail text-[14px] leading-[28px] text-[#777]">{{ company.fiscal_address }}, Nuevo Chimbote</span>
                         </div>
                     </div>
+
+                    <p>
+                        Transforma tu empresa con soluciones digitales innovadoras.
+                    </p>
                 </div>
             </div>
         </div>
