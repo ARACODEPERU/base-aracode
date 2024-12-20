@@ -5,7 +5,7 @@ import iconEye from '@/Components/vristo/icon/icon-eye.vue';
 
 </script>
 <template>
-    <section id="portfolio" class="section-Portfolio 2xl:py-[80px] py-[70px]">
+    <section id="portfolio" class="section-Portfolio 2xl:py-[80px] py-[70px] bg-white dark:bg-[#120f1c]">
         <div class="banner text-center mb-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
             <span class="text-[14px] text-[#777]">PORTAFOLIO</span>
             <h2

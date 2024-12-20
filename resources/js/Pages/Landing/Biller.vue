@@ -2,6 +2,7 @@
 import '@Public/themes/personalLanding/assets/css/style.css';
 import Header from './Components/Header.vue';
 import Footer from './Components/Footer.vue';
+import FacturacionPrices from './Components/FacturacionPrices.vue';
 import { Head, Link } from '@inertiajs/vue3';
 const xassetUrl = assetUrl;
 import { ref, onMounted, onUnmounted } from 'vue';
@@ -79,6 +80,8 @@ defineProps({
             </div>
         </div>
     </section>
+
+    <FacturacionPrices />
 
 
     <section id="contact" class="section-contact 2xl:py-[80px] py-[70px] dark:bg-gray-800">

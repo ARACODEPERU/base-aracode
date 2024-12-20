@@ -6,9 +6,9 @@ const xtassetUrl = assetUrl;
 const pathImage = xtassetUrl;
 </script>
 <template>
-<section id="about" class="bg-white 2xl:pb-[80px] pb-[70px] dark:bg-[#120f1c]">
-        <div
-            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
+<section id="about" class="bg-[#f8f8f8] 2xl:pb-[80px] pt-[120px] pb-[70px] dark:bg-[#161321]">
+        <div class="flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] 
+            xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
             <div class="grid lg:grid-cols-2 grid-cols-1 gap-[30px] px-6 max-[320px]:px-[0px]">
                 <div class="transition-all relative" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
                     <img :src="`${pathImage}themes/personalLanding/assets/img/shape/shape-6.png`" alt="shape-6" class="absolute w-12 top-2.5 left-2.5">

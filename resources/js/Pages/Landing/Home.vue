@@ -8,7 +8,6 @@ import Customers from './Components/Customers.vue';
 import Footer from './Components/Footer.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import Teams from './Components/Teams.vue';
-import FacturacionPrices from './Components/FacturacionPrices.vue';
 const xassetUrl = assetUrl;
 import { ref, onMounted, onUnmounted } from 'vue';
 import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
@@ -309,7 +308,7 @@ defineProps({
             </div>
         </div>
     </section> -->
-    <FacturacionPrices />
+    
     <Teams /> 
     <!-- contact -->
     <section id="contact" class="section-contact 2xl:py-[80px] py-[70px] dark:bg-gray-800">
