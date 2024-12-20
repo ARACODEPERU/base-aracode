@@ -3,7 +3,7 @@ const xtassetUrl = assetUrl;
 const pathImage = xtassetUrl;
 </script>
 <template>
-    <section id="service" class="2xl:py-[80px] py-[70px] bg-white relative dark:bg-[#120f1c]">
+    <section id="service" class="2xl:py-[80px] py-[70px] bg-[#f6f8ff] relative dark:bg-[#120f1c]">
         <div data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
             <img :src="`${pathImage}themes/personalLanding/assets/img/shape/shape-6.png`" alt="shape" class="absolute w-12 h-12 top-28 right-40">
         </div>

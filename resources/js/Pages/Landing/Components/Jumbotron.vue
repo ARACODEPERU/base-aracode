@@ -71,7 +71,7 @@ onUnmounted(() => {
 
 </script>
 <template>
-    <section id="home" class="section-hero bg-[#f6f8ff] relative dark:bg-[#161321] -z-10 -mt-20">
+    <section id="home" class="section-hero bg-[#fff] relative dark:bg-[#161321] -z-10 -mt-10">
         <img ref="shape1" class="shape1 absolute w-12 left-72 bottom-36 parallax sm:block hidden" 
             :src="`${xassetUrl}themes/personalLanding/assets/img/shape/shape-1.png`" alt="shape-1">
         <img ref="shape2" class="shape2 absolute w-12 top-72 right-32 parallax top sm:block hidden" 
@@ -109,7 +109,7 @@ onUnmounted(() => {
                 <img :src="`${xassetUrl}themes/vristo/images/app-development-rafiki.svg`" alt="girl" class="max-h-full">
             </div>
         </div>
-        <div class="relative">
+        <!-- <div class="relative">
             <template v-if="store.theme === 'light'">
                 <img :src="`${xassetUrl}themes/personalLanding/assets/img/shape/hero-shape.png`" alt="hero-shape"
                 class="absolute bottom-0 left-0 right-0 w-full z-10 bg-center bg-cover"
@@ -119,7 +119,7 @@ onUnmounted(() => {
                 <img :src="`${xassetUrl}themes/personalLanding/assets/img/shape/hero-shape-dark.png`" alt="hero-shape"
                 class="absolute bottom-0 left-0 right-0 w-full bg-center z-10 bg-cover">
             </template>
-        </div>
+        </div> -->
     </section>
 
 </template>

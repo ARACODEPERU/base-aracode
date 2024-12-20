@@ -11,6 +11,7 @@ import Teams from './Components/Teams.vue';
 const xassetUrl = assetUrl;
 import { ref, onMounted, onUnmounted } from 'vue';
 import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
+import iconWhatsapp from '@/Components/vristo/icon/icon-whatsapp.vue';
 
 defineProps({
     dataHome: {
@@ -366,6 +367,15 @@ defineProps({
     <!-- footer -->
     
     <Footer />
+
+    <div id="whatsapp">
+        <a href="https://wa.link/path6f" target="_blank" class="wtsapp" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <iconWhatsapp class=" w-8 text-white hover:text-white z-10" />
+        </a>
+    </div>
+
+
+
     <!-- scroll Top -->
     <div id="scrollup"
         @click="scrollToTop" 
@@ -373,6 +383,63 @@ defineProps({
         class="fixed bg-[#0188ee] text-white rounded-full flex justify-center 
         text-center items-center p-2 right-6 cursor-pointer bottom-6 h-10 w-10 z-20
         font-bold">
-        <icon-arrow-left class="-rotate-90 font-bold" />
+        <iconArrowLeft class="-rotate-90 font-bold" />
     </div>
 </template>
+
+
+<style type="text/css">
+#whatsapp .wtsapp{
+    position: fixed;
+    transform: all .5s ease;
+    background-color: #25D366;
+    display: block;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    border-radius: 50px;
+    border-right: none;
+    color: #fff;
+    font-weight: 700;
+    font-size: 30px;
+    bottom: 80px;
+    right: 20px;
+    border: 0;
+    z-index: 9999;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+}
+
+#whatsapp .wtsapp:before{
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    display: block;
+    width: 60px;
+    height: 60px;
+    background-color: #25D366;
+    border-radius: 50%;
+    -webkit-animation: pulse-border 1500ms ease-out infinite;
+    animation: pulse-border 1500ms ease-out infinite;
+}
+
+#whatsapp .wtsapp:focus{
+    border: none;
+    outline: none;
+}
+
+@keyframes pulse-border{
+    0%{
+        transform: translateX(-50%) translateY(-50%) translateZ(0) scale(1);
+        opacity: 1;
+    }
+    100%{
+        transform: translateX(-50%) translateY(-50%) translateZ(0) scale(1.5);
+        opacity: 0;
+    }
+}
+
+</style>
