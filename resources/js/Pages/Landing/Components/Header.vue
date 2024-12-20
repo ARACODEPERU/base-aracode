@@ -20,7 +20,6 @@ const store = useAppStore();
 
 </script>
 <template>
-
     <!-- header -->
     <header class="bg-[#f6f8ff] w-full bx-fixed dark:bg-[#1d1a29]">
         <nav class="border-gray-200 py-2">
