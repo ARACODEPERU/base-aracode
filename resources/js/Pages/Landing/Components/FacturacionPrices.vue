@@ -31,7 +31,7 @@ const store = useAppStore();
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                             <div>
                                 <!-- Card -->
-                                <div class="p-4 relative z-10 bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800">
+                                <div class="p-4 relative bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800">
                                     <h3 class="text-xl font-bold text-gray-800 dark:text-neutral-200">Plan mensual</h3>
                                     <div class="text-sm text-gray-500 dark:text-neutral-500">Todo lo que tu emprendimiento necesita.</div>
 
@@ -121,7 +121,7 @@ const store = useAppStore();
 
                             <div>
                             <!-- Card -->
-                            <div class="shadow-xl shadow-gray-200 p-5 relative z-10 bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800 dark:shadow-gray-900/20">
+                            <div class="shadow-xl shadow-gray-200 p-5 relative bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800 dark:shadow-gray-900/20">
                                 <h3 class="text-xl font-bold text-gray-800 dark:text-neutral-200">Plan por año </h3>
                                 <div class="text-sm text-gray-500 dark:text-neutral-500">Para empresas en crecimiento.</div>
                                 <span class="absolute top-0 end-0 rounded-se-xl rounded-es-xl text-xs font-medium bg-gray-800 text-white py-1.5 px-3 dark:bg-white dark:text-neutral-800">Los más populares</span>
