@@ -24,31 +24,31 @@ const pathImage = xtassetUrl;
                             <span class="text-[#0188ee]">tecnológicas a medida.</span>
                         </h2>
                     </div>
-                    <p class="text-[16px] text-[#777] mb-[30px]">
+                    <p class="text-[16px] text-[#777] dark:text-[#ddd] mb-[30px]">
                         somos un equipo apasionado de profesionales dedicados a desarrollar soluciones tecnológicas innovadoras.
                     </p>
-                    <div class="border p-[24px] rounded-lg">
+                    <div class="border p-[24px] rounded-lg mb-[30px]">
                         <div class="box-border flex justify-between max-[400px]:block">
                             <div class="left">
                                 <div class="name">
                                     <span class="text-[16px] leading-[28px] font-bold dark:text-white"> Nombre : </span><br>
-                                    <span class="detail text-[14px] leading-[28px] text-[#777]">{{ company.business_name }} </span>
+                                    <span class="detail text-[14px] leading-[28px] text-[#777] dark:text-[#ddd]">{{ company.business_name }} </span>
                                 </div>
                             </div>
                             <div class="right">
                                 <div class="ph">
                                     <span class="text-[16px] leading-[28px] font-bold dark:text-white">Número de teléfono : </span><br>
-                                    <span class="detail text-[14px] leading-[28px] text-[#777]">+51 {{ company.phone }}</span>
+                                    <span class="detail text-[14px] leading-[28px] text-[#777] dark:text-[#ddd]">+51 {{ company.phone }}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="bottom pt-[20px]">
                             <span class="text-[16px] leading-[28px] font-bold dark:text-white">DIRECCIÓN : </span>
-                            <span class="detail text-[14px] leading-[28px] text-[#777]">{{ company.fiscal_address }}, Nuevo Chimbote</span>
+                            <span class="detail text-[14px] leading-[28px] text-[#777] dark:text-[#ddd]">{{ company.fiscal_address }}, Nuevo Chimbote</span>
                         </div>
                     </div>
 
-                    <p>
+                    <p class="text-[#777] dark:text-[#0188ee]">
                         Transforma tu empresa con soluciones digitales innovadoras.
                     </p>
                 </div>

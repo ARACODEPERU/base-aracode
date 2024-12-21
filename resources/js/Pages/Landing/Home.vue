@@ -314,11 +314,11 @@ defineProps({
     <!-- contact -->
     <section id="contact" class="section-contact 2xl:py-[80px] py-[70px] dark:bg-gray-800">
         <div class="banner text-center mb-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
-            <span class="text-[14px] text-[#777] dark:text-[#fff]">FORMULARIO</span>
+            <span class="text-[14px] text-[#777] dark:text-[#ddd]">CONTACTANOS</span>
             <h2
                 class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold dark:text-[#fff]">
-                Ponte en contacto con 
-                <span class="text-[#0188ee]">NOSOTROS</span>
+                QUEREMOS SABER
+                <span class="text-[#0188ee]">DE USTED</span>
             </h2>
         </div>
         <form>
@@ -332,25 +332,25 @@ defineProps({
                                     class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none rounded-t-lg dark:bg-[#161321]"
                                     id="fname" placeholder="Nombre completo">
                             </div>
-                            <div class="border-b dark:border-[#27213b]">
+                            <div class="border-b dark:border-[#27213b] pt-1">
                                 <input type="email"
                                     class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none dark:bg-[#161321]"
                                     id="umail" placeholder="Correo electrónico">
                             </div>
-                            <div class="border-b dark:border-[#27213b]">
+                            <div class="border-b dark:border-[#27213b] pt-1">
                                 <input type="text"
                                     class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none dark:bg-[#161321]"
                                     id="phone" placeholder="Teléfono">
                             </div>
-                            <div class="dark:border-[#27213b]">
+                            <div class="dark:border-[#27213b] pt-1">
                                 <input type="text"
                                     class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none rounded-b-lg dark:bg-[#161321]"
                                     id="subject" placeholder="Asunto">
                             </div>
                         </div>
                         <div class="mb-0">
-                            <div class="mb-4">
-                                <textarea class="w-full border dark:border-[#27213b] rounded-xl pl-4 pt-2 focus:outline-none dark:bg-[#161321]"
+                            <div class="mb-3">
+                                <textarea class="w-full border dark:border-[#27213b] rounded-xl pl-4 pt-3 focus:outline-none dark:bg-[#161321]"
                                     id="exampleFormControlTextarea1" rows="8" placeholder="Mensaje"></textarea>
                             </div>
                             <button type="button"

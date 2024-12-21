@@ -65,13 +65,13 @@ const store = useAppStore();
                     <ul class="flex flex-col font-medium lg:flex-row lg:space-x-8 2xl:border-0 lg:border-0 border lg:mt-0 lg-mb-4 lg:p-[0] lg:border-none lg:rounded-[0] lg:text-[15px] mt-4 p-[15px] 2xl:mb-0 xl:mb-0 lg:mb-0 mb-2 border-[#eee] rounded-[30px] text-[13px]"
                         id="top-menu">
                         <li class="nav-item active">
-                            <a href="/" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Inicio</a>
+                            <a href="/" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#000]">Inicio</a>
                         </li>
                         <li class="nav-item">
-                            <a href="#about" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Nosotros</a>
+                            <a href="#about" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#000]">Nosotros</a>
                         </li>
                         <li class="nav-item">
-                            <a href="/facturador" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Facturador</a>
+                            <a href="/facturador" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#000]">Facturador</a>
                         </li>
                         <!-- <li class="nav-item">
                             <a href="#experience" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Experiencia</a>
@@ -83,7 +83,7 @@ const store = useAppStore();
                             <a href="#news" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0">Blog</a>
                         </li> -->
                         <li class="nav-item">
-                            <a href="#contact" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#ddd]">Contactanos</a>
+                            <a href="#contact" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#000]">Contactanos</a>
                         </li>
                         
                     </ul>

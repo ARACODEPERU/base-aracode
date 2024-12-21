@@ -96,7 +96,7 @@ onUnmounted(() => {
                         {{ dataWelcome.items[1].item.content }}
                     </h1>
                     <h2 class="py-2 text-dark-800 text-[20px] font-bold dark:text-[#fff]">{{ dataWelcome.items[2].item.content }}</h2>
-                    <p class="pt-2 text-gray-500 text-base">
+                    <p class="pt-2 text-gray-500 dark:text-[#ddd] text-base">
                         {{ dataWelcome.items[3].item.content }}
                     </p>
                     <button @click="scrollToContact" type="button"

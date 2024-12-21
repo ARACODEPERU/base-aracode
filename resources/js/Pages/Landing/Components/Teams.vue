@@ -19,28 +19,27 @@
                     <div class="flex items-center gap-x-4">
                         <img class="rounded-full size-20" src="/img/socios/jose.jpg" alt="Avatar">
                         <div class="grow">
-                            <h3 class="font-medium text-gray-800 dark:text-neutral-200">
+                            <h3 class="font-medium text-gray-800 dark:text-[#0188ee]">
                                 Jose Alarcon
                             </h3> 
-                            <p class="text-xs uppercase text-gray-500 dark:text-neutral-500">
+                            <p class="text-xs uppercase text-gray-500 dark:text-[#ddd]">
                                 Founder / CEO
                             </p>
                         </div>
                     </div>
 
-                    <p class="mt-3 text-gray-500 dark:text-neutral-500">
+                    <p class="mt-3 text-gray-500 dark:text-[#ddd]">
                         Fundador y CEO, líder estratégico enfocado en impulsar el crecimiento y dirigir la visión general de la empresa.
                     </p>
 
-                    <!-- Social Brands -->
                     <div class="mt-3 space-x-1">
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconLinkedin />
                         </a>
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconInstagram/>
                         </a>
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconFacebook />
                         </a>
                     </div>
@@ -52,28 +51,27 @@
                     <div class="flex items-center gap-x-4">
                         <img class="rounded-full size-20" src="/img/socios/jesus.jpg" alt="Avatar">
                         <div class="grow">
-                            <h3 class="font-medium text-gray-800 dark:text-neutral-200">
+                            <h3 class="font-medium text-gray-800 dark:text-[#0188ee]">
                                 Jesus Anaya
                             </h3>
-                            <p class="text-xs uppercase text-gray-500 dark:text-neutral-500">
+                            <p class="text-xs uppercase text-gray-500 dark:text-[#ddd]">
                                 Founder / UI / UX Designer
                             </p>
                         </div>
                     </div>
 
-                    <p class="mt-3 text-gray-500 dark:text-neutral-500">
+                    <p class="mt-3 text-gray-500 dark:text-[#ddd]">
                         Fundador y diseñador especializado en interfaces amigables, marketing digital y gestión de redes sociales.
                     </p>
 
-                    <!-- Social Brands -->
                     <div class="mt-3 space-x-1">
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconLinkedin />
                         </a>
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconInstagram/>
                         </a>
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconFacebook />
                         </a>
                     </div>
@@ -84,27 +82,27 @@
                     <div class="flex items-center gap-x-4">
                         <img class="rounded-full size-20" src="/img/socios/elmer.jpg" alt="Avatar">
                         <div class="grow">
-                            <h3 class="font-medium text-gray-800 dark:text-neutral-200">
+                            <h3 class="font-medium text-gray-800 dark:text-[#0188ee]">
                                 Elmer Rodriguez
                             </h3>
-                            <p class="text-xs uppercase text-gray-500 dark:text-neutral-500">
+                            <p class="text-xs uppercase text-gray-500 dark:text-[#ddd]">
                                 Founder / CTO / Tech Lead
                             </p>
                         </div>
                     </div>
 
-                    <p class="mt-3 text-gray-500 dark:text-neutral-500">
+                    <p class="mt-3 text-gray-500 dark:text-[#ddd]">
                         Fundador y líder tecnológico que impulsa la visión, define estrategias y dirige equipos para crear soluciones innovadoras.
                     </p>
 
                     <div class="mt-3 space-x-1">
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconLinkedin />
                         </a>
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconInstagram/>
                         </a>
-                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-neutral-400 dark:border-neutral-700 dark:hover:bg-neutral-700 dark:focus:bg-neutral-700" href="#">
+                        <a class="inline-flex justify-center items-center size-8 text-sm font-semibold rounded-lg border border-gray-200 text-gray-500 hover:text-white hover:bg-[#0188ee] focus:outline-none focus:[#0188ee] disabled:opacity-50 disabled:pointer-events-none dark:text-[#fff] dark:border-gray-200 dark:hover:bg-[#0188ee] dark:focus:bg-[#0188ee] dark:hover:border-[#0188ee]" href="#">
                             <iconFacebook />
                         </a>
                     </div>

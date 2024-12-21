@@ -16,7 +16,7 @@
 
     <footer class="bg-[#070415]">
         <div
-            class="flex justify-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] 2xl:flex-row xl:flex-row lg:flex-row flex-col md:max-w-[720px] max-[320px]:px-[12px] sm:max-w-[540px] gap-[30px] px-6 py-8">
+            class="flex justify-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] 2xl:flex-row xl:flex-row lg:flex-row flex-col md:max-w-[720px] max-[320px]:px-[12px] sm:max-w-[540px] gap-[30px] px-6 py-8">
             <div class="lg:w-1/2 text-white text-[12px] font-normal 2xl:text-left xl:text-left text-center">
                 Copyright ©
                 <Link :href="route('index_main')" class="hover:text-white font-semibold">{{ company.name }}</Link>
