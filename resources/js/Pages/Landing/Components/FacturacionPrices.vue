@@ -21,7 +21,9 @@ const store = useAppStore();
                     <!-- Title -->
                     
                     <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
-                        <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">NUESTROS PLANES</h2>
+                        <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
+                            NUESTROS <span class="text-[#0188ee]">PLANES</span>
+                        </h2>
                         <p class="mt-1 text-gray-600 dark:text-neutral-400">planes por mes o al año, envía tus facturas y boletas electrónicas a SUNAT fácilmente</p>
                     </div>
                     <!-- End Title -->
