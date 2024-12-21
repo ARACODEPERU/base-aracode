@@ -4,7 +4,7 @@ const store = useAppStore();
 </script>
 <template>
     <section id="experience" class="section-experience bg-[#f6f8ff] relative dark:bg-[#0e1726]">
-        <div class="relative pt-[60px]">
+        <!-- <div class="relative pt-[60px]">
             <template v-if="store.theme === 'dark'">
                 <img src="/themes/personalLanding/assets/img/shape/bg-shape-dark.png" alt="bg-shape"
                 class="absolute top-0 left-0 right-0 w-full bg-center bg-cover">
@@ -13,8 +13,7 @@ const store = useAppStore();
                 <img src="/themes/personalLanding/assets/img/shape/bg-shape.png" alt="bg-shape"
                 class="absolute top-0 left-0 right-0 w-full bg-center bg-cover">
             </template>
-            
-        </div>
+        </div> -->
         <div class="2xl:pb-[80px] pb-[70px] 2xl:pt-[80px] md:pt-[70px] pt-[20px]">
             <!-- Features -->
             <div class="overflow-hidden">
