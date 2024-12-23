@@ -72,7 +72,9 @@ const pathImage = xtassetUrl;
         <div class="flex justify-center">
             <div>
                 <a href="#contact" type="button"
-                        class=" text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block">
+                        class=" text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full 
+                        text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block
+                        shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110">
                         Obtenga una cotización
                 </a>
             </div>

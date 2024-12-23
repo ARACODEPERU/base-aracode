@@ -45,7 +45,8 @@
                                     id="exampleFormControlTextarea1" rows="8" placeholder="Mensaje"></textarea>
                             </div>
                             <button type="button"
-                                class="text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2">
+                                class="text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 
+                                shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110">
                                 Enviar
                             </button>
                         </div>

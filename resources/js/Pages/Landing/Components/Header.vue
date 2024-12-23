@@ -31,13 +31,15 @@ const store = useAppStore();
                 </Link>
                 <div class="flex items-center lg:order-2">
                     <a href="#contact" type="button"
-                        class="text-white bg-[#0188ee] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block">
+                        class="text-white bg-[#0188ee] hover:bg-opacity-80 no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block
+                        shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
                         Obtenga una cotización
                     </a>
                     <div class="flex gap-2">
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600]"
+                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600] 
+                            shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100"
                             :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('light')"
                             >
@@ -45,7 +47,8 @@ const store = useAppStore();
                         </button>
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2 hover:bg-[#F11600] hover:text-white"
+                            class="btn rounded-full py-2 px-2 hover:bg-[#F11600] hover:text-white
+                            shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100"
                             :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('dark')"
                         >
