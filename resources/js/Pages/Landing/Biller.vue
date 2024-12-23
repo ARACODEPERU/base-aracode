@@ -40,6 +40,8 @@ defineProps({
         window.removeEventListener('scroll', handleScroll);
     });
 
+
+
 </script>
 
 
@@ -63,7 +65,7 @@ defineProps({
     <section style="background-image: url('./img/Landing/bg/tech-bg.png');" class="bg-center bg-no-repeat bg-gray-700 bg-blend-multiply">
         <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
-                Simplifica tu Negocio con Facturación Electrónica Segura y Eficiente
+                Simplifica tu Negocio con <span class="text-[#0188ee]">Facturación Electrónica </span>Segura y Eficiente
             </h1>
             <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">
                 Implementa nuestra solución de facturación electrónica y lleva el control de tus ventas de forma rápida, 
@@ -79,6 +81,37 @@ defineProps({
                 <a href="#" class="inline-flex justify-center hover:text-gray-900 items-center py-3 px-5 sm:ms-4 text-base font-medium text-center text-white rounded-lg border border-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-400">
                     Contactanos
                 </a>  
+            </div>
+        </div>
+    </section>
+
+    
+    <section class="mx-auto bg-[#f6f8ff] dark:bg-[#161321] pt-[80px] pb-[80px]">
+        <div class="max-w-md mx-auto mt-8">
+            <div class="bg-white shadow-md rounded-lg">
+                <button class="flex items-center justify-between w-full text-left py-2 px-4 font-bold bg-gray-200 hover:bg-gray-300">
+                    Pregunta 1
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="answer max-h-0 overflow-hidden">
+                    <p class="p-4">Respuesta a la pregunta 1.</p>
+                </div>
+
+                <button class="flex items-center justify-between w-full text-left py-2 px-4 font-bold bg-gray-200 hover:bg-gray-300 mt-2">
+                    Pregunta 2
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="answer max-h-0 overflow-hidden">
+                    <p class="p-4">Respuesta a la pregunta 2.</p>
+                </div>
+
+                <button class="flex items-center justify-between w-full text-left py-2 px-4 font-bold bg-gray-200 hover:bg-gray-300 mt-2">
+                    Pregunta 3
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="answer max-h-0 overflow-hidden">
+                    <p class="p-4">Respuesta a la pregunta 3.</p>
+                </div>
             </div>
         </div>
     </section>

@@ -68,7 +68,7 @@ defineProps({
             class="bg-center bg-no-repeat bg-gray-700 bg-blend-multiply block">
         <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
-                Haz Crecer Tu Negocio con Sistemas Web que Generan Resultados
+                Haz Crecer Tu Negocio con <span class="text-[#0188ee]">Sistemas Web</span> que Generan Resultados
             </h1>
             <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">
                 Diseñamos sistemas web personalizados que optimizan tus procesos, mejoran la experiencia del cliente y 
