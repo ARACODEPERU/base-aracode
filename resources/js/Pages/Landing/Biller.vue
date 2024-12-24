@@ -107,7 +107,7 @@ onUnmounted(() => {
             </h2>
         </div>
         <div class="container  text-center mb-10 lg:mb-14">
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid sm:grid-cols-2 sm:gap-2 grid-cols-1 gap-1">
                     <div id="accordion-color" data-accordion="collapse" data-active-classes="bg-[#026cad] dark:bg-gray-800 text-white dark:text-white">
                         <h2 id="accordion-color-heading-1">
                             <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border
