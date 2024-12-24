@@ -47,7 +47,7 @@ const store = useAppStore();
                         </button>
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2 hover:bg-[#F11600] hover:text-white
+                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600] hover:text-white
                             shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100"
                             :class="[store.theme === 'dark' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('dark')"

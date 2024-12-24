@@ -100,18 +100,12 @@ onUnmounted(() => {
                         {{ dataWelcome.items[3].item.content }}
                     </p>
                     <br>
-                    <a href="#contact" type="button"
-                        class="text-white mt-4 bg-[#0188ee] hover:bg-[#f11600] font-medium rounded-full 
-                        text-sm px-8 py-2.5 mr-2
-                        shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
-                        Escribenos
-                    </a>
-                    <!-- <button @click="scrollToContact" type="button"
+                    <button @click="scrollToContact" type="button"
                         class="text-white mt-4 bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full 
                         text-sm px-8 py-2.5 mr-2
                         shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
                         Escribenos
-                    </button> -->
+                    </button> 
                 </div>
             </div>
             <div class="w-1/2 hidden px-2 2xl:block xl:block lg:block md:block z-10">

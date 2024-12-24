@@ -110,94 +110,228 @@ onUnmounted(() => {
             </p> -->
         </div>
         <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
-            <div id="accordion-collapse" data-accordion="collapse">
-            <h2 id="accordion-collapse-heading-1">
-                <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border 
-                border-b-0 border-gray-200 rounded-t-xl focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700
-                 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3" 
-                 data-accordion-target="#accordion-collapse-body-1" aria-expanded="true" 
-                 aria-controls="accordion-collapse-body-1">
-                    <span>¿Qué es una factura electrónica?</span>
+
+            <div id="accordion-color" data-accordion="collapse" data-active-classes="bg-blue-100 dark:bg-gray-800 text-blue-600 dark:text-white">
+                <h2 id="accordion-color-heading-1">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 border-gray-200 rounded-t-xl focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-1" aria-expanded="true" aria-controls="accordion-color-body-1">
+                        <span>¿Qué es una factura electrónica?</span>
+                        <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                        </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-1" class="hidden" aria-labelledby="accordion-color-heading-1">
+                    <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Una factura electrónica es un comprobante de pago en formato digital que sirve para sustentar la compraventa de bienes 
+                            o servicios. Si bien este tipo facturación tiene la misma validez legal que la facturación tradicional (en papel), 
+                            termina siendo más atractiva para pequeñas, medianas y grandes empresas debido a los múltiples beneficios que ofrece.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 id="accordion-color-heading-2">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-2" aria-expanded="false" aria-controls="accordion-color-body-2">
+                        <span>¿Para qué sirve la facturación electrónica?</span>
+                        <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                        </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-2" class="hidden" aria-labelledby="accordion-color-heading-2">
+                    <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            La facturación electrónica sirve para sustentar y validar las transacciones comerciales que se generan entre 
+                            empresas y clientes. Además, gracias a la digitalización de comprobantes, con este tipo de facturación puedes 
+                            simplificar procesos y reducir costos asociados a la emisión y almacenamiento de facturas en papel.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 id="accordion-color-heading-3">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-3" aria-expanded="false" aria-controls="accordion-color-body-3">
+                    <span>¿Qué beneficios tengo al emitir facturas electrónicas con Aracode?</span>
                     <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
                     </svg>
-                </button>
-            </h2>
-            <div id="accordion-collapse-body-1" class="hidden" aria-labelledby="accordion-collapse-heading-1">
-                <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
-                    <p class="mb-2 text-gray-500 dark:text-gray-400">
-                        Una factura electrónica es un comprobante de pago en formato digital que sirve para sustentar la compraventa de bienes 
-                        o servicios. Si bien este tipo facturación tiene la misma validez legal que la facturación tradicional (en papel), 
-                        termina siendo más atractiva para pequeñas, medianas y grandes empresas debido a los múltiples beneficios que ofrece.
-                    </p>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-3" class="hidden" aria-labelledby="accordion-color-heading-3">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                    
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                                Entre los beneficios de emitir facturas electrónicas con Aracode tenemos:
+                        </p>
+                            <ul style="list-style:none;margin-top:10px;margin-bottom:10px">
+                                <li style="display:flex;gap:5px;align-items:center">
+                                <img src="" loading="lazy" style="width:15px;margin-right:10px"> 
+                                Ahorro tiempo tus facturas de forma automática
+                                </li>
+                                <li style="display:flex;gap:5px;align-items:center">
+                                    <img src="" loading="lazy" style="width:15px;margin-right:10px"> 
+                                    Mayor tranquilidad al cumplir fácil con la SUNAT
+                                </li>
+                                <li style="display:flex;gap:5px;align-items:center">
+                                    <img src="" loading="lazy" style="width:15px;margin-right:10px"> 
+                                    Eficiencia en procesos al reducir errores humanos
+                                </li>
+                                <li style="display:flex;gap:5px;align-items:center">
+                                    <img src="" loading="lazy" style="width:15px;margin-right:10px"> 
+                                    Ahorro de dinero al reducir costos de impresión y almacenamiento
+                                </li>
+                            </ul>
+                            <p class="mb-2 text-gray-500 dark:text-gray-400">
+                                Y lo mejor es que también puedes emitir boletas y guías de remisión electrónicas de forma ilimitada y desde cualquier lugar. 
+                                Conoce más en nuestra 
+                                <a href="" class="font-weight-500" target="_blank" rel="noreferrer">
+                                    guía sobre cómo llevar tu Facturación Electrónica en Alegra. [Paso a paso]
+                                </a>
+                                te explicamos cómo hacerlo. (Y en solo 4 simples pasos)
+                            </p>
+                    </div>
                 </div>
-            </div>
-            <h2 id="accordion-collapse-heading-2">
-                <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border 
-                border-b-0 border-gray-200 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700
-                 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3" 
-                 data-accordion-target="#accordion-collapse-body-2" aria-expanded="false" 
-                 aria-controls="accordion-collapse-body-2">
-                <span>¿Para qué sirve la facturación electrónica?</span>
-                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                </svg>
-                </button>
-            </h2>
-            <div id="accordion-collapse-body-2" class="hidden" aria-labelledby="accordion-collapse-heading-2">
-                <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
-                    <p class="mb-2 text-gray-500 dark:text-gray-400">
-                        La facturación electrónica sirve para sustentar y validar las transacciones comerciales que se generan entre 
-                        empresas y clientes. Además, gracias a la digitalización de comprobantes, con este tipo de facturación puedes 
-                        simplificar procesos y reducir costos asociados a la emisión y almacenamiento de facturas en papel.
-                    </p>
+                
+                <h2 id="accordion-color-heading-4">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-4" aria-expanded="false" aria-controls="accordion-color-body-4">
+                    <span>¿Cuáles son los pasos para habilitarme como facturador electrónico?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-4" class="hidden" aria-labelledby="accordion-color-heading-4">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Habilitarse como facturador electrónico a la SUNAT puede sonar como una tarea complicada, 
+                            sin embargo, es más fácil de lo que crees y en nuestra 
+                        </p>
+                        <a href="" 
+                        class="font-weight-500" target="_blank" rel="noreferrer">guía definitiva de habilitación ante la SUNAT</a>
+                    </div>
                 </div>
-            </div>
-            <h2 id="accordion-collapse-heading-3">
-                <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border
-                 border-gray-200 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700 dark:text-gray-400
-                  hover:bg-gray-100 dark:hover:bg-gray-800 gap-3" 
-                  data-accordion-target="#accordion-collapse-body-3" aria-expanded="false" 
-                  aria-controls="accordion-collapse-body-3">
-                <span>¿Qué beneficios tengo al emitir facturas electrónicas con Alegra?</span>
-                <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
-                </svg>
-                </button>
-            </h2>
-            <div id="accordion-collapse-body-3" class="hidden" aria-labelledby="accordion-collapse-heading-3">
-                <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
-                    <p class="mb-2 text-gray-500 dark:text-gray-400">
-                        Entre los beneficios de emitir facturas electrónicas con Alegra tenemos:
-                    </p>
-                    <ul style="list-style:none;margin-top:10px;margin-bottom:10px">
-                        <li style="display:flex;gap:5px;align-items:center">
-                        <img src="https://cdn1.alegra.com/websites/check-icon-low-check.webp" loading="lazy" style="width:15px;margin-right:10px"> 
-                        Ahorro tiempo tus facturas de forma automática
-                        </li>
-                        <li style="display:flex;gap:5px;align-items:center">
-                            <img src="https://cdn1.alegra.com/websites/check-icon-low-check.webp" loading="lazy" style="width:15px;margin-right:10px"> 
-                            Mayor tranquilidad al cumplir fácil con la SUNAT
-                        </li>
-                        <li style="display:flex;gap:5px;align-items:center">
-                            <img src="https://cdn1.alegra.com/websites/check-icon-low-check.webp" loading="lazy" style="width:15px;margin-right:10px"> 
-                            Eficiencia en procesos al reducir errores humanos
-                        </li>
-                        <li style="display:flex;gap:5px;align-items:center">
-                            <img src="https://cdn1.alegra.com/websites/check-icon-low-check.webp" loading="lazy" style="width:15px;margin-right:10px"> 
-                            Ahorro de dinero al reducir costos de impresión y almacenamiento
-                        </li>
-                    </ul>
-                    <p class="mb-2 text-gray-500 dark:text-gray-400">
-                        Y lo mejor es que también puedes emitir boletas y guías de remisión electrónicas de forma ilimitada y desde cualquier lugar. 
-                        Conoce más en nuestra 
-                        <a href="https://ayuda.alegra.com/es/facturaci%C3%B3n-electr%C3%B3nica-en-alegra-per%C3%BA" class="font-weight-500" target="_blank" rel="noreferrer">
-                            guía sobre cómo llevar tu Facturación Electrónica en Alegra. [Paso a paso]
-                        </a>
-                    </p>
+                
+                <h2 id="accordion-color-heading-5">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-5" aria-expanded="false" aria-controls="accordion-color-body-5">
+                    <span>¿Cómo emitir factura electrónica con Aracode?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-5" class="hidden" aria-labelledby="accordion-color-heading-5">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Para emitir tus facturas electrónicas con Aracode solo basta con elegir la fecha, el nombre de tu cliente, 
+                            el producto vendido y más campos de llenado rápido que son 100% necesarios para correcta validación ante la SUNAT.
+                            <br><br>
+                            No importa el lugar en donde estés ni la cantidad de comprobantes que tengas que emitir, aprende cómo en 
+                            nuestra 
+                            <a href="" class="font-weight-500" target="_blank" rel="noreferrer">
+                                guía de facturación electrónica para pymes con Aracode.
+                            </a>
+                        </p>
+                    </div>
                 </div>
+                
+                <h2 id="accordion-color-heading-6">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-6" aria-expanded="false" aria-controls="accordion-color-body-6">
+                    <span>¿Cuál es la diferencia entre boleta y factura electrónica?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-6" class="hidden" aria-labelledby="accordion-color-heading-6">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            La principal diferencia entre una boleta y factura electrónica radica en su utilidad, mientras que la primera no 
+                            tiene derecho para sustentar tributariamente costos y gastos, con la segunda sí puedes acreditarlos para efectos 
+                            tributarios relacionados al Impuesto a la Renta. Conoce 3 diferencias más en nuestro 
+                            <a href="" class="font-weight-500" target="_blank" rel="noreferrer">
+                                blog: ¿Boleta y Factura? ¿Cuál debo emitir y por qué?
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                
+                <h2 id="accordion-color-heading-7">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-7" aria-expanded="false" aria-controls="accordion-color-body-7">
+                    <span>¿Cómo puedo ver una factura electrónica recibida?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-7" class="hidden" aria-labelledby="accordion-color-heading-7">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Consulta fácilmente una factura electrónica recibida y/o aprobada ante la SUNAT desde el menú “Ventas” de tu 
+                            cuenta de Alegra. Ahí también podrás consultar, en tiempo real, cuál es el estado de cada comprobante emitido. 
+                            Si deseas saber más, consulta 
+                            <a href="" class="font-weight-500" target="_blank" rel="noreferrer">nuestra guía para aprender a cómo ver el 
+                                estado de emisión de tus documentos electrónicos.
+                            </a>
+                        </p>
+                    </div>
+                </div>
+                
+                <h2 id="accordion-color-heading-8">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-8" aria-expanded="false" aria-controls="accordion-color-body-8">
+                    <span>¿Cómo eliminar una factura electrónica?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-8" class="hidden" aria-labelledby="accordion-color-heading-8">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Puedes eliminar fácilmente una factura electrónica desde el menú “Ventas” de tu cuenta de Alegra. Posterior a ello, tu solicitud llegará a la SUNAT para su pronta aprobación. Conoce cómo hacerlo y más detalles de la funcionalidad en 
+                            <a href="" class="font-weight-500" target="_blank" rel="noreferrer">
+                                nuestro artículo sobre la eliminación de comprobantes de pago electrónicos.
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+                <h2 id="accordion-color-heading-9">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-9" aria-expanded="false" aria-controls="accordion-color-body-9">
+                    <span>¿Es obligatorio emitir factura electrónica en Perú?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-9" class="hidden" aria-labelledby="accordion-color-heading-9">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Sí, según la Resolución de Superintendencia N° 128-2021/Sunat, la emisión de factura electrónica ya es obligatoria en todo 
+                            el Perú. Esta clasificación se divide principalmente en el monto de facturación anual, clasificando a pequeñas, medianas y 
+                            grandes empresas.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 id="accordion-color-heading-10">
+                    <button type="button" class="flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-gray-200 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 dark:border-gray-700 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-gray-800 gap-3" data-accordion-target="#accordion-color-body-10" aria-expanded="false" aria-controls="accordion-color-body-10">
+                    <span>¿Cuál es el plazo para rechazar una factura electrónica?</span>
+                    <svg data-accordion-icon class="w-3 h-3 rotate-180 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"/>
+                    </svg>
+                    </button>
+                </h2>
+                <div id="accordion-color-body-10" class="hidden" aria-labelledby="accordion-color-heading-10">
+                    <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                        <p class="mb-2 text-gray-500 dark:text-gray-400">
+                            Según la SUNAT, una factura electrónica puede ser rechazada hasta el noveno día hábil del mes siguiente de su 
+                            emisión. Esto puede ocurrir por 2 principales motivos: quien recibe no es el adquiriente o se consignó una 
+                            descripción que no corresponde a la operación.
+                        </p>
+                    </div>
+                </div>
+
             </div>
-            </div>
+
         </div>
 
     </section>
