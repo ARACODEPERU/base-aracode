@@ -148,7 +148,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-2" class="hidden" aria-labelledby="accordion-color-heading-2">
-                            <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-b-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     La facturación electrónica sirve para sustentar y validar las transacciones comerciales que se generan entre 
                                     empresas y clientes. Además, gracias a la digitalización de comprobantes, con este tipo de facturación puedes 
@@ -171,10 +171,9 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-3" class="hidden" aria-labelledby="accordion-color-heading-3">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
-                            
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
-                                        Entre los beneficios de emitir facturas electrónicas con Aracode tenemos:
+                                    Entre los beneficios de emitir facturas electrónicas con Aracode tenemos:
                                 </p>
                                     <ul style="list-style:none;margin-top:10px;margin-bottom:10px">
                                         <li style="display:flex;gap:5px;align-items:center">
@@ -219,7 +218,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-4" class="hidden" aria-labelledby="accordion-color-heading-4">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     Habilitarse como facturador electrónico a la SUNAT puede sonar como una tarea complicada, 
                                     sin embargo, es más fácil de lo que crees y en nuestra 
@@ -243,7 +242,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-5" class="hidden" aria-labelledby="accordion-color-heading-5">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     Para emitir tus facturas electrónicas con Aracode solo basta con elegir la fecha, el nombre de tu cliente, 
                                     el producto vendido y más campos de llenado rápido que son 100% necesarios para correcta validación ante la SUNAT.
@@ -273,7 +272,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-6" class="hidden" aria-labelledby="accordion-color-heading-6">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     La principal diferencia entre una boleta y factura electrónica radica en su utilidad, mientras que la primera no 
                                     tiene derecho para sustentar tributariamente costos y gastos, con la segunda sí puedes acreditarlos para efectos 
@@ -298,7 +297,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-7" class="hidden" aria-labelledby="accordion-color-heading-7">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     Consulta fácilmente una factura electrónica recibida y/o aprobada ante la SUNAT desde el menú “Ventas” de tu 
                                     cuenta de Alegra. Ahí también podrás consultar, en tiempo real, cuál es el estado de cada comprobante emitido. 
@@ -324,7 +323,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-8" class="hidden" aria-labelledby="accordion-color-heading-8">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     Puedes eliminar fácilmente una factura electrónica desde el menú “Ventas” de tu cuenta de Alegra. Posterior a ello, tu solicitud llegará a la SUNAT para su pronta aprobación. Conoce cómo hacerlo y más detalles de la funcionalidad en 
                                     <a href="" class="font-weight-500" target="_blank" rel="noreferrer">
@@ -348,7 +347,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-9" class="hidden" aria-labelledby="accordion-color-heading-9">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     Sí, según la Resolución de Superintendencia N° 128-2021/Sunat, la emisión de factura electrónica ya es obligatoria en todo 
                                     el Perú. Esta clasificación se divide principalmente en el monto de facturación anual, clasificando a pequeñas, medianas y 
@@ -371,7 +370,7 @@ onUnmounted(() => {
                             </button>
                         </h2>
                         <div id="accordion-color-body-10" class="hidden" aria-labelledby="accordion-color-heading-10">
-                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700">
+                            <div class="p-5 border border-t-0 border-gray-200 dark:border-gray-700 dark:bg-gray-900">
                                 <p class="mb-2 text-gray-500 dark:text-gray-400">
                                     Según la SUNAT, una factura electrónica puede ser rechazada hasta el noveno día hábil del mes siguiente de su 
                                     emisión. Esto puede ocurrir por 2 principales motivos: quien recibe no es el adquiriente o se consignó una 
