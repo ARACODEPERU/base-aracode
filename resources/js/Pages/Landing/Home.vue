@@ -13,6 +13,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
 import WhatsappHome from './Components/WhatsappHome.vue';
 import ContactForm from './Components/ContactForm.vue';
+import ContinuousArrow from './Components/ContinuousArrow.vue';
 
 defineProps({
     dataHome: {
@@ -91,6 +92,8 @@ defineProps({
             </div>
         </div>
     </section>
+
+    <ContinuousArrow />
 
 
     <!-- hero section -->
