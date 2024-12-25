@@ -8,8 +8,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
 import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
 import WhatsappBiller from './Components/WhatsappBiller.vue';
+import ContinuousArrow from './Components/ContinuousArrow.vue';
 import { initFlowbite } from 'flowbite'; // Importar desde Flowbite, previa instalación
-
 
 // Inicializando Flowbite
 onMounted(() => {
