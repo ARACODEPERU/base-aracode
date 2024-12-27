@@ -386,7 +386,611 @@ onUnmounted(() => {
 
     </section>
 
-    <FacturacionPrices />
+    <section class="mx-auto bg-[#f6f8ff] dark:bg-[#0e1726] pt-[80px] pb-[80px]">
+        <div class="container-xl">
+            <!-- Title -->
+            <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
+                <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
+                    NUESTROS <span class="text-[#0188ee]">PLANES</span>
+                </h2>
+                <p class="mt-1 text-gray-600 dark:text-neutral-400">planes por mes o al año, envía tus facturas y boletas electrónicas a SUNAT fácilmente</p>
+            </div>
+            <!-- End Title -->
+        </div>
+        <div class="md:container bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+            <div class="sm:hidden">
+                <label for="tabs" class="sr-only">Seleciones Plan</label>
+                <select id="tabs" class="bg-gray-50 border-0 border-b border-gray-200 text-gray-900 text-sm rounded-t-lg 
+                        focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 
+                        dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                    <option>Paga Mensualmente</option>
+                    <option>Paga Anualmente (Ahorra 2 meses)</option>
+                </select>
+            </div>
+            <ul class="hidden text-sm font-medium text-center text-gray-500 divide-x divide-gray-200 rounded-lg sm:flex dark:divide-gray-600 dark:text-gray-400 rtl:divide-x-reverse" id="fullWidthTab" data-tabs-toggle="#fullWidthTabContent" role="tablist">
+                <li class="w-full">
+                    <button id="stats-tab" data-tabs-target="#stats" type="button" role="tab" aria-controls="stats" 
+                            aria-selected="true" class="inline-block w-full p-4 
+                            bg-[#026cad] text-white
+                            hover:bg-[#0188ee] hover:text-white
+                            focus:bg-gray-50 focus:text-gray-600
+                            dark:bg-gray-800 dark:text-white dark:border-gray-700
+                            dark:hover:bg-gray-800 
+                            dark:focus:ring-blue-800">
+                     Paga Mensualmente
+                    </button>
+                </li>
+                <li class="w-full">
+                    <button id="about-tab" data-tabs-target="#about" type="button" role="tab" aria-controls="about" 
+                            aria-selected="false" class="inline-block w-full p-4 
+                            bg-gray-50 text-gray-600
+                            hover:bg-[#0188ee] hover:text-white
+                            focus:bg-[#0188ee] focus:text-white
+                            dark:bg-gray-800 dark:text-white dark:border-gray-700
+                            dark:hover:bg-gray-800 
+                            dark:focus:ring-blue-800">
+                         Paga Anualmente (Ahorra 2 meses)
+                    </button>
+                </li>
+            </ul>
+            <div id="fullWidthTabContent" class="border-t border-gray-200 dark:border-gray-600">
+                <div class="hidden p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+                    
+                    <div class="grid sm:grid-cols-3 sm:gap-3 grid-cols-1 gap-1 justify-center">
+
+                        <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+                            <h5 class="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                        EMPRENDEDOR
+                            </h5>
+                            <div class="flex items-baseline text-gray-900 dark:text-white">
+                                        <span class="text-3xl font-semibold">S/ </span>
+                                        <span class="text-5xl font-extrabold tracking-tight">35</span>
+                                        <span class="text-lg font-bold text-gray-800 dark:text-neutral-200">.00</span>
+                                        <span class="ms-1 text-xl font-normal text-gray-500 dark:text-gray-400">/mensual</span>
+                            </div>
+                            <ul role="list" class="space-y-5 my-7">
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Modulo de ventas y compras</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Control de inventario</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Cotizaciones, Notas de venta, Guias de remision</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Reportes</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Punto de Venta</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Kardex</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Movimientos de productos</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Facturas y Boletas 
+                                                <br>Electrónicas
+                                            </span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Todos los comprobantes 
+                                                <br>electrónicos SUNAT
+                                            </span>
+                                        </li>
+                                        <li class="flex items-center">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>2 usuarios</b></span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>Soporte 24/7</b></span>
+                                        </li>
+                            </ul>
+                            <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-200
+                                    dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex 
+                                    justify-center w-full text-center">
+                                    Lo Quiero
+                            </button>
+                        </div>
+                        
+                        <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+                                    <h5 class="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                        PYME
+                                    </h5>
+                                    <div class="flex items-baseline text-gray-900 dark:text-white">
+                                        <span class="text-3xl font-semibold">S/ </span>
+                                        <span class="text-5xl font-extrabold tracking-tight">50</span>
+                                        <span class="text-lg font-bold text-gray-800 dark:text-neutral-200">.00</span>
+                                        <span class="ms-1 text-xl font-normal text-gray-500 dark:text-gray-400">/mensual</span>
+                                    </div>
+                                    <ul role="list" class="space-y-5 my-7">
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Modulo de ventas y compras</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Control de inventario</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Cotizaciones, Notas de venta, Guias de remision</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Reportes</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Punto de Venta</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Kardex</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Movimientos de productos</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Facturas y Boletas 
+                                                <br> Electrónicas <b>Ilimitadas</b>
+                                            </span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Todos los comprobantes <br>electrónicos SUNAT 
+                                                <b>ilimitados</b>
+                                            </span>
+                                        </li>
+                                        <li class="flex items-center">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>5 usuarios</b></span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>Soporte 24/7</b></span>
+                                        </li>
+                                    </ul>
+                                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-200
+                                            dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex 
+                                            justify-center w-full text-center">
+                                            Lo Quiero
+                                    </button>
+                        </div>
+
+                        
+                        <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+                                <h5 class="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                    PRO
+                                </h5>
+                                <div class="flex items-baseline text-gray-900 dark:text-white">
+                                    <span class="text-3xl font-semibold">S/ </span>
+                                    <span class="text-5xl font-extrabold tracking-tight">80</span>
+                                    <span class="text-lg font-bold text-gray-800 dark:text-neutral-200">.00</span>
+                                    <span class="ms-1 text-xl font-normal text-gray-500 dark:text-gray-400">/mensual</span>
+                                </div>
+                                <ul role="list" class="space-y-5 my-7">
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Modulo de ventas y compras</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Control de inventario</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Cotizaciones, Notas de venta, Guias de remision</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Reportes</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Punto de Venta</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Kardex</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Movimientos de productos</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Facturas y Boletas 
+                                            <br> Electrónicas <b>Ilimitadas</b>
+                                        </span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Todos los comprobantes 
+                                            <br>electrónicos SUNAT <b>ilimitados</b>
+                                        </span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>10 usuarios</b></span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>Soporte 24/7</b></span>
+                                    </li>
+                                </ul>
+                                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-200
+                                        dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex 
+                                        justify-center w-full text-center">
+                                        Lo Quiero
+                                </button>
+                        </div>
+
+                    </div>
+
+
+                </div>
+                <div class="hidden p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800" id="about" role="tabpanel" aria-labelledby="about-tab">
+                    
+                    <div class="grid sm:grid-cols-3 sm:gap-3 grid-cols-1 gap-1 justify-center">
+
+                        <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+                            <h5 class="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                        EMPRENDEDOR
+                            </h5>
+                            <div class="flex items-baseline text-gray-900 dark:text-white">
+                                        <span class="text-3xl font-semibold">S/ </span>
+                                        <span class="text-5xl font-extrabold tracking-tight">350</span>
+                                        <span class="text-lg font-bold text-gray-800 dark:text-neutral-200">.00</span>
+                                        <span class="ms-1 text-xl font-normal text-gray-500 dark:text-gray-400">/anual</span>
+                            </div>
+                            <ul role="list" class="space-y-5 my-7">
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Modulo de ventas y compras</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Control de inventario</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Cotizaciones, Notas de venta, Guias de remision</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Reportes</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Punto de Venta</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Kardex</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Movimientos de productos</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Facturas y Boletas 
+                                                <br>Electrónicas
+                                            </span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Todos los comprobantes 
+                                                <br>electrónicos SUNAT
+                                            </span>
+                                        </li>
+                                        <li class="flex items-center">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>2 usuarios</b></span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>Soporte 24/7</b></span>
+                                        </li>
+                            </ul>
+                            <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-200
+                                    dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex 
+                                    justify-center w-full text-center">
+                                    Lo Quiero
+                            </button>
+                        </div>
+
+                        <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+                                    <h5 class="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                        PYME
+                                    </h5>
+                                    <div class="flex items-baseline text-gray-900 dark:text-white">
+                                        <span class="text-3xl font-semibold">S/ </span>
+                                        <span class="text-5xl font-extrabold tracking-tight">500</span>
+                                        <span class="text-lg font-bold text-gray-800 dark:text-neutral-200">.00</span>
+                                        <span class="ms-1 text-xl font-normal text-gray-500 dark:text-gray-400">/anual</span>
+                                    </div>
+                                    <ul role="list" class="space-y-5 my-7">
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Modulo de ventas y compras</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Control de inventario</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Cotizaciones, Notas de venta, Guias de remision</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Reportes</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Punto de Venta</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Kardex</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Movimientos de productos</span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Facturas y Boletas 
+                                                <br> Electrónicas <b>Ilimitadas</b>
+                                            </span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Todos los comprobantes <br>electrónicos SUNAT 
+                                                <b>ilimitados</b>
+                                            </span>
+                                        </li>
+                                        <li class="flex items-center">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>5 usuarios</b></span>
+                                        </li>
+                                        <li class="flex">
+                                            <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>Soporte 24/7</b></span>
+                                        </li>
+                                    </ul>
+                                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-200
+                                            dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex 
+                                            justify-center w-full text-center">
+                                            Lo Quiero
+                                    </button>
+                        </div>
+
+                        <div class="w-full max-w-sm p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
+                                <h5 class="mb-4 text-xl font-medium text-gray-500 dark:text-gray-400">
+                                    PRO
+                                </h5>
+                                <div class="flex items-baseline text-gray-900 dark:text-white">
+                                    <span class="text-3xl font-semibold">S/ </span>
+                                    <span class="text-5xl font-extrabold tracking-tight">800</span>
+                                    <span class="text-lg font-bold text-gray-800 dark:text-neutral-200">.00</span>
+                                    <span class="ms-1 text-xl font-normal text-gray-500 dark:text-gray-400">/anual</span>
+                                </div>
+                                <ul role="list" class="space-y-5 my-7">
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Modulo de ventas y compras</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Control de inventario</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Cotizaciones, Notas de venta, Guias de remision</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Reportes</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Punto de Venta</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Kardex</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Movimientos de productos</span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Facturas y Boletas 
+                                            <br> Electrónicas <b>Ilimitadas</b>
+                                        </span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3">Todos los comprobantes 
+                                            <br>electrónicos SUNAT <b>ilimitados</b>
+                                        </span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>10 usuarios</b></span>
+                                    </li>
+                                    <li class="flex">
+                                        <svg class="flex-shrink-0 w-4 h-4 text-blue-700 dark:text-blue-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                        </svg>
+                                        <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400 ms-3"><b>Soporte 24/7</b></span>
+                                    </li>
+                                </ul>
+                                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-200
+                                        dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-900 font-medium rounded-lg text-sm px-5 py-2.5 inline-flex 
+                                        justify-center w-full text-center">
+                                        Lo Quiero
+                                </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+
+
+
+    <!-- <FacturacionPrices /> -->
 
     <!-- contact -->
     <ContactForm />
