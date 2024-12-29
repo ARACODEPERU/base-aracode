@@ -30,9 +30,10 @@ Route::get('/facturador', [LandingController::class, 'biller'])->name('biller_ma
 Route::get('/news', [LandingController::class, 'blog'])->name('blog_main');
 Route::get('/terms', [LandingController::class, 'terms'])->name('terms_main');
 Route::get('/computer/store', [LandingController::class, 'computerStore'])->name('index_computer_store');
-
+Route::get('/prices/academic', [LandingController::class, 'academicPrices'])->name('academic_prices');
 Route::get('/curso-descripcion/{id}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
-
+Route::get('/create/payment/{id}/academic', [LandingController::class, 'academiCreatePayment'])->name('academic_form_mercadopago');
+Route::get('/process/academic/payment/mp', [LandingController::class, 'processAcademicPayment'])->name('academic_process_payment_mercadopago');
 //////mensajes de whatsapp///////
 Route::get('/ask/product/{id}', [LandingController::class, 'redirectToWhatsApp'])->name('whatsapp_send');
 

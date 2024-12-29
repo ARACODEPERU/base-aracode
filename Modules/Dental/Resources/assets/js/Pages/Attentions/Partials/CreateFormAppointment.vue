@@ -21,54 +21,52 @@ const props = defineProps({
         type: Object,
         default: () => ({})
     },
-    attention: {
+    appointment: {
         type: Object,
         default: () => ({}),
     }
 });
 
 const form = useForm({
-    id: props.attention.id,
-    date_time_attention: props.attention.date_time_attention,
-    current_illness: props.attention.current_illness,
-    reason_consultation: props.attention.reason_consultation,
-    sick_time: props.attention.sick_time,
-    appetite: props.attention.appetite,
-    thirst: props.attention.thirst,
-    dream: props.attention.dream,
-    mood: props.attention.mood,
-    urine: props.attention.urine,
-    depositions: props.attention.depositions,
-    weight_loss: props.attention.weight_loss,
-    pex_tem: props.attention.pex_tem,
-    pex_pa: props.attention.pex_pa,
-    pex_fc: props.attention.pex_fc,
-    pex_fr: props.attention.pex_fr,
-    pex_peso: props.attention.pex_peso,
-    pex_talla: props.attention.pex_talla,
-    pex_imc: props.attention.pex_imc,
-    treatment: props.attention.treatment,
-    pex_aux_examination: JSON.parse(props.attention.pex_aux_examination),
-    doctor_id: {
-        code: props.attention.doctor.id,
-        name: props.attention.doctor.person.full_name,
-        email: props.attention.doctor.person.email,
-        telephone: props.attention.doctor.person.telephone,
+    date_time_attention: props.appointment.date_appointmen + ' '+ props.appointment.time_appointmen,
+    current_illness: null,
+    reason_consultation: props.appointment.description,
+    sick_time: null,
+    appetite: null,
+    thirst: null,
+    dream: null,
+    mood: null,
+    urine: null,
+    depositions: null,
+    weight_loss: null,
+    pex_tem: null,
+    pex_pa: null,
+    pex_fc: null,
+    pex_fr: null,
+    pex_peso: null,
+    pex_talla: null,
+    pex_imc: null,
+    treatment: null,
+    pex_aux_examination: {
+        description: null,
+        reference: null
     },
-    patient_id: props.attention.patient_id,
-    appointment_id: props.attention.appointment_id,
-    signed_accepted: props.attention.signed_accepted == 1 ? true : false,
-    observations: props.attention.observations,
-    next_appointmen_doctor_id: props.attention.nextappointment ? {
-        code: props.attention.nextappointment.doctor.id,
-        name: props.attention.nextappointment.doctor.full_name,
-        email: props.attention.nextappointment.doctor.email,
-        telephone: props.attention.nextappointment.doctor.telephone,
-    } : null,
-    next_date_appointment: props.attention.nextappointment ? props.attention.nextappointment.date_appointmen : null,
-    next_time_appointment: props.attention.nextappointment ? props.attention.nextappointment.time_appointmen : null,
-    next_time_end_appointment: props.attention.nextappointment ? props.attention.nextappointment.time_end_appointmen : null,
-    age: props.attention.age,
+    doctor_id: {
+        code: props.appointment.doctor.id,
+        name: props.appointment.doctor.full_name,
+        email: props.appointment.doctor.email,
+        telephone: props.appointment.doctor.telephone,
+    },
+    patient_id: props.appointment.patient.id,
+    patient_fullname: props.appointment.patient.full_name,
+    appointment_id: props.appointment.id,
+    signed_accepted: null,
+    observations: null,
+    next_appointmen_doctor_id: null,
+    next_date_appointment: null,
+    next_time_appointment: null,
+    next_time_end_appointment: null,
+    age: null,
 
 });
 
@@ -96,7 +94,7 @@ let intervalId;
 
 onMounted(() => {
     // Inicializar el valor de date_attention con la fecha y hora actual
-    // form.date_time_attention = getCurrentDateTime();
+    form.date_time_attention = getCurrentDateTime();
 
     // Actualizar la fecha y hora cada minuto
     intervalId = setInterval(() => {
@@ -108,55 +106,6 @@ onUnmounted(() => {
     clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
 });
 
-const seeker = reactive({
-    search: props.attention.patient.person.full_name,
-    loading: false,
-    several: false,
-    patients: [],
-    patient: props.attention.patient
-});
-
-const searchPatients = (event) => {
-    event.preventDefault(); // Previene el submit del form
-    seeker.loading = true;
-    axios({
-        method: 'post',
-        url: route('heal_patients_search'),
-        data: {search: seeker.search}
-    }).then((response) => {
-        let contador = 0;
-        if(response.data.success){
-            seeker.patients = response.data.patients;
-            contador = response.data.patients.length;
-        }else{
-            contador = 0;
-        }
-
-        return contador;
-    }).then((result) => {
-        if(result == 0){
-            Swal.fire({
-                icon: 'error',
-                title: 'Lo sentimos',
-                text: 'No se encontraron datos para la busqueda',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-            });
-        } else {
-            seeker.several = true
-        } 
-    }).finally(() => {
-        seeker.loading = false;
-    });
-}
-
-const selectPatient = (patient) => {
-    form.patient_id = patient.id;
-    form.age = calcularEdad(patient.person.birthdate);
-    seeker.patient = patient;
-    seeker.search = patient.person.full_name;
-    seeker.several = false;
-}
 
 const baseUrl = assetUrl;
 
@@ -270,13 +219,15 @@ function calcularEdad(fechaNacimiento) {
     };
 
     const saveAttention = () => {
-        form.put(route('odontology_attention_update',form.id), {
+        form.post(route('odontology_attention_store'), {
             preserveScroll: true,
             onSuccess: () => {
+                form.reset();
+
                 Swal.fire({
                     icon: 'success',
                     title: 'Enhorabuena',
-                    text: 'Se actualizado correctamente',
+                    text: 'Se registro correctamente',
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
@@ -285,33 +236,36 @@ function calcularEdad(fechaNacimiento) {
     }
 </script>
 <template>
-    <div class="space-y-6">
-        <form @submit.prevent="saveAttention">
+    <div >
+        <form @submit.prevent="saveAttention" class="space-y-6">
             <div class="panel">
                 <div class="grid grid-cols-5 gap-4">
                     <div class="col-span-6 sm:col-span-1">
                         <div class="ltr:sm:mr-4 rtl:sm:ml-4 w-full mb-5">
-                            <template v-if="seeker.patient">
-                                <img v-if="seeker.patient.person.image" 
-                                    :src="getImage(seeker.patient.person.image)"
+                            <template v-if="appointment.patient">
+                                <img v-if="appointment.patient.image" 
+                                    :src="getImage(appointment.patient.image)"
                                     alt="" 
                                     class="w-20 h-20 md:w-32 md:h-32 rounded-full object-cover mx-auto">
                                 
-                                <img v-else :src="'https://ui-avatars.com/api/?name='+seeker.patient.person.full_name+'&size=500&rounded=true'"
-                                    :alt="seeker.patient.person.full_name" 
+                                <img v-else :src="'https://ui-avatars.com/api/?name='+appointment.patient.full_name+'&size=500&rounded=true'"
+                                    :alt="appointment.patient.full_name" 
                                     class="w-20 h-20 md:w-32 md:h-32 rounded-full object-cover mx-auto">
                             </template>
                             <template v-else>
                                 <img src="/img/svg/questions-pana.svg" alt="" class="w-20 h-20 md:w-32 md:h-32 rounded-full object-cover mx-auto">
                             </template>
+                            <p class="text-xl font-semibold text-primary">
+                                {{ appointment.patient.full_name }}
+                            </p>
                         </div>
-                        <div class="space-y-3" v-if="seeker.patient">
+                        <div class="space-y-3" v-if="appointment.patient">
                             <dl class="flex flex-col sm:flex-row gap-1">
                                 <dt class="min-w-20">
                                     <span class="block text-sm text-gray-500 dark:text-neutral-500">DNI:</span>
                                 </dt>
                                 <dd>
-                                    <strong>{{ seeker.patient.person.number }}</strong>
+                                    <strong>{{ appointment.patient.number }}</strong>
                                 </dd>
                             </dl>
                             <dl class="flex flex-col sm:flex-row gap-1">
@@ -319,55 +273,13 @@ function calcularEdad(fechaNacimiento) {
                                     <span class="block text-sm text-gray-500 dark:text-neutral-500">EDAD:</span>
                                 </dt>
                                 <dd>
-                                    <strong>{{ calcularEdad(seeker.patient.person.birthdate) }}</strong>
+                                    <strong>{{ calcularEdad(appointment.patient.birthdate) }}</strong>
                                 </dd>
                             </dl>
                         </div>
                     </div>
                     <div class="col-span-6 sm:col-span-4">
                         <div class="grid grid-cols-6 gap-4">
-                            <div class="col-span-6 sm:col-span-3">
-                                <InputLabel value="PACIENTE" />
-                                <div class="relative w-full max-w-md">
-                                    <div class="relative">
-                                        <input
-                                            type="text"
-                                            placeholder="Buscar paciente..."
-                                            class="form-input"
-                                            v-model="seeker.search"
-                                            @keydown.enter="searchPatients"
-                                        />
-                                        <button @click="searchPatients" type="button" class="btn btn-primary absolute ltr:right-1 rtl:left-1 inset-y-0 m-auto rounded-md w-7 h-7 p-0 flex items-center justify-center">
-                                            <icon-processing v-if="seeker.loading" class="w-4 h-4" />
-                                            <icon-search v-else />
-                                        </button>
-                                    </div>
-                                    <div v-if="seeker.several" class="absolute w-full bg-white border border-gray-300 rounded-md mt-1 shadow-lg max-h-60 overflow-auto z-10">
-                                        <ul>
-                                            <!-- Ejemplos de resultados -->
-                                            <template v-for="patient, index in seeker.patients">
-                                                <li v-on:click="selectPatient(patient)" class="cursor-pointer">
-                                                    <div class="flex px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10"
-                                                        :class="{
-                                                            'border-b border-[#e0e6ed] dark:border-[#1b2e4b]': index > 0
-                                                        }"
-                                                    >
-                                                        <div class="ltr:mr-3 rtl:ml-3">
-                                                            <img v-if="patient.person.image" :src="getImage(patient.person.image)" alt="" class="rounded-full w-12 h-12 object-cover" />
-                                                            <img v-else :src="'https://ui-avatars.com/api/?name='+patient.person.full_name+'&size=500&rounded=true'" alt="" class="rounded-full w-12 h-12 object-cover" />
-                                                        </div>
-                                                        <div class="flex-1 font-semibold">
-                                                            <h6 class="mb-1 text-base">{{ patient.person.full_name }}</h6>
-                                                            <p class="text-xs">{{ patient.person.number }}</p>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <InputError :message="form.errors.patient_id" class="mt-1" />
-                            </div>
                             <div class="col-span-6 sm:col-span-3">
                                 <InputLabel value="ENFERMEDAD ACTUAL" />
                                 <TextInput v-model="form.current_illness" />
@@ -378,18 +290,17 @@ function calcularEdad(fechaNacimiento) {
                                 <flat-pickr v-model="form.date_time_attention" class="form-input" :config="dateTime"></flat-pickr>
                                 <InputError :message="form.errors.date_time_attention" class="mt-1" />
                             </div>
-                            
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="TALLA (centímetros)" />
-                                <TextInput v-model="form.pex_talla" />
+                                <InputLabel value="PESO" />
+                                <TextInput v-model="form.pex_peso" />
                             </div>
                             <div class="col-span-6 sm:col-span-3">
                                 <InputLabel value="MOTIVO DE CONSULTA" />
                                 <TextInput v-model="form.reason_consultation" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="PESO" />
-                                <TextInput v-model="form.pex_peso" />
+                                <InputLabel value="TALLA (centímetros)" />
+                                <TextInput v-model="form.pex_talla" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="APETITO" />
@@ -409,8 +320,8 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.dream" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
-                                <InputLabel value="ESTADO DE ANIMO" />
-                                <TextInput v-model="form.mood" />
+                                <InputLabel value="EST. ANIMO" />
+                                <TextInput v-model="form.mood" v-tippy="{ content: 'Estado de animo', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
                                 <InputLabel value="ORINA" />
@@ -421,29 +332,28 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.depositions" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
-                                <InputLabel value="PERDIDA DE PESO" />
-                                <TextInput v-model="form.weight_loss" />
+                                <InputLabel value="PER. PESO" />
+                                <TextInput v-model="form.weight_loss" v-tippy="{ content: 'Perdida de peso', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="T°" />
-                                <TextInput v-model="form.pex_tem" />
+                                <InputLabel value="T°" title="Temperatura" />
+                                <TextInput v-model="form.pex_tem" v-tippy="{ content: 'Temperatura', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="PA" />
-                                <TextInput v-model="form.pex_pa" />
+                                <InputLabel value="PA"  />
+                                <TextInput v-model="form.pex_pa" v-tippy="{ content: 'Presión arterial', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
                                 <InputLabel value="FC" />
-                                <TextInput v-model="form.pex_fc" />
+                                <TextInput v-model="form.pex_fc" v-tippy="{ content: 'Frecuencia cardiaca', placement: 'bottom' }" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
                                 <InputLabel value="FR" />
-                                <TextInput v-model="form.pex_fr" />
+                                <TextInput v-model="form.pex_fr" v-tippy="{ content: 'Frecuencia respiratoria', placement: 'bottom' }" />
                             </div>
-                            
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="IMC" />
-                                <TextInput v-model="form.pex_imc" />
+                                <InputLabel value="IMC"  />
+                                <TextInput v-model="form.pex_imc" v-tippy="{ content: 'Indice de masa corporal', placement: 'bottom' }" />
                             </div>
                         </div>
                     </div>
@@ -501,7 +411,7 @@ function calcularEdad(fechaNacimiento) {
                                 </label>
                             </div>
                             <div class="col-span-2">
-                                <div class="rounded-md border border-gray-200 dark:border-gray-700 px-4 py-2">
+                                <div class="rounded-md bg-white-light dark:bg-gray-800 dark:border-gray-700 px-4 py-2">
                                     <h3 class="m-0 dark:text-white-dark">PROGRAMAR PROXIMA CITA (opcional)</h3>
                                     <div class="mt-5 mb-5">
                                         <label for="doctor_id" >Doctor</label>
@@ -585,7 +495,7 @@ function calcularEdad(fechaNacimiento) {
                                 <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                 <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                             </svg>
-                            Actualizar
+                            Guardar
                         </PrimaryButton>
                         <Link :href="route('odontology_attention_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
                     </template>

@@ -12,9 +12,13 @@ use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
+use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\CMS\Entities\CmsSection;
 use Modules\CMS\Entities\CmsSectionItem;
 use Modules\Sales\Entities\SaleProductCategory;
+use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Payment\PaymentClient;
 
 class LandingController extends Controller
 {
@@ -101,5 +105,44 @@ class LandingController extends Controller
     public function terms()
     {
         return Inertia::render('Landing/TermsConditions');
+    }
+
+    public function academicPrices()
+    {
+        $subscriptions  = AcaSubscriptionType::orderBy('order_number')->get();
+        //dd($subscriptions);
+        return Inertia::render('Landing/Academic/CoursesSubscriptions', [
+            'subscriptions' => $subscriptions
+        ]);
+    }
+
+    public function academiCreatePayment($id)
+    {
+        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+        $client = new PreferenceClient();
+        $items = [];
+
+        array_push($items, [
+            'id' => '2',
+            'title' => 'PRIMIUN',
+            'quantity'      => floatval(1),
+            'currency_id'   => 'PEN',
+            'unit_price'    => floatval(240)
+        ]);
+
+        $preference = $client->create([
+            "items" => $items,
+        ]);
+
+        $preference_id =  $preference->id;
+
+        return Inertia::render('Landing/Academic/Checkout', [
+            'preference' => $preference_id
+        ]);
+    }
+
+    public function processAcademicPayment(Request $request)
+    {
+        dd($request->all());
     }
 }

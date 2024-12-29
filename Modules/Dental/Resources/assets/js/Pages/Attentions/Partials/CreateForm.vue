@@ -377,7 +377,7 @@ function calcularEdad(fechaNacimiento) {
                                 <TextInput v-model="form.reason_consultation" />
                             </div>
                             <div class="col-span-2 sm:col-span-1">
-                                <InputLabel value="TALLA" />
+                                <InputLabel value="TALLA (centímetros)" />
                                 <TextInput v-model="form.pex_talla" />
                             </div>
                             <div class="col-span-3 sm:col-span-1">
@@ -441,11 +441,7 @@ function calcularEdad(fechaNacimiento) {
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 sm:col-span-1">
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <InputLabel value="TRATAMIENTO" />
-                                <textarea v-model="form.treatment" class="form-textarea" rows="3"></textarea>
-                                <InputError :message="form.errors.treatment" class="mt-1" />
-                            </div>
+                            
                             <div class="col-span-2">
                                 <InputLabel value="Observación" />
                                 <textarea v-model="form.observations" class="form-textarea" rows="3"></textarea>
@@ -457,6 +453,11 @@ function calcularEdad(fechaNacimiento) {
                             <div class="col-span-2">
                                 <InputLabel value="Referencia (Lugar y motivo): " />
                                 <textarea v-model="form.pex_aux_examination.reference" class="form-textarea" rows="3"></textarea>
+                            </div>
+                            <div class="col-span-2">
+                                <InputLabel value="TRATAMIENTO" />
+                                <textarea v-model="form.treatment" class="form-textarea" rows="3"></textarea>
+                                <InputError :message="form.errors.treatment" class="mt-1" />
                             </div>
                         </div>
                     </div>
@@ -520,7 +521,7 @@ function calcularEdad(fechaNacimiento) {
                                     </div>
                                     <div class="mb-5">
                                         <label for="dateEnd">Hora :</label>
-                                        <Dropdown placement="bottom" align-to-end :trigger="['click']" v-model:visible="timeVisible">
+                                        <Dropdown placement="bottom" align-to-end :trigger="['click']" v-model:open="timeVisible">
                                             <input v-model="form.next_time_appointment" class="form-input w-full" @click.prevent /> 
                                             <template #overlay>
                                                 <Menu>

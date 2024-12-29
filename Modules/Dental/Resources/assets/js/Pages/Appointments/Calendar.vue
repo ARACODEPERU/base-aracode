@@ -207,6 +207,11 @@
         return dt;
     };
 
+    const hideModalCita = () => {
+        form.reset();
+        isAddEventModal.value = false;
+    }
+
     const saveAppointment = () => {
         if (!form.description) {
             return true;
@@ -256,8 +261,8 @@
         }
         form.reset();
         calendar.value.getApi(); //refresh Calendar
-        showMessage('Event has been saved successfully.');
-        isAddEventModal.value = false;
+        showMessage('La cita se ha guardado correctamente.');
+        hideModalCita();
     };
 
     const timeVisible = ref(false);
@@ -346,12 +351,14 @@
     };
 
     const getBusyHours = () => {
-        axios({
-            method: 'get',
-            url: route("odontology_appointments_busy_hours",[form.date_appointmen,form.doctor_id.code])
-        }).then((result) => {
-            generateTimeRange('08:00','20:00',30,result.data.times);
-        });
+        if(form.doctor_id && form.date_appointmen){
+            axios({
+                method: 'get',
+                url: route("odontology_appointments_busy_hours",[form.date_appointmen,form.doctor_id.code])
+            }).then((result) => {
+                generateTimeRange('08:00','20:00',30,result.data.times);
+            });
+        }
     }
 
 </script>
@@ -403,7 +410,7 @@
             </div>
             <!-- add event modal -->
             <TransitionRoot appear :show="isAddEventModal" as="template">
-                <Dialog as="div" @close="isAddEventModal = false" class="relative z-[51]">
+                <Dialog as="div" class="relative z-[51]">
                     <TransitionChild
                         as="template"
                         enter="duration-300 ease-out"
@@ -431,7 +438,7 @@
                                     <button
                                         type="button"
                                         class="absolute top-4 ltr:right-4 rtl:left-4 text-gray-400 hover:text-gray-800 dark:hover:text-gray-600 outline-none"
-                                        @click="isAddEventModal = false"
+                                        @click="hideModalCita"
                                     >
                                         <icon-x />
                                     </button>
@@ -493,7 +500,7 @@
                                                 </div>
                                                 <div class="mb-5">
                                                     <label for="dateEnd">Hora :</label>
-                                                    <Dropdown placement="bottom" align-to-end :trigger="['click']" v-model:visible="timeVisible">
+                                                    <Dropdown placement="bottom" align-to-end :trigger="['click']" v-model:open="timeVisible">
                                                         <input v-model="form.time_appointmen" class="form-input w-full" @click.prevent /> 
                                                         <template #overlay>
                                                             <Menu>
@@ -563,8 +570,13 @@
                                                 </div>
                                             </div>
                                             <div class="flex justify-end items-center mt-8">
-                                                <button type="button" class="btn btn-outline-danger" @click="isAddEventModal = false">Cerrar</button>
-                                                <button type="submit" class="btn btn-primary ltr:ml-4 rtl:mr-4">
+                                                <button type="button" class="btn btn-outline-danger" @click="hideModalCita">Cerrar</button>
+                                                <template v-if="form.id && form.status == 1">
+                                                    <Link :href="route('odontology_attention_create_appointment', form.id)" v-can="'dental_citas_acceso_atencion'" type="button" class="btn btn-primary ltr:ml-4 rtl:mr-4">
+                                                        Atender
+                                                    </Link>
+                                                </template>
+                                                <button v-can="'dental_citas_nuevo'" type="submit" class="btn btn-success ltr:ml-4 rtl:mr-4">
                                                     {{ form.id ? 'Actualizar' : 'Guardar' }}
                                                 </button>
                                             </div>

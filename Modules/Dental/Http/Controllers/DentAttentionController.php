@@ -127,6 +127,7 @@ class DentAttentionController extends Controller
                 $initialDateTime = Carbon::parse($ddate);
                 $newDateTime = $initialDateTime->addMinutes(30);
                 $doctor2 = HealDoctor::find($request->get('next_appointmen_doctor_id')['code']);
+
                 $appointment = DentAppointment::create([
                     'patient_id'            => $patient->id,
                     'patient_person_id'     => $patient->person_id,
@@ -149,6 +150,13 @@ class DentAttentionController extends Controller
 
                 $attention->next_appointment_id = $appointment->id;
                 $attention->save();
+            }
+
+            if ($request->get('appointment_id')) {
+                //cambiamos la cita de procedencia a atendido
+                DentAppointment::find($request->get('appointment_id'))->update([
+                    'status' => '2'
+                ]);
             }
         }
 
@@ -331,6 +339,33 @@ class DentAttentionController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message
+        ]);
+    }
+
+    public function appointmentByIdAttention($id)
+    {
+
+        $appointment = DentAppointment::with('patient')
+            ->with('doctor')
+            ->where('id', $id)
+            ->first();
+
+        $doctors = HealDoctor::with('person')->get();
+
+        if (count($doctors) > 0) {
+            foreach ($doctors as $i => $doctor) {
+                $doctors[$i] = array(
+                    'code' => $doctor->id,
+                    'name' => $doctor->person->full_name,
+                    'email' => $doctor->person->email,
+                    'telephone' => $doctor->person->telephone
+                );
+            }
+        }
+
+        return Inertia::render('Dental::Attentions/CreateByIdAppointment', [
+            'appointment' => $appointment,
+            'doctors' => $doctors
         ]);
     }
 }

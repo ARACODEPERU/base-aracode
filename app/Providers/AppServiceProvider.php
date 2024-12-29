@@ -30,5 +30,9 @@ class AppServiceProvider extends ServiceProvider
         Inertia::share('company', function () {
             return Company::first();
         });
+
+        Inertia::share([
+            'MERCADOPAGO_KEY' => env('MERCADOPAGO_KEY'), // Comparte la clave con el frontend
+        ]);
     }
 }

@@ -26,6 +26,7 @@ class PermissionsDentalTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'dental_citas_nuevo']));
         array_push($permissions, Permission::create(['name' => 'dental_citas_editar']));
         array_push($permissions, Permission::create(['name' => 'dental_citas_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'dental_citas_acceso_atencion']));
         array_push($permissions, Permission::create(['name' => 'dental_atencion_listado']));
         array_push($permissions, Permission::create(['name' => 'dental_atencion_nuevo']));
         array_push($permissions, Permission::create(['name' => 'dental_atencion_editar']));

@@ -33,6 +33,7 @@
         "@fullcalendar/vue3": "^6.1.14",
         "@headlessui/vue": "^1.7.22",
         "@intlify/unplugin-vue-i18n": "^4.0.0",
+        "@mercadopago/sdk-js": "^0.0.3",
         "@popperjs/core": "2.9.1",
         "@primevue/themes": "^4.0.4",
         "@suadelabs/vue3-multiselect": "^1.0.2",
