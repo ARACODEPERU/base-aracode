@@ -5,12 +5,14 @@ import iconEye from '@/Components/vristo/icon/icon-eye.vue';
 
 </script>
 <template>
-    <section id="portfolio" class="section-Portfolio 2xl:py-[80px] py-[70px]">
+    <section id="portfolio" class="section-Portfolio 2xl:py-[80px] py-[70px] bg-white dark:bg-[#120f1c]">
         <div class="banner text-center mb-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
-            <span class="text-[14px] text-[#777]">PORTAFOLIO</span>
+            <span class="text-[14px] text-[#777] dark:text-[#ddd]">PORTAFOLIO</span>
             <h2
-                class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold">
-                ALGUNOS <span class="text-[#0188ee]"> PROYECTOS</span></h2>
+                class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] 
+                text-[22px] font-bold dark:text-white">
+                ALGUNOS <span class="text-[#0188ee]"> PROYECTOS</span>
+            </h2>
         </div>
         <div
             class="flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px] px-6">
@@ -20,16 +22,16 @@ import iconEye from '@/Components/vristo/icon/icon-eye.vue';
                     <div class="portfolio-tabs mb-[30px]">
                         <ul
                             class="2xl:flex xl:flex md:flex sm:block place-content-center text-center">
-                            <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block active"
+                            <li class="text-[14px] text-[#17181c] dark:text-[#ddd] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block active"
                                 data-filter="all">
                                 ALL</li>
-                            <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
+                            <li class="text-[14px] text-[#17181c] dark:text-[#ddd] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
                                 data-filter=".corporativo">CORPORATIVO</li>
-                            <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
+                            <li class="text-[14px] text-[#17181c] dark:text-[#ddd] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
                                 data-filter=".elerarning">E-LEARNING</li>
-                            <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
+                            <li class="text-[14px] text-[#17181c] dark:text-[#ddd] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
                                 data-filter=".ecomerce">E-COMMERCE</li>
-                            <li class="text-[14px] text-[#17181c] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
+                            <li class="text-[14px] text-[#17181c] dark:text-[#ddd] 2xl:mx-[10px] sm:mx-[0px] px-[10px] leading-[11px] font-semibold hover:text-[#0188ee] cursor-pointer inline-block"
                                 data-filter=".sistemas">SISTEMAS WEBS</li>
                         </ul>
                     </div>
@@ -209,7 +211,9 @@ import iconEye from '@/Components/vristo/icon/icon-eye.vue';
         <div class="flex justify-center">
             <div>
                 <a href="#contact" type="button"
-                        class=" text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block">
+                        class=" text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm 
+                        px-8 py-2.5 mr-2 hidden 2xl:block xl:block lg:block
+                        shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-110">
                         Obtenga una cotización
                 </a>
             </div>

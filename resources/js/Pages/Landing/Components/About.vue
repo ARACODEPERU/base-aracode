@@ -6,9 +6,9 @@ const xtassetUrl = assetUrl;
 const pathImage = xtassetUrl;
 </script>
 <template>
-<section id="about" class="bg-white 2xl:pb-[80px] pb-[70px] dark:bg-[#120f1c]">
-        <div
-            class="flex flex-wrap justify-between items-center mx-auto mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
+<section id="about" class="bg-[#f8f8f8] 2xl:pb-[80px] pt-[120px] pb-[70px] dark:bg-[#161321]">
+        <div class="flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] 
+            xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
             <div class="grid lg:grid-cols-2 grid-cols-1 gap-[30px] px-6 max-[320px]:px-[0px]">
                 <div class="transition-all relative" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
                     <img :src="`${pathImage}themes/personalLanding/assets/img/shape/shape-6.png`" alt="shape-6" class="absolute w-12 top-2.5 left-2.5">
@@ -24,29 +24,33 @@ const pathImage = xtassetUrl;
                             <span class="text-[#0188ee]">tecnológicas a medida.</span>
                         </h2>
                     </div>
-                    <p class="text-[16px] text-[#777] mb-[30px]">
+                    <p class="text-[16px] text-[#777] dark:text-[#ddd] mb-[30px]">
                         somos un equipo apasionado de profesionales dedicados a desarrollar soluciones tecnológicas innovadoras.
                     </p>
-                    <div class="border p-[24px] rounded-lg">
+                    <div class="border p-[24px] rounded-lg mb-[30px]">
                         <div class="box-border flex justify-between max-[400px]:block">
                             <div class="left">
                                 <div class="name">
                                     <span class="text-[16px] leading-[28px] font-bold dark:text-white"> Nombre : </span><br>
-                                    <span class="detail text-[14px] leading-[28px] text-[#777]">{{ company.business_name }} </span>
+                                    <span class="detail text-[14px] leading-[28px] text-[#777] dark:text-[#ddd]">{{ company.business_name }} </span>
                                 </div>
                             </div>
                             <div class="right">
                                 <div class="ph">
                                     <span class="text-[16px] leading-[28px] font-bold dark:text-white">Número de teléfono : </span><br>
-                                    <span class="detail text-[14px] leading-[28px] text-[#777]">+51 {{ company.phone }}</span>
+                                    <span class="detail text-[14px] leading-[28px] text-[#777] dark:text-[#ddd]">+51 {{ company.phone }}</span>
                                 </div>
                             </div>
                         </div>
                         <div class="bottom pt-[20px]">
                             <span class="text-[16px] leading-[28px] font-bold dark:text-white">DIRECCIÓN : </span>
-                            <span class="detail text-[14px] leading-[28px] text-[#777]">{{ company.fiscal_address }}, Nuevo Chimbote</span>
+                            <span class="detail text-[14px] leading-[28px] text-[#777] dark:text-[#ddd]">{{ company.fiscal_address }}, Nuevo Chimbote</span>
                         </div>
                     </div>
+
+                    <p class="text-[#777] dark:text-[#0188ee]">
+                        Transforma tu empresa con soluciones digitales innovadoras.
+                    </p>
                 </div>
             </div>
         </div>

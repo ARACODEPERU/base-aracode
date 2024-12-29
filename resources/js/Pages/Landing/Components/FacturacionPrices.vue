@@ -4,7 +4,7 @@ const store = useAppStore();
 </script>
 <template>
     <section id="experience" class="section-experience bg-[#f6f8ff] relative dark:bg-[#0e1726]">
-        <div class="relative pt-[60px]">
+        <!-- <div class="relative pt-[60px]">
             <template v-if="store.theme === 'dark'">
                 <img src="/themes/personalLanding/assets/img/shape/bg-shape-dark.png" alt="bg-shape"
                 class="absolute top-0 left-0 right-0 w-full bg-center bg-cover">
@@ -13,16 +13,16 @@ const store = useAppStore();
                 <img src="/themes/personalLanding/assets/img/shape/bg-shape.png" alt="bg-shape"
                 class="absolute top-0 left-0 right-0 w-full bg-center bg-cover">
             </template>
-            
-        </div>
+        </div> -->
         <div class="2xl:pb-[80px] pb-[70px] 2xl:pt-[80px] md:pt-[70px] pt-[20px]">
             <!-- Features -->
             <div class="overflow-hidden">
                 <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
                     <!-- Title -->
-                    
                     <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
-                        <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">NUESTROS PLANES</h2>
+                        <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
+                            NUESTROS <span class="text-[#0188ee]">PLANES</span>
+                        </h2>
                         <p class="mt-1 text-gray-600 dark:text-neutral-400">planes por mes o al año, envía tus facturas y boletas electrónicas a SUNAT fácilmente</p>
                     </div>
                     <!-- End Title -->
@@ -32,7 +32,7 @@ const store = useAppStore();
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                             <div>
                                 <!-- Card -->
-                                <div class="p-4 relative z-10 bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800">
+                                <div class="p-4 relative bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800">
                                     <h3 class="text-xl font-bold text-gray-800 dark:text-neutral-200">Plan mensual</h3>
                                     <div class="text-sm text-gray-500 dark:text-neutral-500">Todo lo que tu emprendimiento necesita.</div>
 
@@ -122,7 +122,7 @@ const store = useAppStore();
 
                             <div>
                             <!-- Card -->
-                            <div class="shadow-xl shadow-gray-200 p-5 relative z-10 bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800 dark:shadow-gray-900/20">
+                            <div class="shadow-xl shadow-gray-200 p-5 relative bg-white border rounded-xl md:p-10 dark:bg-neutral-900 dark:border-neutral-800 dark:shadow-gray-900/20">
                                 <h3 class="text-xl font-bold text-gray-800 dark:text-neutral-200">Plan por año </h3>
                                 <div class="text-sm text-gray-500 dark:text-neutral-500">Para empresas en crecimiento.</div>
                                 <span class="absolute top-0 end-0 rounded-se-xl rounded-es-xl text-xs font-medium bg-gray-800 text-white py-1.5 px-3 dark:bg-white dark:text-neutral-800">Los más populares</span>
@@ -214,21 +214,21 @@ const store = useAppStore();
                 <!-- End Grid -->
 
                 <!-- SVG Element -->
-                <div class="hidden md:block absolute top-0 end-0 translate-y-16 translate-x-16">
+                <!-- <div class="hidden md:block absolute top-0 end-0 translate-y-16 translate-x-16">
                     <svg class="w-16 h-auto text-orange-500" width="121" height="135" viewBox="0 0 121 135" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M5 16.4754C11.7688 27.4499 21.2452 57.3224 5 89.0164" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
                     <path d="M33.6761 112.104C44.6984 98.1239 74.2618 57.6776 83.4821 5" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
                     <path d="M50.5525 130C68.2064 127.495 110.731 117.541 116 78.0874" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
                     </svg>
-                </div>
+                </div> -->
                 <!-- End SVG Element -->
 
                 <!-- SVG Element -->
-                <div class="hidden md:block absolute bottom-0 start-0 translate-y-16 -translate-x-16">
+                <!-- <div class="hidden md:block absolute bottom-0 start-0 translate-y-16 -translate-x-16">
                     <svg class="w-56 h-auto text-cyan-500" width="347" height="188" viewBox="0 0 347 188" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M4 82.4591C54.7956 92.8751 30.9771 162.782 68.2065 181.385C112.642 203.59 127.943 78.57 122.161 25.5053C120.504 2.2376 93.4028 -8.11128 89.7468 25.5053C85.8633 61.2125 130.186 199.678 180.982 146.248L214.898 107.02C224.322 95.4118 242.9 79.2851 258.6 107.02C274.299 134.754 299.315 125.589 309.861 117.539L343 93.4426" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
                     </svg>
-                </div>
+                </div> -->
                 <!-- End SVG Element -->
                 </div>
 

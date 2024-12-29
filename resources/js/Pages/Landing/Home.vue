@@ -8,10 +8,12 @@ import Customers from './Components/Customers.vue';
 import Footer from './Components/Footer.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import Teams from './Components/Teams.vue';
-import FacturacionPrices from './Components/FacturacionPrices.vue';
 const xassetUrl = assetUrl;
 import { ref, onMounted, onUnmounted } from 'vue';
 import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
+import WhatsappHome from './Components/WhatsappHome.vue';
+import ContactForm from './Components/ContactForm.vue';
+import ContinuousArrow from './Components/ContinuousArrow.vue';
 
 defineProps({
     dataHome: {
@@ -63,29 +65,35 @@ defineProps({
     <Header :dataHeader="dataHome.header" />
     
 
-    <section style="background-image: url('./img/Landing/bg/portadaWeb.jpg');" class="bg-center bg-no-repeat bg-gray-700 bg-blend-multiply">
-         
+    <section style="background-image: url('./img/Landing/bg/portadaWeb.jpg');" 
+            class="bg-center bg-no-repeat bg-gray-700 bg-blend-multiply block">
         <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
-                Haz Crecer Tu Negocio con Sistemas Web que Generan Resultados
+                Haz Crecer Tu Negocio con <span class="text-[#0188ee]">Sistemas Web</span> que Generan Resultados
             </h1>
             <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">
                 Diseñamos sistemas web personalizados que optimizan tus procesos, mejoran la experiencia del cliente y 
-                generan resultados para tu negocio. Transforma tu empresa con soluciones digitales innovadoras.
+                generan resultados para tu negocio.
             </p>
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
-                <a href="#contact" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-[#0188ee] hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900">
-                    Contactanos
+                <a href="#contact" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white 
+                    rounded-lg bg-[#0188ee] hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900
+                    shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
+                    Ver Demos
                     <svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
                     </svg>
                 </a>
-                <a href="#" class="inline-flex justify-center hover:text-gray-900 items-center py-3 px-5 sm:ms-4 text-base font-medium text-center text-white rounded-lg border border-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-400">
-                    Learn more
+                <a href="#contact" class="inline-flex justify-center hover:text-gray-900 items-center py-3 px-5 sm:ms-4 text-base font-medium 
+                    text-center text-white rounded-lg border border-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-400
+                    shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
+                    Contactanos
                 </a>  
             </div>
         </div>
     </section>
+
+    <ContinuousArrow />
 
 
     <!-- hero section -->
@@ -309,64 +317,18 @@ defineProps({
             </div>
         </div>
     </section> -->
-    <FacturacionPrices />
+    
     <Teams /> 
+
     <!-- contact -->
-    <section id="contact" class="section-contact 2xl:py-[80px] py-[70px] dark:bg-gray-800">
-        <div class="banner text-center mb-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
-            <span class="text-[14px] text-[#777] dark:text-[#fff]">FORMULARIO</span>
-            <h2
-                class="text-center mt-[5px] 2xl:text-[35px] xl:text-[33px] lg:text-[30px] md:text-[26px] sm:text-[24px] text-[22px] font-bold dark:text-[#fff]">
-                Ponte en contacto con 
-                <span class="text-[#0188ee]">NOSOTROS</span>
-            </h2>
-        </div>
-        <form>
-            <div
-                class="flex flex-wrap justify-between items-center mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px] px-6">
-                <div class="m-b-minus-24px w-full">
-                    <div class="grid lg:grid-cols-2 grid-cols-1 gap-[30px]" data-aos="fade-up" data-aos-duration="2000" data-aos-delay="300">
-                        <div class="border rounded-lg dark:border-[#27213b]">
-                            <div class="border-b dark:border-[#27213b]">
-                                <input type="text"
-                                    class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none rounded-t-lg dark:bg-[#161321]"
-                                    id="fname" placeholder="Nombre completo">
-                            </div>
-                            <div class="border-b dark:border-[#27213b]">
-                                <input type="email"
-                                    class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none dark:bg-[#161321]"
-                                    id="umail" placeholder="Correo electrónico">
-                            </div>
-                            <div class="border-b dark:border-[#27213b]">
-                                <input type="text"
-                                    class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none dark:bg-[#161321]"
-                                    id="phone" placeholder="Teléfono">
-                            </div>
-                            <div class="dark:border-[#27213b]">
-                                <input type="text"
-                                    class="appearance-none w-full py-6 px-3 text-gray-700 leading-tight focus:outline-none rounded-b-lg dark:bg-[#161321]"
-                                    id="subject" placeholder="Asunto">
-                            </div>
-                        </div>
-                        <div class="mb-0">
-                            <div class="mb-4">
-                                <textarea class="w-full border dark:border-[#27213b] rounded-xl pl-4 pt-2 focus:outline-none dark:bg-[#161321]"
-                                    id="exampleFormControlTextarea1" rows="8" placeholder="Mensaje"></textarea>
-                            </div>
-                            <button type="button"
-                                class="text-white bg-[#0188ee] hover:bg-[#f11600] no-underline font-medium rounded-full text-sm px-8 py-2.5 mr-2">
-                                Enviar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </section>
+     <ContactForm />
 
     <!-- footer -->
     
     <Footer />
+
+    <WhatsappHome />
+
     <!-- scroll Top -->
     <div id="scrollup"
         @click="scrollToTop" 
@@ -374,6 +336,8 @@ defineProps({
         class="fixed bg-[#0188ee] text-white rounded-full flex justify-center 
         text-center items-center p-2 right-6 cursor-pointer bottom-6 h-10 w-10 z-20
         font-bold">
-        <icon-arrow-left class="-rotate-90 font-bold" />
+        <iconArrowLeft class="-rotate-90 font-bold" />
     </div>
 </template>
+
+
