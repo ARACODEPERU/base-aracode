@@ -12,6 +12,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    subscription:{
+        type: Object,
+        default: () => ({}),
+    }
 });
 
 </script>
@@ -26,7 +30,7 @@ const props = defineProps({
         <!-- End Title -->
         <div class="flex flex-wrap justify-center gap-6">
             <div class="flex flex-col rounded-xl p-8 w-[500px]">
-                <MercadoPagoForm :preference="preference" :publicKey="publicKey" /> 
+                <MercadoPagoForm :preference="preference" :publicKey="publicKey" :subscription="subscription" /> 
             </div>
         </div>
     </div>

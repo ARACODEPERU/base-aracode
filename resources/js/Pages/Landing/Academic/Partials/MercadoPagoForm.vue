@@ -13,6 +13,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    subscription:{
+        type: Object,
+        default: () => ({}),
+    }
 });
 
 let mp;
@@ -53,7 +57,7 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                 console.log("Brick está listo");
             },
             onSubmit: (cardFormData) => {
-                return fetch(route("academic_process_payment_mercadopago"), {
+                return fetch(route("aca_mercadopago_processpayment", subscription.id), {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",

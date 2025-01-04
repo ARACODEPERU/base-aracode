@@ -137,12 +137,8 @@ class LandingController extends Controller
         $preference_id =  $preference->id;
 
         return Inertia::render('Landing/Academic/Checkout', [
-            'preference' => $preference_id
+            'preference' => $preference_id,
+            'subscription' => AcaSubscriptionType::find($id)
         ]);
-    }
-
-    public function processAcademicPayment(Request $request)
-    {
-        dd($request->all());
     }
 }

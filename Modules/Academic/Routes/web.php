@@ -14,6 +14,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
+use Modules\Academic\Http\Controllers\MercadopagoController;
 
 Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('academic')->group(function () {
     Route::middleware(['middleware' => 'permission:aca_dashboard'])
@@ -222,4 +223,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::post('subscriptions/free/user', [AcaStudentController::class, 'startStudentFree'])
         ->name('aca_subscriptions_free_user');
+
+    Route::put('mercadopago/{id}/processpayment', [MercadopagoController::class, 'processPayment'])
+        ->name('aca_mercadopago_processpayment');
 });

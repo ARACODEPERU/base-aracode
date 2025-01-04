@@ -30,8 +30,18 @@
     const displayModalVideo = ref(false);
     const videoSelected = ref(null);
 
+    const default_theme_id = ref(null);
+    const contentsData = ref(null);
+    const commentsData = ref(null);
+
+    if(props.module.themes.length > 0){
+        default_theme_id.value = props.module.themes[0].id;
+        contentsData = props.module.themes[0].contents;
+        commentsData = props.module.themes[0].comments;
+    }
+
     const formComment = useForm({
-        theme_id: props.module.themes[0].id,
+        theme_id:  default_theme_id.value,
         message: null
     });
 
@@ -159,9 +169,6 @@
 
     const selectedTab = ref('');
 
-    const contentsData = ref(props.module.themes[0].contents);
-    const commentsData = ref(props.module.themes[0].comments);
-
     const selectTheme = (theme) => {
         contentsData.value = theme.contents;
         selectedTab.value = theme.id
@@ -199,7 +206,7 @@
                 <p class="lead mt-3 mb-4 text-center dark:text-white-light">
                     {{ module.description }}
                 </p>
-                <blockquote class="text-black p-5 ltr:pl-3.5 rtl:pr-3.5 bg-white shadow-md rounded-tr-md rounded-br-md border border-white-light border-l-2 !border-l-primary dark:bg-[#060818] dark:border-[#060818]">
+                <blockquote v-if="course && course.teacher && course.teacher.person"  class="text-black p-5 ltr:pl-3.5 rtl:pr-3.5 bg-white shadow-md rounded-tr-md rounded-br-md border border-white-light border-l-2 !border-l-primary dark:bg-[#060818] dark:border-[#060818]">
                     <div class="flex items-start">
                         <div class="w-14 h-14 ltr:mr-5 rtl:ml-5 flex-none">
                             <img :src="getImage(course.teacher.person.image)" alt="" class="w-14 h-14 rounded-full object-cover m-auto" />
@@ -298,7 +305,7 @@
                                     </div>
                                 </template>
                                 <template v-else>
-                                    <template v-if="commentsData.length > 0">
+                                    <template v-if="commentsData && commentsData.length > 0">
                                         <div v-for="(comment, ibex) in commentsData" class="mt-8">
                                             <div class="flex align-top">
                                                 <div class="shrink-0">
