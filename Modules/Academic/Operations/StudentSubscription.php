@@ -11,19 +11,20 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
+use Illuminate\Support\Facades\Hash;
 
 class StudentSubscription
 {
     protected $subscription_id;
-    protected $response;
 
-    public function __construct($subscription_id, $response)
+    public function __construct($subscription_id = null)
     {
         $this->subscription_id = $subscription_id;
-        $this->response = $response;
     }
-    public function process()
+    public function process($response, $server)
     {
+        dd($response);
+        $subscription = AcaSubscriptionType::find($this->subscription_id);
         ///se registra la venta en linea 
         ///en la tabla onli_sale
         $sale = new OnliSale();
@@ -117,19 +118,18 @@ class StudentSubscription
 
             $person = Person::create([
                 'document_type_id' => 1,
-                'short_name',
-                'full_name',
-                'number',
-                'email',
+                'short_name' => 'Usuario Nuevo',
+                'full_name' => 'Usuario Academico Nuevo',
+                'number' => $response['payer']['identification']['number'],
+                'email' => $response['payer']['email'],
                 'gender' => 'M',
                 'status' => true,
             ]);
 
             $user = User::create([
-                'name',
-                'email',
-                'email_verified_at',
-                'pasword',
+                'name' => 'Usuario Nuevo',
+                'email' => $response['payer']['email'],
+                'pasword' => Hash::make($response['payer']['identification']['number']),
                 'local_id' => 1,
                 'person_id' => $person->id
             ]);
@@ -157,16 +157,16 @@ class StudentSubscription
             ]);
         }
 
-        // $sale->total = $response->get('transaction_amount');
-        // $sale->identification_type = $request->get('payer')['identification']['type'];
-        // $sale->identification_number = $request->get('payer')['identification']['number'];
-        // $sale->response_status = $payment->status;
-        // $sale->response_id = $request->get('collection_id');
-        // $sale->response_date_approved = Carbon::now()->format('Y-m-d');
-        // $sale->response_payer = json_encode($request->all());
-        // $sale->response_payment_method_id = $request->get('payment_type');
-        // $sale->mercado_payment_id = $payment->id;
-        // $sale->mercado_payment = json_encode($payment);
+        $sale->total = $response['transaction_amount'];
+        $sale->identification_type = $response['payer']['identification']['type'];
+        $sale->identification_number = $response['payer']['identification']['number'];
+        $sale->response_status = $payment->status;
+        $sale->response_id = $response['issuer_id'];
+        $sale->response_date_approved = Carbon::now()->format('Y-m-d');
+        $sale->response_payer = json_encode($response);
+        $sale->response_payment_method_id = $response['payment_method_id'];
+        $sale->mercado_payment_id = $payment->id;
+        $sale->mercado_payment = json_encode($payment);
 
         $sale->save();
 

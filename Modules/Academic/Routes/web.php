@@ -223,7 +223,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::post('subscriptions/free/user', [AcaStudentController::class, 'startStudentFree'])
         ->name('aca_subscriptions_free_user');
-
-    Route::put('mercadopago/{id}/processpayment', [MercadopagoController::class, 'processPayment'])
-        ->name('aca_mercadopago_processpayment');
 });
+
+/////////no nesesita aver iniciado session//////////
+Route::put('mercadopago/{id}/processpayment', [MercadopagoController::class, 'processPayment'])
+    ->name('aca_mercadopago_processpayment');
+
+Route::get('Thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');

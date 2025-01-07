@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Academic\Entities\AcaSubscriptionType;
+use Modules\Academic\Operations\StudentSubscription;
 
 class MercadopagoController extends Controller
 {
@@ -18,7 +19,7 @@ class MercadopagoController extends Controller
         $payment_server = null;
 
         $sus = AcaSubscriptionType::find($id);
-
+        //dd($request->all());
         try {
 
             if ($request->get('payment_method_id') == 'yape') {
@@ -29,7 +30,7 @@ class MercadopagoController extends Controller
                     "payer" => $request->get('payer'),
                     "payment_method_id" => "yape",
                     "token" => $request->get('token'),
-                    "transaction_amount" => (float) $sus->price,
+                    "transaction_amount" => (float) $request->get('transaction_amount'),
                 ];
                 $payment = $client->create($createRequest);
                 $payment_server = 'yape';
@@ -41,7 +42,7 @@ class MercadopagoController extends Controller
                     "payer" => $request->get('payer'),
                     "payment_method_id" => $request->get('payment_method_id'),
                     "token" => $request->get('token'),
-                    "transaction_amount" => (float) $sus->price
+                    "transaction_amount" => (float) $request->get('transaction_amount')
                 ];
                 $payment = $client->create($createRequest);
 
@@ -54,7 +55,8 @@ class MercadopagoController extends Controller
 
             switch ($payment->status) {
                 case "approved":
-
+                    $pro = new StudentSubscription($id);
+                    $pro->process($request->all(), $payment_server);
                     $message = 'Pago aprobado';
                     break;
                 case "rejected":
@@ -81,5 +83,10 @@ class MercadopagoController extends Controller
             $message = $content['message'];
             return response()->json(['error' => 'Error al procesar el pago: ' . $message], 412);
         }
+    }
+
+    public function thankYou($id)
+    {
+        dd('gracias');
     }
 }
