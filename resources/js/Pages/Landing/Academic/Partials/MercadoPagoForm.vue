@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { loadMercadoPago } from "@mercadopago/sdk-js";
+import { router } from '@inertiajs/vue3'
 
 const cardPaymentBrickContainer = ref(null);
 
@@ -57,21 +58,20 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                 console.log("Brick está listo");
             },
             onSubmit: (cardFormData) => {
-                console.log(cardFormData)
                 return axios({
                         method: 'PUT',
                         url: route("aca_mercadopago_processpayment", props.subscription.id),
                         data: cardFormData
                     }).then((response) => {
-                        if (!response.ok) {
-                            return response.json().then((error) => {
-                                throw new Error(error.error);
-                            });
-                        }
-                        return response.json();
+                        return response.data;
                     }).then((data) => {
                         if (data.status === "approved") {
-                            window.location.href = data.url;
+                            router.visit(data.url, {
+                                method: 'get',
+                                replace: true,
+                                preserveState: false,
+                                preserveScroll: false,
+                            });
                         } else {
                             alert(data.message);
                             window.location.reload();

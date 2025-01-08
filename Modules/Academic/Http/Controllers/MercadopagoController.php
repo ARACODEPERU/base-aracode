@@ -56,7 +56,7 @@ class MercadopagoController extends Controller
             switch ($payment->status) {
                 case "approved":
                     $pro = new StudentSubscription($id);
-                    $pro->process($request->all(), $payment_server);
+                    $pro->process($request->all(), $payment);
                     $message = 'Pago aprobado';
                     break;
                 case "rejected":

@@ -12,6 +12,8 @@ use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Modules\Academic\Emails\ConfirmPurchaseSubscription;
 
 class StudentSubscription
 {
@@ -21,9 +23,9 @@ class StudentSubscription
     {
         $this->subscription_id = $subscription_id;
     }
-    public function process($response, $server)
+    public function process($response, $payment)
     {
-        dd($response);
+        //dd($response);
         $subscription = AcaSubscriptionType::find($this->subscription_id);
         ///se registra la venta en linea 
         ///en la tabla onli_sale
@@ -68,37 +70,25 @@ class StudentSubscription
                 $dateEnd = null;
         }
 
+        $amount = 0;
+        if ($subscription->prices) {
+            foreach (json_decode($subscription->prices) as $price) {
+                if ($price['currency'] == 'PEN') {
+                    $amount = $price['amount'];
+                }
+            }
+        }
+
         if (Auth::check()) {
             // El usuario está autenticado
             $user = User::find(Auth::id());
             $person = Person::find($user->person_id);
             $student = AcaStudent::where('person_id', $person->id)->first();
 
-            $subscription = AcaSubscriptionType::find($this->subscription_id);
-
-            $amount = 0;
-            if ($subscription->prices) {
-                foreach (json_decode($subscription->prices) as $price) {
-                    if ($price['currency'] == 'PEN') {
-                        $amount = $price['amount'];
-                    }
-                }
-            }
-
             $sale->person_id = $user->person_id;
             $sale->clie_full_name = $person->full_name;
             $sale->phone = $person->telephone;
             $sale->email = $person->email;
-
-
-            OnliSaleDetail::create([
-                'sale_id'       => $sale->id,
-                'item_id'       => $subscription->item_id,
-                'entitie'       => AcaSubscriptionType::class,
-                'price'         => floatval($amount),
-                'quantity'      => 1,
-                //'onli_item_id'  => $id
-            ]);
 
             // Fecha actual como fecha de inicio
 
@@ -116,30 +106,39 @@ class StudentSubscription
         } else {
             // El usuario NO está autenticado
 
-            $person = Person::create([
-                'document_type_id' => 1,
-                'short_name' => 'Usuario Nuevo',
-                'full_name' => 'Usuario Academico Nuevo',
-                'number' => $response['payer']['identification']['number'],
-                'email' => $response['payer']['email'],
-                'gender' => 'M',
-                'status' => true,
-            ]);
+            $person = Person::firstOrCreate(
+                [
+                    'document_type_id' => 1,
+                    'email' => $response['payer']['email'],
+                    'number' => $response['payer']['identification']['number'],
+                ],
+                [
 
-            $user = User::create([
-                'name' => 'Usuario Nuevo',
-                'email' => $response['payer']['email'],
-                'pasword' => Hash::make($response['payer']['identification']['number']),
-                'local_id' => 1,
-                'person_id' => $person->id
-            ]);
+                    'short_name' => 'Usuario Nuevo',
+                    'full_name' => 'Usuario Academico Nuevo',
+                    'gender' => 'M',
+                    'status' => true,
+                ]
+            );
+            //dd($response['payer']['identification']['number']);
+            $user = User::firstOrCreate(
+                [
+                    'email' => $response['payer']['email'],
+                    'person_id' => $person->id
+                ],
+                [
+                    'name' => 'Usuario Nuevo',
+                    'password' => Hash::make($response['payer']['identification']['number']),
+                    'local_id' => 1,
+                ]
+            );
 
             $sale->person_id = $user->person_id;
             $sale->clie_full_name = $person->full_name;
             $sale->phone = $person->telephone;
             $sale->email = $person->email;
 
-            $student = AcaStudent::create([
+            $student = AcaStudent::firstOrCreate([
                 'student_code' => $person->number,
                 'person_id' => $person->id
             ]);
@@ -170,7 +169,16 @@ class StudentSubscription
 
         $sale->save();
 
-        // Mail::to($sale->email)
-        //     ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $id)->first()));
+        OnliSaleDetail::create([
+            'sale_id'       => $sale->id,
+            'item_id'       => $this->subscription_id,
+            'entitie'       => AcaSubscriptionType::class,
+            'price'         => floatval($amount),
+            'quantity'      => 1,
+            //'onli_item_id'  => $id
+        ]);
+
+        Mail::to($sale->email)
+            ->send(new ConfirmPurchaseSubscription($sale));
     }
 }
