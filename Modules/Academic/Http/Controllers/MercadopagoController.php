@@ -6,11 +6,42 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Inertia\Inertia;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Operations\StudentSubscription;
+use Modules\Onlineshop\Entities\OnliSale;
+use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Payment\PaymentClient;
 
 class MercadopagoController extends Controller
 {
+    public function formPay($id)
+    {
+        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+        $client = new PreferenceClient();
+        $items = [];
+
+        array_push($items, [
+            'id' => '2',
+            'title' => 'PRIMIUN',
+            'quantity'      => floatval(1),
+            'currency_id'   => 'PEN',
+            'unit_price'    => floatval(240)
+        ]);
+
+        $preference = $client->create([
+            "items" => $items,
+        ]);
+
+        $preference_id =  $preference->id;
+
+        return Inertia::render('Landing/Academic/StepsPayCheckout', [
+            'preference' => $preference_id,
+            'subscription' => AcaSubscriptionType::find($id)
+        ]);
+    }
+
     public function processPayment(Request $request, $id)
     {
         \MercadoPago\MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
@@ -50,13 +81,14 @@ class MercadopagoController extends Controller
             }
 
 
-            $url = route('web_gracias_por_comprar', $sus->id);
             $message = null;
+
+            $ssale = 0;
 
             switch ($payment->status) {
                 case "approved":
                     $pro = new StudentSubscription($id);
-                    $pro->process($request->all(), $payment);
+                    $ssale = $pro->process($request->all(), $payment);
                     $message = 'Pago aprobado';
                     break;
                 case "rejected":
@@ -69,6 +101,9 @@ class MercadopagoController extends Controller
                     $message = 'Pendiente de pago';
                     break;
             }
+
+            $url = route('web_gracias_por_comprar', $ssale->id);
+
             return response()->json([
                 'status' => $payment->status,
                 //'message' => $payment->status_detail,
@@ -87,6 +122,10 @@ class MercadopagoController extends Controller
 
     public function thankYou($id)
     {
-        dd('gracias');
+        $sale = OnliSale::firstWhere('id', $id);
+
+        return Inertia::render('Landing/Academic/StepsThankSubscribing', [
+            'sale' => $sale
+        ]);
     }
 }

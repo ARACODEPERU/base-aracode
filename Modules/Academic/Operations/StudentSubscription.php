@@ -73,8 +73,8 @@ class StudentSubscription
         $amount = 0;
         if ($subscription->prices) {
             foreach (json_decode($subscription->prices) as $price) {
-                if ($price['currency'] == 'PEN') {
-                    $amount = $price['amount'];
+                if ($price->currency == 'PEN') {
+                    $amount = $price->amount;
                 }
             }
         }
@@ -82,8 +82,13 @@ class StudentSubscription
         if (Auth::check()) {
             // El usuario está autenticado
             $user = User::find(Auth::id());
-            $person = Person::find($user->person_id);
-            $student = AcaStudent::where('person_id', $person->id)->first();
+            $person = Person::find($user->id);
+            $student = AcaStudent::firstOrCreate(
+                [
+                    'person_id' => $person->id,
+                    'student_code' => $person->number
+                ]
+            );
 
             $sale->person_id = $user->person_id;
             $sale->clie_full_name = $person->full_name;
@@ -180,5 +185,7 @@ class StudentSubscription
 
         Mail::to($sale->email)
             ->send(new ConfirmPurchaseSubscription($sale));
+
+        return $sale;
     }
 }

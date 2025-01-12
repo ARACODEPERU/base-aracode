@@ -32,7 +32,7 @@
                         <span class="text-gray-800 dark:text-neutral-400">{{ item.label }}</span>
                     </li>
                 </ul>
-                <Link :href="route('academic_form_mercadopago', subscription.id)" class="mt-5 py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none dark:bg-transparent dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800">Acceder</Link>
+                <Link :href="route('academic_step_account', subscription.id)" class="mt-5 py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none dark:bg-transparent dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800">Acceder</Link>
             </div>
             <!-- End Card -->
         </div>

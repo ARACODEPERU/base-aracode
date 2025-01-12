@@ -118,26 +118,8 @@ class LandingController extends Controller
 
     public function academiCreatePayment($id)
     {
-        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
-        $client = new PreferenceClient();
-        $items = [];
 
-        array_push($items, [
-            'id' => '2',
-            'title' => 'PRIMIUN',
-            'quantity'      => floatval(1),
-            'currency_id'   => 'PEN',
-            'unit_price'    => floatval(240)
-        ]);
-
-        $preference = $client->create([
-            "items" => $items,
-        ]);
-
-        $preference_id =  $preference->id;
-
-        return Inertia::render('Landing/Academic/Checkout', [
-            'preference' => $preference_id,
+        return Inertia::render('Landing/Academic/StepsPayLogin', [
             'subscription' => AcaSubscriptionType::find($id)
         ]);
     }

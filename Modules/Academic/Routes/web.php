@@ -11,7 +11,9 @@
 |
 */
 
+use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
+use Modules\Academic\Http\Controllers\AcaAuthController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
@@ -223,10 +225,27 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::post('subscriptions/free/user', [AcaStudentController::class, 'startStudentFree'])
         ->name('aca_subscriptions_free_user');
+
+    ////////////////verificar datos///////////////////////////
+
 });
 
 /////////no nesesita aver iniciado session//////////
-Route::put('mercadopago/{id}/processpayment', [MercadopagoController::class, 'processPayment'])
+Route::get('create/payment/{id}/account', [LandingController::class, 'academiCreatePayment'])->name('academic_step_account');
+
+Route::put('create/payment/{id}/login', [AcaAuthController::class, 'login'])
+    ->name('academic_step_account_login');
+Route::put('create/payment/{id}/create', [AcaAuthController::class, 'create'])
+    ->name('academic_step_account_create');
+
+Route::middleware(['auth'])->get('create/payment/{id}/Verification', [AcaAuthController::class, 'userVerification'])
+    ->name('academic_step_verification');
+
+Route::middleware(['auth'])->get('create/payment/{id}/pay', [MercadopagoController::class, 'formPay'])
+    ->name('academic_step_pay');
+
+Route::put('mercadopago/{id}/academic', [MercadopagoController::class, 'processPayment'])
     ->name('aca_mercadopago_processpayment');
+
 
 Route::get('Thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
