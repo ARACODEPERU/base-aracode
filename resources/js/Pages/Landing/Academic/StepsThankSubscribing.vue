@@ -1,7 +1,7 @@
 <script setup>
     import { ref } from 'vue';
     import { message } from 'ant-design-vue';
-    import { useForm } from '@inertiajs/vue3';
+    import { Link } from '@inertiajs/vue3';
 
     const props = defineProps({
         sale:{
@@ -45,7 +45,7 @@
                             Pagar
                         </span>
                     </li>
-                    <li class="flex items-center">
+                    <li class="flex items-center text-blue-600 dark:text-blue-500">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 me-2.5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                             <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM164.1 325.5C182 346.2 212.6 368 256 368s74-21.8 91.9-42.5c5.8-6.7 15.9-7.4 22.6-1.6s7.4 15.9 1.6 22.6C349.8 372.1 311.1 400 256 400s-93.8-27.9-116.1-53.5c-5.8-6.7-5.1-16.8 1.6-22.6s16.8-5.1 22.6 1.6zM144.4 208a32 32 0 1 1 64 0 32 32 0 1 1 -64 0zm192-32a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/>
                         </svg>
@@ -57,8 +57,15 @@
                     <!-- FAQ -->
 
                         <div class="max-w-md p-6 bg-white border border-gray-200 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
-                            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">¡Gracias por su suscripción!</h2>
-                            <p class="mt-2 text-lg text-gray-600">Estimado/a <span class="font-medium text-gray-800 dark:text-gray-100">Juan</span>,</p>
+                            <div class="flex justify-center">
+                                <div class="">
+                                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">¡Gracias por su suscripción!</h2>
+                                    <p class="mt-2 text-lg text-gray-600">Estimado/a <span class="font-medium text-gray-800 dark:text-gray-100">Juan</span>,</p>
+                                </div>
+                                <div class="p-2">
+                                    <img class="w-16 h-16" src="/img/clap-congratulations.gif" />
+                                </div> 
+                            </div>
                             <p class="mt-4 text-gray-600">
                                 Usted ha adquirido la suscripción <span class="font-semibold text-blue-600">{{ sale.total }}</span> por un valor de 
                                 <span class="font-semibold text-blue-600">{{ sale.total }} soles</span>.
@@ -71,9 +78,9 @@
                                 También recibirá un correo con sus credenciales de acceso al sistema.
                             </p>
                             <div class="mt-6">
-                                <button class="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                <Link :href="route('dashboard')" class="w-full px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                                     Ir a mi cuenta
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
