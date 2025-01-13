@@ -21,6 +21,7 @@ use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaModule;
 use Illuminate\Http\RedirectResponse;
+use Modules\Academic\Entities\AcaStudentSubscription;
 
 class AcaStudentController extends Controller
 {
@@ -363,6 +364,11 @@ class AcaStudentController extends Controller
         $user = Auth::user();
         $student_id = AcaStudent::where('person_id', $user->person_id)->value('id');
         $courses = [];
+
+        $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
+            ->where('status', true)
+            ->first();
+
         // También puedes verificar múltiples roles a la vez
         if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
             $courses = AcaCourse::with('modules.themes.contents')
@@ -370,19 +376,41 @@ class AcaStudentController extends Controller
                 ->with('category')
                 ->with('modality')
                 ->orderBy('id', 'DESC')
-                ->get();
+                ->get()
+                ->map(function ($course) {
+                    $course->can_view = true; // Campo adicional
+                    return $course;
+                });
         } else {
-            $courses = AcaCourse::with('modules.themes.contents')
-                ->with('modality')
-                ->with('category')
-                ->with('teacher.person')->whereHas('registrations', function ($query) use ($student_id) {
-                    $query->where('student_id', $student_id);
-                })->orderBy('id', 'DESC')
-                ->get();
+            $courses = AcaCourse::with(['modules.themes.contents', 'modality', 'category', 'teacher.person'])
+                ->with('registrations') // Para validar los cursos registrados
+                ->get()
+                ->map(function ($course) use ($studentSubscribed, $student_id) {
+                    // Verificar si el curso es gratuito
+                    $isFree = is_null($course->price);
+
+                    // Verificar si el alumno está registrado en este curso
+                    $isRegistered = $course->registrations->contains('student_id', $student_id);
+
+                    // Verificar si el alumno tiene una suscripción activa
+                    $hasActiveSubscription = $studentSubscribed !== null;
+
+                    // Lógica para determinar si puede ver
+                    if ($hasActiveSubscription || $isRegistered || $isFree) {
+                        $course->can_view = true; // Campo adicional
+                    } else {
+                        $course->can_view = false; // Campo adicional
+                    }
+
+                    return $course;
+                });
         }
-        //dd($courses);
+
+
+
         return Inertia::render('Academic::Students/Courses', [
-            'courses' => $courses
+            'courses' => $courses,
+            'studentSubscribed' => $studentSubscribed
         ]);
     }
 

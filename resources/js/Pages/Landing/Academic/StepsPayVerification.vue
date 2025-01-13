@@ -68,7 +68,7 @@
                         <h5 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
                             {{ $page.props.auth.user.name }}
                         </h5>
-                        <p class="mb-5 text-base text-gray-500 sm:text-lg dark:text-gray-400">Stay up to date and move work forward with Flowbite on iOS & Android. Download the app today.</p>
+                        <p class="mb-5 text-base text-gray-500 sm:text-lg dark:text-gray-400">Por favor, verifique que los datos de su cuenta sean correctos antes de proceder con los siguientes pasos del proceso de suscripción. Asegúrese de que su información esté actualizada para evitar inconvenientes. Si necesita realizar algún cambio, hágalo antes de continuar. ¡Gracias por su confianza en nosotros!</p>
                         <div class="items-center justify-center space-y-4 sm:flex sm:space-y-0 sm:space-x-4 rtl:space-x-reverse">
                             <a href="#" class="btn btn-danger">
                                 <svg class="me-3 w-7 h-7" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">

@@ -195,9 +195,9 @@
                 </div>
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-3 mt-6">
                     <template v-for="(module, index) in course.modules">
-                        <Link :href="route('aca_mycourses_lesson_themes', module.id)" class="transition-all  duration-1000 bg-white hover:bg-blue-500  hover:shadow-xl m-2 p-4 relative z-40 group  ">
-                            <div class=" absolute  bg-blue-500/50 top-0 left-0 w-24 h-1 z-30  transition-all duration-200   group-hover:bg-white group-hover:w-1/2  "></div>
-                            <div class="py-2 px-9 relative  ">
+                        <Link :href="route('aca_mycourses_lesson_themes', module.id)" class="rounded-xl rounded-tl-none transition-all  duration-1000 bg-white hover:bg-blue-500  hover:shadow-xl m-2 p-4 relative z-40 group  dark:bg-gray-800">
+                            <div class="absolute  bg-blue-500/50 top-0 left-0 w-24 h-1 z-30  transition-all duration-200   group-hover:bg-white group-hover:w-1/2 dark:group-hover:bg-gray-300 "></div>
+                            <div class="py-2 px-9 relative">
                                 <svg class="w-10 h-10 fill-gray-400 group-hover:fill-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M88.7 223.8L0 375.8 0 96C0 60.7 28.7 32 64 32l117.5 0c17 0 33.3 6.7 45.3 18.7l26.5 26.5c12 12 28.3 18.7 45.3 18.7L416 96c35.3 0 64 28.7 64 64l0 32-336 0c-22.8 0-43.8 12.1-55.3 31.8zm27.6 16.1C122.1 230 132.6 224 144 224l400 0c11.5 0 22 6.1 27.7 16.1s5.7 22.2-.1 32.1l-112 192C453.9 474 443.4 480 432 480L32 480c-11.5 0-22-6.1-27.7-16.1s-5.7-22.2 .1-32.1l112-192z"/></svg>
                                 <p class="mt-4 text-base text-gray-600 group-hover:text-white  ">{{ module.description }}</p>
                             </div>

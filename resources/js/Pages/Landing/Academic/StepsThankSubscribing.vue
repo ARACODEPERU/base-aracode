@@ -67,7 +67,7 @@
                                 </div> 
                             </div>
                             <p class="mt-4 text-gray-600">
-                                Usted ha adquirido la suscripción <span class="font-semibold text-blue-600">{{ sale.total }}</span> por un valor de 
+                                Usted ha adquirido la suscripción <span class="font-semibold text-blue-600"> </span> por un valor de 
                                 <span class="font-semibold text-blue-600">{{ sale.total }} soles</span>.
                             </p>
                             <p class="mt-4 text-gray-600">

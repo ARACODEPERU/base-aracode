@@ -82,7 +82,7 @@ class StudentSubscription
         if (Auth::check()) {
             // El usuario está autenticado
             $user = User::find(Auth::id());
-            $person = Person::find($user->id);
+            $person = Person::find($user->person_id);
             $student = AcaStudent::firstOrCreate(
                 [
                     'person_id' => $person->id,
@@ -95,19 +95,42 @@ class StudentSubscription
             $sale->phone = $person->telephone;
             $sale->email = $person->email;
 
-            // Fecha actual como fecha de inicio
+            $stsubscription = AcaStudentSubscription::where('student_id', $student->id)
+                ->where('subscription_id', $this->subscription_id])
+                ->first();
 
-            AcaStudentSubscription::create([
-                'student_id' => $student->id,
-                'subscription_id' => $this->subscription_id,
-                'date_start' => $dateStart,
-                'date_end' => $dateEnd,
-                'status' => true,
-                'notes' => null,
-                'renewals' => 0,
-                'registration_user_id' => Auth::id(),
-                'onli_sale_id' => null
-            ]);
+            if ($stsubscription) {
+                // Actualizar el registro existente
+                $stsubscription->update(
+                    [
+                        'student_id' => $student->id,
+                        'subscription_id' => $this->subscription_id,
+                        'date_start' => $dateStart,
+                        'date_end' => $dateEnd,
+                        'status' => true,
+                        'notes' => null,
+                        'renewals' => true,
+                        'registration_user_id' => Auth::id(),
+                        'onli_sale_id' => null
+                    ]
+                );
+            } else {
+                AcaStudentSubscription::updateOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'subscription_id' => $this->subscription_id,
+                        'date_start' => $dateStart,
+                        'date_end' => $dateEnd,
+                        'status' => true,
+                        'notes' => null,
+                        'renewals' => 0,
+                        'registration_user_id' => Auth::id(),
+                        'onli_sale_id' => null
+                    ]
+                );
+            }
+
+            
         } else {
             // El usuario NO está autenticado
 
@@ -148,17 +171,36 @@ class StudentSubscription
                 'person_id' => $person->id
             ]);
 
-            AcaStudentSubscription::create([
-                'student_id' => $student->id,
-                'subscription_id' => $this->subscription_id,
-                'date_start' => $dateStart,
-                'date_end' => $dateEnd,
-                'status' => true,
-                'notes' => null,
-                'renewals' => 0,
-                'registration_user_id' => $user->id,
-                'onli_sale_id' => null
-            ]);
+            $stsubscription = AcaStudentSubscription::where('student_id', $student->id)
+                ->where('subscription_id', $this->subscription_id])
+                ->first();
+
+            if ($stsubscription) {
+                $stsubscription->update([
+                    'student_id' => $student->id,
+                    'subscription_id' => $this->subscription_id,
+                    'date_start' => $dateStart,
+                    'date_end' => $dateEnd,
+                    'status' => true,
+                    'notes' => null,
+                    'renewals' => true,
+                    'registration_user_id' => $user->id,
+                    'onli_sale_id' => null
+                ]);
+            } else {
+                AcaStudentSubscription::create([
+                    'student_id' => $student->id,
+                    'subscription_id' => $this->subscription_id,
+                    'date_start' => $dateStart,
+                    'date_end' => $dateEnd,
+                    'status' => true,
+                    'notes' => null,
+                    'renewals' => 0,
+                    'registration_user_id' => $user->id,
+                    'onli_sale_id' => null
+                ]);
+            }
+            
         }
 
         $sale->total = $response['transaction_amount'];
