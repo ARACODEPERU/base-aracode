@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Team;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -80,6 +81,7 @@ class UserRole extends Seeder
             'name' => 'Admin',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('12345678'),
+            'email_verified_at' => Carbon::now(),
             'local_id' => 1,
             'company_id' => 1
         ]);

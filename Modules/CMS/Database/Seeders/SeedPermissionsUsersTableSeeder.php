@@ -3,6 +3,7 @@
 namespace Modules\CMS\Database\Seeders;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
@@ -53,6 +54,7 @@ class SeedPermissionsUsersTableSeeder extends Seeder
             'name' => 'webAdmin',
             'email' => 'webAdmin@gmail.com',
             'password' => Hash::make('12345678'),
+            'email_verified_at' => Carbon::now(),
             'local_id' => 1,
             'company_id' => 1
         ]);

@@ -36,8 +36,8 @@
 
     if(props.module.themes.length > 0){
         default_theme_id.value = props.module.themes[0].id;
-        contentsData = props.module.themes[0].contents;
-        commentsData = props.module.themes[0].comments;
+        contentsData.value = props.module.themes[0].contents;
+        //commentsData = props.module.themes[0].comments;
     }
 
     const formComment = useForm({

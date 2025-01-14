@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Security\Http\Controllers\PermissionController;
 use Modules\Security\Http\Controllers\RolesController;
+use Modules\Security\Http\Controllers\SecurityController;
 
 Route::middleware('auth')->prefix('security')->group(function () {
     Route::get('dashboard', 'SecurityController@index')->name('security_dashboard');
@@ -26,7 +27,7 @@ Route::middleware('auth')->prefix('security')->group(function () {
 
     Route::post('person/information/update', [PersonController::class, 'createdOrUpdated'])->name('person_information_update');
 
-    Route::get('dashboard/storage/indicator', 'SecurityController@storageIndicador')->name('security_storage_indicator');
+    Route::get('dashboard/storage/indicator', [SecurityController::class, 'storageIndicador'])->name('security_storage_indicator');
 
     Route::get('table/permissions', [PermissionController::class, 'getData'])->name('security_permissions_data');
 });

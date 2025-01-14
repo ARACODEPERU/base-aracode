@@ -8,6 +8,9 @@
     import IconBox from '@/Components/vristo/icon/icon-box.vue';
     import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
+    import iconExcel from "@/Components/vristo/icon/icon-excel.vue";
+    import ModalLarge from "@/Components/ModalLarge.vue";
+    import { ref } from 'vue';
 
     import { useAppStore } from '@/stores/index';
     const store = useAppStore();
@@ -32,6 +35,16 @@
     const getImage = (path) => {
         return baseUrl + 'storage/'+ path;
     }
+
+    const displayModalImport = ref(false);
+
+    const showModalImport = () => {
+        displayModalImport.value = true;
+    }
+
+    const closeModalImport = () => {
+        displayModalImport.value = false;
+    }
 </script>
 
 <template>
@@ -55,13 +68,19 @@
                                 Nuevo
                             </Link>
                         </div>
+                        <div>
+                            <button v-on:click="showModalImport()" type="button" class="btn btn-success">
+                                <icon-excel class="ltr:mr-2 rtl:ml-2 w-4 h-4" />
+                                Importar
+                            </button>
+                        </div>
                     </div>
 
                     <div class="relative">
                         <input
                             type="text"
                             placeholder="Buscar"
-                            class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
+                            class="form-input py-2 ltr:pr-11 rtl:pl-11 peer dark:text-gray-100"
                             v-model="form.search"
                             @keyup.enter="form.get(route('aca_students_list'))"
                         />
@@ -88,7 +107,7 @@
                                                 <template #content="{ close }">
                                                     <ul @click="close()" class="whitespace-nowrap">
                                                         <li>
-                                                            <Link :href="route('aca_students_edit',student.id)" type="Button">
+                                                            <Link :href="route('aca_students_edit',student.id)" type="Button" class="dark:text-white">
                                                                 Editar
                                                             </Link>
                                                         </li>
@@ -159,6 +178,21 @@
                     </div>
             </template>
         </div>
-        
+        <ModalLarge :show="displayModalImport" :onClose="closeModalImport" :icon="'/img/excel.png'">
+            <template #title>Importar Almnos</template>
+            <template #message>Puedes registrar datos de forma rápida y sencilla utilizando un archivo Excel. Asegúrate de seguir el formato especificado para garantizar un proceso sin errores.</template>
+            <template #content>
+                <img src="/img/aca_formato_estudiantes.png" />
+                <form class="mt-8">
+                    <label for="small-file-input" class="sr-only">Seleccione archivo</label>
+                    <input type="file" name="small-file-input" id="small-file-input" class="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400
+                    file:bg-gray-50 file:border-0
+                    file:me-4
+                    file:py-2 file:px-4
+                    dark:file:bg-neutral-700 dark:file:text-neutral-400">
+                </form>
+            </template>
+            
+        </ModalLarge>
     </AppLayout>
 </template>

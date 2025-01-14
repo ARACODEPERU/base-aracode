@@ -248,4 +248,4 @@ Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoContro
     ->name('aca_mercadopago_processpayment');
 
 
-Route::middleware(['auth'])->get('Thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
+Route::middleware(['auth'])->get('thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
