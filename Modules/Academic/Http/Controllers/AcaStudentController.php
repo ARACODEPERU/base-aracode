@@ -8,6 +8,7 @@ use App\Models\PaymentMethod;
 use App\Models\Person;
 use App\Models\Product;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -22,6 +23,9 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaModule;
 use Illuminate\Http\RedirectResponse;
 use Modules\Academic\Entities\AcaStudentSubscription;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class AcaStudentController extends Controller
 {
@@ -60,7 +64,8 @@ class AcaStudentController extends Controller
                 'people.address',
                 'people.birthdate',
                 'people.image AS people_image',
-                'aca_students.created_at'
+                'aca_students.created_at',
+                'aca_students.new_student'
             );
         if (request()->has('search')) {
             $students->where('people.full_name', 'Like', '%' . request()->input('search') . '%');
@@ -517,5 +522,161 @@ class AcaStudentController extends Controller
         } else {
             return to_route('profile.edit');
         }
+    }
+
+
+    public function import(Request $request)
+    {
+        try {
+            // Validar el archivo
+            $request->validate([
+                'file' => 'required|mimes:xlsx,xls',
+            ]);
+
+            $file = $request->file('file');
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            DB::beginTransaction();
+
+            $totalRows = count($rows) - 1; // Total de filas a procesar
+
+            // Usar una clave única para el progreso
+            $importKey = uniqid();
+
+            // Iniciar el progreso en 0
+            Cache::put($importKey, 0);
+
+            foreach ($rows as $index => $row) {
+                if ($index === 0) {
+                    continue;
+                }
+
+                $cont = $index + 1;
+
+                // Validar datos obligatorios
+                if (!$row[0] || !$row[1] || !$row[4] || !$row[9]) {
+                    throw new \Exception("Fila {$cont}: Faltan datos obligatorios.");
+                }
+
+                // Validar cada campo con detalles específicos
+                if (!$row[0]) {
+                    throw new \Exception("Fila {$cont}: El campo 'Nombre completo' (columna A) es obligatorio.");
+                }
+
+                if (!$row[1]) {
+                    throw new \Exception("Fila {$cont}: El campo 'Número' (columna B) es obligatorio.");
+                }
+                $dni = $row[1];
+                if (Person::where('number', $dni)->exists()) {
+                    throw new \Exception("Fila {$cont}: Número de identificación ya registrado ({$dni}).");
+                }
+                $fechaExcel = $row[2]; // Fecha en formato d/m/Y
+
+                // Validar fecha con strtotime
+                if (strtotime($fechaExcel) !== false) {
+                    $fechaMysql = Carbon::parse($fechaExcel)->format('Y-m-d');
+                } else {
+                    throw new \Exception("Fila {$cont}: Formato de fecha no válido: {$fechaExcel}");
+                }
+
+                $fechaMysql = Carbon::parse($fechaExcel)->format('Y-m-d');
+
+                if (!$row[4]) {
+                    throw new \Exception("Fila {$cont}: El campo 'Correo electrónico' (columna E) es obligatorio.");
+                }
+                $email = trim($row[4]); // Eliminar espacios al inicio y al final
+
+                // Opcional: eliminar caracteres no visibles
+                $email = preg_replace('/[^\P{C}\n]+/u', '', $email);
+
+                // Validar el correo
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new \Exception("Fila {$index}: El correo '{$email}' no es válido.");
+                }
+
+                if (Person::where('email', $email)->exists()) {
+                    throw new \Exception("Fila {$cont}: Email ya registrado ({$email}).");
+                }
+
+                if (!$row[9]) {
+                    throw new \Exception("Fila {$cont}: El campo 'Género' (columna J) es obligatorio.");
+                }
+                // Validar género
+                $genero = trim(strtoupper($row[9]));
+                if (!in_array($genero, ['M', 'F'])) {
+                    throw new \Exception("Fila {$cont}: El campo 'Género' (columna J) debe ser 'M = Masculino' o 'F = Femenino'. Valor encontrado: '{$genero}'");
+                }
+
+                // Crear registro en la base de datos
+                $person = Person::create([
+                    'document_type_id' => 1,
+                    'full_name' => $row[0],
+                    'number' => $row[1],
+                    'birthdate' => $fechaMysql,
+                    'telephone' => $row[3],
+                    'email' => $row[4],
+                    'company' => $row[5],
+                    'industry' => $row[6],
+                    'ocupacion' => $row[7],
+                    'profession' => $row[8],
+                    'gender' => $row[9]
+                ]);
+
+                User::updateOrCreate(
+                    [
+                        'email' => $row[4]
+                    ],
+                    [
+                        'name' => $row[0],
+                        'password' => Hash::make(trim($row[1])),
+                        'local_id' => 1,
+                        'person_id' => $person->id,
+                        'status' => true
+                    ]
+                );
+
+                $student = AcaStudent::firstOrCreate(
+                    [
+                        'person_id' => $person->id,
+                        'student_code' => trim($row[1]),
+                        'new_student' => true
+                    ]
+                );
+
+                // Actualizar el progreso en la caché
+                $currentProgress = (($index + 1) / $totalRows) * 100;
+                Cache::put($importKey, $currentProgress);
+            }
+
+            DB::commit();
+
+            // Al finalizar, actualizar el progreso al 100%
+            Cache::put($importKey, 100);
+
+            return response()->json([
+                'message' => 'Archivo importado exitosamente.',
+                'importKey' => $importKey, // Devolver la clave para que se pueda consultar el progreso
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error de importación: {$e->getMessage()}");
+
+            return response()->json([
+                'error' => true,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+
+
+    public function getProgress($importKey)
+    {
+        // Obtener el progreso desde la caché
+        $progress = Cache::get($importKey, 0);
+
+        return response()->json(['progress' => $progress]);
     }
 }

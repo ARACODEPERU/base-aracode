@@ -193,6 +193,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->post('student/dashboard/courses', 'AcaStudentController@getCourses')
         ->name('aca_student_dashboard_courses');
 
+    Route::middleware(['middleware' => 'permission:aca_estudiante_importar_excel'])
+        ->post('student/import/excel', 'AcaStudentController@import')
+        ->name('aca_student_import_file_excel');
+
+    Route::middleware(['middleware' => 'permission:aca_estudiante_importar_excel'])
+        ->get('student/import/{importKey}/progress', 'AcaStudentController@getProgress')
+        ->name('aca_student_import_progress');
+
 
     Route::middleware(['middleware' => 'permission:aca_dashboard'])
         ->get('dashboard/total/registration/student', 'AcademicController@studentsEnrolledMonth')

@@ -38,7 +38,11 @@ class Person extends Model
         'gender',
         'status',
         'social_networks',
-        'ubigeo_description'
+        'ubigeo_description',
+        'person_id',
+        'industry',
+        'profession',
+        'company'
     ];
     // se esta guardando la ruta completa por eso se comento
     // public function getImageAttribute($value)

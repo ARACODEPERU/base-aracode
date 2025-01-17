@@ -28,7 +28,7 @@ class CrmConversationController extends Controller
                 'crm_conversations.new_message',
                 'crm_conversations.id',
             )
-            ->where('person_id', $persomId)
+            ->where('crm_participants.person_id', $persomId)
             ->limit(5)
             ->get();
 

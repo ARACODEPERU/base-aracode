@@ -66,7 +66,7 @@
                     <slot name="content" />
                     <div class="flex justify-end items-center space-x-2 mt-8">
                         <slot name="buttons" />
-                        <SecondaryButton @click="onClose" class="btn-primary">
+                        <SecondaryButton @click="onClose" class="btn btn-danger">
                           Cerrar
                         </SecondaryButton>
                     </div>

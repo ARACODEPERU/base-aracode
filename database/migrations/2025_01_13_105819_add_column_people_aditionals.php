@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('person_id')->nullable();
             $table->string('industry', 100)->nullable();
             $table->string('profession', 100)->nullable();
+            $table->string('company', 200)->nullable();
             $table->foreign('person_id', 'people_person_id_fk')->references('id')->on('people')->onDelete('cascade');
         });
     }
@@ -26,6 +27,7 @@ return new class extends Migration
     {
         Schema::table('people', function (Blueprint $table) {
             $table->dropForeign('people_person_id_fk');
+            $table->dropColumn('company');
             $table->dropColumn('profession');
             $table->dropColumn('industry');
             $table->dropColumn('person_id');
