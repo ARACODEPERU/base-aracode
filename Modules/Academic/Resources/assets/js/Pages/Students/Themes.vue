@@ -243,49 +243,83 @@
                     </div>
                 </div>
                 <div class="panel col-span-6 sm:col-span-4">
-                    <div class="p-10 flow-root">
+                    <div class="flow-root">
                         <div class="space-y-6">
                             <template v-for="(content, key) in contentsData">
                                 <template v-if="content.is_file == 1">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="w-6 h-6 ltr:mr-4 rtl:ml-4">
-                                            <icon-file />
+                                    <div class="flex items-start p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
+                                        <span class="ltr:mr-3 rtl:ml-3">
+                                            <icon-file class="w-12 h-12 object-cover" />
                                         </span>
-                                        <span>
-                                            <strong class="ltr:mr-1 rtl:ml-1">Link de archivo: </strong>
-                                            {{ content.description }}
-                                        </span>
-                                        <a :href="content.content" target="_blank"  type="button" class="btn btn-sm bg-white text-black ltr:ml-auto rtl:mr-auto">
-                                            Ir al sitio
-                                        </a>
+                                        <div class="flex-1 font-semibold">
+                                            <h6 class="mb-2 text-base">
+                                                <strong class="ltr:mr-1 rtl:ml-1">Link de archivo: </strong>
+                                                {{ content.description }}
+                                            </h6>
+                                            <div class="flex justify-end">
+                                                <a 
+                                                    :href="content.content" 
+                                                    target="_blank" 
+                                                    type="button" 
+                                                    class="btn btn-success btn-sm flex uppercase inline-block"
+                                                >
+                                                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                        <path fill="currentColor" d="M156.6 384.9L125.7 354c-8.5-8.5-11.5-20.8-7.7-32.2c3-8.9 7-20.5 11.8-33.8L24 288c-8.6 0-16.6-4.6-20.9-12.1s-4.2-16.7 .2-24.1l52.5-88.5c13-21.9 36.5-35.3 61.9-35.3l82.3 0c2.4-4 4.8-7.7 7.2-11.3C289.1-4.1 411.1-8.1 483.9 5.3c11.6 2.1 20.6 11.2 22.8 22.8c13.4 72.9 9.3 194.8-111.4 276.7c-3.5 2.4-7.3 4.8-11.3 7.2l0 82.3c0 25.4-13.4 49-35.3 61.9l-88.5 52.5c-7.4 4.4-16.6 4.5-24.1 .2s-12.1-12.2-12.1-20.9l0-107.2c-14.1 4.9-26.4 8.9-35.7 11.9c-11.2 3.6-23.4 .5-31.8-7.8zM384 168a40 40 0 1 0 0-80 40 40 0 1 0 0 80z"/>
+                                                    </svg>
+                                                    Ir al sitio
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                                 <template v-else-if="content.is_file == 0">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="w-6 h-6 ltr:mr-4 rtl:ml-4">
-                                            <icon-video />
+                                    <div class="flex items-start p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
+                                        <span class="ltr:mr-3 rtl:ml-3">
+                                            <icon-video class="w-12 h-12 object-cover" />
                                         </span>
-                                        <span>
-                                            <strong class="ltr:mr-1 rtl:ml-1">Video: </strong>
-                                            {{ content.description }}
-                                        </span>
-                                        <button @click="openSelectedVideo(content.content)" type="button" class="btn btn-sm bg-white text-black ltr:ml-auto rtl:mr-auto">
-                                            Reproducir
-                                        </button>
+                                        <div class="flex-1 font-semibold">
+                                            <h6 class="mb-2 text-base">
+                                                <strong class="ltr:mr-1 rtl:ml-1">Video: </strong>
+                                                {{ content.description }}
+                                            </h6>
+                                            <div class="flex justify-end">
+                                                <button @click="openSelectedVideo(content.content)"
+                                                    type="button" 
+                                                    class="btn btn-success btn-sm flex uppercase inline-block"
+                                                >
+                                                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                                        <path fill="currentColor" d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+                                                    </svg>
+                                                    Reproducir
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                                 <template v-else-if="content.is_file == 2">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="w-6 h-6 ltr:mr-4 rtl:ml-4">
-                                            <icon-file-pdf />
+                                    <div class="flex items-start p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
+                                        <span class="ltr:mr-3 rtl:ml-3">
+                                            <icon-file-pdf class="w-12 h-12 object-cover" />
                                         </span>
-                                        <span>
-                                            <strong class="ltr:mr-1 rtl:ml-1">Archivo: </strong>
-                                            {{ content.description }}
-                                        </span>
-                                        <a :href="getPath(content.content)" target="_blank" type="button" class="btn btn-sm bg-white text-black ltr:ml-auto rtl:mr-auto">
-                                            Descargar
-                                        </a>
+                                        <div class="flex-1 font-semibold">
+                                            <h6 class="mb-2 text-base">
+                                                <strong class="ltr:mr-1 rtl:ml-1">Link de archivo: </strong>
+                                                {{ content.description }}
+                                            </h6>
+                                            <div class="flex justify-end">
+                                                <a 
+                                                    :href="getPath(content.content)" 
+                                                    target="_blank" 
+                                                    type="button" 
+                                                    class="btn btn-success btn-sm flex uppercase inline-block"
+                                                >
+                                                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                        <path fill="currentColor" d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 242.7-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7 288 32zM64 352c-35.3 0-64 28.7-64 64l0 32c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-32c0-35.3-28.7-64-64-64l-101.5 0-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352 64 352zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/>
+                                                    </svg>
+                                                    Descargar
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </template>

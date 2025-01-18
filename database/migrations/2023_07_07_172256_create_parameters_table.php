@@ -33,8 +33,8 @@ return new class extends Migration
         Parameter::create([
             'parameter_code'    => 'P000002',
             'description'       => 'Tipo de operacion Venta - Catalog. 51 Sunat',
-            'control_type'      => 'se',
-            'json_query_data'   => null,
+            'control_type'      => 'sq',
+            'json_query_data'   => 'SELECT id,description FROM sunat_operation_types',
             'value_default'     => '0101'
         ]);
 
@@ -73,16 +73,16 @@ return new class extends Migration
         Parameter::create([
             'parameter_code'    => 'P000008',
             'description'       => 'Tipo de afectación del IGV por defecto compras y ventas',
-            'control_type'      => 'se',
-            'json_query_data'   => null,
+            'control_type'      => 'sq',
+            'json_query_data'   => "SELECT id,description FROM sunat_affectation_igv_types",
             'value_default'     => '10'
         ]);
 
         Parameter::create([
             'parameter_code'    => 'P000009',
             'description'       => 'Tipo de negocio o empresa, para ventas en linea',
-            'control_type'      => 'in',
-            'json_query_data'   => '[{"value": "1","label":"Cursos"},{"value": "2","label":"Productos"},{"value": "3","label":"Productos con Especificaciónes"}]',
+            'control_type'      => 'sa',
+            'json_query_data'   => '[{"value": "1","label":"Cursos y capacitaciones"},{"value": "2","label":"Productos"},{"value": "3","label":"Productos con Especificaciónes"},{"value": "99","label":"Todos"}]',
             'value_default'     => 1
         ]);
 
@@ -108,6 +108,14 @@ return new class extends Migration
             'control_type'      => 'tx',
             'json_query_data'   => null,
             'value_default'     => 'apis-token-9042.kSfEdAqdNoOW8-fGfu-cKQoWOH7Tzg2Z'
+        ]);
+
+        Parameter::create([
+            'parameter_code'    => 'P000013',
+            'description'       => 'Correo electronico remitente de mensajes del modulo CRM, correos enviados a estudiantes',
+            'control_type'      => 'tx',
+            'json_query_data'   => null,
+            'value_default'     => 'aracode_atencion@gmail.com'
         ]);
     }
 

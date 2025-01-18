@@ -39,7 +39,7 @@ class Person extends Model
         'status',
         'social_networks',
         'ubigeo_description',
-        'person_id',
+        'company_person_id', /// se registra la empresa a la que pertenese
         'industry',
         'profession',
         'company'

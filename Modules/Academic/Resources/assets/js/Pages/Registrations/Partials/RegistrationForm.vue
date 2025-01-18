@@ -74,6 +74,8 @@ const destroyCertificate = (id) => {
         confirmButtonText: '¡Sí, Eliminar!',
         cancelButtonText: 'Cancelar',
         showLoaderOnConfirm: true,
+        padding: '2em',
+        customClass: 'sweet-alerts',
         preConfirm: () => {
             return axios.delete(route('aca_students_registrations_destroy', id)).then((res) => {
                 if (!res.data.success) {
@@ -89,6 +91,8 @@ const destroyCertificate = (id) => {
                 title: 'Enhorabuena',
                 text: 'Se Eliminó correctamente',
                 icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
             });
             router.visit(route('aca_students_registrations_create', props.student.id), { replace: true, method: 'get' });
         }
@@ -108,11 +112,11 @@ const getImage = (path) => {
         <div class="col-span-6 sm:col-span-3">
             <div
                 v-for="registration in registrations"
-                class="relative bg-white border border-gray-200 rounded-lg shadow p-4 mb-2"
+                class="relative bg-white border border-gray-200 rounded-lg shadow p-4 mb-2 dark:bg-gray-800 dark:border-gray-700"
             >
                 <div class="flex items-center gap-4">
                     <img class="w-20 h-20" :src="getImage(registration.course.image)" alt="">
-                    <div class="flex-1 font-medium dark:text-white">
+                    <div class="flex-1 font-medium dark:text-primary-200">
                         <div>{{ registration.course.description }}</div>
                         
                     </div>

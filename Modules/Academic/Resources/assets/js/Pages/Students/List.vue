@@ -57,33 +57,32 @@
     };
 
     const startImport = async () => {
-        loading.value = true;
+        loading.value = true; // Inicia el estado de carga
 
         const formData = new FormData();
         formData.append("file", file.value);
 
-        try {
-            const response = await axios.post(route('aca_student_import_file_excel'), formData);
-            importKey.value = response.data.importKey;
-
-            // Mostrar errores al usuario
-            if (response.data.errors && response.data.errors.length > 0) {
-                response.data.errors.forEach((error) => showAlert(error, 'error'));
-            }
-            
-            // Iniciar la actualización del progreso
-            trackProgress();
-        } catch (error) {
-            if (error.response && error.response.data && error.response.data.message) {
-                showAlert(error.response.data.message, 'error');
-            } else {
-                showAlert("Ocurrió un error al importar el archivo.", 'error');
-            }
-        } finally {
-            //loading.value = false;
-
-            showAlert("Procesando archivo por favor espere.", 'success');
-        }
+        axios.post(route('aca_student_import_file_excel'), formData)
+            .then((response) => {
+                importKey.value = response.data.importKey;
+                trackProgress(); // Inicia la actualización del progreso
+                showAlert("Procesando archivo, por favor espere.", 'success'); // Mostrar mensaje de éxito
+            }).catch((error) => {
+                // Verifica si hay un mensaje de error en la respuesta
+                if (error.response && error.response.data && error.response.data.message) {
+                    console.log('Error detectado:', error.response.data.message);
+                    showAlert(error.response.data.message, 'error');
+                } else {
+                    console.log('Error genérico detectado');
+                    showAlert("Ocurrió un error al importar el archivo.", 'error');
+                }
+            })
+            .finally(() => {
+                // Solo detener el estado de carga si no hay errores
+                if (!importKey.value) {
+                    loading.value = false;
+                }
+            });
     };
     const trackProgress = () => {
         const interval = setInterval(async () => {
@@ -96,7 +95,7 @@
                     showAlert("Importación completada.", 'success');
                 }
             } catch (error) {
-                console.error(error);
+                //console.error(error);
                 clearInterval(interval);
             }  finally {
                 loading.value = false;
@@ -155,6 +154,7 @@
                                 Importar
                             </button>
                         </div>
+                        
                     </div>
 
                     <div class="relative">
@@ -264,7 +264,7 @@
             </template>
         </div>
         <ModalLarge :show="displayModalImport" :onClose="closeModalImport" :icon="'/img/excel.png'">
-            <template #title>Importar Almnos</template>
+            <template #title>Importar Alumnos</template>
             <template #message>Puedes registrar datos de forma rápida y sencilla utilizando un archivo Excel. Asegúrate de seguir el formato especificado para garantizar un proceso sin errores.</template>
             <template #content>
                 <img src="/img/aca_formato_estudiantes.png" />

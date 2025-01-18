@@ -2,11 +2,16 @@
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import IconChatDot from '@/Components/vristo/icon/icon-chat-dots.vue';
+import Keypad from '@/Components/Keypad.vue';
 import DataTable from 'datatables.net-vue3';
 import DataTablesCore from 'datatables.net';
 import 'datatables.net-responsive';
 import '@/Components/vristo/datatables/datatables.css'
 import '@/Components/vristo/datatables/style.css'
+import 'datatables.net-buttons'
+import 'datatables.net-buttons/js/buttons.html5';
+import es_PE from '@/Components/vristo/datatables/datatables-es.js'
+
 import Swal2 from "sweetalert2";
 import { Link, router } from '@inertiajs/vue3';
 import { faComments, faPerson, faPersonDress, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -15,13 +20,20 @@ DataTable.use(DataTablesCore);
 
 const columns = [
     { data: null, render: '#action', title: 'Acción' },
+    { data: null, render: '#peremail', title: 'Email' },
     { data: null, render: '#perinformation', title: 'Nombre' },
     { data: 'number', title: 'Número Identificación' },
     { data: 'birthdate', title: 'Fecha nacimiento' },
     { data: 'telephone', title: 'Teléfono' },
-    { data: 'email', title: 'Email' },
     { data: null, render: '#pergender', title: 'Sexo' },
 ];
+
+const options = {
+    responsive: true, 
+    language: es_PE,
+    order: [[2, 'desc']],
+    paging: true
+}
 
 const baseUrl = assetUrl;
 
@@ -29,9 +41,17 @@ const getImage = (path) => {
     return baseUrl + 'storage/'+ path;
 }
 
+
+const props = defineProps({
+    P000009: {
+        type: String,
+        default: null
+    }
+});
+
 </script>
 <template>
-    <AppLayout title="Items">
+    <AppLayout title="Contactos">
         <Navigation :routeModule="route('crm_dashboard')" :titleModule="'CRM'">
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <span>Contactos</span>
@@ -39,22 +59,21 @@ const getImage = (path) => {
         </Navigation>
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
-                <h2 class="text-xl">Items</h2>
-                <!-- <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
+                <h2 class="text-xl">Lista de contactos </h2>
+                <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
                     <div class="flex gap-3">
-                        <div>
-                            <Link v-can="'cms_items'" :href="route('cms_items_create')" type="button" class="btn btn-primary">
-                                <icon-plus class="ltr:mr-2 rtl:ml-2" />
-                                Nuevo
-                            </Link>
-                        </div>
+                        <Keypad>
+                            <template #botones>
+                                <Link v-can="'crm_envio_correo_masivo'" :href="route('crm_send_mass_mailing')" class="inline-block px-6 py-2.5 bg-red-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-red-700 hover:shadow-lg focus:bg-red-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-red-800 active:shadow-lg transition duration-150 ease-in-out">Enviar Correo Masivo</Link>
+                            </template>
+                        </Keypad>
 
                     </div>
-                </div> -->
+                </div>
             </div>
             <div class="panel pb-1.5 mt-6">
                 <div class="table-responsive">
-                    <DataTable :ajax="route('crm_contacts_list_data')" :columns="columns">
+                    <DataTable :ajax="route('crm_contacts_list_data')" :columns="columns" :options="options">
                         <template #action="props">
                             <div class="flex gap-1 items-center justify-center">
 
@@ -76,6 +95,11 @@ const getImage = (path) => {
                                 </div>
                                 <div>{{ props.rowData.full_name }}</div>
                             </div>
+                        </template>
+                        <template #peremail="props">
+                            <Link href="" class="py-3 px-4 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-none focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:text-blue-400">
+                                {{ props.rowData.email }}
+                            </Link>
                         </template>
                         <template #pergender="props">
                             <div class="text-center" >

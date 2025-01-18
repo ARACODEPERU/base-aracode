@@ -516,6 +516,7 @@ class AcaStudentController extends Controller
                 ],
                 [
                     'student_code'  => $per->number,
+                    'new_student' => false
                 ]
             );
             return to_route('dashboard');
@@ -556,7 +557,7 @@ class AcaStudentController extends Controller
                 $cont = $index + 1;
 
                 // Validar datos obligatorios
-                if (!$row[0] || !$row[1] || !$row[4] || !$row[9]) {
+                if (!isset($row[0]) || !isset($row[1]) || !isset($row[4]) || !isset($row[9]) || !$row[0] || !$row[1] || !$row[4] || !$row[9]) {
                     throw new \Exception("Fila {$cont}: Faltan datos obligatorios.");
                 }
 
@@ -600,7 +601,7 @@ class AcaStudentController extends Controller
                     throw new \Exception("Fila {$cont}: Email ya registrado ({$email}).");
                 }
 
-                if (!$row[9]) {
+                if (!isset($row[9]) || !$row[9]) {
                     throw new \Exception("Fila {$cont}: El campo 'Género' (columna J) es obligatorio.");
                 }
                 // Validar género
@@ -621,7 +622,8 @@ class AcaStudentController extends Controller
                     'industry' => $row[6],
                     'ocupacion' => $row[7],
                     'profession' => $row[8],
-                    'gender' => $row[9]
+                    'gender' => $row[9],
+                    'is_client' => true
                 ]);
 
                 User::updateOrCreate(

@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('people', function (Blueprint $table) {
-            $table->unsignedBigInteger('person_id')->nullable();
+            $table->unsignedBigInteger('company_person_id')->nullable()->comment('se registra la empresa que pertenese');
             $table->string('industry', 100)->nullable();
             $table->string('profession', 100)->nullable();
             $table->string('company', 200)->nullable();
-            $table->foreign('person_id', 'people_person_id_fk')->references('id')->on('people')->onDelete('cascade');
+            $table->foreign('company_person_id', 'people_company_person_id_fk')->references('id')->on('people')->onDelete('cascade');
         });
     }
 
@@ -26,11 +26,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('people', function (Blueprint $table) {
-            $table->dropForeign('people_person_id_fk');
+            $table->dropForeign('people_company_person_id_fk');
             $table->dropColumn('company');
             $table->dropColumn('profession');
             $table->dropColumn('industry');
-            $table->dropColumn('person_id');
+            $table->dropColumn('company_person_id');
         });
     }
 };

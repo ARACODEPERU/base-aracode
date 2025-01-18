@@ -25,6 +25,7 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'crm_chat_dashboard']));
         array_push($permissions, Permission::create(['name' => 'crm_mailbox_dashboard']));
         array_push($permissions, Permission::create(['name' => 'crm_chat_notifications']));
+        array_push($permissions, Permission::create(['name' => 'crm_envio_correo_masivo']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

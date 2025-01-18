@@ -2,6 +2,7 @@
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import EditForm from './Partials/EditForm.vue';
 import { Link } from '@inertiajs/vue3';
+import Navigation from "@/Components/vristo/layout/Navigation.vue";
 
 const props = defineProps({
     identityDocumentTypes: {
@@ -22,17 +23,17 @@ const props = defineProps({
 
 <template>
     <AppLayout title="Crear Estudiante">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
+        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
+            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+                <Link :href="route('aca_students_list')" class="text-primary hover:underline">Estudiantes</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Estudiantes</span>
+                <span>{{ student.full_name }}</span>
             </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <span>Editar</span>
             </li>
-        </ul>
+        </Navigation>
         <div class="pt-5">
             <EditForm :student="student" :identityDocumentTypes="identityDocumentTypes" :ubigeo="ubigeo" /> 
         </div>

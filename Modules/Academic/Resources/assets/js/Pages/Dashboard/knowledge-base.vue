@@ -237,7 +237,7 @@
                     </template>
                 </div>
             </div>
-            <div class="panel mt-10 text-center md:mt-20">
+            <!-- <div class="panel mt-10 text-center md:mt-20">
                 <h3 class="mb-2 text-xl font-bold dark:text-white md:text-2xl">¿Necesitas ayuda?</h3>
                 <div class="text-lg font-medium text-white-dark">
                     Nuestros especialistas siempre están dispuestos a ayudar. Comuníquese con nosotros durante el horario comercial habitual o envíenos un correo electrónico las 24 horas del día, los 7 días de la semana y nos comunicaremos con usted.
@@ -246,7 +246,7 @@
                     <Link :href="route('crm_mailbox_dashboard')" type="button" class="btn btn-primary">Envia un correo</Link>
                     <button type="button" class="btn btn-primary">Chatea con nosotros</button>
                 </div>
-            </div>
+            </div> -->
             <div class="mt-10">
                 <h3 class="mb-6 text-xl font-bold md:text-3xl">Cursos populares</h3>
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
