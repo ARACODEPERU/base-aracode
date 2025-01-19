@@ -7,7 +7,9 @@
     import { Head, useForm, Link, usePage } from '@inertiajs/vue3';
     import IconMail from '@/Components/vristo/icon/icon-mail.vue';
     import IconLockDots from '@/Components/vristo/icon/icon-lock-dots.vue';
-    
+    import { useAppStore } from '@/stores/index';
+    const store = useAppStore();
+
     const props = defineProps({
         email: {
             type: String,
@@ -74,7 +76,14 @@
                     <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
                         <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
                             <Link :href="route('index_main')" class="w-8 block lg:hidden">
-                                <img :src="`${baseUrl}/img/isotipo.png`" alt="Logo" class="mx-auto w-10" />
+                                <template v-if="store.theme === 'light'">
+                                    <img v-if="company.isotipo == '/img/isotipo.png'" :src="`${baseUrl}/img/isotipo.png`" alt="Logo" class="mx-auto w-10" />
+                                    <img v-else :src="`${baseUrl}storage/${company.isotipo}`" alt="Logo" class="mx-auto w-10" />
+                                </template>
+                                <template v-if="store.theme === 'dark'">
+                                    <img v-if="company.isotipo_negative == '/img/isotipo_negativo.png'" :src="`${baseUrl}/img/isotipo_negativo.png`" alt="Logo" class="mx-auto w-10" />
+                                    <img v-else :src="`${baseUrl}storage/${company.isotipo_negative}`" alt="Logo" class="mx-auto w-10" />
+                                </template>
                             </Link>
                             <div class="dropdown ms-auto w-max">
                                 <!-- <Popper :placement="'bottom-start'" offsetDistance="8">
