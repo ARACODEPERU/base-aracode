@@ -554,10 +554,14 @@ class AcaStudentController extends Controller
                     continue;
                 }
 
+                if (array_filter($row) === []) {
+                    continue; // Ignorar filas completamente vacías
+                }
+
                 $cont = $index + 1;
 
                 // Validar datos obligatorios
-                if (!isset($row[0]) || !isset($row[1]) || !isset($row[4]) || !isset($row[9]) || !$row[0] || !$row[1] || !$row[4] || !$row[9]) {
+                if (!isset($row[0]) || !isset($row[1]) || !isset($row[4]) || !isset($row[9]) || trim($row[0]) === '' || trim($row[1]) === '' || trim($row[4]) === '' || trim($row[9]) === '') {
                     throw new \Exception("Fila {$cont}: Faltan datos obligatorios.");
                 }
 

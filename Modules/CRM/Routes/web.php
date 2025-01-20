@@ -82,4 +82,8 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_envio_correo_masivo'])
         ->get('contacts/mass/mailing', [CrmContactsController::class, 'massMailing'])
         ->name('crm_send_mass_mailing');
+
+    Route::middleware(['middleware' => 'permission:crm_contactos_listado'])
+        ->post('contacts/list/pagination', [CrmContactsController::class, 'getContactsPagination'])
+        ->name('crm_contacts_list_data');
 });

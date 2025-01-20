@@ -11,6 +11,7 @@ use Illuminate\Http\Response;
 use DataTables;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaStudent;
 
 class CrmContactsController extends Controller
 {
@@ -55,7 +56,6 @@ class CrmContactsController extends Controller
     public function massMailing()
     {
         $courses = [];
-
         if ($this->P000009 == '1' || $this->P000009 == '99') {
             $courses = AcaCourse::where('status', true)->get();
         }
@@ -64,5 +64,31 @@ class CrmContactsController extends Controller
             'P000009' => $this->P000009,
             'courses' => $courses
         ]);
+    }
+
+    public function getContactsPagination(Request $request)
+    {
+        $search = $request->get('search');
+
+
+
+        $model = Person::query();
+        $selectFields = ['people.*']; // Siempre incluir 'people.*'
+
+        if ($this->P000009 == '1' || $this->P000009 == '99') {
+            $model = $model->join('aca_students', 'aca_students.person_id', 'people.id');
+
+            if ($search['type']) {
+                $model = $model->where('aca_students.new_student', true);
+            }
+
+
+            $selectFields[] = 'aca_students.new_student'; // Agregar 'new_student' dinámicamente
+        }
+        // Puedes agregar más condiciones similares aquí con otros joins y campos
+        $model = $model->select($selectFields); // Aplicar el select con todos los campos acumulados
+        $model = $model->where('people.id', '<>', 1);
+
+        return $model->paginate(10);
     }
 }
