@@ -48,7 +48,13 @@
     color: #bfc5db !important;
 }
 
-.dark .rc-virtual-list, .rc-virtual-list-holder, .ant-select-item-option-content{
+.dark .rc-virtual-list{
+    color: #bfc5db !important;
+}
+.dark .rc-virtual-list-holder {
+    color: #bfc5db !important;
+}
+.dark .ant-select-item-option-content{
     color: #bfc5db !important;
 }
 .dark .ant-select-item-option:hover{
@@ -57,5 +63,8 @@
 }
 .dark .ant-select-item-option-selected{
     background-color: #0f1d33 !important;
+    color: #bfc5db !important;
+}
+.dark .ant-dropdown-menu-title-content {
     color: #bfc5db !important;
 }

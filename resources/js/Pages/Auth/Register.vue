@@ -134,7 +134,7 @@ const company = usePage().props.company;
                                 <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Registrate</h1>
                                 <p class="text-base font-bold leading-normal text-white-dark">Ingresa tu email y contraseña para registrarte</p>
                             </div>
-                            <form class="space-y-5 dark:text-white" @submit.prevent="submit">
+                            <form class="space-y-5 dark:text-white" @submit.prevent="submit" novalidate>
                                 <div>
                                     <label for="name">Nombre</label>
                                     <div class="relative text-white-dark">
@@ -159,7 +159,7 @@ const company = usePage().props.company;
                                     <div class="relative text-white-dark">
                                         <TextInput
                                             id="email"
-                                            type="email"
+                                            type="text"
                                             class="ps-10 placeholder:text-white-dark"
                                             v-model="form.email"
                                             required

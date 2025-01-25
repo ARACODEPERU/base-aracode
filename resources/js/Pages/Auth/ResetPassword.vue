@@ -128,13 +128,13 @@
                                 <h1 class="mb-3 text-2xl font-bold !leading-snug dark:text-white">Restablecer contraseña</h1>
                                 <p>Crear nueva contraseña</p>
                             </div>
-                            <form class="space-y-5" @submit.prevent="submit">
+                            <form class="space-y-5" @submit.prevent="submit" novalidate>
                                 <div>
                                     <label for="Email">Email</label>
                                     <div class="relative text-white-dark">
                                         <TextInput
                                             id="email"
-                                            type="email"
+                                            type="text"
                                             class="form-input pl-10 placeholder:text-white-dark"
                                             v-model="form.email"
                                             required

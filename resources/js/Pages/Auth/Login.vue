@@ -132,11 +132,11 @@
                                 <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Iniciar sesión</h1>
                                 <p class="text-base font-bold leading-normal text-white-dark">Ingrese su correo electrónico y contraseña para iniciar sesión</p>
                             </div>
-                            <form class="space-y-5 dark:text-white" @submit.prevent="submit">
+                            <form class="space-y-5 dark:text-white" @submit.prevent="submit" novalidate>
                                 <div>
                                     <label for="Email">Correo Electrónico</label>
                                     <div class="relative text-white-dark">
-                                        <input v-model="form.email" id="Email" type="email" placeholder="Ingrese correo electrónico" class="form-input ps-10 placeholder:text-white-dark" tabindex="1" />
+                                        <input v-model="form.email" id="Email" type="text" placeholder="Ingrese correo electrónico" class="form-input ps-10 placeholder:text-white-dark" tabindex="1" />
                                         <span class="absolute start-4 top-1/2 -translate-y-1/2">
                                             <icon-mail :fill="true" />
                                         </span>

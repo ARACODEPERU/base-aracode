@@ -118,11 +118,11 @@ const store = useAppStore();
                                 <h1 class="mb-3 text-2xl font-bold !leading-snug dark:text-white">Has olvidado tu contraseña</h1>
                                 <p>¿Olvidaste tu contraseña? No hay problema. Solo indícanos tu dirección de correo electrónico y te enviaremos un enlace para restablecer tu contraseña que te permitirá elegir una nueva.</p>
                             </div>
-                            <form class="space-y-5" @submit.prevent="submit">
+                            <form class="space-y-5" @submit.prevent="submit" novalidate>
                                 <div>
                                     <label for="Email">Correo electrónico</label>
                                     <div class="relative text-white-dark">
-                                        <input id="Email" type="email" placeholder="Introducir correo electrónico" 
+                                        <input id="Email" type="text" placeholder="Introducir correo electrónico" 
                                             class="form-input pl-10 placeholder:text-white-dark"
                                             v-model="form.email"
                                             required
