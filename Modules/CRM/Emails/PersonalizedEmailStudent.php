@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Academic\Emails;
+namespace Modules\CRM\Emails;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Address;
 
-class ConfirmPurchaseSubscription extends Mailable
+class PersonalizedEmailStudent extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -19,18 +19,24 @@ class ConfirmPurchaseSubscription extends Mailable
     {
         $this->data = $data;
     }
-
     public function envelope(): Envelope
     {
+        $from_mail = $this->data['from_mail'];
+        $from_name = $this->data['from_name'];
+        $title = $this->data['title'];
+        $title = $this->data['title'];
+
         return new Envelope(
-            from: new Address(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME')),
-            subject: 'Student Registration Mailable',
+            from: new Address($from_mail, $from_name),
+            subject: $title,
         );
     }
-
-    public function build()
+    /**
+     * Build the message.
+     */
+    public function build(): self
     {
-        return $this->view('academic::emails.subscription_gratitude', [
+        return $this->view('crm::mails.personalize-email-student', [
             'data' => $this->data
         ]);
     }

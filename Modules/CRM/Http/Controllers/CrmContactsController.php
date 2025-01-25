@@ -14,6 +14,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Illuminate\Support\Facades\Mail;
 use Modules\CRM\Emails\MailwithUserAccount;
+use Modules\CRM\Emails\PersonalizedEmailStudent;
 
 class CrmContactsController extends Controller
 {
@@ -112,6 +113,7 @@ class CrmContactsController extends Controller
         $P000013 = Parameter::where('parameter_code', 'P000013')->value('value_default');
 
         $type = $correo['type'];
+        $message = $correo['message'];
 
         $correosEnviados = 0;
         $correosFallidos = [];
@@ -120,13 +122,19 @@ class CrmContactsController extends Controller
             'from_mail' => $P000013 ?? env('MAIL_FROM_ADDRESS'),
             'from_name' => env('MAIL_FROM_NAME'),
             'title' => $correo['title'],
-            'contact' => $correo['contact']
+            'contact' => $correo['contact'],
+            'message' => null
         ];
 
-        //dd($correo);
-
         try {
-            Mail::to($correo['contact']['email'])->send(new MailwithUserAccount($data));
+            if ($type == 'ccu') {
+                Mail::to(trim($correo['contact']['email']))->send(new MailwithUserAccount($data));
+            } elseif ($type == 'cdb') {
+            } elseif ($type == 'ccc') {
+            } elseif ($type == 'cmp') {
+                $data['message'] =  $message;
+                Mail::to(trim($correo['contact']['email']))->send(new PersonalizedEmailStudent($data));
+            }
             $correosEnviados = 1;
         } catch (\Exception $e) {
 

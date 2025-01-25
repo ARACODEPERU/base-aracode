@@ -160,6 +160,8 @@
         // Verifica si el elemento ya existe en el array antes de agregarlo
         if (!emailForm.para.some(selectedItem => selectedItem.id === item.id)) {
             emailForm.para.push(item);
+        }else{
+            console.log(emailForm.para)
         }
     };
 
@@ -174,16 +176,36 @@
     const porsentaje = ref(0);
 
     const sendEmails = async () => {
-        loadingSend.value = true;
         emailStatus.value = [];
+        porsentaje.value = 0;
+        progressSend.value = 0;
+        // Validar si el asunto está vacío
+        if (!emailForm.asunto) {
+            showMessage("El campo 'Asunto' es obligatorio.",'info');
+            return; // Detiene la ejecución si está vacío
+        }
+
+        // Validar si el correo predeterminado está vacío
+        if (!emailForm.correoDefault) {
+            showMessage("El campo 'Correo predeterminado' es obligatorio.",'info');
+            return; // Detiene la ejecución si está vacío
+        }
+
+        // Validar si el array 'para' está vacío
+        if (emailForm.para.length === 0) {
+            showMessage("Debe agregar al menos un destinatario.",'info');
+            return; // Detiene la ejecución si no hay destinatarios
+        }
+        loadingSend.value = true;
+        
         displayModalDetails.value = true;
         const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/send-emails'; // Cambia por la URL de tu API
         let emailstotal = emailForm.para.length;
-        porsentaje.value = (1 / parseInt(emailstotal)) * 100;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         emailForm.csrfToken = csrfToken;
-        
+        porsentaje.value = (1 / parseInt(emailstotal)) * 100;
+
          axios.post(url,emailForm,{
             headers: {
                 'Content-Type': 'application/json'
@@ -201,7 +223,25 @@
 
     const emailStatus = ref([])
     
-    
+    const showMessage = (msg = '', type = 'success') => {
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            customClass: { container: 'toast' },
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+        toast.fire({
+            icon: type,
+            title: msg,
+            padding: '10px 20px',
+        });
+    };
 </script>
 <template>
     <AppLayout title="Contactos">
@@ -305,7 +345,6 @@
 
                                         <button 
                                             :id="`student-send-${ixx}`" 
-                                            :disabled="selectedStudents[ixx]" 
                                             @click="updateSelectedItem(item,ixx)" 
                                             type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                             <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">

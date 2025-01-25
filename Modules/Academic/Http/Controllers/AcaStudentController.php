@@ -191,12 +191,12 @@ class AcaStudentController extends Controller
 
         $user = User::updateOrCreate(
             [
-                'email'         => $request->get('email'),
+                'email'         => trim($request->get('email')),
                 'person_id'     => $per->id
             ],
             [
-                'name'          => $request->get('names'),
-                'password'      => Hash::make($request->get('number')),
+                'name'          => trim($request->get('names')),
+                'password'      => Hash::make(trim($request->get('number'))),
                 'information'   => $request->get('description'),
                 'avatar'        => $path,
                 'person_id'     => $per->id
@@ -324,9 +324,9 @@ class AcaStudentController extends Controller
             'short_name'            => trim($request->get('names')),
             'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
             'description'           => $request->get('description'),
-            'number'                => $request->get('number'),
+            'number'                => trim($request->get('number')),
             'telephone'             => $request->get('telephone'),
-            'email'                 => $request->get('email'),
+            'email'                 => trim($request->get('email')),
             'image'                 => $path,
             'address'               => $request->get('address'),
             'is_provider'           => false,
@@ -617,11 +617,11 @@ class AcaStudentController extends Controller
                 // Crear registro en la base de datos
                 $person = Person::create([
                     'document_type_id' => 1,
-                    'full_name' => $row[0],
-                    'number' => $row[1],
+                    'full_name' => trim($row[0]),
+                    'number' => trim($row[1]),
                     'birthdate' => $fechaMysql,
                     'telephone' => $row[3],
-                    'email' => $row[4],
+                    'email' => trim($row[4]),
                     'company' => $row[5],
                     'industry' => $row[6],
                     'ocupacion' => $row[7],
@@ -632,10 +632,10 @@ class AcaStudentController extends Controller
 
                 User::updateOrCreate(
                     [
-                        'email' => $row[4]
+                        'email' => trim($row[4])
                     ],
                     [
-                        'name' => $row[0],
+                        'name' => trim($row[0]),
                         'password' => Hash::make(trim($row[1])),
                         'local_id' => 1,
                         'person_id' => $person->id,
