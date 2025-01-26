@@ -72,8 +72,8 @@ class CrmContactsController extends Controller
     public function getContactsPagination(Request $request)
     {
         $search = $request->get('search');
-
-
+        $text = $search['search'];
+        $num = $search['number_records'];
 
         $model = Person::query();
         $selectFields = ['people.*']; // Siempre incluir 'people.*'
@@ -102,8 +102,9 @@ class CrmContactsController extends Controller
         // Puedes agregar más condiciones similares aquí con otros joins y campos
         $model = $model->select($selectFields); // Aplicar el select con todos los campos acumulados
         $model = $model->where('people.id', '<>', 1);
+        $model = $model->where('people.full_name', 'like', '%' . $text . '%');
 
-        return $model->paginate(10);
+        return $model->paginate($num);
     }
 
     public function sendMassMessage(Request $request)

@@ -280,7 +280,7 @@
                             </div>
                             <div>
                                 <label for="txtbuscar" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Buscar por descripcion o dni</label>
-                                <Input v-model:value="formSearch.search" id="txtbuscar" required />
+                                <Input v-model:value="formSearch.search" @keyup.enter="getContactsPagination"  id="txtbuscar" />
                             </div>
                             <div class="flex items-center justify-between col-span-2 pr-6">
                                 <div class="flex items-center space-x-2">
@@ -397,8 +397,8 @@
                                 @change="selectEmailDeafult"
                             >
                                 <SelectOption value="ccu">Correo con cuenta de usuario</SelectOption>
-                                <SelectOption value="cdb">Correo de bienvenida</SelectOption>
-                                <SelectOption value="ccc">Correo con certificados</SelectOption>
+                                <!-- <SelectOption value="cdb">Correo de bienvenida</SelectOption>
+                                <SelectOption value="ccc">Correo con certificados</SelectOption> -->
                                 <SelectOption value="cmp">Correo con mensaje personalizado</SelectOption>
                             </Select>
                         </div>
