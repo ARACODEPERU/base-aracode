@@ -4,7 +4,7 @@
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     import { Cascader, Input, Textarea, Select, SelectOption, notification } from 'ant-design-vue';
     import { ref, computed, onMounted, watch, nextTick  } from 'vue';
-    import { useForm, Link } from '@inertiajs/vue3';
+    import { useForm, Link, usePage } from '@inertiajs/vue3';
     import Keypad from '@/Components/Keypad.vue';
     import { Pagination } from 'flowbite-vue';
     import Swal from 'sweetalert2';
@@ -16,6 +16,8 @@
         },
     });
 
+    const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
+    const channelListen = "email-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
     const loadingPrev = ref(false);
     const loadingNext = ref(false);
 
@@ -47,6 +49,7 @@
         correoDefault: null,
         csrfToken: null,
         urlBacken: route('crm_contacts_send_mail_post'),
+        channelListen: channelListen,
         para: []
     });
 
@@ -108,24 +111,15 @@
             }
         });
         
-        // if (selectAll.value) {
-        //     // Agrega los estudiantes a emailForm.para si no están ya incluidos
-        //     students.value.forEach((student) => {
-        //         if (!emailForm.para.some((item) => item.id === student.id)) {
-        //             emailForm.para.push(student);
-        //         }
-        //     });
-        // } else {
-        //     // Elimina los estudiantes del array si se desactiva "selectAll"
-        //     emailForm.para = emailForm.para.filter(
-        //         (item) => !students.value.some((student) => student.id === item.id)
-        //     );
-        // }
+    };
+
+    const toggleDeSelectAll = () => {
+        emailForm.para = [];
     };
 
     onMounted(() => { 
         getContactsPagination();
-        window.socketIo.on("email-status", (status) => {
+        window.socketIo.on(channelListen, (status) => {
             emailStatus.value.push(status);
             progressSend.value = parseFloat(progressSend.value) + parseFloat(porsentaje.value)
             nextTick(() => {
@@ -276,6 +270,7 @@
                                     id="txtbuscarpor" 
                                     placeholder="Seleccionar"
                                     @change="getContactsPagination"
+                                    style="width: 100%"
                                  />
                             </div>
                             <div>
@@ -297,10 +292,10 @@
                                     <span class="dark:text-info" v-if="paginacion.total">{{ paginacion.total }} Total</span>
                                 </div>
                                 <button @click="toggleSelectAll" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                    <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                         <path stroke="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/>
                                     </svg>
-                                    <span class="sr-only">Agregar todos</span>
+                                    Agregar todo
                                 </button>
                             </div>
                         </div>
@@ -478,9 +473,15 @@
                                     <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                     <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                 </svg>
+                                <button v-show="!loadingSend" @click="toggleDeSelectAll" type="button" class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                                    <svg  class="w-5 h-5 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                        <path stroke="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
+                                    </svg>
+                                    Quitar todo
+                                </button>
                             </div>
                             <div class="flex justify-end">
-                                <button @click="sendEmails" :class="{ 'opacity-25': loadingSend }" :disabled="loadingSend" type="button" class="btn btn-primary w-[120px]">
+                                <button @click="sendEmails" type="button" :class="{ 'opacity-25': loadingSend }" :disabled="loadingSend" class="btn btn-primary w-[120px]">
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                                         <path d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480l0-83.6c0-4 1.5-7.8 4.2-10.8L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z"/>
                                     </svg>
