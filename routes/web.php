@@ -203,4 +203,8 @@ Route::middleware('auth')->group(function () {
     Route::post('meta/whatsapp/message/send', [MetaController::class, 'sendMessageWhatsapp'])->name('meta_whatsapp_message_send');
 });
 
+//CERTIFICADOS AUTOMATIZACIÓN Y PRUEBAS
+Route::get('/test-image/{student_id}/{certificate_id}', [WebController::class, 'testimage'])->name('test-image');
+
+
 require __DIR__ . '/auth.php';
