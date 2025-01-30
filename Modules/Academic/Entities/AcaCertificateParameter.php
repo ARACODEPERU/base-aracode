@@ -42,7 +42,8 @@ class AcaCertificateParameter extends Model
         'position_description_x',
         'position_description_y',
         'font_size_description',
-        'max_width_description',   
+        'max_width_description',  
+        'interspace_description', 
     ];
 
     public function course()
