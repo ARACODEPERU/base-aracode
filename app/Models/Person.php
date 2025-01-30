@@ -42,7 +42,8 @@ class Person extends Model
         'company_person_id', /// se registra la empresa a la que pertenese
         'industry',
         'profession',
-        'company'
+        'company',
+        'industry_id'
     ];
     // se esta guardando la ruta completa por eso se comento
     // public function getImageAttribute($value)

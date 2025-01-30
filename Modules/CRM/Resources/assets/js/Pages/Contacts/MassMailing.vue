@@ -241,7 +241,10 @@
     <AppLayout title="Contactos">
         <Navigation :routeModule="route('crm_dashboard')" :titleModule="'CRM'">
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Contactos</span>
+                <Link :href="route('crm_contacts_list')" >Contactos</Link>
+            </li>
+            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                <span>Enviar Correos</span>
             </li>
         </Navigation>
         <div class="mt-5">

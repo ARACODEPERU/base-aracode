@@ -27,6 +27,16 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'crm_chat_notifications']));
         array_push($permissions, Permission::create(['name' => 'crm_envio_correo_masivo']));
 
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_listado']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_editar']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_empleados']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_agregar_empleados']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_eliminar_empleados']));
+        array_push($permissions, Permission::create(['name' => 'crm_empresas_enviar_correo_empleados']));
+
+
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
         }

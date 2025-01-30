@@ -1,4 +1,10 @@
-import { faGear, faUserGroup, faComments, faEnvelopesBulk } from "@fortawesome/free-solid-svg-icons";
+import { 
+    faGear, 
+    faUserGroup, 
+    faComments, 
+    faEnvelopesBulk ,
+    faBuildingUser
+} from "@fortawesome/free-solid-svg-icons";
 
 const menuCRM = {
     status: false,
@@ -7,6 +13,13 @@ const menuCRM = {
     route: 'module',
     permissions: "crm_dashboard",
     items: [
+        {
+            route: route("crm_companies_list"),
+            status: false,
+            text: "Empresas",
+            permissions: "crm_empresas_listado",
+            icom: faBuildingUser,
+        },
         {
             route: route("crm_contacts_list"),
             status: false,

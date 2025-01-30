@@ -441,7 +441,7 @@
                                                                 <td align="center" bgcolor="#af5372"
                                                                     style="border-radius:28px;" height="61">
                                                                     <multiline>
-                                                                        <a href="{{ route('verification.send') }}"
+                                                                        <a href="{{ route('login') }}"
                                                                             style="font:700 16px/61px 'Montserrat', Helvetica, Arial, sans-serif; color:#ffffff; text-decoration:none; text-transform:uppercase; display:block; overflow:hidden; outline:none;">
                                                                             Iniciar sesión
                                                                         </a>

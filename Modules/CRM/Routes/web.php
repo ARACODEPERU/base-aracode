@@ -83,7 +83,47 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->get('contacts/mass/mailing', [CrmContactsController::class, 'massMailing'])
         ->name('crm_send_mass_mailing');
 
-    Route::middleware(['middleware' => 'permission:crm_contactos_listado'])
+
+    Route::middleware(['middleware' => 'permission:crm_envio_correo_masivo'])
         ->post('contacts/list/pagination', [CrmContactsController::class, 'getContactsPagination'])
         ->name('crm_contacts_list_pagination');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_listado'])
+        ->get('companies/list', [CrmContactsController::class, 'companies'])
+        ->name('crm_companies_list');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_listado'])
+        ->get('companies/list/pagination', [CrmContactsController::class, 'getCompanies'])
+        ->name('crm_companies_list_pagination');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_nuevo'])
+        ->get('companies/create', [CrmContactsController::class, 'companiesCreate'])
+        ->name('crm_companies_create');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_nuevo'])
+        ->post('companies/store', [CrmContactsController::class, 'companiesStore'])
+        ->name('crm_companies_store');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_editar'])
+        ->get('contacts/{id}/edit', [CrmContactsController::class, 'companiesEdit'])
+        ->name('crm_companies_edit');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_editar'])
+        ->post('companies/update', [CrmContactsController::class, 'companiesUpdate'])
+        ->name('crm_companies_update');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_eliminar'])
+        ->delete('companies/destroy/{id}', [CrmContactsController::class, 'companiesDestroy'])
+        ->name('crm_companies_destroy');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_empleados'])
+        ->get('companies/{id}/employees', [CrmContactsController::class, 'companiesEmployees'])
+        ->name('crm_companies_employees');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_empleados'])
+        ->post('employees/list/search', [CrmContactsController::class, 'getEmployeesSearch'])
+        ->name('crm_companies_employees_search');
+    Route::middleware(['middleware' => 'permission:crm_empresas_agregar_empleados'])
+        ->post('employees/list/search', [CrmContactsController::class, 'companiesEmployeesAdd'])
+        ->name('crm_companies_employees_add');
 });

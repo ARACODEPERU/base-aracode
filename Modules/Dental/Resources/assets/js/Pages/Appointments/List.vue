@@ -603,15 +603,7 @@ const sendMessageWhatsapp = () => {
                                                                 </a>
                                                             </li> -->
                                                                 <li>
-                                                                    <a
-                                                                        href="javascript:;"
-                                                                        @click="
-                                                                            setTag(
-                                                                                note,
-                                                                                '1'
-                                                                            )
-                                                                        "
-                                                                    >
+                                                                    <a href="javascript:;" @click="setTag(note,'1')">
                                                                         <icon-square-rotated
                                                                             class="ltr:mr-2 rtl:ml-2 fill-warning text-warning"
                                                                         />
@@ -619,15 +611,7 @@ const sendMessageWhatsapp = () => {
                                                                     </a>
                                                                 </li>
                                                                 <li>
-                                                                    <a
-                                                                        href="javascript:;"
-                                                                        @click="
-                                                                            setTag(
-                                                                                note,
-                                                                                '2'
-                                                                            )
-                                                                        "
-                                                                    >
+                                                                    <a href="javascript:;" @click="setTag(note,'2')">
                                                                         <icon-square-rotated
                                                                             class="ltr:mr-2 rtl:ml-2 fill-info text-info"
                                                                         />

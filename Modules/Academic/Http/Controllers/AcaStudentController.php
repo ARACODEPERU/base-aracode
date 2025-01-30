@@ -627,6 +627,7 @@ class AcaStudentController extends Controller
                     'ocupacion' => $row[7],
                     'profession' => $row[8],
                     'gender' => $row[9],
+                    'is_provider' => false,
                     'is_client' => true
                 ]);
 

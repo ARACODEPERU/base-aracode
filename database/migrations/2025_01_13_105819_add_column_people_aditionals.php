@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('people', function (Blueprint $table) {
             $table->unsignedBigInteger('company_person_id')->nullable()->comment('se registra la empresa que pertenese');
+            $table->unsignedBigInteger('industry_id')->nullable();
             $table->string('industry', 100)->nullable();
             $table->string('profession', 100)->nullable();
             $table->string('company', 200)->nullable();
