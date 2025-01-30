@@ -25,7 +25,8 @@ class AcaCourse extends Model
         'type_description',
         'teacher_id',
         'sector_description',
-        'price'
+        'price',
+        'certificate_description',
     ];
 
     protected static function newFactory()
