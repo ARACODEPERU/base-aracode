@@ -51,6 +51,8 @@ class WebController extends Controller
                     $font->angle(0);
                 });
 
+
+
                 $img->text("Entregado el: " . $fecha,$this->certificates_param->position_date_x, $this->certificates_param->position_date_y , function ($font) {
                     $font->file($this->certificates_param->fontfamily_date);
                     $font->size($this->certificates_param->font_size_date);
@@ -66,6 +68,17 @@ class WebController extends Controller
                     $font->color('#0d0603');
                     $font->align($this->certificates_param->font_align_title);
                     $font->valign($this->certificates_param->font_vertical_align_title);
+                    $font->angle(0);
+                });
+                
+                //descripcion del certificado 
+                $max_width = $this->certificates_param->max_width_description;
+                $img->text($this->wrapText($this->certificates_param->Course->certificate_description, $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
+                    $font->file($this->certificates_param->fontfamily_description);
+                    $font->size($this->certificates_param->font_size_description);
+                    $font->color('#0d0603');
+                    $font->align($this->certificates_param->font_align_description);
+                    $font->valign($this->certificates_param->font_vertical_align_description);
                     $font->angle(0);
                 });
 
@@ -116,26 +129,27 @@ class WebController extends Controller
 
     }
 
-    public function wrapText($text, $maxWidth) {
+    public function wrapText($text, $maxWidth, $lineSpacing = 2.3) {
         // Envolver el texto
         $wrappedText = wordwrap($text, $maxWidth, PHP_EOL, true);
-
+    
         // Dividir el texto envuelto en líneas
         $lines = explode(PHP_EOL, $wrappedText);
-
+    
         // Calcular la longitud máxima de las líneas envueltas
         $maxLineLength = max(array_map('strlen', $lines));
-
+    
         // Centrar horizontalmente las líneas
         $centeredLines = array_map(function($line) use ($maxLineLength) {
             $spacesToAdd = max(0, ($maxLineLength - strlen($line)) / 2);
             $centeredLine = str_repeat(' ', $spacesToAdd) . $line;
             return $centeredLine;
         }, $lines);
-
-        // Unir las líneas centradas de nuevo en un solo texto
-        $centeredText = implode(PHP_EOL, $centeredLines);
-
+    
+        // Agregar espacio entre líneas
+        $spacing = str_repeat(PHP_EOL, $lineSpacing); // Crear el espacio entre líneas
+        $centeredText = implode($spacing, $centeredLines); // Unir las líneas con el espacio
+    
         return $centeredText;
     }
 }
