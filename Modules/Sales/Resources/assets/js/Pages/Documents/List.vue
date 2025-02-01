@@ -326,7 +326,7 @@ const cancelDocument = (index, item) => {
                     if(textarea){
                         resp = axios.post(route('saledocuments_cancel_document'), {
                             reason: textarea,
-                            id: item.id,
+                            id: item.document_id,
                             type: item.invoice_type_doc
                         }).then((res) => {
                             if (!res.data.success) {

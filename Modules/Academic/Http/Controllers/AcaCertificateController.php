@@ -47,6 +47,8 @@ class AcaCertificateController extends Controller
             ]
         );
 
+
+
         $certificate = AcaCertificateParameter::create([
             'course_id' => $request->get('course_id') ?? null,
             'certificate_img' => $request->get('certificate_img'),
