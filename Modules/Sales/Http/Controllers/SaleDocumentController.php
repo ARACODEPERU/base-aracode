@@ -1223,10 +1223,12 @@ class SaleDocumentController extends Controller
         $res = [];
 
         if ($type == '03') {
+            dd($document);
             $document->status = 3;
             $document->reason_cancellation = $request->get('reason');
             $document->invoice_status = 'Enviada Por Anular';
             $document->save();
+
             $res = $this->createSumamry($document);
             $boleta = new Boleta();
             $boleta->updateStockSale($document->id);

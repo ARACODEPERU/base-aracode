@@ -14,6 +14,7 @@
 use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 use Modules\Academic\Http\Controllers\AcaAuthController;
+use Modules\Academic\Http\Controllers\AcaCertificateController;
 use Modules\Academic\Http\Controllers\AcaContentController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
@@ -72,13 +73,13 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->name('aca_students_create');
 
     Route::middleware(['permission:aca_estudiante_certificados_crear'])
-        ->get('students/certificates/{id}', 'AcaCertificateController@create')
+        ->get('students/certificates/{id}', 'AcaCertificateController@studentCreate')
         ->name('aca_students_certificates_create');
 
-    Route::post('students/certificates_store', 'AcaCertificateController@store')
+    Route::post('students/certificates_store', 'AcaCertificateController@studentStore')
         ->name('aca_students_certificates_store');
 
-    Route::delete('students/certificates_destroy/{id}', 'AcaCertificateController@destroy')
+    Route::delete('students/certificates_destroy/{id}', 'AcaCertificateController@studentDestroy')
         ->name('aca_students_certificates_destroy');
 
     Route::middleware(['permission:aca_estudiante_certificados_crear'])
@@ -234,6 +235,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::post('subscriptions/free/user', [AcaStudentController::class, 'startStudentFree'])
         ->name('aca_subscriptions_free_user');
+
+    Route::get('certificate/list', [AcaCertificateController::class, 'index'])
+        ->name('aca_certificate_list');
+
+    Route::get('certificate/create', [AcaCertificateController::class, 'create'])
+        ->name('aca_certificate_create');
+    Route::get('certificate/{id}/edit', [AcaCertificateController::class, 'edit'])
+        ->name('aca_certificate_edit');
 
     ////////////////verificar datos///////////////////////////
 

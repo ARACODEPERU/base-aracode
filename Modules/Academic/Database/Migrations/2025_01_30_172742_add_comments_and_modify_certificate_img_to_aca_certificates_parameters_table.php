@@ -17,9 +17,11 @@ return new class extends Migration
 
             // Agregar comentarios a las columnas
             Schema::table('aca_certificates_parameters', function (Blueprint $table) {
+                $table->string('name_certificate')->nullable();
+                $table->boolean('state')->default(true);
                 // Cambiar el tipo de dato de certificate_img de text a string y hacerla nulleable
                 $table->string('certificate_img')->nullable()->comment('Ruta o URL de la imagen del certificado')->change();
-            
+
                 // Hacer todas las columnas nulleables y agregar comentarios
                 $table->unsignedBigInteger('course_id')->nullable()->comment('ID del curso asociado al certificado')->change();
                 $table->string('fontfamily_date')->nullable()->comment('Fuente utilizada para la fecha /fonts/fuente.ttf')->change();

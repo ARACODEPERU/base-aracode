@@ -4,7 +4,8 @@ import {
     faLandmarkFlag, 
     faUserTie, 
     faBookOpen,
-    faRocket
+    faRocket,
+    faCertificate
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -48,6 +49,13 @@ const menuAcademic = {
             text: "Cursos",
             icom: faBook,
             permissions: "aca_cursos_listado",
+        },
+        {
+            route: route("aca_certificate_list"),
+            status: false,
+            text: "Certificados",
+            icom: faCertificate,
+            permissions: "aca_certificados_listado",
         },
         {
             route: route("aca_mycourses"),
