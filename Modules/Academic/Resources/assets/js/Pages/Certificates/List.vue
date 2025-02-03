@@ -82,16 +82,16 @@
                                 <template v-for="(certificate, index) in certificates.data" :key="certificate.id">
                                     <tr>
                                         <td class="text-center">
-
+                                            <Link :href="route('aca_certificate_edit',certificate.id)" >Editar</Link>
                                         </td>
                                         <td class="whitespace-nowrap">
-                                            {{ certificate.description }}
+                                            {{ certificate.name_certificate }}
                                         </td>
                                         <td class="whitespace-nowrap">
                                             {{ certificate.created_at }}
                                         </td>
                                         <td class="whitespace-nowrap">
-                                            <span v-if="certificate.status" class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Activo</span>
+                                            <span v-if="certificate.state" class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Activo</span>
                                             <span v-else class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-red-400 border border-red-400">Inactivo</span>
                                         </td>
                                     </tr>

@@ -1,15 +1,10 @@
 <script setup>
     import { useForm, Link } from '@inertiajs/vue3';
-    import FormSection from '@/Components/FormSection.vue';
     import InputError from '@/Components/InputError.vue';
     import InputLabel from '@/Components/InputLabel.vue';
-    import PrimaryButton from '@/Components/PrimaryButton.vue';
     import TextInput from '@/Components/TextInput.vue';
-    import Keypad from '@/Components/Keypad.vue';
     import Swal2 from 'sweetalert2';
     import { ref, watch } from 'vue';
-    import ImageCompressorjs from '@/Components/ImageCompressorjs.vue';
-    import { useAppStore } from '@/stores/index';
     import iconMenu from '@/Components/vristo/icon/icon-menu.vue';
     import iconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
     import Multiselect from "@suadelabs/vue3-multiselect";
@@ -26,6 +21,7 @@
     const form = useForm({
         course_id: null,
         certificate_img: null,
+        certificate_img_preview: null,
         fontfamily_date: null,
         font_align_date: null,
         font_vertical_align_date: null,
@@ -64,7 +60,7 @@
     });
 
     const createCertificate = () => {
-        form.post(route('aca_courses_store'), {
+        form.post(route('aca_certificate_store'), {
             forceFormData: true,
             errorBag: 'createCertificate',
             preserveScroll: true,
@@ -76,8 +72,8 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                form.reset()
-            },
+                form.reset();
+            }
         });
     }
 
@@ -92,14 +88,21 @@
     const canvas = ref(null);
 
     
+    // Manejar la subida de la imagen
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
+            form.certificate_img = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                form.certificate_img = new Image();
-                form.certificate_img.src = e.target.result;
-                form.certificate_img.onload = () => drawCanvas();
+                form.certificate_img_preview = new Image();
+                form.certificate_img_preview.src = e.target.result;
+                form.certificate_img_preview.onload = () => {
+                    // Ajustar el tamaño del canvas al tamaño de la imagen
+                    canvas.value.width = form.certificate_img_preview.width;
+                    canvas.value.height = form.certificate_img_preview.height;
+                    drawCanvas();
+                };
             };
             reader.readAsDataURL(file);
         }
@@ -110,11 +113,16 @@
         const ctx = canvas.value.getContext('2d');
         ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
 
-        // Dibujar la imagen principal
-        if (form.certificate_img) {
-            ctx.drawImage(form.certificate_img, 0, 0, canvas.value.width, canvas.value.height);
+        // Dibujar la imagen principal en su tamaño completo
+        if (form.certificate_img_preview) {
+            ctx.drawImage(
+                form.certificate_img_preview,
+                0,
+                0,
+                form.certificate_img_preview.width,
+                form.certificate_img_preview.height
+            );
         }
-
     };
 </script>
 
@@ -175,7 +183,8 @@
                                 </div>
                                 <input @change="handleImageUpload" id="dropzone-file" type="file" class="hidden" />
                             </label>
-                        </div> 
+                        </div>
+                        <InputError :message="form.errors.certificate_img" class="mt-1" />
                     </div>
                     <div class="col-span-2">
                         <button @click="createCertificate" class="btn btn-primary w-full" type="button">
@@ -218,7 +227,7 @@
 <style>
 .canvas-code-block {
     width:100%;
-    height: 400px;
+    min-height: 400px;
     border: 1px solid #000;
     color: #fff;
     background: #181d28;

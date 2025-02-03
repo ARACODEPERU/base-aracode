@@ -172,7 +172,7 @@ class StudentSubscription
             ]);
 
             $stsubscription = AcaStudentSubscription::where('student_id', $student->id)
-                ->where('subscription_id', $this->subscription_id])
+                ->where('subscription_id', $this->subscription_id)
                 ->first();
 
             if ($stsubscription) {

@@ -42,21 +42,40 @@ class AcaCertificateController extends Controller
         $this->validate(
             $request,
             [
-                'name_certificate'   => 'required',
-                'certificate_img'       => 'required'
+                'name_certificate' => 'required',
+                'certificate_img' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]
         );
 
 
 
+        $destination = 'uploads/certificate';
+        $file = $request->file('certificate_img');
+        $path = null;
+
+        if ($file) {
+            $original_name = date('YmdHis');
+            $extension = $file->getClientOriginalExtension();
+            $file_name = $original_name . '.' . $extension;
+            $path = $file->storeAs($destination, $file_name, 'public');
+        }
+
         $certificate = AcaCertificateParameter::create([
             'course_id' => $request->get('course_id') ?? null,
-            'certificate_img' => $request->get('certificate_img'),
+            'certificate_img' => $path,
             'name_certificate' => $request->get('name_certificate'),
             'state' => true
         ]);
 
         return redirect()->route('aca_certificate_edit', $certificate->id);
+    }
+
+    public function edit($id)
+    {
+        $certificate = AcaCertificateParameter::find($id);
+        return Inertia::render('Academic::Certificates/Edit', [
+            'certificate' => $certificate
+        ]);
     }
 
     public function studentCreate($id)

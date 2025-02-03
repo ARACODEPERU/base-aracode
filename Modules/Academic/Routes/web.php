@@ -89,6 +89,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('students/registrations_store', 'AcaCapRegistrationController@store')
         ->name('aca_students_registrations_store');
 
+    Route::post('students/subscriptions_store', 'AcaCapRegistrationController@subscriptionStore')
+        ->name('aca_students_subscriptions_store');
+
+    Route::delete('students/subscriptions_destroy/{student_id}/{subscription_id}', 'AcaCapRegistrationController@subscriptionDestroy')
+        ->name('aca_students_subscriptions_destroy');
+
     Route::delete('students/registrations_destroy/{id}', 'AcaCapRegistrationController@destroy')
         ->name('aca_students_registrations_destroy');
 
@@ -241,6 +247,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::get('certificate/create', [AcaCertificateController::class, 'create'])
         ->name('aca_certificate_create');
+
+    Route::post('certificate/store', [AcaCertificateController::class, 'store'])
+        ->name('aca_certificate_store');
+
     Route::get('certificate/{id}/edit', [AcaCertificateController::class, 'edit'])
         ->name('aca_certificate_edit');
 
