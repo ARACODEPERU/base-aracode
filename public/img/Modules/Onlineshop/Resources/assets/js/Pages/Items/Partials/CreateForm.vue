@@ -1,0 +1,416 @@
+<script setup>
+import { useForm, Link } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
+import Keypad from '@/Components/Keypad.vue';
+import Swal2 from 'sweetalert2';
+import { ref, watch } from 'vue';
+import Editor from '@tinymce/tinymce-vue'
+import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+
+const props = defineProps({
+    courses: {
+        type: Object,
+        default: () => ({}),
+    },
+    products: {
+        type: Object,
+        default: () => ({}),
+    },
+    tiny_api_key: {
+        type: String,
+        default: null,
+    },
+    type: {
+        type: String,
+        default: null,
+    }
+});
+
+const titles = ref({
+    additional: props.type == 1 ? 'Tipo' : 'Descripción completa',
+    additional1: props.type == 1 ? 'Modalidad' : 'Video',
+    additional2: props.type == 3 ? 'Ficha técnica' : 'Brochure',
+    additional3: props.type == 3 ? 'Manual' : null,
+    additional4: props.type == 3 ? 'Legal' : null,
+    additional5: props.type == 3 ? 'Tipo' : null,
+});
+
+const form = useForm({
+    type: props.type,
+    item_id: null,
+    entitie: 'Modules-Academic-Entities-AcaCourse',
+    category_description: null,
+    name: null,
+    description: null,
+    price: null,
+    discount: null,
+    image: null,
+    image_view: null,
+    additional: null,///tipo curso o diplomado
+    additional1: null,///modalidad en Vivo, Presencial, E-learning,
+    additional2: null,
+    additional3: null,
+    additional4: null,
+    additional5: null,
+    countCharacters: 0,
+    specifications: [{
+        editable: true,
+        title: null,
+        description: null
+    }]
+});
+
+watch(() => form.description, (newValue) => {
+    form.countCharacters = newValue.length;
+});
+
+const createItem = () => {
+    form.post(route('onlineshop_items_store'), {
+        forceFormData: true,
+        errorBag: 'createItem',
+        preserveScroll: true,
+        onSuccess: () => {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se registró correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            form.reset()
+        },
+    });
+}
+
+const setItemsData = (data,type) => {
+    form.type = type;
+    form.item_id = data.id;
+    if(type == 1){
+        titles.value.additional = 'Tipo'
+        titles.value.additional1 = 'Modalidad'
+
+        form.additional = data.type_description;
+        form.additional1 = data.modality.description;
+        form.category_description = data.category.description;
+        form.entitie = 'Modules-Academic-Entities-AcaCourse';
+
+    }else{
+        titles.value.additional = 'Recomendación'
+        titles.value.additional1 = 'Video'
+        titles.value.additional2 = 'Ficha técnica'
+        titles.value.additional3 = 'Manual'
+        titles.value.additional4 = 'Legal'
+        titles.value.additional5 = 'Tipo'
+
+        form.entitie = 'App-Models-Product'
+        form.category_description = data.category ? data.category.description : null;
+        let prices = JSON.parse(data.sale_prices);
+
+        if(prices.high){
+            form.price = prices.high;
+        }else if(prices.medium){
+            form.price = prices.medium;
+        }else if(prices.under){
+            form.price = prices.under;
+        }
+        
+    }
+
+
+    form.name = data.description;
+    form.image_view = data.image ? (data.image.includes("imagen-no-disponible.jpg") ? data.image :  getImage(data.image)) : null ;
+
+}
+
+const baseUrl = assetUrl;
+
+const getImage = (path) => {
+    return baseUrl + 'storage/'+ path;
+}
+
+const loadFile = (event) => {
+    const input = event.target;
+    const file = input.files[0];
+    const type = file.type;
+
+    // Obtén una referencia al elemento de imagen a través de Vue.js
+    const imagePreview = document.getElementById('preview_img');
+
+    // Crea un objeto de archivo de imagen y asigna la URL al formulario
+    const imageFile = URL.createObjectURL(event.target.files[0]);
+    form.image_view = imageFile;
+    // Asigna el archivo a form.image
+    form.image = file;
+    // Libera la URL del objeto una vez que la imagen se haya cargado
+    imagePreview.onload = function() {
+        URL.revokeObjectURL(imageFile); // libera memoria
+    }
+};
+
+const handleFileChange = (event) => {
+    try {
+        form.additional2 = event.target.files[0];
+    } catch (error) {
+        console.error("Error al manejar el cambio de archivo:", error);
+    }
+}
+
+const addSpecifications = () => {
+    form.specifications.push({
+        title: null,
+        description: null
+    });
+}
+
+const removeSpecifications= (key) => {
+    form.specifications.splice(key, 1);
+}
+
+</script>
+
+<template>
+    <div class="grid grid-cols-6 md:grid-cols-6 gap-4">
+        <div class="col-span-6 sm:col-span-2 space-y-4">
+            <div v-if="courses.length > 0" class="w-full rounded-lg font-medium text-gray-900 bg-white border border-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <div class="block w-full px-4 py-2 border-b border-gray-200 bg-gray-200 dark:bg-gray-800 dark:border-gray-600">Cursos</div>
+                <div style="max-height: 530px; overflow-y: auto;">
+                    <button @click="setItemsData(course,1)" v-for="(course, key) in courses" type="button" class="w-full text-sm px-4 py-2 font-medium text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white">
+                        {{ course.description }}
+                    </button>
+                </div>
+            </div>
+            <div v-if="products.length > 0" class="w-full rounded-lg font-medium text-gray-900 bg-white border border-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <div class="block w-full px-4 py-2 border-b border-gray-200 bg-gray-200 dark:bg-gray-800 dark:border-gray-600">Productos</div>
+                <div style="max-height: 530px; overflow-y: auto;">
+                    <button @click="setItemsData(product,2)" v-for="(product, key) in products" type="button" class="w-full text-sm px-4 py-2 font-medium text-left border-b border-gray-200 cursor-pointer hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white">
+                        {{ product.description }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-span-6 sm:col-span-4">
+
+            <div class="w-full p-4 bg-white border border-gray-200 rounded-lg sm:p-6 md:p-8 dark:bg-gray-800 dark:border-gray-700">
+                <form @submit.prevent="createItem" class="space-y-6" action="#">
+                    <div>
+                        <InputLabel for="name" value="Nombre" />
+                        <TextInput
+                            id="name"
+                            v-model="form.name"
+                            type="text"
+                            class="block w-full mt-1"
+                            autocomplete="off"
+                        />
+                        <InputError :message="form.errors.name" class="mt-2" />
+                        <InputError :message="form.errors.item_id" class="mt-2" />
+                    </div>
+                    <div v-if="form.type == 1" class="mt-2">
+                        <InputLabel for="description" value="Descripción" />
+                        <textarea v-model="form.description" id="description" rows="2" autofocus class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Escribe descripción aquí..."></textarea>
+                        <span id="charCount">{{ form.countCharacters }}</span> caracteres de máximo 255
+                        <InputError :message="form.errors.description" class="mt-2" />
+                    </div>
+                    <div v-if="form.type == 2 || form.type == 3" class="mt-2">
+                        <InputLabel for="description" value="Descripción" />
+                        <Editor
+                            id="description"
+                            :api-key="tiny_api_key"
+                            v-model="form.description"
+                            :init="{
+                                plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
+                                language: 'es',
+                            }"
+                        />
+                        <InputError :message="form.errors.description" class="mt-2" />
+                    </div>
+                    <!-- para cursos -->
+                    <div v-if="form.type == 1" class="mt-2">
+                        <InputLabel for="category_description" value="Sector" />                       
+                        <select id="category_description" v-model="form.category_description" class="form-select text-white-dark">
+                            <option selected value="">Seleccionar Sector</option>
+                            <option value="Derecho">Derecho</option>
+                            <option value="Empresarial">Empresarial</option>
+                            <option value="Publico">Público</option>
+                            <!-- Agrega más opciones según tus necesidades -->
+                        </select>
+                        <InputError :message="form.errors.category_description" class="mt-2" />
+                    </div>
+                    <div v-else class="mt-2">
+                        <InputLabel for="category_description" value="Sector" />                       
+                        <TextInput
+                            id="category_description"
+                            v-model="form.category_description"
+                            type="text"
+                            class="block w-full mt-1"
+                            autocomplete="off"
+                        />
+                        <InputError :message="form.errors.category_description" class="mt-2" />
+                    </div>
+
+                    <div v-if="form.type == 1" class="mt-2">
+                        <InputLabel for="additional1" :value="titles.additional1+'*'" />
+                        <select id="additional1" v-model="form.additional1" class="form-select text-white-dark">
+                            <option value="">Seleccionar modalidad</option>
+                            <option value="En Vivo">En Vivo</option>
+                            <option value="Presencial">Presencial</option>
+                            <option value="E-Learning">E-Learning</option>
+                            <!-- Agrega más opciones según tus necesidades -->
+                        </select>
+                        <InputError :message="form.errors.additional1" class="mt-2" />
+                    </div>
+                    <!-- para zoe -->
+                    <div v-if="form.type == 2 || form.type == 3" class="mt-2">
+                        <InputLabel for="additional1" :value="titles.additional1+'*'" />
+                        <textarea v-model="form.additional1" id="additional1" rows="4" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"></textarea>
+                        <InputError :message="form.errors.additional1" class="mt-2" />
+                    </div>
+                    <div v-if="form.type == 1" class="mt-2">
+                        <InputLabel for="additional" :value="titles.additional+'*'" />
+                        <select id="additional" v-model="form.additional" class="form-select text-white-dark">
+                            <option value="">Seleccionar tipo</option>
+                            <option value="Curso">Curso</option>
+                            <option value="Diplomado">Diplomado</option>
+                        </select>
+                        <InputError :message="form.errors.additional" class="mt-2" />
+                    </div>
+                    <div v-if="form.type == 2 || form.type == 3" class="mt-2">
+                        <InputLabel for="additional" :value="titles.additional+'*'" />
+                        <Editor
+                            id="additional"
+                            :api-key="tiny_api_key"
+                            v-model="form.additional"
+                            :init="{
+                                plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
+                                language: 'es',
+                            }"
+                        />
+                        <InputError :message="form.errors.additional" class="mt-2" />
+                    </div>
+                    <div class="mt-2">
+                        <InputLabel for="image" value="Imagen *" />
+                        <div v-if="form.image_view" class="flex justify-center space-x-2">
+                            <figure class="max-w-lg">
+                                <img style="width: 200px;" id="preview_img" class="h-auto rounded-lg" :src="form.image_view">
+                                <figcaption class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">Imagen Actual</figcaption>
+                            </figure>
+                        </div>
+
+                        <input @change="loadFile" accept=".svg, .png, .jpg, .jpeg, .gif" class="form-input file:py-2 file:px-4 file:border-0 file:font-semibold p-0 file:bg-primary/90 ltr:file:mr-5 rtl:file:ml-5 file:text-white file:hover:bg-primary" aria-describedby="file_input_help" id="file_input" type="file">
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">PNG, JPG or GIF (RECOMENDADO. 800x400px).</p>
+                        <InputError :message="form.errors.image" class="mt-2" />
+                    </div>
+                    <!-- agregado para celmovil -->
+                    <div v-if="form.type == 3" class="mt-2">
+                        <InputLabel for="additional2" :value="titles.additional2+'*'" />
+                        <input @change="handleFileChange" accept=".pdf, image/*" class="form-input file:py-2 file:px-4 file:border-0 file:font-semibold p-0 file:bg-primary/90 ltr:file:mr-5 rtl:file:ml-5 file:text-white file:hover:bg-primary" id="file_input" type="file">
+                        <InputError :message="form.errors.additional2" class="mt-2" />
+                    </div>
+
+                    <div v-if="form.type == 3" class="mt-2">
+                        <InputLabel for="additional3" :value="titles.additional3+'*'" />
+                        <input v-model="form.additional3" type="text" id="additional3" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="link manual" required>
+                        <InputError :message="form.errors.additional3" class="mt-2" />
+                    </div>
+                    <div v-if="form.type == 3" class="mt-2">
+                        <InputLabel for="additional4" :value="titles.additional4+'*'" />
+                        <Editor
+                            id="additional4"
+                            :api-key="tiny_api_key"
+                            v-model="form.additional4"
+                            :init="{
+                                plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
+                                language: 'es',
+                            }"
+                        />
+                        <InputError :message="form.errors.additional4" class="mt-2" />
+                    </div>
+                    <div v-if="form.type == 3" class="mt-2">
+                        <InputLabel for="additional5" :value="titles.additional5+'*'" />
+                        <select v-model="form.additional5" id="additional5" class="form-select text-white-dark">
+                            <option value="NO">Venta Normal</option>
+                            <option value="PR">En Promoción</option>
+                            <option value="DE">Con Descuento</option>
+                        </select>
+                        <InputError :message="form.errors.additional5" class="mt-2" />
+                    </div>
+                    <div  class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mt-2">
+                            <InputLabel for="price" value="Precio" />
+                            <TextInput
+                                id="price"
+                                v-model="form.price"
+                                type="number"
+                                class="block w-full mt-1"
+                                autocomplete="off"
+                            />
+                            <InputError :message="form.errors.price" class="mt-2" />
+                        </div>
+                        <div v-if="form.type == 3 && form.additional5 == 'DE'" class="mt-2" >
+                            <InputLabel for="discount" value="Descuento" />
+                            <TextInput
+                                id="discount"
+                                v-model="form.discount"
+                                type="number"
+                                class="block w-full mt-1"
+                                autocomplete="off"
+                            />
+                            <InputError :message="form.errors.discount" class="mt-2" />
+                        </div>
+                    </div>
+                    <div v-if="form.type == 3" class="mt-2" >
+                        <div class="relative overflow-x-auto border">
+                            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                                <thead class="text-xs text-gray-700 uppercase dark:text-gray-400">
+                                    <tr class="px-6 py-3 bg-gray-200 dark:bg-gray-800">
+                                        <th colspan="3" scope="col" class="px-6 py-3">
+                                            <div class="flex items-center justify-between">
+                                                <span>ESPECIFICACIONES DEL PRODUCTO</span> 
+                                                <button @click="addSpecifications" type="button" class="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                                    Agregar
+                                                </button>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(del, ky) in form.specifications" class="border-b border-gray-50 dark:border-gray-700">
+                                        <th scope="row" class="px-2 py-4 font-medium text-gray-900 whitespace-nowrap bg-gray-100 dark:text-white dark:bg-gray-800">
+                                            <input v-model="del.title" type="text" :id="'input-title'+ky" class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                        </th>
+                                        <td class="px-2 py-4">
+                                            <input v-model="del.description" type="text" :id="'input-description'+ky" class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                                        </td>
+                                        <td class="px-2 py-4">
+                                            <button @click="removeSpecifications(ky)" type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                                                <font-awesome-icon :icon="faTrashAlt" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-xl text-gray-900 dark:text-white">Los datos guardados solo serán visibles en la web, no se modificara en el origen</p>
+                    <div class="mt-2">
+                        <Keypad>
+                            <template #botones>
+                                <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                                    <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                                    </svg>
+                                    Guardar
+                                </PrimaryButton>
+                                <Link :href="route('onlineshop_items')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
+                            </template>
+                        </Keypad>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</template>
