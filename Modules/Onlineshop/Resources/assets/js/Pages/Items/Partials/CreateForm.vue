@@ -111,6 +111,7 @@ const setItemsData = (data,type) => {
         form.additional = data.type_description;
         form.additional1 = data.modality.description;
         form.category_description = data.category.description;
+        form.price = data.price;
         form.entitie = 'Modules-Academic-Entities-AcaCourse';
 
     }else{
@@ -225,7 +226,7 @@ const removeSpecifications= (key) => {
                     </div>
                     <div v-if="form.type == 1" class="mt-2">
                         <InputLabel for="description" value="Descripción" />
-                        <textarea v-model="form.description" id="description" rows="2" autofocus class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Escribe descripción aquí..."></textarea>
+                        <textarea v-model="form.description" id="description" class="form-textarea" rows="8" placeholder="Escribe descripción aquí..."></textarea>
                         <span id="charCount">{{ form.countCharacters }}</span> caracteres de máximo 255
                         <InputError :message="form.errors.description" class="mt-2" />
                     </div>

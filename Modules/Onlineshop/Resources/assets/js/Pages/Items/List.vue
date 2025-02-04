@@ -241,22 +241,24 @@
                                     <template v-for="(item, index) in items.data" :key="item.id">
                                         <tr>
                                             <td class="text-center">
-                                                <Link v-can="'onli_items_editar'" :href="route('onlineshop_items_edit',item.id)" class="mr-1 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                                    <font-awesome-icon :icon="faPencilAlt" />
-                                                </Link>
-                                                <Tooltip>
-                                                    <template #title>Galería de imágenes</template>
-                                                    <button @click="openModalImagesItem(item)" type="button" class="mr-1 text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                                                        <font-awesome-icon :icon="faImage" />
+                                                <div class="flex items-center justify-center space-x-2">
+                                                    <Link v-can="'onli_items_editar'" :href="route('onlineshop_items_edit',item.id)" class="btn btn-info">
+                                                        <font-awesome-icon :icon="faPencilAlt" class="w-4 h-4" />
+                                                    </Link>
+                                                    <Tooltip>
+                                                        <template #title>Galería de imágenes</template>
+                                                        <button @click="openModalImagesItem(item)" type="button" class="btn btn-success text-sm">
+                                                            <font-awesome-icon :icon="faImage" class="w-4 h-4" />
+                                                        </button>
+                                                    </Tooltip>
+                                                                        
+                                                    <button v-can="'onli_items_eliminar'" @click="destroyItem(item.id)" type="button" class="btn btn-danger">
+                                                        <font-awesome-icon :icon="faTrashAlt" class="w-4 h-4" />
                                                     </button>
-                                                </Tooltip>
-                                                                    
-                                                <button v-can="'onli_items_eliminar'" @click="destroyItem(item.id)" type="button" class="mr-1 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
-                                                    <font-awesome-icon :icon="faTrashAlt" />
-                                                </button>
+                                                </div>
                                             </td>
                                             <td >
-                                                <Image :src="item.image" :alt="item.name" style="width: 70px;" />
+                                                <img :src="item.image" :alt="item.name" style="width: 70px;" />
                                             </td>
                                             <td v-if="type == 1" >
                                                 {{ item.category_description }}
