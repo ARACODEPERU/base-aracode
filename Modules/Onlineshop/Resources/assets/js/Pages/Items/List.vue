@@ -242,23 +242,23 @@
                                         <tr>
                                             <td class="text-center">
                                                 <div class="flex items-center justify-center space-x-2">
-                                                    <Link v-can="'onli_items_editar'" :href="route('onlineshop_items_edit',item.id)" class="btn btn-info">
+                                                    <Link v-can="'onli_items_editar'" :href="route('onlineshop_items_edit',item.id)" class="btn btn-info text-sm btn-sm">
                                                         <font-awesome-icon :icon="faPencilAlt" class="w-4 h-4" />
                                                     </Link>
                                                     <Tooltip>
                                                         <template #title>Galería de imágenes</template>
-                                                        <button @click="openModalImagesItem(item)" type="button" class="btn btn-success text-sm">
+                                                        <button @click="openModalImagesItem(item)" type="button" class="btn btn-success text-sm btn-sm">
                                                             <font-awesome-icon :icon="faImage" class="w-4 h-4" />
                                                         </button>
                                                     </Tooltip>
                                                                         
-                                                    <button v-can="'onli_items_eliminar'" @click="destroyItem(item.id)" type="button" class="btn btn-danger">
+                                                    <button v-can="'onli_items_eliminar'" @click="destroyItem(item.id)" type="button" class="btn btn-danger text-sm btn-sm">
                                                         <font-awesome-icon :icon="faTrashAlt" class="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </td>
                                             <td >
-                                                <img :src="item.image" :alt="item.name" style="width: 70px;" />
+                                                <Image :src="item.image" :alt="item.name" style="width: 70px;" />
                                             </td>
                                             <td v-if="type == 1" >
                                                 {{ item.category_description }}
