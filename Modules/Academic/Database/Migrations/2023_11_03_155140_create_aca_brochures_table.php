@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('aca_brochures', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('course_id');
-            $table->text('resolution')->nullable();
-            $table->text('presentation')->nullable();
-            $table->text('benefits')->nullable();
-            $table->text('frequent_questions')->nullable();
+            $table->binary('resolution')->nullable();
+            $table->binary('presentation')->nullable();
+            $table->binary('benefits')->nullable();
+            $table->binary('frequent_questions')->nullable();
             $table->string('path_file')->nullable();
             $table->timestamps();
             $table->foreign('course_id')->references('id')->on('aca_courses')->onDelete('cascade');

@@ -1,22 +1,17 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Modules\Academic\Operations;
 
-use Illuminate\Http\Request;
-use Modules\Academic\Entities\AcaStudent;
-use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaStudent;
 use Intervention\Image\Facades\Image;
-use Intervention\Image\Font;
 use Illuminate\Support\Facades\Response;
 use App\Helpers\Invoice\QrCodeGenerator;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\File;
 
-class WebController extends Controller
+class StudentSubscription
 {
-
     public $certificates_param;
 
     public function testimage($student_id, $course_id)
@@ -112,7 +107,7 @@ class WebController extends Controller
 
 
                 // Generar la respuesta HTTP con la imagen
-                $response = Response::make($imageContent);
+                $response = Respons::make($imageContent);
 
                 // Establecer el tipo de contenido de la respuesta como imagen PNG
                 $response->header('Content-Type', 'image/png');

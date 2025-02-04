@@ -20,6 +20,22 @@ const props = defineProps({
     type: {
         type: String,
         default: () => ({}),
+    },
+    modalitiesCourses: {
+        type: Object,
+        default: () => ({}),
+    },
+    categoriesCourses: {
+        type: Object,
+        default: () => ({}),
+    },
+    typesCourses: {
+        type: Object,
+        default: () => ({}),
+    },
+    sectorsCourses: {
+        type: Object,
+        default: () => ({}),
     }
 });
 

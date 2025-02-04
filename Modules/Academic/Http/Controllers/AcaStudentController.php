@@ -199,7 +199,8 @@ class AcaStudentController extends Controller
                 'password'      => Hash::make(trim($request->get('number'))),
                 'information'   => $request->get('description'),
                 'avatar'        => $path,
-                'person_id'     => $per->id
+                'person_id'     => $per->id,
+                'local_id'      => 1
             ]
         );
 

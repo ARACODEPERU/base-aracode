@@ -6,7 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch, onMounted } from 'vue';
-import { Select } from 'flowbite-vue'
+import InputLabel from '@/Components/InputLabel.vue';
 
 import Editor from '@tinymce/tinymce-vue'
 
@@ -49,7 +49,8 @@ const form = useForm({
     teaching_plan: props.course_teachers,
     frequent_questions: null,
     path_file: null,
-    path_file_preview: null
+    path_file_preview: null,
+    curriculum_plan: null
 });
 
 if(props.brochure){
@@ -59,6 +60,7 @@ if(props.brochure){
     form.benefits = props.brochure?.benefits || null;
     form.frequent_questions = props.brochure?.frequent_questions || null;
     form.path_file_preview = props.brochure?.path_file;
+    form.curriculum_plan = props.brochure?.curriculum_plan;
 }
 
 
@@ -209,7 +211,7 @@ const uploadImage = (blobInfo, progress) => {
 
         <template #form>
             <div class="col-span-6 ">
-                <label for="resolution" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Resolución</label>
+                <InputLabel for="resolution" value="Resolución" />
                 <Editor
                     id="resolution"
                     :api-key="tiny_api_key"
@@ -225,7 +227,7 @@ const uploadImage = (blobInfo, progress) => {
                 <InputError :message="form.errors.resolution" class="mt-2" />
             </div>
             <div class="col-span-6 ">
-                <label for="presentation" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Presentación</label>
+                <InputLabel for="presentation">Presentación</InputLabel>
                 <Editor
                     id="presentation"
                     :api-key="tiny_api_key"
@@ -241,7 +243,7 @@ const uploadImage = (blobInfo, progress) => {
                 <InputError :message="form.errors.presentation" class="mt-2" />
             </div>
             <div class="col-span-6 ">
-                <label for="benefits" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Beneficios</label>
+                <InputLabel for="benefits">Beneficios</InputLabel>
                 <Editor
                     id="benefits"
                     :api-key="tiny_api_key"
@@ -257,77 +259,23 @@ const uploadImage = (blobInfo, progress) => {
                 <InputError :message="form.errors.benefits" class="mt-2" />
             </div>
             <div class="col-span-6 ">
-                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Docente</label>
-                <div class="flex items-center">   
-                    <label for="teacher_id" class="sr-only">Teachers</label>
-                    <div class="relative w-full">
-                        <select v-model="teacherSelected" id="teacher_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                            <option selected>Seleccionar</option> 
-                            <option v-for="(te,k) in teachers" :value="k">{{ te.person.father_lastname+" "+te.person.mother_lastname+" "+te.person.names }}</option>
-                        </select>
-                    </div>
-                    <button @click="addTeacher" type="button" class="p-2.5 ml-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                        <font-awesome-icon :icon="faCheck" />
-                    </button>
-                </div>
-                <InputError :message="form.errors.teaching_plan" class="mt-2" />
-                <div class="mt-4 relative overflow-x-auto shadow-md sm:rounded-lg">
-                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">
-                                    Principal
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Foto
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Nombre Completo
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Teléfono
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Correo
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Action
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(tea, ke) in form.teaching_plan ">
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center">
-                                        <input v-model="tea.is_main" @change="checkChanged(ke)" :id="'checkbox-'+ke" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                                        <label :for="'checkbox-'+ke" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ tea.is_main ? 'SI' : 'NO' }}</label>
-                                    </div>
-                                </td>
-                                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                    <img v-if="tea.teacher.person.image" class="w-10 h-10 rounded" :src="getImage(tea.teacher.person.image)" alt="Medium avatar" >
-                                    <img v-else :src="'https://ui-avatars.com/api/?name='+tea.teacher.person.full_name+'&size=500&rounded=true'" class="w-10 h-10 rounded" :alt="tea.teacher.person.full_name"/>
-                                </th>
-                                <td class="px-6 py-4">
-                                    {{ tea.teacher.person.father_lastname+" "+ tea.teacher.person.mother_lastname+" "+ tea.teacher.person.names }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ tea.teacher.person.telephone }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ tea.teacher.person.email }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <button @click="removeTeacher(ke)" type="button" class="p-2.5 ml-2 text-sm font-medium text-white bg-red-700 rounded-lg border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
-                                        <font-awesome-icon :icon="faTrashAlt" />
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <InputLabel for="curriculum_plan" >Plan Curricular</InputLabel>
+                <Editor
+                    id="curriculum_plan"
+                    :api-key="tiny_api_key"
+                    v-model="form.curriculum_plan"
+                    :init="{
+                        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                        images_upload_handler: uploadImage,
+                        language: 'es',
+                    }"
+                    :images_file_types="'jpg,svg,webp'"
+                    :images_upload_url="route('aca_upload_image_tiny')"
+                />
+                <InputError :message="form.errors.curriculum_plan" class="mt-2" />
             </div>
             <div class="col-span-6 ">
-                <label for="frequent_questions" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Preguntas Frecuentes</label>
+                <InputLabel for="frequent_questions" >Preguntas Frecuentes</InputLabel>
                 <Editor
                     id="frequent_questions"
                     :api-key="tiny_api_key"
@@ -341,6 +289,73 @@ const uploadImage = (blobInfo, progress) => {
                     :images_upload_url="route('aca_upload_image_tiny')"
                 />
                 <InputError :message="form.errors.frequent_questions" class="mt-2" />
+            </div>
+            
+            <div class="col-span-6 ">
+                <InputLabel>Docente</InputLabel>
+                <div class="flex items-center">   
+                    <div class="relative w-full">
+                        <select v-model="teacherSelected" id="teacher_id" class="form-select text-white-dark">
+                            <option selected>Seleccionar</option> 
+                            <option v-for="(te,k) in teachers" :value="k">{{ te.person.father_lastname+" "+te.person.mother_lastname+" "+te.person.names }}</option>
+                        </select>
+                    </div>
+                    <button @click="addTeacher" type="button" class="btn btn-primary ml-2">
+                        <font-awesome-icon :icon="faCheck" class="mr-1" />
+                        Agregar
+                    </button>
+                </div>
+                <InputError :message="form.errors.teaching_plan" class="mt-2" />
+                <div class="mt-4 relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-2">
+                                    Principal
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Nombre Completo
+                                </th>
+                                <th scope="col" class="px-6 py-2">
+                                    Action
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(tea, ke) in form.teaching_plan ">
+                                <td class="px-6 py-4 text-center">
+                                    <input v-model="tea.is_main" @change="checkChanged(ke)" :id="'checkbox-'+ke" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                </td>
+                                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    <div class="flex items-center space-x-4">
+                                        <div>
+                                            <img v-if="tea.teacher.person.image" class="w-16 h-16 rounded" :src="getImage(tea.teacher.person.image)" alt="Medium avatar" >
+                                            <img v-else :src="'https://ui-avatars.com/api/?name='+tea.teacher.person.full_name+'&size=500&rounded=true'" class="w-16 h-16 rounded" :alt="tea.teacher.person.full_name"/>
+                                        </div>
+                                        <div>
+                                            <h4>{{ tea.teacher.person.father_lastname+" "+ tea.teacher.person.mother_lastname+" "+ tea.teacher.person.names }}</h4>
+                                            
+                                            <p class="text-white-dark overflow-hidden min-w-[300px] line-clamp-1">
+                                                DNI: {{ tea.teacher.person.number }}
+                                            </p>
+                                            <p class="text-white-dark overflow-hidden min-w-[300px] line-clamp-1">
+                                                Email: {{ tea.teacher.person.email }}
+                                            </p>
+                                            <p class="text-white-dark overflow-hidden min-w-[300px] line-clamp-1">
+                                                Teléfono: {{ tea.teacher.person.telephone }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <button @click="removeTeacher(ke)" type="button" class="btn btn-danger">
+                                        <font-awesome-icon :icon="faTrashAlt" />
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="col-span-6 ">
                 <label for="path_file" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">PDF</label>

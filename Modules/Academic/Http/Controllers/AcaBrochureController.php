@@ -72,6 +72,7 @@ class AcaBrochureController extends Controller
         $presentation = $request->get('presentation');
         $benefits = $request->get('benefits');
         $frequent_questions = $request->get('frequent_questions');
+        $curriculum_plan = $request->get('curriculum_plan');
         // Reemplazar las rutas de imágenes en el contenido
         $resolution = preg_replace('/src="..\/..\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $resolution);
         $resolution = preg_replace('/src="..\/..\/..\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $resolution);
@@ -89,6 +90,10 @@ class AcaBrochureController extends Controller
         $frequent_questions = preg_replace('/src="..\/..\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $frequent_questions);
         $frequent_questions = preg_replace('/src="..\/..\/..\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $frequent_questions);
 
+        $curriculum_plan = preg_replace('/src="\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $curriculum_plan);
+        $curriculum_plan = preg_replace('/src="..\/..\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $curriculum_plan);
+        $curriculum_plan = preg_replace('/src="..\/..\/..\/storage\/brochures\/([^"]+)"/', 'src="' . $baseUrl . '/storage/brochures/$1"', $curriculum_plan);
+
 
         AcaBrochure::updateOrCreate(
             ['course_id' => $request->get('course_id')],
@@ -97,6 +102,7 @@ class AcaBrochureController extends Controller
                 'presentation' => $presentation,
                 'benefits' => $benefits,
                 'frequent_questions' => $frequent_questions,
+                'curriculum_plan' => $curriculum_plan,
                 'path_file' => $path !== null ? $path : AcaBrochure::where('course_id', $request->get('course_id'))->value('path_file')
             ]
         );
@@ -120,39 +126,7 @@ class AcaBrochureController extends Controller
         }
 
 
-        return redirect()->route('aca_courses_list', $request->get('course_id'));
-    }
-
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('academic::show');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('academic::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        //
+        return redirect()->route('aca_courses_list');
     }
 
     public function uploadImage(Request $request)

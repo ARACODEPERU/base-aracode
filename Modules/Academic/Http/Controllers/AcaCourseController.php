@@ -105,7 +105,9 @@ class AcaCourseController extends Controller
             'category_id'       => $request->get('category_id'),
             'modality_id'       => $request->get('modality_id'),
             'type_description'  => $request->get('type_description'),
-            'sector_description' => $request->get('sector_description')
+            'sector_description' => $request->get('sector_description'),
+            'price'                     => $request->get('price') ?? 0,
+            'certificate_description'   => trim($request->get('certificate_description')) ?? null
         ]);
 
         $path = null;
@@ -226,6 +228,8 @@ class AcaCourseController extends Controller
         $course->modality_id       = $request->get('modality_id');
         $course->type_description  = $request->get('type_description');
         $course->sector_description = $request->get('sector_description');
+        $course->price                   = $request->get('price') ?? 0;
+        $course->certificate_description  = trim($request->get('certificate_description')) ?? null;
 
         $destination = 'uploads/courses';
         $base64Image = $request->get('image');

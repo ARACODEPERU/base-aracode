@@ -87,7 +87,8 @@
     const isShowChatMenu = ref(false);
     const accordians3 = ref(0);
     const canvas = ref(null);
-    const certificateImgPreview = ref(null);
+    
+
     // Cargar la imagen principal desde la URL
     const loadMainImage = () => {
         form.certificate_img_preview = new Image();
@@ -116,171 +117,19 @@
             );
         }
 
-        // Dibujar la fecha
-        drawText(
-            ctx,
-            textDate,
-            form.position_date_x,
-            form.position_date_y,
-            form.fontfamily_date,
-            form.font_size_date,
-            form.font_align_date,
-            form.font_vertical_align_date
-        );
-
-        // Dibujar el nombre del estudiante
-        drawText(
-            ctx,
-            textStudentName,
-            form.position_names_x,
-            form.position_names_y,
-            form.fontfamily_names,
-            form.font_size_names,
-            form.font_align_names,
-            form.font_vertical_align_names
-        );
-
-        // Dibujar el título
-        //form.font_size_title,
-        drawText(
-            ctx,
-            textTitle,
-            form.position_title_x,
-            form.position_title_y,
-            form.fontfamily_title,
-            16,
-            form.font_align_title,
-            form.font_vertical_align_title,
-            form.max_width_title
-        );
-
-        // Dibujar la descripción
-        drawText(
-            ctx,
-            textDescription,
-            form.position_description_x,
-            form.position_description_y,
-            form.fontfamily_description,
-            form.font_size_description,
-            form.font_align_description,
-            form.font_vertical_align_description,
-            form.max_width_description
-        );
-
-        // Dibujar la imagen QR
-        if (imageQrDefault) {
-            const imgQr = new Image();
-            imgQr.src = imageQrDefault;
-            imgQr.onload = () => {
-                ctx.drawImage(
-                    imgQr,
-                    form.position_qr_x,
-                    form.position_qr_y,
-                    form.size_qr,
-                    form.size_qr
-                );
-            };
-        }
     };
 
-    const drawText = (ctx, text, x, y, font, fontSize, align, verticalAlign, maxWidth) => {
-        ctx.font = `${fontSize}px ${font}`;
-        ctx.textAlign = align;
-        ctx.textBaseline = verticalAlign;
-        ctx.fillStyle = '#000000'; // Color del texto
-
-        if (maxWidth) {
-            // Si hay un ancho máximo, ajusta el texto para que no lo exceda
-            let lines = [];
-            let currentLine = '';
-            text.split(' ').forEach(word => {
-                let testLine = currentLine + word + ' ';
-                let metrics = ctx.measureText(testLine);
-                if (metrics.width > maxWidth && currentLine !== '') {
-                    lines.push(currentLine);
-                    currentLine = word + ' ';
-                } else {
-                    currentLine = testLine;
-                }
-            });
-            lines.push(currentLine);
-            lines.forEach((line, index) => {
-                ctx.fillText(line, x, y + (index * (fontSize + 5))); // Ajusta el espaciado entre líneas
-            });
-        } else {
-            ctx.fillText(text, x, y);
-        }
-    };
-
-    watch(() => [
-            form.fontfamily_date,
-            form.font_size_date,
-            form.font_align_date,
-            form.font_vertical_align_date,
-            form.position_date_x,
-            form.position_date_y,
-            form.fontfamily_names,
-            form.font_size_names,
-            form.font_align_names,
-            form.font_vertical_align_names,
-            form.position_names_x,
-            form.position_names_y,
-            form.fontfamily_title,
-            form.font_size_title,
-            form.font_align_title,
-            form.font_vertical_align_title,
-            form.position_title_x,
-            form.position_title_y,
-            form.max_width_title,
-            form.position_qr_x,
-            form.position_qr_y,
-            form.size_qr,
-            form.font_align_qr,
-            form.fontfamily_description,
-            form.font_size_description,
-            form.font_align_description,
-            form.font_vertical_align_description,
-            form.position_description_x,
-            form.position_description_y,
-            form.max_width_description,
-            form.interspace_description,
-        ],() => {
-            drawCanvas();
-        },{ deep: true }
-    );
+   
 
     // Cargar la imagen principal al montar el componente
     onMounted(() => {
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas(); // Ajustar el tamaño inicial
         loadMainImage();
     });
 
-    onUnmounted(() => {
-        window.removeEventListener('resize', resizeCanvas);
-    });
+    const updateCertificateData = (par) => {
 
-    const textDate = '01/10/2024'; //////fontfamily_date
-    const textStudentName = 'Elmer Rodriguez Bobadilla'; ///fontfamily_names
-    const textTitle = 'Certificado'; ///////////fontfamily_title
-    const textDescription = 'Otorgado al alumno: Elmer Rodriguez Bobadilla por el cumplimiento de aprendisaje al curso virtual, por cumplimiento de las 22 horas estudiadas satisfactorias ';
-    const imageQrDefault = '/img/qrcode.png'; ///size_qr
+    }
 
-    const resizeCanvas = () => {
-        const canvasElement = canvas.value;
-        const container = canvasElement.parentElement;
-
-        // Obtener el ancho y alto del contenedor
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-
-        // Ajustar el tamaño del canvas en píxeles
-        canvasElement.width = width;
-        canvasElement.height = height;
-
-        // Redibujar el contenido del canvas
-        drawCanvas();
-    };
 </script>
 <template>
     <div>
@@ -376,6 +225,9 @@
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
+                                    </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(1)" class="btn btn-success">vista previa</button>
                                     </div>
                                 </div>
                             </vue-collapsible>

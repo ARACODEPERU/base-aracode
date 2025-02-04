@@ -10,9 +10,10 @@ use Illuminate\Routing\Controller;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Onlineshop\Entities\OnliItem;
-use Modules\Onlineshop\Entities\AcaModality;
+use Modules\Academic\Entities\AcaModality;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\DB;
+use Modules\Academic\Entities\AcaCategoryCourse;
 use Modules\Onlineshop\Entities\OnliItemSpecification;
 
 class OnliItemController extends Controller
@@ -88,11 +89,20 @@ class OnliItemController extends Controller
             $courses = [];
         }
 
+        $categories = AcaCategoryCourse::all();
+        $modalities = AcaModality::all();
+        $types = getEnumValues('aca_courses', 'type_description');
+        $sectors = getEnumValues('aca_courses', 'sector_description');
+
         return Inertia::render('Onlineshop::Items/Create', [
             'courses'   => $courses,
             'products'  => $products,
             'tiny_api_key' => $this->P000010,
-            'type'  => $this->P000009
+            'type'  => $this->P000009,
+            'modalitiesCourses'    => $modalities,
+            'categoriesCourses'    => $categories,
+            'typesCourses'    => $types,
+            'sectorsCourses'    => $sectors,
         ]);
     }
 
@@ -220,10 +230,20 @@ class OnliItemController extends Controller
     {
 
         $item = OnliItem::with('specifications')->where('id', $id)->first();
+
+        $categories = AcaCategoryCourse::all();
+        $modalities = AcaModality::all();
+        $types = getEnumValues('aca_courses', 'type_description');
+        $sectors = getEnumValues('aca_courses', 'sector_description');
+
         return Inertia::render('Onlineshop::Items/Edit', [
             'item' => $item,
             'type'  => $this->P000009,
             'tiny_api_key' => $this->P000010,
+            'modalitiesCourses'    => $modalities,
+            'categoriesCourses'    => $categories,
+            'typesCourses'    => $types,
+            'sectorsCourses'    => $sectors,
         ]);
     }
 

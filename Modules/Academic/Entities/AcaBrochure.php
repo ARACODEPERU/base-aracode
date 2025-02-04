@@ -20,7 +20,8 @@ class AcaBrochure extends Model
         'presentation',
         'benefits',
         'frequent_questions',
-        'path_file'
+        'path_file',
+        'curriculum_plan'
     ];
 
     protected static function newFactory()

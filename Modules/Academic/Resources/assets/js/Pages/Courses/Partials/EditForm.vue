@@ -50,7 +50,9 @@ const form = useForm({
     image_preview: getImage(props.course.image),
     modality_id: props.course.modality_id,
     type_description: props.course.type_description,
-    sector_description: props.course.sector_description
+    sector_description: props.course.sector_description,
+    price: props.course.price,
+    certificate_description: props.course.certificate_description
 });
 
 const updateCourse = () => {
@@ -133,6 +135,15 @@ const handleImageCompressed = (file) => {
                 </select>
                 <InputError :message="form.errors.sector_description" class="mt-2" />
             </div>
+            <div class="col-span-6 sm:col-span-4 ">
+                <InputLabel for="description" value="Nombre *" />
+                <TextInput 
+                    id="description"
+                    v-model="form.description"
+                    type="text"
+                />
+                <InputError :message="form.errors.description" class="mt-2" />
+            </div>
             <div class="col-span-6">
                 <InputLabel for="file_input" value="Imagen *" />
                 <div class="flex justify-center space-x-2">
@@ -145,18 +156,7 @@ const handleImageCompressed = (file) => {
                 <!-- <input @input="form.image = $event.target.files[0]" accept=".svg, .png, .jpg, .jpeg, .gif" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="file_input" type="file"> -->
                 <InputError :message="form.errors.image" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-6 ">
-                <InputLabel for="description" value="Nombre *" />
-                <textarea 
-                    id="description"
-                    v-model="form.description"
-                    type="text"
-                    class="form-textarea"
-                    
-                >
-               </textarea> 
-                <InputError :message="form.errors.description" class="mt-2" />
-            </div>
+            
             <div class="col-span-6 sm:col-span-3 ">
                 <InputLabel for="course_date" value="Fecha Inicio *" />
                 <TextInput
@@ -166,6 +166,26 @@ const handleImageCompressed = (file) => {
                     
                 />
                 <InputError :message="form.errors.course_date" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-3 ">
+                <InputLabel for="price" value="Precio *" />
+                <TextInput
+                    id="price"
+                    v-model="form.price"
+                    type="number"
+                />
+                <InputError :message="form.errors.price" class="mt-2" />
+            </div>
+            <div class="col-span-6">
+                <InputLabel for="certificate_description" value="Descripción de los certificados *" />
+                <textarea
+                    id="certificate_description"
+                    v-model="form.certificate_description"
+                    class="form-textarea"
+                    rows="6"
+                >
+                </textarea>
+                <InputError :message="form.errors.certificate_description" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel value="Estado" />
