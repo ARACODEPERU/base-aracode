@@ -94,7 +94,7 @@ class SaleLowCommunicationController extends Controller
         $voided = new LowCommunication();
         $result = $voided->create($lowco, $documents);
 
-        $factura = new Factura();
+
 
         if ($result['success']) {
             foreach ($documents as $document) {
@@ -115,7 +115,6 @@ class SaleLowCommunicationController extends Controller
                             'status'            => 3,
                             'invoice_status'    => 'Enviada Por Anular'
                         ]);
-                    $factura->updateStockSale($document['id']);
                 }
             }
         }

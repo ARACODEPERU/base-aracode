@@ -101,13 +101,16 @@ class LowCommunication
                 if ($cdr->getNotes()) {
                     $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
                 }
+                $factura = new Factura();
                 foreach ($documents as $document) {
                     SaleDocument::where('id', $document['document_id'])
                         ->update([
                             'invoice_status' => 'Anulada',
                             'invoice_response_code' => 0,
-                            'invoice_response_description' => 'Comunicacion de baja ' . $voided->communication_name . ' Número ticket: ' . $ticket
+                            'invoice_response_description' => 'Comunicacion de baja ' . $voided->communication_name . ' Número ticket: ' . $ticket,
+                            'reason_cancellation' => $document['invoice_description']
                         ]);
+                    $factura->updateStockSale($document['document_id']);
                 }
                 $status = $cdr->getCode() == 0 ? 'Aceptado' : null;
                 $voided->cdr = $this->util->writeCdr($sum, $res->getCdrZip());

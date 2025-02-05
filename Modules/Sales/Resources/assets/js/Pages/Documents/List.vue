@@ -11,7 +11,7 @@
     import InputLabel from '@/Components/InputLabel.vue';
     import TextInput from '@/Components/TextInput.vue';
     import InputError from '@/Components/InputError.vue';
-    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import DangerButton from '@/Components/DangerButton.vue';
     import DialogModal from '@/Components/DialogModal.vue';
     import Swal from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
@@ -87,12 +87,7 @@
                             cadena += `<br>Nota: ${notes}`;
                         }
                         Swal.showValidationMessage(cadena)
-                        router.visit(route('saledocuments_list'),{
-                            method: 'get',
-                            replace: false,
-                            preserveState: true,
-                            preserveScroll: true,
-                        });
+                        refreshTable();
                     }
                     return res
                 });
@@ -113,12 +108,7 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 }).then(() => {
-                    router.visit(route('saledocuments_list'),{
-                        method: 'get',
-                        replace: false,
-                        preserveState: true,
-                        preserveScroll: true,
-                    });
+                    refreshTable();
                 });
 
             }
@@ -254,12 +244,7 @@
                     customClass: 'sweet-alerts',
                 });
                 formHead.reset();
-                router.visit(route('saledocuments_list'),{
-                    method: 'get',
-                    replace: false,
-                    preserveState: true,
-                    preserveScroll: true,
-                });
+                refreshTable();
             }
         });
     }
@@ -343,12 +328,7 @@ const cancelDocument = (index, item) => {
             }).then((res) => {
                 if (res.isConfirmed) {
                     showMessage('El documento fue anulado correctamente');
-                    router.visit(route('saledocuments_list'),{
-                        method: 'get',
-                        replace: false,
-                        preserveState: true,
-                        preserveScroll: true,
-                    });
+                    refreshTable();
                 }
             });
         }
@@ -393,11 +373,14 @@ const showMessage = (msg = '', type = 'success') => {
     const documentTable = ref(null);
 
     const refreshTable = () => {
+
         const dataTableInstance = documentTable.value?.dt; // accede a la instancia del DataTable
         if (dataTableInstance) {
             dataTableInstance.ajax.reload();
         }
     };
+
+
 </script>
 
 <template>
@@ -669,9 +652,9 @@ const showMessage = (msg = '', type = 'success') => {
                 >
                     Guardar Cambios
                 </PrimaryButton> 
-                <SecondaryButton @click="closeModalEditDocument">
+                <DangerButton @click="closeModalEditDocument" type="button">
                     Cancel
-                </SecondaryButton>
+                </DangerButton>
             </template>
         </DialogModal>
     </AppLayout>
