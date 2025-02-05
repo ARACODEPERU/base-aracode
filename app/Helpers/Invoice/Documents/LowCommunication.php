@@ -72,6 +72,7 @@ class LowCommunication
 
     public function checkLowCommunication($id, $ticket)
     {
+
         try {
             $voided = SaleLowCommunication::find($id);
             $documents = SaleLowcoDetail::where('lowco_id', $id)
@@ -87,6 +88,7 @@ class LowCommunication
             $messageError = null;
 
             $res = $see->getStatus($ticket);
+            //dd($res);
             if (!$res->isSuccess()) {
                 $error = $res->getError();
                 $codeError = $error->getCode();

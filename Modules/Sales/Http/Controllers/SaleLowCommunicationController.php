@@ -90,31 +90,35 @@ class SaleLowCommunicationController extends Controller
             'status'                => 'registrado',
             'user_id'               => Auth::id()
         ]);
-        $factura = new Factura();
-        foreach ($documents as $document) {
-            if ($document['edit_low']) {
-                SaleLowcoDetail::create([
-                    'document_id'  => $document['id'],
-                    'lowco_id' => $lowco->id,
-                    'model_name' => SaleDocument::class,
-                    'invoice_type_doc' => $document['invoice_type_doc'],
-                    'invoice_serie' => $document['invoice_serie'],
-                    'invoice_document_name' => $document['invoice_serie'] . '-' . $document['number'],
-                    'invoice_correlative' => $document['invoice_correlative'],
-                    'invoice_description' => $document['description_low']
-                ]);
-
-                SaleDocument::where('id', $document['id'])
-                    ->update([
-                        'status'            => 3,
-                        'invoice_status'    => 'Enviada Por Anular'
-                    ]);
-                $factura->updateStockSale($document['id']);
-            }
-        }
 
         $voided = new LowCommunication();
         $result = $voided->create($lowco, $documents);
+
+        $factura = new Factura();
+
+        if ($result['success']) {
+            foreach ($documents as $document) {
+                if ($document['edit_low']) {
+                    SaleLowcoDetail::create([
+                        'document_id'  => $document['id'],
+                        'lowco_id' => $lowco->id,
+                        'model_name' => SaleDocument::class,
+                        'invoice_type_doc' => $document['invoice_type_doc'],
+                        'invoice_serie' => $document['invoice_serie'],
+                        'invoice_document_name' => $document['invoice_serie'] . '-' . $document['number'],
+                        'invoice_correlative' => $document['invoice_correlative'],
+                        'invoice_description' => $document['description_low']
+                    ]);
+
+                    SaleDocument::where('id', $document['id'])
+                        ->update([
+                            'status'            => 3,
+                            'invoice_status'    => 'Enviada Por Anular'
+                        ]);
+                    $factura->updateStockSale($document['id']);
+                }
+            }
+        }
 
         return response()->json([
             'success' => $result['success'],
@@ -144,6 +148,7 @@ class SaleLowCommunicationController extends Controller
                 ->select('sale_documents.*')
                 ->where('lowco_id', $low->id)
                 ->get();
+
             foreach ($documents as $document) {
                 SaleDocument::where('id', $document['id'])
                     ->update([

@@ -211,10 +211,10 @@
                             <table >
                                 <thead >
                                     <tr>
-                                        <th>
+                                        <th class="text-center">
                                             Acciones
                                         </th>
-                                        <th>
+                                        <th class="text-center">
                                             Imagen Principal
                                         </th>
                                         <th v-if="type == 1">

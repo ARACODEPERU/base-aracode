@@ -24,6 +24,7 @@ use App\Models\KardexSize;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleDocumentItem;
+use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
 
 class Factura

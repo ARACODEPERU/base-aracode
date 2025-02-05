@@ -1,5 +1,5 @@
 <script setup>
-    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import DangerButton from '@/Components/DangerButton.vue';
     import {
         TransitionRoot,
         TransitionChild,
@@ -66,9 +66,9 @@
                     <slot name="content" />
                     <div class="flex justify-end items-center space-x-2 mt-8">
                         <slot name="buttons" />
-                        <SecondaryButton @click="onClose">
+                        <DangerButton @click="onClose" type="button">
                           Cerrar
-                        </SecondaryButton>
+                        </DangerButton>
                     </div>
                   </div>
                 </DialogPanel>

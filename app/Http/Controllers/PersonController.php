@@ -27,6 +27,7 @@ class PersonController extends Controller
     {
         $document_type = $request->input('document_type');
         $number = $request->input('number');
+        $full_name = $request->input('full_name');
 
         $msg1 = '';
         $msg2 = '';
@@ -37,9 +38,10 @@ class PersonController extends Controller
         if ($document_type == '') {
             $msg1 = 'Elija Tipo docuemnto';
         }
-        if (!$number) {
-            $msg2 = 'Ingrese numero de documento';
+        if (!$number && !$full_name) {
+            $msg2 = 'Ingrese numero de documento o nombre';
         }
+
 
         $person = Person::leftJoin('districts', 'ubigeo', 'districts.id')
             ->leftJoin('provinces', 'districts.province_id', 'provinces.id')
@@ -50,7 +52,10 @@ class PersonController extends Controller
                 DB::raw('CONCAT(departments.name,"-",provinces.name,"-",districts.name) AS city')
             )
             ->where('people.document_type_id', $document_type)
-            ->where('people.number', $number)
+            ->where(function ($query) use ($number, $full_name) {
+                $query->where('people.number', $number)
+                    ->orWhere('full_name', 'like',  $full_name . '%');
+            })
             ->first();
         //dd($person);
         $ubigeo = [];

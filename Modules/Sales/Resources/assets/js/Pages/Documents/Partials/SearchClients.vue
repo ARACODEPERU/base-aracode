@@ -64,6 +64,7 @@
         axios.post(route('search_person_number'), form).then((res) => {
             if (res.data.status) {
                 form.id = res.data.person.id;
+                form.number = res.data.person.number;
                 form.telephone = res.data.person.telephone;
                 form.full_name = res.data.person.full_name;
                 form.email = res.data.person.email;
