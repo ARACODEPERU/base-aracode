@@ -15,6 +15,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MetaController;
 use App\Http\Controllers\ModuloController;
+use App\Http\Controllers\WebController;
 use App\Http\Controllers\WebPageController;
 use App\Mail\StudentRegistrationMailable;
 use App\Models\District;

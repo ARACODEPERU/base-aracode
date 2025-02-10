@@ -26,6 +26,7 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Modules\Academic\Entities\AcaCertificate;
 
 class AcaStudentController extends Controller
 {
@@ -219,15 +220,6 @@ class AcaStudentController extends Controller
             ->with('message', __('Estudiante creado con éxito'));
     }
 
-    /**
-     * Show the specified resource.
-     * @param int $id
-     * @return Renderable
-     */
-    public function show($id)
-    {
-        return view('academic::show');
-    }
 
     /**
      * Show the form for editing the specified resource.
@@ -412,11 +404,14 @@ class AcaStudentController extends Controller
                 });
         }
 
-
+        $certificates = AcaCertificate::with('course')
+            ->where('student_id', $student_id)
+            ->get();
 
         return Inertia::render('Academic::Students/Courses', [
             'courses' => $courses,
-            'studentSubscribed' => $studentSubscribed
+            'studentSubscribed' => $studentSubscribed,
+            'certificates' => $certificates
         ]);
     }
 

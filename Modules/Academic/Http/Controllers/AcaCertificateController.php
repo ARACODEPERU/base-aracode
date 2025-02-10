@@ -2,7 +2,9 @@
 
 namespace Modules\Academic\Http\Controllers;
 
+use App\Helpers\Barios;
 use App\Rules\AcaRegistrationExists;
+use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -16,14 +18,30 @@ use Modules\Academic\Entities\AcaCertificate;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaCertificateParameter;
+use Modules\Academic\Entities\AcaStudentSubscription;
+use Modules\Academic\Operations\CertificateImage;
 
 class AcaCertificateController extends Controller
 {
     use ValidatesRequests;
 
+    public $directory;
+
+    public function __construct()
+    {
+        $this->directory = 'academic' . DIRECTORY_SEPARATOR . 'certificates';
+    }
+
     public function index()
     {
         $certificates = AcaCertificateParameter::paginate(10);
+
+        // Formatear la fecha antes de devolver los datos
+        $certificates->getCollection()->transform(function ($certificate) {
+            $certificate->formatted_date = Carbon::parse($certificate->created_at)->format('d/m/Y');
+            return $certificate;
+        });
+
         return Inertia::render('Academic::Certificates/List', [
             'certificates' => $certificates
         ]);
@@ -47,9 +65,7 @@ class AcaCertificateController extends Controller
             ]
         );
 
-
-
-        $destination = 'uploads/certificate';
+        $destination = $this->directory;
         $file = $request->file('certificate_img');
         $path = null;
 
@@ -58,6 +74,16 @@ class AcaCertificateController extends Controller
             $extension = $file->getClientOriginalExtension();
             $file_name = $original_name . '.' . $extension;
             $path = $file->storeAs($destination, $file_name, 'public');
+        }
+
+        if ($request->get('course_id')) {
+            AcaCertificateParameter::where('course_id', $request->get('course_id'))->update([
+                'state' => false
+            ]);
+        } else {
+            AcaCertificateParameter::whereNull('course_id')->update([
+                'state' => false
+            ]);
         }
 
         $certificate = AcaCertificateParameter::create([
@@ -81,10 +107,57 @@ class AcaCertificateController extends Controller
     public function studentCreate($id)
     {
         $student = AcaStudent::with('person')->where('id', $id)->first();
+        $student_id = $student->id;
 
-        $courses = AcaCourse::whereHas('registrations', function ($query) use ($id) {
-            $query->where('student_id', $id);
-        })->get();
+        // $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
+        //     ->where('status', true)
+        //     ->first();
+
+        // $courses = AcaCourse::with('registrations') // Para validar los cursos registrados
+        //     ->get()
+        //     ->map(function ($course) use ($studentSubscribed, $student_id) {
+        //         // Verificar si el curso es gratuito
+        //         $isFree = is_null($course->price) || $course->price == 0;
+
+        //         // Verificar si el alumno está registrado en este curso
+        //         $isRegistered = $course->registrations->contains('student_id', $student_id);
+
+        //         // Verificar si el alumno tiene una suscripción activa
+        //         $hasActiveSubscription = $studentSubscribed !== null;
+
+        //         // Lógica para determinar si puede ver el curso
+        //         if ($hasActiveSubscription) {
+        //             // Si tiene suscripción activa, puede ver todos los cursos
+        //             $course->can_view = true;
+        //         } else {
+        //             // Si no tiene suscripción activa, solo puede ver cursos gratuitos o en los que está matriculado
+        //             $course->can_view = $isFree || $isRegistered;
+        //         }
+
+        //         return $course;
+        //     });
+
+        // // Filtrar los cursos para mostrar solo los que puede ver
+        // $filteredCourses = $courses->filter(function ($course) {
+        //     return $course->can_view;
+        // });
+        $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
+            ->where('status', true)
+            ->first();
+        //dd($studentSubscribed);
+        $courses = AcaCourse::with('registrations') // Para validar los cursos registrados
+            ->when(!$studentSubscribed, function ($query) use ($student_id) {
+                // Si no tiene suscripción activa, filtrar cursos gratuitos o en los que está matriculado
+                $query->where(function ($q) use ($student_id) {
+                    $q->whereNull('price') // Cursos gratuitos (precio null)
+                        ->orWhere('price', 0) // Cursos gratuitos (precio 0)
+                        ->orWhereHas('registrations', function ($q2) use ($student_id) {
+                            // Cursos en los que el alumno está matriculado
+                            $q2->where('student_id', $student_id);
+                        });
+                });
+            })->get();
+
 
         $certificates = AcaCertificate::with('course')
             ->where('student_id', $id)->get();
@@ -102,53 +175,108 @@ class AcaCertificateController extends Controller
     {
         $student_id = $request->get('student_id');
         $course_id = $request->get('course_id');
-
-        $this->validate(
-            $request,
-            [
-                'student_id'  => ['required', new AcaRegistrationExists($course_id)],
-                'course_id'   => 'required',
-                'image'       => 'required'
-            ]
-        );
+        $certificate_auto = $request->get('certificate');
+        if ($certificate_auto) {
+            $this->validate(
+                $request,
+                [
+                    'student_id'  => ['required', new AcaRegistrationExists($course_id)],
+                    'course_id'   => 'required',
+                ]
+            );
+        } else {
+            $this->validate(
+                $request,
+                [
+                    'student_id'  => ['required', new AcaRegistrationExists($course_id)],
+                    'course_id'   => 'required',
+                    'image'       => 'required'
+                ]
+            );
+        }
 
         $true = AcaCertificate::where('student_id', $student_id)->where('course_id', $course_id)->doesntExist();
 
         if ($true) {
-            $certificate = AcaCertificate::create([
-                'student_id'        => $student_id,
-                'registration_id'   => AcaCapRegistration::where('student_id', $student_id)->where('course_id', $course_id)->value('id'),
-                'course_id'         => $course_id,
-                'content'           => null
-            ]);
 
-            $destination = 'uploads/certificate';
-            $base64Image = $request->get('image');
-            $path = null;
+            AcaCapRegistration::where('student_id', $student_id)
+                ->where('course_id', $course_id)
+                ->update([
+                    'certificate_date' => Carbon::now()->format('Y-m-d')
+                ]);
 
-            if ($base64Image) {
-                $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                if (PHP_OS == 'WINNT') {
-                    $tempFile = tempnam(sys_get_temp_dir(), 'img');
+            if ($certificate_auto) {
+                $autoCertificate = new CertificateImage();
+                $certificateParameter = AcaCertificateParameter::where('course_id', $course_id)
+                    ->where('state', true)
+                    ->first();
+
+                $certificate_id = null;
+
+                if ($certificateParameter) {
+                    $certificate_id = $certificateParameter->id;
                 } else {
-                    $tempFile = tempnam('/var/www/html/img_temp', 'img');
+                    $certificateParameter = AcaCertificateParameter::whereNull('course_id')
+                        ->where('state', true)
+                        ->first();
+
+                    $certificate_id = $certificateParameter->id;
                 }
-                file_put_contents($tempFile, $fileData);
-                $mime = mime_content_type($tempFile);
+                if ($certificate_id) {
+                    $imagen = $autoCertificate->generate($certificate_id, $student_id, $course_id);
 
-                $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-                $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
+                    $ruta = $this->directory . DIRECTORY_SEPARATOR . 'student' . $student_id;
+                    $prefix = $course_id . '_';
 
-                if ($file) {
-                    // $original_name = strtolower(trim($file->getClientOriginalName()));
-                    // $file_name = time() . rand(100, 999) . $original_name;
-                    $original_name = strtolower(trim($file->getClientOriginalName()));
-                    $original_name = str_replace(" ", "_", $original_name);
-                    $extension = $file->getClientOriginalExtension();
-                    $file_name = $student_id . 'X' . $course_id . '.' . $extension;
-                    $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-                    $certificate->image = $path;
-                    $certificate->save();
+                    // Guardar la imagen en el sistema de archivos
+                    $path =  $ruta . DIRECTORY_SEPARATOR . $prefix . date('YmdHis') . '.png'; // Ruta relativa dentro del disco 'public'
+                    Storage::disk('public')->put($path, $imagen);
+
+                    $certificate = AcaCertificate::create([
+                        'student_id'        => $student_id,
+                        'registration_id'   => AcaCapRegistration::where('student_id', $student_id)->where('course_id', $course_id)->value('id'),
+                        'course_id'         => $course_id,
+                        'content'           => null,
+                        'image'             => $path
+                    ]);
+                }
+            } else {
+
+                $certificate = AcaCertificate::create([
+                    'student_id'        => $student_id,
+                    'registration_id'   => AcaCapRegistration::where('student_id', $student_id)->where('course_id', $course_id)->value('id'),
+                    'course_id'         => $course_id,
+                    'content'           => null
+                ]);
+
+                $destination = 'uploads/certificate';
+                $base64Image = $request->get('image');
+                $path = null;
+
+                if ($base64Image) {
+                    $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+                    if (PHP_OS == 'WINNT') {
+                        $tempFile = tempnam(sys_get_temp_dir(), 'img');
+                    } else {
+                        $tempFile = tempnam('/var/www/html/img_temp', 'img');
+                    }
+                    file_put_contents($tempFile, $fileData);
+                    $mime = mime_content_type($tempFile);
+
+                    $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
+                    $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
+
+                    if ($file) {
+                        // $original_name = strtolower(trim($file->getClientOriginalName()));
+                        // $file_name = time() . rand(100, 999) . $original_name;
+                        $original_name = strtolower(trim($file->getClientOriginalName()));
+                        $original_name = str_replace(" ", "_", $original_name);
+                        $extension = $file->getClientOriginalExtension();
+                        $file_name = $student_id . 'X' . $course_id . '.' . $extension;
+                        $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+                        $certificate->image = $path;
+                        $certificate->save();
+                    }
                 }
             }
         }
@@ -170,7 +298,8 @@ class AcaCertificateController extends Controller
 
             // Verificamos si existe.
             $item = AcaCertificate::findOrFail($id);
-
+            $barios = new Barios();
+            $barios->deleteFile($item->image);
             // Si no hay detalles asociados, eliminamos.
             $item->delete();
 
@@ -189,6 +318,94 @@ class AcaCertificateController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message
+        ]);
+    }
+
+    public function updateInfo(Request $request)
+    {
+        $certificate = new CertificateImage();
+        $id = $request->get('id');
+
+        $acaCertificate = AcaCertificateParameter::find($id);
+
+        switch ($request->get('action_type')) {
+            case 1:
+                $acaCertificate->fontfamily_date = $request->get('fontfamily_date');
+                $acaCertificate->font_size_date = $request->get('font_size_date');
+                $acaCertificate->font_align_date = $request->get('font_align_date');
+                $acaCertificate->font_vertical_align_date = $request->get('font_vertical_align_date');
+                $acaCertificate->position_date_x = $request->get('position_date_x');
+                $acaCertificate->position_date_y = $request->get('position_date_y');
+                break;
+            case 2:
+                $acaCertificate->fontfamily_names = $request->get('fontfamily_names');
+                $acaCertificate->font_align_names = $request->get('font_align_names');
+                $acaCertificate->font_vertical_align_names = $request->get('font_vertical_align_names');
+                $acaCertificate->position_names_x = $request->get('position_names_x');
+                $acaCertificate->position_names_y = $request->get('position_names_y');
+                $acaCertificate->font_size_names = $request->get('font_size_names');
+                break;
+            case 3:
+                $acaCertificate->fontfamily_title = $request->get('fontfamily_title');
+                $acaCertificate->font_align_title = $request->get('font_align_title');
+                $acaCertificate->font_vertical_align_title = $request->get('font_vertical_align_title');
+                $acaCertificate->position_title_x = $request->get('position_title_x');
+                $acaCertificate->position_title_y = $request->get('position_title_y');
+                $acaCertificate->font_size_title = $request->get('font_size_title');
+                $acaCertificate->max_width_title = $request->get('max_width_title');
+                break;
+            case 4:
+                $acaCertificate->position_qr_x = $request->get('position_qr_x');
+                $acaCertificate->position_qr_y = $request->get('position_qr_y');
+                $acaCertificate->size_qr = $request->get('size_qr');
+                $acaCertificate->font_align_qr = $request->get('font_align_qr');
+                break;
+            case 5:
+                $acaCertificate->fontfamily_description = $request->get('fontfamily_description');
+                $acaCertificate->font_align_description = $request->get('font_align_description');
+                $acaCertificate->font_vertical_align_description = $request->get('font_vertical_align_description');
+                $acaCertificate->position_description_x = $request->get('position_description_x');
+                $acaCertificate->position_description_y = $request->get('position_description_y');
+                $acaCertificate->font_size_description = $request->get('font_size_description');
+                $acaCertificate->max_width_description = $request->get('max_width_description');
+                break;
+            default:
+                if ($request->get('state')) {
+                    if ($acaCertificate->course_id) {
+                        AcaCertificateParameter::where('course_id', $request->get('course_id'))->update([
+                            'state' => false
+                        ]);
+                    } else {
+                        AcaCertificateParameter::whereNull('course_id')->update([
+                            'state' => false
+                        ]);
+                    }
+                }
+                $acaCertificate->state = $request->get('state') ? true : false;
+                break;
+        }
+
+        $acaCertificate->save();
+        $fullPath = null;
+
+        if ($request->get('action_type') <> 99) {
+            $imagen = $certificate->generate($id);
+
+            $carpeta = $this->directory . DIRECTORY_SEPARATOR . 'parameters';
+            //dd(public_path($carpeta));
+            $barios = new Barios();
+            $barios->deleteFilesSubfoldersPath($carpeta);
+            // Guardar la imagen en el sistema de archivos
+            $path = $carpeta .  DIRECTORY_SEPARATOR . date('YmdHis') . '.png'; // Ruta relativa dentro del disco 'public'
+            Storage::disk('public')->put($path, $imagen);
+
+            // Obtener la ruta completa del archivo guardado
+            $fullPath = Storage::disk('public')->url($path);
+            //$acaCertificate->certificate_img = $path;
+        }
+        return response()->json([
+            'success' => true,
+            'image' => $fullPath
         ]);
     }
 }

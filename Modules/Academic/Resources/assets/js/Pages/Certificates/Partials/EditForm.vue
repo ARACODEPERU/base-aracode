@@ -13,6 +13,8 @@
     import iconFont from '@/Components/vristo/icon/icon-font.vue';
     import iconQrcode from '@/Components/vristo/icon/icon-qrcode.vue';
     import iconInfoCircleTwo from '@/Components/vristo/icon/icon-info-circle-two.vue';
+    import { Image } from 'ant-design-vue';
+    import ImagePng from '@/Components/loader/image-png.vue';
 
     const props = defineProps({
         certificate: {
@@ -21,9 +23,13 @@
         },
     });
 
+    const imagePreviewLoading = ref(false);
+
     const form = useForm({
+        id: props.certificate.id,
+        action_type: null,
         course_id: null,
-        certificate_img: null,
+        certificate_img: props.certificate.certificate_img,
         certificate_img_preview: null,
         fontfamily_date: props.certificate.fontfamily_date,
         font_align_date: props.certificate.font_align_date,
@@ -60,24 +66,6 @@
         state: props.certificate.state == 1 ? true :  false,
     });
 
-    const createCertificate = () => {
-        form.post(route('aca_certificate_store'), {
-            forceFormData: true,
-            errorBag: 'createCertificate',
-            preserveScroll: true,
-            onSuccess: () => {
-                Swal2.fire({
-                    title: 'Enhorabuena',
-                    text: 'Se registró correctamente',
-                    icon: 'success',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-                form.reset();
-            },
-        });
-    };
-
     const xasset = assetUrl;
 
     const getImage = (path) => {
@@ -86,48 +74,53 @@
 
     const isShowChatMenu = ref(false);
     const accordians3 = ref(0);
-    const canvas = ref(null);
     
-
     // Cargar la imagen principal desde la URL
-    const loadMainImage = () => {
-        form.certificate_img_preview = new Image();
-        form.certificate_img_preview.src = getImage(props.certificate.certificate_img);
-        form.certificate_img_preview.onload = () => {
-            // Ajustar el tamaño del canvas al tamaño de la imagen
-            canvas.value.width = form.certificate_img_preview.width;
-            canvas.value.height = form.certificate_img_preview.height;
-            drawCanvas();
-        };
+    const loadMainImage = (urlImage) => {
+        form.certificate_img_preview = urlImage;
     };
 
-    // Dibujar en el canvas
-    const drawCanvas = () => {
-        const ctx = canvas.value.getContext('2d');
-        ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
 
-        // Dibujar la imagen principal en su tamaño original
-        if (form.certificate_img_preview) {
-            ctx.drawImage(
-                form.certificate_img_preview,
-                0,
-                0,
-                canvas.value.width, // Usar el ancho del canvas
-                canvas.value.height // Usar el alto del canvas
-            );
-        }
-
-    };
 
    
 
     // Cargar la imagen principal al montar el componente
     onMounted(() => {
-        loadMainImage();
+        loadMainImage(getImage(form.certificate_img));
     });
 
     const updateCertificateData = (par) => {
+        form.action_type = par;
+        imagePreviewLoading.value = true;
+        axios({
+            method: 'post',
+            url: route('aca_certificate_update_info'),
+            data: form
+        }).then((response) => {
+            form.certificate_img_preview = response.data.image;
+        }).finally(() => {
+            imagePreviewLoading.value = false;
+        });
+    }
 
+    const updateCertificateStatus = () => {
+        form.action_type = 99;
+        form.processing = true;
+        axios({
+            method: 'post',
+            url: route('aca_certificate_update_info'),
+            data: form
+        }).then((response) => {
+            form.processing = false;
+        }).finally(() => {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se registró correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        });
     }
 
 </script>
@@ -181,8 +174,9 @@
                                         <div class="col-span-2">
                                             <InputLabel for="fontfamily_date">Fuente utilizada</InputLabel>
                                             <select v-model="form.fontfamily_date" id="fontfamily_date" class="form-select text-white-dark">
-                                                <option value="1">Pacifico-Regular</option>
-                                                <option value="2">PlaywriteIN-Regular</option>
+                                                <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
+                                                <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
+                                                <option value="OLDENGL.TTF">OLDENGL</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -252,8 +246,9 @@
                                         <div class="col-span-2">
                                             <InputLabel for="fontfamily_names">Fuente utilizada</InputLabel>
                                             <select v-model="form.fontfamily_names" id="fontfamily_names" class="form-select text-white-dark">
-                                                <option value="1">Pacifico-Regular</option>
-                                                <option value="2">PlaywriteIN-Regular</option>
+                                                <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
+                                                <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
+                                                <option value="OLDENGL.TTF">OLDENGL</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -297,6 +292,9 @@
                                             />
                                         </div>
                                     </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(2)" class="btn btn-success">vista previa</button>
+                                    </div>
                                 </div>
                             </vue-collapsible>
                         </div>
@@ -320,8 +318,9 @@
                                         <div class="col-span-2">
                                             <InputLabel for="fontfamily_title">Fuente utilizada</InputLabel>
                                             <select v-model="form.fontfamily_title" id="fontfamily_title" class="form-select text-white-dark">
-                                                <option value="1">Pacifico-Regular</option>
-                                                <option value="2">PlaywriteIN-Regular</option>
+                                                <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
+                                                <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
+                                                <option value="OLDENGL.TTF">OLDENGL</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -373,6 +372,9 @@
                                             />
                                         </div>
                                     </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(3)" class="btn btn-success">vista previa</button>
+                                    </div>
                                 </div>
                             </vue-collapsible>
                         </div>
@@ -403,9 +405,12 @@
                                         <div class="col-span-2">
                                             <InputLabel for="font_align_qr">A. horizontal</InputLabel>
                                             <select v-model="form.font_align_qr" id="font_align_qr" class="form-select text-white-dark">
-                                                <option value="left">left</option>
-                                                <option value="center">center</option>
-                                                <option value="right">right</option>
+                                                <option value="top-left">top-left</option>
+                                                <option value="top-center">top-center</option>
+                                                <option value="top-right">top-right</option>
+                                                <option value="bottom-left">bottom-left</option>
+                                                <option value="bottom-center">bottom-center</option>
+                                                <option value="bottom-right">bottom-right</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -424,6 +429,9 @@
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
+                                    </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(4)" class="btn btn-success">vista previa</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
@@ -447,8 +455,9 @@
                                         <div class="col-span-2">
                                             <InputLabel for="fontfamily_description">Fuente utilizada</InputLabel>
                                             <select v-model="form.fontfamily_description" id="fontfamily_description" class="form-select text-white-dark">
-                                                <option value="1">Pacifico-Regular</option>
-                                                <option value="2">PlaywriteIN-Regular</option>
+                                                <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
+                                                <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
+                                                <option value="OLDENGL.TTF">OLDENGL</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -500,6 +509,9 @@
                                             />
                                         </div>
                                     </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(5)" class="btn btn-success">vista previa</button>
+                                    </div>
                                 </div>
                             </vue-collapsible>
                         </div>
@@ -519,7 +531,7 @@
                         </label>
                     </div>
                     <div class="col-span-2">
-                        <button @click="createCertificate" class="btn btn-primary w-full" type="button">
+                        <button @click="updateCertificateStatus" class="btn btn-primary w-full" type="button">
                             <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                 <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
@@ -546,25 +558,15 @@
                     </div>
                 </div>
                 <div class="h-px w-full border-b border-[#e0e6ed] dark:border-[#1b2e4b]"></div>
-                <div class="canvas-container">
-                    <canvas ref="canvas" class="canvas-code-block"></canvas>
+                <div>
+
+                        <image-png v-if="imagePreviewLoading" :alt="'Maximizar'" /> 
+                        <Image v-else :src="form.certificate_img_preview" 
+                                style="width: 100%; height: auto;" 
+                            />
+                    
                 </div>
             </div>
         </div>
     </div>
 </template>
-<style>
-.canvas-container {
-    width: 100%; /* Ocupa el 100% del ancho del contenedor */
-    max-width: 100%; /* Limita el ancho máximo */
-    aspect-ratio: 2245 / 1587; /* Relación de aspecto de la imagen */
-    position: relative;
-    overflow: hidden;
-}
-
-.canvas-code-block {
-    width: 100%; /* Ocupa el 100% del contenedor */
-    height: 100%; /* Ocupa el 100% del contenedor */
-    display: block;
-}
-</style>

@@ -31,7 +31,7 @@ class WebController extends Controller
                 $this->certificates_param = AcaCertificateParameter::where('course_id', $course_id)->first();
 
                 // Verificar si se obtuvieron resultados en la consulta si no se obtiene se crea certificado por defecto con ID 1
-                if (!$this->certificates_param) $this->certificates_param = AcaCertificateParameter::find(1);
+                if (!$this->certificates_param) $this->certificates_param = AcaCertificateParameter::find(3);
                 $this->certificates_param->Course = AcaCourse::find($course_id);
 
 

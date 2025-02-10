@@ -44,7 +44,8 @@ const form = useForm({
     image: null,
     course_id: null,
     student_id: props.student.id,
-    image_pre: null
+    image_pre: null,
+    certificate: true
 })
 
 const saveCertificate = () => {
@@ -173,6 +174,12 @@ const getImage = (path) => {
                                 <InputError :message="form.errors.image" class="mt-1" />
                             </div> -->
                             <div class="col-span-6">
+                                <label class="inline-flex">
+                                    <input v-model="form.certificate" type="checkbox" class="form-checkbox rounded-full peer" />
+                                    <span class="peer-checked:text-primary">Certificado generado automáticamente</span>
+                                </label>
+                            </div>
+                            <div v-if="!form.certificate" class="col-span-6">
                                 <InputLabel for="image" value="Imagen *" />
                                 <div v-if="form.image_pre" class="flex justify-center space-x-2">
                                     <figure class="max-w-lg">
