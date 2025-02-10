@@ -84,9 +84,7 @@ class AcaCertificateController extends Controller
                 ]);
             }
         } else {
-            $ce = AcaCertificateParameter::whereNull('course_id')->update([
-                'state' => false
-            ]);
+            $ce = AcaCertificateParameter::whereNull('course_id');
             if ($ce) {
                 $ce->update([
                     'state' => false
