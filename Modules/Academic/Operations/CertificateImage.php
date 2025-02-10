@@ -61,7 +61,7 @@ class CertificateImage
                 }
                 // //descripcion del certificado
 
-                if ($course->certificate_description && $this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
+                if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
                     $max_width = $this->certificates_param->max_width_description;
 
                     $img->text($this->wrapText("Descripción del curso, donde aparece horas académicas, fecha e información de lo llevado a cabo en el curso o diplomado", $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
