@@ -64,7 +64,8 @@ class CertificateImage
                 if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
                     $max_width = $this->certificates_param->max_width_description;
 
-                    $img->text($this->wrapText("Descripción del curso, donde aparece horas académicas, fecha e información de lo llevado a cabo en el curso o diplomado", $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
+                    $img->text($this->wrapText("Descripción del curso, donde aparece horas académicas, fecha e información de lo llevado a cabo en el curso o diplomado y más, en este ejemplo se puso texto de más porque es necesario ver como quedará...",
+                    $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
                         $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
                         $font->size($this->certificates_param->font_size_description);
                         $font->color('#0d0603');
