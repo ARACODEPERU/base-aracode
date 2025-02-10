@@ -68,7 +68,7 @@ class AcaCertificateController extends Controller
         $destination = $this->directory;
         $file = $request->file('certificate_img');
         $path = null;
-
+        dd($file->storeAs($destination, $file_name, 'public'));
         if ($file) {
             $original_name = date('YmdHis');
             $extension = $file->getClientOriginalExtension();

@@ -18,15 +18,106 @@ class CertificateImage
 
     public function generate($certificate_id, $student_id = null, $course_id = null)
     {
-        $register = AcaCapRegistration::where('student_id', $student_id)
+        if($student_id == null && $course_id == null){
+           //si no llega datos de curso ni alumno es porque quiere generar vista previa, por ende debe generar certificado sin datos
+           $this->certificates_param = AcaCertificateParameter::find($certificate_id);
+
+                $img = Image::make(public_path('storage' . DIRECTORY_SEPARATOR . $this->certificates_param->certificate_img));
+
+                $fecha = date('d-m-Y');
+
+                if ($this->certificates_param->position_date_x && $this->certificates_param->position_date_y && $this->certificates_param->fontfamily_date) {
+                    $img->text("Entregado el: " . $fecha, $this->certificates_param->position_date_x, $this->certificates_param->position_date_y, function ($font) {
+                        $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_date));
+                        $font->size($this->certificates_param->font_size_date);
+                        $font->color('#0d0603');
+                        $font->align($this->certificates_param->font_align_date);
+                        $font->valign($this->certificates_param->font_vertical_align_date);
+                        $font->angle(0);
+                    });
+                }
+                //nombre estudiante
+                if ($this->certificates_param->fontfamily_names && $this->certificates_param->font_size_names) {
+                    $img->text("Nombres del Estudiante o alumno", $this->certificates_param->position_names_x, $this->certificates_param->position_names_y, function ($font) {
+                        $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_names));
+                        $font->size($this->certificates_param->font_size_names);
+                        $font->color('#0d0603');
+                        $font->align($this->certificates_param->font_align_names);
+                        $font->valign($this->certificates_param->font_vertical_align_names);
+                        $font->angle(0);
+                    });
+                }
+                //titulo del curso
+                if ($this->certificates_param->fontfamily_title && $this->certificates_param->font_align_title && $this->certificates_param->font_vertical_align_title && $this->certificates_param->position_title_y) {
+                    $max_width = $this->certificates_param->max_width_title;
+                    $img->text($this->wrapText("Título del Curso 3025 - II", $max_width), $this->certificates_param->position_title_x, $this->certificates_param->position_title_y, function ($font) {
+                        $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_title));
+                        $font->size($this->certificates_param->font_size_title);
+                        $font->color('#0d0603');
+                        $font->align($this->certificates_param->font_align_title);
+                        $font->valign($this->certificates_param->font_vertical_align_title);
+                        $font->angle(0);
+                    });
+                }
+                // //descripcion del certificado
+
+                if ($course->certificate_description && $this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
+                    $max_width = $this->certificates_param->max_width_description;
+
+                    $img->text($this->wrapText("Descripción del curso, donde aparece horas académicas, fecha e información de lo llevado a cabo en el curso o diplomado", $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
+                        $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
+                        $font->size($this->certificates_param->font_size_description);
+                        $font->color('#0d0603');
+                        $font->align($this->certificates_param->font_align_description);
+                        $font->valign($this->certificates_param->font_vertical_align_description);
+                        $font->angle(0);
+                    });
+                }
+                // //QR GENERATOR
+                $certificate_route="test-image"; //cambiar por la ruta que se creará en el Web ROutes
+                $generator = new QrCodeGenerator(300);
+                $dir = public_path() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tmp_qr';
+                $cadenaqr = env('APP_URL') . DIRECTORY_SEPARATOR . $certificate_route . DIRECTORY_SEPARATOR . '1' . DIRECTORY_SEPARATOR . '1';
+
+                $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10) . '.png', 8, 2);
+
+                $qr = Image::make($qr_path);
+
+                if ($this->certificates_param->size_qr) {
+                    $qr->fit($this->certificates_param->size_qr, $this->certificates_param->size_qr); //ajustar tamaño del qr
+                    $img->insert($qr, $this->certificates_param->font_align_qr, $this->certificates_param->position_qr_x, $this->certificates_param->position_qr_y); //insertar qr en la imagen
+                }
+
+                // Ejemplo de Redimensionar la imagen manteniendo la proporción para avatares y similares
+                // Establecer el ancho máximo y la altura máxima deseados
+                $maxWidth = 1550;
+                $maxHeight = 1550;
+                $img->resize($maxWidth, $maxHeight, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                });
+
+
+
+                // Obtener el contenido binario de la imagen
+                $imageContent = $img->encode('png');
+
+                //ELIMINAR el EL ARCHIVO QR generado
+                if (File::exists($qr_path)) File::delete($qr_path);
+
+                //Retornar la respuesta
+                return $imageContent;
+
+        }else{
+            $register = AcaCapRegistration::where('student_id', $student_id)
             ->where('course_id', $course_id)
             ->first();
 
-        if (!$register) {
-            $register = AcaCapRegistration::first();
-            $student_id = $register->student_id;
-            $course_id = $register->course_id;
-        }
+            if (!$register) {
+                $register = AcaCapRegistration::first();
+                $student_id = $register->student_id;
+                $course_id = $register->course_id;
+            }
 
         if ($register) {
             if ($register->certificate_date != null) {
@@ -80,7 +171,7 @@ class CertificateImage
                         $font->angle(0);
                     });
                 }
-                // //descripcion del certificado 
+                // //descripcion del certificado
 
                 if ($course->certificate_description && $this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
                     $max_width = $this->certificates_param->max_width_description;
@@ -133,6 +224,9 @@ class CertificateImage
         } else {
             echo "No se encontraron registros";
         }
+        }
+
+
     }
 
     public function wrapText($text, $maxWidth, $lineSpacing = 2.3)
