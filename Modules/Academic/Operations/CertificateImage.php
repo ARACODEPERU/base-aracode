@@ -75,36 +75,37 @@ class CertificateImage
                 //     });
                 // }
 
-                                // Descripción del certificado
-                $max_width = $this->certificates_param->max_width_description; // Ancho máximo en píxeles
-                $text = "Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.";
-                $interlineado_px = $this->certificates_param->interspace_description; // Interlineado en píxeles
+                if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
+                    // Descripción del certificado
+                    $max_width = $this->certificates_param->max_width_description; // Ancho máximo en píxeles
+                    $text = "Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.";
+                    $interlineado_px = $this->certificates_param->interspace_description; // Interlineado en píxeles
 
-                // Obtener el ancho de un solo carácter (aproximado)
-                $fontSize = $this->certificates_param->font_size_description;
-                $charWidth = $this->estimateCharWidth($fontSize); // Función para estimar el ancho de un carácter
+                    // Obtener el ancho de un solo carácter (aproximado)
+                    $fontSize = $this->certificates_param->font_size_description;
+                    $charWidth = $this->estimateCharWidth($fontSize); // Función para estimar el ancho de un carácter
 
-                // Dividir el texto en líneas según el ancho máximo en píxeles
-                $lines = $this->splitTextByPixelWidth($text, $max_width, $charWidth);
+                    // Dividir el texto en líneas según el ancho máximo en píxeles
+                    $lines = $this->splitTextByPixelWidth($text, $max_width, $charWidth);
 
-                // Posición inicial Y para la primera línea
-                $currentY = $this->certificates_param->position_description_y;
+                    // Posición inicial Y para la primera línea
+                    $currentY = $this->certificates_param->position_description_y;
 
-                // Dibujar cada línea en la imagen
-                foreach ($lines as $line) {
-                    $img->text($line, $this->certificates_param->position_description_x, $currentY, function ($font) {
-                        $font->file($this->certificates_param->fontfamily_description);
-                        $font->size($this->certificates_param->font_size_description);
-                        $font->color('#0d0603');
-                        $font->align($this->certificates_param->font_align_description);
-                        $font->valign($this->certificates_param->font_vertical_align_description);
-                        $font->angle(0);
-                    });
+                    // Dibujar cada línea en la imagen
+                    foreach ($lines as $line) {
+                        $img->text($line, $this->certificates_param->position_description_x, $currentY, function ($font) {
+                            $font->file($this->certificates_param->fontfamily_description);
+                            $font->size($this->certificates_param->font_size_description);
+                            $font->color('#0d0603');
+                            $font->align($this->certificates_param->font_align_description);
+                            $font->valign($this->certificates_param->font_vertical_align_description);
+                            $font->angle(0);
+                        });
 
-                    // Aumentar la posición Y para la siguiente línea, sumando el interlineado
-                    $currentY += $interlineado_px;
+                        // Aumentar la posición Y para la siguiente línea, sumando el interlineado
+                        $currentY += $interlineado_px;
+                    }
                 }
-
 
                 // //QR GENERATOR
                 $certificate_route="test-image"; //cambiar por la ruta que se creará en el Web ROutes
