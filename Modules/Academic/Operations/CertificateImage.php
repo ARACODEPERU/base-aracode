@@ -61,19 +61,51 @@ class CertificateImage
                 }
                 // //descripcion del certificado
 
-                if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
-                    $max_width = $this->certificates_param->max_width_description;
+                // if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
+                //     $max_width = $this->certificates_param->max_width_description;
 
-                    $img->text($this->wrapText("Descripción del curso, donde aparece horas académicas, fecha e información de lo llevado a cabo en el curso o diplomado y más, en este ejemplo se puso texto de más porque es necesario ver como quedará...",
-                    $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
-                        $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
+                //     $img->text($this->wrapText("Descripción del curso, donde aparece horas académicas, fecha e información de lo llevado a cabo en el curso o diplomado y más, en este ejemplo se puso texto de más porque es necesario ver como quedará...",
+                //     $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
+                //         $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
+                //         $font->size($this->certificates_param->font_size_description);
+                //         $font->color('#0d0603');
+                //         $font->align($this->certificates_param->font_align_description);
+                //         $font->valign($this->certificates_param->font_vertical_align_description);
+                //         $font->angle(0);
+                //     });
+                // }
+
+                                // Descripción del certificado
+                $max_width = $this->certificates_param->max_width_description; // Ancho máximo en píxeles
+                $text = $this->certificates_param->Course->certificate_description;
+                $interlineado_px = $this->certificates_param->interspace_description; // Interlineado en píxeles
+
+                // Obtener el ancho de un solo carácter (aproximado)
+                $fontSize = $this->certificates_param->font_size_description;
+                $charWidth = $this->estimateCharWidth($fontSize); // Función para estimar el ancho de un carácter
+
+                // Dividir el texto en líneas según el ancho máximo en píxeles
+                $lines = $this->splitTextByPixelWidth($text, $max_width, $charWidth);
+
+                // Posición inicial Y para la primera línea
+                $currentY = $this->certificates_param->position_description_y;
+
+                // Dibujar cada línea en la imagen
+                foreach ($lines as $line) {
+                    $img->text($line, $this->certificates_param->position_description_x, $currentY, function ($font) {
+                        $font->file($this->certificates_param->fontfamily_description);
                         $font->size($this->certificates_param->font_size_description);
                         $font->color('#0d0603');
                         $font->align($this->certificates_param->font_align_description);
                         $font->valign($this->certificates_param->font_vertical_align_description);
                         $font->angle(0);
                     });
+
+                    // Aumentar la posición Y para la siguiente línea, sumando el interlineado
+                    $currentY += $interlineado_px;
                 }
+
+
                 // //QR GENERATOR
                 $certificate_route="test-image"; //cambiar por la ruta que se creará en el Web ROutes
                 $generator = new QrCodeGenerator(300);
@@ -229,6 +261,54 @@ class CertificateImage
 
 
     }
+
+            /**
+         * Divide el texto en líneas según un ancho máximo en píxeles.
+         *
+         * @param string $text Texto a dividir.
+         * @param int $maxWidthPx Ancho máximo en píxeles.
+         * @param float $charWidth Ancho aproximado de un carácter en píxeles.
+         * @return array Líneas de texto.
+         */
+        public function splitTextByPixelWidth($text, $maxWidthPx, $charWidth)
+        {
+            $words = explode(' ', $text); // Dividir el texto en palabras
+            $lines = [];
+            $currentLine = '';
+
+            foreach ($words as $word) {
+                // Calcular el ancho de la línea actual más la nueva palabra
+                $lineWidth = strlen($currentLine . ' ' . $word) * $charWidth;
+
+                // Si la línea supera el ancho máximo, guardar la línea actual y empezar una nueva
+                if ($lineWidth > $maxWidthPx) {
+                    $lines[] = trim($currentLine);
+                    $currentLine = $word;
+                } else {
+                    $currentLine .= ' ' . $word;
+                }
+            }
+
+            // Agregar la última línea
+            if (!empty($currentLine)) {
+                $lines[] = trim($currentLine);
+            }
+
+            return $lines;
+        }
+
+        /**
+         * Estima el ancho de un carácter en píxeles según el tamaño de la fuente.
+         *
+         * @param int $fontSize Tamaño de la fuente.
+         * @return float Ancho aproximado de un carácter en píxeles.
+         */
+        public function estimateCharWidth($fontSize)
+        {
+            // Esta es una estimación basada en la relación entre el tamaño de la fuente y el ancho de un carácter.
+            // Puedes ajustar este valor según la fuente que estés utilizando.
+            return $fontSize * 0.6; // Por ejemplo, 0.6 es un factor de escala común para fuentes proporcionales.
+        }
 
     public function wrapText($text, $maxWidth, $lineSpacing = 2.3)
     {
