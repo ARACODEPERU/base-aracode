@@ -500,12 +500,20 @@
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
-                                        <div class="col-span-4">
+                                        <div class="col-span-2">
                                             <InputLabel for="max_width_description">Ancho máximo en píxeles</InputLabel>
                                             <TextInput 
                                                 id="max_width_description"
                                                 v-model="form.max_width_description"
                                                 placeholder="800"
+                                            />
+                                        </div>
+                                        <div class="col-span-2">
+                                            <InputLabel for="interspace_description">Espaciado entre líneas</InputLabel>
+                                            <TextInput 
+                                                id="interspace_description"
+                                                v-model="form.interspace_description"
+                                                placeholder="2.5"
                                             />
                                         </div>
                                     </div>
@@ -515,14 +523,6 @@
                                 </div>
                             </vue-collapsible>
                         </div>
-                    </div>
-                    <div class="col-span-2">
-                        <InputLabel for="interspace_description">Espaciado entre líneas</InputLabel>
-                        <TextInput 
-                            id="interspace_description"
-                            v-model="form.interspace_description"
-                            placeholder="2.5"
-                        />
                     </div>
                     <div class="col-span-2">
                         <label class="flex items-center cursor-pointer">
@@ -561,9 +561,10 @@
                 <div>
 
                         <image-png v-if="imagePreviewLoading" :alt="'Maximizar'" /> 
-                        <Image v-else :src="form.certificate_img_preview" 
-                                style="width: 100%; height: auto;" 
-                            />
+                        <Image v-else 
+                            :src="form.certificate_img_preview" 
+                            style="width: 100%; height: auto;" 
+                        />
                     
                 </div>
             </div>

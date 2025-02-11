@@ -374,6 +374,7 @@ class AcaCertificateController extends Controller
                 $acaCertificate->position_description_y = $request->get('position_description_y');
                 $acaCertificate->font_size_description = $request->get('font_size_description');
                 $acaCertificate->max_width_description = $request->get('max_width_description');
+                $acaCertificate->interspace_description = $request->get('interspace_description') ?? null;
                 break;
             default:
                 if ($request->get('state')) {

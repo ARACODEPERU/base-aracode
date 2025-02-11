@@ -1,6 +1,6 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
-    import { ref } from 'vue';
+    import { ref, onMounted, nextTick } from "vue";
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
     import { useForm, router, Link  } from '@inertiajs/vue3';
@@ -14,6 +14,7 @@
     import IconMinusCircle from '@/Components/vristo/icon/icon-minus-circle.vue';
     import IconArrowForward from '@/Components/vristo/icon/icon-arrow-forward.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
+    import { Tour } from 'ant-design-vue';
 
     defineProps({
         interests:{
@@ -58,10 +59,45 @@
         const options = { month: 'short', day: 'numeric', year: 'numeric', locale: 'es-ES' };
         return dateObj.toLocaleDateString('es-ES', options);
     }
+
+    const open = ref(true);
+    const btnElement = ref(null);
+
+    onMounted(() => {
+        nextTick(() => {
+            btnElement.value = document.getElementById("btn-menu-mycourses");
+        });
+        console.log(document.getElementById("btn-menu-mycourses"));
+    });
+
+    const steps = [
+        {
+            title: 'Center',
+            description: 'Displayed in the center of screen.',
+            target: document.getElementById("btn-menu-mycourses")
+        },
+        {
+            title: 'Right',
+            description: 'On the right of target.',
+            placement: 'right',
+            target: () => btnRef.value && btnRef.value.$el,
+        },
+        {
+            title: 'Top',
+            description: 'On the top of target.',
+            placement: 'top',
+            target: () => btnRef.value && btnRef.value.$el,
+        },
+    ];
+    const handleOpen = (val) => {
+        open.value = val;
+    };
 </script>
 <template>
     <AppLayout title="Dashboard">
         <div>
+            <Tour :open="open" :steps="steps" @close="handleOpen(false)" />
+  
             <div :style="`background-image:url('${urlBasek}themes/vristo/images/knowledge/pattern.png');`" class="relative rounded-t-md bg-primary-light bg-contain bg-left-top bg-no-repeat px-5 py-10 dark:bg-black md:px-10" >
                 <div class="absolute -bottom-1 -end-6 hidden text-[#DBE7FF] rtl:rotate-y-180 dark:text-[#1B2E4B] lg:block xl:end-0">
                     <svg width="375" height="185" viewBox="0 0 375 185" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-72 max-w-xs xl:w-full">
