@@ -77,7 +77,7 @@ class CertificateImage
 
                 if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
                     // Descripción del certificado
-                    $max_width = $this->certificates_param->max_width_description; // Ancho máximo en píxeles
+                    $max_width = $this->certificates_param->max_width_description*10; // Ancho máximo en píxeles
                     $text = "Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.";
                     $interlineado_px = $this->certificates_param->interspace_description; // Interlineado en píxeles
 
@@ -90,7 +90,7 @@ class CertificateImage
 
                     // Posición inicial Y para la primera línea
                     $currentY = $this->certificates_param->position_description_y;
-                    dd($fontSize, $charWidth, $lines, $currentY);
+                    //dd($fontSize, $charWidth, $lines, $currentY);
 
                     // Dibujar cada línea en la imagen
                     foreach ($lines as $line) {
