@@ -55,7 +55,9 @@
 
 </script>
 <template>
-    <div v-can="'crm_chat_notifications'" class="dropdown shrink-0">
+    
+    
+        
         <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-end' : 'bottom-start'" offsetDistance="8">
             <button
                 type="button"
@@ -136,5 +138,5 @@
                 </ul>
             </template>
         </Popper>
-    </div>
+    
 </template>

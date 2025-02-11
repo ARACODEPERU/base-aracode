@@ -372,7 +372,9 @@
                             </template>
                         </Popper>
                     </div> -->
-                    <ChatNotifications />
+                    <div v-can="'crm_chat_notifications'" class="dropdown shrink-0">
+                        <!-- <ChatNotifications /> -->
+                    </div>
                     <!-- <div class="dropdown shrink-0">
                         <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-end' : 'bottom-start'" offsetDistance="8">
                             <button
@@ -451,7 +453,7 @@
 
                     <div class="dropdown shrink-0">
                         <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-end' : 'bottom-start'" offsetDistance="8" class="!block">
-                            <button type="button" class="relative group block">
+                            <button id="btnHeaderPerfilUser" type="button" class="relative group block">
                                 <img v-if="$page.props.auth.user.avatar"
                                     class="w-9 h-9 rounded-full object-cover saturate-50 group-hover:saturate-100"
                                     :src="getImage($page.props.auth.user.avatar)"
