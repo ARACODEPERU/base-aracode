@@ -77,7 +77,7 @@ class CertificateImage
 
                                 // Descripción del certificado
                 $max_width = $this->certificates_param->max_width_description; // Ancho máximo en píxeles
-                $text = $this->certificates_param->Course->certificate_description;
+                $text = "Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.";
                 $interlineado_px = $this->certificates_param->interspace_description; // Interlineado en píxeles
 
                 // Obtener el ancho de un solo carácter (aproximado)
