@@ -207,17 +207,50 @@ class CertificateImage
                 }
                 // //descripcion del certificado
 
-                if ($course->certificate_description && $this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
-                    $max_width = $this->certificates_param->max_width_description;
+                // if ($course->certificate_description && $this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
+                //     $max_width = $this->certificates_param->max_width_description;
 
-                    $img->text($this->wrapText($course->certificate_description, $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
-                        $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
-                        $font->size($this->certificates_param->font_size_description);
-                        $font->color('#0d0603');
-                        $font->align($this->certificates_param->font_align_description);
-                        $font->valign($this->certificates_param->font_vertical_align_description);
-                        $font->angle(0);
-                    });
+                //     $img->text($this->wrapText($course->certificate_description, $max_width, $this->certificates_param->interspace_description), $this->certificates_param->position_description_x, $this->certificates_param->position_description_y, function ($font) {
+                //         $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
+                //         $font->size($this->certificates_param->font_size_description);
+                //         $font->color('#0d0603');
+                //         $font->align($this->certificates_param->font_align_description);
+                //         $font->valign($this->certificates_param->font_vertical_align_description);
+                //         $font->angle(0);
+                //     });
+                // }
+
+                if ($this->certificates_param->position_description_x && $this->certificates_param->position_description_y) {
+                    // Descripción del certificado
+                    $max_width = $this->certificates_param->max_width_description*10; // Ancho máximo en píxeles
+                    $text = $course->certificate_description;
+                    $interlineado_px = $this->certificates_param->interspace_description; // Interlineado en píxeles
+
+                    // Obtener el ancho de un solo carácter (aproximado)
+                    $fontSize = $this->certificates_param->font_size_description;
+                    $charWidth = $this->estimateCharWidth($fontSize); // Función para estimar el ancho de un carácter
+
+                    // Dividir el texto en líneas según el ancho máximo en píxeles
+                    $lines = $this->splitTextByPixelWidth($text, $max_width, $charWidth);
+
+                    // Posición inicial Y para la primera línea
+                    $currentY = $this->certificates_param->position_description_y;
+                    //dd($fontSize, $charWidth, $lines, $currentY);
+
+                    // Dibujar cada línea en la imagen
+                    foreach ($lines as $line) {
+                        $img->text($line, $this->certificates_param->position_description_x, $currentY, function ($font) {
+                            $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
+                            $font->size($this->certificates_param->font_size_description);
+                            $font->color('#0d0603');
+                            $font->align($this->certificates_param->font_align_description);
+                            $font->valign($this->certificates_param->font_vertical_align_description);
+                            $font->angle(0);
+                        });
+
+                        // Aumentar la posición Y para la siguiente línea, sumando el interlineado
+                        $currentY += $interlineado_px;
+                    }
                 }
                 // //QR GENERATOR
                 $generator = new QrCodeGenerator(300);
