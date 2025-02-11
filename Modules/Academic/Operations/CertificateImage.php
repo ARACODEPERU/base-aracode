@@ -95,7 +95,7 @@ class CertificateImage
                     // Dibujar cada línea en la imagen
                     foreach ($lines as $line) {
                         $img->text($line, $this->certificates_param->position_description_x, $currentY, function ($font) {
-                            $font->file($this->certificates_param->fontfamily_description);
+                            $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
                             $font->size($this->certificates_param->font_size_description);
                             $font->color('#0d0603');
                             $font->align($this->certificates_param->font_align_description);
