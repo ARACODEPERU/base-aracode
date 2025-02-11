@@ -63,6 +63,7 @@ const menuAcademic = {
             text: "Mis Cursos",
             icom: faBookOpen,
             permissions: "aca_miscursos",
+            id: 'btn-menu-mycourses'
         }
     ],
 };

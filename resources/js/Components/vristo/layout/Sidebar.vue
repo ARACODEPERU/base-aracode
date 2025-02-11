@@ -98,7 +98,7 @@
                                         <template v-if="item.items && item.items.length > 0" >
                                             <ul class="sub-menu text-gray-500">
                                                 <li v-for="(subItem, subIndex) in item.items" :key="subIndex">
-                                                    <Link :href="subItem.route" @click="toggleMobileMenu">{{ subItem.text }}</Link>
+                                                    <Link :href="subItem.route" @click="toggleMobileMenu">{{ subItem.text }} ggg</Link>
                                                 </li>
                                             </ul>
                                         </template>
@@ -135,7 +135,7 @@
                                                     <ul v-if="subItem.items && subItem.items.length > 0" class="sub-menu text-gray-500">
                                                         <template v-for="(subSubItem, subSubIndex) in subItem.items" :key="subSubIndex">
                                                             <li v-can="subSubItem.permissions">
-                                                                <Link :href="subSubItem.route" @click="toggleMobileMenu">{{ subSubItem.text }}</Link>
+                                                                <Link v-bind="{ id: subSubItem.id }"  :href="subSubItem.route" @click="toggleMobileMenu">{{ subSubItem.text }}</Link>
                                                             </li>
                                                         </template>
                                                     </ul>
@@ -144,7 +144,9 @@
                                         </template>
                                         <template v-else>
                                             <li v-can="subItem.permissions" class="menu nav-item">
-                                                <Link :href="subItem.route" class="nav-link group" @click="toggleMobileMenu">
+                                                <Link 
+                                                    v-bind="{ id: subItem.id }"
+                                                    :href="subItem.route" class="nav-link group" @click="toggleMobileMenu">
                                                     <div class="flex items-center">
                                                         <font-awesome-icon :icon="subItem.icom" class="group-hover:!text-primary shrink-0" />
 
