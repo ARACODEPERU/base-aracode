@@ -90,6 +90,7 @@ class CertificateImage
 
                     // Posición inicial Y para la primera línea
                     $currentY = $this->certificates_param->position_description_y;
+                    dd($fontSize, $charWidth, $lines, $currentY);
 
                     // Dibujar cada línea en la imagen
                     foreach ($lines as $line) {
@@ -106,7 +107,6 @@ class CertificateImage
                         $currentY += $interlineado_px;
                     }
                 }
-                dd($fontSize, $charWidth, $lines, $currentY);
                 // //QR GENERATOR
                 $certificate_route="test-image"; //cambiar por la ruta que se creará en el Web ROutes
                 $generator = new QrCodeGenerator(300);
