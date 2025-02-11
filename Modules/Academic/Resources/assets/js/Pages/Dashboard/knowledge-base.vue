@@ -60,14 +60,15 @@
         return dateObj.toLocaleDateString('es-ES', options);
     }
 
-    const open = ref(true);
+    const open = ref(false);
     const btnElement = ref(null);
 
     onMounted(() => {
         nextTick(() => {
             btnElement.value = document.getElementById("btn-menu-mycourses");
         });
-        console.log(document.getElementById("btn-menu-mycourses"));
+        console.log('elelemneto',document.getElementById("btn-menu-mycourses"))
+        console.log('reff',btnElement.value);
     });
 
     const steps = [
