@@ -19,6 +19,8 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaStudent;
 
 class AcaCourseController extends Controller
 {
@@ -309,6 +311,24 @@ class AcaCourseController extends Controller
 
         return response()->json([
             'courses' => $courses
+        ]);
+    }
+
+    public function enrolledStudents($id)
+    {
+        $course = AcaCourse::find($id);
+
+        $students = AcaCapRegistration::with('student.person')
+            ->where('course_id', $id)
+            ->get()
+            ->map(function ($student) {
+                $student->checkbox = false;
+                return $student;
+            });
+
+        return Inertia::render('Academic::Courses/EnrolledStudents', [
+            'course' => $course,
+            'students' => $students
         ]);
     }
 }

@@ -34,6 +34,7 @@ export const useAppStore = defineStore('app', {
         ],
         isShowMainLoader: true,
         semidark: false,
+        shoppingCart: [] as Array<{ id: number; name: string; price: number; quantity: number; entity: string; image: string }>
     }),
 
     actions: {
@@ -116,6 +117,25 @@ export const useAppStore = defineStore('app', {
                 this.isShowMainLoader = false;
             }, 500);
         },
+        addToCart(product: { id: number; name: string; price: number; quantity: number; entity: string; image: string }) {
+            const existingItem = this.shoppingCart.find((i) => i.id === product.id);
+            if (existingItem) {
+                //no aplica a cursos o servicios
+                //existingItem.quantity += product.quantity; // Incrementa la cantidad
+            } else {
+                this.shoppingCart.push(product); // Agrega el item al carrito
+            }
+            localStorage.setItem('shoppingCart', JSON.stringify(this.shoppingCart)); // Guarda en LocalStorage
+        },
+        removeFromCart(productId: number) {
+            this.shoppingCart = this.shoppingCart.filter(item => item.id !== productId); // Método para remover un producto del carrito
+            localStorage.setItem('shoppingCart', JSON.stringify(this.shoppingCart));
+        },
+        clearCart() {
+            this.shoppingCart = []; // Método para vaciar el carrito
+            localStorage.removeItem("shoppingCart");
+        },
+
     },
     getters: {},
 });

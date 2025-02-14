@@ -415,4 +415,73 @@ class AcaCertificateController extends Controller
             'image' => $fullPath
         ]);
     }
+
+    public function storeMassive(Request $request, $id)
+    {
+        $students = $request->get('students');
+
+        foreach ($students as $student) {
+            $student_id = $student['student']['id'];
+            if ($student['checkbox']) {
+                $true = AcaCertificate::where('student_id', $student_id)->where('course_id', $id)->doesntExist();
+
+                if ($true) {
+
+                    $exists = AcaCapRegistration::where('student_id', $student_id)
+                        ->where('course_id', $id)
+                        ->whereNull('certificate_date')
+                        ->exists();
+
+                    if ($exists) {
+                        AcaCapRegistration::where('student_id', $student_id)
+                            ->where('course_id', $id)
+                            ->update([
+                                'certificate_date' => Carbon::now()->format('Y-m-d')
+                            ]);
+
+
+                        $autoCertificate = new CertificateImage();
+
+                        $certificateParameter = AcaCertificateParameter::where('course_id', $id)
+                            ->where('state', true)
+                            ->first();
+
+                        $certificate_id = null;
+
+                        if ($certificateParameter) {
+                            $certificate_id = $certificateParameter->id;
+                        } else {
+                            $certificateParameter = AcaCertificateParameter::whereNull('course_id')
+                                ->where('state', true)
+                                ->first();
+
+                            $certificate_id = $certificateParameter->id;
+                        }
+                        if ($certificate_id) {
+                            $imagen = $autoCertificate->generate($certificate_id, $student_id, $id);
+
+                            $ruta = $this->directory . DIRECTORY_SEPARATOR . 'student' . $student_id;
+                            $prefix = $id . '_';
+
+                            // Guardar la imagen en el sistema de archivos
+                            $path =  $ruta . DIRECTORY_SEPARATOR . $prefix . date('YmdHis') . '.png'; // Ruta relativa dentro del disco 'public'
+                            Storage::disk('public')->put($path, $imagen);
+
+                            $certificate = AcaCertificate::create([
+                                'student_id'        => $student_id,
+                                'registration_id'   => AcaCapRegistration::where('student_id', $student_id)->where('course_id', $id)->value('id'),
+                                'course_id'         => $id,
+                                'content'           => null,
+                                'image'             => $path
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true
+        ]);
+    }
 }

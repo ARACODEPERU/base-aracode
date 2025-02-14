@@ -11,6 +11,9 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
+use Modules\Onlineshop\Http\Controllers\OnliSaleController;
+
 Route::middleware(['auth', 'verified'])->prefix('onlineshop')->group(function () {
     Route::get('dashboard', 'OnlineshopController@index')->name('onlineshop_dashboard');
     Route::get('items', 'OnliItemController@index')->name('onlineshop_items');
@@ -22,6 +25,7 @@ Route::middleware(['auth', 'verified'])->prefix('onlineshop')->group(function ()
     Route::get('sales', 'OnliSaleController@index')->name('onlineshop_sales');
     Route::post('items/images', 'OnliItemImageController@upload')->name('onlineshop_items_images_upload');
     Route::delete('items/images/destroy/{id}', 'OnliItemImageController@destroy')->name('onlineshop_items_images_destroy');
+    Route::get('sales/shoppingcart/{mo}/pay', [OnliSaleController::class, 'shoppingCart'])->name('onlineshop_sales_shoppingcart');
 });
 
 Route::get('mercadopago/preference/{id}', 'OnliSaleController@getPreference')->name('onlineshop_mercadopago_preference');

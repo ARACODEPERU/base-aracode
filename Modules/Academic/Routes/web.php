@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Academic\Http\Controllers\AcaAuthController;
 use Modules\Academic\Http\Controllers\AcaCertificateController;
 use Modules\Academic\Http\Controllers\AcaContentController;
+use Modules\Academic\Http\Controllers\AcaCourseController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
@@ -257,9 +258,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('certificate/update/info', [AcaCertificateController::class, 'updateInfo'])
         ->name('aca_certificate_update_info');
 
+    Route::middleware(['middleware' => 'permission:aca_cursos_listado_estudiantes'])
+        ->get('courses/enrolledstudents/{id}/registered', [AcaCourseController::class, 'enrolledStudents'])
+        ->name('aca_enrolledstudents_list');
+
+    Route::put('certificate/massive/{id}/store', [AcaCertificateController::class, 'storeMassive'])
+        ->name('aca_certificate_massive_store');
+
 
     ////////////////verificar datos///////////////////////////
-
+    Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
+    Route::post('buy/course/items/mercadopago', [MercadopagoController::class, 'createItemsPreference'])->name('academic_create_items_preference_course');
+    Route::post('buy/course/processpayment/mercadopago', [MercadopagoController::class, 'processPaymentCourses'])->name('academic_processpayment_courses_mercadopago');
 });
 
 /////////no nesesita aver iniciado session//////////

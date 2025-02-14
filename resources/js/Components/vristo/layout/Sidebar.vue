@@ -98,7 +98,7 @@
                                         <template v-if="item.items && item.items.length > 0" >
                                             <ul class="sub-menu text-gray-500">
                                                 <li v-for="(subItem, subIndex) in item.items" :key="subIndex">
-                                                    <Link :href="subItem.route" @click="toggleMobileMenu">{{ subItem.text }} ggg</Link>
+                                                    <Link :href="subItem.route" @click="toggleMobileMenu">{{ subItem.text }}</Link>
                                                 </li>
                                             </ul>
                                         </template>

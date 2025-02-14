@@ -14,7 +14,13 @@ class AcaCapRegistration extends Model
         'student_id',
         'course_id',
         'status',
-        'modality_id'
+        'modality_id',
+        'subscription_id',
+        'date_start',
+        'date_end',
+        'unlimited',
+        'certificate_date',
+        'document_id'
     ];
 
     protected static function newFactory()
@@ -25,5 +31,10 @@ class AcaCapRegistration extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(AcaCourse::class, 'course_id');
+    }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(AcaStudent::class, 'student_id');
     }
 }

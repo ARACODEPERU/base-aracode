@@ -35,7 +35,7 @@ const props = defineProps({
                 <a href="javascript:;" class="text-primary hover:underline">Académico</a>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <a :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</a>
+                <Link :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
                 <span>Editar</span>

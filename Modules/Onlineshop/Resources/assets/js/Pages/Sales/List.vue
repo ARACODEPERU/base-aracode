@@ -38,11 +38,11 @@
 <template>
     <AppLayout title="Resumen">
         <Navigation :routeModule="route('onlineshop_dashboard')" :titleModule="'Ventas en línea'">
-                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                    <span>Pedidos</span>
-                </li>
-            </Navigation>
-            <div class="mt-5">
+            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                <span>Pedidos</span>
+            </li>
+        </Navigation>
+        <div class="mt-5">
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">
                 <!-- ====== Table One Start -->

@@ -19,6 +19,7 @@ use Modules\Onlineshop\Entities\OnliSaleDetail;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Exceptions\MPApiException;
+use Modules\Academic\Entities\AcaCourse;
 
 class OnliSaleController extends Controller
 {
@@ -57,9 +58,12 @@ class OnliSaleController extends Controller
      * Show the form for creating a new resource.
      * @return Renderable
      */
-    public function create()
+    public function shoppingCart($mo)
     {
-        return view('onlineshop::create');
+
+        return Inertia::render('Onlineshop::Sales/ShoppingCart', [
+            'payTipe' => $mo
+        ]);
     }
 
     /**
