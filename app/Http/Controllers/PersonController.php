@@ -53,8 +53,7 @@ class PersonController extends Controller
             )
             ->where('people.document_type_id', $document_type)
             ->where(function ($query) use ($number, $full_name) {
-                $query->where('people.number', $number)
-                    ->orWhere('full_name', 'like',  $full_name . '%');
+                $query->where('people.number', $number);
             })
             ->first();
         //dd($person);

@@ -20,6 +20,7 @@ class AcaCapRegistration extends Model
         'date_end',
         'unlimited',
         'certificate_date',
+        'sale_note_id',
         'document_id'
     ];
 

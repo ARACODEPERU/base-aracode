@@ -15,6 +15,7 @@
     import iconInfoCircleTwo from '@/Components/vristo/icon/icon-info-circle-two.vue';
     import { Image } from 'ant-design-vue';
     import ImagePng from '@/Components/loader/image-png.vue';
+    import switchMobinkakei from '@/Components/switch/switch-mobinkakei.vue';
 
     const props = defineProps({
         certificate: {
@@ -24,12 +25,17 @@
     });
 
     const imagePreviewLoading = ref(false);
+    const xasset = assetUrl;
+
+    const getImage = (path) => {
+        return xasset + 'storage/' + path;
+    };
 
     const form = useForm({
         id: props.certificate.id,
         action_type: null,
         course_id: null,
-        certificate_img: props.certificate.certificate_img,
+        certificate_img: props.certificate.certificate_img_finished,
         certificate_img_preview: null,
         fontfamily_date: props.certificate.fontfamily_date,
         font_align_date: props.certificate.font_align_date,
@@ -64,13 +70,17 @@
         interspace_description: props.certificate.interspace_description,
         name_certificate: props.certificate.name_certificate,
         state: props.certificate.state == 1 ? true :  false,
+        certificate_img_finished: props.certificate.certificate_img_finished,
+        visible_image_qr: props.certificate.visible_image_qr == 1 ? true :  false,
+        visible_description: props.certificate.visible_description == 1 ? true :  false,
+        color_description: props.certificate.color_description,
+        visible_title: props.certificate.visible_title == 1 ? true :  false,
+        color_title: props.certificate.color_title,
+        visible_names: props.certificate.visible_names == 1 ? true :  false,
+        color_names: props.certificate.color_names,
+        visible_date: props.certificate.visible_date == 1 ? true :  false,
+        color_date: props.certificate.color_date,
     });
-
-    const xasset = assetUrl;
-
-    const getImage = (path) => {
-        return xasset + 'storage/' + path;
-    };
 
     const isShowChatMenu = ref(false);
     const accordians3 = ref(0);
@@ -177,6 +187,8 @@
                                                 <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
                                                 <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
                                                 <option value="OLDENGL.TTF">OLDENGL</option>
+                                                <option value="Poppins-Light.ttf">Poppins-Light.ttf</option>
+                                                <option value="Intro-Headr.ttf">Intro-Headr.ttf</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -219,6 +231,22 @@
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
+                                        <div class="col-span-4">
+                                            <InputLabel for="color_date">Color</InputLabel>
+                                            <TextInput 
+                                                id="color_date"
+                                                v-model="form.color_date"
+                                                type="color"
+                                                placeholder="#000"
+                                            />
+                                        </div>
+                                        <div class="col-span-4">
+                                            <switch-mobinkakei
+                                                :title="'Visible'"
+                                                :uId="'visible_date'"
+                                                v-model="form.visible_date"
+                                             />
+                                        </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
                                         <button @click="updateCertificateData(1)" class="btn btn-success">vista previa</button>
@@ -249,6 +277,8 @@
                                                 <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
                                                 <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
                                                 <option value="OLDENGL.TTF">OLDENGL</option>
+                                                <option value="Poppins-Light.ttf">Poppins-Light.ttf</option>
+                                                <option value="Intro-Headr.ttf">Intro-Headr.ttf</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -291,6 +321,22 @@
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
+                                        <div class="col-span-4">
+                                            <InputLabel for="color_names">Color</InputLabel>
+                                            <TextInput 
+                                                id="color_names"
+                                                v-model="form.color_names"
+                                                type="color"
+                                                placeholder="#000"
+                                            />
+                                        </div>
+                                        <div class="col-span-4">
+                                            <switch-mobinkakei
+                                                :title="'Visible'"
+                                                :uId="'visible_names'"
+                                                v-model="form.visible_names"
+                                             />
+                                        </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
                                         <button @click="updateCertificateData(2)" class="btn btn-success">vista previa</button>
@@ -321,6 +367,8 @@
                                                 <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
                                                 <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
                                                 <option value="OLDENGL.TTF">OLDENGL</option>
+                                                <option value="Poppins-Light.ttf">Poppins-Light.ttf</option>
+                                                <option value="Intro-Headr.ttf">Intro-Headr.ttf</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -370,6 +418,22 @@
                                                 v-model="form.max_width_title"
                                                 placeholder="900"
                                             />
+                                        </div>
+                                        <div class="col-span-4">
+                                            <InputLabel for="color_title">Color</InputLabel>
+                                            <TextInput 
+                                                id="color_title"
+                                                v-model="form.color_title"
+                                                type="color"
+                                                placeholder="#000"
+                                            />
+                                        </div>
+                                        <div class="col-span-4">
+                                            <switch-mobinkakei
+                                                :title="'Visible'"
+                                                :uId="'visible_title'"
+                                                v-model="form.visible_title"
+                                             />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
@@ -429,6 +493,13 @@
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
+                                        <div class="col-span-4">
+                                            <switch-mobinkakei
+                                                :title="'Visible'"
+                                                :uId="'visible_image_qr'"
+                                                v-model="form.visible_image_qr"
+                                             />
+                                        </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
                                         <button @click="updateCertificateData(4)" class="btn btn-success">vista previa</button>
@@ -458,6 +529,8 @@
                                                 <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
                                                 <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
                                                 <option value="OLDENGL.TTF">OLDENGL</option>
+                                                <option value="Poppins-Light.ttf">Poppins-Light.ttf</option>
+                                                <option value="Intro-Headr.ttf">Intro-Headr.ttf</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -515,6 +588,22 @@
                                                 v-model="form.interspace_description"
                                                 placeholder="2.5"
                                             />
+                                        </div>
+                                        <div class="col-span-4">
+                                            <InputLabel for="color_description">Color</InputLabel>
+                                            <TextInput 
+                                                id="color_description"
+                                                v-model="form.color_description"
+                                                type="color"
+                                                placeholder="#000"
+                                            />
+                                        </div>
+                                        <div class="col-span-4">
+                                            <switch-mobinkakei
+                                                :title="'Visible'"
+                                                :uId="'visible_description'"
+                                                v-model="form.visible_description"
+                                             />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">

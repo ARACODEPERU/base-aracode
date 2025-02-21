@@ -96,7 +96,7 @@ class StudentSubscription
             $sale->email = $person->email;
 
             $stsubscription = AcaStudentSubscription::where('student_id', $student->id)
-                ->where('subscription_id', $this->subscription_id])
+                ->where('subscription_id', $this->subscription_id)
                 ->first();
 
             if ($stsubscription) {
@@ -129,8 +129,6 @@ class StudentSubscription
                     ]
                 );
             }
-
-            
         } else {
             // El usuario NO está autenticado
 
@@ -200,7 +198,6 @@ class StudentSubscription
                     'onli_sale_id' => null
                 ]);
             }
-            
         }
 
         $sale->total = $response['transaction_amount'];

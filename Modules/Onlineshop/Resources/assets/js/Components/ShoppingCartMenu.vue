@@ -20,6 +20,11 @@
     watch(store.shoppingCart, (items) => {
         itemsShoppingCart.value = items;
     });
+
+    const removeItemShoppingCart = (id, key) => {
+        store.removeFromCart(id);
+        itemsShoppingCart.value.splice(key, 1);
+    }
 </script>
 <template>
     <div class="dropdown shrink-0">
@@ -47,7 +52,7 @@
                             </template>
                         </div>
                     </li>
-                    <template v-for="item in itemsShoppingCart" :key="item.id">
+                    <template v-for="(item, key) in itemsShoppingCart" :key="item.id">
                         <li class="dark:text-white-light/90">
                             <div class="group flex items-center px-4 py-2">
                                 <div class="grid place-content-center rounded">
@@ -68,7 +73,7 @@
                                     <button
                                         type="button"
                                         class="ltr:ml-auto rtl:mr-auto text-neutral-300 hover:text-danger opacity-0 group-hover:opacity-100"
-                                        @click="removeNotification(item.id)"
+                                        @click="removeItemShoppingCart(item.id, key)"
                                     >
                                         <icon-x-circle />
                                     </button>

@@ -28,6 +28,7 @@ class OnliPermissionsTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'onli_pedidos']));
         array_push($permissions, Permission::create(['name' => 'onli_pedidos_aprobar']));
         array_push($permissions, Permission::create(['name' => 'onli_pedidos_responder']));
+        array_push($permissions, Permission::create(['name' => 'onli_pedidos_enviar_boletas']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);

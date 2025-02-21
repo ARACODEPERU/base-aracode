@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,3 +18,5 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/academic', function (Request $request) {
     return $request->user();
 });
+
+Route::post('tickets/send/mail/student', [AcaSaleDocumentController::class, 'generateBoleta'])->name('onli_create_send_tickets');

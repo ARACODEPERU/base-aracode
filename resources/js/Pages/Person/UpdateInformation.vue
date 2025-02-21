@@ -40,9 +40,10 @@ const getImage = (path) => {
                 <blockquote class="text-black p-5 ltr:pl-3.5 rtl:pr-3.5 bg-white shadow-md rounded-tr-md rounded-br-md border border-white-light border-l-2 !border-l-primary dark:bg-[#060818] dark:border-[#060818]">
                     <div class="flex items-start">
                         <div class="w-14 h-14 ltr:mr-5 rtl:ml-5 flex-none">
-                            <img :src="getImage(person.image)" alt="" class="w-14 h-14 rounded-full object-cover m-auto" />
+                            <img v-if="person.image" :src="getImage(person.image)" alt="" class="w-14 h-14 rounded-full object-cover m-auto" />
+                            <img v-else :src="'/img/icon-user.png'" alt="" class="w-14 h-14 rounded-full object-cover m-auto" />
                         </div>
-                        <p class="not-italic text-[#515365] text-sm dark:text-white-light m-0">{{ person.gender == 'M' ? 'Sr.' : 'Sra.' }} {{ person.full_name }}, esta acción se realizará solo una vez para estar seguros de que sus datos son correctos.</p>
+                        <p class="not-italic text-[#515365] text-sm dark:text-white-light m-0">{{ person.gender == 'M' ? 'Sr.' : 'Sra.' }} {{ person.full_name }}, Le informamos que esta acción se llevará a cabo únicamente en esta ocasión, con el propósito de verificar y asegurarnos de que la información que tenemos registrada en nuestro sistema sea completamente precisa y esté actualizada.</p>
                     </div>
                     <small class="ltr:text-right rtl:text-left w-full not-italic text-xs text-[#777] block before:w-3 before:h-[1px] before:bg-[#777] before:inline-block before:opacity-50 before:relative before:-top-1 before:ltr:mr-1 rtl:ml-1">Atentamente, <cite class="italic">La Administración</cite></small>
                 </blockquote>
