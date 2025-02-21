@@ -44,7 +44,7 @@
     const displayModalSendDetails = ref(false);
     const emailForm = useForm({
         csrfToken: null,
-        urlBacken: route('onli_create_send_tickets'),
+        urlBacken: route('aca_create_send_tickets'),
         channelListen: channelListen,
         documenttypeId: 2,
         serie: null,
@@ -105,7 +105,6 @@
             // Si el item no está seleccionado, lo agregamos
             emailForm.ventas.push(item);
         }
-        console.log(emailForm.ventas)
     };
 
     // Función para seleccionar o deseleccionar todos los items
@@ -113,7 +112,6 @@
         if (selectAll.value) {
             // Agregar todos los items al array
             emailForm.ventas = [...props.sales.data];
-            console.log(emailForm.ventas)
         } else {
             // Limpiar el array
             emailForm.ventas = [];
@@ -326,7 +324,7 @@
                         leave-to="opacity-0 scale-95"
                     >
                         <DialogPanel class="relative overflow-hidden w-full max-w-3xl py-8">
-                            <button @click="closeModalDetails" type="button" class="absolute top-4 ltr:right-4 rtl:left-4 text-gray-400 hover:text-gray-800 dark:hover:text-gray-600 outline-none" >
+                            <button @click="closeModalSendDetails" type="button" class="absolute top-4 ltr:right-4 rtl:left-4 text-gray-400 hover:text-gray-800 dark:hover:text-gray-600 outline-none" >
                                 <svg width="24" height="24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
                                     <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
                                 </svg>

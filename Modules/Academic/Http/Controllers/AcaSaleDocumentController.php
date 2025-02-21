@@ -49,7 +49,9 @@ class AcaSaleDocumentController extends Controller
 
         try {
             $res = DB::transaction(function () use ($venta, $serieid, $dtype, $localId) {
+
                 $saleId = $venta['nota_sale_id'];
+                dd('aca eta');
                 $sale = Sale::find($saleId);
 
                 $person = Person::find($sale->client_id);
