@@ -6,7 +6,7 @@
     import Swal from "sweetalert2";
     import { useForm, Link, usePage } from '@inertiajs/vue3';
     import { faMagnifyingGlass, faRotate } from "@fortawesome/free-solid-svg-icons";
-    import { ref, watch } from "vue";
+    import { ref, watch, onMounted, nextTick } from "vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     
@@ -18,7 +18,7 @@
         filters: {
             type: Object,
             default: () => ({}),
-        },
+        }
     });
 
     const form = useForm({
@@ -35,22 +35,25 @@
     }
 
     const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
-    const channelListen = "onli-email-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
+    const channelListenOnli = "onli-email-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
 
     const emailStatus = ref([])
     const porsentaje = ref(0);
     const progressSend = ref(0);
     const loadingSend = ref(false);
     const displayModalSendDetails = ref(false);
+    const scrollContainer = ref(null);
+    
     const emailForm = useForm({
         csrfToken: null,
         urlBacken: route('aca_create_send_tickets'),
-        channelListen: channelListen,
+        channelListen: channelListenOnli,
         documenttypeId: 2,
         serie: null,
         enline: true,
         local: 1,
-        ventas: []
+        ventas: [],
+        userId: usePage().props.auth.user.id
     });
 
     
@@ -142,6 +145,19 @@
             padding: '10px 20px',
         });
     };
+
+    onMounted(() => { 
+        window.socketIo.on(channelListenOnli, (status) => {
+            emailStatus.value.push(status);
+            console.log(emailStatus.value);
+            progressSend.value = parseFloat(progressSend.value) + parseFloat(porsentaje.value)
+            nextTick(() => {
+                if (scrollContainer.value) {
+                    scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+                }
+            });
+        });
+    });
 </script>
 
 <template>
@@ -346,15 +362,16 @@
                                         <div ref="scrollContainer" class="scroll-box-result">
                                             <template v-for="(resEmail, co) in emailStatus">
                                                 
-                                                <div v-if="resEmail.result.success">
+                                                <div v-if="resEmail.status">
                                                     <code style="color: #60a5fa;">
-                                                        <span>{{ resEmail.email }} <span style="color: #a9cdf7;">{{ resEmail.status }}</span></span>
+                                                        <span>BOLETA ELECTRONICA: <strong>{{ resEmail.document.invoice_serie }}-{{ resEmail.document.invoice_correlative }}</strong> CLIENTE:  <strong>{{ resEmail.document.client_rzn_social }}</strong> </span><br />
+                                                        <span style="color: #a9cdf7;">Creado correctamente</span>
                                                     </code>
                                                 </div>
 
-                                                <div v-if="!resEmail.result.success">
+                                                <div v-if="!resEmail.status">
                                                     <code style="color: #ef4444;">
-                                                        {{ resEmail.email ?? 'Nulo o vacio' }} {{ resEmail.status }} {{ resEmail.result.fallidos.error }}
+                                                        {{ resEmail.status }} {{ resEmail.message }}
                                                     </code>
                                                 </div>
                                             

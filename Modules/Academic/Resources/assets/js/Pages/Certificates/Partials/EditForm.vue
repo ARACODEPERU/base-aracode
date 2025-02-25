@@ -35,7 +35,7 @@
         id: props.certificate.id,
         action_type: null,
         course_id: null,
-        certificate_img: props.certificate.certificate_img_finished,
+        certificate_img: props.certificate.certificate_img_finished ?? props.certificate.certificate_img,
         certificate_img_preview: null,
         fontfamily_date: props.certificate.fontfamily_date,
         font_align_date: props.certificate.font_align_date,

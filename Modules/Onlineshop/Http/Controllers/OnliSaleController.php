@@ -8,6 +8,7 @@ use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -50,7 +51,8 @@ class OnliSaleController extends Controller
                                     (SELECT JSON_OBJECT(
                                         'id', aca_courses.id,
                                         'description', aca_courses.description,
-                                        'title', NULL
+                                        'title', NULL,
+                                        'origin', 'ACA'
                                     )
                                     FROM aca_courses 
                                     WHERE aca_courses.id = osd.item_id)
@@ -58,7 +60,8 @@ class OnliSaleController extends Controller
                                     (SELECT JSON_OBJECT(
                                         'id', aca_subscription_types.id,
                                         'description', aca_subscription_types.description,
-                                        'title', aca_subscription_types.title
+                                        'title', aca_subscription_types.title,
+                                        'origin', 'ACA'
                                     )
                                     FROM aca_subscription_types 
                                     WHERE aca_subscription_types.id = osd.item_id)
@@ -66,7 +69,8 @@ class OnliSaleController extends Controller
                                     (SELECT JSON_OBJECT(
                                         'id', products.id,
                                         'description', products.description,
-                                        'title', products.interne
+                                        'title', products.interne,
+                                        'origin', 'PRO'
                                     )
                                     FROM products 
                                     WHERE products.id = osd.item_id)
@@ -86,7 +90,7 @@ class OnliSaleController extends Controller
 
         return Inertia::render('Onlineshop::Sales/List', [
             'sales' => $sales,
-            'filters' => request()->all('search')
+            'filters' => request()->all('search'),
         ]);
     }
 
