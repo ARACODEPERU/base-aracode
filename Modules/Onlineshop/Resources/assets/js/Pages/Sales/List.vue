@@ -34,6 +34,8 @@
         displayModalDetails.value = false;
     }
 
+    const contador = 0.5;
+
     const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
     const channelListenOnli = "onli-email-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
 
@@ -77,7 +79,7 @@
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         emailForm.csrfToken = csrfToken;
-        porsentaje.value = (1 / parseInt(emailstotal)) * 100;
+        porsentaje.value = (contador / parseInt(emailstotal)) * 100;
 
          axios.post(url,emailForm,{
             headers: {
