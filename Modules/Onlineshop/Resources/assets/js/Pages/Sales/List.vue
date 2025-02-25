@@ -46,7 +46,8 @@
     
     const emailForm = useForm({
         csrfToken: null,
-        urlBacken: route('aca_create_send_tickets'),
+        apiBackenStepOne: route('aca_create_students_tickets'),
+        apiBackenStepTwo: route('aca_send_email_student_boleta'),
         channelListen: channelListenOnli,
         documenttypeId: 2,
         serie: null,
@@ -149,7 +150,6 @@
     onMounted(() => { 
         window.socketIo.on(channelListenOnli, (status) => {
             emailStatus.value.push(status);
-            console.log(emailStatus.value);
             progressSend.value = parseFloat(progressSend.value) + parseFloat(porsentaje.value)
             nextTick(() => {
                 if (scrollContainer.value) {
@@ -360,22 +360,33 @@
                                     </div>
                                     <template v-if="emailStatus.length > 0">
                                         <div ref="scrollContainer" class="scroll-box-result">
-                                            <template v-for="(resEmail, co) in emailStatus">
+                                            <div style="border: 5px dotted #9ca0a5; padding: 4px;">
+                                                <template v-for="(resEmail, co) in emailStatus">
                                                 
-                                                <div v-if="resEmail.status">
-                                                    <code style="color: #60a5fa;">
-                                                        <span>BOLETA ELECTRONICA: <strong>{{ resEmail.document.invoice_serie }}-{{ resEmail.document.invoice_correlative }}</strong> CLIENTE:  <strong>{{ resEmail.document.client_rzn_social }}</strong> </span><br />
-                                                        <span style="color: #a9cdf7;">Creado correctamente</span>
-                                                    </code>
-                                                </div>
+                                                    <template v-if="resEmail.status && resEmail.step == 1">
+                                                        <div v-if="resEmail.status">
+                                                            <code style="color: #60a5fa;">
+                                                                <span>BOLETA ELECTRONICA: <strong>{{ resEmail.data.document.invoice_serie }}-{{ resEmail.data.document.invoice_correlative }}</strong> CLIENTE:  <strong>{{ resEmail.data.document.client_rzn_social }}</strong>&nbsp;</span>
+                                                                <span style="color: #a9cdf7;">Creado correctamente</span>
+                                                            </code>
+                                                        </div>
 
-                                                <div v-if="!resEmail.status">
-                                                    <code style="color: #ef4444;">
-                                                        {{ resEmail.status }} {{ resEmail.message }}
-                                                    </code>
-                                                </div>
-                                            
-                                            </template>
+                                                        <div v-if="!resEmail.status">
+                                                            <code style="color: #ef4444;">
+                                                                {{ resEmail.status }} {{ resEmail.message }}
+                                                            </code>
+                                                        </div>
+                                                    </template>
+                                                    <template v-if="resEmail.status && resEmail.step == 2">
+                                                        <div v-if="resEmail.status">
+                                                            <code style="color: #60a5fa;">
+                                                                <span>DESTINO: <strong>{{ resEmail.data.email }}</strong> ESTADO: <span style="color: #a9cdf7;">{{ resEmail.data.message }}</span> </span>
+                                                                
+                                                            </code>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                            </div>
                                         </div>
                                     </template>
                                 </div>

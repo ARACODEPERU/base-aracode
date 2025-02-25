@@ -38,7 +38,7 @@ class StudentElectronicTicket extends Mailable
 
     public function build()
     {
-        return $this->view('Academic::mails.student-electronic-ticket', [
+        return $this->view('academic::emails.student-electronic-ticket', [
             'data' => $this->data
         ]);
     }
@@ -49,8 +49,8 @@ class StudentElectronicTicket extends Mailable
      */
     public function attachments(): array
     {
-        //dd($this->data[1]->attachments);
-        $Attachments = [Attachment::fromPath(public_path('storage' . DIRECTORY_SEPARATOR . $this->data['file_path']))->as($this->data['file_name'])];
+        //dd($this->data['file_path']);
+        $Attachments = [Attachment::fromPath($this->data['file_path'])->as($this->data['file_name'])];
 
         return $Attachments;
     }

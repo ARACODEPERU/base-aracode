@@ -19,4 +19,5 @@ Route::middleware('auth:api')->get('/academic', function (Request $request) {
     return $request->user();
 });
 
-Route::post('tickets/send/mail/student', [AcaSaleDocumentController::class, 'generateBoleta'])->name('aca_create_send_tickets');
+Route::post('tickets/generate/student', [AcaSaleDocumentController::class, 'generateBoleta'])->name('aca_create_students_tickets');
+Route::post('tickets/send/mail/student', [AcaSaleDocumentController::class, 'sendEmailBoleta'])->name('aca_send_email_student_boleta');
