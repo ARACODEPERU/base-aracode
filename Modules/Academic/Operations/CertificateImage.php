@@ -4,6 +4,7 @@ namespace Modules\Academic\Operations;
 
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCertificateParameter;
+use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Intervention\Image\Facades\Image;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Response;
 use App\Helpers\Invoice\QrCodeGenerator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class CertificateImage
 {
@@ -28,7 +30,7 @@ class CertificateImage
 
             if ($this->certificates_param->position_date_x && $this->certificates_param->position_date_y && $this->certificates_param->fontfamily_date) {
                 if ($this->certificates_param->visible_date) {
-                    $img->text("Entregado el: " . $fecha, $this->certificates_param->position_date_x, $this->certificates_param->position_date_y, function ($font) {
+                    $img->text("Lima, " . $fecha, $this->certificates_param->position_date_x, $this->certificates_param->position_date_y, function ($font) {
                         $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_date));
                         $font->size($this->certificates_param->font_size_date);
                         $font->color($this->certificates_param->color_date);
@@ -116,10 +118,14 @@ class CertificateImage
                 }
             }
             // //QR GENERATOR
-            $certificate_route = "test-image"; //cambiar por la ruta que se creará en el Web ROutes
+            $certificate = AcaCertificate::where('course_id', $course_id)
+                ->where('student_id', $student_id)
+                ->first();
+
+            $certificate_id = $certificate ? $certificate->id : "1"; // Si $certificate es null, asigna 1 por defecto
             $generator = new QrCodeGenerator(300);
             $dir = public_path() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tmp_qr';
-            $cadenaqr = env('APP_URL') . DIRECTORY_SEPARATOR . $certificate_route . DIRECTORY_SEPARATOR . '1' . DIRECTORY_SEPARATOR . '1';
+            $cadenaqr = route('aca_image_download', ['id' => $certificate_id]);
 
             $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10) . '.png', 8, 2);
 
@@ -178,14 +184,19 @@ class CertificateImage
 
                     $fecha = $register->certificate_date; //Esta fecha debe obtenerse del registro de la matricula del estudiante al curso respectivo donde se obtiene la fecha de entrega del certificado si es null entonces no tiene certificado
 
+                    if ($register->certificate_date) {
+                        $fecha = Carbon::parse($register->certificate_date)->format('d-m-Y');
+                    } else {
+                        $fecha = 'Sin certificado';
+                    }
                     //las fuentes deben estar en la carpeta public/fonts y en la base de datos debe registrarse el nombre de la fuente y su extensión
                     //recomiendo usar fuentes de google fonts porque son gratis y puedes descargarlas
                     //dd(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_date));
                     if ($this->certificates_param->position_date_x && $this->certificates_param->position_date_y && $this->certificates_param->fontfamily_date) {
-                        $img->text("Entregado el: " . $fecha, $this->certificates_param->position_date_x, $this->certificates_param->position_date_y, function ($font) {
+                        $img->text("Lima, " . $fecha, $this->certificates_param->position_date_x, $this->certificates_param->position_date_y, function ($font) {
                             $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_date));
                             $font->size($this->certificates_param->font_size_date);
-                            $font->color('#0d0603');
+                            $font->color($this->certificates_param->color_date);
                             $font->align($this->certificates_param->font_align_date);
                             $font->valign($this->certificates_param->font_vertical_align_date);
                             $font->angle(0);
@@ -196,7 +207,7 @@ class CertificateImage
                         $img->text($student->person->full_name, $this->certificates_param->position_names_x, $this->certificates_param->position_names_y, function ($font) {
                             $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_names));
                             $font->size($this->certificates_param->font_size_names);
-                            $font->color('#0d0603');
+                            $font->color($this->certificates_param->color_names);
                             $font->align($this->certificates_param->font_align_names);
                             $font->valign($this->certificates_param->font_vertical_align_names);
                             $font->angle(0);
@@ -208,7 +219,7 @@ class CertificateImage
                         $img->text($this->wrapText($course->description, $max_width), $this->certificates_param->position_title_x, $this->certificates_param->position_title_y, function ($font) {
                             $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_title));
                             $font->size($this->certificates_param->font_size_title);
-                            $font->color('#0d0603');
+                            $font->color($this->certificates_param->color_title);
                             $font->align($this->certificates_param->font_align_title);
                             $font->valign($this->certificates_param->font_vertical_align_title);
                             $font->angle(0);
@@ -251,7 +262,7 @@ class CertificateImage
                             $img->text($line, $this->certificates_param->position_description_x, $currentY, function ($font) {
                                 $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $this->certificates_param->fontfamily_description));
                                 $font->size($this->certificates_param->font_size_description);
-                                $font->color('#0d0603');
+                                $font->color($this->certificates_param->color_description);
                                 $font->align($this->certificates_param->font_align_description);
                                 $font->valign($this->certificates_param->font_vertical_align_description);
                                 $font->angle(0);
@@ -262,9 +273,15 @@ class CertificateImage
                         }
                     }
                     // //QR GENERATOR
+                    $certificate = AcaCertificate::where('course_id', $course_id)
+                        ->where('student_id', $student_id)
+                        ->first();
+
+                    $certificate_id = $certificate ? $certificate->id : "1"; // Si $certificate es null, asigna 1 por defecto
                     $generator = new QrCodeGenerator(300);
                     $dir = public_path() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tmp_qr';
-                    $cadenaqr = env('APP_URL') . DIRECTORY_SEPARATOR . 'test-image' . DIRECTORY_SEPARATOR . $student_id . DIRECTORY_SEPARATOR . $course_id;
+                    $cadenaqr = route('aca_image_download', ['id' => $certificate_id]);
+
 
                     $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10) . '.png', 8, 2);
 
