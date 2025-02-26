@@ -60,7 +60,7 @@ class AcaSaleDocumentController extends Controller
                 $dtype = $pedido['documenttypeId'];
                 $userId = $pedido['userId'];
                 $enline = $pedido['enline'];
-
+                $onlisale_id = $venta['id'];
 
                 $saleId = $venta['nota_sale_id'];
 
@@ -293,12 +293,13 @@ class AcaSaleDocumentController extends Controller
 
                 $serie->increment('number', 1);
 
-                return $document;
+                return ['document' => $document, 'onlisale_id' => $onlisale_id];
             });
 
             return response()->json([
                 'success' => true,
-                'document' => $res,
+                'document' => $res['document'],
+                'onlisaleId' => $res['onlisale_id'],
                 'message' => 'Boleta generada correctamente'
             ]);
         } catch (\Exception $e) {
@@ -319,6 +320,7 @@ class AcaSaleDocumentController extends Controller
         $person_email = $request->get('person_email');
         $person_name = $request->get('person_name');
         $document_id = $request->get('document_id');
+        $onlisale_id = $request->get('onlisaleId');
 
         $success = false;
         $correosMessage = [];
@@ -341,7 +343,12 @@ class AcaSaleDocumentController extends Controller
             Mail::to(trim($person_email))->send(new StudentElectronicTicket($data));
 
             $success = true;
-
+            $onlisale = OnliSale::findOrFail($onlisale_id);
+            if ($onlisale) {
+                $onlisale->update([
+                    'email_sent' => true
+                ]);
+            }
             $correosMessage = [
                 'email' => $person_email,
                 'message' => 'Correo enviado correctamente'
