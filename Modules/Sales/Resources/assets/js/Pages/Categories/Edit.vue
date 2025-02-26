@@ -12,6 +12,10 @@ const props = defineProps({
     category: {
         type: Object,
         default: () => ({}),
+    },
+    P000014: {
+        type: String,
+        default: "1",
     }
 });
 </script>
@@ -27,7 +31,7 @@ const props = defineProps({
             </li>
         </Navigation>
         <div class="mt-5">
-            <EditForm :categories="categories" :category="category" /> 
+            <EditForm :categories="categories" :category="category" :P000014="P000014" /> 
         </div>
     </AppLayout>
 </template>

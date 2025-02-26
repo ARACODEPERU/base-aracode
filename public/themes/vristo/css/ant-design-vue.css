@@ -68,3 +68,17 @@
 .dark .ant-dropdown-menu-title-content {
     color: #bfc5db !important;
 }
+
+
+.dark .ant-select-tree-list-holder-inner{
+    background-color: #1b2e4b !important;
+    color: #bfc5db !important;
+}
+.dark .ant-select-tree-node-content-wrapper:hover{
+    background-color: #294064 !important;
+    color: #b5c4fa !important;
+}
+.dark .ant-select-tree-node-selected {
+    background-color: #4a5c77 !important;
+    color: #dcdde6 !important;
+}

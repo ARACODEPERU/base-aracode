@@ -64,6 +64,8 @@ const createParameter = () => {
                     <option value="in">Texto</option>
                     <option value="sq">Lista (consulta a una tabla de la BD)</option>
                     <option value="sa">Lista (desde un arreglo json)</option>
+                    <option value="rdq">Elegir una opciones (consulta a una tabla de la BD)</option>
+                    <option value="rdj">Elegir una opciones (desde un arreglo json)</option>
                     <option value="chq">Elegir varias opciones (consulta a una tabla de la BD)</option>
                     <option value="chj">Elegir varias opciones (desde un arreglo json)</option>
                     <option value="tx">Texto amplio</option>
@@ -96,17 +98,17 @@ const createParameter = () => {
             <div class="col-span-6 ">
                 <InputLabel for="description" value="Descripción *" />
                 <textarea
-                    class="mt-1 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    class="form-textarea"
                     id="description"
                     v-model="form.description"
                 ></textarea>
                 <InputError :message="form.errors.description" class="mt-2" />
             </div>
-            <div class="col-span-6 " v-show="form.control_type == 'sq' || form.control_type == 'sa' ||  form.control_type == 'chq' || form.control_type == 'chj' || form.control_type == 'rgq' || form.control_type == 'rgj'">
+            <div class="col-span-6 " v-show="form.control_type == 'sq' || form.control_type == 'sa' ||  form.control_type == 'chq' || form.control_type == 'chj' || form.control_type == 'rgq' || form.control_type == 'rgj' || form.control_type == 'rdq' || form.control_type == 'rdj'">
                 <InputLabel for="json_query_data" value="Contenido de la lista *" />
                 <textarea
                     rows="10"
-                    class="mt-1 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    class="form-textarea"
                     id="json_query_data"
                     v-model="form.json_query_data"
                 ></textarea>

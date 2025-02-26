@@ -3,6 +3,7 @@
 namespace Modules\Sales\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Parameter;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,9 +18,17 @@ use Illuminate\Support\Facades\DB;
 class SaleProductCategoryController extends Controller
 {
     use ValidatesRequests;
+
+    protected $P000014;
     /**
      * Display a listing of the resource.
      */
+
+    public function __construct()
+    {
+        $this->P000014 = Parameter::where('parameter_code', 'P000014')->value('value_default');
+    }
+
     public function index()
     {
         $categories = (new SaleProductCategory())->newQuery();
@@ -56,7 +65,8 @@ class SaleProductCategoryController extends Controller
         $categories = SaleProductCategory::with('subcategories')->whereNull('category_id')->get();
 
         return Inertia::render('Sales::Categories/Create', [
-            'categories' => $categories
+            'categories' => $categories,
+            'P000014' => $this->P000014
         ]);
     }
 
@@ -141,7 +151,8 @@ class SaleProductCategoryController extends Controller
 
         return Inertia::render('Sales::Categories/Edit', [
             'categories' => $categories,
-            'category' => $category
+            'category' => $category,
+            'P000014' => $this->P000014
         ]);
     }
 

@@ -117,6 +117,14 @@ return new class extends Migration
             'json_query_data'   => null,
             'value_default'     => 'aracode_atencion@gmail.com'
         ]);
+
+        Parameter::create([
+            'parameter_code'    => 'P000014',
+            'description'       => 'Como se mostrará el cuadro de selección en el formulario de nuevo y editar categoría',
+            'control_type'      => 'rdj',
+            'json_query_data'   => '[{"value": "1","label":"Lista de niveles (básico)"},{"value": "2","label":"Lista en Cascada (Avanzada)"}]',
+            'value_default'     => 1
+        ]);
     }
 
     /**

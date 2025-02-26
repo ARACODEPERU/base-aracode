@@ -16,18 +16,26 @@ const props = defineProps({
     categories: {
         type: Object,
         default: () => ({}),
+    },
+    P000014: {
+        type: String,
+        default: "1",
     }
 });
 
 const categoriesData = ref([]);
 
 onMounted(() => {
-    categoriesData.value = props.categories.map(item => ({ value: item.id, label: item.description }));
-    // categoriesData.value = props.categories.map((obj) => ({
-    //     value: obj.id,
-    //     label: obj.description,
-    //     children: obj.subcategories.map(item => ({ value: item.id, label: item.description }))
-    // }));
+
+    if(props.P000014 == "1"){
+        categoriesData.value = props.categories.map(item => ({ value: item.id, label: item.description }));
+    } else if(props.P000014 == "2"){
+        categoriesData.value = props.categories.map((obj) => ({
+            value: obj.id,
+            label: obj.description,
+            children: obj.subcategories.map(item => ({ value: item.id, label: item.description }))
+        }));
+    }
 });
 
 const form = useForm({
@@ -75,30 +83,35 @@ const cropImageAndSave = (res) => {
         <template #form>
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel for="category_id" value="Categorías (Opcional)" class="mb-1" />
-                <!-- <TreeSelect
-                    v-model:value="form.category_id"
-                    show-search
-                    style="width: 100%"
-                    :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
-                    placeholder="Seleccionar Categoría"
-                    allow-clear
-                    :tree-data="categoriesData"
-                    tree-node-filter-prop="label"
-                >
-                    <template #title="{ value: val, label }">
-                        <b v-if="val === 'parent 1-1'" style="color: #08c">sss</b>
-                        <template v-else>{{ label }}</template>
-                    </template>
-                </TreeSelect> -->
-                <Select
-                    id="category_id"
-                    v-model:value="form.category_id"
-                    placeholder="Seleccionar Categoría"
-                    style="width: 100%"
-                    :options="categoriesData"
-                    class=" dark:bg-gray-600"
-                >
-                </Select>
+                <template v-if="P000014 == '1'">
+                    <Select
+                        id="category_id"
+                        v-model:value="form.category_id"
+                        placeholder="Seleccionar Categoría"
+                        style="width: 100%"
+                        :options="categoriesData"
+                        class=" dark:bg-gray-600"
+                    >
+                    </Select>
+                </template>
+                <template v-else-if="P000014 == '2'">
+                    <TreeSelect
+                        v-model:value="form.category_id"
+                        show-search
+                        style="width: 100%"
+                        :dropdown-style="{ maxHeight: '400px', overflow: 'auto' }"
+                        placeholder="Seleccionar Categoría"
+                        allow-clear
+                        :tree-data="categoriesData"
+                        tree-node-filter-prop="label"
+                    >
+                        <template #title="{ value: val, label }">
+                            <b v-if="val === 'parent 1-1'" style="color: #08c">sss</b>
+                            <template v-else>{{ label }}</template>
+                        </template>
+                    </TreeSelect>
+                </template>
+                
                 <InputError :message="form.errors.category_id" class="mt-2" />
             </div>
             <div class="col-span-6">

@@ -142,6 +142,23 @@
                                                 >
                                             </Textarea>
                                         </template>
+                                        <template v-else-if="parameter.control_type == 'rdj'">
+                                            <div>
+                                                <template v-for="(rdj, kec) in JSON.parse(parameter.json_query_data)">
+                                                    <label class="inline-flex">
+                                                        <input 
+                                                            v-model="parameter.value_default"
+                                                            type="radio" 
+                                                            :value="rdj.value"
+                                                            :name="`radio-j-${index}`"
+                                                            class="form-radio rounded-none"
+                                                            @change="updateDefaultValue(parameter.id, parameter.value_default)"
+                                                        />
+                                                        <span>{{ rdj.label }}</span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </template>
                                     </td>
                                 </tr>
                             </tbody>
