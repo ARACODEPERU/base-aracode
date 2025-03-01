@@ -1,0 +1,6 @@
+.scroll-box-result {
+    height: 350px;
+    overflow-y: auto;
+    border: 1px solid #757575;
+    padding: 10px;
+}

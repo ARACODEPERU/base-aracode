@@ -3,17 +3,17 @@
         texto:{
             type: String,
             default: 'Text writing'
-        } 
+        }
     });
 </script>
 
 <template>
-    <!-- From Uiverse.io by JkHuger --> 
-    <div class="aranimation">{{ texto }}</div>
+    <!-- From Uiverse.io by JkHuger -->
+    <div class="aranimation" style="padding: 0px; margin: 0px">{{ texto }}</div>
 </template>
 
 <style>
-    /* From Uiverse.io by JkHuger */ 
+    /* From Uiverse.io by JkHuger */
     @keyframes typing {
         from {
             width: 0;
@@ -30,7 +30,7 @@
     }
 
     .aranimation {
-        font: bold 200% Consolas, Monaco, monospace;
+        font: bold 100% Consolas, Monaco, monospace;
         border-right: .1em solid black;
         width: 13.20ch; /* Ajusta este valor según la longitud del texto */
         white-space: nowrap;

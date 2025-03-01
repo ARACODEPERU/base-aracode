@@ -2,17 +2,20 @@
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
     import Keypad from '@/Components/Keypad.vue';
     import Pagination from '@/Components/Pagination.vue';
-    import Swal2 from "sweetalert2";
-    import { Link, router, useForm } from '@inertiajs/vue3';
+    import Swal from "sweetalert2";
+    import { useForm, Link, usePage, router } from '@inertiajs/vue3';
     import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm } from "@fortawesome/free-solid-svg-icons";
     import ModalLarge from '@/Components/ModalLarge.vue';
-    import { ref, onMounted } from 'vue';
+    import { ref, watch, onMounted, nextTick } from "vue";
     import DangerButton from '@/Components/DangerButton.vue';
     import iconExcel from "@/Components/vristo/icon/icon-excel.vue";
-    import { ConfigProvider, Dropdown,Menu,MenuItem,Button } from 'ant-design-vue';
+    import { ConfigProvider, Dropdown, Menu, MenuItem, Button } from 'ant-design-vue';
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
+    import textWriting from '@/Components/loader/text-writing.vue';
+    import * as XLSX from "xlsx";
 
     const props = defineProps({
         course: {
@@ -26,9 +29,27 @@
     });
 
     const studentsData = ref([]);
+    const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
+    const channelListenOnli = "aca-import-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
+    const importStatus = ref([]);
+    const porsentaje = ref(0);
+    const progressSend = ref(0);
+    const loadingImport = ref(false);
+    const scrollContainer = ref(null);
 
     onMounted(() => {
         studentsData.value = props.students;
+
+        window.socketIo.on(channelListenOnli, (status) => {
+            importStatus.value.push(status);
+            console.log('evento',importStatus.value)
+            progressSend.value = parseFloat(progressSend.value) + parseFloat(porsentaje.value)
+            nextTick(() => {
+                if (scrollContainer.value) {
+                    scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+                }
+            });
+        });
     });
 
     const chxtodos = ref(false);
@@ -72,6 +93,7 @@
     }
 
     const leaderCertificate = ref(false);
+
     const createCertificates = () => {
         leaderCertificate.value = true;
         axios({
@@ -84,6 +106,100 @@
             leaderCertificate.value = false;
         });
     };
+
+    const file = ref(null);
+    const displayModalImportDetails = ref(false);
+    const loading = ref(false);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const totalRecords = ref(0);
+
+    const handleFile = async (event) => {
+        file.value = event.target.files[0];
+        const xfile = event.target.files[0];
+        // 📌 Leer archivo Excel en el frontend
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            totalRecords.value = jsonData.length - 1; // Restar 1 para excluir la cabecera
+        };
+        reader.readAsArrayBuffer(xfile);
+    };
+    const importFileUploadStart = () => {
+
+        if (!file.value) {
+            return showMessage("Selecciona un archivo Excel","error");
+        }
+
+        displayModalImportDetails.value = true;
+        displayModalImport.value = false;
+
+        loadingImport.value = true;
+        importStatus.value = [];
+        porsentaje.value = 0;
+        progressSend.value = 0;
+
+        const formData = new FormData();
+
+        formData.append('course_id', props.course.id);
+        formData.append('modality_id', props.course.modality_id);
+        formData.append('file', file.value);
+        formData.append('channelListen', channelListenOnli);
+        formData.append('csrfToken', csrfToken);
+        formData.append('urlBacken', route('aca_import_student_bycourse'));
+
+        let url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/academic/import-students-excel';
+        porsentaje.value = (1 / parseInt(totalRecords.value)) * 100;
+
+        axios.post(url, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            timeout: 0,
+        }).then(response => {
+            console.log(response)
+        }).catch(error => {
+            console.error('Error al enviar el archivo:', error);
+        }).finally(() => {
+            loadingImport.value = false;
+        });
+
+    }
+    const showMessage = (msg = '', type = 'success') => {
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            customClass: { container: 'toast' },
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        toast.fire({
+            icon: type,
+            title: msg,
+            padding: '10px 20px',
+        });
+    };
+
+    const closeModalImportDetails = () => {
+        displayModalImportDetails.value = false
+        router.visit(route('aca_enrolledstudents_list', props.course.id), {
+            method: 'get',
+            replace: false,
+            preserveState: true,
+            preserveScroll: false,
+        });
+    }
+
 
 </script>
 
@@ -107,10 +223,10 @@
                     <div class="flex gap-3">
                         <Keypad>
                             <template #botones>
-                                <Link :href="route('aca_courses_create')" type="button" class="btn btn-success text-xs px-4 py-2 uppercase">
+                                <button v-on:click="showModalImport" type="button" class="btn btn-success text-xs px-4 py-2 uppercase">
                                     <icon-excel class="w-4 h-4 ltr:mr-2 rtl:ml-2" />
                                     Importar desde Excel
-                                </Link>
+                                </button>
                                 <Link :href="route('aca_courses_list')"  class="btn btn-warning text-xs px-4 py-2 uppercase">Ir Cursos</Link>
                             </template>
                         </Keypad>
@@ -146,14 +262,14 @@
                                     <span class="ms-3">Activar la descarga de certificados</span>
                                 </button>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <button class="flex items-center p-2 text-green-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <svg class="w-5 h-5 transition duration-75" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" fill="currentColor">
                                         <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM80 64l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L80 96c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm16 96l192 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32L96 352c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32zm0 32l0 64 192 0 0-64L96 256zM240 416l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>
                                     </svg>
                                     <span class="ms-3">Generar y enviar documento de venta</span>
                                 </button>
-                            </li>
+                            </li> -->
                         </ul>
                     </div>
                 </div>
@@ -221,5 +337,109 @@
                 </div>
             </div>
         </div>
+        <ModalLarge :show="displayModalImport" :onClose="closeModalImport" :icon="'/img/excel.png'">
+            <template #title>Importar Alumnos</template>
+            <template #message>Puedes registrar datos de forma rápida y sencilla utilizando un archivo Excel. Asegúrate de seguir el formato especificado para garantizar un proceso sin errores.</template>
+            <template #content>
+                <img src="/img/aca_formato_estudiantes.png" />
+                <form enctype="multipart/form-data" class="mt-8">
+                    <label for="small-file-input" class="sr-only">Seleccione archivo</label>
+                    <input type="file" name="small-file-input"
+                        id="small-file-input"
+                        class="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400
+                        file:bg-gray-50 file:border-0
+                        file:me-4
+                        file:py-2 file:px-4
+                        dark:file:bg-neutral-700 dark:file:text-neutral-400"
+
+                        @change="handleFile"
+                        accept=".xlsx, .xls"
+                    >
+                </form>
+
+            </template>
+            <template #buttons>
+                <button
+                    :disabled="!file || loading"
+                    @click="importFileUploadStart"
+                    class="btn btn-primary"
+                    >
+                    <svg v-show="loading" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                    </svg>
+                    {{ loading ? "Cargando..." : "Importar Archivo" }}
+                </button>
+            </template>
+        </ModalLarge>
+
+        <TransitionRoot appear :show="displayModalImportDetails" as="template">
+            <Dialog as="div" @close="closeModalImportDetails" class="relative z-50">
+                <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0" enter-to="opacity-100" leave="duration-200 ease-in" leave-from="opacity-100" leave-to="opacity-0">
+                    <DialogOverlay class="fixed inset-0 bg-[black]/60" />
+                </TransitionChild>
+
+                <div class="fixed inset-0 overflow-y-auto">
+                    <div class="flex min-h-full items-start justify-center px-4 py-8">
+                    <TransitionChild
+                        as="template"
+                        enter="duration-300 ease-out"
+                        enter-from="opacity-0 scale-95"
+                        enter-to="opacity-100 scale-100"
+                        leave="duration-200 ease-in"
+                        leave-from="opacity-100 scale-100"
+                        leave-to="opacity-0 scale-95"
+                    >
+                        <DialogPanel class="relative overflow-hidden w-full max-w-3xl py-8">
+                            <button @click="closeModalImportDetails" type="button" class="absolute top-4 ltr:right-4 rtl:left-4 text-gray-400 hover:text-gray-800 dark:hover:text-gray-600 outline-none" >
+                                <svg width="24" height="24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                    <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                                </svg>
+                            </button>
+                            <div class="p-5">
+                                <div
+                                    style="background-color: #000; color: #fff; padding: 1rem; border-radius: 8px;"
+                                >
+                                    <div class="mb-4">
+                                        <div class="flex justify-between mb-1">
+                                            <span class="text-base font-medium text-gray-100 dark:text-white">Importando alumnos:</span>
+                                            <span class="text-sm font-medium text-gray-200 dark:text-white">{{ parseInt(progressSend) == 99 ? 100 : parseInt(progressSend) }}%</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                            <div class="bg-blue-600 h-2.5 rounded-full" :style="`width: ${progressSend}%`"></div>
+                                        </div>
+                                    </div>
+                                    <template v-if="importStatus.length > 0">
+                                        <div ref="scrollContainer" class="scroll-box-result">
+                                            <div>
+                                                <template v-for="(resImport, co) in importStatus">
+                                                    <div v-if="resImport.success" v-bind:style="{ borderBottom: co !== importStatus.length - 1 ? '1px dotted #a9cdf7' : 'none' }">
+                                                        <code style="color: #60a5fa;">
+                                                            <span>Alumno: <strong>{{ resImport.dni }} {{ resImport.name }}</strong>&nbsp;</span>
+                                                            <span style="color: #a9cdf7;">{{ resImport.message }}</span>
+                                                        </code>
+                                                    </div>
+
+                                                    <div v-if="!resImport.success" v-bind:style="{ borderBottom: co !== importStatus.length - 1 ? '1px dotted #a9cdf7' : 'none' }">
+                                                        <code style="color: #ef4444;">
+                                                            <span>Alumno: <strong>{{ resImport.dni }} {{ resImport.name }}</strong>&nbsp;</span>
+                                                            <span style="color: #bc150b;">{{ resImport.message }} <span v-if="resImport.error">({{ resImport.error }})</span></span>
+                                                        </code>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <template v-if="loadingImport">
+                                                <text-writing :texto="'...............'" />
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </DialogPanel>
+                    </TransitionChild>
+                    </div>
+                </div>
+            </Dialog>
+        </TransitionRoot>
     </AppLayout>
 </template>

@@ -51,6 +51,8 @@
 
 @import 'ant-design-vue.css';
 
+@import 'MyStyle.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -8,6 +8,7 @@
     import Keypad from '@/Components/Keypad.vue';
     import { Pagination } from 'flowbite-vue';
     import Swal from 'sweetalert2';
+    import textWriting from '@/Components/loader/text-writing.vue';
 
     const props = defineProps({
         courses: {
@@ -65,7 +66,7 @@
     }
 
     const getContactsPagination = () => {
-        
+
         axios({
             method: 'post',
             url: route('crm_contacts_list_pagination'),
@@ -83,7 +84,7 @@
         }else{
             loadingNext.value = !loadingNext.value
         }
-        
+
         axios({
             method: 'post',
             url: url,
@@ -110,14 +111,14 @@
                 emailForm.para.push(student);
             }
         });
-        
+
     };
 
     const toggleDeSelectAll = () => {
         emailForm.para = [];
     };
 
-    onMounted(() => { 
+    onMounted(() => {
         getContactsPagination();
         window.socketIo.on(channelListen, (status) => {
             emailStatus.value.push(status);
@@ -191,9 +192,9 @@
             return; // Detiene la ejecución si no hay destinatarios
         }
         loadingSend.value = true;
-        
+
         displayModalDetails.value = true;
-        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/send-emails'; // Cambia por la URL de tu API
+        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/academic/send-mails'; // Cambia por la URL de tu API
         let emailstotal = emailForm.para.length;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -216,7 +217,7 @@
     }
 
     const emailStatus = ref([])
-    
+
     const showMessage = (msg = '', type = 'success') => {
         const toast = Swal.mixin({
             toast: true,
@@ -267,10 +268,10 @@
                         <div class="grid gap-6 mb-6 md:grid-cols-2">
                             <div>
                                 <label for="txtbuscarpor" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tipo de busqueda</label>
-                                <Cascader 
-                                    v-model:value="formSearch.type" 
-                                    :options="options" 
-                                    id="txtbuscarpor" 
+                                <Cascader
+                                    v-model:value="formSearch.type"
+                                    :options="options"
+                                    id="txtbuscarpor"
                                     placeholder="Seleccionar"
                                     @change="getContactsPagination"
                                     style="width: 100%"
@@ -341,9 +342,9 @@
                                             </div> -->
                                         </div>
 
-                                        <button 
-                                            :id="`student-send-${ixx}`" 
-                                            @click="updateSelectedItem(item,ixx)" 
+                                        <button
+                                            :id="`student-send-${ixx}`"
+                                            @click="updateSelectedItem(item,ixx)"
                                             type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                             <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                                 <path stroke="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/>
@@ -354,10 +355,10 @@
                                 </template>
                             </div>
                             <div class="flex items-center justify-center text-center">
-                                <Pagination 
-                                    v-model="paginacion.current_page" 
-                                    :layout="'table'" 
-                                    :per-page="paginacion.per_page" 
+                                <Pagination
+                                    v-model="paginacion.current_page"
+                                    :layout="'table'"
+                                    :per-page="paginacion.per_page"
                                     :total-items="paginacion.total"
                                     :previousLabel="'Atras'"
                                     :nextLabel="'Siguiente'"
@@ -402,10 +403,10 @@
                         </div>
                         <div>
                             <label for="txtasunto" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Asunto</label>
-                            <Input 
+                            <Input
                                 :disabled="emailForm.correoDefault != 'cmp'"
-                                v-model:value="emailForm.asunto" 
-                                id="txtasunto" 
+                                v-model:value="emailForm.asunto"
+                                id="txtasunto"
                                 required />
                         </div>
                         <div class="mt-4">
@@ -418,7 +419,7 @@
                             />
 
                         </div>
-                        
+
 
                         <div v-if="emailForm.para.length > 0" class="relative overflow-x-auto mt-4 shadow-md sm:rounded-lg max-h-[600px] overflow-y-auto">
                             <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -430,16 +431,16 @@
                                         <th scope="col" class="px-6 py-3">
                                             Nombre
                                         </th>
-                                        
+
                                     </tr>
                                 </thead>
                                 <tbody >
                                     <template v-for="(contact, key) in emailForm.para">
                                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                             <td class="px-6 py-2">
-                                                <button 
-                                                    :id="`student-send-${key}`" 
-                                                    @click="removeSelectedItem(contact,key)" 
+                                                <button
+                                                    :id="`student-send-${key}`"
+                                                    @click="removeSelectedItem(contact,key)"
                                                     type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                                     <svg  class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                                         <path stroke="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
@@ -463,7 +464,7 @@
                                                     </div>
                                                 </div>
                                             </th>
-                                            
+
                                         </tr>
                                     </template>
                                 </tbody>
@@ -494,7 +495,7 @@
                         </div>
                     </div>
                 </div>
-                
+
             </div>
         </div>
         <TransitionRoot appear :show="displayModalDetails" as="template">
@@ -536,19 +537,24 @@
                                     <template v-if="emailStatus.length > 0">
                                         <div ref="scrollContainer" class="scroll-box-result">
                                             <template v-for="(resEmail, co) in emailStatus">
-                                                
-                                                <div v-if="resEmail.result.success">
-                                                    <code style="color: #60a5fa;">
-                                                        <span>{{ resEmail.email }} <span style="color: #a9cdf7;">{{ resEmail.status }}</span></span>
-                                                    </code>
+
+                                                <div v-bind:style="{ borderBottom: co !== emailStatus.length - 1 ? '1px dotted #a9cdf7' : 'none' }">
+                                                    <div v-if="resEmail.success" >
+                                                        <code style="color: #60a5fa;">
+                                                            <span>{{ resEmail.email }} <span style="color: #a9cdf7;">{{ resEmail.status }}</span></span>
+                                                        </code>
+                                                    </div>
+
+                                                    <div v-if="!resEmail.success" >
+                                                        <code style="color: #ef4444;">
+                                                            {{ resEmail.email ?? 'Nulo o vacio' }} {{ resEmail.status }} {{ resEmail.error }}
+                                                        </code>
+                                                    </div>
                                                 </div>
 
-                                                <div v-if="!resEmail.result.success">
-                                                    <code style="color: #ef4444;">
-                                                        {{ resEmail.email ?? 'Nulo o vacio' }} {{ resEmail.status }} {{ resEmail.result.fallidos.error }}
-                                                    </code>
-                                                </div>
-                                            
+                                            </template>
+                                            <template v-if="loadingSend">
+                                                <text-writing :texto="'...............'" />
                                             </template>
                                         </div>
                                     </template>

@@ -644,6 +644,8 @@ class AcaStudentController extends Controller
                     [
                         'person_id' => $person->id,
                         'student_code' => trim($row[1]),
+                    ],
+                    [
                         'new_student' => true
                     ]
                 );
@@ -681,5 +683,137 @@ class AcaStudentController extends Controller
         $progress = Cache::get($importKey, 0);
 
         return response()->json(['progress' => $progress]);
+    }
+
+
+    public function importByCourse(Request $request)
+    {
+        $student = $request->get('student');
+        $course_id = $request->get('course_id');
+        $index = $request->get('index');
+        $modality_id = $request->get('modality_id');
+
+        $cont = $index + 1;
+
+        try {
+            if (!isset($student[0]) || !isset($student[1]) || !isset($student[4]) || !isset($student[9]) || trim($student[0]) === '' || trim($student[1]) === '' || trim($student[4]) === '' || trim($student[9]) === '') {
+                throw new \Exception("Fila {$cont}: Faltan datos obligatorios. (Todos los campos son obligatorios)");
+            }
+
+            // Validar cada campo con detalles específicos
+            if (!$student[0]) {
+                throw new \Exception("Fila {$cont}: El campo 'Nombre completo' (columna A) es obligatorio.");
+            }
+
+            if (!$student[1]) {
+                throw new \Exception("Fila {$cont}: El campo 'Número' (columna B) es obligatorio.");
+            }
+            $dni = $student[1];
+            // if (Person::where('number', $dni)->exists()) {
+            //     throw new \Exception("Fila {$cont}: Número de identificación ya registrado ({$dni}).");
+            // }
+            $fechaExcel = $student[2]; // Fecha en formato d/m/Y
+
+            // Validar fecha con strtotime
+            if (strtotime($fechaExcel) !== false) {
+                $fechaMysql = Carbon::parse($fechaExcel)->format('Y-m-d');
+            } else {
+                throw new \Exception("Fila {$cont}: Formato de fecha no válido: {$fechaExcel}");
+            }
+
+            $fechaMysql = Carbon::parse($fechaExcel)->format('Y-m-d');
+
+            if (!$student[4]) {
+                throw new \Exception("Fila {$cont}: El campo 'Correo electrónico' (columna E) es obligatorio.");
+            }
+            $email = trim($student[4]); // Eliminar espacios al inicio y al final
+
+            // Opcional: eliminar caracteres no visibles
+            $email = preg_replace('/[^\P{C}\n]+/u', '', $email);
+
+            // Validar el correo
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new \Exception("Fila {$index}: El correo '{$email}' no es válido.");
+            }
+
+            // if (Person::where('email', $email)->exists()) {
+            //     throw new \Exception("Fila {$cont}: Email ya registrado ({$email}).");
+            // }
+
+            if (!isset($student[9]) || !$student[9]) {
+                throw new \Exception("Fila {$cont}: El campo 'Género' (columna J) es obligatorio.");
+            }
+            // Validar género
+            $genero = trim(strtoupper($student[9]));
+            if (!in_array($genero, ['M', 'F'])) {
+                throw new \Exception("Fila {$cont}: El campo 'Género' (columna J) debe ser 'M = Masculino' o 'F = Femenino'. Valor encontrado: '{$genero}'");
+            }
+
+
+            // Crear registro en la base de datos
+            $person = Person::firstOrCreate(
+                [
+                    'number' => trim($student[1]),
+                ],
+                [
+                    'document_type_id' => 1,
+                    'full_name' => trim($student[0]),
+                    'birthdate' => $fechaMysql,
+                    'telephone' => $student[3],
+                    'email' => trim($student[4]),
+                    'company' => $student[5] == "-" ? null : $student[5],
+                    'industry' => $student[6] == "-" ? null : $student[6],
+                    'ocupacion' => $student[7] == "-" ? null : $student[7],
+                    'profession' => $student[8] == "-" ? null : $student[8],
+                    'gender' => $student[9] == "-" ? null : $student[9],
+                    'is_provider' => false,
+                    'is_client' => true
+                ]
+            );
+
+            User::firstOrCreate(
+                [
+                    'email' => trim($student[4])
+                ],
+                [
+                    'name' => trim($student[0]),
+                    'password' => Hash::make(trim($student[1])),
+                    'local_id' => 1,
+                    'person_id' => $person->id,
+                    'status' => true
+                ]
+            );
+
+            $student = AcaStudent::firstOrCreate(
+                [
+                    'person_id' => $person->id,
+                    'student_code' => trim($student[1])
+                ],
+                [
+                    'new_student' => true
+                ]
+            );
+
+            AcaCapRegistration::firstOrCreate([
+                'student_id' => $student->id,
+                'course_id' => $course_id
+            ], [
+                'status' => true,
+                'modality_id' => $modality_id
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Se registro correctamente",
+            ]);
+        } catch (\Exception $e) {
+
+            //Log::error("Error de importación: {$e->getMessage()}");
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 200);
+        }
     }
 }

@@ -46,7 +46,7 @@
     const loadingSend = ref(false);
     const displayModalSendDetails = ref(false);
     const scrollContainer = ref(null);
-    
+
     const emailForm = useForm({
         csrfToken: null,
         apiBackenStepOne: route('aca_create_students_tickets'),
@@ -60,7 +60,7 @@
         userId: usePage().props.auth.user.id
     });
 
-    
+
     const sendOnliEmails = async () => {
         emailStatus.value = [];
         porsentaje.value = 0;
@@ -73,9 +73,9 @@
         }
 
         loadingSend.value = true;
-        
+
         displayModalSendDetails.value = true;
-        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/onli-send-emails'; // Cambia por la URL de tu API
+        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/onlineshop/send-mails-tickets'; // Cambia por la URL de tu API
         let emailstotal = emailForm.ventas.length;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -162,10 +162,10 @@
             padding: '10px 20px',
         });
     };
-    
+
     const loadingStep = ref(1);
 
-    onMounted(() => { 
+    onMounted(() => {
         window.socketIo.on(channelListenOnli, (status) => {
             emailStatus.value.push(status);
             loadingStep.value = status.step;
@@ -283,7 +283,7 @@
                                                 <input
                                                     :checked="isSelected(item)"
                                                     @change="toggleItem(item)"
-                                                    type="checkbox" 
+                                                    type="checkbox"
                                                     class="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" :id="`venta${index}`" />
                                                 <span :for="`venta${index}`" class="outline_checkbox bg-icon border-2 border-[#bcc8e0] dark:border-white-dark block h-full rounded-full before:absolute before:left-1 before:bg-[#ebedf2] dark:before:bg-white-dark before:bottom-1 before:w-4 before:h-4 before:rounded-full before:bg-[url(/themes/vristo/images/close.svg)] before:bg-no-repeat before:bg-center peer-checked:before:left-7 peer-checked:before:bg-[url(/themes/vristo/images/checked.svg)] peer-checked:border-primary peer-checked:before:bg-primary before:transition-all before:duration-300"></span>
                                             </label>
@@ -303,7 +303,7 @@
                 </div>
             </div>
         </div>
-        <ModalLarge 
+        <ModalLarge
             :show="displayModalDetails"
             :onClose="closeModalDetails"
             :icon="'/img/lupa-documento.png'"
@@ -382,7 +382,7 @@
                                         <div ref="scrollContainer" class="scroll-box-result">
                                             <div>
                                                 <template v-for="(resEmail, co) in emailStatus">
-                                                
+
                                                     <template v-if="resEmail.status && resEmail.step == 1">
                                                         <div v-if="resEmail.status">
                                                             <code style="color: #60a5fa;">
@@ -397,9 +397,9 @@
                                                             </code>
                                                         </div>
                                                     </template>
-                                                    
+
                                                     <template v-if="resEmail.status && resEmail.step == 2">
-                                                        <div v-if="resEmail.status" style="border-bottom: 1px dotted #a9cdf7;">
+                                                        <div v-if="resEmail.status" v-bind:style="{ borderBottom: co !== emailStatus.length - 1 ? '1px dotted #a9cdf7' : 'none' }">
                                                             <code style="color: #60a5fa;">
                                                                 <span>DESTINO: <strong>{{ resEmail.data.email }}</strong> ESTADO: <span style="color: #a9cdf7;">{{ resEmail.data.message }}</span> </span>
                                                             </code>
@@ -408,7 +408,7 @@
                                                 </template>
                                             </div>
                                             <template v-if="loadingStep == 1">
-                                                <text-writing :texto="'...............'" />  
+                                                <text-writing :texto="'...............'" />
                                             </template>
                                         </div>
                                     </template>
@@ -422,11 +422,3 @@
         </TransitionRoot>
     </AppLayout>
 </template>
-<style>
-    .scroll-box-result {
-        height: 350px;
-        overflow-y: auto;
-        border: 1px solid #757575;
-        padding: 10px;
-    }
-</style>
