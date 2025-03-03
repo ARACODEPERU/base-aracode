@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Parameter;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,12 @@ use Modules\Onlineshop\Entities\OnliItem;
 
 class DashboardController extends Controller
 {
+    protected $P000009;
+
+    public function __construct()
+    {
+        $this->P000009 = Parameter::where('parameter_code', 'P000009')->value('value_default');
+    }
     public function index()
     {
         if (Auth::user()->hasRole('Alumno')) {
@@ -23,8 +30,10 @@ class DashboardController extends Controller
             ]);
         } else {
             $person = Person::where('id', Auth::user()->person_id)->with('district')->first();
+
             return Inertia::render('Dashboard', [
-                'authPerson' => $person
+                'authPerson' => $person,
+                'P000009' => $this->P000009
             ]);
         }
     }

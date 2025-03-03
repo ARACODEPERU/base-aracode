@@ -11,6 +11,7 @@ import StatusProducts from 'Modules/Sales/Resources/assets/js/Components/StatusP
 import TotalBalance from 'Modules/Sales/Resources/assets/js/Components/TotalBalance.vue';
 import SalesSummary from 'Modules/Sales/Resources/assets/js/Components/SalesSummary.vue';
 import SubscriptionPrices from 'Modules/Academic/Resources/assets/js/Components/SubscriptionPrices.vue';
+import CoursesTotalStudents from 'Modules/Academic/Resources/assets/js/Components/CoursesTotalStudents.vue';
 
 const userData = usePage().props.auth.user;
 
@@ -18,6 +19,10 @@ const props = defineProps({
     authPerson: {
         type: Object,
         default: () => ({})
+    },
+    P000009:{
+        type: String,
+        default: 1
     }
 });
 </script>
@@ -27,29 +32,35 @@ const props = defineProps({
         <template v-if="userData.roles.length > 0">
             <template v-for="role in userData.roles">
                 <!--modulo academico -->
-                <!-- <StudentDashboard v-if="role.name == 'Alumno'" 
-                    :userData="userData" 
+                <!-- <StudentDashboard v-if="role.name == 'Alumno'"
+                    :userData="userData"
                     :authPerson="authPerson"
                 /> -->
                 <!-- fin modulo academico -->
-                
+
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!--modulo seguridad -->
-                    <StorageIndicator v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                    <div v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'">
+                        <StorageIndicator />
+                    </div>
                     <!-- ventas stock Minimo -->
                     <!-- modulo ventas -->
-                    <MinimumStockNotice v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
-                    <StatusProducts v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
-                    <div class="space-y-6">
-                        <TotalBalance v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
-                        <SalesSummary v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                    <template v-if="P000009 == 2">
+                        <MinimumStockNotice v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                        <StatusProducts v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                        <div class="space-y-6">
+                            <TotalBalance v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                            <SalesSummary v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                        </div>
+                    </template>
+                   <!--modulo academico -->
+                    <div v-if="role.name == 'admin' || role.name == 'webAdmin'" class="col-span-3 sm:col-span-2 space-y-6">
+                        <template v-if="P000009 == 1">
+                            <StudentsEnrolledMonth />
+                            <CoursesTotalStudents />
+                        </template>
                     </div>
                     <!-- fin modulo academico -->
-                    <!-- <div v-if="role.name == 'admin' || role.name == 'webAdmin'" class="col-span-3 sm:col-span-2"> -->
-                        <!--modulo academico -->
-                        <!-- <StudentsEnrolledMonth /> -->
-                        <!-- fin modulo academico -->
-                    <!--</div> -->
                 </div>
             </template>
         </template>

@@ -1,7 +1,7 @@
 import { usePage } from "@inertiajs/vue3";
 
 export default {
-    
+
     install: (app) => {
         app.mixin({
             mounted(){
@@ -18,3 +18,4 @@ export default {
         })
     }
 }
+

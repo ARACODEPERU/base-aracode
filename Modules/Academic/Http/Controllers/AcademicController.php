@@ -7,6 +7,7 @@ use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaStudent;
 
 class AcademicController extends Controller
@@ -28,7 +29,7 @@ class AcademicController extends Controller
     {
         $currentYear = Carbon::now()->year;
 
-        $studentsPerMonth = AcaStudent::select(
+        $studentsPerMonth = AcaCapRegistration::select(
             DB::raw('MONTH(created_at) as month'),
             DB::raw('COUNT(*) as count')
         )
@@ -55,9 +56,27 @@ class AcademicController extends Controller
      * @param Request $request
      * @return Renderable
      */
-    public function store(Request $request)
+    public function getStudentsCourses(Request $request)
     {
-        //
+        $courses =   DB::table('aca_cap_registrations as r')
+            ->join('aca_students as s', 'r.student_id', '=', 's.id')
+            ->join('people as p', 's.person_id', '=', 'p.id')
+            ->join('aca_courses as c', 'r.course_id', '=', 'c.id') // Unir con cursos
+            ->select(
+                'r.course_id',
+                'c.description as curso', // Obtener el nombre del curso
+                DB::raw('COUNT(r.student_id) as total_estudiantes'),
+                DB::raw('SUM(CASE WHEN p.gender = "M" THEN 1 ELSE 0 END) as men'),
+                DB::raw('SUM(CASE WHEN p.gender = "F" THEN 1 ELSE 0 END) as women')
+            )
+            ->where('r.status', true) // Filtrar solo estudiantes activos
+            ->groupBy('r.course_id', 'c.description')
+            ->get();
+        //->ddRawSql();
+
+        return response()->json([
+            'courses' => $courses
+        ]);
     }
 
     /**

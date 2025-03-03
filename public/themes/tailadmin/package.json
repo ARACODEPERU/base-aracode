@@ -10,10 +10,10 @@
   },
   "keywords": [],
   "author": {
-  "name": "TailAdmin",
-  "email": "hello@tailadmin.com",
-  "url": "https://tailadmin.com"
-},
+    "name": "TailAdmin",
+    "email": "hello@tailadmin.com",
+    "url": "https://tailadmin.com"
+  },
   "license": "ISC",
   "devDependencies": {
     "@babel/core": "^7.16.12",
@@ -43,6 +43,7 @@
     "alpinejs": "^3.10.3",
     "apexcharts": "^3.36.3",
     "flatpickr": "^4.6.13",
-    "jsvectormap": "^1.5.1"
+    "jsvectormap": "^1.5.1",
+    "tailadmin-free": "file:"
   }
 }
