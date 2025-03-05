@@ -202,91 +202,62 @@ class AcaCertificateController extends Controller
             );
         }
 
-        $true = AcaCertificate::where('student_id', $student_id)->where('course_id', $course_id)->doesntExist();
+        $registration = AcaCapRegistration::where('student_id', $student_id)
+            ->where('course_id', $course_id)
+            ->first();
 
-        if ($true) {
+        $registration->update([
+            'certificate_date' => Carbon::now()->format('Y-m-d')
+        ]);
 
-            AcaCapRegistration::where('student_id', $student_id)
-                ->where('course_id', $course_id)
-                ->update([
-                    'certificate_date' => Carbon::now()->format('Y-m-d')
-                ]);
+        if ($certificate_auto) {
+            $certificate = AcaCertificate::firstOrCreate([
+                'student_id'        => $student_id,
+                'registration_id'   => $registration->id,
+                'course_id'         => $course_id,
+                'content'           => null,
+                'image'             => null
+            ]);
+        } else {
 
-            if ($certificate_auto) {
-                $autoCertificate = new CertificateImage();
-                $certificateParameter = AcaCertificateParameter::where('course_id', $course_id)
-                    ->where('state', true)
-                    ->first();
+            $certificate = AcaCertificate::firstOrCreate([
+                'student_id'        => $student_id,
+                'registration_id'   => $registration->id,
+                'course_id'         => $course_id,
+                'content'           => null
+            ]);
 
-                $certificate_id = null;
+            $destination = 'uploads/certificate';
+            $base64Image = $request->get('image');
+            $path = null;
 
-                if ($certificateParameter) {
-                    $certificate_id = $certificateParameter->id;
+            if ($base64Image) {
+                $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+                if (PHP_OS == 'WINNT') {
+                    $tempFile = tempnam(sys_get_temp_dir(), 'img');
                 } else {
-                    $certificateParameter = AcaCertificateParameter::whereNull('course_id')
-                        ->where('state', true)
-                        ->first();
-
-                    $certificate_id = $certificateParameter->id;
+                    $tempFile = tempnam('/var/www/html/img_temp', 'img');
                 }
-                if ($certificate_id) {
-                    $imagen = $autoCertificate->generate($certificate_id, $student_id, $course_id);
+                file_put_contents($tempFile, $fileData);
+                $mime = mime_content_type($tempFile);
 
-                    $ruta = $this->directory . DIRECTORY_SEPARATOR . 'student' . $student_id;
-                    $prefix = $course_id . '_';
+                $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
+                $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
 
-                    // Guardar la imagen en el sistema de archivos
-                    $path =  $ruta . DIRECTORY_SEPARATOR . $prefix . date('YmdHis') . '.png'; // Ruta relativa dentro del disco 'public'
-                    Storage::disk('public')->put($path, $imagen);
-
-                    $certificate = AcaCertificate::create([
-                        'student_id'        => $student_id,
-                        'registration_id'   => AcaCapRegistration::where('student_id', $student_id)->where('course_id', $course_id)->value('id'),
-                        'course_id'         => $course_id,
-                        'content'           => null,
-                        'image'             => $path
-                    ]);
-                }
-            } else {
-
-                $certificate = AcaCertificate::create([
-                    'student_id'        => $student_id,
-                    'registration_id'   => AcaCapRegistration::where('student_id', $student_id)->where('course_id', $course_id)->value('id'),
-                    'course_id'         => $course_id,
-                    'content'           => null
-                ]);
-
-                $destination = 'uploads/certificate';
-                $base64Image = $request->get('image');
-                $path = null;
-
-                if ($base64Image) {
-                    $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                    if (PHP_OS == 'WINNT') {
-                        $tempFile = tempnam(sys_get_temp_dir(), 'img');
-                    } else {
-                        $tempFile = tempnam('/var/www/html/img_temp', 'img');
-                    }
-                    file_put_contents($tempFile, $fileData);
-                    $mime = mime_content_type($tempFile);
-
-                    $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-                    $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
-
-                    if ($file) {
-                        // $original_name = strtolower(trim($file->getClientOriginalName()));
-                        // $file_name = time() . rand(100, 999) . $original_name;
-                        $original_name = strtolower(trim($file->getClientOriginalName()));
-                        $original_name = str_replace(" ", "_", $original_name);
-                        $extension = $file->getClientOriginalExtension();
-                        $file_name = $student_id . 'X' . $course_id . '.' . $extension;
-                        $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-                        $certificate->image = $path;
-                        $certificate->save();
-                    }
+                if ($file) {
+                    // $original_name = strtolower(trim($file->getClientOriginalName()));
+                    // $file_name = time() . rand(100, 999) . $original_name;
+                    $original_name = strtolower(trim($file->getClientOriginalName()));
+                    $original_name = str_replace(" ", "_", $original_name);
+                    $extension = $file->getClientOriginalExtension();
+                    $file_name = $student_id . 'X' . $course_id . '.' . $extension;
+                    $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+                    $certificate->image = $path;
+                    $certificate->save();
                 }
             }
         }
+
 
 
 
@@ -434,31 +405,28 @@ class AcaCertificateController extends Controller
         foreach ($students as $student) {
             $student_id = $student['student']['id'];
             if ($student['checkbox']) {
-                $true = AcaCertificate::where('student_id', $student_id)->where('course_id', $id)->doesntExist();
 
-                if ($true) {
+                $registration = AcaCapRegistration::where('student_id', $student_id)
+                    ->where('course_id', $id)
+                    ->whereNull('certificate_date')
+                    ->first();
 
-                    $exists = AcaCapRegistration::where('student_id', $student_id)
-                        ->where('course_id', $id)
-                        ->whereNull('certificate_date')
-                        ->exists();
+                if ($registration) {
+                    $registration->update([
+                        'certificate_date' => Carbon::now()->format('Y-m-d')
+                    ]);
 
-                    if ($exists) {
-                        $acr = AcaCapRegistration::where('student_id', $student_id)
-                            ->where('course_id', $id)
-                            ->first();
-                        $acr->update([
-                            'certificate_date' => Carbon::now()->format('Y-m-d')
-                        ]);
-
-                        AcaCertificate::create([
+                    AcaCertificate::firstOrCreate(
+                        [
                             'student_id'        => $student_id,
-                            'registration_id'   => $acr->id,
+                            'registration_id'   => $registration->id,
                             'course_id'         => $id,
+                        ],
+                        [
                             'content'           => null,
                             'image'             => null
-                        ]);
-                    }
+                        ]
+                    );
                 }
             }
         }

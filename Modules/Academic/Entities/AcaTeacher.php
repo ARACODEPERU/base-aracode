@@ -13,7 +13,8 @@ class AcaTeacher extends Model
     use HasFactory;
 
     protected $fillable = [
-        'teacher_code', 'person_id'
+        'teacher_code',
+        'person_id'
     ];
 
     protected static function newFactory()

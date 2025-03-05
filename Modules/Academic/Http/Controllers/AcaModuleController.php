@@ -18,7 +18,11 @@ class AcaModuleController extends Controller
 
     public function index($id)
     {
-        $course = AcaCourse::where('id', $id)->with('modules.themes.contents')->first();
+        $course = AcaCourse::where('id', $id)
+            ->with('teachers.teacher.person')
+            ->with('modules.themes.contents')
+            ->first();
+
         return Inertia::render('Academic::Courses/Modules', [
             'course' => $course
         ]);
@@ -103,5 +107,19 @@ class AcaModuleController extends Controller
     {
         $themes = AcaTheme::with('contents')->where('module_id', $id)->get();
         return response()->json(['themes' => $themes]);
+    }
+
+    public function updateTeacher(Request $request)
+    {
+        $module_id = $request->get('module_id');
+        $teacher_id = $request->get('teacher_id');
+        $module = AcaModule::findOrFail($module_id);
+        if ($module) {
+            $module->update([
+                'teacher_id' => $teacher_id ?? null
+            ]);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

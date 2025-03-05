@@ -144,6 +144,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::post('courses/modules/store', 'AcaModuleController@store')->name('aca_courses_module_store');
     Route::put('courses/modules/update/{id}', 'AcaModuleController@update')->name('aca_courses_module_update');
+    Route::post('courses/modules/teacher/update', 'AcaModuleController@updateTeacher')->name('aca_courses_module_teacher_update');
     Route::delete('courses/modules/destroy/{id}', 'AcaModuleController@destroy')->name('aca_courses_module_destroy');
     Route::get('courses/modules/themes/list/{id}', 'AcaModuleController@getThemeByModelId')->name('aca_courses_module_themes_list');
     Route::post('courses/modules/themes/store', 'AcaThemeController@store')->name('aca_courses_module_themes_store');
@@ -278,6 +279,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
 /////////no nesesita aver iniciado session//////////
 Route::get('academic/certificate/image/{id}/download', [AcaCertificateController::class, 'generateCertificateStudent'])->name('aca_image_download');
+
 Route::get('create/payment/{id}/account', [LandingController::class, 'academiCreatePayment'])->name('academic_step_account');
 
 Route::put('create/payment/{id}/login', [AcaAuthController::class, 'login'])

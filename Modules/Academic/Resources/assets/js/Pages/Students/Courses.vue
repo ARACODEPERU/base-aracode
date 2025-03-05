@@ -129,12 +129,12 @@
                 </section>
                 <section v-if="certificates.length > 0" class="py-10 col-span-6 sm:col-span-2 rounded-md dark:bg-gray-800">
                     <h1 class="text-center text-2xl font-bold text-gray-800 dark:text-gray-50">Logros</h1>
-                    
-                    
-                    
+
+
+
                     <div class="p-6 space-y-6">
                         <div v-for="(certificate, index) in certificates" class="flex flex-col gap-1">
-                            <div class="flex flex-col w-full leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
+                            <div v-if="!certificate.image" class="flex flex-col w-full leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
                                 <div class="flex items-center space-x-2 rtl:space-x-reverse mb-2">
                                     <span class="text-sm font-semibold text-gray-900 dark:text-white">Certificado otorgado</span>
                                     <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ formatDate(certificate.created_at) }}</span>

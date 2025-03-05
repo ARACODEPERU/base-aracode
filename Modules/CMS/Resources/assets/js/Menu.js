@@ -1,7 +1,8 @@
-import { 
-    faEarthAmericas, 
-    faCube, 
+import {
+    faEarthAmericas,
+    faCube,
     faWindowRestore,
+    faArrowTrendUp,
     faTable,
     faBlog,
     faFeather,
@@ -71,6 +72,13 @@ const menuCMS = {
             text: "Testimonios",
             permissions: "cms_testimonios",
             icom: faFaceGrinStars,
+        },
+        {
+            route: route("cms_advertising_list"),
+            status: false,
+            text: "Publicidad",
+            permissions: "cms_publicidad",
+            icom: faArrowTrendUp,
         },
     ],
 };

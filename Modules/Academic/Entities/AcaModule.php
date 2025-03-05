@@ -12,7 +12,10 @@ class AcaModule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'course_id', 'position', 'description'
+        'course_id',
+        'position',
+        'description',
+        'teacher_id'
     ];
 
     protected static function newFactory()
@@ -27,5 +30,9 @@ class AcaModule extends Model
     public function themes(): HasMany
     {
         return $this->hasMany(AcaTheme::class, 'module_id');
+    }
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(AcaTeacher::class, 'teacher_id');
     }
 }

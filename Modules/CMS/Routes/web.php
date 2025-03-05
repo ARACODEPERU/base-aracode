@@ -11,6 +11,7 @@
 |
 */
 
+use Modules\CMS\Http\Controllers\CmsAdvertisingController;
 use Modules\CMS\Http\Controllers\CMSController;
 use Modules\CMS\Http\Controllers\CmsItemController;
 use Modules\CMS\Http\Controllers\CmsPageController;
@@ -67,6 +68,9 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     Route::middleware(['permission:cms_testimonios_editar'])->post('testimonies/update', [CmsTestimonyController::class, 'update'])->name('cms_testimonies_update');
     Route::middleware(['permission:cms_testimonios_editar'])->get('testimonies/edit/{id}', [CmsTestimonyController::class, 'edit'])->name('cms_testimonies_edit');
     Route::middleware(['permission:cms_testimonios_eliminar'])->delete('testimonies/destroy/{id}', [CmsTestimonyController::class, 'destroy'])->name('cms_testimonies_destroy');
+
+    Route::middleware(['permission:cms_publicidad'])->get('advertising', [CmsAdvertisingController::class, 'index'])->name('cms_advertising_list');
+    Route::middleware(['permission:cms_publicidad'])->get('advertising/create', [CmsAdvertisingController::class, 'create'])->name('cms_advertising_create');
 });
 
 
