@@ -125,7 +125,7 @@ class StudentSubscription
                 //Retornar la respuesta
                 return $response;
             } else {
-                echo 'El estudiante fue registrado en el ' . $register->Course->description . 'pero no se le ha entregado el certificado aún';
+                echo 'El estudiante fue registrado en el ' . $register->Course->description . ' pero no se le ha entregado el certificado aún';
             }
         } else {
             echo "No se encontraron registros";
