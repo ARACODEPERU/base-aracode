@@ -18,7 +18,7 @@
     const fetchNotifications = async () => {
         try {
             axios.get(route('crm_chat_notifications')).then( (response) => {
-                notifications.value = response.data.conversations; 
+                notifications.value = response.data.conversations;
                 totalNews.value = response.data.totalNew;
             });
         } catch (error) {
@@ -30,8 +30,11 @@
     const getImage = (path) => {
         return xasset + 'storage/'+ path;
     }
+    const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
+    const channelListenCrm = "message-notification-" + appCodeUnique + '-' + authUser.id;
+
     onMounted(() => {
-        window.socketIo.on('message-notification', (result) => {
+        window.socketIo.on(channelListenCrm, (result) => {
             let participants = result.data.participants;
             participants.forEach(item => {
                 if(authUser.id == item){
@@ -44,7 +47,7 @@
     onMounted(() => fetchNotifications());
 
     onUnmounted(() => {
-        window.socketIo.off('message-notification'); // Dejar el canal cuando se desmonte el componente
+        window.socketIo.off(channelListenCrm); // Dejar el canal cuando se desmonte el componente
     });
 
 
@@ -55,9 +58,9 @@
 
 </script>
 <template>
-    
-    
-        
+
+
+
         <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-end' : 'bottom-start'" offsetDistance="8">
             <button
                 type="button"
@@ -110,7 +113,7 @@
                                             class="ltr:ml-auto rtl:mr-auto text-neutral-300 hover:text-danger opacity-0 group-hover:opacity-100"
                                             @click="showChatBox(notification)"
                                         >
-                                            
+
                                             <icon-square-check />
                                         </button>
                                     </div>
@@ -138,5 +141,5 @@
                 </ul>
             </template>
         </Popper>
-    
+
 </template>

@@ -26,7 +26,7 @@ class SocketIoBroadcaster
     {
         try {
             foreach ($channels as $channel) {
-                $this->client->post("{$this->url}/broadcast", [
+                $this->client->post("{$this->url}/api/crm/broadcast", [
                     'json' => [
                         'channel' => $channel,
                         'event' => $event,

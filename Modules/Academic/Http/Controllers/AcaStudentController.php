@@ -133,7 +133,7 @@ class AcaStudentController extends Controller
                 'number'            => 'required|max:12',
                 'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
                 'telephone'         => 'required|max:12',
-                'email'             => 'required|max:255',
+                'email'             => 'required|email|max:255',
                 'email'             => 'unique:people,email,' . $update_id . ',id',
                 'email'             => 'unique:users,email,' . ($user ? $user->id  : null) . ',id',
                 'address'           => 'required|max:255',
@@ -170,7 +170,8 @@ class AcaStudentController extends Controller
                 'birthdate'             => $request->get('birthdate'),
                 'names'                 => trim($request->get('names')),
                 'father_lastname'       => trim($request->get('father_lastname')),
-                'mother_lastname'       => trim($request->get('mother_lastname'))
+                'mother_lastname'       => trim($request->get('mother_lastname')),
+                'gender'                => $request->get('gender') ?? 'M'
             ]
         );
 
@@ -281,7 +282,7 @@ class AcaStudentController extends Controller
                 'number'            => 'required|max:12',
                 'number'            => 'unique:people,number,' . $person_id . ',id,document_type_id,' . $request->get('document_type_id'),
                 'telephone'         => 'required|max:12',
-                'email'             => 'required|max:255',
+                'email'             => 'required|email|max:255',
                 'email'            => 'unique:people,email,' . $person_id . ',id',
                 'email'            => 'unique:users,email,' . $user->id . ',id',
                 'address'           => 'required|max:255',
@@ -328,7 +329,8 @@ class AcaStudentController extends Controller
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
-            'mother_lastname'       => trim($request->get('mother_lastname'))
+            'mother_lastname'       => trim($request->get('mother_lastname')),
+            'gender'                => $request->get('gender') ?? 'M'
         ]);
 
         $user->update([
@@ -430,11 +432,12 @@ class AcaStudentController extends Controller
     {
 
 
-        $module = AcaModule::with(['themes' => function ($query) {
-            $query->orderBy('position')
-                ->with('contents')
-                ->with('comments.user'); // Cargar los contenidos de cada theme
-        }])
+        $module = AcaModule::with('teacher.person')
+            ->with(['themes' => function ($query) {
+                $query->orderBy('position')
+                    ->with('contents')
+                    ->with('comments.user'); // Cargar los contenidos de cada theme
+            }])
             ->where('id', $id)
             ->first();
 
@@ -815,5 +818,30 @@ class AcaStudentController extends Controller
                 'message' => $e->getMessage(),
             ], 200);
         }
+    }
+
+    public function getCertificates()
+    {
+
+        // Verificar si el usuario tiene el rol de "Alumno"
+        if (!Auth::user()->hasRole('Alumno')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para ver estos datos.'
+            ], 403);
+        }
+
+        // Obtener el student_id del usuario autenticado
+        $student_id = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+
+        // Obtener los certificados del estudiante
+        $certificates = AcaCertificate::with('course')
+            ->where('student_id', $student_id)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'certificates' => $certificates,
+        ], 200);
     }
 }

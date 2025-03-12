@@ -53,6 +53,16 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'aca_certificados_editar']));
         array_push($permissions, Permission::create(['name' => 'aca_certificados_nuevo']));
         array_push($permissions, Permission::create(['name' => 'aca_certificados_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_cortos']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_lista']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_lista_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_lista_editar']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_lista_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_videos']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_videos_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_videos_editar']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_videos_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'aca_tutoriales_lista_agregar_video']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

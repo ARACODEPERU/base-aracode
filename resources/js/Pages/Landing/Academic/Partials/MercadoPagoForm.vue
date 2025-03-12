@@ -17,6 +17,10 @@ const props = defineProps({
     subscription:{
         type: Object,
         default: () => ({}),
+    },
+    samount: {
+        type: Number,
+        default: null,
     }
 });
 
@@ -39,7 +43,7 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
     const settings = {
         initialization: {
             preferenceId: props.preference,
-            amount: 300,
+            amount: props.samount,
         },
         customization: {
             visual: {

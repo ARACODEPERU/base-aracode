@@ -1,11 +1,12 @@
-import { 
-    faBook, 
-    faUserGraduate, 
-    faLandmarkFlag, 
-    faUserTie, 
+import {
+    faBook,
+    faUserGraduate,
+    faLandmarkFlag,
+    faUserTie,
     faBookOpen,
     faRocket,
-    faCertificate
+    faCertificate,
+    faPlay
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -56,6 +57,29 @@ const menuAcademic = {
             text: "Certificados",
             icom: faCertificate,
             permissions: "aca_certificados_listado",
+        },
+        {
+            route: null,
+            status: false,
+            text: "Tutoriales Cortos",
+            icom: faPlay,
+            permissions: "aca_tutoriales_cortos",
+            items: [
+                {
+                    route: route("aca_tutorials_playlist"),
+                    status: false,
+                    text: "Lista de reproduccion",
+                    icom: faCertificate,
+                    permissions: "aca_tutoriales_lista",
+                },
+                {
+                    route: route("aca_tutorials_playlist"),
+                    status: false,
+                    text: "Videos",
+                    icom: faCertificate,
+                    permissions: "aca_tutoriales_videos",
+                },
+            ]
         },
         {
             route: route("aca_mycourses"),

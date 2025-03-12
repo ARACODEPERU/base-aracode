@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Auth;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\CMS\Entities\CmsSection;
 use Modules\CMS\Entities\CmsSectionItem;
@@ -118,7 +119,12 @@ class LandingController extends Controller
 
     public function academiCreatePayment($id)
     {
+        if (Auth::check()) {
+            // Si el usuario está autenticado, lo redirige a la ruta `academic_step_verification`
+            return redirect()->route('academic_step_verification', $id);
+        }
 
+        // Si no está autenticado, muestra la vista actual con la suscripción
         return Inertia::render('Landing/Academic/StepsPayLogin', [
             'subscription' => AcaSubscriptionType::find($id)
         ]);

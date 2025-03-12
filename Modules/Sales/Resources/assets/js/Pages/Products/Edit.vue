@@ -3,7 +3,7 @@
     import EditProductForm from './Partials/EditProductForm.vue';
     import { Link } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    
+
     defineProps({
         product: {
             type: Object,
@@ -16,13 +16,17 @@
         brands: {
             type: Object,
             default: () => ({}),
+        },
+        P000014: {
+            type: String,
+            default: "1",
         }
     });
 </script>
 
 <template>
     <AppLayout title="Editar Producto">
-        
+
         <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <Link :href="route('products.index')" class="text-primary hover:underline">Productos</Link>
@@ -32,10 +36,11 @@
             </li>
         </Navigation>
         <div class="mt-5">
-            <EditProductForm 
+            <EditProductForm
                 :product="product"
-                :categories="categories" 
+                :categories="categories"
                 :brands="brands"
+                :P000014="P000014"
             />
         </div>
     </AppLayout>

@@ -46,24 +46,24 @@ class OnliSaleController extends Controller
                             'id', osd.id,
                             'price', osd.price,
                             'quantity', osd.quantity,
-                            'product', CASE 
-                                WHEN osd.entitie = 'Modules\\\Academic\\\Entities\\\AcaCourse' THEN 
+                            'product', CASE
+                                WHEN osd.entitie = 'Modules\\\Academic\\\Entities\\\AcaCourse' THEN
                                     (SELECT JSON_OBJECT(
                                         'id', aca_courses.id,
                                         'description', aca_courses.description,
                                         'title', NULL,
                                         'origin', 'ACA'
                                     )
-                                    FROM aca_courses 
+                                    FROM aca_courses
                                     WHERE aca_courses.id = osd.item_id)
-                                WHEN osd.entitie = 'Modules\\\Academic\\\Entities\\\AcaSubscriptionType' THEN 
+                                WHEN osd.entitie = 'Modules\\\Academic\\\Entities\\\AcaSubscriptionType' THEN
                                     (SELECT JSON_OBJECT(
                                         'id', aca_subscription_types.id,
                                         'description', aca_subscription_types.description,
                                         'title', aca_subscription_types.title,
                                         'origin', 'ACA'
                                     )
-                                    FROM aca_subscription_types 
+                                    FROM aca_subscription_types
                                     WHERE aca_subscription_types.id = osd.item_id)
                                 WHEN osd.entitie = 'App\\\Models\\\Product' THEN
                                     (SELECT JSON_OBJECT(
@@ -72,7 +72,7 @@ class OnliSaleController extends Controller
                                         'title', products.interne,
                                         'origin', 'PRO'
                                     )
-                                    FROM products 
+                                    FROM products
                                     WHERE products.id = osd.item_id)
                                 ELSE NULL
                             END

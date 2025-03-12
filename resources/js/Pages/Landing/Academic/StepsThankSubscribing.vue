@@ -60,18 +60,18 @@
                             <div class="flex justify-center">
                                 <div class="">
                                     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">¡Gracias por su suscripción!</h2>
-                                    <p class="mt-2 text-lg text-gray-600">Estimado/a <span class="font-medium text-gray-800 dark:text-gray-100">Juan</span>,</p>
+                                    <p class="mt-2 text-lg text-gray-600">Estimado/a <span class="font-medium text-gray-800 dark:text-gray-100">{{ sale.clie_full_name }}</span>,</p>
                                 </div>
                                 <div class="p-2">
                                     <img class="w-16 h-16" src="/img/clap-congratulations.gif" />
-                                </div> 
+                                </div>
                             </div>
                             <p class="mt-4 text-gray-600">
-                                Usted ha adquirido la suscripción <span class="font-semibold text-blue-600"> </span> por un valor de 
+                                Usted ha adquirido la suscripción <span class="font-semibold text-blue-600"> </span> por un valor de
                                 <span class="font-semibold text-blue-600">{{ sale.total }} soles</span>.
                             </p>
                             <p class="mt-4 text-gray-600">
-                                Se le enviará a su correo electrónico el comprobante de venta de su compra. 
+                                Se le enviará a su correo electrónico el comprobante de venta de su compra.
                                 Gracias por elegir aprender con nosotros.
                             </p>
                             <p class="mt-4 text-gray-600">
@@ -87,7 +87,7 @@
                 </div>
                 <!-- finstep uno -->
             </div>
-            
+
         </div>
     </div>
     <!-- End FAQ -->

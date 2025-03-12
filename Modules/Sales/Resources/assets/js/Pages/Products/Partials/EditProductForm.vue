@@ -1,93 +1,109 @@
 <script setup>
-import { useForm, Link } from '@inertiajs/vue3';
-import FormSection from '@/Components/FormSection.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { library } from "@fortawesome/fontawesome-svg-core";
-import { faTrashAlt, faPlus } from "@fortawesome/free-solid-svg-icons";
-import Keypad from '@/Components/Keypad.vue';
-import ModalCropperImage from './ModalCropperImage.vue';
-import swal from 'sweetalert';
-import { watchEffect, defineComponent, ref, onMounted } from 'vue';
+    import { useForm, Link } from '@inertiajs/vue3';
+    import FormSection from '@/Components/FormSection.vue';
+    import InputError from '@/Components/InputError.vue';
+    import InputLabel from '@/Components/InputLabel.vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import TextInput from '@/Components/TextInput.vue';
+    import { library } from "@fortawesome/fontawesome-svg-core";
+    import { faTrashAlt, faPlus } from "@fortawesome/free-solid-svg-icons";
+    import Keypad from '@/Components/Keypad.vue';
+    import ModalCropperImage from './ModalCropperImage.vue';
+    import swal from 'sweetalert';
+    import { watchEffect, defineComponent, ref, onMounted } from 'vue';
 
-import { 
-    ConfigProvider, Divider, Space, Button, Select, Input, message, TreeSelect
-} from 'ant-design-vue';
+    import {
+        ConfigProvider, Divider, Space, Button, Select, Input, message, TreeSelect
+    } from 'ant-design-vue';
 
-import esES from 'ant-design-vue/es/locale/es_ES';
+    import esES from 'ant-design-vue/es/locale/es_ES';
 
-const props = defineProps({
-    product: {
-        type: Object,
-        default: () => ({}),
-    },
-    categories: {
-        type: Object,
-        default: () => ({}),
-    },
-    brands: {
-        type: Object,
-        default: () => ({}),
-    }
-});
-
-const form = useForm({
-    usine: props.product.usine,
-    interne: props.product.interne,
-    description: props.product.description,
-    image: props.product.image,
-    imageNew: '',
-    purchase_prices: props.product.purchase_prices,
-    sale_prices: JSON.parse(props.product.sale_prices),
-    sizes: JSON.parse(props.product.sizes),
-    presentations: props.product.presentations == 1 ? true : false,
-    category_id: props.product.category_id,
-    brand_id: props.product.brand_id
-});
-
-const editProduct = () => {
-    form.put(route('products.update', props.product.id), {
-        errorBag: 'editProduct',
-        preserveScroll: true,
-        onSuccess: () => {
-            swal('Producto actualizada con éxito');
+    const props = defineProps({
+        product: {
+            type: Object,
+            default: () => ({}),
+        },
+        categories: {
+            type: Object,
+            default: () => ({}),
+        },
+        brands: {
+            type: Object,
+            default: () => ({}),
+        },
+        P000014: {
+            type: String,
+            default: "1",
         }
     });
-};
 
-const getDataProductImage = (data) => {
-    form.image = data.product.image;
-}
+    const form = useForm({
+        usine: props.product.usine,
+        interne: props.product.interne,
+        description: props.product.description,
+        image: props.product.image,
+        imageNew: '',
+        purchase_prices: props.product.purchase_prices,
+        sale_prices: JSON.parse(props.product.sale_prices),
+        sizes: JSON.parse(props.product.sizes),
+        presentations: props.product.presentations == 1 ? true : false,
+        category_id: props.product.category_id,
+        brand_id: props.product.brand_id
+    });
 
-library.add(faTrashAlt);
+    const editProduct = () => {
+        form.put(route('products.update', props.product.id), {
+            errorBag: 'editProduct',
+            preserveScroll: true,
+            onSuccess: () => {
+                swal('Producto actualizada con éxito');
+            }
+        });
+    };
 
-const categoriesData = ref([]);
-const brandsData = ref([]);
+    const getDataProductImage = (data) => {
+        form.image = data.product.image;
+    }
 
-onMounted(()=>{
-    // cuando las categorias no tiene sub niveles
-    // categoriesData.value = props.categories.map(item => ({ value: item.id, label: item.description }));
-    categoriesData.value = props.categories.map((obj) => ({
-        value: obj.id,
-        label: obj.description,
-        children: obj.subcategories.map(item => ({ value: item.id, label: item.description }))
-    }));
-    brandsData.value = props.brands.map(item => ({ value: item.id, label: item.description }));
-});
+    library.add(faTrashAlt);
 
-const VNodes = defineComponent({
-  props: {
-    vnodes: {
-      type: Object,
-      required: true,
-    },
-  },
-  render() {
-    return this.vnodes;
-  },
-});
+    const categoriesData = ref([]);
+    const brandsData = ref([]);
+
+    onMounted(()=>{
+        if(props.P000014 == "1"){
+        // cuando las categorias no tiene sub niveles
+            categoriesData.value = props.categories.map(item => ({ value: item.id, label: item.description }));
+        } else if(props.P000014 == "2"){
+            categoriesData.value = props.categories.map((obj) => ({
+                value: obj.id,
+                label: obj.description,
+                children: obj.subcategories.map(item => ({
+                    value: item.id,
+                    label: item.description,
+                    children: item.subcategories && item.subcategories.length > 0
+                        ? item.subcategories.map(sub => ({
+                            value: sub.id,
+                            label: sub.description
+                        }))
+                        : null // Si item.subcategories no existe o está vacío, se asigna null
+                }))
+            }));
+        }
+        brandsData.value = props.brands.map(item => ({ value: item.id, label: item.description }));
+    });
+
+    const VNodes = defineComponent({
+        props: {
+            vnodes: {
+                type: Object,
+                required: true,
+            },
+        },
+        render() {
+            return this.vnodes;
+        },
+    });
 
 const formCategory = ref({
     id: null,
@@ -111,7 +127,7 @@ const addCategory = () => {
                 message.success('Se registró correctamente');
                 categoriesData.value.push({
                     value: res.data.category.id,
-                    label: res.data.category.description 
+                    label: res.data.category.description
                 })
             }
         }).then(() => {
@@ -131,7 +147,7 @@ const addBrand = () => {
                 message.success('Se registró correctamente');
                 brandsData.value.push({
                     value: res.data.brand.id,
-                    label: res.data.brand.description 
+                    label: res.data.brand.description
                 })
             }
         }).then(() => {
@@ -241,7 +257,7 @@ const addBrand = () => {
                         v-model="form.interne"
                         type="text"
                         class="block w-full mt-1"
-    
+
                     />
                     <InputError :message="form.errors.interne" class="mt-2" />
                 </div>

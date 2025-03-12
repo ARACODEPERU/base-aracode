@@ -997,14 +997,15 @@
                             <tr v-for="(row, go) in course.teachers" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
 
                                 <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                                    <img class="w-10 h-10 rounded-full" :src="getPath(row.teacher.person.image)" alt="Jese image">
+                                    <img v-if="row.teacher.person.image" class="w-10 h-10 rounded-full" :src="getPath(row.teacher.person.image)" alt="Jese image">
+                                    <img v-else class="w-10 h-10 rounded-full" :src="`https://ui-avatars.com/api/?name=${row.teacher.person.names}&size=150&rounded=true`" :alt="row.teacher.person.names">
                                     <div class="ps-3">
                                         <div class="text-base font-semibold">{{ row.teacher.person.full_name }}</div>
                                         <div class="font-normal text-gray-500">{{ row.teacher.person.email }}</div>
                                     </div>
                                 </th>
                                 <td class="w-4 p-4 items-center">
-                                    <label v-if="go > 0" :for="`radio-teacher-${go}`" class="inline-flex">
+                                    <label v-if="course.teachers.length > 1" :for="`radio-teacher-${go}`" class="inline-flex">
                                         <input
                                             type="radio"
                                             name="square_radio"

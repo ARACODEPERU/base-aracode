@@ -5,7 +5,7 @@
     import { usePage } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
     import Swal from "sweetalert2";
-    import yaya from "@/Components/cards/yaya.vue";
+    import shortVideos from "../../Components/shortVideos.vue";
 
     const page = usePage();
     const store = useAppStore();
@@ -127,41 +127,8 @@
                         </template>
                     </div>
                 </section>
-                <section v-if="certificates.length > 0" class="py-10 col-span-6 sm:col-span-2 rounded-md dark:bg-gray-800">
-                    <h1 class="text-center text-2xl font-bold text-gray-800 dark:text-gray-50">Logros</h1>
-
-
-
-                    <div class="p-6 space-y-6">
-                        <div v-for="(certificate, index) in certificates" class="flex flex-col gap-1">
-                            <div v-if="!certificate.image" class="flex flex-col w-full leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
-                                <div class="flex items-center space-x-2 rtl:space-x-reverse mb-2">
-                                    <span class="text-sm font-semibold text-gray-900 dark:text-white">Certificado otorgado</span>
-                                    <span class="text-sm font-normal text-gray-500 dark:text-gray-400">{{ formatDate(certificate.created_at) }}</span>
-                                </div>
-                                <p class="text-xl font-normal text-gray-900 dark:text-white">
-                                    {{ certificate.course.description }}
-                                </p>
-                                <div class="group relative my-2.5 bg-gray-50">
-                                    <div class="absolute w-full h-full bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                                        <a :href="route('aca_image_download',certificate.id)" target="_blank" class="inline-flex items-center justify-center rounded-full h-10 w-10 bg-white/30 hover:bg-white/50 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50">
-                                            <svg class="w-5 h-5 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 18">
-                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 1v11m0 0 4-4m-4 4L4 8m11 4v3a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-3"/>
-                                            </svg>
-                                        </a>
-                                        <div id="download-image" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip dark:bg-gray-700">
-                                            Descargar imagen
-                                            <div class="tooltip-arrow" data-popper-arrow></div>
-                                        </div>
-                                    </div>
-                                    <div class="p-4 w-full flex items-center justify-center">
-                                        <img src="/img/svg/certificate-1356.svg" class="rounded-lg w-24 h-24"  alt="">
-                                    </div>
-                                </div>
-                                <!-- <span class="text-sm font-normal text-gray-500 dark:text-gray-400">Descargar</span> -->
-                            </div>
-                        </div>
-                    </div>
+                <section class="col-span-6 sm:col-span-2 rounded-md">
+                    <shortVideos />
                 </section>
             </div>
         </div>

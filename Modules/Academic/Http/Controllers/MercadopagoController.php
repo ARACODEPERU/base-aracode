@@ -33,12 +33,23 @@ class MercadopagoController extends Controller
         $client = new PreferenceClient();
         $items = [];
 
+        $subscription = AcaSubscriptionType::find($id);
+
+        $amount = 0;
+        if ($subscription->prices) {
+            foreach (json_decode($subscription->prices) as $price) {
+                if ($price->currency == 'PEN') {
+                    $amount = $price->amount;
+                }
+            }
+        }
+
         array_push($items, [
             'id' => '2',
-            'title' => 'PRIMIUN',
+            'title' => $subscription->title,
             'quantity'      => floatval(1),
             'currency_id'   => 'PEN',
-            'unit_price'    => floatval(240)
+            'unit_price'    => floatval($amount)
         ]);
 
         $preference = $client->create([
@@ -47,9 +58,11 @@ class MercadopagoController extends Controller
 
         $preference_id =  $preference->id;
 
+
         return Inertia::render('Landing/Academic/StepsPayCheckout', [
             'preference' => $preference_id,
-            'subscription' => AcaSubscriptionType::find($id)
+            'subscription' => $subscription,
+            'samount' => floatval($amount)
         ]);
     }
 

@@ -36,7 +36,8 @@ const form = useForm({
     names: null,
     father_lastname: null,
     mother_lastname: null,
-    ubigeo_description: null
+    ubigeo_description: null,
+    genero: 'M'
 });
 
 const createPatient = () => {
@@ -82,7 +83,7 @@ const loadFile = (event) => {
 
     // Obtén una referencia al elemento de imagen a través de Vue.js
     const imagePreview = document.getElementById('preview_img');
-    
+
     // Crea un objeto de archivo de imagen y asigna la URL al formulario
     const imageFile = URL.createObjectURL(event.target.files[0]);
     form.image_preview = imageFile;
@@ -198,7 +199,7 @@ const openSwal2Search = () => {
                 imageHeight: 180,
                 imageWidth: 180,
                 customClass: {
-                    image: 'rounded-full',  
+                    image: 'rounded-full',
                 },
                 padding: '2em',
             }).then((res) => {
@@ -210,22 +211,23 @@ const openSwal2Search = () => {
     });
 }
 const getPersonData = (newValues) => {
-    form.id = newValues.id,
-    form.teacher_id = newValues.teacher_id,
-    form.document_type_id = newValues.document_type_id,
-    form.number = newValues.number,
-    form.telephone = newValues.telephone,
-    form.email = newValues.email,
-    form.image = null,
-    form.image_preview = newValues.image ? getImage(newValues.image) : null,
-    form.address = newValues.address,
-    form.ubigeo = newValues.ubigeo,
-    form.birthdate = newValues.birthdate,
-    form.names = newValues.names,
-    form.father_lastname = newValues.father_lastname,
-    form.mother_lastname = newValues.mother_lastname,
-    form.ubigeo_description = newValues.city
-    form.presentacion = newValues.presentacion
+    form.id = newValues.id;
+    form.teacher_id = newValues.teacher_id;
+    form.document_type_id = newValues.document_type_id;
+    form.number = newValues.number;
+    form.telephone = newValues.telephone;
+    form.email = newValues.email;
+    form.image = null;
+    form.image_preview = newValues.image ? getImage(newValues.image) : null;
+    form.address = newValues.address;
+    form.ubigeo = newValues.ubigeo;
+    form.birthdate = newValues.birthdate;
+    form.names = newValues.names;
+    form.father_lastname = newValues.father_lastname;
+    form.mother_lastname = newValues.mother_lastname;
+    form.ubigeo_description = newValues.city;
+    form.presentacion = newValues.presentacion;
+    form.genero = newValues.gender;
 };
 </script>
 
@@ -255,7 +257,7 @@ const getPersonData = (newValues) => {
                     v-model="form.number"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.number" class="mt-2" />
             </div>
@@ -266,7 +268,7 @@ const getPersonData = (newValues) => {
                     v-model="form.birthdate"
                     type="date"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.birthdate" class="mt-2" />
             </div>
@@ -276,8 +278,8 @@ const getPersonData = (newValues) => {
                         <img id='preview_img' class="h-16 w-16 object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
                     </div>
                     <label class="block ml-1">
-                        <input @change="loadFile" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" 
-                        id="file_input" 
+                        <input @change="loadFile" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
+                        id="file_input"
                         type="file"
                         >
                     </label>
@@ -290,7 +292,7 @@ const getPersonData = (newValues) => {
                     v-model="form.names"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.names" class="mt-2" />
             </div>
@@ -301,7 +303,7 @@ const getPersonData = (newValues) => {
                     v-model="form.father_lastname"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.father_lastname" class="mt-2" />
             </div>
@@ -312,7 +314,7 @@ const getPersonData = (newValues) => {
                     v-model="form.mother_lastname"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.mother_lastname" class="mt-2" />
             </div>
@@ -323,18 +325,18 @@ const getPersonData = (newValues) => {
                     v-model="form.address"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.address" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-6 ">
                 <InputLabel for="ubigeo" value="Ciudad *" />
                 <div class="relative">
-                    <TextInput 
-                    v-model="form.ubigeo_description" 
+                    <TextInput
+                    v-model="form.ubigeo_description"
                     @input="filterCities"
                     placeholder="Buscar Distrito"
-                    type="text" 
+                    type="text"
                     class="block w-full mt-1" />
                     <ul v-if="searchUbigeos && searchUbigeos.length > 0" style="max-height: 200px; overflow-y: auto;" class="list-disc list-inside absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1">
                         <li v-for="item in searchUbigeos" :key="item.id" class="px-4 cursor-pointer hover:bg-gray-100" @click="selectCity(item)">
@@ -351,7 +353,7 @@ const getPersonData = (newValues) => {
                     v-model="form.telephone"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.telephone" class="mt-2" />
             </div>
@@ -362,14 +364,28 @@ const getPersonData = (newValues) => {
                     v-model="form.email"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="genero" value="Genero *" />
+                <div class="space-x-4">
+                    <label class="inline-flex">
+                        <input v-model="form.genero" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
+                        <span>Masculino</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="form.genero" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
+                        <span>Femenino</span>
+                    </label>
+                </div>
+                <InputError :message="form.errors.genero" class="mt-2" />
             </div>
         </template>
 
         <template #actions>
-            
+
             <Keypad>
                 <template #botones>
                     <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">

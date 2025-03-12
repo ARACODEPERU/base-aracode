@@ -24,7 +24,6 @@ return new class extends Migration
             $table->decimal('total');
             $table->timestamps();
             $table->foreign('sale_id')->references('id')->on('sales')->onDelete('cascade');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
         });
     }
 

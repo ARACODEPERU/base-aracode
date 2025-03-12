@@ -5,6 +5,7 @@ namespace Modules\Sales\Http\Controllers;
 use App\Models\Kardex;
 use App\Models\KardexSize;
 use App\Models\LocalSale;
+use App\Models\Parameter;
 use App\Models\Product;
 use App\Models\ProductEstablishmentPrice;
 use Carbon\Carbon;
@@ -25,11 +26,18 @@ use PDF;
 class ProductController extends Controller
 {
     use ValidatesRequests;
+
+    protected $P000014;
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function __construct()
+    {
+        $this->P000014 = Parameter::where('parameter_code', 'P000014')->value('value_default');
+    }
     public function index()
     {
         $product = request()->input('displayProduct') ? request()->input('displayProduct') : true;
@@ -84,13 +92,14 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $categories = SaleProductCategory::with('subcategories')->whereNull('category_id')->get();
+        $categories = SaleProductCategory::with('subcategories.subcategories')->whereNull('category_id')->get();
         $brands = SaleProductBrand::get();
 
         return Inertia::render('Sales::Products/Create', [
             'establishments' => LocalSale::all(),
             'categories'     => $categories ?? [],
-            'brands'         => $brands ?? []
+            'brands'         => $brands ?? [],
+            'P000014' => $this->P000014
         ]);
     }
 
@@ -223,7 +232,8 @@ class ProductController extends Controller
         return Inertia::render('Sales::Products/Edit', [
             'product'       => $product,
             'categories'    => $categories,
-            'brands'        => $brands
+            'brands'        => $brands,
+            'P000014' => $this->P000014
         ]);
     }
 

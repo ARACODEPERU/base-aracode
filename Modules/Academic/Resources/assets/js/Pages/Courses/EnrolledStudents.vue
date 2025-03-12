@@ -81,13 +81,14 @@
 
     const closeModalImport = () => {
         displayModalImport.value = false;
+        reloadPage();
     }
 
     const reloadPage = () => {
         router.visit(route('aca_enrolledstudents_list', props.course.id), {
             method: 'get',
             replace: false,
-            preserveState: false,
+            preserveState: true,
             preserveScroll: true,
         });
     }

@@ -48,11 +48,12 @@ class AcaAuthController extends Controller
                 'names' => ['required', 'max:255'],
                 'apps' => ['required', 'max:255'],
                 'apms' => ['required', 'max:255'],
-                'numberdni' => ['required', 'max:255'],
+                'numberdni' => ['required', 'max:8'],
                 'email' => ['required', 'email'],
                 'password' => ['required'],
             ]
         );
+
         $person = Person::firstOrCreate(
             [
                 'document_type_id' => 1,
@@ -70,18 +71,22 @@ class AcaAuthController extends Controller
             ]
         );
         // Crear el usuario
-        $user = User::create([
-            'name' => $request->get('names'),
-            'email' => $request->get('email'),
-            'password' => Hash::make($request->get('password')), // Encriptar la contraseña
-            'persom_id' => $person->id,
-            'local_id' => 1,
-        ]);
+        if ($person->id) {
+            $user = User::create([
+                'name' => $request->get('names'),
+                'email' => $request->get('email'),
+                'password' => Hash::make($request->get('password')), // Encriptar la contraseña
+                'person_id' => $person->id,
+                'local_id' => 1,
+            ]);
 
-        // Loguear al usuario
-        Auth::login($user);
-        $request->session()->regenerate();
-        return redirect()->route('academic_step_verification', $id);
+            // Loguear al usuario
+            Auth::login($user);
+            $request->session()->regenerate();
+            return redirect()->route('academic_step_verification', $id);
+        } else {
+            return redirect()->route('academic_step_account', $id);
+        }
     }
 
     public function userVerification($id)

@@ -82,7 +82,7 @@ const loadFile = (event) => {
 
     // Obtén una referencia al elemento de imagen a través de Vue.js
     const imagePreview = document.getElementById('preview_img');
-    
+
     // Crea un objeto de archivo de imagen y asigna la URL al formulario
     const imageFile = URL.createObjectURL(event.target.files[0]);
     form.image_preview = imageFile;
@@ -163,6 +163,8 @@ const openSwal2Search = () => {
         allowOutsideClick: false,
         allowEscapeKey: false,
         icon: "question",
+        padding: '2em',
+        customClass: 'sweet-alerts',
         preConfirm: async (login) => {
             let data = {
                 document_type: document.getElementById("identityDocument").value,
@@ -187,8 +189,10 @@ const openSwal2Search = () => {
                 text: `Ya fue registrado con el DNI ` + result.value.data.person.number,
                 imageHeight: 180,
                 imageWidth: 180,
+                padding: '2em',
+                customClass: 'sweet-alerts',
                 customClass: {
-                    image: 'rounded-full',  
+                    image: 'rounded-full',
                 },
             }).then((res) => {
                 if (res.isConfirmed) {
@@ -260,7 +264,7 @@ const getPersonData = (newValues) => {
                     v-model="form.birthdate"
                     type="date"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.birthdate" class="mt-2" />
             </div>
@@ -281,7 +285,7 @@ const getPersonData = (newValues) => {
                     v-model="form.names"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.names" class="mt-2" />
             </div>
@@ -292,7 +296,7 @@ const getPersonData = (newValues) => {
                     v-model="form.father_lastname"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.father_lastname" class="mt-2" />
             </div>
@@ -303,7 +307,7 @@ const getPersonData = (newValues) => {
                     v-model="form.mother_lastname"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.mother_lastname" class="mt-2" />
             </div>
@@ -314,18 +318,18 @@ const getPersonData = (newValues) => {
                     v-model="form.address"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.address" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-6 ">
                 <InputLabel for="ubigeo" value="Ciudad *" />
                 <div class="relative">
-                    <TextInput 
-                    v-model="form.ubigeo_description" 
+                    <TextInput
+                    v-model="form.ubigeo_description"
                     @input="filterCities"
                     placeholder="Buscar Distrito"
-                    type="text" 
+                    type="text"
                     class="block w-full mt-1" />
                     <ul v-if="searchUbigeos && searchUbigeos.length > 0" style="max-height: 200px; overflow-y: auto;" class="list-disc list-inside absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1">
                         <li v-for="item in searchUbigeos" :key="item.id" class="px-4 cursor-pointer hover:bg-gray-100" @click="selectCity(item)">
@@ -342,7 +346,7 @@ const getPersonData = (newValues) => {
                     v-model="form.telephone"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.telephone" class="mt-2" />
             </div>
@@ -353,7 +357,7 @@ const getPersonData = (newValues) => {
                     v-model="form.email"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
             </div>
@@ -362,7 +366,7 @@ const getPersonData = (newValues) => {
                 <textarea
                     id="presentacion"
                     v-model="form.presentacion"
-                    rows="4" 
+                    rows="4"
                     class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 >
                 </textarea>
@@ -371,7 +375,7 @@ const getPersonData = (newValues) => {
         </template>
 
         <template #actions>
-            
+
             <Keypad>
                 <template #botones>
                     <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">

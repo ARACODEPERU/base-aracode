@@ -199,29 +199,52 @@
             </li>
         </ul>
         <div class="pt-5 space-y-5 relative">
-            <div class="prose bg-[#f1f2f3] px-4 py-4 sm:px-8 sm:py-4 rounded max-w-full dark:bg-[#1b2e4b] dark:text-white-light">
-                <h2 class="text-dark mb-5  mt-4 text-center text-4xl dark:text-white-light">
-                    {{ course.description }}
-                </h2>
-                <p class="lead mt-3 mb-4 text-center dark:text-white-light">
-                    {{ module.description }}
-                </p>
-                <blockquote v-if="course && course.teacher && course.teacher.person"  class="text-black p-5 ltr:pl-3.5 rtl:pr-3.5 bg-white shadow-md rounded-tr-md rounded-br-md border border-white-light border-l-2 !border-l-primary dark:bg-[#060818] dark:border-[#060818]">
-                    <div class="flex items-start">
-                        <div class="w-14 h-14 ltr:mr-5 rtl:ml-5 flex-none">
-                            <img :src="getImage(course.teacher.person.image)" alt="" class="w-14 h-14 rounded-full object-cover m-auto" />
+            <div class="max-w-[85rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 mx-auto">
+                <!-- Title -->
+                <div class="max-w-2xl mx-auto text-center mb-6 lg:mb-8">
+                    <h2 class="text-2xl font-bold md:text-2xl md:leading-tight dark:text-white">{{ course.description }}</h2>
+                    <p class="mt-1 text-gray-600 dark:text-neutral-400">{{ module.description }}</p>
+                </div>
+                <!-- Profile -->
+                <div class="flex justify-center">
+                    <template v-if="module.teacher_id">
+                        <div class="flex items-center gap-x-3 max-w-xl">
+                            <div class="shrink-0">
+                                <img v-if="module.teacher.person.image" class="shrink-0 size-16 rounded-full" :src="getImage(module.teacher.person.image)" alt="Avatar">
+                                <img v-else :src="`https://ui-avatars.com/api/?name=${module.teacher.person.names}&size=150&rounded=true`" class="shrink-0 size-16 rounded-full" alt="avatar"/>
+                            </div>
+
+                            <div class="grow">
+                                <h1 class="text-lg font-medium text-gray-800 dark:text-neutral-200">
+                                    {{ module.teacher.person.full_name }}
+                                </h1>
+                                <p class="text-sm text-gray-600 dark:text-neutral-400">
+                                    {{ module.teacher.person.presentacion }}
+                                </p>
+                            </div>
                         </div>
-                        <div >
-                            <h4 class="not-italic text-[#515365] dark:text-white-light m-0">
-                                {{ course.teacher.person.full_name }}
-                            </h4>
-                            <p class="not-italic text-[#515365] text-sm dark:text-white-light m-0">
-                                {{ course.teacher.person.presentacion }}
-                            </p>
+                    </template>
+                    <template v-else>
+                        <div class="flex items-center gap-x-3 max-w-xl">
+                            <div class="shrink-0">
+                                <img v-if="course.teacher.person.image" class="shrink-0 size-16 rounded-full" :src="getImage(course.teacher.person.image)" alt="Avatar">
+                                <img v-else :src="`https://ui-avatars.com/api/?name=${course.teacher.person.names}&size=150&rounded=true`" class="shrink-0 size-16 rounded-full" alt="avatar"/>
+                            </div>
+
+                            <div class="grow">
+                                <h1 class="text-lg font-medium text-gray-800 dark:text-neutral-200">
+                                    {{ course.teacher.person.full_name }}
+                                </h1>
+                                <p class="text-sm text-gray-600 dark:text-neutral-400">
+                                    {{ course.teacher.person.presentacion }}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                </blockquote>
+                    </template>
+                </div>
+                <!-- End Profile -->
             </div>
+
             <div class="grid grid-cols-6 gap-4">
                 <div class="panel col-span-6 sm:col-span-2">
                     <div class="flex justify-between items-center">
@@ -257,10 +280,10 @@
                                                 {{ content.description }}
                                             </h6>
                                             <div class="flex justify-end">
-                                                <a 
-                                                    :href="content.content" 
-                                                    target="_blank" 
-                                                    type="button" 
+                                                <a
+                                                    :href="content.content"
+                                                    target="_blank"
+                                                    type="button"
                                                     class="btn btn-success btn-sm flex uppercase inline-block"
                                                 >
                                                     <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -284,7 +307,7 @@
                                             </h6>
                                             <div class="flex justify-end">
                                                 <button @click="openSelectedVideo(content.content)"
-                                                    type="button" 
+                                                    type="button"
                                                     class="btn btn-success btn-sm flex uppercase inline-block"
                                                 >
                                                     <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
@@ -307,10 +330,10 @@
                                                 {{ content.description }}
                                             </h6>
                                             <div class="flex justify-end">
-                                                <a 
-                                                    :href="getPath(content.content)" 
-                                                    target="_blank" 
-                                                    type="button" 
+                                                <a
+                                                    :href="getPath(content.content)"
+                                                    target="_blank"
+                                                    type="button"
                                                     class="btn btn-success btn-sm flex uppercase inline-block"
                                                 >
                                                     <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -335,16 +358,16 @@
                                                 {{ content.description }}
                                             </h6>
                                             <div class="flex justify-end">
-                                                <a 
-                                                    :href="content.content" 
-                                                    target="_blank" 
-                                                    type="button" 
+                                                <a
+                                                    :href="content.content"
+                                                    target="_blank"
+                                                    type="button"
                                                     class="btn btn-success btn-sm flex uppercase inline-block"
                                                 >
                                                     <svg class="w-4 h-4 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
                                                         <path d="M0 128C0 92.7 28.7 64 64 64l256 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2l0 256c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1l0-17.1 0-128 0-17.1 14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/>
                                                     </svg> Unirse
-                                                    
+
                                                 </a>
                                             </div>
                                         </div>
@@ -387,7 +410,7 @@
 
                                                             <div class="flex justify-end mt-4">
                                                                 <button name="submit" type="submit" class="btn btn-danger hover:-translate-y-1" :class="{ 'opacity-25': comment.loading }" :disabled="comment.loading">
-                                                                    Editar mensaje 
+                                                                    Editar mensaje
                                                                     <svg v-if="comment.loading" aria-hidden="true" role="status" class="inline w-4 h-4 ml-2 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
@@ -398,7 +421,7 @@
                                                         </form>
                                                     </div>
                                                     <p v-if="!comment.edit_status" class="mb-0 italic text-gray-500 dark:text-gray-300">{{ comment.description }}</p>
-                                                    
+
                                                     <div class="mt-4">
                                                         <ul class="flex space-x-4 rtl:space-x-reverse font-bold">
                                                             <!-- <li>
@@ -434,12 +457,12 @@
                                                             </li>
                                                         </ul>
                                                     </div>
-                                                    
+
                                                 </div>
                                             </div>
                                         </div>
                                     </template>
-                                </template>                  
+                                </template>
                                 <form @submit.prevent="createComment" class="mt-8 contact-form">
                                     <div>
                                         <label for="ctnTextarea">Dejar un comentario</label>
@@ -458,13 +481,13 @@
                                         </button>
                                     </div>
                                 </form>
-                                
+
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
         </div>
          <!-- Modal -->
         <TransitionRoot appear :show="displayModalVideo" as="template">

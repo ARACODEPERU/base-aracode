@@ -17,6 +17,7 @@ use Modules\Academic\Http\Controllers\AcaAuthController;
 use Modules\Academic\Http\Controllers\AcaCertificateController;
 use Modules\Academic\Http\Controllers\AcaContentController;
 use Modules\Academic\Http\Controllers\AcaCourseController;
+use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
@@ -270,6 +271,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::put('certificate/massive/{id}/store', [AcaCertificateController::class, 'storeMassive'])
         ->name('aca_certificate_massive_store');
 
+    Route::post('student/certificates/menu', [AcaStudentController::class, 'getCertificates'])
+        ->name('aca_certificate_by_student');
+
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_lista'])->get('tutorials/playlist', [AcaListVideoController::class, 'index'])
+        ->name('aca_tutorials_playlist');
+
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_lista_nuevo'])->post('tutorials/playlist/store', [AcaListVideoController::class, 'storeOrUpdate'])
+        ->name('aca_tutorials_playlist_store');
 
     ////////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
