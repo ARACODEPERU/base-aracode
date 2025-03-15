@@ -52,7 +52,9 @@ const form = useForm({
     type_description: props.course.type_description,
     sector_description: props.course.sector_description,
     price: props.course.price,
-    certificate_description: props.course.certificate_description
+    certificate_description: props.course.certificate_description,
+    discount: props.course.discount,
+    discount_applies: props.course.discount_applies
 });
 
 const updateCourse = () => {
@@ -137,7 +139,7 @@ const handleImageCompressed = (file) => {
             </div>
             <div class="col-span-6 sm:col-span-4 ">
                 <InputLabel for="description" value="Nombre *" />
-                <TextInput 
+                <TextInput
                     id="description"
                     v-model="form.description"
                     type="text"
@@ -152,18 +154,18 @@ const handleImageCompressed = (file) => {
                         <figcaption class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">Imagen Actual</figcaption>
                     </figure>
                 </div>
-                <ImageCompressorjs :onImageCompressed="handleImageCompressed" /> 
+                <ImageCompressorjs :onImageCompressed="handleImageCompressed" />
                 <!-- <input @input="form.image = $event.target.files[0]" accept=".svg, .png, .jpg, .jpeg, .gif" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="file_input" type="file"> -->
                 <InputError :message="form.errors.image" class="mt-2" />
             </div>
-            
+
             <div class="col-span-6 sm:col-span-3 ">
                 <InputLabel for="course_date" value="Fecha Inicio *" />
                 <TextInput
                     id="course_date"
                     v-model="form.course_date"
                     type="date"
-                    
+
                 />
                 <InputError :message="form.errors.course_date" class="mt-2" />
             </div>
@@ -187,8 +189,29 @@ const handleImageCompressed = (file) => {
                 </textarea>
                 <InputError :message="form.errors.certificate_description" class="mt-2" />
             </div>
+            <div class="col-span-6 sm:col-span-4">
+                <InputLabel for="discount" value="Descuento (Opcional)" />
+                <div>
+                    <input type="range" id="discount" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" min="0" max="100" v-model="form.discount" />
+                    <div class="font-bold ltr:text-right rtl:text-left">
+                        <input type="text" class="form-input text-xs form-input-sm w-10 text-right px-2" :value="form.discount"> <span>%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="¿A que alumnos les aplica el descuento?" />
+                <div class="flex items-center space-x-2">
+                    <label class="inline-flex">
+                        <input v-model="form.discount_applies" value="01" type="radio" name="square_radio" class="form-radio rounded-none" />
+                        <span>Todos</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="form.discount_applies" value="02" type="radio" name="square_radio" class="form-radio rounded-none" />
+                        <span>Suscripción</span>
+                    </label>
+                </div>
+            </div>
             <div class="col-span-6 sm:col-span-3">
-                <InputLabel value="Estado" />
                 <div class="flex items-center">
                     <input v-model="form.status" id="link-checkbox" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                     <label for="link-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Activo</label>
@@ -197,7 +220,7 @@ const handleImageCompressed = (file) => {
         </template>
 
         <template #actions>
-            
+
             <Keypad>
                 <template #botones>
                     <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">

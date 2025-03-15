@@ -22,6 +22,7 @@ use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Exceptions\MPApiException;
 use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaStudentSubscription;
 
 class OnliSaleController extends Controller
 {
@@ -114,16 +115,33 @@ class OnliSaleController extends Controller
         $success = true;
         $preference_id = null;
         $products = $request->get('items');
+        $student_id = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+        $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
+            ->where('status', true)
+            ->first();
 
         if (count($products) > 0) {
             foreach ($products as $product) {
                 $xpro = AcaCourse::find($product['id']);
+                $price = 0;
+                if ($xpro->discount || $xpro->discount > 0) {
+                    if ($xpro->discount_applies == '01') {
+                        $price = number_format($xpro->price - ($xpro->price * $xpro->discount / 100), 2, '.', '');
+                    } elseif ($xpro->discount_applies == '02') {
+                        if ($studentSubscribed && $studentSubscribed->status == 1) {
+                            $price = number_format($xpro->price - ($xpro->price * $xpro->discount / 100), 2, '.', '');
+                        } else {
+                            $price = number_format($xpro->price, 2, '.', '');
+                        }
+                    }
+                }
+
                 array_push($items, [
                     'id' => $xpro->id,
                     'title' => trim($xpro->description),
                     'quantity'      => floatval(1),
                     'currency_id'   => 'PEN',
-                    'unit_price'    => floatval($xpro->price)
+                    'unit_price'    => floatval($price)
                 ]);
             }
 

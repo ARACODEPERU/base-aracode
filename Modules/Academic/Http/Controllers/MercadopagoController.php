@@ -23,6 +23,7 @@ use MercadoPago\Client\Payment\PaymentClient;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
 
 class MercadopagoController extends Controller
@@ -292,7 +293,9 @@ class MercadopagoController extends Controller
                     'nota_sale_id' => $sale_note->id
                 ]);
 
-
+                $studentSubscribed = AcaStudentSubscription::where('student_id', $student->id)
+                    ->where('status', true)
+                    ->first();
 
                 switch ($payment->status) {
                     case "approved":
@@ -300,13 +303,27 @@ class MercadopagoController extends Controller
                             foreach ($products as $product) {
                                 $xpro = AcaCourse::find($product['id']);
                                 $true = AcaCapRegistration::where('student_id', $student->id)->where('course_id', $xpro->id)->doesntExist();
+
+                                $price = 0;
+                                if ($xpro->discount || $xpro->discount > 0) {
+                                    if ($xpro->discount_applies == '01') {
+                                        $price = number_format($xpro->price - ($xpro->price * $xpro->discount / 100), 2, '.', '');
+                                    } elseif ($xpro->discount_applies == '02') {
+                                        if ($studentSubscribed && $studentSubscribed->status == 1) {
+                                            $price = number_format($xpro->price - ($xpro->price * $xpro->discount / 100), 2, '.', '');
+                                        } else {
+                                            $price = number_format($xpro->price, 2, '.', '');
+                                        }
+                                    }
+                                }
+
                                 if ($true) {
 
                                     OnliSaleDetail::create([
                                         'sale_id' => $sale->id,
                                         'item_id' => $xpro->id,
                                         'entitie' => AcaCourse::class,
-                                        'price' => $xpro->price,
+                                        'price' => $price,
                                         'quantity' => 1
                                     ]);
 
@@ -315,10 +332,10 @@ class MercadopagoController extends Controller
                                         'product_id' => $xpro->id,
                                         'product' => json_encode($xpro),
                                         'saleProduct' => json_encode($product),
-                                        'price' => $xpro->price,
+                                        'price' => $price,
                                         'discount' => 0,
                                         'quantity' => 1,
-                                        'total' => round($xpro->price, 2),
+                                        'total' => round($price, 2),
                                         'entity_name_product' => AcaCourse::class
                                     ]);
 

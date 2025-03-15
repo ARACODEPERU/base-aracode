@@ -7,7 +7,7 @@
     <!-- From Uiverse.io by ayman-ashine -->
     <div class="vc-card ">
         <img class="vc-image" alt="" src="https://uiverse.io/astronaut.png" />
-        <div class="vc-heading">Clips Educativo</div>
+        <div class="vc-heading">Pronto Clips Educativo</div>
         <div class="vc-icons">
             <a class="vc-instagram" href="#">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">

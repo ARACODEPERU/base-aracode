@@ -27,6 +27,8 @@ class AcaCourse extends Model
         'sector_description',
         'price',
         'certificate_description',
+        'discount',
+        'discount_applies'
     ];
 
     protected static function newFactory()

@@ -60,7 +60,7 @@
                     icon: 'success',
                 });
                 router.visit(route('aca_courses_list'), {
-                    replace: false, 
+                    replace: false,
                     method: 'get',
                     preserveState: true,
                     preserveScroll: true,
@@ -135,7 +135,7 @@
     const saveAgreements = () => {
         formAgreement.progress = true;
         axios.post(route('aca_agreements_store'), formAgreement ).then((res) => {
-            
+
             formAgreement.progress = false;
             Swal2.fire({
                 title: 'Enhorabuena',
@@ -155,7 +155,7 @@
                 for (let field in errors) {
                     formAgreement.setError(field, errors[field][0]);
                 }
-                
+
             }
             formAgreement.progress = false;
         });
@@ -238,6 +238,9 @@ const selectTheme = (data) => {
                                         Nombre
                                     </th>
                                     <th>
+                                        Categoría
+                                    </th>
+                                    <th>
                                         Sector
                                     </th>
                                     <th>
@@ -290,6 +293,9 @@ const selectTheme = (data) => {
                                             {{ course.category.description }}
                                         </td>
                                         <td class="whitespace-nowrap">
+                                            {{ course.sector_description }}
+                                        </td>
+                                        <td class="whitespace-nowrap">
                                             {{ course.type_description }}
                                         </td>
                                         <td class="whitespace-nowrap">
@@ -308,10 +314,10 @@ const selectTheme = (data) => {
                         <Pagination :data="courses" />
                     </ConfigProvider>
                 </div>
-                    
+
             </div>
         </div>
-        
+
         <ModalLarge
             :onClose = "closeModalAgreements"
             :show="displayModalAgreements"
@@ -341,7 +347,7 @@ const selectTheme = (data) => {
                         <InputError :message="formAgreement.errors.end_date" class="mt-2" />
                     </div>
                 </div>
-                
+
                 <div class="mt-4">
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="border p-4" v-for="(xagreement) in arrayAgreements">
