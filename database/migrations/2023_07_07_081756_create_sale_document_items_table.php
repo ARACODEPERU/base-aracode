@@ -35,7 +35,7 @@ return new class extends Migration
             $table->json('json_discounts')->nullable()->comment('Catalog. 53 (00: Descuento que afecta la Base Imponible)-cantidad * valor unitario-% descuento');
             $table->timestamps();
             $table->foreign('document_id')->references('id')->on('sale_documents')->onDelete('cascade');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            //$table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
         });
     }
 

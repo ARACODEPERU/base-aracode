@@ -9,6 +9,7 @@ use Greenter\Model\Sale\Invoice;
 use App\Models\SaleDocument;
 use App\Helpers\Invoice\Util;
 use Greenter\Model\Company\Company;
+use Greenter\Model\Sale\Detraction;
 use Carbon\Carbon;
 use DateTime;
 use App\Models\Company as MyCompany;
@@ -80,7 +81,7 @@ class Boleta
         return array('success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes);
     }
 
-    public function setDocument($document)
+    public function setDocument($document, $tipDet = '022', $ipMeP = '001')
     {
         $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
 
@@ -97,6 +98,8 @@ class Boleta
         $company->setRuc($this->mycompany->ruc)
             ->setRazonSocial($this->mycompany->business_name)
             ->setNombreComercial($this->mycompany->tradename)
+            ->setEmail($this->mycompany->email)
+            ->setTelephone($this->mycompany->phone)
             ->setAddress((new Address())
                 ->setUbigueo($this->mycompany->ubigeo)
                 ->setDepartamento($department->name)
@@ -123,6 +126,11 @@ class Boleta
             ->setSubTotal($document->invoice_subtotal)
             ->setMtoImpVenta($document->invoice_mto_imp_sale);
 
+        if ($document->additional_description) {
+            $invoice->setObservacion($document->additional_description);
+        }
+
+
         $details = $document->items;
         $items = [];
         foreach ($details as $detail) {
@@ -143,6 +151,9 @@ class Boleta
             $descuent = $detail->mto_discount;
 
             if ($descuent > 0) {
+
+                $item->setDescuento($descuent);
+
                 $json_discounts = json_decode($detail->json_discounts);
 
                 $charges = [];
@@ -184,7 +195,8 @@ class Boleta
 
 
             $seller = User::find($document->user_id);
-            $pdf = $this->util->generatePdf($invoice, $seller, $qr_path, $format);
+
+            $pdf = $this->util->generatePdf($invoice, $seller, $qr_path, $format, $document->status);
             $document->invoice_pdf = $pdf;
             $document->save();
 

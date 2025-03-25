@@ -37,7 +37,7 @@ const form = useForm({
     father_lastname: null,
     mother_lastname: null,
     ubigeo_description: null,
-    genero: 'M'
+    gender: 'M'
 });
 
 const createPatient = () => {
@@ -227,7 +227,7 @@ const getPersonData = (newValues) => {
     form.mother_lastname = newValues.mother_lastname;
     form.ubigeo_description = newValues.city;
     form.presentacion = newValues.presentacion;
-    form.genero = newValues.gender;
+    form.gender = newValues.gender;
 };
 </script>
 
@@ -369,18 +369,18 @@ const getPersonData = (newValues) => {
                 <InputError :message="form.errors.email" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-3">
-                <InputLabel for="genero" value="Genero *" />
+                <InputLabel for="gender" value="Genero *" />
                 <div class="space-x-4">
                     <label class="inline-flex">
-                        <input v-model="form.genero" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
+                        <input v-model="form.gender" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
                         <span>Masculino</span>
                     </label>
                     <label class="inline-flex">
-                        <input v-model="form.genero" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
+                        <input v-model="form.gender" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
                         <span>Femenino</span>
                     </label>
                 </div>
-                <InputError :message="form.errors.genero" class="mt-2" />
+                <InputError :message="form.errors.gender" class="mt-2" />
             </div>
         </template>
 

@@ -54,7 +54,7 @@ const props = defineProps({
                         </div>
                     </template>
                    <!--modulo academico -->
-                    <div v-if="role.name == 'admin' || role.name == 'webAdmin'" class="col-span-3 sm:col-span-2 space-y-6">
+                    <div v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" class="col-span-3 sm:col-span-2 space-y-6">
                         <template v-if="P000009 == 1">
                             <StudentsEnrolledMonth />
                             <CoursesTotalStudents />

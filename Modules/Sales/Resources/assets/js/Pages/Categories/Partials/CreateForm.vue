@@ -111,7 +111,7 @@ const cropImageAndSave = (res) => {
                         </template>
                     </TreeSelect>
                 </template>
-                
+
                 <InputError :message="form.errors.category_id" class="mt-2" />
             </div>
             <div class="col-span-6">

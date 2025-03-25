@@ -163,9 +163,9 @@ final class Util
         return $filePath;
     }
 
-    public function generatePdf(DocumentInterface $document, $seller = null, $qr_path = null, $format = 'A4')
+    public function generatePdf(DocumentInterface $document, $seller = null, $qr_path = null, $format = 'A4', $status = 1,)
     {
-
+        //dd($document);
         $params = self::getParametersPdf($this->company, $seller);
 
         $fileDir = public_path();
@@ -173,25 +173,31 @@ final class Util
         if (!file_exists($fileDir)) {
             mkdir($fileDir, 0777, true);
         }
+
         $filename = $document->getName() . '.pdf';
         $filePath = $fileDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'invoice' . DIRECTORY_SEPARATOR . $filename;
 
         if ($format == 'A4') {
-            $pdf = Pdf::loadView('sales::sales.invoice_pdf', [
+            $pdf = Pdf::loadView('sales::sales.invoice_a4', [
                 'document' => $document,
                 'params' => $params,
-                'qr_path' => $qr_path
+                'qr_path' => $qr_path,
+                'status' => $status
             ]);
+
             $pdf->setPaper('a4', 'portrait');
         } else if ($format == 't80') {
             $pdf = Pdf::loadView('sales::sales.invoice_ticket_pdf', [
                 'document' => $document,
                 'params' => $params,
-                'qr_path' => $qr_path
+                'qr_path' => $qr_path,
+                'status' => $status
             ]);
             $pdf->setPaper(array(0, 0, 273, 500), 'portrait');
         }
 
+
+        $pdf->render();
         $pdf->save($filePath);
 
         return $filePath;

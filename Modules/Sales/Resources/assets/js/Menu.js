@@ -1,4 +1,4 @@
-import { 
+import {
     faCashRegister,
     faFileInvoiceDollar,
     faScrewdriverWrench,
@@ -8,8 +8,9 @@ import {
     faMoneyBillTrendUp,
     faFileInvoice,
     faListOl,
-    faListCheck,
-    faFileExport
+    faFileLines,
+    faFileArrowDown,
+    faFileFragment
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSales = [{
@@ -19,7 +20,7 @@ const menuSales = [{
         route: 'module',
         permissions: "sale_dashboard",
         items: [
-            
+
             {
                 status: false,
                 route: null,
@@ -119,18 +120,25 @@ const menuSales = [{
                 icom: faListOl,
             },
             {
+                route: route('sale_credit_notes_list'),
+                status: false,
+                text: 'Notas de credito',
+                permissions: 'invo_nota_credito',
+                icom: faFileFragment,
+            },
+            {
                 route: route('salesummaries_list'),
                 status: false,
                 text: 'Resumen',
                 permissions: 'invo_resumenes_lista',
-                icom: faListCheck,
+                icom: faFileLines,
             },
             {
                 route: route('low_communication_list'),
                 status: false,
                 text: 'Comunicacion de Baja',
                 permissions: 'invo_comunicacion_baja',
-                icom: faFileExport,
+                icom: faFileArrowDown,
             }
         ]
     }

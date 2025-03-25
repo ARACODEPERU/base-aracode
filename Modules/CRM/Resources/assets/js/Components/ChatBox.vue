@@ -55,7 +55,7 @@
 
     const getMessagesChat = () => {
         privateChat.value.loading = true;
-        let myDiv = document.getElementById('header-total-news'); 
+        let myDiv = document.getElementById('header-total-news');
 
         // Verifica si el div existe
         if (myDiv) {
@@ -69,7 +69,7 @@
                 return response.data;
             }).then((res) => {
                 privateChat.value.messages = res;
-                
+
                 privateChat.value.loading = false;
                 return true;
             }).then(() => {
@@ -145,7 +145,7 @@
                 type: result.data.message.type,
                 id: result.data.message.id
             };
-            
+
             participants.forEach(item => {
                 if(authUser.id == item){
                     if(privateChat.value){
@@ -154,7 +154,7 @@
                             scrollToBottomChatBox();
                         }
                     }
-                    
+
                 }
             });
         });
@@ -175,12 +175,12 @@
     const displayNoneDivs = () => {
         let crmlist = document.getElementById('crm-chatbox-list');
         let crmform = document.getElementById('crm-chatbox-form');
-        
+
         if (crmlist) {
             crmlist.classList.remove('chat-maximizer');
             crmlist.classList.add('chat-minimizer');
         }
-        
+
         if (crmform) {
             crmform.classList.remove('chat-maximizer');
             crmform.classList.add('chat-minimizer');
@@ -189,12 +189,12 @@
     const displayBlockDivs = () => {
         let crmlist = document.getElementById('crm-chatbox-list');
         let crmform = document.getElementById('crm-chatbox-form');
-        
+
         if (crmlist) {
             crmlist.classList.remove('chat-minimizer');
             crmlist.classList.add('chat-maximizer');
         }
-        
+
         if (crmform) {
             crmform.classList.remove('chat-minimizer');
             crmform.classList.add('chat-maximizer');
@@ -246,11 +246,11 @@
                                 {{ message.text }}
                             </p>
                             <p v-if="message.type == 'audio'" class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block">
-                                <AudioPlayer :audioSrc="message.text" :position="'right'" /> 
+                                <AudioPlayer :audioSrc="message.text" :position="'right'" />
                             </p>
                             <p v-if="message.type == 'file'" class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block">
-                                <FileDownload 
-                                    :fileDate="message.text" 
+                                <FileDownload
+                                    :fileDate="message.text"
                                     :position="'right'"
                                 />
                             </p>
@@ -260,11 +260,11 @@
                                 {{ message.text }}
                             </p>
                             <p v-if="message.type == 'audio'" class="bg-gray-200 text-gray-700 rounded-lg rounded-tl-none py-2 px-4 inline-block">
-                                <AudioPlayer :audioSrc="message.text" :position="'left'" /> 
+                                <AudioPlayer :audioSrc="message.text" :position="'left'" />
                             </p>
                             <p v-if="message.type == 'file'" class="bg-gray-200 text-gray-700 rounded-lg rounded-tl-none py-2 px-4 inline-block">
-                                <FileDownload 
-                                    :fileDate="message.text" 
+                                <FileDownload
+                                    :fileDate="message.text"
                                     :position="'left'"
                                 />
                             </p>
@@ -294,7 +294,7 @@
                 <div class="p-4 border-t flex">
                     <input v-model="privateChatText" id="user-input" type="text" placeholder="Escribe un mensaje" class="w-full px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <button @click="sendMessageChatBox" type="button" id="send-button" class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 transition duration-300">
-                    <icon-send /> 
+                    <icon-send />
                     </button>
                 </div>
             </div>

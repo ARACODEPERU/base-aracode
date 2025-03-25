@@ -48,7 +48,8 @@ class CompanyController extends Controller
                 'representative'    => $request->get('representative'),
                 'email'             => $request->get('email'),
                 'mode'              => $request->get('mode'),
-                'ubigeo'            => $request->get('ubigeo')
+                'ubigeo'            => $request->get('ubigeo'),
+                'withdrawal_account_number' => $request->get('withdrawal_account_number')
             ]
         );
 

@@ -396,37 +396,39 @@ const addBrand = () => {
                     </label>
                     <div v-for="(item, index) in form.sizes" v-bind:key="index">
                         <table style="width: 100%;">
-                            <tr>
-                                <td style="padding: 4px;">
-                                    <div class="col-span-3 sm:col-span-2">
-                                        <InputLabel value="Descripcion" />
-                                        <TextInput
-                                            v-model="item.size"
-                                            type="text"
-                                            class="block w-full mt-1"
-                                            autofocus
-                                        />
-                                        <InputError :message="form.errors[`sizes.${index}.size`]" class="mt-2" />
-                                    </div>
-                                </td>
-                                <td style="padding: 4px;">
-                                    <div class="col-span-3 sm:col-span-2">
-                                        <InputLabel value="Cantidad" />
-                                        <TextInput
-                                            v-model="item.quantity"
-                                            type="number"
-                                            class="block w-full mt-1"
-                                            autofocus
-                                        />
-                                        <InputError :message="form.errors[`sizes.${index}.quantity`]" class="mt-2" />
-                                    </div>
-                                </td>
-                                <td style="padding: 4px;" valign="bottom">
-                                    <button @click="removeSize(index)" type="button" class="px-2 py-1 inline-block rounded-full bg-blue-600 text-white leading-normal uppercase shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
-                                        <font-awesome-icon :icon="faTrashAlt" />
-                                    </button>
-                                </td>
-                            </tr>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 4px;">
+                                        <div class="col-span-3 sm:col-span-2">
+                                            <InputLabel value="Descripcion" />
+                                            <TextInput
+                                                v-model="item.size"
+                                                type="text"
+                                                class="block w-full mt-1"
+                                                autofocus
+                                            />
+                                            <InputError :message="form.errors[`sizes.${index}.size`]" class="mt-2" />
+                                        </div>
+                                    </td>
+                                    <td style="padding: 4px;">
+                                        <div class="col-span-3 sm:col-span-2">
+                                            <InputLabel value="Cantidad" />
+                                            <TextInput
+                                                v-model="item.quantity"
+                                                type="number"
+                                                class="block w-full mt-1"
+                                                autofocus
+                                            />
+                                            <InputError :message="form.errors[`sizes.${index}.quantity`]" class="mt-2" />
+                                        </div>
+                                    </td>
+                                    <td style="padding: 4px;" valign="bottom">
+                                        <button @click="removeSize(index)" type="button" class="px-2 py-1 inline-block rounded-full bg-blue-600 text-white leading-normal uppercase shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
+                                            <font-awesome-icon :icon="faTrashAlt" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>

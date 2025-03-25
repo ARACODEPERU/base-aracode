@@ -57,7 +57,9 @@ class SaleDocument extends Model
         'reason_cancellation',
         'user_id',
         'additional_description',
-        'overall_total'
+        'overall_total',
+        'document_id',
+        'note_type_operation_id'
     ];
 
     public function items(): HasMany

@@ -19,6 +19,7 @@ use Modules\Sales\Http\Controllers\ProductController;
 use Modules\Sales\Http\Controllers\ProviderController;
 use Modules\Sales\Http\Controllers\ReportController;
 use Modules\Sales\Http\Controllers\SaleController;
+use Modules\Sales\Http\Controllers\SaleCreditNotesController;
 use Modules\Sales\Http\Controllers\SaleDocumentController;
 use Modules\Sales\Http\Controllers\SaleLowCommunicationController;
 use Modules\Sales\Http\Controllers\SalePhysicalDocumentController;
@@ -133,7 +134,12 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::post('lowcommunication/store', [SaleLowCommunicationController::class, 'store'])->name('low_communication_store');
     Route::get('lowcommunication/check/{id}/{ticket}', [SaleLowCommunicationController::class, 'check'])->name('low_communication_check');
     Route::get('lowcommunication/destroy/{id}', [SaleLowCommunicationController::class, 'destroy'])->name('low_communication_destroy');
-
+    ////rutas de notas de credito
+    Route::get('creditnote/list', [SaleCreditNotesController::class, 'index'])->name('sale_credit_notes_list');
+    Route::get('creditnote/table', [SaleCreditNotesController::class, 'tableDocument'])->name('sale_credit_notes_table');
+    Route::get('creditnote/create', [SaleCreditNotesController::class, 'create'])->name('sale_credit_notes_create');
+    Route::post('creditnote/search/invoice', [SaleCreditNotesController::class, 'searchInvoice'])->name('sale_credit_notes_search_invoice');
+    Route::post('creditnote/store', [SaleCreditNotesController::class, 'validateDocument'])->name('sale_all_notes_store');
 
     ///////////nuevo cambios en productos
     Route::middleware(['middleware' => 'permission:sale_categorias'])

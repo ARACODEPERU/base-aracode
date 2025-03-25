@@ -30,8 +30,8 @@ DataTable.use(DataTablesCore);
         { data: null, render: '#status', title: 'Estado' },
     ];
 
-    const options = { 
-        responsive: true, 
+    const options = {
+        responsive: true,
         language: es_PE,
         order: [[3, 'desc']]
     }
@@ -86,7 +86,6 @@ DataTable.use(DataTablesCore);
                 refreshTable();
             }
         });
-
     };
 
     const showMessage = (msg = "", type = "success") => {
@@ -141,8 +140,8 @@ DataTable.use(DataTablesCore);
                 <DataTable ref="odontologyTable" :options="options" :ajax="route('odontology_attention_table')" :columns="columns">
                     <template #action="props">
                         <div class="flex gap-1 items-center justify-center">
-                            <Link :href="route('odontology_attention_edit',props.rowData.id)" 
-                                v-tippy="{ content: 'Editar', placement: 'bottom' }" 
+                            <Link :href="route('odontology_attention_edit',props.rowData.id)"
+                                v-tippy="{ content: 'Editar', placement: 'bottom' }"
                                 type="button" class="btn btn-sm btn-outline-primary" @click="editAttention(props.rowData.id)">
                                 <font-awesome-icon  :icon="faPencil"  />
                             </Link>

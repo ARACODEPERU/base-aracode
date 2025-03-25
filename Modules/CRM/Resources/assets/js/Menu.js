@@ -1,7 +1,7 @@
-import { 
-    faGear, 
-    faUserGroup, 
-    faComments, 
+import {
+    faGear,
+    faUserGroup,
+    faComments,
     faEnvelopesBulk ,
     faBuildingUser
 } from "@fortawesome/free-solid-svg-icons";

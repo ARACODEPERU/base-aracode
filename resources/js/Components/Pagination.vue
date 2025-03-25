@@ -95,10 +95,10 @@
                                 "
                                 >
                                     <template v-if="link.label.includes('Next')" >
-                                        <font-awesome-icon :icon="faAngleRight"  class="w-2 h-5" />
+                                        <font-awesome-icon :icon="faAngleRight"  class="w-2 h-4" />
                                     </template>
                                     <template v-else>
-                                        {{ link.label }}
+                                        <span v-html="link.label"></span>
                                     </template>
                                 </button>
                             </li>
@@ -123,14 +123,14 @@
                                         :aria-label="`ir a la página ${link.label}`"
                                     >
                                         <template v-if="link.label.includes('Next')" >
-                                            <font-awesome-icon :icon="faAngleRight"  class="w-2 h-5" />
+                                            <font-awesome-icon :icon="faAngleRight"  class="w-2 h-4" />
                                         </template>
                                         <template v-else>
-                                            {{ link.label }}
+                                            <span v-html="link.label"></span>
                                         </template>
                                 </Link>
                             </li>
-                            
+
                         </template>
                     </template>
                     <li v-if="data.current_page < data.last_page">

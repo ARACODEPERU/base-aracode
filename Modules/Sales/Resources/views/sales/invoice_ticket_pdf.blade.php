@@ -182,6 +182,18 @@
         .container {
             padding: 0px 4px 0px 4px
         }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 50px;
+            font-weight: bold;
+            color: rgba(255, 0, 0, 0.2);
+            /* Rojo con opacidad */
+            white-space: nowrap;
+        }
     </style>
 </head>
 @php
@@ -196,7 +208,9 @@
 @endphp
 
 <body>
-
+    @if ($status == 3)
+        <div class="watermark">ANULADO</div>
+    @endif
     <div class="container">
         <div class="receipt">
             <div style="margin-top:36px;width:100%;text-align: center">

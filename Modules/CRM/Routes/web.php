@@ -5,6 +5,7 @@ use Modules\CRM\Http\Controllers\CrmChatController;
 use Modules\CRM\Http\Controllers\CrmContactsController;
 use Modules\CRM\Http\Controllers\CRMController;
 use Modules\CRM\Http\Controllers\CrmConversationController;
+use Modules\CRM\Http\Controllers\CrmIaController;
 use Modules\CRM\Http\Controllers\CrmMessagesController;
 use Modules\CRM\Http\Controllers\CrmMailboxController;
 
@@ -126,4 +127,8 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_empresas_agregar_empleados'])
         ->post('employees/list/search', [CrmContactsController::class, 'companiesEmployeesAdd'])
         ->name('crm_companies_employees_add');
+
+    Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
+        ->get('application-ai-prompt', [CrmIaController::class, 'clientPromptIA'])
+        ->name('crm_application_ai_prompt');
 });

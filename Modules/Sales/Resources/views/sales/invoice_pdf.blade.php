@@ -208,7 +208,7 @@
         body {
             line-height: 1.42857143;
             font-family: "open sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            background-color: #2f4050;
+
             font-size: 13px;
             color: #676a6c;
             overflow-x: hidden
@@ -232,6 +232,18 @@
         .table-valores-totales tbody>tr>td {
             border-top: 0 none !important
         }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 150px;
+            font-weight: bold;
+            color: rgba(255, 0, 0, 0.2);
+            /* Rojo con opacidad */
+            white-space: nowrap;
+        }
     </style>
 </head>
 @php
@@ -245,7 +257,10 @@
 
 @endphp
 
-<body class="white-bg">
+<body>
+    @if ($status == 3)
+        <div class="watermark">ANULADO</div>
+    @endif
     <table width="100%">
         <tbody>
             <tr>

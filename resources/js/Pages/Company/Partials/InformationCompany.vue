@@ -69,7 +69,8 @@ const form = useForm({
     isotipo_dark: null,
     isotipo_dark_old:(props.company.isotipo_dark == '/img/isotipo_azul.jpeg' ? props.company.isotipo_dark : getBasePath(props.company.isotipo_dark)),
     social_networks: props.company.social_networks ? JSON.parse(props.company.social_networks) : null,
-    mode: props.company.mode
+    mode: props.company.mode,
+    withdrawal_account_number: props.company.withdrawal_account_number
 });
 
 const createOrUpdateCompany = () => {
@@ -130,14 +131,14 @@ const options = ref([]);
 const ubigeoSelected = ref([]);
 
 onMounted(() => {
-    options.value = props.ubigeo.map((dep) => ({ 
-        value: dep.id, 
+    options.value = props.ubigeo.map((dep) => ({
+        value: dep.id,
         label: dep.name,
-        children: dep.provinces.map(prov => ({ 
-            value: prov.id, 
+        children: dep.provinces.map(prov => ({
+            value: prov.id,
             label: prov.name,
-            children: prov.districts.map(dist => ({ 
-                value: dist.id, 
+            children: prov.districts.map(dist => ({
+                value: dist.id,
                 label: dist.name
             }))
         }))
@@ -146,7 +147,7 @@ onMounted(() => {
         let dep = props.company.district.province.department.name;
         let pro = props.company.district.province.name;
         let dis = props.company.district.name;
-        ubigeoSelected.value = [dep,pro,dis]; 
+        ubigeoSelected.value = [dep,pro,dis];
     }
 
     if(!form.social_networks){
@@ -242,7 +243,7 @@ const openSwal2Certificate = () => {
         allowOutsideClick: () => !Swal.isLoading()
     }).then((result) => {
         if (result.isConfirmed) {
-            form.certificate_sunat = res.data.certificate.file_name;
+            form.certificate_sunat = result.data.certificate.file_name;
             showMessage('El archivo .pem se genero correctamente');
         }
     });
@@ -386,6 +387,16 @@ const uploadImages = () => {
                                         class="block w-full mt-1"
                                     />
                                     <InputError :message="form.errors.tradename" class="mt-2" />
+                                </div>
+                                <div>
+                                    <label for="withdrawal_account_number" >N° Cuenta de detracción*</label>
+                                    <TextInput
+                                        id="withdrawal_account_number"
+                                        v-model="form.withdrawal_account_number"
+                                        type="text"
+                                        class="block w-full mt-1"
+                                    />
+                                    <InputError :message="form.errors.withdrawal_account_number" class="mt-2" />
                                 </div>
                                 <div>
                                     <label for="fiscal_address" >Ciudad*</label>
