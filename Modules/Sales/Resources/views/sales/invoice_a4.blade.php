@@ -1108,15 +1108,16 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                     </p>
                 @endif
 
-                <footer class="fixed bottom-0 left-0 bg-slate-100 w-full text-neutral-600 text-center text-xs py-3">
+                <div class="fixed bottom-0 left-0 bg-slate-100 w-full text-neutral-600 text-center text-xs py-3">
                     {{ $document->getCompany()->getNombreComercial() }}
                     <span class="text-slate-300 px-2">|</span>
                     {{ $document->getCompany()->getEmail() }}
                     <span class="text-slate-300 px-2">|</span>
                     {{ $document->getCompany()->getTelephone() }}
-                </footer>
+                </div>
             </div>
         </div>
 </body>
+
 
 </html>

@@ -21,13 +21,13 @@
       <div class="max-w-[85rem] mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-40">
         <!-- Announcement Banner -->
         <div class="flex justify-center">
-          <a class="inline-flex items-center gap-x-2 bg-white border border-gray-200 text-xs text-gray-600 p-2 px-3 rounded-full transition hover:border-gray-300 focus:outline-none focus:border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:focus:border-neutral-600" href="#">
-            Explora nuestra pagina web
-            <a :href="route('index_main')" class="flex items-center gap-x-1">
-              <span class="border-s border-gray-200 text-blue-600 ps-2 dark:text-blue-500 dark:border-neutral-700">Está bien</span>
-              <svg class="shrink-0 size-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </a>
-          </a>
+            <div class="inline-flex items-center gap-x-2 bg-white border border-gray-200 text-xs text-gray-600 p-2 px-3 rounded-full transition hover:border-gray-300 focus:outline-none focus:border-gray-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:focus:border-neutral-600" href="#">
+                Explora nuestra pagina web
+                <a :href="route('index_main')" class="flex items-center gap-x-1">
+                    <span class="border-s border-gray-200 text-blue-600 ps-2 dark:text-blue-500 dark:border-neutral-700">Está bien</span>
+                    <svg class="shrink-0 size-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </a>
+            </div>
         </div>
         <!-- End Announcement Banner -->
 
@@ -59,5 +59,5 @@
     </div>
     <!-- End Hero -->
     <!-- Pricing -->
-    
+
 </template>
