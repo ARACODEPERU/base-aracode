@@ -47,6 +47,7 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'sale_tienda_agregar_vendedor']));
         array_push($permissions, Permission::create(['name' => 'invo_dashboard']));
         array_push($permissions, Permission::create(['name' => 'invo_documento']));
+        array_push($permissions, Permission::create(['name' => 'invo_documento_nuevo']));
         array_push($permissions, Permission::create(['name' => 'invo_documento_lista']));
         array_push($permissions, Permission::create(['name' => 'invo_documento_envio_sunat']));
         array_push($permissions, Permission::create(['name' => 'invo_resumenes_lista']));
