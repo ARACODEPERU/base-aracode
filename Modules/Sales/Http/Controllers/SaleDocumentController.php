@@ -75,7 +75,7 @@ class SaleDocumentController extends Controller
         $sales = (new Sale())->newQuery();
 
         //$isAdmin = Auth::user()->hasRole('admin');
-        $hasFullAccess = Auth::user()->hasAnyRole(['admin', 'contabilidad']);
+        $hasFullAccess = Auth::user()->hasAnyRole(['admin', 'Contabilidad']);
 
         $sales = $sales->join('people', 'client_id', 'people.id')
             ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
