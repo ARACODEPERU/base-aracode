@@ -49,8 +49,8 @@ const props = defineProps({
                         <MinimumStockNotice v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
                         <StatusProducts v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
                         <div class="space-y-6">
-                            <TotalBalance v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
-                            <SalesSummary v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" />
+                            <TotalBalance v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador' || role.name == 'Contabilidad'" />
+                            <SalesSummary v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador' || role.name == 'Contabilidad'" />
                         </div>
                     </template>
                    <!--modulo academico -->
