@@ -6,7 +6,7 @@
         Dialog,
         DialogPanel,
         DialogOverlay,
-    } from "@headlessui/vue";  
+    } from "@headlessui/vue";
     import IconX from "@/Components/vristo/icon/icon-x.vue";
 
     const props = defineProps({
@@ -56,7 +56,7 @@
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
                           <slot name="title" />
                         </h3>
-                        <div class="mt-2">
+                        <div class="text-sm">
                           <slot name="message" />
                         </div>
                       </div>
@@ -77,6 +77,5 @@
         </Dialog>
     </TransitionRoot>
 </template>
-  
 
-  
+

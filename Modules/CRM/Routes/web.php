@@ -50,7 +50,7 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->name('crm_chat_conveersation_status');
 
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
+    Route::middleware(['middleware' => 'permission:crm_chat_messages'])
         ->post('conversations/messages', [CrmMessagesController::class, 'sendMessage'])
         ->name('crm_send_message');
 
@@ -58,7 +58,7 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->post('conversations/email/messages', [CrmMessagesController::class, 'sendMessageEmail'])
         ->name('crm_send_message_email');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
+    Route::middleware(['middleware' => 'permission:crm_chat_messages'])
         ->post('conversations/messages/list', [CrmMessagesController::class, 'getMessages'])
         ->name('crm_list_message');
 

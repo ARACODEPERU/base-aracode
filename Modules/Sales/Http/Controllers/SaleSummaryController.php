@@ -114,7 +114,8 @@ class SaleSummaryController extends Controller
             DB::raw('(SELECT description FROM sale_document_types WHERE sunat_id=invoice_type_doc) AS type_description')
         )
             ->whereDate('invoice_broadcast_date', $date)
-            ->whereIn('invoice_type_doc', ['03', '07'])
+            //->whereIn('invoice_type_doc', ['03', '07'])
+            ->whereIn('invoice_type_doc', ['03'])
             ->where('invoice_status', 'Pendiente')
             ->get();
 
@@ -152,7 +153,7 @@ class SaleSummaryController extends Controller
     {
         try {
             $summary = SaleSummary::find($id);
-            $documents = SaleDocument::join('sale_summary_details', 'document_id', 'sale_documents.id')
+            $documents = SaleDocument::join('sale_summary_details', 'sale_summary_details.document_id', 'sale_documents.id')
                 ->select('sale_documents.*')
                 ->where('summary_id', $summary->id)
                 ->get();

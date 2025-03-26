@@ -41,6 +41,7 @@ const getBasePath = (path) => {
 };
 
 const form = useForm({
+    id: props.company.id,
     ruc: props.company.ruc,
     name: props.company.name,
     business_name: props.company.business_name,

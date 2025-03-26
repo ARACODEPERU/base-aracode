@@ -37,8 +37,9 @@ class CrmChatController extends Controller
 
 
         if (request()->has('search')) {
-            $persons->where('full_name', 'like', '%' . request()->input('search') . '%');
+            $persons->where('people.full_name', 'like', '%' . request()->input('search') . '%');
         }
+
         $persons = $persons->paginate(5);
 
         // Modificar cada registro antes de devolverlo
@@ -91,7 +92,6 @@ class CrmChatController extends Controller
 
         // Reemplazar la colección de personas en la paginación con la colección formateada
         $persons->setCollection($formattedPersons);
-
         return response()->json($persons);
     }
 }

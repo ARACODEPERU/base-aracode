@@ -23,7 +23,8 @@ class CrmMessage extends Model
         'attachments',
         'email_from',
         'email_for',
-        'status'
+        'status',
+        'answer_ai'
     ];
 
     public function conversation()

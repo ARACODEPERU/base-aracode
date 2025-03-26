@@ -187,15 +187,6 @@ final class Util
             ]);
 
             $pdf->setPaper('a4', 'portrait');
-
-            // $html = view('sales::sales.invoice_a4', [
-            //     'document' => $document,
-            //     'params' => $params,
-            //     'qr_path' => $qr_path,
-            //     'status' => $status
-            // ])->render();
-
-            // dd($html);
         } else if ($format == 't80') {
             $pdf = Pdf::loadView('sales::sales.invoice_ticket_pdf', [
                 'document' => $document,
@@ -335,15 +326,6 @@ final class Util
      */
     private static function getParametersPdf($company, $seller = null): array
     {
-        $img = null;
-
-        if ($company->logo == '/img/logo176x32.png') {
-            $img = public_path($company->logo);
-        } else {
-            $img = public_path('storage/' . $company->logo);
-        }
-        //dd($img);
-        $logo = file_get_contents($img);
 
         $seller_name = 'ARACODE SELLER';
 
@@ -353,7 +335,7 @@ final class Util
 
         return [
             'system' => [
-                'logo' => $logo,
+                'logo' => null,
                 'hash' => ''
             ],
             'user' => [

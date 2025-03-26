@@ -74,7 +74,8 @@ class SaleDocumentController extends Controller
     {
         $sales = (new Sale())->newQuery();
 
-        $isAdmin = Auth::user()->hasRole('admin');
+        //$isAdmin = Auth::user()->hasRole('admin');
+        $hasFullAccess = Auth::user()->hasAnyRole(['admin', 'contabilidad']);
 
         $sales = $sales->join('people', 'client_id', 'people.id')
             ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
@@ -111,7 +112,7 @@ class SaleDocumentController extends Controller
                 'sale_documents.reason_cancellation'
             )
             ->whereIn('series.document_type_id', [1, 2])
-            ->when(!$isAdmin, function ($q) {
+            ->when(!$hasFullAccess, function ($q) {
                 return $q->where('sales.user_id', Auth::id());
             })
             ->with('documents.items')

@@ -373,7 +373,7 @@
                         </Popper>
                     </div> -->
                     <div v-can="'crm_chat_notifications'" class="dropdown shrink-0">
-                        <!-- <ChatNotifications /> -->
+                        <ChatNotifications />
                     </div>
                     <ShoppingCartMenu />
                     <div class="dropdown shrink-0">

@@ -28,17 +28,23 @@
     import AudioPlay from '@/Components/AudioPlayer.vue';
     import FileDownload from './Partials/FileDownload.vue';
     import Swal from 'sweetalert2';
+    import ModalLargeX from '@/Components/ModalLargeX.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import { message } from 'ant-design-vue';
 
     const data = reactive({
         posts: []
     });
+
+    const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
+    const channelListenChat = "message-notification-" + appCodeUnique;
 
     const loadingContacts = ref(false);
 
     const fetchPosts = async () => {
         try {
             axios.get(route('crm_chat_contacts_data')).then( (response) => {
-                data.posts = response.data; 
+                data.posts = response.data;
             });
         } catch (error) {
             console.log(error);
@@ -52,7 +58,7 @@
                     data.posts.data.push(item);
                 });
             });
-            
+
         } catch (error) {
             console.log(error);
         }
@@ -67,7 +73,7 @@
 
     onBeforeMount(() => fetchPosts());
 
-
+    const displayModalAi = ref(false);
     const store = useAppStore();
     const isShowUserChat = ref(false);
     const isShowChatMenu = ref(false);
@@ -81,7 +87,8 @@
     const searchUsers = async () => {
         try {
             const response = await axios.get(`${route('crm_chat_contacts_data')}?search=${searchUser.value}`);
-            data.posts = response.data; 
+            console.log(response);
+            data.posts = response.data;
         } catch (error) {
             console.log(error);
         }
@@ -91,13 +98,13 @@
         isShowLoadingMessages.value = true;
         data.posts.data[iidex].newMessage = false;
         // Cambia 'miDiv' por el ID de tu div
-        let myDiv = document.getElementById('header-total-news'); 
+        let myDiv = document.getElementById('header-total-news');
 
         // Verifica si el div existe
         if (myDiv) {
             myDiv.style.display = 'none'; // Oculta el div
         }
-        
+
         try {
             axios.post(route('crm_list_message'),{
                 conversationId: user.conversationId,
@@ -163,7 +170,7 @@
     const sendAudioMessage = (audio) => {
         if (audio.file_name.trim()) {
             isShowLoadingSend.value = true;
-            
+
             const msg = {
                 fromUserId: selectedUser.value.userId,
                 toUserId: 0,
@@ -207,7 +214,7 @@
     const authUser = usePage().props.auth.user;
 
     onMounted(() => {
-        window.socketIo.on('message-notification', (result) => {
+        window.socketIo.on(channelListenChat, (result) => {
             let participants = result.data.participants;
             let conversationId = result.data.message.conversation_id;
 
@@ -219,7 +226,7 @@
                 type: result.data.message.type,
                 id: result.data.message.id
             };
-            
+
             participants.forEach(item => {
                 if(authUser.id == item){
                     fetchPosts()
@@ -229,7 +236,7 @@
                             scrollToBottom();
                         }
                     }
-                    
+
                 }
             });
         });
@@ -253,6 +260,20 @@
             padding: '10px 20px',
         });
     };
+
+    const formIaconsulta = useForm({
+        messageText: null,
+        instructions: null
+    });
+    const openModalQuestionAI = (item) => {
+        formIaconsulta.messageText = item.content
+        displayModalAi.value = true;
+    };
+
+    const closeModalQuestionAI = () => {
+        displayModalAi.value = false;
+    };
+
 </script>
 <template>
     <AppLayout title="Chat">
@@ -262,7 +283,7 @@
             </li>
         </Navigation>
         <div class="mt-5">
-            
+
             <div class="flex gap-5 relative sm:h-[calc(100vh_-_150px)] h-full sm:min-h-0" :class="{ 'min-h-[999px]': isShowChatMenu }">
                 <div
                     class="panel p-4 flex-none max-w-xs w-full absolute xl:relative z-10 space-y-4 h-full hidden xl:block overflow-hidden"
@@ -383,20 +404,20 @@
                                                         alt="ava"
                                                     />
                                                     <img v-else :src="'https://ui-avatars.com/api/?name='+person.full_name+'&size=54&rounded=true'" :alt="person.full_name" class="rounded-full h-12 w-12 object-cover" />
-                                                    
+
                                                     <template v-if="person.active">
                                                         <div class="absolute bottom-0 ltr:right-0 rtl:left-0">
                                                             <div class="w-4 h-4 bg-success rounded-full"></div>
                                                         </div>
                                                     </template>
                                                 </div>
-                                                
+
                                                 <div class="mx-3 ltr:text-left rtl:text-right">
-                                                    <p 
+                                                    <p
                                                         :class="person.newMessage == true ? 'text-gray-900 font-semibold dark:text-white' : 'text-gray-700 dark:text-white-dark'"
                                                         class="mb-1 "
                                                     >{{ person.full_name }} </p>
-                                                    <p 
+                                                    <p
                                                         :class="person.newMessage == true ? 'text-gray-900 dark:text-white' : 'text-white-dark'"
                                                         class="text-xs truncate max-w-[185px]"
                                                     >{{ person.preview }}</p>
@@ -689,7 +710,7 @@
                                                     </div>
                                                     <div class="space-y-2">
                                                         <div class="flex items-center gap-3">
-                                                            
+
                                                                 <div class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10"
                                                                     :class="message.fromUserId == selectedUser.userId
                                                                             ? 'ltr:rounded-br-none rtl:rounded-bl-none !bg-primary text-white'
@@ -703,8 +724,8 @@
                                                                         <AudioPlay :audioSrc="message.text" :position="message.fromUserId == selectedUser.userId ? 'right' : 'left'" />
                                                                     </template>
                                                                     <template v-if="message.type == 'file'">
-                                                                        <FileDownload 
-                                                                            :fileDate="message.text" 
+                                                                        <FileDownload
+                                                                            :fileDate="message.text"
                                                                             :position="message.fromUserId == selectedUser.userId
                                                                                     ? 'right'
                                                                                     : 'left'
@@ -712,11 +733,14 @@
                                                                         />
                                                                     </template>
                                                                 </div>
-                                                           
-                                                            
-                                                            
+
+
+
                                                             <div :class="{ hidden: selectedUser.userId === message.fromUserId }">
-                                                                <icon-mood-smile class="hover:text-primary" />
+                                                                <!-- <icon-mood-smile class="hover:text-primary" /> -->
+                                                                <svg @click="openModalQuestionAI(message)" class="hover:text-primary w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                                    <path fill="currentColor" d="M156.6 384.9L125.7 354c-8.5-8.5-11.5-20.8-7.7-32.2c3-8.9 7-20.5 11.8-33.8L24 288c-8.6 0-16.6-4.6-20.9-12.1s-4.2-16.7 .2-24.1l52.5-88.5c13-21.9 36.5-35.3 61.9-35.3l82.3 0c2.4-4 4.8-7.7 7.2-11.3C289.1-4.1 411.1-8.1 483.9 5.3c11.6 2.1 20.6 11.2 22.8 22.8c13.4 72.9 9.3 194.8-111.4 276.7c-3.5 2.4-7.3 4.8-11.3 7.2l0 82.3c0 25.4-13.4 49-35.3 61.9l-88.5 52.5c-7.4 4.4-16.6 4.5-24.1 .2s-12.1-12.2-12.1-20.9l0-107.2c-14.1 4.9-26.4 8.9-35.7 11.9c-11.2 3.6-23.4 .5-31.8-7.8zM384 168a40 40 0 1 0 0-80 40 40 0 1 0 0 80z"/>
+                                                                </svg>
                                                             </div>
                                                         </div>
                                                         <div
@@ -733,7 +757,7 @@
                                 </perfect-scrollbar>
                             </template>
                             <div class="p-4 absolute bottom-0 left-0 w-full">
-                                
+
                                 <div class="sm:flex w-full space-x-3 rtl:space-x-reverse items-center">
                                     <div class="relative flex-1">
                                         <input
@@ -771,5 +795,30 @@
                 </div>
             </div>
         </div>
+        <ModalLargeX :show="displayModalAi" :onClose="closeModalQuestionAI" :icon="'/img/ai.png'">
+            <template #title>Inteligencia Artificial</template>
+            <template #message>Mejora tu respuesta</template>
+            <template #content>
+                <div>
+                    <div id="alert-additional-content-1" class="p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
+                        <div class="flex items-center">
+                            <svg class="shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                            </svg>
+                            <span class="sr-only">Info</span>
+                            <h3 class="text-lg font-medium">Mensaje del studiante</h3>
+                        </div>
+                        <div class="mt-2 mb-4 text-sm" v-html="formIaconsulta.messageText"></div>
+                    </div>
+                </div>
+                <div>
+                    <label>Instrucciones</label>
+                    <textarea v-model="formIaconsulta.instructions" class="form-textarea" rows="8"></textarea>
+                </div>
+            </template>
+            <template #buttons>
+                <PrimaryButton>Consultar</PrimaryButton>
+            </template>
+        </ModalLargeX>
     </AppLayout>
 </template>

@@ -24,14 +24,15 @@ class SendMessage implements ShouldBroadcastNow
      *
      * @return void
      */
-    public function __construct($participants, $message, $ofUserId)
+    public function __construct($participants, $message, $ofUserId, $conversationId)
     {
         $this->participants = $participants;
         $this->message  = $message;
         $this->ofUserId  = $ofUserId;
 
         $appCodeUnique = env('VITE_APP_CODE', 'ARACODE');
-        $this->channelListenCrm = "message-notification-" . $appCodeUnique . '-' + Auth::id();
+
+        $this->channelListenCrm = "message-notification-" . $appCodeUnique;
     }
     /**
      * Get the channels the event should broadcast on.

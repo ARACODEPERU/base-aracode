@@ -84,7 +84,7 @@ class CrmMessagesController extends Controller
             ]);
 
             // Devolver la conversación con los mensajes
-            broadcast(new SendMessage($participants, $message, ['ofUserId' => $personId]));
+            broadcast(new SendMessage($participants, $message, ['ofUserId' => $personId], $conversationId));
 
             CrmConversation::find($conversationId)->update([
                 'new_message' => true,
