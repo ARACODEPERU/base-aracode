@@ -6,7 +6,7 @@
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
     import AudioPlayer from '@/Components/AudioPlayer.vue';
-    import { usePage } from '@inertiajs/vue3';
+    import { usePage, router, Link } from '@inertiajs/vue3';
     import FileDownload from '../Pages/Chat/Partials/FileDownload.vue';
     import Swal from 'sweetalert2';
 
@@ -203,13 +203,24 @@
             crmform.classList.add('chat-maximizer');
         }
     }
+
+    const goMessengerMode = () => {
+        router.visit(route('crm_application_ai_prompt'), {
+            method: 'get',
+            replace: false,
+            data: {conv: privateChat.value.conversation},
+            onFinish: () => {
+                hideChatBox();
+            },
+        });
+    }
 </script>
 <template>
     <div v-if="storeChatBox.showDiv" id="crm-chat-container" class="fixed bottom-0 right-4 w-96" style="z-index: 9999;">
         <form @submit.prevent="sendMessageChatBox" class="bg-white shadow-md rounded-t-lg max-w-lg w-full">
             <div class="p-2 border-b bg-blue-500 text-white rounded-t-lg">
                 <div class="flex justify-between items-center w-full">
-                    <div class="flex items-center space-x-2 rtl:space-x-reverse">
+                    <div @click="goMessengerMode" class="flex items-center cursor-pointer space-x-2 rtl:space-x-reverse">
                         <div class="relative flex-none">
                             <img v-if="privateChat.avatar" :src="getImage(privateChat.avatar)" class="rounded-full w-6 h-6 sm:h-8 sm:w-8 object-cover" />
                             <img v-else :src="`https://ui-avatars.com/api/?name=${privateChat.full_name}&size=150&rounded=true`" class="rounded-full w-6 h-6 sm:h-8 sm:w-8 object-cover" />
@@ -259,9 +270,9 @@
                             </p>
                         </div>
                         <div v-else class="mb-2">
-                            <p v-if="message.type == 'text'" class="bg-gray-200 text-gray-700 rounded-lg rounded-tl-none py-2 px-4 inline-block">
-                                {{ message.text }}
-                            </p>
+                            <template v-if="message.type == 'text'">
+                                <div v-html="message.text" class="bg-gray-200 text-gray-700 rounded-lg rounded-tl-none py-2 px-4 inline-block"></div>
+                            </template>
                             <p v-if="message.type == 'audio'" class="bg-gray-200 text-gray-700 rounded-lg rounded-tl-none py-2 px-4 inline-block">
                                 <AudioPlayer :audioSrc="message.text" :position="'left'" />
                             </p>

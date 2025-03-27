@@ -129,6 +129,6 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->name('crm_companies_employees_add');
 
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
-        ->get('application-ai-prompt', [CrmIaController::class, 'clientPromptIA'])
+        ->get('application-ai-prompt', [CrmIaController::class, 'clientDashboard'])
         ->name('crm_application_ai_prompt');
 });

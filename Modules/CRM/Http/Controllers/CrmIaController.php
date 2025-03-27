@@ -6,16 +6,33 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Modules\CRM\Entities\CrmMessage;
+use Modules\CRM\Entities\CrmParticipant;
 
 class CrmIaController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function clientPromptIA()
+    public function clientDashboard()
     {
-        return Inertia::render('CRM::IA/ClientPrompt');
+        $conversationId = request()->get('conv');
+        $participants = CrmParticipant::with('user')
+            ->where('conversation_id', $conversationId)
+            ->where('user_id', '<>', Auth::id())
+            ->get();
+
+        $messages = CrmMessage::where('conversation_id', $conversationId)
+            ->orderBy('id')
+            ->limit(200)
+            ->get();
+        //dd($messages);
+        return Inertia::render('CRM::Chat/studentDashboard', [
+            'messages' => $messages,
+            'participants' => $participants
+        ]);
     }
 
     public function send_prompt($user_id, $message, $archivo = null)

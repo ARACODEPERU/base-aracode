@@ -447,7 +447,7 @@ class SaleDocumentController extends Controller
                         'price' => $produc['unit_price'],
                         'discount' => $produc['discount'],
                         'quantity' => $produc['quantity'],
-                        'total' => round($unit_price * $item['quantity'], 2)
+                        'total' => round($unit_price * $produc['quantity'], 2)
                     ]);
 
                     if ($produc['is_product']) {

@@ -80,7 +80,8 @@ class CrmMessagesController extends Controller
                 'conversation_id' => $conversationId,
                 'person_id' => $personId,
                 'content' => htmlentities($request->get('text'), ENT_QUOTES, "UTF-8"),
-                'type' => $request->get('type')
+                'type' => $request->get('type'),
+                'answer_ai' => $request->has('answer_ai') ? $request->get('answer_ai') : false
             ]);
 
             // Devolver la conversación con los mensajes

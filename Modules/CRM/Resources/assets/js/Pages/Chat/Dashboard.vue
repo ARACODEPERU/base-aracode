@@ -29,8 +29,8 @@
     import FileDownload from './Partials/FileDownload.vue';
     import Swal from 'sweetalert2';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import { message } from 'ant-design-vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import { message } from 'ant-design-vue';
 
     const data = reactive({
         posts: []
@@ -263,17 +263,70 @@ import { message } from 'ant-design-vue';
 
     const formIaconsulta = useForm({
         messageText: null,
-        instructions: null
+        instructions: null,
+        csrfToken: null,
+        respond: null
     });
     const openModalQuestionAI = (item) => {
         formIaconsulta.messageText = item.content
+        formIaconsulta.instructions = item.content
         displayModalAi.value = true;
     };
 
     const closeModalQuestionAI = () => {
         displayModalAi.value = false;
+        formIaconsulta.reset();
     };
 
+
+    const sendPrompt = () => {
+        formIaconsulta.processing = true;
+        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/ai/basicquestion'; // Cambia por la URL de tu API
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        formIaconsulta.csrfToken = csrfToken;
+
+        axios.post(url,formIaconsulta,{
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            timeout: 0,
+        }).then((result) => {
+            console.log('array',result);
+            console.log('mensaje',result.data.responseText)
+            formIaconsulta.respond = result.data.responseText
+        }).finally(()=>{
+            formIaconsulta.processing = false;;
+        });
+    }
+
+    const sendMessageAi = () => {
+        if (formIaconsulta.respond.trim()) {
+            isShowLoadingSend.value = true;
+            const msg = {
+                fromUserId: selectedUser.value.userId,
+                toUserId: 0,
+                text: formIaconsulta.respond,
+                time: 'En este momento',
+                type: 'text',
+                id: null,
+                answer_ai: true
+            };
+            axios.post(route('crm_send_message'), msg).then((response) => {
+                return response.data;
+            }).then((res) => {
+                if(res.success){
+                    selectedUser.value.messages.push(msg);
+                    textMessage.value = '';
+                    scrollToBottom();
+                }else{
+                    showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
+                }
+                isShowLoadingSend.value = false;
+            }).finally(() => {
+                closeModalQuestionAI();
+            });
+        }
+    };
 </script>
 <template>
     <AppLayout title="Chat">
@@ -712,13 +765,10 @@ import { message } from 'ant-design-vue';
                                                         <div class="flex items-center gap-3">
 
                                                                 <div class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10"
-                                                                    :class="message.fromUserId == selectedUser.userId
-                                                                            ? 'ltr:rounded-br-none rtl:rounded-bl-none !bg-primary text-white'
-                                                                            : 'ltr:rounded-tl-none rtl:rounded-tr-none'
-                                                                    "
+                                                                    :class="message.fromUserId == selectedUser.userId ? 'ltr:rounded-br-none rtl:rounded-bl-none !bg-primary text-white': 'ltr:rounded-tl-none rtl:rounded-tr-none'"
                                                                 >
                                                                     <template v-if="message.type == 'text'">
-                                                                        {{ message.text }}
+                                                                        <div v-html="message.text"></div>
                                                                     </template>
                                                                     <template v-if="message.type == 'audio'">
                                                                         <AudioPlay :audioSrc="message.text" :position="message.fromUserId == selectedUser.userId ? 'right' : 'left'" />
@@ -726,10 +776,7 @@ import { message } from 'ant-design-vue';
                                                                     <template v-if="message.type == 'file'">
                                                                         <FileDownload
                                                                             :fileDate="message.text"
-                                                                            :position="message.fromUserId == selectedUser.userId
-                                                                                    ? 'right'
-                                                                                    : 'left'
-                                                                            "
+                                                                            :position="message.fromUserId == selectedUser.userId ? 'right' : 'left'"
                                                                         />
                                                                     </template>
                                                                 </div>
@@ -799,16 +846,23 @@ import { message } from 'ant-design-vue';
             <template #title>Inteligencia Artificial</template>
             <template #message>Mejora tu respuesta</template>
             <template #content>
-                <div>
-                    <div id="alert-additional-content-1" class="p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
-                        <div class="flex items-center">
-                            <svg class="shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+
+                <div v-if="formIaconsulta.respond" class="p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
+                    <div class="flex items-center">
+                        <svg class="shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                        </svg>
+                        <span class="sr-only">Info</span>
+                        <h3 class="text-lg font-medium">Respuesta IA</h3>
+                    </div>
+                    <div class="mt-2 mb-4 text-sm" v-html="formIaconsulta.respond"></div>
+                    <div class="flex">
+                        <button @click="sendMessageAi" type="button" class="text-white bg-blue-800 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-blue-200 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                <path fill="currentColor" d="M307 34.8c-11.5 5.1-19 16.6-19 29.2l0 64-112 0C78.8 128 0 206.8 0 304C0 417.3 81.5 467.9 100.2 478.1c2.5 1.4 5.3 1.9 8.1 1.9c10.9 0 19.7-8.9 19.7-19.7c0-7.5-4.3-14.4-9.8-19.5C108.8 431.9 96 414.4 96 384c0-53 43-96 96-96l96 0 0 64c0 12.6 7.4 24.1 19 29.2s25 3 34.4-5.4l160-144c6.7-6.1 10.6-14.7 10.6-23.8s-3.8-17.7-10.6-23.8l-160-144c-9.4-8.5-22.9-10.6-34.4-5.4z"/>
                             </svg>
-                            <span class="sr-only">Info</span>
-                            <h3 class="text-lg font-medium">Mensaje del studiante</h3>
-                        </div>
-                        <div class="mt-2 mb-4 text-sm" v-html="formIaconsulta.messageText"></div>
+                            Enviar al alumno
+                        </button>
                     </div>
                 </div>
                 <div>
@@ -817,7 +871,13 @@ import { message } from 'ant-design-vue';
                 </div>
             </template>
             <template #buttons>
-                <PrimaryButton>Consultar</PrimaryButton>
+                <PrimaryButton @click="sendPrompt" type="button" :class="{ 'opacity-25': formIaconsulta.processing }" :disabled="formIaconsulta.processing">
+                    <svg v-show="formIaconsulta.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                    </svg>
+                    Consultar
+                </PrimaryButton>
             </template>
         </ModalLargeX>
     </AppLayout>
