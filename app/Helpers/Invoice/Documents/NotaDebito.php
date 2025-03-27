@@ -55,7 +55,11 @@ class NotaDebito
                 $codeError = $cdr->getCode();
                 $messageError = $cdr->getDescription();
                 $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
-                $status = $cdr->getCode() == 0 ? 'Aceptada' : null;
+                if ($cdr->getCode() == 0) {
+                    $status = 'Aceptada';
+                } elseif ($cdr->getCode() == 2325) {
+                    $status = 'Pendiente';
+                }
                 $document->invoice_cdr = $this->util->writeCdr($note, $res->getCdrZip());
             } else {
                 $error = $res->getError();
