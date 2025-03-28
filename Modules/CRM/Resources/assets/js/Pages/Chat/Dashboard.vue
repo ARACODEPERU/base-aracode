@@ -243,7 +243,7 @@
     });
 
     onUnmounted(() => {
-        window.socketIo.off('message-notification'); // Dejar el canal cuando se desmonte el componente
+        window.socketIo.off(channelListenChat); // Dejar el canal cuando se desmonte el componente
     });
 
     const showMessage = (msg = '', type = 'success') => {

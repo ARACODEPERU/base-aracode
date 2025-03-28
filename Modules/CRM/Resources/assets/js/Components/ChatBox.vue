@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+    import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue';
     import { useSharedStore } from '../useSharedStore';
     import IconMaximizer from '@/Components/vristo/icon/icon-maximizer.vue';
     import IconMinimizer from '@/Components/vristo/icon/icon-minimizer.vue';
@@ -164,7 +164,7 @@
     });
 
     onUnmounted(() => {
-        window.socketIo.off('message-notification'); // Dejar el canal cuando se desmonte el componente
+        window.socketIo.off(channelListenChat); // Dejar el canal cuando se desmonte el componente
     });
 
     onMounted(() => {
@@ -211,6 +211,9 @@
             data: {conv: privateChat.value.conversation},
             onFinish: () => {
                 hideChatBox();
+                setTimeout(() => {
+                    window.scrollTo(0, document.body.scrollHeight);
+                }, 100);
             },
         });
     }
