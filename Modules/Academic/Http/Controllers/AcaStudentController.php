@@ -462,8 +462,32 @@ class AcaStudentController extends Controller
     {
         $payments = PaymentMethod::all();
         $saleDocumentTypes = DB::table('sale_document_types')->whereIn('sunat_id', ['01', '03'])->get();
+
         $services = Product::where('is_product', false)->get();
-        $courses = AcaCourse::where('status', true)->get();
+        $courses = AcaCourse::where('status', true)
+            ->where(function ($query) {
+                $query->whereNotNull('price')->where('price', '>', 0);
+            })
+            ->get();
+
+        $registrationCourses = AcaCapRegistration::with('course')
+            ->with('salenote')
+            ->where('student_id', $id)
+            ->whereNull('document_id')
+            ->whereHas('course', function ($query) {
+                $query->whereNotNull('price')->where('price', '>', 0);
+            })
+            ->whereNull('sale_note_id')
+            ->get();
+
+        $subscriptions = AcaStudentSubscription::with('subscription')
+            ->where('student_id', $id)
+            ->whereNull('onli_sale_id')
+            ->whereNull('xdocument_id') ///si esta lleno es porque lo compro en linea
+            ->get();
+
+        $standardIdentityDocument = DB::table('identity_document_type')->get();
+
 
         return Inertia::render('Academic::Students/Invoice', [
             'payments' => $payments,
@@ -474,7 +498,10 @@ class AcaStudentController extends Controller
             'taxes' => array(
                 'igv' => $this->igv,
                 'icbper' => $this->icbper
-            )
+            ),
+            'registrationCourses' => $registrationCourses,
+            'subscriptions' => $subscriptions,
+            'standardIdentityDocument' => $standardIdentityDocument
         ]);
     }
 

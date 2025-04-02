@@ -19,7 +19,7 @@
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
         if (selector) {
             selector.classList.add('active');
-            const ul = selector.closest('ul.sub-menu');
+            const ul = selector.closest('ul.sub-menu-before');
             if (ul) {
                 let ele  = ul.closest('li.menu').querySelectorAll('.nav-link') || [];
                 if (ele.length) {
@@ -127,7 +127,7 @@
                                     </button>
                                     <HeightTransition v-show="activeDropdown === item.text">
                                         <template v-if="item.items && item.items.length > 0" >
-                                            <ul class="sub-menu text-gray-500">
+                                            <ul class="sub-menu-before text-gray-500">
                                                 <li v-for="(subItem, subIndex) in item.items" :key="subIndex">
                                                     <Link :href="subItem.route" @click="toggleMobileMenu">{{ subItem.text }}</Link>
                                                 </li>
@@ -135,7 +135,6 @@
                                         </template>
                                     </HeightTransition>
                                 </li>
-
                             </template>
                             <template v-else-if="item.route == 'module'">
                                 <h2 v-can="item.permissions" class="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
@@ -163,10 +162,25 @@
                                                     </div>
                                                 </button>
                                                 <HeightTransition v-show="activeDropdown === subItem.text">
-                                                    <ul v-if="subItem.items && subItem.items.length > 0" class="sub-menu text-gray-500">
+                                                    <ul v-if="subItem.items && subItem.items.length > 0"
+                                                        class="text-gray-500"
+                                                        :class="subItem.avatar ? 'sub-menu-avatar' : 'sub-menu-before'"
+                                                    >
                                                         <template v-for="(subSubItem, subSubIndex) in subItem.items" :key="subSubIndex">
                                                             <li v-can="subSubItem.permissions">
-                                                                <Link v-bind="{ id: subSubItem.id }"  :href="subSubItem.route" @click="toggleMobileMenu">{{ subSubItem.text }}</Link>
+                                                                <Link v-bind="{ id: subSubItem.id }"  :href="subSubItem.route" @click="toggleMobileMenu">
+                                                                    <template v-if="subSubItem.img">
+                                                                        <div class="ltr:mr-2 rtl:ml-2">
+                                                                            <img :src="`${xasset}storage/${subSubItem.img}`" alt="" class="w-8 h-8 rounded" />
+                                                                        </div>
+                                                                        <div class="flex-1 text-xs">
+                                                                            {{ subSubItem.text }}
+                                                                        </div>
+                                                                    </template>
+                                                                    <template v-else>
+                                                                        {{ subSubItem.text }}
+                                                                    </template>
+                                                                </Link>
                                                             </li>
                                                         </template>
                                                     </ul>
@@ -227,7 +241,7 @@
                                     </div>
                                 </button>
                                 <HeightTransition v-show="activeDropdown === 'logros'">
-                                    <ul class="sub-menu text-gray-500">
+                                    <ul class="sub-menu-before text-gray-500">
                                         <li v-for="(scd, sck) in studentSCertificates" :key="sck">
                                             <a :href="route('aca_image_download', scd.id)" target="_blank">
                                                 <div>

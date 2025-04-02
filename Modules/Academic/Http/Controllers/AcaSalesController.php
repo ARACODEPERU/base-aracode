@@ -22,7 +22,13 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Inertia\Inertia;
+use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentSubscription;
+use Modules\Academic\Entities\AcaSubscriptionType;
+use DataTables;
 
 class AcaSalesController extends Controller
 {
@@ -44,10 +50,13 @@ class AcaSalesController extends Controller
     public function store(Request $request)
     {
         ///se validan los campos requeridos
+
         $this->validate(
             $request,
             [
                 'serie' => 'required',
+                'client_number' => 'required',
+                'client_rzn_social' => 'required',
                 'date_issue' => 'required',
                 'date_end' => 'required',
                 'sale_documenttype_id' => 'required',
@@ -73,8 +82,9 @@ class AcaSalesController extends Controller
 
                 ///si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
                 ///se crea una caja para poder hacer la venta
-
+                $student_id = $request->get('student_id');
                 $local_id = Auth::user()->local_id;
+
                 $petty_cash = PettyCash::firstOrCreate([
                     'user_id' => Auth::id(),
                     'state' => 1,
@@ -107,6 +117,12 @@ class AcaSalesController extends Controller
                 $numberletters = new NumberLetter();
                 $tido = SaleDocumentType::find($request->get('sale_documenttype_id'));
                 ///creamos el documento de la venta para enviar a sunat
+
+                $typeOperation = $request->get('type_operation');
+                if ($request->get('total') > 700) {
+                    $typeOperation = '1001';
+                }
+
                 $document = SaleDocument::create([
                     'sale_id'                       => $sale->id,
                     'serie_id'                      => $request->get('serie'),
@@ -121,7 +137,7 @@ class AcaSalesController extends Controller
                     'client_phone'                  => $request->get('client_phone'),
                     'client_email'                  => $request->get('client_email'),
                     'invoice_ubl_version'           => $this->ubl,
-                    'invoice_type_operation'        => $request->get('type_operation'),
+                    'invoice_type_operation'        => $typeOperation,
                     'invoice_type_doc'              => $tido->sunat_id,
                     'invoice_serie'                 => $serie->description,
                     'invoice_correlative'           => $serie->number,
@@ -132,11 +148,12 @@ class AcaSalesController extends Controller
                     'invoice_legend_code'           => '1000',
                     'invoice_legend_description'    => $numberletters->convertToLetter($request->get('total')),
                     'invoice_status'                => 'registrado',
+                    'user_id'                       => Auth::id(),
                     'additional_description'        => $request->get('additional_description'),
                     'overall_total'                 => $request->get('total')
                 ]);
 
-                ///obtenemos los productos o servicios para insertar en los 
+                ///obtenemos los productos o servicios para insertar en los
                 ///detalles de la venta y el documento
                 $products = $request->get('items');
 
@@ -144,37 +161,22 @@ class AcaSalesController extends Controller
                 $mto_oper_taxed = 0;
                 $mto_igv = 0;
                 $total_icbper = 0;
-                $porcentage_icbper = 0.20;
+                $porcentage_icbper = $this->icbper;
                 $total_discount = 0;
                 $total = 0;
-
+                //dd($products);
                 foreach ($products as $produc) {
-                    // primero se guarda en la tabla venta detalle para saber que producto es y de que tabla vienen los datos
-                    // para este caso vendra de cursos y de porductos(SERVICIOS)
-                    SaleProduct::create([
-                        'sale_id' => $sale->id,
-                        'product_id' => $produc['id'],
-                        'product' => json_encode($produc),
-                        'price'   => $produc['amount'],
-                        'discount' => $produc['amount'],
-                        'quantity' => $produc['amount'],
-                        'total' => $produc['amount'],
-                        'saleProduct' => json_encode($produc),
-                        'entity_name' => $produc['mode'] == 1 ? Product::class : AcaCourse::class, //esto solo aplica para modulo academico
-                        'entity_name_product' => 'Academic'
-                    ]);
+
                     /// ahora tenemos que saber si es un producto o servicio ya existente
                     /// o si sera creado para esta venta, verificaremos esto por el id del producto
                     /// si el id es nulo quiere decir que es un producto nuevo y procedemos a crearlo
-
                     $product_id = $produc['id'];
-                    $interne = 'AC0' . $product_id;
-
 
                     /// imiciamos las variables para hacer los calculos por item;
                     $percentage_igv = $this->igv;
                     $mto_base_igv = 0;
-                    $price_sale = $produc['unit_price'];
+
+                    $price_sale = $produc['amount'];
                     $nfactorIGV = round(($percentage_igv / 100) + 1, 2);
                     $ifactorIGV = round($percentage_igv / 100, 2);
                     $quantity = $produc['quantity'];
@@ -192,7 +194,7 @@ class AcaSalesController extends Controller
                         //se tiene que quitar el igv porque el sistema trabaja con los precios
                         //incluido el igv
                         $value_unit = round($price_sale / $nfactorIGV, 2);
-                        //la base para hacer el descuento 
+                        //la base para hacer el descuento
                         $base = round($value_unit * $quantity, 2);
                         //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
                         $factor = (($produc['discount'] * 100) / $price_sale) / 100;
@@ -200,7 +202,7 @@ class AcaSalesController extends Controller
                         $descuento_monto = $factor * $value_unit * $quantity;
                         //a la base igv le restamos el descuento
                         $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar 
+                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
                         //el valor total igv
                         $igv = ($mto_base_igv * $ifactorIGV);
                         //total del item
@@ -221,13 +223,12 @@ class AcaSalesController extends Controller
                                 'monto'     => round($descuento_monto, 2)
                             );
                         } else {
-                            //el precio unitario es el mismo 
+                            //el precio unitario es el mismo
                             $unit_price = $price_sale;
                         }
 
                         $mto_discount = round($descuento_monto, 2);
                     }
-
                     if ($produc['afe_igv'] == '20') { //Exonerated
 
                     }
@@ -244,13 +245,34 @@ class AcaSalesController extends Controller
                     }
                     $total_tax = $igv + $icbper;
 
-                    //se inserta los datos al detalle del documento 
+                    $originId = $produc['originId'] ?? null;
+
+                    if ($produc['mode'] == 1) {
+                        $classEntity = Product::class;
+                    } else if ($produc['mode'] == 2) {
+                        $classEntity = AcaCourse::class;
+                    } else if ($produc['mode'] == 3) {
+                        $classEntity = AcaCourse::class;
+                        AcaCapRegistration::where('id', $originId)->update([
+                            'sale_note_id' => $sale->id,
+                            'document_id' => $document->id
+                        ]);
+                    } else if ($produc['mode'] == 4) {
+                        $classEntity = AcaSubscriptionType::class;
+                        AcaStudentSubscription::where('student_id', $student_id)
+                            ->where('subscription_id', $product_id)
+                            ->update([
+                                'xdocument_id' => $document->id
+                            ]);
+                    }
+
+                    //se inserta los datos al detalle del documento
                     SaleDocumentItem::create([
                         'document_id'           => $document->id,
                         'product_id'            => $product_id,
-                        'cod_product'           => $interne,
+                        'cod_product'           => $product_id,
                         'decription_product'    => $produc['description'],
-                        'unit_type'             => $produc['unit_type'] ?? 'ZZ',
+                        'unit_type'             => $produc['amount'],
                         'quantity'              => $produc['quantity'],
                         'mto_base_igv'          => $mto_base_igv,
                         'percentage_igv'        => $this->igv,
@@ -263,11 +285,23 @@ class AcaSalesController extends Controller
                         'mto_value_unit'        => $value_unit,
                         'mto_price_unit'        => $unit_price,
                         'price_sale'            => $price_sale,
-                        'mto_total'             => round($total_item, 2),
+                        'mto_total'             => round($unit_price * $produc['quantity'], 2),
                         'mto_discount'          => $mto_discount ?? 0,
-                        'json_discounts'        => json_encode($array_discounts)
+                        'json_discounts'        => json_encode($array_discounts),
+                        'entity_name_product'   => $classEntity
                     ]);
 
+                    SaleProduct::create([
+                        'sale_id' => $sale->id,
+                        'product_id' => $product_id,
+                        'product' => json_encode(Product::find($product_id)),
+                        'saleProduct' => json_encode($produc),
+                        'price' => $produc['amount'],
+                        'discount' => $produc['discount'],
+                        'quantity' => $produc['quantity'],
+                        'total' => round($unit_price * $produc['quantity'], 2),
+                        'entity_name_product' => $classEntity
+                    ]);
 
                     if ($produc['is_product']) {
                         $k = Kardex::create([
@@ -317,7 +351,9 @@ class AcaSalesController extends Controller
                     $total_icbper = $total_icbper + $icbper; //total del impuesto a la bolsa plastica
                     $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
                     $total = $total + $total_item; // total de la venta general
+
                 }
+
                 //totales de la cabesera del documento
                 $total_taxes = $mto_igv + $total_icbper;
                 $subtotal = $total_taxes + $mto_oper_taxed;
@@ -343,9 +379,74 @@ class AcaSalesController extends Controller
                 return $document;
             });
 
+
             return response()->json($res);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()]);
+            // Devuelve una respuesta de error
         }
+    }
+
+    public function listDocumentByStudent($id)
+    {
+        $affectations = DB::table('sunat_affectation_igv_types')->get();
+        $unitTypes = DB::table('sunat_unit_types')->get();
+        $student = AcaStudent::with('person')->where('id', $id)->first();
+
+        return Inertia::render('Academic::Students/ListInvoice', [
+            'affectations'  => $affectations,
+            'unitTypes'     => $unitTypes,
+            'taxes'         => array(
+                'igv' => $this->igv,
+                'icbper' => $this->icbper
+            ),
+            'student' => $student
+        ]);
+    }
+
+    public function tableDocumentStudent($id)
+    {
+        $sales = (new Sale())->newQuery();
+
+        $sales = $sales->join('people', 'client_id', 'people.id')
+            ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
+            ->join('series', 'sale_documents.serie_id', 'series.id')
+            ->select(
+                'sales.id',
+                'sales.client_id',
+                'sale_documents.id AS document_id',
+                'people.full_name',
+                'total',
+                'advancement',
+                'total_discount',
+                'payments',
+                'sales.created_at',
+                'sales.local_id',
+                'sale_documents.invoice_status',
+                'sale_documents.invoice_response_description',
+                'sale_documents.invoice_response_code',
+                'sale_documents.invoice_notes',
+                'sale_documents.status',
+                'series.description AS serie',
+                'sale_documents.number',
+                'sale_documents.invoice_correlative',
+                'sale_documents.invoice_type_doc',
+                'sale_documents.client_number',
+                'sale_documents.client_rzn_social',
+                'sale_documents.client_address',
+                'sale_documents.client_ubigeo_code',
+                'sale_documents.client_ubigeo_description',
+                'sale_documents.client_phone',
+                'sale_documents.client_email',
+                'sale_documents.invoice_broadcast_date',
+                'sale_documents.invoice_due_date',
+                'sale_documents.reason_cancellation'
+            )
+            ->whereIn('series.document_type_id', [1, 2])
+            ->where('sales.client_id', $id)
+            ->with('documents.items')
+            ->orderBy('sales.id', 'DESC');
+
+        return DataTables::of($sales)->toJson();
     }
 }

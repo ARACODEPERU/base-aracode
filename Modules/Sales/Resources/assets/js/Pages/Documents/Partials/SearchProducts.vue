@@ -54,7 +54,7 @@
                     form.data.quantity = 1;
                     form.data.discount = 0;
                     form.search = null;
-                    
+
                 }else{
                     Swal.fire({
                         icon: 'error',
@@ -64,7 +64,7 @@
                         customClass: 'sweet-alerts',
                     });
                 }
-                
+
             });
         }else{
             axios.post(route('search_product'), form ).then((response) => {
@@ -80,7 +80,7 @@
                         customClass: 'sweet-alerts',
                     });
                 }
-                
+
             });
         }
     };
@@ -273,9 +273,9 @@
             </template>
         </Popper>
     </div>
-    
+
     <ModalLargeX
-        :show="displayModal" 
+        :show="displayModal"
         :onClose="closeModalSelectProduct"
     >
         <template #title>
@@ -310,7 +310,7 @@
                     <p class="my-4 text-center">Stock Actual : {{ form.data.stock  }}</p>
                 </div>
                 <div class="col-span-1">
-                    
+
                     <div class="mb-4">
                         <label for="stock" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                             Precios Disponibles
@@ -319,19 +319,19 @@
                             <div v-if="!form.product.local_prices">
                                 <div class="form-check">
                                     <input v-model="form.data.price" :value="JSON.parse(form.product.sale_prices).high" class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="radio" name="flexRadioDefault" id="flexRadioDefault1">
-                                    <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault1">
+                                    <label class="form-check-label inline-block text-gray-800 dark:text-gray-100" for="flexRadioDefault1">
                                         Precio Normal {{ JSON.parse(form.product.sale_prices).high  }}
                                     </label>
                                 </div>
                                 <div v-show="JSON.parse(form.product.sale_prices).medium" class="form-check">
                                     <input v-model="form.data.price" :value="JSON.parse(form.product.sale_prices).medium" class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
-                                    <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault2">
+                                    <label class="form-check-label inline-block text-gray-800 dark:text-gray-100" for="flexRadioDefault2">
                                         Precio Medio {{ JSON.parse(form.product.sale_prices).medium  }}
                                     </label>
                                 </div>
                                 <div v-show="JSON.parse(form.product.sale_prices).under" class="form-check">
                                     <input v-model="form.data.price" :value="JSON.parse(form.product.sale_prices).under" class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="radio" name="flexRadioDefault" id="flexRadioDefault3">
-                                    <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault3">
+                                    <label class="form-check-label inline-block text-gray-800 dark:text-gray-100" for="flexRadioDefault3">
                                         Precio Minimo {{ JSON.parse(form.product.sale_prices).under  }}
                                     </label>
                                 </div>
@@ -339,19 +339,19 @@
                             <div v-else>
                                 <div class="form-check">
                                     <input v-model="form.data.price" :value="JSON.parse(form.product.local_prices).high" class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="radio" name="flexRadioDefault" id="flexRadioDefault1">
-                                    <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault1">
+                                    <label class="form-check-label inline-block text-gray-800 dark:text-gray-100" for="flexRadioDefault1">
                                         Precio Normal {{ JSON.parse(form.product.local_prices).high  }}
                                     </label>
                                 </div>
                                 <div class="form-check">
                                     <input v-model="form.data.price" :value="JSON.parse(form.product.local_prices).medium" class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
-                                    <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault2">
+                                    <label class="form-check-label inline-block text-gray-800 dark:text-gray-100" for="flexRadioDefault2">
                                         Precio Medio {{ JSON.parse(form.product.local_prices).medium  }}
                                     </label>
                                 </div>
                                 <div class="form-check">
                                     <input v-model="form.data.price" :value="JSON.parse(form.product.local_prices).under" class="form-check-input appearance-none rounded-full h-4 w-4 border border-gray-300 bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer" type="radio" name="flexRadioDefault" id="flexRadioDefault3">
-                                    <label class="form-check-label inline-block text-gray-800" for="flexRadioDefault3">
+                                    <label class="form-check-label inline-block text-gray-800 dark:text-gray-100" for="flexRadioDefault3">
                                         Precio Minimo {{ JSON.parse(form.product.local_prices).under  }}
                                     </label>
                                 </div>

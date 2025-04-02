@@ -117,7 +117,7 @@ class AcaSaleDocumentController extends Controller
                     'overall_total'                 => $sale->total
                 ]);
 
-                ///obtenemos los productos o servicios para insertar en los 
+                ///obtenemos los productos o servicios para insertar en los
                 ///detalles de la venta y el documento
                 $products = SaleProduct::where('sale_id', $sale->id)->get();
 
@@ -187,7 +187,7 @@ class AcaSaleDocumentController extends Controller
                         //se tiene que quitar el igv porque el sistema trabaja con los precios
                         //incluido el igv
                         $value_unit = round($price_sale / $nfactorIGV, 2);
-                        //la base para hacer el descuento 
+                        //la base para hacer el descuento
                         $base = round($value_unit * $quantity, 2);
                         //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
                         $factor = (($pdiscount * 100) / $price_sale) / 100;
@@ -195,7 +195,7 @@ class AcaSaleDocumentController extends Controller
                         $descuento_monto = $factor * $value_unit * $quantity;
                         //a la base igv le restamos el descuento
                         $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar 
+                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
                         //el valor total igv
                         $igv = ($mto_base_igv * $ifactorIGV);
                         //total del item
@@ -216,7 +216,7 @@ class AcaSaleDocumentController extends Controller
                                 'monto'     => round($descuento_monto, 2)
                             );
                         } else {
-                            //el precio unitario es el mismo 
+                            //el precio unitario es el mismo
                             $unit_price = $price_sale;
                         }
 
@@ -239,7 +239,7 @@ class AcaSaleDocumentController extends Controller
                     $total_tax = $igv + $icbper;
 
 
-                    //se inserta los datos al detalle del documento 
+                    //se inserta los datos al detalle del documento
                     SaleDocumentItem::create([
                         'document_id'           => $document->id,
                         'product_id'            => $curPro->id,
@@ -339,16 +339,21 @@ class AcaSaleDocumentController extends Controller
 
         try {
 
-
+            //dd($data);
             Mail::to(trim($person_email))->send(new StudentElectronicTicket($data));
 
             $success = true;
-            $onlisale = OnliSale::findOrFail($onlisale_id);
-            if ($onlisale) {
-                $onlisale->update([
-                    'email_sent' => true
-                ]);
+
+            if ($onlisale_id) {
+                $onlisale = OnliSale::findOrFail($onlisale_id);
+
+                if ($onlisale) {
+                    $onlisale->update([
+                        'email_sent' => true
+                    ]);
+                }
             }
+
             $correosMessage = [
                 'email' => $person_email,
                 'message' => 'Correo enviado correctamente'

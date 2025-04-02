@@ -127,7 +127,8 @@ class StudentSubscription
                         'notes' => null,
                         'renewals' => true,
                         'registration_user_id' => Auth::id(),
-                        'onli_sale_id' => $sale->id
+                        'onli_sale_id' => $sale->id,
+                        'amount_paid' => $amount
                     ]
                 );
             } else {
@@ -141,7 +142,8 @@ class StudentSubscription
                         'notes' => null,
                         'renewals' => 0,
                         'registration_user_id' => Auth::id(),
-                        'onli_sale_id' => $sale->id
+                        'onli_sale_id' => $sale->id,
+                        'amount_paid' => $amount
                     ]
                 );
             }

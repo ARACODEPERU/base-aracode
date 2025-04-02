@@ -3,14 +3,18 @@
 namespace Modules\CRM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Parameter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use Modules\CRM\Entities\CrmConversation;
 use Modules\CRM\Entities\CrmMessage;
 use Modules\CRM\Entities\CrmParticipant;
+use Modules\CRM\Entities\CrmUser;
 use Modules\CRM\Events\SendMessage;
 
 class CrmIaController extends Controller
@@ -18,9 +22,48 @@ class CrmIaController extends Controller
     /**
      * Display a listing of the resource.
      */
+
     public function clientDashboard()
     {
-        $conversationId = request()->get('conv');
+
+        if (request()->has('conv')) {
+            $conversationId = request()->get('conv');
+        }
+        if (request()->get('cont')) {
+            $contactId = request()->get('cont');
+            $personId = Auth::user()->person_id;
+            if ($personId) {
+                // Buscar conversación existente
+                $conversationId = CrmParticipant::whereIn('person_id', [$contactId, $personId])
+                    ->groupBy('conversation_id')
+                    ->having(DB::raw('COUNT(DISTINCT user_id)'), '>=', 2)
+                    ->value('conversation_id');
+                if (!$conversationId) {
+                    // Crear nueva conversación
+                    $conversation = CrmConversation::create([
+                        'title' => 'private',
+                        'user_id' => Auth::id(),
+                        'type_name' => 'chat',
+                        'type_action' => null
+                    ]);
+
+                    // Agregar participantes
+                    CrmParticipant::create([
+                        'conversation_id' => $conversation->id,
+                        'person_id' => $personId,
+                        'user_id' => Auth::id()
+                    ]);
+
+                    CrmParticipant::create([
+                        'conversation_id' => $conversation->id,
+                        'person_id' => $contactId,
+                        'user_id' => CrmUser::where('person_id', $contactId)->value('id') ?? null
+                    ]);
+
+                    $conversationId = $conversation->id;
+                }
+            }
+        }
 
         $participants = CrmParticipant::with('user')
             ->where('conversation_id', $conversationId)
@@ -31,6 +74,7 @@ class CrmIaController extends Controller
             ->orderBy('id')
             ->limit(200)
             ->get();
+
         //dd($messages);
         return Inertia::render('CRM::Chat/studentDashboard', [
             'messages' => $messages,
@@ -39,7 +83,7 @@ class CrmIaController extends Controller
         ]);
     }
 
-    public function send_prompt($user_id, $message, $archivo = null)
+    public function sendPromptOpenAI($user_id, $message, $archivo = null)
     {
         $port = env('AI__PORT', 5000);
         // URL del servidor Flask

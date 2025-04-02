@@ -167,7 +167,7 @@ final class Util
     {
 
         $params = self::getParametersPdf($this->company, $seller);
-        //dd($params);
+
         $fileDir = public_path();
 
         if (!file_exists($fileDir)) {

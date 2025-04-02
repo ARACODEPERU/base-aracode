@@ -154,7 +154,7 @@
                                 Importar
                             </button>
                         </div>
-                        
+
                     </div>
 
                     <div class="relative">
@@ -192,13 +192,18 @@
                                                 <template #content="{ close }">
                                                     <ul @click="close()" class="whitespace-nowrap">
                                                         <li>
-                                                            <Link :href="route('aca_students_edit',student.id)" type="Button" class="dark:text-white">
+                                                            <Link :href="route('aca_students_edit', student.id)" type="Button" class="dark:text-white">
                                                                 Editar
                                                             </Link>
                                                         </li>
                                                         <li v-can="'aca_estudiante_cobrar'">
-                                                            <Link :href="route('aca_student_invoice',student.id)" type="Button" class="text-warning">
+                                                            <Link :href="route('aca_student_invoice', student.id)" type="Button" class="text-warning">
                                                                 Cobrar
+                                                            </Link>
+                                                        </li>
+                                                        <li v-can="'aca_estudiante_listar_comprobantes'">
+                                                            <Link :href="route('aca_student_invoice_list', student.id)" type="Button" class="text-info">
+                                                                Lista de Comprobantes
                                                             </Link>
                                                         </li>
                                                     </ul>
@@ -221,7 +226,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div> 
+                            </div>
                         </div>
                         <div>
                             <Pagination :data="students" />
@@ -270,8 +275,8 @@
                 <img src="/img/aca_formato_estudiantes.png" />
                 <form enctype="multipart/form-data" class="mt-8">
                     <label for="small-file-input" class="sr-only">Seleccione archivo</label>
-                    <input type="file" name="small-file-input" 
-                    id="small-file-input" 
+                    <input type="file" name="small-file-input"
+                    id="small-file-input"
                     class="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400
                     file:bg-gray-50 file:border-0
                     file:me-4
@@ -282,7 +287,7 @@
                     accept=".xlsx, .xls"
                     >
                 </form>
-                
+
             </template>
             <template #buttons>
                 <button

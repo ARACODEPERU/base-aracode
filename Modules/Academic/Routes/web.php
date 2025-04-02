@@ -19,6 +19,8 @@ use Modules\Academic\Http\Controllers\AcaContentController;
 use Modules\Academic\Http\Controllers\AcaCourseController;
 use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
+use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
+use Modules\Academic\Http\Controllers\AcaSalesController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 
@@ -199,6 +201,16 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_estudiante_cobrar'])
         ->post('student/sale/store', 'AcaSalesController@store')
         ->name('aca_student_invoice_store');
+
+    Route::middleware(['middleware' => 'permission:aca_estudiante_listar_comprobantes'])
+        ->get('student/sale/list/{id}', 'AcaSalesController@listDocumentByStudent')
+        ->name('aca_student_invoice_list');
+
+    Route::get('student/sale/listtable/{id}', [AcaSalesController::class, 'tableDocumentStudent'])
+        ->name('aca_student_invoice_list_table');
+
+    Route::post('student/send/mail/student/ticket', [AcaSaleDocumentController::class, 'sendEmailBoleta'])
+        ->name('aca_send_email_student_document');
 
     Route::middleware(['middleware' => 'permission:aca_miscursos'])
         ->post('student/dashboard/courses', 'AcaStudentController@getCourses')

@@ -67,7 +67,7 @@
         "pinia": "^2.1.7",
         "socket.io-client": "^4.7.5",
         "sweetalert": "^2.1.2",
-        "sweetalert2": "^11.10.2",
+        "sweetalert2": "11.5.1",
         "swiper": "^11.1.10",
         "table2excel": "^1.0.0",
         "tippy.js": "^6.3.7",

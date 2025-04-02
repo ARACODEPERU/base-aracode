@@ -13,11 +13,14 @@ use Illuminate\Http\Response;
 use DataTables;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Illuminate\Support\Facades\Mail;
+use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaTeacher;
 use Modules\CRM\Emails\MailwithUserAccount;
 use Modules\CRM\Emails\PersonalizedEmailStudent;
 
@@ -449,6 +452,27 @@ class CrmContactsController extends Controller
 
         return response()->json([
             'success' => true
+        ], 200);
+    }
+
+    public function contactsDocentsChat()
+    {
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+        //dd($student);
+        $docents = AcaCapRegistration::with('course.teacher.person')
+            ->where('student_id', $student->id)
+            ->where('status', true)
+            ->get()
+            ->map(function ($registration) {
+                return $registration->course->teacher ?? null;
+            })
+            ->filter() // Elimina valores nulos en caso de cursos sin teacher
+            ->unique('id') // Agrupa por ID del teacher
+            ->values(); // Reindexa el array
+        //dd($docents);
+        return response()->json([
+            'success' => true,
+            'docents' => $docents
         ], 200);
     }
 }

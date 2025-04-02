@@ -189,6 +189,7 @@ class Boleta
     {
         try {
             $document = SaleDocument::find($id);
+
             $invoice = $this->setDocument($document);
 
             $generator = new QrCodeGenerator(300);

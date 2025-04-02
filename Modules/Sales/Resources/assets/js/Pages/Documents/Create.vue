@@ -11,6 +11,7 @@
     import Swal2 from 'sweetalert2';
     import { Link, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import { message } from 'ant-design-vue';
 
     const props = defineProps({
         payments: {
@@ -116,10 +117,10 @@
         getCurrentDate();
         startTaxes();
     });
-    
+
     const taxes = ref({});
     const startTaxes = () => {
-        
+
         let igv = parseFloat(props.taxes.igv);
         let icbper = parseFloat(props.taxes.icbper);
 
@@ -130,6 +131,7 @@
         }
         taxes.value = xa;
     }
+
     const getCurrentDate = () => {
         const currentDate = new Date();
         const year = currentDate.getFullYear();
@@ -176,12 +178,12 @@
             }
         }
         displayModalClientSearch.value = false;
-        
+
     }
 
     const displayModalClientSearch = ref(false);
     const saleDocumentTypesId = ref({});
-    
+
     const openModalClientSearch = () => {
         displayModalClientSearch.value = true;
         saleDocumentTypesId.value = formDocument.sale_documenttype_id
@@ -208,7 +210,7 @@
         }
         formDocument.items.push(item);
     }
-    
+
     const removeItem = (key) => {
         //let t = parseFloat(formDocument.items[key].total);
         //formDocument.total = parseFloat(formDocument.total) - t;
@@ -250,7 +252,7 @@
         formDocument.total_taxed = formDocument.items.reduce((acc, item) => acc + parseFloat(item.v_sale), 0).toFixed(2);
         formDocument.total_igv = formDocument.items.reduce((acc, item) => acc + parseFloat(item.m_igv), 0).toFixed(2);
         formDocument.payments[0].amount = formDocument.total;
-        
+
     }
 
     const removeCalculateTotals = (key) => {
@@ -265,17 +267,17 @@
             reference: null,
             amount: formDocument.total
         });
-        
+
     }
 
     ////imprimir documento
     const downloadDocument = (id,type,file) => {
         let url = route('saledocuments_download',[id, type,file])
-        window.open(url, "_blank");      
+        window.open(url, "_blank");
     }
 
     const saveDocument = () => {
-        
+
         formDocument.processing = true
 
         if(formDocument.serie){
@@ -289,7 +291,7 @@
                 });
                 formDocument.processing = false
                 return;
-                
+
             }
 
             axios.post(route('saledocuments_store'), formDocument ).then((res) => {
@@ -350,7 +352,7 @@
                     }
                 });
             }).catch(function (error) {
-                console.log(error)
+                setFormError(error);
             });
         }else{
             Swal2.fire({
@@ -364,6 +366,82 @@
             return;
         }
     }
+
+
+    const setFormError = (error) => {
+        let validationErrors = error.response.data.errors;
+
+        if(error.status == 422){
+            if (validationErrors && validationErrors.corelative) {
+                const corelativeErrors = validationErrors.corelative;
+                for (let i = 0; i < corelativeErrors.length; i++) {
+                    formDocument.setError('corelative', corelativeErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.serie) {
+                const serieErrors = validationErrors.serie;
+                for (let i = 0; i < serieErrors.length; i++) {
+                    formDocument.setError('serie', serieErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.client_name) {
+                const client_nameErrors = validationErrors.client_name;
+                for (let i = 0; i < client_nameErrors.length; i++) {
+                    formDocument.setError('client_name', client_nameErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.total) {
+                const totalErrors = validationErrors.total;
+                for (let i = 0; i < totalErrors.length; i++) {
+                    formDocument.setError('total', totalErrors[i]);
+                }
+            }
+
+            if (validationErrors && validationErrors.client_rzn_social) {
+                const client_rzn_socialErrors = validationErrors.client_rzn_social;
+                for (let i = 0; i < client_rzn_socialErrors.length; i++) {
+                    formDocument.setError('client_rzn_social', client_rzn_socialErrors[i]);
+                }
+            }
+
+            if (validationErrors && validationErrors.items) {
+                const itemsErrors = validationErrors.items;
+
+                for (let i = 0; i < itemsErrors.length; i++) {
+                    formDocument.setError('items.'+index+'.quantity', itemsErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.payments) {
+                const paymentsErrors = validationErrors.payments;
+
+                for (let i = 0; i < paymentsErrors.length; i++) {
+                    formDocument.setError('payments.'+index+'.amount', paymentsErrors[i]);
+                }
+            }
+            showAlertMessage('Faltan ingresar datos importantes','error')
+        }else{
+            showAlertMessage(error.message,'error')
+        }
+        formDocument.processing =  false;
+    }
+
+    const showAlertMessage = async (msg, xicon = 'success') => {
+        const toast = Swal2.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        toast.fire({
+            icon: xicon,
+            title: msg,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    }
+
     const addPayment = () => {
         let ar = {
             type:1,
@@ -382,7 +460,7 @@
     const closeSearchProducus = () => {
         displaySearchProducts.value = false;
     }
-    
+
     const getDataTable = async (data) => {
         let c = parseFloat(data.quantity) ?? 0;
         let p = parseFloat(data.unit_price) ?? 0;
@@ -395,7 +473,7 @@
         let mi = bi * taxes.value.rfactorIGV; //total igv por item
         let st = ((vu * c) - md) + mi;
         let vs = (vu * c) - md;
-        
+
         // Verificar si el resultado es NaN y asignar 0 en su lugar
         if (isNaN(st)) {
             st = 0;
@@ -508,16 +586,16 @@
                                 <div style="font-size: 14px;" class="col-span-3 sm:col-span-1 uppercase">Cliente:</div>
                                 <div class="col-span-3 sm:col-span-2 ltr:text-right rtl:text-left">
                                     <input @click="openModalClientSearch" @input="openModalClientSearch" :value="formDocument.client_name" class="form-input form-input-sm" type="text" />
-                                    <SearchClients 
-                                        :display="displayModalClientSearch" 
+                                    <SearchClients
+                                        :display="displayModalClientSearch"
                                         :closeModalClient="closeModalClientSearch"
-                                        @clientId="getDataClient" 
-                                        :clientDefault="client" 
+                                        @clientId="getDataClient"
+                                        :clientDefault="client"
                                         :documentTypes="documentTypes"
                                         :saleDocumentTypes="saleDocumentTypesId"
                                         :ubigeo="departments"
                                     />
-                                   <div><InputError :message="formDocument.errors.client_id" class="mt-2" /></div> 
+                                   <div><InputError :message="formDocument.errors.client_id" class="mt-2" /></div>
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 gap-4 justify-between mb-1">
@@ -568,12 +646,12 @@
                                             <button v-can="'sale_registar_producto_alvender'" @click="newItems" type="button" title="Agregar Nuevo" class="btn btn-sm btn-outline-success">
                                                 <font-awesome-icon :icon="faPlus" />
                                             </button>
-                                            <SearchProducts 
-                                                @eventdata="getDataTable" 
-                                                :iconSearch="faMagnifyingGlass" 
+                                            <SearchProducts
+                                                @eventdata="getDataTable"
+                                                :iconSearch="faMagnifyingGlass"
                                              />
                                         </div>
-                                    </th>                                    
+                                    </th>
                                     <th class="text-left text-xs uppercase px-2 py-1">Item</th>
                                     <th class="text-center text-xs uppercase px-2 py-1">Producto</th>
                                     <th class="text-center text-xs uppercase px-2 py-1">Tipo de Unidad</th>
@@ -593,29 +671,29 @@
                                                 </button>
                                             </td>
                                             <td class="">
-                                                <!-- <input v-model="row.description" 
-                                                :disabled="row.id ? true : false" 
-                                                :class="row.id ? 'bg-gray-100' : ''" 
-                                                :ref="'item-description-' + key" 
+                                                <!-- <input v-model="row.description"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
+                                                :ref="'item-description-' + key"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
                                                 class="form-input form-input-sm" type="text" /> -->
 
-                                                <textarea v-model="row.description" 
-                                                    :ref="'item-description-' + key" 
+                                                <textarea v-model="row.description"
+                                                    :ref="'item-description-' + key"
                                                     class="form-textarea form-input-sm">
                                                 </textarea>
                                             </td>
                                             <td style="width: 80px;" class="text-center">
-                                                <input v-model="row.is_product" 
-                                                :disabled="row.id ? true : false" 
-                                                :class="row.id ? 'bg-gray-100' : ''" 
+                                                <input v-model="row.is_product"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
                                                 type="checkbox">
                                             </td>
                                             <td style="width: 110px;">
-                                                <select v-model="row.unit_type" 
-                                                :disabled="row.id ? true : false" 
-                                                :class="row.id ? 'bg-gray-100' : ''" 
+                                                <select v-model="row.unit_type"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
                                                 class="form-select form-select-sm text-white-dark">
                                                     <template v-for="(unitType) in unitTypes">
@@ -624,28 +702,28 @@
                                                 </select>
                                             </td>
                                             <td style="width: 70px;" class="text-center">
-                                                <input v-model="row.quantity" 
-                                                @input="calculateTotals(key)" 
-                                             
+                                                <input v-model="row.quantity"
+                                                @input="calculateTotals(key)"
+
                                                 class="form-input form-input-sm" type="text" />
                                             </td>
                                             <td style="width: 120px;" class="text-right">
-                                                <input v-model="row.unit_price" 
-                                                @input="calculateTotals(key)" 
-                                                :disabled="row.id ? true : false" 
+                                                <input v-model="row.unit_price"
+                                                @input="calculateTotals(key)"
+                                                :disabled="row.id ? true : false"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
-                                                :class="row.id ? 'bg-gray-100' : ''" 
+                                                :class="row.id ? 'bg-gray-100' : ''"
                                                 class="form-input form-input-sm text-right" type="text" />
                                             </td>
                                             <td style="width: 90px;" class="text-right">
-                                                <input v-model="row.discount" @input="calculateTotals(key)" 
-                                                :disabled="row.id ? true : false" 
-                                                :class="row.id ? 'bg-gray-100' : ''" 
+                                                <input v-model="row.discount" @input="calculateTotals(key)"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
                                                 class="form-input form-input-sm text-right" type="text" />
                                             </td>
                                             <td style="width: 110px;" class="text-right ">
-                                                <input v-model="row.total" 
+                                                <input v-model="row.total"
                                                 style="cursor: not-allowed"
                                                 class="form-input form-input-sm text-right" disabled type="text" />
                                                 <InputError :message="formDocument.errors[`items.${key}.total`]" class="mt-2" />
@@ -663,7 +741,7 @@
                                                 <span class="sr-only">Info</span>
                                                 <div class="flex">
                                                 <div v-can="'sale_registar_producto_alvender'">
-                                                    Click en <span class="p-1 bg-blue-700 text-white"><font-awesome-icon @click="newItems" :icon="faPlus" /></span> para agregar o 
+                                                    Click en <span class="p-1 bg-blue-700 text-white"><font-awesome-icon @click="newItems" :icon="faPlus" /></span> para agregar o
                                                 </div>
                                                     Click en <span class="p-1 bg-gray-700 text-white"><font-awesome-icon :icon="faMagnifyingGlass" /></span> para buscar producto o servicio
                                                 </div>
@@ -725,11 +803,11 @@
                                         <input v-model="row.amount" type="text" id="first_name" class="form-input form-input-sm text-right" autofocus placeholder="Monto" required>
                                         <InputError :message="formDocument.errors[`payments.${index}.amount`]" class="mt-2" />
                                     </td>
-                                    
+
                                 </tr>
                             </tbody>
                         </table>
-                        
+
                     </div>
                     <div class="grid grid-cols-4 gap-4">
                         <div class="col-span-4 sm:col-span-3">
@@ -743,11 +821,11 @@
                                     <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                 </svg>
                                 Generar
-                            </PrimaryButton> 
+                            </PrimaryButton>
                             <DangerButton class="w-full">
                                 Cancelar
-                            </DangerButton> 
-                            
+                            </DangerButton>
+
                         </div>
                     </div>
                 </div>

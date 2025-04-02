@@ -30,7 +30,7 @@ const menuCRM = {
         {
             route: route("crm_chat_dashboard"),
             status: false,
-            text: "Chat en vivo",
+            text: "Chat",
             permissions: "crm_chat_dashboard",
             icom: faComments,
         },
@@ -40,7 +40,9 @@ const menuCRM = {
             text: "Buzón de correo",
             permissions: "crm_mailbox_dashboard",
             icom: faEnvelopesBulk,
-        }
+        },
+
     ],
 };
+
 export default menuCRM;

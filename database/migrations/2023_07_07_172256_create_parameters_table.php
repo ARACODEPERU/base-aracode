@@ -125,6 +125,14 @@ return new class extends Migration
             'json_query_data'   => '[{"value": "1","label":"Lista de niveles (básico)"},{"value": "2","label":"Lista en Cascada (Avanzada)"}]',
             'value_default'     => 1
         ]);
+
+        Parameter::create([
+            'parameter_code'    => 'P000015',
+            'description'       => 'Proveedor de inteligencia artificial, las configuraciones se realizan en el archivo .env de base-aracodeo server-socket nodejs',
+            'control_type'      => 'sa',
+            'json_query_data'   => '[{"value": "1","label":"OpenAI"},{"value": "2","label":"Gemini AI"}]',
+            'value_default'     => 2
+        ]);
     }
 
     /**

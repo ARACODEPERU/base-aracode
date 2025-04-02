@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Entities;
 
+use App\Models\Sale;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,5 +38,9 @@ class AcaCapRegistration extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(AcaStudent::class, 'student_id');
+    }
+    public function salenote(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'sale_note_id');
     }
 }

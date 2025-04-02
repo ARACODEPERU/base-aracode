@@ -164,6 +164,15 @@ class AcaCapRegistrationController extends Controller
 
         $user = User::find(Auth::id());
 
+        $amount = 0;
+        if ($subscription->prices) {
+            foreach (json_decode($subscription->prices) as $price) {
+                if ($price->currency == 'PEN') {
+                    $amount = $price->amount;
+                }
+            }
+        }
+
         if ($stsubscription) {
             $stsubscription->update([
                 'student_id' => $student->id,
@@ -174,7 +183,8 @@ class AcaCapRegistrationController extends Controller
                 'notes' => null,
                 'renewals' => true,
                 'registration_user_id' => $user->id,
-                'onli_sale_id' => null
+                'onli_sale_id' => null,
+                'amount_paid' => $amount
             ]);
         } else {
             AcaStudentSubscription::create([
@@ -186,7 +196,8 @@ class AcaCapRegistrationController extends Controller
                 'notes' => null,
                 'renewals' => 0,
                 'registration_user_id' => $user->id,
-                'onli_sale_id' => null
+                'onli_sale_id' => null,
+                'amount_paid' => $amount
             ]);
         }
     }

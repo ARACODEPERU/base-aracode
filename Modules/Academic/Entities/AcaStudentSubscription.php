@@ -25,7 +25,9 @@ class AcaStudentSubscription extends Model
         'notes',
         'renewals',
         'registration_user_id',
-        'onli_sale_id'
+        'onli_sale_id',
+        'xdocument_id',
+        'amount_paid'
     ];
 
     protected static function newFactory(): AcaStudentSubscriptionFactory

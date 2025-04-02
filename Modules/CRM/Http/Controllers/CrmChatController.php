@@ -4,6 +4,7 @@ namespace Modules\CRM\Http\Controllers;
 
 use App\Models\Person;
 use App\Http\Controllers\Controller;
+use App\Models\Parameter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,9 +20,18 @@ class CrmChatController extends Controller
     /**
      * Display a listing of the resource.
      */
+    protected $P000015;
+
+    public function __construct()
+    {
+        $this->P000015 = Parameter::where('parameter_code', 'P000015')->value('value_default');
+    }
+
     public function index(Request $request)
     {
-        return Inertia::render('CRM::Chat/Dashboard');
+        return Inertia::render('CRM::Chat/Dashboard', [
+            'P000015' => $this->P000015
+        ]);
     }
 
     /**
