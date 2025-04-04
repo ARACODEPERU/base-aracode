@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Parameter;
 use App\Models\Person;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
@@ -98,7 +99,7 @@ class PersonController extends Controller
             [
                 'document_type_id' => $request->input('document_type'),
                 'number' => $request->input('number')
-            ], // Buscamos a la persona 
+            ], // Buscamos a la persona
             [
                 'full_name' => trim($request->input('full_name')),
                 'telephone' => $request->input('telephone'),
@@ -296,7 +297,7 @@ class PersonController extends Controller
                 [
                     'document_type_id' => $request->get('document_type_id'),
                     'number' => $request->input('number')
-                ], // Buscamos a la persona 
+                ], // Buscamos a la persona
                 [
                     'short_name' => $request->input('names'),
                     'full_name' => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
@@ -351,5 +352,42 @@ class PersonController extends Controller
         }
 
         return view('DniConsulta', ['dni' => $response]);
+    }
+
+    public function getBirthdays()
+    {
+        $startDate = Carbon::now()->subDays(2)->format('m-d'); // Hace 2 días (MM-DD)
+        $endDate = Carbon::now()->addWeek()->format('m-d'); // Próxima semana (MM-DD)
+
+        $persons = Person::whereRaw("DATE_FORMAT(birthdate, '%m-%d') BETWEEN ? AND ?", [$startDate, $endDate])
+            ->orderByRaw("DATE_FORMAT(birthdate, '%m-%d')")
+            ->get()
+            ->map(function ($person) {
+                $birthdate = Carbon::parse($person->birthdate);
+                $currentYear = Carbon::now()->year;
+                $today = Carbon::now()->format('m-d');
+                $birthdayThisYear = Carbon::createFromDate($currentYear, $birthdate->month, $birthdate->day)->format('m-d');
+
+                // Determinar el estado (status)
+                if ($birthdayThisYear < $today) {
+                    $status = 'pasado';
+                } elseif ($birthdayThisYear > $today) {
+                    $status = 'proximo';
+                } else {
+                    $status = 'hoy';
+                }
+
+                $day = Carbon::createFromDate($currentYear, $birthdate->month, $birthdate->day)->format('Y-m-d');
+
+                return [
+                    'image' => $person->image,
+                    'name' => $person->full_name,
+                    'birthdate' => Carbon::parse($day)->translatedFormat('d \d\e F'),
+                    'age' => $currentYear - $birthdate->year,
+                    'status' => $status,
+                ];
+            });
+
+        return $persons;
     }
 }

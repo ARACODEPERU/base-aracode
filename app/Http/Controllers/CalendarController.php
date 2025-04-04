@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Person;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,13 +15,18 @@ class CalendarController extends Controller
         $period = request()->get('period', 'month');
 
         $dentAppointments = $this->getDentAppointments($period);
+
+        $birthdays = $this->getBirthdays();
+
         return Inertia::render(
             'Calendar/Index',
             [
-                'eventsDB' => $dentAppointments
+                'eventsDB' => $dentAppointments,
+                'eventsBirthdays' => $birthdays
             ]
         );
     }
+
 
     public function getDentAppointments($period)
     {

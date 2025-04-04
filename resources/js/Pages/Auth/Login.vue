@@ -136,7 +136,14 @@
                                 <div>
                                     <label for="Email">Correo Electrónico</label>
                                     <div class="relative text-white-dark">
-                                        <input v-model="form.email" id="Email" type="text" placeholder="Ingrese correo electrónico" class="form-input ps-10 placeholder:text-white-dark" tabindex="1" />
+                                        <input
+                                            v-model="form.email"
+                                            id="Email"
+                                            type="text"
+                                            placeholder="Ingrese correo electrónico"
+                                            class="form-input ps-10 placeholder:text-white-dark" tabindex="1"
+                                            @input="(e) => form.email = e.target.value.trim()"
+                                        />
                                         <span class="absolute start-4 top-1/2 -translate-y-1/2">
                                             <icon-mail :fill="true" />
                                         </span>
@@ -149,7 +156,13 @@
                                         <Link :href="route('password.request')" class="inline-flex items-center gap-x-1 text-sm text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500">¿Has olvidado tu contraseña?</Link>
                                     </div>
                                     <div class="relative text-white-dark">
-                                        <input v-model="form.password" id="Password" type="password" placeholder="Ingrese la contraseña" class="form-input ps-10 placeholder:text-white-dark" tabindex="2" />
+                                        <input
+                                            v-model="form.password"
+                                            id="Password" type="password"
+                                            placeholder="Ingrese la contraseña"
+                                            class="form-input ps-10 placeholder:text-white-dark" tabindex="2"
+                                            @input="(e) => form.password = e.target.value.trim()"
+                                        />
                                         <span class="absolute start-4 top-1/2 -translate-y-1/2">
                                             <icon-lock-dots :fill="true" />
                                         </span>

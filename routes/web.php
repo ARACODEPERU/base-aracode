@@ -197,6 +197,11 @@ Route::middleware('auth')->group(function () {
         [PersonController::class, 'updateInformationPerson']
     )->name('user-update-profile-store');
 
+    Route::post(
+        'person/birthdays',
+        [PersonController::class, 'getBirthdays']
+    )->name('person-birthdays');
+
     Route::get('calendar/index', [CalendarController::class, 'index'])->name('calendar');
 
     ///////////////META FACEBOOK WHATSAPP/////////////////

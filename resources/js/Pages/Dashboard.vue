@@ -12,6 +12,8 @@ import TotalBalance from 'Modules/Sales/Resources/assets/js/Components/TotalBala
 import SalesSummary from 'Modules/Sales/Resources/assets/js/Components/SalesSummary.vue';
 import SubscriptionPrices from 'Modules/Academic/Resources/assets/js/Components/SubscriptionPrices.vue';
 import CoursesTotalStudents from 'Modules/Academic/Resources/assets/js/Components/CoursesTotalStudents.vue';
+import BirthDays from './Person/Partials/BirthDays.vue';
+
 
 const userData = usePage().props.auth.user;
 
@@ -40,7 +42,8 @@ const props = defineProps({
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!--modulo seguridad -->
-                    <div v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'">
+                    <div v-if="role.name == 'admin' || role.name == 'webAdmin' || role.name == 'Administrador'" class="space-y-6">
+                        <BirthDays />
                         <StorageIndicator />
                     </div>
                     <!-- ventas stock Minimo -->

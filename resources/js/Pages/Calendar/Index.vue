@@ -14,13 +14,13 @@
 
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
- 
+
 
     const props = defineProps({
         eventsDB: {
             type: Object,
             default: () => ({}),
-        },
+        }
     });
 
     const defaultParams = ref({
@@ -46,7 +46,7 @@
     const calendar = ref(null);
     const now = new Date();
     const events = ref([]);
-    
+
     const calendarOptions = computed(() => {
         return {
             plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, momentTimezonePlugin],
@@ -87,17 +87,17 @@
         // console.log(props.eventsDB)
 
         const formattedEvents = props.eventsDB.map(appointment => ({
-          id: appointment.id,
-          title: `Cita con ${appointment.patient.full_name}`,
-          start: appointment.date_appointmen + 'T' + appointment.time_appointmen,
-          end: appointment.date_end_appointmen + 'T' + appointment.time_end_appointmen, // Ajusta la lógica según tu necesidad
-          className: (appointment.status == '1' ? 'success':(appointment.status == '2' ? 'primary' : (appointment.status == '0' ? 'danger' : 'info' ))), // Ajusta según tu necesidad
-          description: appointment.description || '',
-          details: appointment.details
+            id: appointment.id,
+            title: `Cita con ${appointment.patient.full_name}`,
+            start: appointment.date_appointmen + 'T' + appointment.time_appointmen,
+            end: appointment.date_end_appointmen + 'T' + appointment.time_end_appointmen, // Ajusta la lógica según tu necesidad
+            className: (appointment.status == '1' ? 'success':(appointment.status == '2' ? 'primary' : (appointment.status == '0' ? 'danger' : 'info' ))), // Ajusta según tu necesidad
+            description: appointment.description || '',
+            details: appointment.details,
+            origin: 'citas'
         }));
-
+        //events.value = formattedEvents;
         events.value = formattedEvents;
-
     };
 
     const getMonth = (dt, add = 0) => {
@@ -105,6 +105,8 @@
         const str = (month < 10 ? '0' + month : month).toString();
         return str;
     };
+
+    const displayEventModalCumple = ref(false);
 
     const editEvent = (data = null) => {
         params.value = JSON.parse(JSON.stringify(defaultParams.value));
@@ -121,12 +123,17 @@
             };
             minStartDate.value = new Date();
             minEndDate.value = dateFormat(obj.start);
+            if(data.origin == 'cumples'){
+                displayEventModalCumple.value = true
+            }else if(data.origin == 'citas'){
+                isAddEventModal.value = true;
+            }
         } else {
             minStartDate.value = new Date();
             minEndDate.value = new Date();
         }
 
-        isAddEventModal.value = true;
+        //isAddEventModal.value = true;
     };
 
     const editDate = (data) => {
@@ -403,7 +410,6 @@
                 </Dialog>
             </TransitionRoot>
         </div>
-
 
     </AppLayout>
 </template>

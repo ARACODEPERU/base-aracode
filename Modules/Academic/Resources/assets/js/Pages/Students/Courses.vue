@@ -140,11 +140,12 @@
 
                                     <div class="mt-1 p-2">
                                         <p class="mt-1 text-sm text-slate-400">{{ course.modality.description }}</p>
+                                        <p class="mt-1 text-sm text-slate-400">{{ course.type_description }}</p>
                                         <h2 class="text-slate-700 dark:text-slate-400">{{ course.description }}</h2>
                                     </div>
-                                    <div class="space-y-4">
+                                    <div class="space-y-4" v-if="course.price && course.price > 0">
                                         <div class="etiquet-price relative">
-                                            <template v-if="course.discount || course.discount > 0">
+                                            <template v-if="course.discount && course.discount > 0">
                                                 <template v-if="course.discount_applies == '01'">
                                                     <p class="price-new">
                                                         S./ {{ (course.price - (course.price * course.discount / 100)).toFixed(2) }} <!-- Precio con descuento -->
