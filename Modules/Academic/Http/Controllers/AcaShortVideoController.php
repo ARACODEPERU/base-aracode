@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Support\Facades\Auth;
+use Modules\Academic\Entities\AcaShortVideo;
 
 class AcaShortVideoController extends Controller
 {
+    use ValidatesRequests;
     /**
      * Display a listing of the resource.
      */
@@ -28,17 +32,41 @@ class AcaShortVideoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'title'         => 'required|max:255',
+            'video'         => 'required',
+            'duration'      => 'required'
+        ]);
+
+        $listId = $request->get('list_id');
+
+        $video = AcaShortVideo::create([
+            'list_id' => $listId ?? null,
+            'title' => $request->get('title'),
+            'video' => $request->get('video'),
+            'link' => $request->get('link') ? true : false,
+            'duration' => $request->get('duration'),
+            'author_id' => Auth::user()->person_id,
+            'user_id' => Auth::id(),
+            'keywords' => json_encode($request->get('keywords')),
+            'status' => $request->get('status') ? true : false
+        ]);
+
+        return response()->json(['video' => $video]);
     }
 
     /**
      * Show the specified resource.
      */
-    public function show($id)
+    public function studentVideos()
     {
-        return view('academic::show');
+        $videos = AcaShortVideo::where('status', true)->get();
+
+        return response()->json([
+            'videos' => $videos
+        ]);
     }
 
     /**

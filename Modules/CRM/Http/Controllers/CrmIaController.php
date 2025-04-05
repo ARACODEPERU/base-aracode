@@ -83,8 +83,13 @@ class CrmIaController extends Controller
         ]);
     }
 
-    public function sendPromptOpenAI($user_id, $message, $archivo = null)
+    public function sendPromptOpenAI(Request $request)
     {
+
+        $user_id = Auth::id();
+        $message = $request->get('messageText');
+        $archivo = null;
+
         $port = env('AI__PORT', 5000);
         // URL del servidor Flask
         $url = 'http://127.0.0.1:' . $port . '/assistant_ai';

@@ -19,7 +19,8 @@ class AcaListVideoController extends Controller
      */
     public function index()
     {
-        $playLists = AcaListVideo::orderBy('title')->get();
+        $playLists = AcaListVideo::with('videos')->orderBy('title')->get();
+
         return Inertia::render('Academic::Tutorials/List', [
             'playLists' => $playLists
         ]);

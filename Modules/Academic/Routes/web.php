@@ -21,6 +21,7 @@ use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
+use Modules\Academic\Http\Controllers\AcaShortVideoController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 
@@ -291,6 +292,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::middleware(['middleware' => 'permission:aca_tutoriales_lista_nuevo'])->post('tutorials/playlist/store', [AcaListVideoController::class, 'storeOrUpdate'])
         ->name('aca_tutorials_playlist_store');
+
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_videos_nuevo'])->post('tutorials/video/store', [AcaShortVideoController::class, 'store'])
+        ->name('aca_tutorials_video_store');
+
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_videos'])->post('tutorials/video/todos', [AcaShortVideoController::class, 'store'])
+        ->name('aca_tutorials_video_todos_estudiante');
 
     ////////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');

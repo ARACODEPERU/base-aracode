@@ -1,20 +1,44 @@
 <script setup>
-    import { ref } from 'vue';
-
+    import { ref, onMounted } from 'vue';
     const startVideo = ref(false);
+    const vcLoading = ref(false);
+    const videos = ref([]);
+
+    const getVideos = () => {
+        vcLoading.value = true;
+        axios.post(route('aca_tutorials_video_todos_estudiante')).then((res) => {
+            console.log(res)
+            return res.data
+        }).then((res)=>{
+            videos.value = res.videos
+        }).then(()=>{
+            vcLoading.value = false;
+        });
+    }
+
+    onMounted(() => {
+        getVideos();
+    });
 </script>
 <template>
     <!-- From Uiverse.io by ayman-ashine -->
     <div class="vc-card ">
-        <img class="vc-image" alt="" src="https://uiverse.io/astronaut.png" />
-        <div class="vc-heading">Pronto Clips Educativo</div>
+        <div v-if="videos.length > 0">
+            <img  class="vc-image" alt="" src="https://uiverse.io/astronaut.png" />
+            <div class="vc-heading">Pronto Clips Educativo</div>
+        </div>
+
+        <div v-else>
+            <iframe width="100%" height="180" src="https://www.youtube.com/embed/4J6VZWpLCk4?si=MiLHbo7WVmtZ9I9M" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+
         <div class="vc-icons">
             <a class="vc-instagram" href="#">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M267.5 440.6c9.5 7.9 22.8 9.7 34.1 4.4s18.4-16.6 18.4-29l0-320c0-12.4-7.2-23.7-18.4-29s-24.5-3.6-34.1 4.4l-192 160L64 241 64 96c0-17.7-14.3-32-32-32S0 78.3 0 96L0 416c0 17.7 14.3 32 32 32s32-14.3 32-32l0-145 11.5 9.6 192 160z"/>
                 </svg>
             </a>
-            <a class="vc-x" href="#">
+            <a v-if="!videos.length > 0" class="vc-x" href="#">
                 <svg v-if="startVideo" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M48 64C21.5 64 0 85.5 0 112L0 400c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48L48 64zm192 0c-26.5 0-48 21.5-48 48l0 288c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48l-32 0z"/>
                 </svg>
@@ -61,7 +85,7 @@
         height: 20%;
         top: 40%;
         left: -10%;
-        background: linear-gradient(144deg, #af40ff, #5b42f3 50%, #00ddeb);
+
         animation: keyframes-floating-light 2.5s infinite ease-in-out;
         filter: blur(20px);
     }

@@ -4,6 +4,7 @@ namespace Modules\Academic\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Academic\Database\factories\AcaListVideoFactory;
 
 class AcaListVideo extends Model
@@ -30,5 +31,10 @@ class AcaListVideo extends Model
     protected static function newFactory(): AcaListVideoFactory
     {
         //return AcaListVideoFactory::new();
+    }
+
+    public function videos(): HasMany
+    {
+        return $this->hasMany(AcaShortVideo::class, 'list_id');
     }
 }
