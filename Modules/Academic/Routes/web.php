@@ -296,7 +296,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_tutoriales_videos_nuevo'])->post('tutorials/video/store', [AcaShortVideoController::class, 'store'])
         ->name('aca_tutorials_video_store');
 
-    Route::middleware(['middleware' => 'permission:aca_tutoriales_videos'])->post('tutorials/video/todos', [AcaShortVideoController::class, 'store'])
+    Route::post('tutorials/video/todos', [AcaShortVideoController::class, 'studentVideos'])
         ->name('aca_tutorials_video_todos_estudiante');
 
     ////////////////verificar datos///////////////////////////

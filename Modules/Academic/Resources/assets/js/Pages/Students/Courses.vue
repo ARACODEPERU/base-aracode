@@ -137,7 +137,6 @@
                                     <div class="relative flex items-end overflow-hidden justify-center rounded-xl">
                                         <img :src="getImage(course.image)" alt="Hotel Photo" class="max-h-[105.05px]" />
                                     </div>
-
                                     <div class="mt-1 p-2">
                                         <p class="mt-1 text-sm text-slate-400">{{ course.modality.description }}</p>
                                         <p class="mt-1 text-sm text-slate-400">{{ course.type_description }}</p>

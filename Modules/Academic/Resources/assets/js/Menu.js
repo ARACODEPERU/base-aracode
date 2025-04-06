@@ -9,6 +9,8 @@ import {
     faPlay,
     faUserGroup
 } from "@fortawesome/free-solid-svg-icons";
+import { ref } from 'vue';
+import axios from 'axios';
 
 const menuAcademic = {
     status: false,
@@ -93,49 +95,7 @@ const menuAcademic = {
     ],
 };
 
-// 🔥 Función para cargar los docentes y agregarlos al menú
-async function loadTeachers() {
-    try {
-        const response = await fetch(route('crm_contacts_docents_chat'), {
-            method: 'POST', // Cambiamos a POST
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') // Si usas Laravel con Blade
-            },
-            body: JSON.stringify({}) // Puedes enviar datos adicionales si es necesario
-        });
 
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Mapear los docentes a objetos de menú
-        const docentesMenu = data.docents.map(docente => ({
-            route: route("crm_application_ai_prompt", { cont: docente.person.id }),
-            status: false,
-            text: docente.person.full_name,
-            permissions: "crm_clientes_preguntas_ia",
-            img: docente.person.image
-        }));
-        //console.log(docentesMenu)
-        const chatDodent = {
-            status: false,
-            text: "Chat",
-            icom: faUserGroup,
-            route: null,
-            permissions: "crm_clientes_preguntas_ia",
-            items: docentesMenu,
-            avatar: true
-        }
-        // // Agregar los docentes al menú
-        menuAcademic.items.push(chatDodent);
-    } catch (error) {
-        console.error("Error cargando docentes:", error);
-    }
-}
 
 // Llamamos la función para cargar los docentes al menú
-loadTeachers();
 export default menuAcademic;

@@ -1,9 +1,8 @@
 
-    <script setup>
-    import { ref, onMounted, computed, reactive, watch } from 'vue';
-    import { Link, router } from '@inertiajs/vue3';
+<script setup>
+    import { ref, onMounted, computed, reactive, watch, toRefs } from 'vue';
+    import { Link, router, usePage } from '@inertiajs/vue3';
     import { useI18n } from 'vue-i18n';
-
     import appSetting from '@/app-setting';
 
 
@@ -35,10 +34,16 @@
     import IconMenuForms from '@/Components/vristo/icon/menu/icon-menu-forms.vue';
     import IconMenuPages from '@/Components/vristo/icon/menu/icon-menu-pages.vue';
     import IconMenuMore from '@/Components/vristo/icon/menu/icon-menu-more.vue';
-    import { faCartPlus } from  '@fortawesome/free-solid-svg-icons';
+    import { faCartPlus, faUserGroup } from  '@fortawesome/free-solid-svg-icons';
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
     import menuData from './MenuData.js'
+
+    const userData = usePage().props.auth.user;
+
+    const hasAnyRole = (rolesToCheck) => {
+        return userData.roles.some(role => rolesToCheck.includes(role.name))
+    }
 
     const logout = () => {
         router.post(route('logout'));
@@ -69,18 +74,7 @@
             message: '<strong class="text-sm mr-1">John Doe</strong>invite you to <strong>Prototyping</strong>',
             time: '45 min ago',
         },
-        {
-            id: 2,
-            profile: 'profile-34.jpeg',
-            message: '<strong class="text-sm mr-1">Adam Nolan</strong>mentioned you to <strong>UX Basics</strong>',
-            time: '9h Ago',
-        },
-        {
-            id: 3,
-            profile: 'profile-16.jpeg',
-            message: '<strong class="text-sm mr-1">Anna Morgan</strong>Upload a file',
-            time: '9h Ago',
-        },
+
     ]);
 
     const messages = ref([
@@ -91,31 +85,11 @@
             message: 'Your OS has been updated.',
             time: '1hr',
         },
-        {
-            id: 2,
-            image: '<span class="grid place-content-center w-9 h-9 rounded-full bg-info-light dark:bg-info text-info dark:text-info-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>',
-            title: 'Did you know?',
-            message: 'You can switch between artboards.',
-            time: '2hr',
-        },
-        {
-            id: 3,
-            image: '<span class="grid place-content-center w-9 h-9 rounded-full bg-danger-light dark:bg-danger text-danger dark:text-danger-light"> <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>',
-            title: 'Something went wrong!',
-            message: 'Send Reposrt',
-            time: '2days',
-        },
-        {
-            id: 4,
-            image: '<span class="grid place-content-center w-9 h-9 rounded-full bg-warning-light dark:bg-warning text-warning dark:text-warning-light"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">    <circle cx="12" cy="12" r="10"></circle>    <line x1="12" y1="8" x2="12" y2="12"></line>    <line x1="12" y1="16" x2="12.01" y2="16"></line></svg></span>',
-            title: 'Warning',
-            message: 'Your password strength is low.',
-            time: '5days',
-        },
     ]);
 
     onMounted(() => {
         setActiveDropdown();
+        loadTeachers();
     });
 
     watch(route, (to, from) => {
@@ -155,6 +129,43 @@
     const getImage = (path) => {
         return baseUrl + 'storage/'+ path;
     }
+
+    // 🔥 Función para cargar los docentes y agregarlos al menú
+
+    const menuChatAI = ref({});
+
+    async function loadTeachers() {
+        try {
+            const response = await axios.post(route('crm_contacts_docents_chat'),{
+                timeout: 0,
+            });
+
+            const data = response.data;
+
+            // Mapear los docentes a objetos de menú
+            const docentesMenu = data.docents.map(docente => ({
+                route: route("crm_application_ai_prompt", { cont: docente.person.id }),
+                status: false,
+                text: docente.person.full_name,
+                permissions: "crm_clientes_preguntas_ia",
+                img: docente.person.image
+            }));
+
+            menuChatAI.value = {
+                status: false,
+                text: "Chat",
+                icom: faUserGroup,
+                route: null,
+                permissions: "crm_clientes_preguntas_ia",
+                items: docentesMenu,
+                avatar: true
+            };
+
+        } catch (error) {
+            console.error("Error cargando docentes:", error);
+        }
+    }
+
 </script>
 <template>
 
@@ -439,7 +450,7 @@
             </div>
 
             <!-- horizontal menu -->
-            <ul class="horizontal-menu hidden py-1.5 font-semibold px-6 lg:space-x-1.5 xl:space-x-8 rtl:space-x-reverse bg-white border-t border-[#ebedf2] dark:border-[#191e3a] dark:bg-[#0e1726] text-black dark:text-white-dark">
+            <ul class="horizontal-menu hidden flex flex-wrap gap-x-4 gap-y-0 py-1.5 font-semibold px-6 bg-white border-t border-[#ebedf2] dark:border-[#191e3a] dark:bg-[#0e1726] text-black dark:text-white-dark">
                 <template v-for="(item, index) in menuData" :key="index">
                     <template v-if="item.route == null">
                         <li v-can="item.permissions" class="menu nav-item relative">
@@ -476,14 +487,19 @@
                                 <template v-if="item.items && item.items.length > 0" >
                                     <template v-for="(subItem, subIndex) in item.items" :key="subIndex">
                                         <template v-if="subItem.route == null">
-                                            <li class="relative">
+                                            <li
+                                                v-can="subItem.permissions"
+                                                class="relative"
+                                            >
                                                 <a href="javascript:;" >
                                                     {{ subItem.text }}
                                                     <div class="ltr:ml-auto rtl:mr-auto rtl:rotate-90 -rotate-90">
                                                         <icon-caret-down />
                                                     </div>
                                                 </a>
-                                                <ul v-if="subItem.items && subItem.items.length > 0"  class="rounded absolute top-0 ltr:left-[95%] rtl:right-[95%] min-w-[180px] bg-white z-[10] text-dark dark:text-white-dark dark:bg-[#1b2e4b] shadow p-0 py-2 hidden">
+                                                <ul
+                                                    v-if="subItem.items && subItem.items.length > 0"
+                                                    class="rounded absolute top-0 left-[95%] min-w-[180px] bg-white z-[10] text-dark dark:text-white-dark dark:bg-[#1b2e4b] shadow p-0 py-2 hidden">
                                                     <template v-for="(subSubItem, subSubIndex) in subItem.items" :key="subSubIndex">
                                                         <li v-can="subSubItem.permissions">
                                                             <Link :href="subSubItem.route">{{ subSubItem.text }}</Link>
@@ -512,6 +528,28 @@
                             </Link>
                         </li>
                     </template>
+                </template>
+                <template v-if="hasAnyRole(['Alumno'])">
+                    <li v-can="menuChatAI.permissions" class="menu nav-item relative">
+                        <a href="javascript:;" class="nav-link">
+                            <div class="flex items-center">
+                                <!-- <font-awesome-icon :icon="menuChatAI.icom" class="shrink-0" /> -->
+                                <span class="px-2">{{ menuChatAI.text }}</span>
+                            </div>
+                            <div class="right_arrow">
+                                <icon-caret-down />
+                            </div>
+                        </a>
+                        <ul class="sub-menu">
+                            <template v-if="menuChatAI.items && menuChatAI.items.length > 0" >
+                                <template v-for="(subItem, subIndex) in menuChatAI.items" :key="subIndex">
+                                    <li v-can="subItem.permissions">
+                                        <Link :href="subItem.route">{{ subItem.text }}</Link>
+                                    </li>
+                                </template>
+                            </template>
+                        </ul>
+                    </li>
                 </template>
             </ul>
         </div>

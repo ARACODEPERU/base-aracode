@@ -215,6 +215,16 @@
         modifiedContent = modifiedContent.replace(/width="\d+"/g, `width="100%"`);
         return modifiedContent;
     };
+
+    const getIframeSrc = (item) => {
+        if(video.type == 1){
+            return video.iframe
+        }else{
+            let iframeHtml = video.iframe;
+            const match = iframeHtml.match(/src="([^"]+)"/)
+            return match ? match[1] : ''
+        }
+    }
 </script>
 <template>
     <AppLayout title="Tutoriales">
@@ -301,14 +311,26 @@
                             <div class="grid grid-cols-3 gap-4 mb-4">
                                 <button @click="openModalVideo" type="button" class="flex items-center justify-center h-24 bg-gray-50 dark:bg-gray-800">
                                     <p class="text-2xl text-gray-400 dark:text-gray-500">
-                                    <svg class="w-3.5 h-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16"/>
-                                    </svg>
+                                        <svg class="w-3.5 h-3.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16"/>
+                                        </svg>
                                     </p>
                                 </button>
                                 <template v-if="playListVideos && playListVideos.videos.length > 0">
                                     <template v-for="(item, ixe) in playListVideos.videos">
-                                        <div v-html="modifiedContent(item.video)" class="flex items-center justify-center h-24 bg-gray-50 dark:bg-gray-800"></div>
+                                        <template v-if="item.link">
+                                            <iframe
+                                                :src="item.video"
+                                                width="100%"
+                                                :height="newHeight"
+                                                frameborder="0"
+                                                allowfullscreen
+                                                class="w-full"
+                                            ></iframe>
+                                        </template>
+                                        <template v-else>
+                                            <div v-html="modifiedContent(item.video)" class="flex items-center justify-center h-24 bg-gray-50 dark:bg-gray-800"></div>
+                                        </template>
                                     </template>
                                 </template>
                             </div>

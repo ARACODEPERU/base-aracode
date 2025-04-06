@@ -41,12 +41,17 @@ class AcaShortVideoController extends Controller
         ]);
 
         $listId = $request->get('list_id');
-
+        $link = true;
+        if ($request->get('link') === true || $request->get('link') === "true") {
+            $link = true;
+        } else {
+            $link = false;
+        }
         $video = AcaShortVideo::create([
             'list_id' => $listId ?? null,
             'title' => $request->get('title'),
             'video' => $request->get('video'),
-            'link' => $request->get('link') ? true : false,
+            'link' => $link,
             'duration' => $request->get('duration'),
             'author_id' => Auth::user()->person_id,
             'user_id' => Auth::id(),

@@ -387,7 +387,7 @@ class AcaStudentController extends Controller
                 ->get()
                 ->map(function ($course) use ($studentSubscribed, $student_id) {
                     // Verificar si el curso es gratuito
-                    $isFree = is_null($course->price);
+                    $isFree = is_null($course->price) || floatval($course->price) == 0.00;
                     $isProgram = $course->type_description == 'Programas de especialización' ? true : false;
                     // Verificar si el alumno está registrado en este curso
                     $isRegistered = $course->registrations->contains('student_id', $student_id);

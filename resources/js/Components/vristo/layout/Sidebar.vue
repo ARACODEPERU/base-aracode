@@ -7,13 +7,19 @@
     import IconMinus from '@/Components/vristo/icon/icon-minus.vue';
 
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
-
+    import { faUserGroup } from  '@fortawesome/free-solid-svg-icons';
 
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js'
 
     const store = useAppStore();
     const activeDropdown = ref('');
+
+    const userData = usePage().props.auth.user;
+
+    const hasAnyRole = (rolesToCheck) => {
+        return userData.roles.some(role => rolesToCheck.includes(role.name))
+    }
 
     onMounted(() => {
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
@@ -32,7 +38,7 @@
         }
 
         getStudentCertificates();
-
+        loadTeachers();
     });
 
     const toggleMobileMenu = () => {
@@ -71,6 +77,41 @@
     };
 
     const xasset = assetUrl;
+
+    const menuChatAI = ref({});
+
+    async function loadTeachers() {
+        try {
+            const response = await axios.post(route('crm_contacts_docents_chat'),{
+                timeout: 0,
+            });
+
+            const data = response.data;
+
+            // Mapear los docentes a objetos de menú
+            const docentesMenu = data.docents.map(docente => ({
+                route: route("crm_application_ai_prompt", { cont: docente.person.id }),
+                status: false,
+                text: docente.person.full_name,
+                permissions: "crm_clientes_preguntas_ia",
+                img: docente.person.image
+            }));
+
+            menuChatAI.value = {
+                status: false,
+                text: "Chat",
+                icom: faUserGroup,
+                route: null,
+                permissions: "crm_clientes_preguntas_ia",
+                items: docentesMenu,
+                avatar: true
+            };
+
+        } catch (error) {
+            console.error("Error cargando docentes:", error);
+        }
+    }
+
 </script>
 <template>
     <div :class="{ 'dark text-white-dark': store.semidark }">
@@ -256,7 +297,48 @@
                                 </HeightTransition>
                             </li>
                         </template>
-
+                        <template v-if="hasAnyRole(['Alumno'])">
+                            <li v-if="menuChatAI.permissions" class="menu nav-item">
+                                <button
+                                    type="button"
+                                    class="nav-link group w-full"
+                                    :class="{ active: activeDropdown === 'logros' }"
+                                    @click="activeDropdown === menuChatAI.text ? (activeDropdown = null) : (activeDropdown = menuChatAI.text)"
+                                >
+                                    <div class="flex items-center">
+                                        <font-awesome-icon :icon="menuChatAI.icom" class="group-hover:!text-primary shrink-0" />
+                                        <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
+                                            {{ menuChatAI.text }}
+                                        </span>
+                                    </div>
+                                    <div :class="{ 'rtl:rotate-90 -rotate-90': activeDropdown !== menuChatAI.text }">
+                                        <icon-caret-down />
+                                    </div>
+                                </button>
+                                <HeightTransition v-show="activeDropdown === menuChatAI.text">
+                                    <ul
+                                        class="text-gray-500"
+                                        :class="menuChatAI.avatar ? 'sub-menu-avatar' : 'sub-menu-before'"
+                                    >
+                                        <li v-for="(scd, sck) in menuChatAI.items" :key="sck">
+                                            <Link v-bind="{ id: scd.id }" :href="scd.route" @click="toggleMobileMenu">
+                                                <template v-if="scd.img">
+                                                    <div class="ltr:mr-2 rtl:ml-2">
+                                                        <img :src="`${xasset}storage/${scd.img}`" alt="" class="w-8 h-8 rounded" />
+                                                    </div>
+                                                    <div class="flex-1 text-xs">
+                                                        {{ scd.text }}
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    {{ scd.text }}
+                                                </template>
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </HeightTransition>
+                            </li>
+                        </template>
                     </ul>
 
                 </perfect-scrollbar>
