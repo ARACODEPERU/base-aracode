@@ -76,7 +76,7 @@ const menuAcademic = {
                     permissions: "aca_tutoriales_lista",
                 },
                 {
-                    route: route("aca_tutorials_playlist"),
+                    route: route("aca_tutorials_videos_list"),
                     status: false,
                     text: "Videos",
                     icom: faCertificate,

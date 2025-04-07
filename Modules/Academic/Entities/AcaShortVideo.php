@@ -23,7 +23,8 @@ class AcaShortVideo extends Model
         'author_id',
         'user_id',
         'keywords',
-        'status'
+        'status',
+        'number_views'
     ];
 
     protected static function newFactory(): AcaShortVideoFactory

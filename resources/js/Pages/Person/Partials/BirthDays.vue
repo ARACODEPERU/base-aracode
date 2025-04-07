@@ -1,6 +1,7 @@
 <script setup>
 
     import { ref, onMounted, computed, watch } from 'vue';
+    import { Popover } from 'ant-design-vue';
 
     const displayBirthdays = ref(false);
     const birthdays = ref([]);
@@ -103,49 +104,55 @@
                     }"
                     class="relative max-h-[380px]"
                 >
-                    <div class="space-y-4">
+                    <ol class="divide-y divide-gray-200 dark:divide-gray-700">
                         <template v-for="(per, hey) in birthdays">
-                                <div class="sm:flex pl-4">
-                                    <div class="
-                                        relative
-                                        mx-auto
-                                        mb-5
-                                        sm:mb-0
-                                        ltr:sm:mr-4
-                                        rtl:sm:ml-4
-                                        z-[2]
-                                        before:absolute before:top-12 before:left-1/2 before:-bottom-[15px] before:-translate-x-1/2 before:border-l-2 before:border-[#ebedf2] before:w-0 before:h-auto before:-z-[1]
-                                        dark:before:border-[#191e3a]
-                                        before:hidden
-                                        sm:before:block
-                                    "
-                                    >
-                                        <img v-if="per.image" :src="getImage(per.image)" alt="" class="w-12 h-12 mx-auto rounded-full shadow-[0_4px_9px_0_rgba(31,45,61,0.31)]" />
-                                        <img v-else :src="`https://ui-avatars.com/api/?name=${per.name}&size=150&rounded=true`" alt="" class="w-12 h-12 mx-auto rounded-full shadow-[0_4px_9px_0_rgba(31,45,61,0.31)]" />
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex items-center p-3.5 rounded-tl-none rounded-xl text-primary bg-primary-light dark:bg-primary-dark-light"
-                                        :class="{
-                                            'animate-blink text-white': per.status === 'hoy',
-                                        }"
-                                        >
-                                            <span class="ltr:pr-2 rtl:pl-2">
-                                                {{ per.status == 'pasado' ? 'El '+ per.birthdate + ' fue el' :  per.status == 'hoy' ? 'Hoy '+per.birthdate+' es el' : 'El próximo '+per.birthdate+' es el'}} cumpleaños de
-                                                <strong class="ltr:mr-1 rtl:ml-1">{{ per.name }}</strong>
-
-                                            </span>
-                                            <button v-if="per.status == 'hoy'" type="button" class="ltr:ml-auto rtl:mr-auto hover:opacity-80">
-                                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                                                    <path fill="currentColor" d="M86.4 5.5L61.8 47.6C58 54.1 56 61.6 56 69.2L56 72c0 22.1 17.9 40 40 40s40-17.9 40-40l0-2.8c0-7.6-2-15-5.8-21.6L105.6 5.5C103.6 2.1 100 0 96 0s-7.6 2.1-9.6 5.5zm128 0L189.8 47.6c-3.8 6.5-5.8 14-5.8 21.6l0 2.8c0 22.1 17.9 40 40 40s40-17.9 40-40l0-2.8c0-7.6-2-15-5.8-21.6L233.6 5.5C231.6 2.1 228 0 224 0s-7.6 2.1-9.6 5.5zM317.8 47.6c-3.8 6.5-5.8 14-5.8 21.6l0 2.8c0 22.1 17.9 40 40 40s40-17.9 40-40l0-2.8c0-7.6-2-15-5.8-21.6L361.6 5.5C359.6 2.1 356 0 352 0s-7.6 2.1-9.6 5.5L317.8 47.6zM128 176c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 48c-35.3 0-64 28.7-64 64l0 71c8.3 5.2 18.1 9 28.8 9c13.5 0 27.2-6.1 38.4-13.4c5.4-3.5 9.9-7.1 13-9.7c1.5-1.3 2.7-2.4 3.5-3.1c.4-.4 .7-.6 .8-.8l.1-.1s0 0 0 0s0 0 0 0s0 0 0 0s0 0 0 0c3.1-3.2 7.4-4.9 11.9-4.8s8.6 2.1 11.6 5.4c0 0 0 0 0 0s0 0 0 0l.1 .1c.1 .1 .4 .4 .7 .7c.7 .7 1.7 1.7 3.1 3c2.8 2.6 6.8 6.1 11.8 9.5c10.2 7.1 23 13.1 36.3 13.1s26.1-6 36.3-13.1c5-3.5 9-6.9 11.8-9.5c1.4-1.3 2.4-2.3 3.1-3c.3-.3 .6-.6 .7-.7l.1-.1c3-3.5 7.4-5.4 12-5.4s9 2 12 5.4l.1 .1c.1 .1 .4 .4 .7 .7c.7 .7 1.7 1.7 3.1 3c2.8 2.6 6.8 6.1 11.8 9.5c10.2 7.1 23 13.1 36.3 13.1s26.1-6 36.3-13.1c5-3.5 9-6.9 11.8-9.5c1.4-1.3 2.4-2.3 3.1-3c.3-.3 .6-.6 .7-.7l.1-.1c2.9-3.4 7.1-5.3 11.6-5.4s8.7 1.6 11.9 4.8c0 0 0 0 0 0s0 0 0 0s0 0 0 0l.1 .1c.2 .2 .4 .4 .8 .8c.8 .7 1.9 1.8 3.5 3.1c3.1 2.6 7.5 6.2 13 9.7c11.2 7.3 24.9 13.4 38.4 13.4c10.7 0 20.5-3.9 28.8-9l0-71c0-35.3-28.7-64-64-64l0-48c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 48-64 0 0-48c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 48-64 0 0-48zM448 394.6c-8.5 3.3-18.2 5.4-28.8 5.4c-22.5 0-42.4-9.9-55.8-18.6c-4.1-2.7-7.8-5.4-10.9-7.8c-2.8 2.4-6.1 5-9.8 7.5C329.8 390 310.6 400 288 400s-41.8-10-54.6-18.9c-3.5-2.4-6.7-4.9-9.4-7.2c-2.7 2.3-5.9 4.7-9.4 7.2C201.8 390 182.6 400 160 400s-41.8-10-54.6-18.9c-3.7-2.6-7-5.2-9.8-7.5c-3.1 2.4-6.8 5.1-10.9 7.8C71.2 390.1 51.3 400 28.8 400c-10.6 0-20.3-2.2-28.8-5.4L0 480c0 17.7 14.3 32 32 32l384 0c17.7 0 32-14.3 32-32l0-85.4z"/>
-                                                </svg>
-                                            </button>
+                            <li>
+                                <a href="#"
+                                    class="items-center block p-3 sm:flex hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    :class="{
+                                        'animate-blink ': per.status === 'hoy',
+                                    }"
+                                >
+                                    <img v-if="per.image" :src="getImage(per.image)" alt="" class="w-12 h-12 mb-3 me-3 rounded-lg sm:mb-0" />
+                                    <img v-else :src="`https://ui-avatars.com/api/?name=${per.name}&size=150`" alt="" class="w-12 h-12 mb-3 me-3 rounded-lg sm:mb-0" />
+                                    <div class="text-gray-600 dark:text-gray-400">
+                                        <div class="font-normal text-gray-900 dark:text-white">
+                                            {{ per.status == 'pasado' ? 'El '+ per.birthdate + ' fue el' :  per.status == 'hoy' ? 'Hoy '+per.birthdate+' es el ' : 'El próximo '+per.birthdate+' es el ' }} cumpleaños de
+                                            <span class="font-medium text-gray-900 dark:text-blue-700">{{ per.name }}</span>
                                         </div>
+                                        <Popover title="Información de contacto">
+                                            <template #content>
+                                                <ul class="space-y-3 font-semibold selectable-content">
+                                                    <li>
+                                                        <svg class="inline w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                            <path fill="currentColor" d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48L48 64zM0 176L0 384c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-208L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"/>
+                                                        </svg>
+                                                        <span class="list-text">{{ per.email }}</span>
+                                                    </li>
+                                                    <li>
+                                                        <svg class="inline w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                            <path fill="currentColor" d="M164.9 24.6c-7.7-18.6-28-28.5-47.4-23.2l-88 24C12.1 30.2 0 46 0 64C0 311.4 200.6 512 448 512c18 0 33.8-12.1 38.6-29.5l24-88c5.3-19.4-4.6-39.7-23.2-47.4l-96-40c-16.3-6.8-35.2-2.1-46.3 11.6L304.7 368C234.3 334.7 177.3 277.7 144 207.3L193.3 167c13.7-11.2 18.4-30 11.6-46.3l-40-96z"/>
+                                                        </svg>
+                                                        <span class="list-text">{{ per.telephone }}</span>
+                                                    </li>
+                                                </ul>
+                                            </template>
+                                            <button v-if="per.status == 'hoy'" class="mt-2 w-full inline-flex items-center justify-center font-normal text-[#ec1b2b] bg-[#e6eee4] px-2 py-1">
+                                                <img src="/img/24px/pastel-de-cumpleanos.png" />
+                                                <img src="/img/24px/globos.png" />
+                                                <img src="/img/24px/papel-picado.png" />
+                                                <img src="/img/24px/victoria.png" />
+                                                <img src="/img/24px/guirnalda.png" />
+                                                <img src="/img/24px/champan.png" />
+                                                <img src="/img/24px/regalo.png" />
+                                            </button>
+                                        </Popover>
                                     </div>
-                                </div>
-
-
+                                </a>
+                            </li>
                         </template>
-                    </div>
+                    </ol>
+
                 </perfect-scrollbar>
             </template>
             <template>
@@ -158,12 +165,13 @@
 </template>
 <style scoped>
 @keyframes blink {
-    0% { background-color: #208607; } /* Azul oscuro */
-    50% { background-color: #0f9b16; } /* Azul normal */
-    100% { background-color: #135c05; } /* Azul oscuro */
+    0% { background-color: #f4faf2; } /* Azul oscuro */
+    50% { background-color: #e7faf4; } /* Azul normal */
+    100% { background-color: #eff5f1; } /* Azul oscuro */
 }
 
 .animate-blink {
-    animation: blink 1.5s infinite alternate ease-in-out;
+    /* animation: blink 1.5s infinite alternate ease-in-out; */
 }
+
 </style>

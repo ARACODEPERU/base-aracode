@@ -1,7 +1,6 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import VueCollapsible from 'vue-height-collapsible/vue3';
     import { ref, nextTick, onMounted, onUnmounted } from 'vue';
     import iconFolderClassic from '@/Components/vristo/icon/icon-folder-classic.vue';
     import iconFolderClassicOpen from '@/Components/vristo/icon/icon-folder-classic-open.vue';
@@ -10,7 +9,7 @@
     import iconTrash from "@/Components/vristo/icon/icon-trash.vue";
     import InputLabel from "@/Components/InputLabel.vue";
     import TextInput from "@/Components/TextInput.vue";
-    import { useForm } from "@inertiajs/vue3";
+    import { useForm, router } from "@inertiajs/vue3";
     import Swal2 from 'sweetalert2';
     import InputError from "@/Components/InputError.vue";
     import PrimaryButton from "@/Components/PrimaryButton.vue";
@@ -86,11 +85,22 @@
 
     const displayModalVideo = ref(false);
 
-    const openModalVideo = () => {
+    const openModalVideo = (video = {}) => {
 
         if(playListVideos.value){
             displayModalVideo.value = true;
             formVideo.list_id = playListVideos.value.id
+            if(video){
+                formVideo.id = video.id;
+                formVideo.title = video.title;
+                formVideo.video = video.video;
+                formVideo.link = video.link == 1 ? true : false;
+                formVideo.duration = video.duration;
+                formVideo.stars = video.stars;
+                formVideo.keywords = JSON.parse(video.keywords);
+                formVideo.status = video.status == 1 ? true : false;
+            }
+
         }else{
             showAlert('Debe seleccionar una lista','error')
         }
@@ -98,9 +108,11 @@
 
     const closeModalVideo = () => {
         displayModalVideo.value = false;
+        formVideo.reset();
     };
 
     const formVideo = useForm({
+        id: null,
         list_id: null,
         title: null,
         video: null,
@@ -139,7 +151,6 @@
 
     const removeTarget = (key) => {
         formVideo.keywords.splice(key,1);
-
     }
 
     const showAlert = async (msg, xicon = 'success') => {
@@ -188,32 +199,52 @@
                 customClass: 'sweet-alerts',
             })
 
-            formVideo.reset()
-            displayModalVideo.value = false
+
 
             // Puedes hacer algo con el video si quieres
-            playListVideos.value.videos.push(video);
-            formVideo.processing = false;
+            if(formVideo.id){
+                const index = playListVideos.value.videos.findIndex(v => v.id === formVideo.id)
 
+                if (index !== -1) {
+                    // Actualiza el video existente en la misma posición
+                    playListVideos.value.videos[index] = video
+                } else {
+                    // Si por alguna razón no se encontró, lo agregas como nuevo
+                    playListVideos.value.videos.push(video)
+                }
+            }else{
+                playListVideos.value.videos.push(video);
+            }
+
+            formVideo.reset()
+            displayModalVideo.value = false
+            formVideo.processing = false;
+            formVideo.setError(null);
         } catch (error) {
             if (error.response?.status === 422) {
                 const validationErrors = error.response.data.errors
-                formVideo.setErrors(validationErrors)
+                formVideo.setError(validationErrors)
             } else {
                 showAlert('Error inesperado: '+ error , 'error')
             }
+            formVideo.processing = false;
         }
     }
 
-    const newHeight = ref(96);
+    const newHeight = ref('100%');
+
     const modifiedContent = (content) => {
         // Copia el contenido original
-        let modifiedContent = content;
+        if(content){
+            let modifiedContent = content;
+            // Realiza la sustitución de la altura con un valor dinámico
+            modifiedContent = modifiedContent.replace(/height="\d+"/g, `height="${newHeight.value}"`);
+            modifiedContent = modifiedContent.replace(/width="\d+"/g, `width="100%"`);
+            return modifiedContent;
+        }else{
+            return null;
+        }
 
-        // Realiza la sustitución de la altura con un valor dinámico
-        modifiedContent = modifiedContent.replace(/height="\d+"/g, `height="${newHeight.value}"`);
-        modifiedContent = modifiedContent.replace(/width="\d+"/g, `width="100%"`);
-        return modifiedContent;
     };
 
     const getIframeSrc = (item) => {
@@ -224,6 +255,115 @@
             const match = iframeHtml.match(/src="([^"]+)"/)
             return match ? match[1] : ''
         }
+    }
+
+    const destroyVideo = (video, index) =>{
+        Swal2.fire({
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto!",
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonColor: '#d3021b',
+            cancelButtonColor: '#0832b5',
+            denyButtonColor: '#39ad1d',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            denyButtonText: `Quitar de la lista`,
+            showLoaderOnConfirm: true,
+            showLoaderOnDeny: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            backdrop: true,
+            preConfirm: () => {
+                return axios.post(route('aca_tutorials_video_eliminar_actualizar'),{
+                    destroy: true,
+                    id: video.id
+                }).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message)
+                    }
+                    return res
+                });
+            },
+            preDeny: () => {
+                return axios.post(route('aca_tutorials_video_eliminar_actualizar'), {
+                    destroy: false,
+                    id: video.id
+                }).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message);
+                    }
+                    return res;
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            console.log(result)
+            if (result.isConfirmed) {
+
+                playListVideos.value.videos.splice(index,1);
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: result.value.data.message,
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                    backdrop: true,
+                });
+            }else if(result.isDenied){
+                playListVideos.value.videos.splice(index,1);
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: result.value.data.message,
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                    backdrop: true,
+                });
+            }
+        });
+    };
+
+    const destroyList = (playList) => {
+        Swal2.fire({
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto!",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            backdrop: true,
+            preConfirm: () => {
+                return axios.delete(route('aca_tutorials_playlist_eliminar', playList.id)).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message)
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: result.value.data.message,
+                    icon: 'success',
+                    backdrop: true,
+                });
+                router.visit(route('aca_tutorials_playlist'), {
+                    replace: false,
+                    method: 'get',
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            }
+        });
     }
 </script>
 <template>
@@ -247,7 +387,7 @@
                                 }"
                                 class="relative ltr:pr-3.5 rtl:pl-3.5 ltr:-mr-3.5 rtl:-ml-3.5 h-full grow"
                             >
-                            <ul v-if="playLists.length > 0" class="max-w-xs flex flex-col divide-y divide-gray-200 dark:divide-neutral-700">
+                            <ul v-if="playLists.length > 0" class="w-full flex flex-col divide-y divide-gray-200 dark:divide-neutral-700">
                                 <template v-for="(playList, index) in playLists">
                                     <li class="inline-flex items-center gap-x-2 py-2 px-4 text-sm font-medium "
                                         :class="{ 'bg-yellow-100': activePlayList === playList.id }"
@@ -282,7 +422,7 @@
                                                                     </button>
                                                                 </li>
                                                                 <li v-can="'aca_tutoriales_lista_eliminar'">
-                                                                    <button type="Button" class="text-warning">
+                                                                    <button @click="destroyList(playList)" type="Button" class="text-warning">
                                                                         <icon-trash class="w-4 h-4 mr-2" />
                                                                         Eliminar
                                                                     </button>
@@ -319,17 +459,47 @@
                                 <template v-if="playListVideos && playListVideos.videos.length > 0">
                                     <template v-for="(item, ixe) in playListVideos.videos">
                                         <template v-if="item.link">
-                                            <iframe
-                                                :src="item.video"
-                                                width="100%"
-                                                :height="newHeight"
-                                                frameborder="0"
-                                                allowfullscreen
-                                                class="w-full"
-                                            ></iframe>
+                                            <div>
+                                                <div class="flex items-center justify-center h-24 bg-gray-50 dark:bg-gray-800">
+                                                    <iframe
+                                                        :src="item.video"
+                                                        width="100%"
+                                                        :height="newHeight"
+                                                        frameborder="0"
+                                                        allowfullscreen
+                                                        class="w-full"
+                                                    ></iframe>
+                                                </div>
+                                                <ul class="flex items-center justify-center gap-2 mt-2">
+                                                    <li>
+                                                        <a v-on:click="openModalVideo(item)" href="javascript:;"  v-tippy="{ content: 'Editar', placement: 'left'}" >
+                                                            <iconPencil />
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a v-on:click="destroyVideo(item, ixe)" href="javascript:;" v-tippy="{ content: 'Eliminar', placement: 'right'}">
+                                                            <iconX />
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </template>
                                         <template v-else>
-                                            <div v-html="modifiedContent(item.video)" class="flex items-center justify-center h-24 bg-gray-50 dark:bg-gray-800"></div>
+                                            <div>
+                                                <div v-html="modifiedContent(item.video)" class="flex items-center justify-center h-24 bg-gray-50 dark:bg-gray-800"></div>
+                                                <ul class="flex items-center justify-center gap-2 mt-2">
+                                                    <li>
+                                                        <a v-on:click="openModalVideo(item)" href="javascript:;"  v-tippy="{ content: 'Editar', placement: 'left'}" >
+                                                            <iconPencil />
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a v-on:click="destroyVideo(item, ixe)" href="javascript:;" v-tippy="{ content: 'Eliminar', placement: 'right'}">
+                                                            <iconX />
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </template>
                                     </template>
                                 </template>
@@ -340,7 +510,7 @@
             </div>
         </div>
         <Drawer placement="right" :closable="false" v-model:open="open" @close="onClose">
-            <div class="max-w-sm mx-auto">
+            <div class="w-[80%] mx-auto">
                 <h5 v-if="formModalList.id" class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     Editar lista de reproduccion
                 </h5>
@@ -348,7 +518,7 @@
                     Nueva lista de reproduccion
                 </h5>
             </div>
-            <form class="max-w-sm mx-auto">
+            <form class="w-[80%] mx-auto">
                 <div class="mb-5">
                     <InputLabel for="title" value="Titulo" />
                     <textarea v-model="formModalList.title" id="title" class="form-textarea"></textarea>
@@ -382,11 +552,11 @@
             </form>
         </Drawer>
         <Drawer id="modalAddVideos" width="40%" placement="right" :closable="false" v-model:open="displayModalVideo" @close="closeModalVideo">
-            <div v-if="playListVideos" class="max-w-sm mx-auto">
+            <div v-if="playListVideos" class="w-[80%] mx-auto">
                 <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     {{ playListVideos.title }}
                 </h5>
-                <form class="max-w-sm mx-auto">
+                <form class="w-full mx-auto">
                     <div class="mb-5">
                         <InputLabel for="video-title" value="Titulo" />
                         <textarea v-model="formVideo.title" class="form-textarea" id="video-title"></textarea>

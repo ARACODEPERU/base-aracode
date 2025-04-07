@@ -385,6 +385,9 @@ class PersonController extends Controller
                     'birthdate' => Carbon::parse($day)->translatedFormat('d \d\e F'),
                     'age' => $currentYear - $birthdate->year,
                     'status' => $status,
+                    'id' => $person->id,
+                    'email' => $person->email,
+                    'telephone' => $person->telephone
                 ];
             });
 

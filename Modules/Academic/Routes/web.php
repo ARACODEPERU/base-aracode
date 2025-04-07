@@ -299,6 +299,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('tutorials/video/todos', [AcaShortVideoController::class, 'studentVideos'])
         ->name('aca_tutorials_video_todos_estudiante');
 
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_videos_eliminar'])
+        ->post('tutorials/video/destroy', [AcaShortVideoController::class, 'destroyOrUpdate'])
+        ->name('aca_tutorials_video_eliminar_actualizar');
+
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_lista_eliminar'])
+        ->delete('tutorials/playlist/destroy/{id}', [AcaListVideoController::class, 'destroy'])
+        ->name('aca_tutorials_playlist_eliminar');
+
+    Route::middleware(['middleware' => 'permission:aca_tutoriales_videos'])
+        ->get('tutorials/video/list', [AcaShortVideoController::class, 'index'])
+        ->name('aca_tutorials_videos_list');
+
     ////////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
     Route::post('buy/course/items/mercadopago', [MercadopagoController::class, 'createItemsPreference'])->name('academic_create_items_preference_course');

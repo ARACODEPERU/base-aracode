@@ -25,7 +25,7 @@
             default: () => ({})
         },
         conversationId: {
-            type: Number,
+            type: [Number, String],
             default: 0
         }
     });

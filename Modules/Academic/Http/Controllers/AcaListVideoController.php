@@ -9,6 +9,7 @@ use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaListVideo;
 
 class AcaListVideoController extends Controller
@@ -102,6 +103,34 @@ class AcaListVideoController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $message = null;
+        $success = false;
+
+        try {
+            // Usamos una transacción para asegurarnos de que la operación se realice de manera segura.
+            DB::beginTransaction();
+
+            // Verificamos si existe.
+            $item = AcaListVideo::findOrFail($id);
+
+            $item->delete();
+            $message =  'Se eliminado correctamente';
+
+            // Si todo ha sido exitoso, confirmamos la transacción.
+            DB::commit();
+
+
+            $success = true;
+        } catch (\Exception $e) {
+            // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.
+            DB::rollback();
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
     }
 }
