@@ -441,20 +441,6 @@ class CrmContactsController extends Controller
         ]);
     }
 
-    public function companiesEmployeesAdd(Request $request)
-    {
-        $person_id = $request->get('person_id');
-        $company_id = $request->get('company_id');
-
-        Person::find($person_id)->update([
-            'company_person_id' => $company_id
-        ]);
-
-        return response()->json([
-            'success' => true
-        ], 200);
-    }
-
     public function contactsDocentsChat()
     {
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();

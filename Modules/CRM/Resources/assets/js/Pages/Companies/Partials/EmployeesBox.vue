@@ -1,11 +1,15 @@
 <script setup>
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     import { Cascader, Input, Textarea, Select, SelectOption, notification } from 'ant-design-vue';
-    import { ref, computed, onMounted, watch, nextTick  } from 'vue';
+    import { ref, computed, onMounted, watch, nextTick, reactive  } from 'vue';
     import { useForm, Link, usePage } from '@inertiajs/vue3';
     import Keypad from '@/Components/Keypad.vue';
     import { Pagination } from 'flowbite-vue';
     import Swal from 'sweetalert2';
+    import SecondaryButton from '@/Components/SecondaryButton.vue';
+    import ModalLarge from '@/Components/ModalLarge.vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+
 
     const props = defineProps({
         empresa: {
@@ -48,28 +52,17 @@
     }
 
     const getContactsPagination = () => {
+        console.log('aca esta');
         axios({
             method: 'post',
-            url: route('crm_companies_employees_search'),
+            url: route('crm_persons_search_company'),
             data: { search: formSearch.value }
         }).then((response) => {
-            students.value = response.data.employees;
+            students.value = response.data.persons;
+            console.log('acresult a esta',students.value);
         });
     }
 
-    const loadingStudent = ref(false);
-    const selectStudent = (item) => {
-        loadingStudent.value = true;
-        axios({
-            method: 'post',
-            url: route('crm_companies_employees_add'),
-            data: { person_id: item.id,company_id: empresa.id }
-        }).then((response) => {
-            props.employees.unshift(item);
-        }).finally(() => {
-            loadingStudent.value = false;
-        });
-    }
 
     const toggleSelectAll = () => {
 
@@ -80,14 +73,14 @@
                 emailForm.para.push(student);
             }
         });
-        
+
     };
 
     const toggleDeSelectAll = () => {
         emailForm.para = [];
     };
 
-    onMounted(() => { 
+    onMounted(() => {
         window.socketIo.on(channelListen, (status) => {
             emailStatus.value.push(status);
             progressSend.value = parseFloat(progressSend.value) + parseFloat(porsentaje.value)
@@ -160,7 +153,7 @@
             return; // Detiene la ejecución si no hay destinatarios
         }
         loadingSend.value = true;
-        
+
         displayModalDetails.value = true;
         const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/send-emails'; // Cambia por la URL de tu API
         let emailstotal = emailForm.para.length;
@@ -185,7 +178,7 @@
     }
 
     const emailStatus = ref([])
-    
+
     const showMessage = (msg = '', type = 'success') => {
         const toast = Swal.mixin({
             toast: true,
@@ -205,6 +198,55 @@
             padding: '10px 20px',
         });
     };
+
+    const displayModalPersons = ref(false);
+
+    const openModalPersons = () => {
+        displayModalPersons.value = true;
+    }
+
+    const closeModalPersons = () => {
+        displayModalPersons.value = false;
+    }
+
+    const dataPersons = reactive({
+        loader: false,
+        search: null,
+        items: []
+    });
+
+    const searchPerson = () => {
+        dataPersons.loader = true;
+        axios({
+            method: 'post',
+            url: route('crm_persons_search_company'),
+            data: { search: dataPersons.search }
+        }).then((result) => {
+            dataPersons.items = result.data.persons
+        }).finally(() => {
+            dataPersons.loader = false;
+        });
+    }
+
+    const formEmployees = useForm({
+        person_id: null,
+        company_id: props.empresa.id
+    });
+
+    const saveEmployeesCompany = (person) => {
+        formEmployees.person_id = person.id;
+
+        formEmployees.post(route('crm_persons_store_company'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                formEmployees.reset('person_id');
+                displayModalPersons.value = false;
+                dataPersons.items = [];
+                dataPersons.search = null;
+            },
+        })
+    }
+
 </script>
 <template>
 
@@ -214,32 +256,25 @@
             <div class="flex gap-3">
                 <Keypad>
                     <template #botones>
-                        <Link v-can="'crm_contactos_listado'" :href="route('crm_contacts_list')" class="inline-block px-6 py-2.5 bg-yellow-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-yellow-700 hover:shadow-lg focus:bg-yellow-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-yellow-800 active:shadow-lg transition duration-150 ease-in-out">ir al listado</Link>
+
+                        <Link v-can="'crm_contactos_listado'" :href="route('crm_companies_list')" class="inline-block px-6 py-2.5 bg-yellow-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-yellow-700 hover:shadow-lg focus:bg-yellow-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-yellow-800 active:shadow-lg transition duration-150 ease-in-out">ir al listado</Link>
                     </template>
                 </Keypad>
-
             </div>
         </div>
     </div>
     <div class="mt-6">
-        <div class="md:grid md:grid-cols-2 md:gap-4 mb-4">
-            <div class="panel mt-5 md:mt-0 md:col-span-1">
+        <div class="md:grid md:grid-cols-3 md:gap-4 mb-4">
+            <div class="panel mt-5 md:mt-0 md:col-span-2">
                 <div class="grid gap-6 mb-6 md:grid-cols-2">
                     <div class="col-span-2">
-                        <label for="txtbuscar" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Buscar por descripcion o dni</label>
-                        <div class="relative">
-                            <Input v-model:value="formSearch" @keyup.enter="getContactsPagination"  id="txtbuscar" />
-                            <ul v-if="students && students.length > 0" style="max-height: 200px; overflow-y: auto;" class="text-sm mt-2 absolute z-50 w-full font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <li v-for="item in students" 
-                                    :key="item.id" 
-                                    
-                                    class="w-full flex items-center justify-between px-4 py-2 font-medium text-left rtl:text-right border-b border-gray-200  hover:bg-gray-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white"
-                                >
-                                    <span>{{ item.names+' '+item.father_lastname+' '+item.mother_lastname }}</span>
-                                    <button @click="selectStudent(item)" type="button" class="btn btn-success btn-sm">Agregar</button>
-                                </li>
-                            </ul>
-                        </div>
+                        <h4 class="mb-2 text-2xl tracking-tight text-gray-900 dark:text-white">
+                            Empleados vinculados a la empresa
+                            <span class="font-bold">
+                                {{ empresa.full_name }}
+                            </span>
+                        </h4>
+                        <span @click="openModalPersons" class="text-sm font-bold text-primary cursor-pointer">[+Agregar]</span>
                     </div>
                     <div class="flex items-center justify-between col-span-2 pr-6">
                         <div class="flex items-center space-x-2">
@@ -256,10 +291,9 @@
                             <span class="dark:text-info" v-if="paginacion.total">{{ paginacion.total }} Total</span>
                         </div>
                         <button @click="toggleSelectAll" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                            <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                 <path stroke="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/>
                             </svg>
-                            Agregar todo
                         </button>
                     </div>
                 </div>
@@ -293,18 +327,21 @@
                                             <img :src="'https://ui-avatars.com/api/?name='+item.full_name+'&size=96&rounded=false'" class="w-8 h-8 rounded-md object-cover" :alt="item.full_name"/>
                                         </template>
                                     </div>
-                                    <div>
+                                    <Link
+                                        :href="route('crm_persons_details_courses_company',[empresa.id,item.id])"
+                                        v-tippy="{ content: 'Ver detalles', placement: 'bottom'}"
+                                    >
                                         <h6 class="font-semibold dark:text-white-light">{{ item.full_name }}</h6>
-                                        <p>{{ item.email }}</p>
-                                    </div>
+                                        <p class="text-sm">{{ item.email }}</p>
+                                    </Link>
                                     <!-- <div v-if="item.new_student" class="badge bg-success h-6">
                                         Nuevo
                                     </div> -->
                                 </div>
 
-                                <button 
-                                    :id="`student-send-${ixx}`" 
-                                    @click="updateSelectedItem(item,ixx)" 
+                                <button
+                                    :id="`student-send-${ixx}`"
+                                    @click="updateSelectedItem(item,ixx)"
                                     type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                     <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                         <path stroke="currentColor" d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/>
@@ -315,10 +352,10 @@
                         </template>
                     </div>
                     <div class="flex items-center justify-center text-center">
-                        <Pagination 
-                            v-model="paginacion.current_page" 
-                            :layout="'table'" 
-                            :per-page="paginacion.per_page" 
+                        <Pagination
+                            v-model="paginacion.current_page"
+                            :layout="'table'"
+                            :per-page="paginacion.per_page"
                             :total-items="paginacion.total"
                             :previousLabel="'Atras'"
                             :nextLabel="'Siguiente'"
@@ -363,10 +400,10 @@
                 </div>
                 <div>
                     <label for="txtasunto" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Asunto</label>
-                    <Input 
+                    <Input
                         :disabled="emailForm.correoDefault != 'cmp'"
-                        v-model:value="emailForm.asunto" 
-                        id="txtasunto" 
+                        v-model:value="emailForm.asunto"
+                        id="txtasunto"
                         required />
                 </div>
                 <div class="mt-4">
@@ -379,7 +416,7 @@
                     />
 
                 </div>
-                
+
 
                 <div v-if="emailForm.para.length > 0" class="relative overflow-x-auto mt-4 shadow-md sm:rounded-lg max-h-[600px] overflow-y-auto">
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
@@ -391,16 +428,16 @@
                                 <th scope="col" class="px-6 py-3">
                                     Nombre
                                 </th>
-                                
+
                             </tr>
                         </thead>
                         <tbody >
                             <template v-for="(contact, key) in emailForm.para">
                                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                     <td class="px-6 py-2">
-                                        <button 
-                                            :id="`student-send-${key}`" 
-                                            @click="removeSelectedItem(contact,key)" 
+                                        <button
+                                            :id="`student-send-${key}`"
+                                            @click="removeSelectedItem(contact,key)"
                                             type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                             <svg  class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                                                 <path stroke="currentColor" d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
@@ -424,7 +461,7 @@
                                             </div>
                                         </div>
                                     </th>
-                                    
+
                                 </tr>
                             </template>
                         </tbody>
@@ -455,7 +492,7 @@
                 </div>
             </div>
         </div>
-        
+
     </div>
     <TransitionRoot appear :show="displayModalDetails" as="template">
         <Dialog as="div" @close="closeModalDetails" class="relative z-50">
@@ -496,7 +533,7 @@
                                 <template v-if="emailStatus.length > 0">
                                     <div ref="scrollContainer" class="scroll-box-result">
                                         <template v-for="(resEmail, co) in emailStatus">
-                                            
+
                                             <div v-if="resEmail.result.success">
                                                 <code style="color: #60a5fa;">
                                                     <span>{{ resEmail.email }} <span style="color: #a9cdf7;">{{ resEmail.status }}</span></span>
@@ -508,7 +545,7 @@
                                                     {{ resEmail.email ?? 'Nulo o vacio' }} {{ resEmail.status }} {{ resEmail.result.fallidos.error }}
                                                 </code>
                                             </div>
-                                        
+
                                         </template>
                                     </div>
                                 </template>
@@ -520,7 +557,62 @@
             </div>
         </Dialog>
     </TransitionRoot>
+    <ModalLarge
+        :show="displayModalPersons"
+        :onClose="closeModalPersons"
+        :icon="'/img/empleados.png'"
+    >
+        <template #title>BÚSQUEDA DE PERSONAS</template>
+        <template #message>Buscar por nombre o dni para agregar como empleado a la empresa</template>
+        <template #content>
+            <div class="max-w-md mx-auto">
+                <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Buscar</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                    </div>
+                    <input @keyup.enter="searchPerson" v-model="dataPersons.search" type="search" id="default-search" class="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Presiona Enter para buscar" required />
+                    <button @click="searchPerson" type="button" class="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Buscar</button>
+                </div>
+            </div>
+            <div class="max-w-md mx-auto space-y-4 mt-6">
+                <template v-for="(person, key) in dataPersons.items">
+                    <div class="flex border border-gray-300 rounded-lg py-1 px-2 items-center">
+                        <span class="shrink-0 grid place-content-center w-9 h-9 rounded-md bg-warning-light dark:bg-warning text-warning dark:text-warning-light">
+                            <template v-if="person.image">
+                                <img :src="getImage(person.image)" class="w-9 h-9" :alt="person.full_name"/>
+                            </template>
+                            <template v-else>
+                                <img :src="'https://ui-avatars.com/api/?name='+person.full_name+'&size=96&rounded=false'" class="w-9 h-9" :alt="person.full_name"/>
+                            </template>
+                        </span>
+                        <div class="px-3 flex-1">
+                            <div>{{ person.number }}</div>
+                            <div class="text-sm text-white-dark dark:text-gray-500">
+                                {{ person.full_name }}
+                            </div>
+                        </div>
+                        <div class="px-1 ltr:ml-auto rtl:mr-auto whitespace-pre">
+                            <PrimaryButton @click="saveEmployeesCompany(person)" :class="{ 'opacity-25': formEmployees.processing }" :disabled="formEmployees.processing" type="button" class="btn-sm text-xs">
+                                <svg v-if="formEmployees.processing" aria-hidden="true" role="status" class="inline w-4 h-4 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                                </svg>
+                                <svg v-else class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                    <path fill="currentColor" d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/>
+                                </svg>
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+        <template #buttons>
 
+        </template>
+    </ModalLarge>
 </template>
 <style>
     .scroll-box-result {

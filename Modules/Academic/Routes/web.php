@@ -84,6 +84,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('students/certificates_store', [AcaCertificateController::class, 'studentStore'])
         ->name('aca_students_certificates_store');
 
+    Route::post('students/history_store', [AcaStudentController::class, 'historyStore'])
+        ->name('aca_students_history_store');
+
     Route::delete('students/certificates_destroy/{id}', 'AcaCertificateController@studentDestroy')
         ->name('aca_students_certificates_destroy');
 

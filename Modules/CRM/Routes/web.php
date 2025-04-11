@@ -8,6 +8,7 @@ use Modules\CRM\Http\Controllers\CrmConversationController;
 use Modules\CRM\Http\Controllers\CrmIaController;
 use Modules\CRM\Http\Controllers\CrmMessagesController;
 use Modules\CRM\Http\Controllers\CrmMailboxController;
+use Modules\CRM\Http\Controllers\CrmPersonController;
 
 /*
 |--------------------------------------------------------------------------
@@ -125,12 +126,6 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->get('companies/{id}/employees', [CrmContactsController::class, 'companiesEmployees'])
         ->name('crm_companies_employees');
 
-    Route::middleware(['middleware' => 'permission:crm_empresas_empleados'])
-        ->post('employees/list/search', [CrmContactsController::class, 'getEmployeesSearch'])
-        ->name('crm_companies_employees_search');
-    Route::middleware(['middleware' => 'permission:crm_empresas_agregar_empleados'])
-        ->post('employees/list/search', [CrmContactsController::class, 'companiesEmployeesAdd'])
-        ->name('crm_companies_employees_add');
 
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
         ->get('application-ai-prompt', [CrmIaController::class, 'clientDashboard'])
@@ -143,4 +138,15 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
         ->post('application-ai-prompt/send/messages/openai', [CrmIaController::class, 'sendPromptOpenAI'])
         ->name('crm_application_ai_prompt_send_message_openai');
+
+    Route::post('persons/search/company', [CrmPersonController::class, 'searchPerson'])
+        ->name('crm_persons_search_company');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_agregar_empleados'])
+        ->post('persons/store/company', [CrmPersonController::class, 'store'])
+        ->name('crm_persons_store_company');
+
+    Route::middleware(['middleware' => 'permission:crm_empresas_empleados'])
+        ->get('companies/{company_id}/employee/{person_id}/details', [CrmPersonController::class, 'personDetails'])
+        ->name('crm_persons_details_courses_company');
 });

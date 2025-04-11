@@ -126,24 +126,24 @@
         </template>
 
         <div v-if="videos.length > 0" class="vc-icons mt-2">
-            <button @click="previousVideo"  class="vc-instagram" type="button">
+            <button @click="previousVideo"  class="vc-button" type="button">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M267.5 440.6c9.5 7.9 22.8 9.7 34.1 4.4s18.4-16.6 18.4-29l0-320c0-12.4-7.2-23.7-18.4-29s-24.5-3.6-34.1 4.4l-192 160L64 241 64 96c0-17.7-14.3-32-32-32S0 78.3 0 96L0 416c0 17.7 14.3 32 32 32s32-14.3 32-32l0-145 11.5 9.6 192 160z"/>
                 </svg>
             </button>
-            <button @click="nextVideo" class="vc-discord" type="button">
+            <button @click="nextVideo" class="vc-button" type="button">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M52.5 440.6c-9.5 7.9-22.8 9.7-34.1 4.4S0 428.4 0 416L0 96C0 83.6 7.2 72.3 18.4 67s24.5-3.6 34.1 4.4l192 160L256 241l0-145c0-17.7 14.3-32 32-32s32 14.3 32 32l0 320c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-145-11.5 9.6-192 160z"/>
                 </svg>
             </button>
         </div>
         <div v-else class="vc-icons">
-            <a class="vc-instagram" href="#">
+            <a class="vc-link" href="#">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M267.5 440.6c9.5 7.9 22.8 9.7 34.1 4.4s18.4-16.6 18.4-29l0-320c0-12.4-7.2-23.7-18.4-29s-24.5-3.6-34.1 4.4l-192 160L64 241 64 96c0-17.7-14.3-32-32-32S0 78.3 0 96L0 416c0 17.7 14.3 32 32 32s32-14.3 32-32l0-145 11.5 9.6 192 160z"/>
                 </svg>
             </a>
-            <a class="vc-x" href="#">
+            <a class="vc-link" href="#">
                 <svg v-if="startVideo" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M48 64C21.5 64 0 85.5 0 112L0 400c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48L48 64zm192 0c-26.5 0-48 21.5-48 48l0 288c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48l-32 0z"/>
                 </svg>
@@ -151,12 +151,12 @@
                     <path fill="currentColor" d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
                 </svg>
             </a>
-            <a  class="vc-discord" href="#">
+            <a  class="vc-link" href="#">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
                     <path fill="currentColor" d="M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/>
                 </svg>
             </a>
-            <a class="vc-discord" href="#">
+            <a class="vc-link" href="#">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
                     <path fill="currentColor" d="M52.5 440.6c-9.5 7.9-22.8 9.7-34.1 4.4S0 428.4 0 416L0 96C0 83.6 7.2 72.3 18.4 67s24.5-3.6 34.1 4.4l192 160L256 241l0-145c0-17.7 14.3-32 32-32s32 14.3 32 32l0 320c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-145-11.5 9.6-192 160z"/>
                 </svg>
@@ -273,7 +273,7 @@
         gap: var(--unit);
     }
 
-    .vc-card .vc-icons a, button {
+    .vc-card .vc-icons .vc-link, .vc-button {
         display: flex;
         flex-grow: 1;
         align-items: center;
@@ -284,7 +284,7 @@
         border-radius: calc(var(--unit) / 2);
     }
 
-    .vc-card .vc-icons a:hover, button:hover  {
+    .vc-card .vc-icons .vc-link:hover, .vc-button:hover  {
         transition: 0.2s;
         background-color: var(--semidark);
     }

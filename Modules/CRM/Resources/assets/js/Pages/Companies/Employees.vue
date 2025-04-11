@@ -24,6 +24,9 @@ const props = defineProps({
                 <Link :href="route('crm_companies_list')" class="text-primary hover:underline">Empresas</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+                <span>{{ empresa.full_name }}</span>
+            </li>
+            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
                 <span>Empleados</span>
             </li>
         </Navigation>

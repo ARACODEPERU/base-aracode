@@ -11,6 +11,8 @@ use Modules\Academic\Entities\AcaThemeComment;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaModule;
 use Modules\Academic\Entities\AcaTheme;
 
 class AcaThemeCommentController extends Controller
@@ -57,10 +59,14 @@ class AcaThemeCommentController extends Controller
             ]
         );
 
-        //$theme = AcaTheme::find($request->theme_id);
+        $theme = AcaTheme::find($request->get('theme_id'));
+        $module = AcaModule::find($theme->module_id);
+        $course = AcaCourse::find($module->course_id);
 
         AcaThemeComment::create([
             'user_id' => Auth::id(),
+            'course_id' => $course->id,
+            'module_id' => $module->id,
             'theme_id' => $request->get('theme_id'),
             'description' => $request->get('message'),
             'i_like' => 0,

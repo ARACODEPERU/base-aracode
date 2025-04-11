@@ -27,6 +27,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaStudentHistory;
 
 class AcaStudentController extends Controller
 {
@@ -427,12 +428,42 @@ class AcaStudentController extends Controller
 
     public function courseLessons($id)
     {
-        $course = AcaCourse::with('modules')
-            ->where('id', $id)
-            ->first();
+        $course = AcaCourse::with([
+            'modules.themes.contents'
+        ])->where('id', $id)->first();
+
+        $courseSummary = [
+            'course' => $course->only(['id', 'description']), // o los campos que desees
+            'modules' => []
+        ];
+
+        foreach ($course->modules as $module) {
+            $totalThemes = $module->themes->count();
+            $totalFiles = 0;
+            $totalVideos = 0;
+
+            foreach ($module->themes as $theme) {
+                foreach ($theme->contents as $content) {
+                    if ($content->is_file == 1 || $content->is_file == 2) {
+                        $totalFiles++;
+                    } elseif ($content->type == 0) {
+                        $totalVideos++;
+                    }
+                }
+            }
+
+            $courseSummary['modules'][] = [
+                'id' => $module->id,
+                'description' => $module->description,
+                'position' => $module->position,
+                'total_themes' => $totalThemes,
+                'total_files' => $totalFiles,
+                'total_videos' => $totalVideos,
+            ];
+        }
 
         return Inertia::render('Academic::Students/Lessons', [
-            'course' => $course
+            'course' => $courseSummary
         ]);
     }
 
@@ -883,5 +914,18 @@ class AcaStudentController extends Controller
             'success' => true,
             'certificates' => $items,
         ], 200);
+    }
+
+    public function historyStore(Request $request)
+    {
+        AcaStudentHistory::create([
+            'user_id' => Auth::id(),
+            'person_id' => Auth::user()->person_id,
+            'course_id' => $request->get('course_id'),
+            'module_id' => $request->get('module_id'),
+            'theme_id' => $request->get('theme_id'),
+            'content_id' => $request->get('content_id'),
+            'type_content' => $request->get('type_content')
+        ]);
     }
 }
