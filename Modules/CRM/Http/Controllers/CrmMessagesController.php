@@ -19,6 +19,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\CRM\Emails\ClientHelpEmail;
+use Modules\CRM\Entities\CrmInformationBank;
 
 class CrmMessagesController extends Controller
 {
@@ -293,5 +294,21 @@ class CrmMessagesController extends Controller
         Mail::to($data[1]->email_for)->send(new ClientHelpEmail($data));
 
         return true;
+    }
+
+    public function frequentlyQuestionsStore(Request $request)
+    {
+        $iBank = CrmInformationBank::create([
+            'question_text' => $request->get('question_text'),
+            'response_text' => $request->get('response_text'),
+            'user_id' => $request->get('user_id'),
+            'likes_count' => 1,
+            'shared_count' => 1,
+            'status' => true
+        ]);
+
+        return  response()->json([
+            'ibank' => $iBank
+        ]);
     }
 }

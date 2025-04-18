@@ -169,13 +169,7 @@
 
 const dataModule = ref({});
 
-const openModalModules = (course) =>{
-    dataModule.value = {
-        course_id: course.id,
-        name_course: course.description,
-        modules: course.modules
-    };
-}
+
 const baseUrl = assetUrl;
 
 const getImage = (path) => {
@@ -183,9 +177,7 @@ const getImage = (path) => {
 }
 
 const dataModalContent = ref(null);
-const selectTheme = (data) => {
-    dataModalContent.value = data;
-}
+
 </script>
 
 <template>

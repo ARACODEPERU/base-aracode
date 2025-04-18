@@ -38,6 +38,8 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'crm_empresas_enviar_correo_empleados']));
 
         array_push($permissions, Permission::create(['name' => 'crm_clientes_preguntas_ia']));
+        array_push($permissions, Permission::create(['name' => 'crm_dudas_comunes']));
+        array_push($permissions, Permission::create(['name' => 'crm_dudas_comunes_edicion']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

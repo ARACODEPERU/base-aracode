@@ -197,7 +197,6 @@ return [
         //App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        Biscolab\ReCaptcha\ReCaptchaServiceProvider::class,
         Yajra\DataTables\DataTablesServiceProvider::class,
         App\Providers\CustomBroadcastServiceProvider::class,
     ],
@@ -216,7 +215,6 @@ return [
     'aliases' => Facade::defaultAliases()->merge([
         // 'ExampleClass' => App\Example\ExampleClass::class,
         'Image' => Intervention\Image\Facades\Image::class,
-        'ReCaptcha' => Biscolab\ReCaptcha\Facades\ReCaptcha::class,
     ])->toArray(),
 
 ];

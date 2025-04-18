@@ -12,6 +12,18 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    banks: {
+        type: Object,
+        default: () => ({}),
+    },
+    bankAccounts: {
+        type: Object,
+        default: () => ({}),
+    },
+    currencyTypes: {
+        type: Object,
+        default: () => ({}),
+    }
 });
 </script>
 
@@ -29,6 +41,9 @@ const props = defineProps({
             <InformationCompany
                 :company="company"
                 :ubigeo="ubigeo"
+                :banks="banks"
+                :bankAccounts="bankAccounts"
+                :currencyTypes="currencyTypes"
             ></InformationCompany>
         </div>
     </AppLayout>

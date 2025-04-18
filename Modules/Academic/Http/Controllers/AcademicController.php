@@ -58,26 +58,31 @@ class AcademicController extends Controller
      */
     public function getStudentsCourses(Request $request)
     {
-        $courses =   DB::table('aca_cap_registrations as r')
+        $courses = DB::table('aca_cap_registrations as r')
             ->join('aca_students as s', 'r.student_id', '=', 's.id')
             ->join('people as p', 's.person_id', '=', 'p.id')
-            ->join('aca_courses as c', 'r.course_id', '=', 'c.id') // Unir con cursos
+            ->join('aca_courses as c', 'r.course_id', '=', 'c.id')
             ->select(
                 'r.course_id',
-                'c.description as curso', // Obtener el nombre del curso
+                'c.description as curso',
                 DB::raw('COUNT(r.student_id) as total_estudiantes'),
                 DB::raw('SUM(CASE WHEN p.gender = "M" THEN 1 ELSE 0 END) as men'),
                 DB::raw('SUM(CASE WHEN p.gender = "F" THEN 1 ELSE 0 END) as women')
             )
-            ->where('r.status', true) // Filtrar solo estudiantes activos
+            ->where('r.status', true)
             ->groupBy('r.course_id', 'c.description')
+            ->orderBy('total_estudiantes', 'desc')
+            ->limit(10)
             ->get();
-        //->ddRawSql();
+
+        // Barajar (shuffle) la colección para que se muestre de forma aleatoria
+        $courses = $courses->shuffle();
 
         return response()->json([
             'courses' => $courses
         ]);
     }
+
 
     /**
      * Show the specified resource.

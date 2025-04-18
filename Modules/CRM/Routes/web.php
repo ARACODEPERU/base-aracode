@@ -6,6 +6,7 @@ use Modules\CRM\Http\Controllers\CrmContactsController;
 use Modules\CRM\Http\Controllers\CRMController;
 use Modules\CRM\Http\Controllers\CrmConversationController;
 use Modules\CRM\Http\Controllers\CrmIaController;
+use Modules\CRM\Http\Controllers\CrmInformationBankController;
 use Modules\CRM\Http\Controllers\CrmMessagesController;
 use Modules\CRM\Http\Controllers\CrmMailboxController;
 use Modules\CRM\Http\Controllers\CrmPersonController;
@@ -136,7 +137,7 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->name('crm_application_ai_prompt_send_message');
 
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
-        ->post('application-ai-prompt/send/messages/openai', [CrmIaController::class, 'sendPromptOpenAI'])
+        ->post('application-ai-prompt/send/messages/openai', [CrmIaController::class, 'basicQuestionService'])
         ->name('crm_application_ai_prompt_send_message_openai');
 
     Route::post('persons/search/company', [CrmPersonController::class, 'searchPerson'])
@@ -149,4 +150,23 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_empresas_empleados'])
         ->get('companies/{company_id}/employee/{person_id}/details', [CrmPersonController::class, 'personDetails'])
         ->name('crm_persons_details_courses_company');
+
+    Route::post('application-ai-prompt/respond/messages/openai', [CrmIaController::class, 'censorTextService'])
+        ->name('crm_respond_frequently_questions_store');
+
+    Route::middleware(['middleware' => 'permission:crm_dudas_comunes'])
+        ->get('common-questions', [CrmInformationBankController::class, 'index'])
+        ->name('crm_common_questions');
+
+    Route::middleware(['middleware' => 'permission:crm_dudas_comunes_edicion'])
+        ->put('common-questions/{id}/update', [CrmInformationBankController::class, 'update'])
+        ->name('crm_common_questions_update');
+
+    Route::middleware(['middleware' => 'permission:crm_dudas_comunes_edicion'])
+        ->get('common-questions/{id}/edit', [CrmInformationBankController::class, 'edit'])
+        ->name('crm_common_questions_edit');
+
+    Route::middleware(['middleware' => 'permission:crm_dudas_comunes_edicion'])
+        ->delete('common-questions/{id}/destroy', [CrmInformationBankController::class, 'destroy'])
+        ->name('crm_common_questions_destroy');
 });

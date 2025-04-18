@@ -3,7 +3,8 @@ import {
     faUserGroup,
     faComments,
     faEnvelopesBulk ,
-    faBuildingUser
+    faBuildingUser,
+    faPersonCircleQuestion
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuCRM = {
@@ -41,7 +42,13 @@ const menuCRM = {
             permissions: "crm_mailbox_dashboard",
             icom: faEnvelopesBulk,
         },
-
+        {
+            route: route("crm_common_questions"),
+            status: false,
+            text: "Dudas Comunes",
+            permissions: "crm_dudas_comunes",
+            icom: faPersonCircleQuestion,
+        },
     ],
 };
 

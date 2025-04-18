@@ -83,11 +83,10 @@ class CrmIaController extends Controller
         ]);
     }
 
-    public function sendPromptOpenAI(Request $request)
+    public function sendPromptOpenAI($message)
     {
 
         $user_id = Auth::id();
-        $message = $request->get('messageText');
         $archivo = null;
 
         $port = env('AI__PORT', 5000);
@@ -173,32 +172,27 @@ class CrmIaController extends Controller
     /**
      * Show the specified resource.
      */
-    public function show($id)
+
+    public function basicQuestionService(Request $request)
     {
-        return view('crm::show');
+        $user_id = Auth::id();
+        $message = $request->input('messageText');
+        $response = $this->sendPromptOpenAI($user_id, $message);
+        return response()->json([
+            'success' => true,
+            'responseText' => $response
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
+    public function censorTextService(Request $request)
     {
-        return view('crm::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        //
+        $user_id = Auth::id();
+        $cens = "por favor censura con asteriscos los nombres personales y de empresas privadas en el siguiente texto, las públicas no; solo responde lo que pedí sin palabras previas o saludos: ";
+        $message = $cens . $request->input('messageText');
+        $response = $this->sendPromptOpenAI($user_id, $message);
+        return response()->json([
+            'success' => true,
+            'responseText' => $response
+        ]);
     }
 }

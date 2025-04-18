@@ -271,7 +271,9 @@
         messageText: null,
         instructions: null,
         csrfToken: null,
-        respond: null
+        respond: null,
+        routeBackend: null,
+        userId: null
     });
     const openModalQuestionAI = (item) => {
         formIaconsulta.messageText = item.content
@@ -354,6 +356,65 @@
             });
         }
     };
+
+    const clearHTMLdelimiters = (cadena) => {
+        return cadena.replace(/```html\s*|\s*```/g, '');
+    }
+
+    const saveQuestionResult = () => {
+        // formIaconsulta
+        if(props.P000015 == 1){
+            sendCensorTextOpenAI();
+        }else if(props.P000015 == 2){
+            sendCensorTextGeminiAI();
+        }
+    }
+
+    const censorLoader = ref(false);
+    const sendCensorTextGeminiAI = () => {
+        censorLoader.value = true;
+        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/ai/basiccensortext'; // Cambia por la URL de tu API
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        formIaconsulta.csrfToken = csrfToken;
+        formIaconsulta.routeBackend = route('crm_chat_frequently_questions_store');
+        formIaconsulta.userId = authUser.id;
+
+        axios.post(url, formIaconsulta,{
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            timeout: 0,
+        }).then((result) => {
+            if(result.data.success){
+                showMessage('Información guardada correctamente.','success');
+            }
+        }).finally(()=>{
+            censorLoader.value = false;
+        });
+    }
+
+    const sendCensorTextOpenAI = () => {
+        formIaconsulta.processing = true;
+        const url = route('crm_respond_frequently_questions_store');
+        axios.post(url,formIaconsulta,{
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            timeout: 0,
+        }).then((result) => {
+            if(result.data.success){
+                showMessage('Información guardada correctamente. puede visualizarlo en DUDAS COMUNES','success');
+            }
+        }).finally(()=>{
+            formIaconsulta.processing = false;;
+        });
+    }
+
+    const stripHtml = (html) => {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div.innerText || '';
+    }
 </script>
 <template>
     <AppLayout title="Chat">
@@ -396,7 +457,7 @@
                                                 Mi perfil
                                             </Link>
                                         </li>
-                                        <li>
+                                        <!-- <li>
                                             <a href="javascript:;">
                                                 <icon-help-circle class="w-4.5 h-4.5 ltr:mr-1 rtl:ml-1 shrink-0" />
                                                 Help & feedback
@@ -408,7 +469,7 @@
 
                                                 Sign Out
                                             </a>
-                                        </li>
+                                        </li> -->
                                     </ul>
                                 </template>
                             </Popper>
@@ -420,7 +481,7 @@
                             <icon-search />
                         </div>
                     </div>
-                    <div class="flex justify-between items-center text-xs">
+                    <!-- <div class="flex justify-between items-center text-xs">
                         <button type="button" class="hover:text-primary">
                             <icon-messages-dot class="mx-auto mb-1" />
                             Chats
@@ -440,7 +501,7 @@
                             <icon-bell class="w-5 h-5 mx-auto mb-1" />
                             Notification
                         </button>
-                    </div>
+                    </div> -->
                     <div class="h-px w-full border-b border-[#e0e6ed] dark:border-[#1b2e4b]"></div>
                     <div class="!mt-0">
                         <perfect-scrollbar
@@ -497,15 +558,16 @@
                                                         :class="person.newMessage == true ? 'text-gray-900 font-semibold dark:text-white' : 'text-gray-700 dark:text-white-dark'"
                                                         class="mb-1 "
                                                     >{{ person.full_name }} </p>
-                                                    <p
-                                                        :class="person.newMessage == true ? 'text-gray-900 dark:text-white' : 'text-white-dark'"
-                                                        class="text-xs truncate max-w-[185px]"
-                                                    >{{ person.preview }}</p>
+                                                    <p :class="person.newMessage == true ? 'text-gray-900 dark:text-white' : 'text-white-dark'"
+                                                        class="text-xs truncate max-w-[180px] whitespace-nowrap"
+                                                        v-text="stripHtml(person.preview)"
+                                                    >
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div v-if="person.time" class="font-semibold whitespace-nowrap text-xs">
-                                            <p>{{ person.time }}</p>
+                                        <div v-if="person.time" class="font-semibold text-xs">
+                                            <p class="truncate whitespace-nowrap max-w-[80px]">{{ person.time }}</p>
                                         </div>
                                     </button>
                                 </template>
@@ -882,9 +944,19 @@
                         <span class="sr-only">Info</span>
                         <h3 class="text-lg font-medium">Respuesta IA</h3>
                     </div>
-                    <div class="mt-2 mb-4 text-sm" v-html="formIaconsulta.respond"></div>
+                    <div class="mt-2 mb-4 text-sm" v-html="clearHTMLdelimiters(formIaconsulta.respond)"></div>
                     <div class="flex">
-                        <button @click="sendMessageAi" type="button" class="text-white bg-blue-800 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-blue-200 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        <button @click="saveQuestionResult" type="button" class="text-white bg-yellow-800 hover:bg-yellow-900 focus:ring-4 focus:outline-none focus:ring-yellow-200 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">
+                            <svg v-if="censorLoader" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                            </svg>
+                            <svg v-else class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                <path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-242.7c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32L64 32zm0 96c0-17.7 14.3-32 32-32l192 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32L96 224c-17.7 0-32-14.3-32-32l0-64zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/>
+                            </svg>
+                            Guardar respuesta
+                        </button>
+                        <button @click="sendMessageAi"  :class="{ 'opacity-25': isShowLoadingSend }" :disabled="isShowLoadingSend" type="button" class="text-white bg-blue-800 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-blue-200 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                             <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                                 <path fill="currentColor" d="M307 34.8c-11.5 5.1-19 16.6-19 29.2l0 64-112 0C78.8 128 0 206.8 0 304C0 417.3 81.5 467.9 100.2 478.1c2.5 1.4 5.3 1.9 8.1 1.9c10.9 0 19.7-8.9 19.7-19.7c0-7.5-4.3-14.4-9.8-19.5C108.8 431.9 96 414.4 96 384c0-53 43-96 96-96l96 0 0 64c0 12.6 7.4 24.1 19 29.2s25 3 34.4-5.4l160-144c6.7-6.1 10.6-14.7 10.6-23.8s-3.8-17.7-10.6-23.8l-160-144c-9.4-8.5-22.9-10.6-34.4-5.4z"/>
                             </svg>

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\Invoice\Certificates\Convert;
+use App\Models\Bank;
+use App\Models\BankAccount;
 use App\Models\Company;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
@@ -16,10 +19,18 @@ class CompanyController extends Controller
     {
         $company = Company::with('district.province.department')->first();
         $ubigeo = Department::with('provinces.districts')->get();
+        $banks = Bank::all();
+
+        $bankAccounts = BankAccount::with('bank')->get();;
+        //dd($bankAccounts);
+        $currencyTypes = DB::table('sunat_currency_types')->get();
 
         return Inertia::render('Company/Show', [
             'company'   => $company ? $company : [],
             'ubigeo'    => $ubigeo->toArray(),
+            'banks'     => $banks,
+            'bankAccounts' => $bankAccounts,
+            'currencyTypes' => $currencyTypes
         ]);
     }
     public function updateCreate(Request $request)

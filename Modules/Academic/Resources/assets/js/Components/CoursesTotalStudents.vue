@@ -11,7 +11,6 @@
     const getDataStudentsCourses = () => {
         displayChartBar.value = true;
         axios.get(route('aca_student_registration_courses')).then((response) => {
-            console.log(response.data)
             return response.data;
         }).then((result) => {
             let men = [];

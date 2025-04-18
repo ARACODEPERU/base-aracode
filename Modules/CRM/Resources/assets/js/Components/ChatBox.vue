@@ -259,9 +259,12 @@
                  <template v-if="privateChat.messages.length > 0">
                     <template v-for="(message, index) in privateChat.messages">
                         <div v-if="authUser.person_id == message.person_id" class="mb-2 text-right">
-                            <p v-if="message.type == 'text'" class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block">
-                                {{ message.text }}
-                            </p>
+                            <div
+                                v-if="message.type == 'text'"
+                                class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block"
+                                v-html="message.text"
+                            >
+                            </div>
                             <p v-if="message.type == 'audio'" class="bg-blue-500 text-white rounded-lg rounded-br-none py-2 px-4 inline-block">
                                 <AudioPlayer :audioSrc="message.text" :position="'right'" />
                             </p>

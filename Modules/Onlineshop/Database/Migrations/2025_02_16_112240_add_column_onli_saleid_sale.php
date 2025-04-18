@@ -12,20 +12,29 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::table('sunat_payment_method_types', function (Blueprint $table) {
+            // Cambia la columna 'id' a string de 255 con el collation adecuado.
+            // Utilizamos el método change() para alterar la columna.
+            $table->string('id', 255)->collation('utf8mb4_unicode_ci')->change();
+        });
+
         Schema::create('related_payment_methods', function (Blueprint $table) {
-            // Definir las columnas
+            // Definir la columna payment_method_id (mantiene unsignedBigInteger)
             $table->unsignedBigInteger('payment_method_id');
-            $table->string('sunat_payment_method_type_id', 255); // Mantenido como string
+
+            // Definir la columna sunat_payment_method_type_id como string de 255 y con collation igual al de la otra tabla
+            $table->string('sunat_payment_method_type_id', 255)->collation('utf8mb4_unicode_ci');
 
             // Definir la clave primaria compuesta
             $table->primary(['payment_method_id', 'sunat_payment_method_type_id']);
 
-            // Definir las claves foráneas
+            // Definir la clave foránea para payment_method_id
             $table->foreign('payment_method_id', 'payment_method_id_fk')
                 ->references('id')
                 ->on('payment_methods')
                 ->onDelete('cascade');
 
+            // Definir la clave foránea para sunat_payment_method_type_id
             $table->foreign('sunat_payment_method_type_id', 'sunat_payment_method_type_id_fk')
                 ->references('id')
                 ->on('sunat_payment_method_types')

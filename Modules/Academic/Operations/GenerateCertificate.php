@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Response;
 use App\Helpers\Invoice\QrCodeGenerator;
 use Carbon\Carbon;
 
-class StudentSubscription
+class GenerateCertificate
 {
     public $certificates_param;
 
@@ -114,13 +114,13 @@ class StudentSubscription
 
 
                 // Generar la respuesta HTTP con la imagen
-                $response = Respons::make($imageContent);
+                $response = Response::make($imageContent);
 
                 // Establecer el tipo de contenido de la respuesta como imagen PNG
                 $response->header('Content-Type', 'image/png');
 
                 //ELIMINAR el EL ARCHIVO QR generado
-                if (File::exists($qr_path)) File::delete($qr_path);
+                if (File::exists($qr_path)) Fil::delete($qr_path);
 
                 //Retornar la respuesta
                 return $response;

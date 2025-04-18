@@ -4,7 +4,7 @@ import { useAppStore } from "@/stores/index";
 import IconHome from "@/Components/vristo/icon/icon-home.vue";
 import IconDollarSignCircle from "@/Components/vristo/icon/icon-dollar-sign-circle.vue";
 import IconAt from "@/Components/vristo/icon/icon-at.vue";
-import IconPhone from "@/Components/vristo/icon/icon-phone.vue";
+import DangerButton from "@/Components/DangerButton.vue";
 import IconLinkedin from "@/Components/vristo/icon/icon-linkedin.vue";
 import IconTwitter from "@/Components/vristo/icon/icon-twitter.vue";
 import IconFacebook from "@/Components/vristo/icon/icon-facebook.vue";
@@ -17,9 +17,10 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import ModalSmall from "@/Components/ModalSmall.vue";
 import TextInput from "@/Components/TextInput.vue";
 import Swal from "sweetalert2";
-import Keypad from "@/Components/Keypad.vue";
+import iconCaretDown from "@/Components/vristo/icon/icon-caret-down.vue";
 import { ref, onMounted,computed } from "vue";
 import ImageCompressorjs from '@/Components/ImageCompressorjs.vue';
+import cardAccount from '@/Components/cards/cardAccount.vue';
 import { Cascader } from 'ant-design-vue';
 
 const store = useAppStore();
@@ -32,6 +33,18 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    banks: {
+        type: Object,
+        default: () => ({}),
+    },
+    bankAccounts: {
+        type: Object,
+        default: () => ({}),
+    },
+    currencyTypes: {
+        type: Object,
+        default: () => ({}),
+    }
 });
 
 const baseUrl = assetUrl;
@@ -271,16 +284,73 @@ const saveSocialNetworks = () => {
     });
 }
 
-const uploadImages = () => {
-    form.post(route('company_upload_images'), {
-        forceFormData: true,
-        errorBag: "uploadImages",
-        preserveScroll: true,
-        onSuccess: () => {
-            showMessage("Datos registrados con éxito");
-        },
+    const uploadImages = () => {
+        form.post(route('company_upload_images'), {
+            forceFormData: true,
+            errorBag: "uploadImages",
+            preserveScroll: true,
+            onSuccess: () => {
+                showMessage("Datos registrados con éxito");
+            },
+        });
+    };
+
+    const selectBank = ref({
+        id: props.banks[0].id,
+        image: props.banks[0].image,
+        name: props.banks[0].full_name
     });
-};
+
+    const changeBank = (item) => {
+        selectBank.value.id = item.id;
+        selectBank.value.image = item.image;
+        selectBank.value.name = item.full_name;
+    }
+
+    const displayModalBankAccount = ref(false);
+    const formAccount = useForm({
+        id: null,
+        bank_id: null,
+        description: null,
+        number: null,
+        cci: null,
+        currency_type_id: 'PEN',
+        status: true,
+        invoice_show: false
+    });
+
+    const openModalBankAccount = (item = null) => {
+        if(item && item.id){
+            formAccount.id = item.id;
+            formAccount.bank_id = item.bank_id;
+            formAccount.description = item.description;
+            formAccount.number = item.number;
+            formAccount.cci = item.cci;
+            formAccount.currency_type_id = item.currency_type_id;
+            formAccount.status = item.status == 1 ? true : false;
+        }
+        displayModalBankAccount.value = true;
+    }
+
+    const closeModalBankAccount = () => {
+        displayModalBankAccount.value = false;
+    }
+
+    const saveBankAccount = () =>{
+        formAccount.post(route('bank-account-store'), {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                displayModalBankAccount.value = false;
+                formAccount.reset();
+            },
+            onFinish: () => {
+                showMessage("Datos registrados con éxito",'success');
+            },
+        });
+    }
+
+
 </script>
 <template>
     <div class="flex items-center justify-between mb-5">
@@ -288,46 +358,58 @@ const uploadImages = () => {
     </div>
     <TabGroup>
         <TabList
-            class="flex font-semibold border-b border-[#ebedf2] dark:border-[#191e3a] mb-5 whitespace-nowrap overflow-y-auto"
+            class="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:justify-center mt-3 mb-5 sm:space-x-3 rtl:space-x-reverse"
         >
             <Tab as="template" v-slot="{ selected }">
                 <a
                     href="javascript:;"
-                    class="flex gap-2 p-4 border-b border-transparent hover:border-primary hover:text-primary !outline-none"
-                    :class="{ '!border-primary text-primary': selected }"
+                    class="p-7 py-3 flex flex-col items-center justify-center rounded-lg bg-[#f1f2f3] dark:bg-[#191e3a] hover:!bg-success hover:text-white hover:shadow-[0_5px_15px_0_rgba(0,0,0,0.30)] !outline-none transition duration-300"
+                    :class="{ '!bg-success text-white': selected }"
                 >
-                    <icon-home />
+                    <icon-home class="w-5 h-5 mb-1" />
                     Información general
                 </a>
             </Tab>
             <Tab as="template" v-slot="{ selected }">
                 <a
                     href="javascript:;"
-                    class="flex gap-2 p-4 border-b border-transparent hover:border-primary hover:text-primary !outline-none"
-                    :class="{ '!border-primary text-primary': selected }"
+                    class="p-7 py-3 flex flex-col items-center justify-center rounded-lg bg-[#f1f2f3] dark:bg-[#191e3a] hover:!bg-success hover:text-white hover:shadow-[0_5px_15px_0_rgba(0,0,0,0.30)] !outline-none transition duration-300"
+                    :class="{ '!bg-success text-white': selected }"
                 >
-                    <icon-images class="w-5 h-5" />
+                    <icon-images class="w-5 h-5 mb-1" />
                     Logotipos e imágenes
                 </a>
             </Tab>
             <Tab as="template" v-slot="{ selected }">
                 <a
                     href="javascript:;"
-                    class="flex gap-2 p-4 border-b border-transparent hover:border-primary hover:text-primary !outline-none"
-                    :class="{ '!border-primary text-primary': selected }"
+                    class="p-7 py-3 flex flex-col items-center justify-center rounded-lg bg-[#f1f2f3] dark:bg-[#191e3a] hover:!bg-success hover:text-white hover:shadow-[0_5px_15px_0_rgba(0,0,0,0.30)] !outline-none transition duration-300"
+                    :class="{ '!bg-success text-white': selected }"
                 >
-                    <icon-dollar-sign-circle />
+                    <icon-dollar-sign-circle class="w-5 h-5 mb-1" />
                     Facturación electrónica
                 </a>
             </Tab>
             <Tab as="template" v-slot="{ selected }">
                 <a
                     href="javascript:;"
-                    class="flex gap-2 p-4 border-b border-transparent hover:border-primary hover:text-primary !outline-none"
-                    :class="{ '!border-primary text-primary': selected }"
+                    class="p-7 py-3 flex flex-col items-center justify-center rounded-lg bg-[#f1f2f3] dark:bg-[#191e3a] hover:!bg-success hover:text-white hover:shadow-[0_5px_15px_0_rgba(0,0,0,0.30)] !outline-none transition duration-300"
+                    :class="{ '!bg-success text-white': selected }"
                 >
-                    <icon-at />
+                    <icon-at class="w-5 h-5 mb-1" />
                     Redes sociales
+                </a>
+            </Tab>
+            <Tab as="template" v-slot="{ selected }">
+                <a
+                    href="javascript:;"
+                    class="p-7 py-3 flex flex-col items-center justify-center rounded-lg bg-[#f1f2f3] dark:bg-[#191e3a] hover:!bg-success hover:text-white hover:shadow-[0_5px_15px_0_rgba(0,0,0,0.30)] !outline-none transition duration-300"
+                    :class="{ '!bg-success text-white': selected }"
+                >
+                    <svg class="w-5 h-5 mb-1"  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path fill="currentColor" d="M243.4 2.6l-224 96c-14 6-21.8 21-18.7 35.8S16.8 160 32 160l0 8c0 13.3 10.7 24 24 24l400 0c13.3 0 24-10.7 24-24l0-8c15.2 0 28.3-10.7 31.3-25.6s-4.8-29.9-18.7-35.8l-224-96c-8-3.4-17.2-3.4-25.2 0zM128 224l-64 0 0 196.3c-.6 .3-1.2 .7-1.8 1.1l-48 32c-11.7 7.8-17 22.4-12.9 35.9S17.9 512 32 512l448 0c14.1 0 26.5-9.2 30.6-22.7s-1.1-28.1-12.9-35.9l-48-32c-.6-.4-1.2-.7-1.8-1.1L448 224l-64 0 0 192-40 0 0-192-64 0 0 192-48 0 0-192-64 0 0 192-40 0 0-192zM256 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/>
+                    </svg>
+                    Bancos y Cuentas Bancarias
                 </a>
             </Tab>
         </TabList>
@@ -679,6 +761,132 @@ const uploadImages = () => {
                     </button>
                 </div>
             </TabPanel>
+            <TabPanel>
+                <div class="relative w-full">
+                    <div class="relative panel">
+                        <div class="">
+                            <div class="flex items-center justify-start space-x-4">
+                                <div class="dropdown">
+                                    <Popper :placement="'bottom-end'" offsetDistance="8">
+                                        <button
+                                            type="button"
+                                            class="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark hover:border-primary hover:text-primary dark:bg-black min-w-[315px]"
+                                        >
+                                            <img
+                                                :src="selectBank.image"
+                                                alt="image"
+                                                class="h-5 w-5 rounded-full object-cover"
+                                            />
+                                            <div class="text-base font-bold uppercase">{{ selectBank.name }}</div>
+                                            <span class="shrink-0 ml-auto">
+                                                <icon-caret-down />
+                                            </span>
+                                        </button>
+                                        <template #content="{ close }">
+                                            <perfect-scrollbar
+                                                :options="{
+                                                    swipeEasing: true,
+                                                    wheelPropagation: false,
+                                                    suppressScrollX: true  // ← here
+                                                }"
+                                                class="max-h-[280px]"
+                                            >
+                                                <ul class="w-full !px-2 text-dark dark:text-white-dark font-semibold dark:text-white-light/90">
+                                                    <template v-for="item in banks" :key="item.id">
+                                                        <li>
+                                                            <button
+                                                                type="button"
+                                                                class="w-full hover:text-primary"
+                                                                :class="{ 'bg-primary/10 text-primary': selectBank.id === item.id }"
+                                                                @click="changeBank(item), close()"
+                                                            >
+                                                                <img
+                                                                    class="w-5 h-5 object-cover rounded-full"
+                                                                    :src="item.image"
+                                                                    alt=""
+                                                                />
+                                                                <span class="ltr:ml-3 rtl:mr-3">{{ item.full_name }}</span>
+                                                            </button>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </perfect-scrollbar>
+                                        </template>
+                                    </Popper>
+                                </div>
+                                <!-- <PrimaryButton>NUEVO BANCO</PrimaryButton> -->
+                                <DangerButton @click="openModalBankAccount" type="button" >NUEVA CUENTA</DangerButton>
+                            </div>
+                            <div class="mt-6 w-full">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div v-for="cuenta in bankAccounts">
+                                        <cardAccount :bankAccount="cuenta" @openModalEditAccount="openModalBankAccount" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </TabPanel>
         </TabPanels>
     </TabGroup>
+    <ModalSmall :show="displayModalBankAccount" :onClose="closeModalBankAccount" :icon="'/img/banco.png'">
+        <template #title>Crear cuenta bancaria</template>
+        <template #message>Los campos * son obligatorios</template>
+        <template #content>
+            <div class="space-y-4">
+                <div>
+                    <InputLabel for="bank_id" value="Banco" />
+                    <select id="bank_id" v-model="formAccount.bank_id" class="form-select">
+                        <template v-for="xbank in banks">
+                            <option :value="xbank.id">{{ xbank.short_name }}</option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <InputLabel for="description" value="Descripción" />
+                    <TextInput id="description" v-model="formAccount.description" ></TextInput>
+                </div>
+                <div>
+                    <InputLabel for="number" value="Número de cuenta soles" />
+                    <TextInput id="number" v-model="formAccount.number" ></TextInput>
+                </div>
+                <div>
+                    <InputLabel for="cci" value="N° de cuenta interbancario (cci)" />
+                    <TextInput id="cci" v-model="formAccount.cci" ></TextInput>
+                </div>
+                <div>
+                    <label class="inline-flex">
+                        <input v-model="formAccount.invoice_show" type="checkbox" class="form-checkbox text-success rounded-full" />
+                        <span>Mostrar cuenta en documentos de venta</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="formAccount.status" type="checkbox" class="form-checkbox rounded-full" />
+                        <span>Activo</span>
+                    </label>
+                </div>
+                <div>
+                    <InputLabel for="currency_type_id" value="Tipo moneda" />
+                    <select id="currency_type_id" v-model="formAccount.currency_type_id" class="form-select" >
+                        <template v-for="row in currencyTypes">
+                            <option :value="row.id">{{ row.description }}</option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+        </template>
+        <template #buttons>
+            <PrimaryButton
+                @click="saveBankAccount"
+                type="button"
+                :class="{ 'opacity-25': formAccount.processing }" :disabled="formAccount.processing"
+            >
+                <svg v-show="formAccount.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                </svg>
+                GUARDAR
+            </PrimaryButton>
+        </template>
+    </ModalSmall>
 </template>

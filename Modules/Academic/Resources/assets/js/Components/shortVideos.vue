@@ -227,7 +227,7 @@
 
     @keyframes keyframes-intro {
         100% {
-            ransform: translate(-100%);
+            transform: translate(-100%);
             opacity: 0;
         }
     }
