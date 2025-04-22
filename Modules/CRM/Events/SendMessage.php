@@ -33,6 +33,7 @@ class SendMessage implements ShouldBroadcastNow
         $appCodeUnique = env('VITE_APP_CODE', 'ARACODE');
 
         $this->channelListenCrm = "message-notification-" . $appCodeUnique;
+        //dd($this->channelListenCrm);
     }
     /**
      * Get the channels the event should broadcast on.

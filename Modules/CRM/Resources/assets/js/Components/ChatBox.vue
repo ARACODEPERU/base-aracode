@@ -136,10 +136,12 @@
     };
 
     onMounted(() => {
+        console.log('aca llega')
+        console.log('canal', channelListenChat)
         window.socketIo.on(channelListenChat, (result) => {
             let participants = result.data.participants;
             let conversationId = result.data.message.conversation_id;
-
+            console.log('aca llega 2')
             const newmsg = {
                 fromUserId: result.data.ofUserId,
                 toUserId: 0,

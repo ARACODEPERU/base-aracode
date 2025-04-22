@@ -32,7 +32,7 @@
         return xasset + 'storage/'+ path;
     }
     const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
-    const channelListenCrm = "message-notification-" + appCodeUnique + '-' + authUser.id;
+    const channelListenCrm = "message-notification-" + appCodeUnique;
 
     onMounted(() => {
         window.socketIo.on(channelListenCrm, (result) => {
