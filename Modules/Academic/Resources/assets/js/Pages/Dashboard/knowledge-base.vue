@@ -15,6 +15,7 @@
     import IconArrowForward from '@/Components/vristo/icon/icon-arrow-forward.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import { Tour } from 'ant-design-vue';
+    import LastRegisteredCourse from "../../Components/LastRegisteredCourse.vue";
 
     defineProps({
         interests:{
@@ -125,8 +126,12 @@
     <AppLayout title="Dashboard">
         <div>
             <Tour :open="open" :steps="steps" @close="handleOpen(false)" />
-  
-            <div :style="`background-image:url('${urlBasek}themes/vristo/images/knowledge/pattern.png');`" class="relative rounded-t-md bg-primary-light bg-contain bg-left-top bg-no-repeat px-5 py-10 dark:bg-black md:px-10" >
+            <LastRegisteredCourse :lastCourse="interests.lastCourse" :urlBasek="urlBasek" :isBirthday="interests.isBirthday" />
+            <div
+                v-if="interests.popularArticles.length > 0"
+                :style="`background-image:url('${urlBasek}themes/vristo/images/knowledge/pattern.png');`"
+                class="relative rounded-t-md bg-primary-light bg-contain bg-left-top bg-no-repeat px-5 py-10 dark:bg-black md:px-10"
+            >
                 <div class="absolute -bottom-1 -end-6 hidden text-[#DBE7FF] rtl:rotate-y-180 dark:text-[#1B2E4B] lg:block xl:end-0">
                     <svg width="375" height="185" viewBox="0 0 375 185" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-72 max-w-xs xl:w-full">
                         <g clip-path="url(#clip0_1109_89938)">
@@ -339,7 +344,7 @@
                 </div>
             </div>
 
-            <div class="mt-10 lg:mt-16">
+            <div v-if="interests.popularArticles.length > 0" class="mt-10 lg:mt-16">
                 <h3 class="mb-6 text-xl font-bold md:text-3xl">Artículos más buscados</h3>
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                     <template v-for="(article, i) in  interests.popularArticles" :key="i">

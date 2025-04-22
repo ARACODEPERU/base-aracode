@@ -47,8 +47,7 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->get('chat/contacts', [CrmChatController::class, 'getContacts'])
         ->name('crm_chat_contacts_data');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
-        ->get('chat/conversation/{id}/status', [CrmConversationController::class, 'updateConversationStatus'])
+    Route::get('chat/conversation/{id}/status', [CrmConversationController::class, 'updateConversationStatus'])
         ->name('crm_chat_conveersation_status');
 
 

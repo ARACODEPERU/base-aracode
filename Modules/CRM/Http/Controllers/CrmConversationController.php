@@ -71,7 +71,7 @@ class CrmConversationController extends Controller
 
             return $conversation;
         });
-
+        //dd($formattedConversations);
         $formattedConversations = $formattedConversations->sortByDesc('new_order')->values();
 
         return response()->json([
@@ -105,9 +105,12 @@ class CrmConversationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id): RedirectResponse
+    public function updateConversationStatus($id)
     {
-        //
+        CrmConversation::find($id)->update([
+            'status' => 'Recibido',
+            'new_message' => false
+        ]);
     }
 
     /**

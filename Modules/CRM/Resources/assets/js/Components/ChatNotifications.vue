@@ -24,6 +24,7 @@
         } catch (error) {
             console.log(error);
         }
+
     }
     const xasset = assetUrl;
 
@@ -44,7 +45,10 @@
         });
     });
 
-    onMounted(() => fetchNotifications());
+    onMounted(() => {
+        fetchNotifications()
+        console.log('Conversasiones',notifications.value);
+    });
 
     onUnmounted(() => {
         window.socketIo.off(channelListenCrm); // Dejar el canal cuando se desmonte el componente
@@ -54,7 +58,16 @@
     const showChatBox = (notification) => {
         storeChatBox.toggleChatBoxVisibility();
         storeChatBox.updateChatBox(notification);
+        updateStateNotification(notification);
     };
+
+    const updateStateNotification = (notification) => {
+        try {
+            axios.get(route('crm_chat_conveersation_status', notification.id));
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
 </script>
 <template>

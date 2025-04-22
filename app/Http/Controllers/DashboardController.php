@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Parameter;
 use App\Models\Person;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentHistory;
+use Modules\Academic\Entities\AcaThemeComment;
 use Modules\Blog\Entities\BlogArticle;
 use Modules\Blog\Entities\BlogCategory;
 use Modules\Onlineshop\Entities\OnliItem;
@@ -74,11 +78,55 @@ class DashboardController extends Controller
 
         $articles = BlogArticle::orderByDesc('views')->take('4')->get();
 
+        $lastCourse = AcaCapRegistration::with('course.modality')
+            ->where('student_id', $student_id)
+            ->latest()
+            ->first();
+
+        if ($lastCourse) {
+            // Formatear la fecha en español con la primera letra en mayúscula
+            $lastCourse->formatted_date = $lastCourse->created_at
+                ? ucfirst(Carbon::parse($lastCourse->created_at)->translatedFormat('d M Y'))
+                : null;
+
+            // Inicializar valores por defecto
+            $lastCourse->total_contents = 0;
+            $lastCourse->total_activity = 0;
+            $lastCourse->total_coments = 0;
+
+            // Verificar si el curso existe antes de acceder a sus propiedades
+            if ($lastCourse->course && isset($lastCourse->course->id)) {
+                $courseId = $lastCourse->course->id;
+
+                // Total de contenidos
+                $lastCourse->total_contents = AcaContent::whereHas('theme.module.course', function ($query) use ($courseId) {
+                    $query->where('id', $courseId);
+                })->count();
+
+                // Total de actividades del estudiante
+                $lastCourse->total_activity = AcaStudentHistory::where('person_id', Auth::user()->person_id)
+                    ->where('course_id', $courseId)
+                    ->count('content_id');
+
+                // Total de comentarios del usuario
+                $lastCourse->total_coments = AcaThemeComment::where('course_id', $courseId)
+                    ->where('user_id', Auth::id())
+                    ->count();
+            }
+        }
+
+        $isBirthday = Person::where('id', Auth::user()->person_id)
+            ->whereMonth('birthdate', now()->month)
+            ->whereDay('birthdate', now()->day)
+            ->exists();
+
         return [
             'categoriesArticles' => $categoriesArticles,
             'popularCourses' => $popularCourses,
             'student' => $student,
-            'popularArticles' => $articles
+            'popularArticles' => $articles,
+            'lastCourse' => $lastCourse,
+            'isBirthday' => $isBirthday
         ];
     }
 }

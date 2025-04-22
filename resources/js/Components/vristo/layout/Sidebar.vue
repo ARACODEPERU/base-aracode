@@ -180,7 +180,7 @@
                             <template v-else-if="item.route == 'module'">
                                 <h2 v-can="item.permissions" class="py-3 px-7 flex items-center uppercase font-extrabold bg-white-light/30 dark:bg-dark dark:bg-opacity-[0.08] -mx-4 mb-1">
                                     <icon-minus class="w-4 h-5 flex-none hidden" />
-                                    <span>{{ item.text }}</span>
+                                    <span class="">{{ item.text }}</span>
                                 </h2>
                                 <template v-if="item.items && item.items.length > 0" >
                                     <template v-for="(subItem, subIndex) in item.items" :key="subIndex">

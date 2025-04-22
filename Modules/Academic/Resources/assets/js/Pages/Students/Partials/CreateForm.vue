@@ -244,7 +244,7 @@ const getPersonData = (newValues) => {
         <template #form>
             <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="document_type_id" value="Tipo *" />
-                <select v-model="form.document_type_id" id="document_type_id" class="mt-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <select v-model="form.document_type_id" id="document_type_id" class="form-select">
                     <option value="" selected>Seleccionar</option>
                     <option v-for="(identityDocumentType) in identityDocumentTypes" :value="identityDocumentType.id">{{ identityDocumentType.description }}</option>
                 </select>
