@@ -443,6 +443,7 @@ class CrmContactsController extends Controller
 
     public function contactsDocentsChat()
     {
+        //dd(Auth::user()->person_id);
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
         //dd($student);
         $docents = AcaCapRegistration::with('course.teacher.person')

@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <h1>mensaje de satisfaccion</h1>
+    <h1>Agradecemos su compra. Le enviamos adjunta su boleta de venta.</h1>
 </body>
 
 </html>
