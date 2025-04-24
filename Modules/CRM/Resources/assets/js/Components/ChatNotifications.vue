@@ -36,6 +36,7 @@
 
     onMounted(() => {
         window.socketIo.on(channelListenCrm, (result) => {
+            console.log(result);
             let participants = result.data.participants;
             participants.forEach(item => {
                 if(authUser.id == item){

@@ -45,6 +45,7 @@
     const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
     const channelListenChat = "message-notification-" + appCodeUnique;
 
+
     const loadingContacts = ref(false);
 
     const fetchPosts = async () => {
@@ -223,7 +224,6 @@
         window.socketIo.on(channelListenChat, (result) => {
             let participants = result.data.participants;
             let conversationId = result.data.message.conversation_id;
-
             const newmsg = {
                 fromUserId: result.data.ofUserId,
                 toUserId: 0,

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\CRM\Emails\ClientHelpEmail;
 use Modules\CRM\Entities\CrmInformationBank;
+use GuzzleHttp\Client;
 
 class CrmMessagesController extends Controller
 {
@@ -86,7 +87,9 @@ class CrmMessagesController extends Controller
             ]);
 
             // Devolver la conversación con los mensajes
-            broadcast(new SendMessage($participants, $message, ['ofUserId' => $personId], $conversationId));
+            //broadcast(new SendMessage($participants, $message, ['ofUserId' => $personId], $conversationId));
+
+            $this->broadcastSend($participants, $message, $personId);
 
             CrmConversation::find($conversationId)->update([
                 'new_message' => true,
@@ -95,6 +98,35 @@ class CrmMessagesController extends Controller
             return response()->json(['success' => true], 201);
         } else {
             return response()->json(['success' => false], 201);
+        }
+    }
+
+    public function broadcastSend($participants, $message, $personId)
+    {
+        $client = new Client();
+
+        $dom = env('VITE_SOCKET_IO_SERVER', 'https://localhost:3000');
+        $url = "{$dom}/api/crm/broadcast";
+
+        $appCodeUnique = env('VITE_APP_CODE', 'ARACODE');
+
+        $channelListen = "message-notification-" . $appCodeUnique;
+
+        try {
+            $res = $client->post($url, [
+                'json' => [
+                    'channelName' => $channelListen,
+                    'participants' => $participants,
+                    'message' => $message,
+                    'ofUserId' => $personId
+                ],
+                'verify' => false // importante si usas certificado autofirmado
+            ]);
+
+            //dd($res->getBody()->getContents());
+        } catch (\Exception $e) {
+            Log::error('SocketIOBroadcaster: ' . $e->getMessage());
+            //dd($e->getMessage());
         }
     }
 
