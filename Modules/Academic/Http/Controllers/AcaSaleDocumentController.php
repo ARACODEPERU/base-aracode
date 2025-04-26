@@ -330,7 +330,7 @@ class AcaSaleDocumentController extends Controller
         $dataFile = $this->generateBoletaPDF($document_id);
 
         $data = [
-            'from_mail' => $P000013 ?? env('MAIL_FROM_ADDRESS'),
+            'from_mail' => env('MAIL_FROM_ADDRESS'),
             'from_name' => env('MAIL_FROM_NAME'),
             'title' => 'Hola! Llegó tu comprobante electrónico',
             'for_mail' => $person_email,
