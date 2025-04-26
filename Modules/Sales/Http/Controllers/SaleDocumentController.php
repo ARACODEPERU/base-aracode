@@ -277,6 +277,7 @@ class SaleDocumentController extends Controller
                     'user_id'                       => Auth::id(),
                     'additional_description'        => $request->get('additional_description'),
                     'overall_total'                 => $request->get('total')
+
                 ]);
 
                 ///obtenemos los productos o servicios para insertar en los
@@ -447,7 +448,8 @@ class SaleDocumentController extends Controller
                         'price' => $produc['unit_price'],
                         'discount' => $produc['discount'],
                         'quantity' => $produc['quantity'],
-                        'total' => round($unit_price * $produc['quantity'], 2)
+                        'total' => round($unit_price * $produc['quantity'], 2),
+                        'entity_name_product' => Product::class
                     ]);
 
                     if ($produc['is_product']) {
