@@ -124,8 +124,10 @@ class OnliSaleController extends Controller
             foreach ($products as $product) {
                 $xpro = AcaCourse::find($product['id']);
                 $price = 0;
-                if ($xpro->discount || $xpro->discount > 0) {
+
+                if ($xpro->discount && $xpro->discount > 0) {
                     if ($xpro->discount_applies == '01') {
+
                         $price = number_format($xpro->price - ($xpro->price * $xpro->discount / 100), 2, '.', '');
                     } elseif ($xpro->discount_applies == '02') {
                         if ($studentSubscribed && $studentSubscribed->status == 1) {
@@ -134,6 +136,8 @@ class OnliSaleController extends Controller
                             $price = number_format($xpro->price, 2, '.', '');
                         }
                     }
+                } else {
+                    $price = number_format($xpro->price, 2, '.', '');
                 }
 
                 array_push($items, [

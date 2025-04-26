@@ -25,9 +25,9 @@
         const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
         if (selector) {
             selector.classList.add('active');
-            const ul = selector.closest('ul.sub-menu-before');
+            const ul = selector.closest('ul.sub-menu');
             if (ul) {
-                let ele  = ul.closest('li.menu').querySelectorAll('.nav-link') || [];
+                let ele = ul.closest('li.menu').querySelectorAll('.nav-link') || [];
                 if (ele.length) {
                     ele = ele[0];
                     setTimeout(() => {
