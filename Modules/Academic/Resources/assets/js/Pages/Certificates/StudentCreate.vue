@@ -16,6 +16,10 @@ const props = defineProps({
     certificates:{
         type: Object,
         default : () => ({})
+    },
+    P000016: {
+        type: String,
+        default: null
     }
 });
 
@@ -38,11 +42,12 @@ const props = defineProps({
             </li>
         </ul>
         <div class="pt-5">
-            <StudentCertificateForm 
+            <StudentCertificateForm
                 :faTrashAlt="faTrashAlt"
-                :certificates="certificates" 
-                :student="student" 
-                :courses="courses" 
+                :certificates="certificates"
+                :student="student"
+                :courses="courses"
+                :P000016="P000016"
             />
         </div>
     </AppLayout>

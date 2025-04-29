@@ -8,35 +8,28 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
+use DataTables;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = (new User())->newQuery();
-        if (request()->has('search')) {
-            $users->where('name', 'Like', '%' . request()->input('search') . '%');
-        }
-        if (request()->query('sort')) {
-            $attribute = request()->query('sort');
-            $sort_order = 'ASC';
-            if (strncmp($attribute, '-', 1) === 0) {
-                $sort_order = 'DESC';
-                $attribute = substr($attribute, 1);
-            }
-            $users->orderBy($attribute, $sort_order);
-        } else {
-            $users->latest();
-        }
-
-        $users = $users->with('tokens');
-        $users = $users->paginate(10)->onEachSide(2);
-        //dd($users);
-        return Inertia::render('Users/List', [
-            'users' => $users
-        ]);
+        return Inertia::render('Users/List');
     }
 
+    public function getUsers()
+    {
+        $users = (new User())->newQuery();
+        $users = $users->leftJoin('people', 'people.id', 'users.person_id');
+        $users = $users->select(
+            'users.*',
+            'people.full_name',
+            'people.image',
+            'people.number'
+        );
+
+        return DataTables::of($users)->toJson();
+    }
     public function create()
     {
         return Inertia::render('Users/Create', [

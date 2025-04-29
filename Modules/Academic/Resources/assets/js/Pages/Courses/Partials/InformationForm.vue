@@ -8,7 +8,7 @@ import Swal2 from 'sweetalert2';
 import { ref, watch, onMounted } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 
-import Editor from '@tinymce/tinymce-vue'
+import Editor from '@tinymce/tinymce-vue';
 
 const props = defineProps({
     brochure:{
@@ -290,13 +290,13 @@ const uploadImage = (blobInfo, progress) => {
                 />
                 <InputError :message="form.errors.frequent_questions" class="mt-2" />
             </div>
-            
+
             <div class="col-span-6 ">
                 <InputLabel>Docente</InputLabel>
-                <div class="flex items-center">   
+                <div class="flex items-center">
                     <div class="relative w-full">
                         <select v-model="teacherSelected" id="teacher_id" class="form-select text-white-dark">
-                            <option selected>Seleccionar</option> 
+                            <option selected>Seleccionar</option>
                             <option v-for="(te,k) in teachers" :value="k">{{ te.person.father_lastname+" "+te.person.mother_lastname+" "+te.person.names }}</option>
                         </select>
                     </div>
@@ -334,7 +334,7 @@ const uploadImage = (blobInfo, progress) => {
                                         </div>
                                         <div>
                                             <h4>{{ tea.teacher.person.father_lastname+" "+ tea.teacher.person.mother_lastname+" "+ tea.teacher.person.names }}</h4>
-                                            
+
                                             <p class="text-white-dark overflow-hidden min-w-[300px] line-clamp-1">
                                                 DNI: {{ tea.teacher.person.number }}
                                             </p>
@@ -359,7 +359,7 @@ const uploadImage = (blobInfo, progress) => {
             </div>
             <div class="col-span-6 ">
                 <label for="path_file" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">PDF</label>
-                
+
                 <!-- <div class="flex justify-center space-x-2">
                     <figure class="max-w-lg">
                         <img class="h-auto max-w-full rounded-lg" :src="form.path_file_preview">
@@ -367,7 +367,7 @@ const uploadImage = (blobInfo, progress) => {
                     </figure>
                 </div> -->
                 <!-- <input @input="form.path_file = $event.target.files[0]" accept=".svg, .png, .jpg, .jpeg, .gif" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="path_file" type="file"> -->
-                
+
                 <a :href="form.path_file_preview" v-if="form.path_file_preview" target="_blank" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Ver PDF Actual</a>
 
                 <input @input="form.path_file = $event.target.files[0]" accept=".pdf" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="path_file" type="file">
@@ -376,7 +376,7 @@ const uploadImage = (blobInfo, progress) => {
         </template>
 
         <template #actions>
-            
+
             <Keypad>
                 <template #botones>
                     <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">

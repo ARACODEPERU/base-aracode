@@ -5,20 +5,52 @@
     import Pagination from '@/Components/Pagination.vue';
     import Keypad from '@/Components/Keypad.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import { ref, onMounted } from 'vue';
+    import DataTable from 'datatables.net-vue3';
+    import DataTablesCore from 'datatables.net';
+    import 'datatables.net-responsive';
+    import '@/Components/vristo/datatables/datatables.css'
+    import '@/Components/vristo/datatables/style.css'
+    import 'datatables.net-buttons'
+    import 'datatables.net-buttons/js/buttons.html5';
+    import es_PE from '@/Components/vristo/datatables/datatables-es.js'
 
-    const props = defineProps({
-        users: {
-            type: Object,
-            default: () => ({}),
+    DataTable.use(DataTablesCore);
+
+    const columns = [
+        { data: null, render: '#action', title: 'Acción', className: 'text-center' },
+        { data: null, render: '#userDescription', title: 'Nombres' },
+        { data: 'email', title: 'Email' },
+        {
+            data: 'created_at',
+            title: 'Fecha Registrado',
+            render: function (data) {
+                if (!data) return '';
+                return new Date(data).toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+            }
         },
-        filters: {
-            type: Object,
-            default: () => ({}),
-        },
-    });
+        { data: null, render: '#userStatus', title: 'Estado' },
+    ];
+
+    const options = {
+        responsive: true,
+        language: es_PE,
+        order: [[3,'DESC']],
+        paging: true
+    }
+
+    const usersTable = ref(null);
 
     const form = useForm({
-        search: props.filters.search,
+        search: null,
     });
 
     const formDelete = useForm({});
@@ -29,6 +61,11 @@
         }
     }
 
+    const baseUrl = assetUrl;
+
+    const getImage = (path) => {
+        return baseUrl + 'storage/'+ path;
+    }
 </script>
 <template>
     <AppLayout title="Usuarios">
@@ -41,86 +78,51 @@
             </li>
         </Navigation>
         <div class="mt-5">
-            <!-- ====== Table Section Start -->
-            <div class="flex flex-col gap-10">
-                <!-- ====== Table One Start -->
-                <div class="panel p-0">
-                    <div class="w-full p-4">
-                        <div class="grid grid-cols-3">
-                            <div class="col-span-3 sm:col-span-1">
-                                <form @submit.prevent="form.get(route('users.index'))">
-                                    <label for="table-search" class="sr-only">Search</label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
-                                        </div>
-                                        <input v-model="form.search" type="text" id="table-search-users" class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar venta por fecha">
-                                    </div>
-                                </form>
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <h2 class="text-xl">Lista de Usuarios </h2>
+                <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
+                    <div class="flex gap-3">
+                        <Keypad>
+                            <template #botones>
+                                <Link :href="route('users.create')" class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Nuevo</Link>
+                            </template>
+                        </Keypad>
+                    </div>
+                </div>
+            </div>
+            <div class="panel pb-1.5 mt-6">
+                <DataTable ref="usersTable" :ajax="route('users-tables-list')" :columns="columns" :options="options">
+                    <template #action="props">
+                        <div class="flex gap-4 items-center justify-center">
+                            <Link :href="route('users.edit', props.rowData.id)" class="btn btn-sm btn-outline-primary">
+                                <font-awesome-icon :icon="faPencilAlt" />
+                            </Link>
+                            <button @click="destroy(props.rowData.id)" type="button" class="btn btn-sm btn-outline-danger" >
+                                <font-awesome-icon :icon="faTrashAlt" />
+                            </button>
+                        </div>
+                    </template>
+                    <template #userDescription="props">
+                        <div class="flex items-center">
+                            <div class="ltr:mr-4 rtl:ml-4">
+                                <img v-if="props.rowData.image" :src="getImage(props.rowData.image)" alt="" class="w-10 h-10 rounded" />
+                                <img v-else :src="'https://ui-avatars.com/api/?name='+props.rowData.full_name+'&size=96&rounded=false'" alt="" class="w-10 h-10 rounded" />
                             </div>
-                            <div class="col-span-3 sm:col-span-2">
-                                <Keypad>
-                                    <template #botones>
-                                        <Link :href="route('users.create')" class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Nuevo</Link>
-                                    </template>
-                                </Keypad>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-sm">{{ props.rowData.full_name ?? props.rowData.name }}</h4>
+                                <p class="media-text">{{ props.rowData.number ?? 'FALTA DATOS' }}</p>
                             </div>
                         </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table >
-                            <thead >
-                                <tr  >
-                                    <th class="text-center">
-                                        Acciones
-                                    </th>
-                                    <th class="text-center">
-                                        Fecha
-                                    </th>
-                                    <th >
-                                        Nombre
-                                    </th>
-                                    <th >
-                                        Email
-                                    </th>
-                                    <!-- <th >
-                                        TOKEN
-                                    </th> -->
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(user, index) in users.data" :key="user.id" class="">
-                                    <td class="text-center">
-                                        <div class="flex gap-4 items-center justify-center">
-                                            <Link :href="route('users.edit', user.id)" class="btn btn-sm btn-outline-primary">
-                                                <font-awesome-icon :icon="faPencilAlt" />
-                                            </Link>
-                                            <button @click="destroy(user.id)" type="button" class="btn btn-sm btn-outline-danger" >
-                                                <font-awesome-icon :icon="faTrashAlt" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        {{  new Date(user.created_at).toLocaleDateString('es-ES') }}
-                                    </td>
-                                    <td >
-                                        {{ user.name }}
-                                    </td>
-                                    <td >
-                                        {{ user.email }}
-                                    </td>
-                                    <!-- <td >
-                                        {{ user.api_token }}
-                                    </td> -->
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <Pagination :data="users" />
-                </div>
-
+                    </template>
+                    <template #userStatus="props">
+                        <div class="flex items-center">
+                            <span v-if="props.rowData.status" class="badge bg-success">Activo</span>
+                            <span v-else class="badge bg-danger">Inactivo</span>
+                        </div>
+                    </template>
+                </DataTable>
             </div>
+
         </div>
     </AppLayout>
 </template>

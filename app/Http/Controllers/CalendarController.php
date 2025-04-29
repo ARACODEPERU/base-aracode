@@ -16,13 +16,13 @@ class CalendarController extends Controller
 
         $dentAppointments = $this->getDentAppointments($period);
 
-        $birthdays = $this->getBirthdays();
+        //$birthdays = $this->getBirthdays();
 
         return Inertia::render(
             'Calendar/Index',
             [
                 'eventsDB' => $dentAppointments,
-                'eventsBirthdays' => $birthdays
+                //'eventsBirthdays' => $birthdays
             ]
         );
     }

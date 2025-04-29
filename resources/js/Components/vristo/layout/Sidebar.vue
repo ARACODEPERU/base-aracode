@@ -3,7 +3,7 @@
 
     import { useAppStore } from '@/stores/index';
     import IconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
-
+    import VueCollapsible from 'vue-height-collapsible/vue3';
     import IconMinus from '@/Components/vristo/icon/icon-minus.vue';
 
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
@@ -14,6 +14,7 @@
 
     const store = useAppStore();
     const activeDropdown = ref('');
+    const subActive = ref('');
 
     const userData = usePage().props.auth.user;
 
@@ -22,10 +23,11 @@
     }
 
     onMounted(() => {
-        const selector = document.querySelector('.sidebar ul a[href="' + window.location.pathname + '"]');
+        //console.log('ruta actual',window.location.href)
+        const selector = document.querySelector('.sidebar ul a[href="' + window.location.href + '"]');
         if (selector) {
             selector.classList.add('active');
-            const ul = selector.closest('ul.sub-menu');
+            const ul = selector.closest('ul.sub-menu-before');
             if (ul) {
                 let ele = ul.closest('li.menu').querySelectorAll('.nav-link') || [];
                 if (ele.length) {
@@ -38,7 +40,11 @@
         }
 
         getStudentCertificates();
-        loadTeachers();
+
+        if(hasAnyRole(['Alumno'])){
+            loadTeachers();
+        }
+
     });
 
     const toggleMobileMenu = () => {
@@ -166,7 +172,7 @@
                                             <icon-caret-down />
                                         </div>
                                     </button>
-                                    <HeightTransition v-show="activeDropdown === item.text">
+                                    <vue-collapsible :isOpen="activeDropdown === item.text">
                                         <template v-if="item.items && item.items.length > 0" >
                                             <ul class="sub-menu-before text-gray-500">
                                                 <li v-for="(subItem, subIndex) in item.items" :key="subIndex">
@@ -174,7 +180,7 @@
                                                 </li>
                                             </ul>
                                         </template>
-                                    </HeightTransition>
+                                    </vue-collapsible>
                                 </li>
                             </template>
                             <template v-else-if="item.route == 'module'">
@@ -202,14 +208,20 @@
                                                         <icon-caret-down />
                                                     </div>
                                                 </button>
-                                                <HeightTransition v-show="activeDropdown === subItem.text">
+                                                <vue-collapsible :isOpen="activeDropdown === subItem.text">
                                                     <ul v-if="subItem.items && subItem.items.length > 0"
                                                         class="text-gray-500"
                                                         :class="subItem.avatar ? 'sub-menu-avatar' : 'sub-menu-before'"
                                                     >
                                                         <template v-for="(subSubItem, subSubIndex) in subItem.items" :key="subSubIndex">
                                                             <li v-can="subSubItem.permissions">
-                                                                <Link v-bind="{ id: subSubItem.id }"  :href="subSubItem.route" @click="toggleMobileMenu">
+                                                                <Link
+                                                                    v-bind="{ id: subSubItem.id }"
+                                                                    :href="subSubItem.route"
+                                                                    @click="toggleMobileMenu"
+                                                                    preserve-state
+                                                                    preserve-scroll
+                                                                >
                                                                     <template v-if="subSubItem.img">
                                                                         <div class="ltr:mr-2 rtl:ml-2">
                                                                             <img :src="`${xasset}storage/${subSubItem.img}`" alt="" class="w-8 h-8 rounded" />
@@ -225,14 +237,19 @@
                                                             </li>
                                                         </template>
                                                     </ul>
-                                                </HeightTransition>
+                                                </vue-collapsible>
                                             </li>
                                         </template>
                                         <template v-else>
                                             <li v-can="subItem.permissions" class="menu nav-item">
                                                 <Link
                                                     v-bind="{ id: subItem.id }"
-                                                    :href="subItem.route" class="nav-link group" @click="toggleMobileMenu">
+                                                    :href="subItem.route"
+                                                    class="nav-link group"
+                                                    @click="toggleMobileMenu"
+                                                    preserve-state
+                                                    preserve-scroll
+                                                >
                                                     <div class="flex items-center">
                                                         <font-awesome-icon :icon="subItem.icom" class="group-hover:!text-primary shrink-0" />
 
@@ -248,7 +265,13 @@
                             </template>
                             <template v-else>
                                 <li v-can="item.permissions" class="menu nav-item">
-                                    <Link :href="item.route" class="nav-link group" @click="toggleMobileMenu">
+                                    <Link
+                                        :href="item.route"
+                                        class="nav-link group"
+                                        @click="toggleMobileMenu"
+                                        preserve-state
+                                        preserve-scroll
+                                    >
                                         <div class="flex items-center">
                                             <!-- <icon-menu-font-icons class="group-hover:!text-primary shrink-0" /> -->
                                             <font-awesome-icon :icon="item.icom" class="group-hover:!text-primary shrink-0" />
@@ -281,7 +304,7 @@
                                         <icon-caret-down />
                                     </div>
                                 </button>
-                                <HeightTransition v-show="activeDropdown === 'logros'">
+                                <vue-collapsible :isOpen="activeDropdown === 'logros'">
                                     <ul class="sub-menu-before text-gray-500">
                                         <li v-for="(scd, sck) in studentSCertificates" :key="sck">
                                             <a :href="route('aca_image_download', scd.id)" target="_blank">
@@ -294,7 +317,7 @@
                                             </a>
                                         </li>
                                     </ul>
-                                </HeightTransition>
+                                </vue-collapsible>
                             </li>
                         </template>
                         <template v-if="hasAnyRole(['Alumno'])">
@@ -318,13 +341,19 @@
                                         <icon-caret-down />
                                     </div>
                                 </button>
-                                <HeightTransition v-show="activeDropdown === menuChatAI.text">
+                                <vue-collapsible :isOpen="activeDropdown === menuChatAI.text">
                                     <ul
                                         class="text-gray-500"
                                         :class="menuChatAI.avatar ? 'sub-menu-avatar' : 'sub-menu-before'"
                                     >
                                         <li v-for="(scd, sck) in menuChatAI.items" :key="sck">
-                                            <Link v-bind="{ id: scd.id }" :href="scd.route" @click="toggleMobileMenu">
+                                            <Link
+                                                v-bind="{ id: scd.id }"
+                                                :href="scd.route"
+                                                @click="toggleMobileMenu"
+                                                preserve-state
+                                                preserve-scroll
+                                            >
                                                 <template v-if="scd.img">
                                                     <div class="ltr:mr-2 rtl:ml-2">
                                                         <img :src="`${xasset}storage/${scd.img}`" alt="" class="w-8 h-8 rounded" />
@@ -339,7 +368,7 @@
                                             </Link>
                                         </li>
                                     </ul>
-                                </HeightTransition>
+                                </vue-collapsible>
                             </li>
                         </template>
                     </ul>
@@ -353,4 +382,9 @@
     </div>
 </template>
 
-
+<style>
+ul.sub-menu-before li a.active {
+  --tw-text-opacity: 1;
+  color: rgb(67 97 238 / var(--tw-text-opacity));
+}
+</style>

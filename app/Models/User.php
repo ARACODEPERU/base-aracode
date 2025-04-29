@@ -70,7 +70,7 @@ class User extends Authenticatable
 
     public function person(): HasOne
     {
-        return $this->hasOne(Person::class, 'person_id', 'id');
+        return $this->hasOne(Person::class, 'id', 'person_id');
     }
 
     public function sendEmailVerificationNotification()

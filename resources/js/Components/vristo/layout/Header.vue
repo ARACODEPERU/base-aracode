@@ -89,7 +89,9 @@
 
     onMounted(() => {
         setActiveDropdown();
-        loadTeachers();
+        if(hasAnyRole(['Alumno'])){
+            loadTeachers();
+        }
     });
 
     watch(route, (to, from) => {
@@ -97,7 +99,7 @@
     });
 
     const setActiveDropdown = () => {
-        const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.pathname + '"]');
+        const selector = document.querySelector('ul.horizontal-menu a[href="' + window.location.href + '"]');
         if (selector) {
             selector.classList.add('active');
             const all  = document.querySelectorAll('ul.horizontal-menu .nav-link.active');

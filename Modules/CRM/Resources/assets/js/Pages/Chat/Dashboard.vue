@@ -30,9 +30,14 @@
     import Swal from 'sweetalert2';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import Editor from '@tinymce/tinymce-vue';
 
     const props = defineProps({
         P000015: {
+            type: String,
+            default: null
+        },
+        P000010: {
             type: String,
             default: null
         }
@@ -287,7 +292,9 @@
     };
 
     const selectServerAI = () => {
+        console.log(props.P000015)
         if(props.P000015 == 1){
+
             sendPromptOpenAI();
         }else if(props.P000015 == 2){
             sendPromptGeminiAI();
@@ -323,6 +330,7 @@
             timeout: 0,
         }).then((result) => {
             formIaconsulta.respond = result.data.responseText
+            //zformIaconsulta.respond = clearHTMLdelimiters(result.data.responseText)
         }).finally(()=>{
             formIaconsulta.processing = false;;
         });
@@ -936,7 +944,7 @@
             <template #message>Mejora tu respuesta</template>
             <template #content>
 
-                <div v-if="formIaconsulta.respond" class="p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
+                <div v-show="formIaconsulta.respond" class="p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
                     <div class="flex items-center">
                         <svg class="shrink-0 w-4 h-4 me-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
@@ -944,7 +952,15 @@
                         <span class="sr-only">Info</span>
                         <h3 class="text-lg font-medium">Respuesta IA</h3>
                     </div>
-                    <div class="mt-2 mb-4 text-sm" v-html="clearHTMLdelimiters(formIaconsulta.respond)"></div>
+                    <!-- <div class="mt-2 mb-4 text-sm" v-html="clearHTMLdelimiters(formIaconsulta.respond)"></div>
+                    {{ formIaconsulta.respond }} -->
+                    <div class="mt-2 mb-4 text-sm">
+                        <Editor
+                            id="respondTxt"
+                            :api-key="P000010"
+                            v-model="formIaconsulta.respond"
+                        />
+                    </div>
                     <div class="flex">
                         <button @click="saveQuestionResult" type="button" class="text-white bg-yellow-800 hover:bg-yellow-900 focus:ring-4 focus:outline-none focus:ring-yellow-200 font-medium rounded-lg text-xs px-3 py-1.5 me-2 text-center inline-flex items-center dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800">
                             <svg v-if="censorLoader" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">

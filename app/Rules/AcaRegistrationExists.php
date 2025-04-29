@@ -17,14 +17,28 @@ class AcaRegistrationExists implements Rule
 
     public function passes($attribute, $value)
     {
+        $result = false;
+
         $exists = DB::table('aca_cap_registrations')
             ->where('student_id', $value)
             ->where('course_id', $this->parameter)
             ->exists();
 
-        if ($exists) {
-            return true;
+        // $courseFree = DB::table('aca_courses')
+        //     ->where('id', $this->parameter)
+        //     ->where(function ($query) {
+        //         $query->where('price', '=', 0)
+        //             ->orWhereNull('price');
+        //     })
+        //     ->exists();
+        $courseFree = false;
+        if ($courseFree) {
+            $result =  true;
+        } elseif ($exists) {
+            $result =  true;
         }
+
+        return $result;
     }
 
     public function message()

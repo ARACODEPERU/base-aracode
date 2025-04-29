@@ -3,6 +3,7 @@
 namespace Modules\Academic\Http\Controllers;
 
 use App\Helpers\Barios;
+use App\Models\Parameter;
 use App\Rules\AcaRegistrationExists;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
@@ -27,10 +28,12 @@ class AcaCertificateController extends Controller
     use ValidatesRequests;
 
     public $directory;
+    public $P000016;
 
     public function __construct()
     {
         $this->directory = 'academic' . DIRECTORY_SEPARATOR . 'certificates';
+        $this->P000016 = Parameter::where('parameter_code', 'P000016')->value('value_default');
     }
 
     public function index()
@@ -173,7 +176,8 @@ class AcaCertificateController extends Controller
         return Inertia::render('Academic::Certificates/StudentCreate', [
             'student'   => $student,
             'courses'   => $courses,
-            'certificates' => $certificates
+            'certificates' => $certificates,
+            'P000016' => $this->P000016
         ]);
     }
 
@@ -210,55 +214,63 @@ class AcaCertificateController extends Controller
             'certificate_date' => Carbon::now()->format('Y-m-d')
         ]);
 
-        if ($certificate_auto) {
+        if ($this->P000016 == 1) {
             $certificate = AcaCertificate::firstOrCreate([
                 'student_id'        => $student_id,
                 'registration_id'   => $registration->id,
                 'course_id'         => $course_id,
                 'content'           => null,
-                'image'             => null
+                'image'             => $request->get('image')
             ]);
         } else {
+            if ($certificate_auto) {
+                $certificate = AcaCertificate::firstOrCreate([
+                    'student_id'        => $student_id,
+                    'registration_id'   => $registration->id,
+                    'course_id'         => $course_id,
+                    'content'           => null,
+                    'image'             => null
+                ]);
+            } else {
 
-            $certificate = AcaCertificate::firstOrCreate([
-                'student_id'        => $student_id,
-                'registration_id'   => $registration->id,
-                'course_id'         => $course_id,
-                'content'           => null
-            ]);
+                $certificate = AcaCertificate::firstOrCreate([
+                    'student_id'        => $student_id,
+                    'registration_id'   => $registration->id,
+                    'course_id'         => $course_id,
+                    'content'           => null
+                ]);
 
-            $destination = 'uploads/certificate';
-            $base64Image = $request->get('image');
-            $path = null;
+                $destination = 'uploads/certificate';
+                $base64Image = $request->get('image');
+                $path = null;
 
-            if ($base64Image) {
-                $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-                if (PHP_OS == 'WINNT') {
-                    $tempFile = tempnam(sys_get_temp_dir(), 'img');
-                } else {
-                    $tempFile = tempnam('/var/www/html/img_temp', 'img');
-                }
-                file_put_contents($tempFile, $fileData);
-                $mime = mime_content_type($tempFile);
+                if ($base64Image) {
+                    $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+                    if (PHP_OS == 'WINNT') {
+                        $tempFile = tempnam(sys_get_temp_dir(), 'img');
+                    } else {
+                        $tempFile = tempnam('/var/www/html/img_temp', 'img');
+                    }
+                    file_put_contents($tempFile, $fileData);
+                    $mime = mime_content_type($tempFile);
 
-                $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-                $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
+                    $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
+                    $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
 
-                if ($file) {
-                    // $original_name = strtolower(trim($file->getClientOriginalName()));
-                    // $file_name = time() . rand(100, 999) . $original_name;
-                    $original_name = strtolower(trim($file->getClientOriginalName()));
-                    $original_name = str_replace(" ", "_", $original_name);
-                    $extension = $file->getClientOriginalExtension();
-                    $file_name = $student_id . 'X' . $course_id . '.' . $extension;
-                    $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-                    $certificate->image = $path;
-                    $certificate->save();
+                    if ($file) {
+                        // $original_name = strtolower(trim($file->getClientOriginalName()));
+                        // $file_name = time() . rand(100, 999) . $original_name;
+                        $original_name = strtolower(trim($file->getClientOriginalName()));
+                        $original_name = str_replace(" ", "_", $original_name);
+                        $extension = $file->getClientOriginalExtension();
+                        $file_name = $student_id . 'X' . $course_id . '.' . $extension;
+                        $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+                        $certificate->image = $path;
+                        $certificate->save();
+                    }
                 }
             }
         }
-
-
 
 
 
