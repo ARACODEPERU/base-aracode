@@ -1,5 +1,5 @@
 <script setup>
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { Link, useForm, usePage, router } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import flatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
@@ -67,7 +67,7 @@ import Swal2 from 'sweetalert2';
                 twitter: props.person.social_networks ? JSON.parse(props.person.social_networks).twitter : null,
             }
         }
-        
+
     });
 
 

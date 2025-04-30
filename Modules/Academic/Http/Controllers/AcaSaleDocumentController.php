@@ -187,23 +187,35 @@ class AcaSaleDocumentController extends Controller
                     if ($pafe_igv == '10') {
                         //valor unitario presio de venta / 1.IGV para quitarle el igv
                         //se tiene que quitar el igv porque el sistema trabaja con los precios
-                        //incluido el igv
+                        // Asegurar que los valores clave no sean nulos
+                        $pdiscount = $pdiscount ?? 0;
+                        //$price_sale = $price_sale ?: 0.01; // Evita división por cero si por alguna razón viene 0
+
+                        // Precio unitario sin IGV
                         $value_unit = round($price_sale / $nfactorIGV, 2);
-                        //la base para hacer el descuento
+
+                        // Base para aplicar descuento
                         $base = round($value_unit * $quantity, 2);
-                        //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
-                        $factor = (($pdiscount * 100) / $price_sale) / 100;
-                        //el descuento se aplica por unidad vendida
-                        $descuento_monto = $factor * $value_unit * $quantity;
-                        //a la base igv le restamos el descuento
-                        $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                        //el valor total igv
-                        $igv = ($mto_base_igv * $ifactorIGV);
-                        //total del item
-                        $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                        //el valor de la venta
-                        $value_sale = ($value_unit * $quantity) - $descuento_monto;
+
+                        // Calcular factor de descuento (evita división por 0)
+                        $factor = ($price_sale > 0 && $pdiscount > 0)
+                            ? round((($pdiscount * 100) / $price_sale) / 100, 4)
+                            : 0;
+
+                        // Descuento en monto total
+                        $descuento_monto = round($factor * $value_unit * $quantity, 2);
+
+                        // Base imponible menos descuento
+                        $mto_base_igv = round(($value_unit * $quantity) - $descuento_monto, 2);
+
+                        // IGV sobre la base restante
+                        $igv = round($mto_base_igv * $ifactorIGV, 2);
+
+                        // Total del ítem (con IGV y descuento aplicado)
+                        $total_item = round((($value_unit * $quantity) - $descuento_monto) + $igv, 2);
+
+                        // Valor de venta neto (sin IGV, con descuento)
+                        $value_sale = round(($value_unit * $quantity) - $descuento_monto, 2);
                         //si tiene descuento creamos el array de descuento
                         //2023-07-20 el sistema solo trabaja con un descuento
                         if ($pdiscount > 0) {

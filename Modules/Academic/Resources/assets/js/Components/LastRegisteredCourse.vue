@@ -24,6 +24,7 @@
 </script>
 <template>
     <div
+        v-if="lastCourse"
         :class="isBirthday ? 'grid grid-cols-6 gap-4': ''"
     >
         <div v-if="isBirthday" class="panel col-span-6 sm:col-span-2">

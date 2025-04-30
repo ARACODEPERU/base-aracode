@@ -153,6 +153,7 @@ class PersonController extends Controller
         //dd($request->get('birthdate'));
         $person_id = $request->get('id');
         $student_id = $request->get('student_id');
+
         $user = User::where('person_id', $person_id)->first();
 
         $this->validate(
@@ -226,7 +227,7 @@ class PersonController extends Controller
         $user->update([
             'name'          => $request->get('names'),
             'email'         => $request->get('email'),
-            'password'      => Hash::make($request->get('number')),
+            //'password'      => Hash::make($request->get('number')),
             'information'   => $request->get('description'),
             'avatar'        => $path,
             'updated_information' => true
@@ -283,6 +284,8 @@ class PersonController extends Controller
                 'ocupacion' => $request->input('ocupacion'),
                 'presentacion' => $request->input('presentacion'),
                 'gender' => $request->input('gender'),
+                'is_provider'           => false,
+                'is_client'             => true,
                 'status' => true,
                 'social_networks' => json_encode($request->input('social_networks')),
                 'ubigeo_description' => $request->input('ubigeo')['name_city']
@@ -290,7 +293,8 @@ class PersonController extends Controller
 
             User::find(Auth::id())->update([
                 'email' => trim($request->input('email')),
-                'name' => trim($request->input('names'))
+                'name' => trim($request->input('names')),
+                'updated_information' => true
             ]);
         } else {
             $person = Person::updateOrCreate(
@@ -320,9 +324,11 @@ class PersonController extends Controller
             );
 
             User::find(Auth::id())->update([
-                'person_id' => $person->id
+                'person_id' => $person->id,
+                'updated_information' => true
             ]);
         }
+        return redirect()->route('dashboard');
     }
 
 

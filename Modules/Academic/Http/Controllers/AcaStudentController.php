@@ -362,10 +362,11 @@ class AcaStudentController extends Controller
 
     public function myCourses()
     {
+
         $user = Auth::user();
         $student_id = AcaStudent::where('person_id', $user->person_id)->value('id');
         $courses = [];
-
+        //dd($student_id);
         $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
             ->where('status', true)
             ->first();
