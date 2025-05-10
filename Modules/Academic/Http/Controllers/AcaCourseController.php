@@ -323,6 +323,7 @@ class AcaCourseController extends Controller
         $course = AcaCourse::find($id);
 
         $students = AcaCapRegistration::with('student.person')
+            ->with('document')
             ->where('course_id', $id)
             ->get()
             ->map(function ($student) {

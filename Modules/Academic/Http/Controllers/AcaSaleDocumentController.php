@@ -29,6 +29,7 @@ use Modules\Academic\Emails\StudentElectronicTicket;
 use App\Helpers\Invoice\Documents\Boleta;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaSubscriptionType;
+use Modules\Academic\Jobs\SendBoletaJob;
 
 class AcaSaleDocumentController extends Controller
 {
@@ -411,5 +412,65 @@ class AcaSaleDocumentController extends Controller
             // Lanzar una excepción con un mensaje descriptivo
             throw new \Exception("Error al generar la boleta: " . $e->getMessage());
         }
+    }
+
+    public function generateAndSendInvoices(Request $request)
+    {
+
+        $registration = $request->get('registration');
+        $userId = $request->get('userId');
+        $error = [];
+        $procesado = [];
+        $success = true;
+        // foreach ($registrations as $registration) {
+        if ($registration['checkbox']) {
+            //dd($registration);
+            try {
+                // Puedes validar campos requeridos aquí
+                $person = $registration['student']['person'];
+                $regis = AcaCapRegistration::find($registration['id']);
+                if (!$regis->document_id && !$regis->sale_note_id) {
+
+                    if (!$person['email']) {
+                        $error = [
+                            'full_name' => $person['full_name'],
+                            'razon' => 'Estudiante sin correo electrónico',
+                        ];
+                        //continue;
+                    }
+
+                    // Genera la boleta si aplica aquí (si no lo haces dentro del job)
+                    // generarBoleta($student);
+
+                    // Enviar usando colas
+                    dispatch(new SendBoletaJob($registration, $userId));
+                    $success = true;
+                    $procesado = [
+                        'full_name' => $person['full_name'],
+                        'razon' => 'Boleta creada y enviada correctamente',
+                    ];
+                } else {
+                    $error = [
+                        'full_name' => $person['full_name'],
+                        'razon' => 'Ya se le envió su boleta',
+                    ];
+                    $success = false;
+                }
+            } catch (\Throwable $e) {
+                $error = [
+                    'full_name' => $person['full_name'],
+                    'razon' => $e->getMessage(),
+                ];
+                $success = false;
+            }
+        }
+
+
+        return response()->json([
+            'success' => $success,
+            'procesado' => $procesado,
+            'error' => $error,
+            'status' => 'Fin del proceso'
+        ]);
     }
 }

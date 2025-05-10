@@ -50,7 +50,7 @@
 
         <template #form>
                 <div class="col-span-6 sm:col-span-3">
-                    <InputLabel for="description" value="Nombre" />
+                    <InputLabel for="description" value="Nombre *" />
                     <TextInput
                         id="description"
                         v-model="form.description"
@@ -61,7 +61,7 @@
                     <InputError :message="form.errors.description" class="mt-2" />
                 </div>
                 <div class="col-span-6 sm:col-span-3">
-                    <InputLabel for="identifier" value="Código" />
+                    <InputLabel for="identifier" value="Código *" />
                     <TextInput
                         id="identifier"
                         v-model="form.identifier"
@@ -70,17 +70,17 @@
                     />
                     <InputError :message="form.errors.identifier" class="mt-2" />
                 </div>
-                <div v-show="false" class="col-span-6 sm:col-span-3">
-                    <InputLabel for="icon" value="Icono" />
-                    <TextInput
+                <div v-show="false" class="col-span-6">
+                    <InputLabel for="icon" value="Icono *" />
+                    <textarea
                         id="icon"
                         v-model="form.icon"
-                        type="text"
-                        class="block w-full mt-1"
-                    />
+                        class="form-textarea"
+                    >
+                    </textarea>
                     <InputError :message="form.errors.icon" class="mt-2" />
                 </div>
-                <div class="col-span-6 sm:col-span-3">
+                <div class="col-span-6">
                     <label class="inline-flex">
                         <input v-model="form.status" type="checkbox" class="form-checkbox" />
                         <span>Activo</span>

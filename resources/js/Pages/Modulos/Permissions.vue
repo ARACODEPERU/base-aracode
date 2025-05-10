@@ -63,7 +63,7 @@
             }
         });
     }
-    
+
 </script>
 
 <template>
@@ -80,58 +80,60 @@
             </li>
         </Navigation>
         <div class="mt-5">
-            <div class="panel">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12">
-                    <div>
-                        <div class="font-semibold text-lg mb-5">Permisos Libres</div>
-                        <div style="height: 400px;" class="flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
-                            <perfect-scrollbar
-                                :options="{
-                                    swipeEasing: true,
-                                    wheelPropagation: false,
-                                }"
-                                class="relative ltr:pr-3.5 rtl:pl-3.5 ltr:-mr-3.5 rtl:-ml-3.5 h-full grow"
-                            >
-                                <template v-if="itemsFree.length > 0">
-                                    <template v-for="(item, index) in itemsFree">
-                                        <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
-                                            <div>{{ item.name }} </div>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" @click="addItems(item, index)">
-                                                <icon-arrow-left />
-                                            </button>
-                                        </div>
+            <div class="panel p-0">
+                <div class="p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12">
+                        <div>
+                            <div class="font-semibold text-lg mb-5">Permisos Libres</div>
+                            <div style="max-height: 610px;" class="flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
+                                <perfect-scrollbar
+                                    :options="{
+                                        swipeEasing: true,
+                                        wheelPropagation: false,
+                                    }"
+                                    class="relative ltr:pr-3.5 rtl:pl-3.5 ltr:-mr-3.5 rtl:-ml-3.5 h-full grow"
+                                >
+                                    <template v-if="itemsFree.length > 0">
+                                        <template v-for="(item, index) in itemsFree">
+                                            <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
+                                                <div>{{ item.name }} </div>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" @click="addItems(item, index)">
+                                                    <icon-arrow-left />
+                                                </button>
+                                            </div>
+                                        </template>
                                     </template>
-                                </template>
-                            </perfect-scrollbar>
+                                </perfect-scrollbar>
+                            </div>
+
                         </div>
-                        
-                    </div>
-                    <div>
-                        <div class="font-semibold text-lg mb-5">Permisos Agregados</div>
-                        <div style="height: 400px;" class="flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
-                            <perfect-scrollbar
-                                :options="{
-                                    swipeEasing: true,
-                                    wheelPropagation: false,
-                                }"
-                                class="relative ltr:pr-3.5 rtl:pl-3.5 ltr:-mr-3.5 rtl:-ml-3.5 h-full grow"
-                            >
-                                <template v-if="itemsAdded.length > 0">
-                                    <template v-for="(item, index) in itemsAdded">
-                                        <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" @click="removeItems(item, index)">
-                                                <icon-arrow-left class="transform" style="rotate: 180deg;"  />
-                                            </button>
-                                            <div>{{ item.name }} </div>
-                                        </div>
+                        <div>
+                            <div class="font-semibold text-lg mb-5">Permisos Agregados</div>
+                            <div style="max-height: 610px;" class="flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
+                                <perfect-scrollbar
+                                    :options="{
+                                        swipeEasing: true,
+                                        wheelPropagation: false,
+                                    }"
+                                    class="h-full"
+                                >
+                                    <template v-if="itemsAdded.length > 0">
+                                        <template v-for="(item, index) in itemsAdded">
+                                            <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" @click="removeItems(item, index)">
+                                                    <icon-arrow-left class="transform" style="rotate: 180deg;"  />
+                                                </button>
+                                                <div>{{ item.name }} </div>
+                                            </div>
+                                        </template>
                                     </template>
-                                </template>
-                            </perfect-scrollbar>
+                                </perfect-scrollbar>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md dark:bg-gray-900">
+                <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md dark:bg-gray-800">
                     <Keypad>
                         <template #botones>
                             <PrimaryButton @click="savePermissionsModulo" type="button":class="{ 'opacity-25': form.processing }" :disabled="form.processing">

@@ -20,11 +20,13 @@ use Modules\Onlineshop\Entities\OnliSale;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Client\Payment\PaymentClient;
+use Modules\Academic\Emails\CratitudeCoursePurchase;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
+use Illuminate\Support\Facades\Mail;
 
 class MercadopagoController extends Controller
 {
@@ -359,6 +361,11 @@ class MercadopagoController extends Controller
                         $sale->response_payment_method_id = $request->get('payment_method_id');
                         $sale->mercado_payment_id = $payment->id;
                         $sale->mercado_payment = json_encode($payment);
+
+                        ////enviar correo de agradecimiento///
+                        Mail::to($sale->email)
+                            ->send(new CratitudeCoursePurchase(OnliSale::with('details.course')->where('id', $sale->id)->first()));
+
                         $message = 'Pago aprobado';
                         break;
                     case "rejected":

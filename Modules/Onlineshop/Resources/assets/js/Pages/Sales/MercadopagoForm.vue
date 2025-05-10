@@ -43,7 +43,7 @@
 
             // Renderiza el brick una vez que el DOM está disponible
             await renderCardPaymentBrick(bricksBuilder);
-    
+
         }
     });
 
@@ -279,12 +279,12 @@
                             </svg>
                             <span>TARJETA</span>
                         </button>
-                        <Link :href="route('onlineshop_sales_shoppingcart','me')" class="flex w-full items-center justify-between rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                        <!-- <Link :href="route('onlineshop_sales_shoppingcart','me')" class="flex w-full items-center justify-between rounded-lg bg-red-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
                             <svg class="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
                                 <path d="M16 64C16 28.7 44.7 0 80 0L304 0c35.3 0 64 28.7 64 64l0 384c0 35.3-28.7 64-64 64L80 512c-35.3 0-64-28.7-64-64L16 64zM144 448c0 8.8 7.2 16 16 16l64 0c8.8 0 16-7.2 16-16s-7.2-16-16-16l-64 0c-8.8 0-16 7.2-16 16zM304 64L80 64l0 320 224 0 0-320z"/>
                             </svg>
                             <span>YAPE</span>
-                        </Link>
+                        </Link> -->
                     </div>
                 </div>
             </div>

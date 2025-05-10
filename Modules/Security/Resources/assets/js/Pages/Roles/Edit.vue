@@ -1,6 +1,8 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import EditForm from './Pertials/editForm.vue';
+    import VueCollapsible from 'vue-height-collapsible/vue3';
+
 
     const props = defineProps({
         role: {
@@ -8,6 +10,10 @@
             default: () => ({}),
         },
         permissions: {
+            type: Object,
+            default: () => ({}),
+        },
+        sorted: {
             type: Object,
             default: () => ({}),
         },
@@ -28,10 +34,11 @@
 
         <div>
             <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-                <EditForm 
+                <EditForm
                     :role="role"
                     :permissions="permissions"
                     :roleHasPermissions="roleHasPermissions"
+                    :sorted="sorted"
                 >
                 </EditForm>
             </div>

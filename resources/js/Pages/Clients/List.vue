@@ -106,7 +106,8 @@
                                         {{ client.full_name }}
                                     </td>
                                     <td>
-                                        {{ client.number.toString().length == 8 ? "DNI: "+client.number : client.number.toString().length == 12 ? "RUC: "+client.number : client.number}}
+                                        <small class="text-xs text-gray-600">{{ client.document_type_id == 1 ? "DNI": client.document_type_id == 6 ? "RUC": "OTROS" }}</small>
+                                        <p>{{ client.number }}</p>
                                     </td>
                                     <td>
                                         {{ client.telephone }}

@@ -105,6 +105,7 @@
         });
 
     }
+
     const closeModalSendDetails = () => {
         displayModalSendDetails.value = false
     }

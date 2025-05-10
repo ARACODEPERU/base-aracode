@@ -32,7 +32,7 @@ const menuSales = [{
                         status: false,
                         route: route("clients.index"),
                         text: "Clientes",
-                        permissions: "sale_marcas",
+                        permissions: "clientes",
                     },
                     {
                         status: false,
@@ -50,7 +50,7 @@ const menuSales = [{
                         status: false,
                         route: route("products.index"),
                         text: "Productos",
-                        permissions: "sale_marcas",
+                        permissions: "productos",
                     },
                     {
                         status: false,

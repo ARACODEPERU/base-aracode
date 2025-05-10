@@ -35,7 +35,8 @@ const form = useForm({
     father_lastname: null,
     mother_lastname: null,
     ubigeo_description: null,
-    full_name: null
+    full_name: null,
+    gender: 'M'
 });
 
 const searchPerson = async () => {
@@ -48,7 +49,7 @@ const searchPerson = async () => {
         //     form.number = res.data.number;
         //     form.id = res.data.id;
         // });
-    };   
+    };
 
 const createClient = () => {
     form.post(route('clients.store'), {
@@ -164,11 +165,11 @@ const openSwal2Search = () => {
                 allowOutsideClick: false,
                 title: result.value.data.person.full_name,
                 imageUrl: result.value.data.person.image ? getImage(result.value.data.person.image) : null,
-                text: `Ya fue registrado con el DNI ` + result.value.data.person.number,
+                text: `Ya fue registrado con el numero ` + result.value.data.person.number,
                 imageHeight: 180,
                 imageWidth: 180,
                 customClass: {
-                    image: 'rounded-full',  
+                    image: 'rounded-full',
                 },
                 padding: '2em',
             }).then((res) => {
@@ -180,23 +181,24 @@ const openSwal2Search = () => {
     });
 }
 const getPersonData = (newValues) => {
-    form.id = newValues.id,
-    form.teacher_id = newValues.teacher_id,
-    form.document_type_id = newValues.document_type_id,
-    form.number = newValues.number,
-    form.telephone = newValues.telephone,
-    form.email = newValues.email,
-    form.image = null,
-    form.image_preview = newValues.image ? getImage(newValues.image) : null,
-    form.address = newValues.address,
-    form.ubigeo = newValues.ubigeo,
-    form.birthdate = newValues.birthdate,
-    form.names = newValues.names,
-    form.father_lastname = newValues.father_lastname,
-    form.mother_lastname = newValues.mother_lastname,
-    form.ubigeo_description = newValues.city
-    form.presentacion = newValues.presentacion,
-    form.full_name = newValues.full_name
+    form.id = newValues.id;
+    form.teacher_id = newValues.teacher_id;
+    form.document_type_id = newValues.document_type_id;
+    form.number = newValues.number;
+    form.telephone = newValues.telephone;
+    form.email = newValues.email;
+    form.image = null;
+    form.image_preview = newValues.image ? getImage(newValues.image) : null;
+    form.address = newValues.address;
+    form.ubigeo = newValues.ubigeo;
+    form.birthdate = newValues.birthdate;
+    form.names = newValues.names;
+    form.father_lastname = newValues.father_lastname;
+    form.mother_lastname = newValues.mother_lastname;
+    form.ubigeo_description = newValues.city;
+    form.presentacion = newValues.presentacion;
+    form.full_name = newValues.full_name;
+    form.gender =  newValues.gender;
 };
 </script>
 
@@ -210,7 +212,7 @@ const getPersonData = (newValues) => {
             <span>Ingresar nuevo cliente, los campos con * son obligatorios. También puedes verificar si el cliente ya existe en </span>
 
             <a @click="openSwal2Search" href="javascript:;" class="text-primary font-semibold hover:underline group">
-                la base de datos 
+                la base de datos
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180">
                     <path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
@@ -268,6 +270,31 @@ const getPersonData = (newValues) => {
                     class="block w-full mt-1"
                 />
                 <InputError :message="form.errors.full_name" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="birthdate" value="Fecha de nacimiento *" />
+                <TextInput
+                    id="birthdate"
+                    v-model="form.birthdate"
+                    type="date"
+                    class="block w-full mt-1"
+
+                />
+                <InputError :message="form.errors.birthdate" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="gender" value="Genero *" />
+                <div class="space-x-4">
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
+                        <span>Masculino</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
+                        <span>Femenino</span>
+                    </label>
+                </div>
+                <InputError :message="form.errors.gender" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="email" value="Email *" />

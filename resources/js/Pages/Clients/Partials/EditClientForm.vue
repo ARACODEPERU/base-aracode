@@ -30,7 +30,9 @@
         telephone: props.client.telephone,
         email: props.client.email,
         address: props.client.address,
-        ubigeo: props.client.ubigeo
+        ubigeo: props.client.ubigeo,
+        gender: props.client.gender,
+        birthdate: props.client.birthdate,
     });
 
     const editClient = () => {
@@ -59,7 +61,7 @@
             <span>Editar cliente, los campos con * son obligatorios. También puedes verificar si el cliente ya existe en </span>
 
             <a @click="openSwal2Search" href="javascript:;" class="text-primary font-semibold hover:underline group">
-                la base de datos 
+                la base de datos
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="ltr:ml-1 rtl:mr-1 inline-block relative transition-all duration-300 group-hover:translate-x-2 rtl:group-hover:-translate-x-2 rtl:rotate-180">
                     <path d="M4 12H20M20 12L14 6M20 12L14 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
@@ -109,6 +111,31 @@
                     autofocus
                 />
                 <InputError :message="form.errors.full_name" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="birthdate" value="Fecha de nacimiento *" />
+                <TextInput
+                    id="birthdate"
+                    v-model="form.birthdate"
+                    type="date"
+                    class="block w-full mt-1"
+
+                />
+                <InputError :message="form.errors.birthdate" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="gender" value="Genero *" />
+                <div class="space-x-4">
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
+                        <span>Masculino</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
+                        <span>Femenino</span>
+                    </label>
+                </div>
+                <InputError :message="form.errors.gender" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="email" value="Email *" />

@@ -2,6 +2,7 @@
 
 namespace Modules\Security\Http\Controllers;
 
+use App\Models\Modulo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -74,12 +75,62 @@ class RolesController extends Controller
 
     public function edit(Role $role)
     {
-        $permissions = Permission::all();
+        $permissions = Permission::leftJoin('model_has_permissions', 'model_has_permissions.permission_id', '=', 'permissions.id')
+            ->leftJoin('modulos', function ($join) {
+                $join->on('model_has_permissions.model_id', '=', 'modulos.identifier')
+                    ->where('model_has_permissions.model_type', '=', Modulo::class);
+            })
+            ->select(
+                'permissions.*',
+                'modulos.identifier as modulo_id',
+                'modulos.description as modulo_description'
+            )
+            ->orderByRaw('modulos.description IS NULL, modulos.description ASC')
+            ->get();
+
         $roleHasPermissions = array_column(json_decode($role->permissions, true), 'name');
 
+
+        // Agrupar permisos por módulo
+        $grouped = [];
+
+        foreach ($permissions as $permission) {
+            $key = $permission->modulo_id ?? 'Otros';
+
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'modulo_id' => $key,
+                    'modulo_description' => $permission->modulo_description ?? 'Otros permisos',
+                    'permissions' => [],
+                ];
+            }
+
+            $grouped[$key]['permissions'][] = [
+                'id' => $permission->id,
+                'name' => $permission->name,
+                'guard_name' => $permission->guard_name,
+                'created_at' => $permission->created_at,
+                'updated_at' => $permission->updated_at,
+            ];
+        }
+
+        // Reordenar dejando "Otros permisos" al final
+        $otros = $grouped['Otros'] ?? null; // <- Asegúrate de usar la misma clave
+        unset($grouped['Otros']);
+
+        $sorted = collect($grouped)
+            ->sortBy(fn($item) => strtolower($item['modulo_description']))
+            ->values()
+            ->toArray();
+
+        if ($otros) {
+            $sorted[] = $otros;
+        }
+        //dd($sorted);
         return Inertia::render('Security::Roles/Edit', [
             'role' => $role,
             'permissions' => $permissions,
+            'sorted' => $sorted,
             'roleHasPermissions' => $roleHasPermissions,
         ]);
     }

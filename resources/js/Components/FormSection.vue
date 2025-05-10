@@ -20,17 +20,15 @@
 
         <div class="mt-5 md:mt-0 md:col-span-2">
             <form @submit.prevent="$emit('submitted')">
-                <div
-                    class="px-4 py-5 bg-white sm:p-6 shadow dark:bg-gray-800"
-                    :class="hasActions ? 'sm:rounded-tl-md sm:rounded-tr-md' : 'sm:rounded-md'"
-                >
-                    <div class="grid grid-cols-6 gap-6 ">
-                        <slot name="form" />
+                <div class="panel p-0">
+                    <div class="p-6">
+                        <div class="grid grid-cols-6 gap-6 ">
+                            <slot name="form" />
+                        </div>
                     </div>
-                </div>
-
-                <div v-if="hasActions" class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md dark:bg-gray-900">
-                    <slot name="actions" />
+                    <div v-if="hasActions" class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md dark:bg-gray-800">
+                        <slot name="actions" />
+                    </div>
                 </div>
             </form>
         </div>

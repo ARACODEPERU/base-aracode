@@ -28,13 +28,13 @@ class ModuloController extends Controller
         $this->validate($request, [
             'description'   => 'required|max:255|min:4',
             'identifier'       => 'required|min:4|max:4|unique:modulos,identifier',
-            'icon'        => 'required'
+            //'icon'        => 'required'
         ]);
 
         Modulo::create([
             'identifier' => $request->get('identifier'),
             'description' => $request->get('description'),
-            'icon' => $request->get('icon'),
+            'icon' => $request->get('icon') ?? null,
             'status' => $request->get('status') ? true : false
         ]);
     }
