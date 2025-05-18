@@ -366,7 +366,8 @@ class AcaStudentController extends Controller
         $user = Auth::user();
         $student_id = AcaStudent::where('person_id', $user->person_id)->value('id');
         $courses = [];
-        //dd($student_id);
+        $mycourses = [];
+
         $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
             ->where('status', true)
             ->first();
@@ -384,43 +385,83 @@ class AcaStudentController extends Controller
                     return $course;
                 });
         } else {
-            $courses = AcaCourse::with(['modules.themes.contents', 'modality', 'category', 'teacher.person'])
-                ->with('registrations') // Para validar los cursos registrados
-                ->get()
-                ->map(function ($course) use ($studentSubscribed, $student_id) {
-                    // Verificar si el curso es gratuito
-                    $isFree = is_null($course->price) || floatval($course->price) == 0.00;
-                    $isProgram = $course->type_description == 'Programas de especialización' ? true : false;
-                    // Verificar si el alumno está registrado en este curso
-                    $isRegistered = $course->registrations->contains('student_id', $student_id);
+            // $courses = AcaCourse::with(['modules.themes.contents', 'modality', 'category', 'teacher.person'])
+            //     ->with('registrations') // Para validar los cursos registrados
+            //     ->get()
+            //     ->map(function ($course) use ($studentSubscribed, $student_id) {
+            //         // Verificar si el curso es gratuito
+            //         $isFree = is_null($course->price) || floatval($course->price) == 0.00;
+            //         $isProgram = $course->type_description == 'Programas de especialización' ? true : false;
+            //         // Verificar si el alumno está registrado en este curso
+            //         $isRegistered = $course->registrations->contains('student_id', $student_id);
 
-                    // Verificar si el alumno tiene una suscripción activa
-                    $hasActiveSubscription = $studentSubscribed !== null;
+            //         // Verificar si el alumno tiene una suscripción activa
+            //         $hasActiveSubscription = $studentSubscribed !== null;
 
-                    // Lógica para determinar si puede ver
-                    if ($hasActiveSubscription || $isRegistered || $isFree) {
-                        if ($isProgram) {
-                            if ($isRegistered) {
-                                $course->can_view = true;
-                            } else {
-                                $course->can_view = false;
-                            }
-                        } else {
-                            $course->can_view = true;
-                        }
-                    } else {
-                        $course->can_view = false; // Campo adicional
-                    }
+            //         // Lógica para determinar si puede ver
+            //         if ($hasActiveSubscription || $isRegistered || $isFree) {
+            //             if ($isProgram) {
+            //                 if ($isRegistered) {
+            //                     $course->can_view = true;
+            //                 } else {
+            //                     $course->can_view = false;
+            //                 }
+            //             } else {
+            //                 $course->can_view = true;
+            //             }
+            //         } else {
+            //             $course->can_view = false; // Campo adicional
+            //         }
 
-                    return $course;
-                });
+            //         return $course;
+            //     });
+
+            $mycourses = AcaCourse::with('modules.themes.contents')
+                ->with('modality')
+                ->with('teacher.person')->whereHas('registrations', function ($query) use ($student_id) {
+                    $query->where('student_id', $student_id);
+                })->orderBy('id', 'DESC')
+                ->get();
+
+            $result = AcaCourse::with(['modules.themes.contents', 'modality', 'teacher.person'])
+                ->whereDoesntHave('registrations', function ($query) use ($student_id) {
+                    $query->where('student_id', $student_id);
+                })
+                ->get();
+
+            // Agrupar cursos
+            $grouped = [];
+
+            foreach ($result as $course) {
+                if (empty($course->price) || $course->price == 0) {
+                    $grouped['Cursos gratis'][] = $course;
+                } else {
+                    $grouped[$course->type_description][] = $course;
+                }
+            }
+
+            // Ordenar alfabéticamente por clave del grupo
+            ksort($grouped);
+
+            // Transformar al formato deseado
+            $courses = collect($grouped)->map(function ($items, $type_description) {
+                return [
+                    'type_description' => $type_description,
+                    'courses' => $items,
+                ];
+            })->values(); // values() para que los índices sean numéricos
+            //dd($courses);
         }
 
         $certificates = AcaCertificate::with('course')
             ->where('student_id', $student_id)
             ->get();
 
+
+
+
         return Inertia::render('Academic::Students/Courses', [
+            'mycourses' => $mycourses,
             'courses' => $courses,
             'studentSubscribed' => $studentSubscribed,
             'certificates' => $certificates
@@ -429,9 +470,27 @@ class AcaStudentController extends Controller
 
     public function courseLessons($id)
     {
-        $course = AcaCourse::with([
-            'modules.themes.contents'
-        ])->where('id', $id)->first();
+
+        // Obtener el curso con relaciones
+        $course = AcaCourse::with(['modules.themes.contents'])->where('id', $id)->first();
+
+        // Verificar si existe el curso
+        if (!$course) {
+            abort(404, 'Curso no encontrado.');
+        }
+
+        // Verificar si el estudiante está matriculado
+        $isEnrolled = $course->registrations()
+            ->where('student_id', AcaStudent::where('person_id', Auth::user()->person_id)->value('id'))
+            ->exists();
+
+        // Verificar si el curso es gratuito
+        $isFree = $course->price == 0 || is_null($course->price);
+
+        // Denegar acceso si no está matriculado y el curso no es gratis
+        if (!$isEnrolled && !$isFree) {
+            abort(403, 'No tienes acceso a este curso.');
+        }
 
         $courseSummary = [
             'course' => $course->only(['id', 'description']), // o los campos que desees

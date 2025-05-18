@@ -122,7 +122,7 @@ const menuSales = [{
             {
                 route: route('sale_credit_notes_list'),
                 status: false,
-                text: 'Notas de credito',
+                text: 'Notas de credito & debito',
                 permissions: 'invo_nota_credito',
                 icom: faFileFragment,
             },

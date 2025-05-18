@@ -234,14 +234,16 @@ class MercadopagoController extends Controller
         \MercadoPago\MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
 
         $client = new \MercadoPago\Client\Payment\PaymentClient();
-
+        //dd($request->all());
         $products = $request->get('products');
+        $personInvoice = $request->get('personInvoice');
+
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
 
         $amount = (float) $request->get('transaction_amount');
 
         try {
-            $res = DB::transaction(function () use ($request, $client, $amount, $products, $student) {
+            $res = DB::transaction(function () use ($request, $client, $amount, $products, $student, $personInvoice) {
 
                 if ($request->get('payment_method_id') == 'yape') {
 
@@ -283,7 +285,12 @@ class MercadopagoController extends Controller
                     'total_discount' => 0,
                     'payments' => json_encode($payments),
                     'petty_cash_id' => null,
-                    'physical' => 1
+                    'physical' => 1,
+                    'invoice_razon_social' => $personInvoice ? $personInvoice['razonSocial'] : null,
+                    'invoice_ruc' => $personInvoice ? $personInvoice['ruc'] : null,
+                    'invoice_direccion' => null,
+                    'invoice_ubigeo' => null,
+                    'invoice_type' => $personInvoice ? $personInvoice['document_type'] : null
                 ]);
 
                 $sale = OnliSale::create([
@@ -317,33 +324,42 @@ class MercadopagoController extends Controller
                                             $price = number_format($xpro->price, 2, '.', '');
                                         }
                                     }
+                                } else {
+                                    $price = $xpro->price;
                                 }
 
+                                OnliSaleDetail::create([
+                                    'sale_id' => $sale->id,
+                                    'item_id' => $xpro->id,
+                                    'entitie' => AcaCourse::class,
+                                    'price' => $price,
+                                    'quantity' => 1
+                                ]);
+
+                                SaleProduct::create([
+                                    'sale_id' => $sale_note->id,
+                                    'product_id' => $xpro->id,
+                                    'product' => json_encode($xpro),
+                                    'saleProduct' => json_encode($product),
+                                    'price' => $price,
+                                    'discount' => 0,
+                                    'quantity' => 1,
+                                    'total' => round($price, 2),
+                                    'entity_name_product' => AcaCourse::class
+                                ]);
+
                                 if ($true) {
-
-                                    OnliSaleDetail::create([
-                                        'sale_id' => $sale->id,
-                                        'item_id' => $xpro->id,
-                                        'entitie' => AcaCourse::class,
-                                        'price' => $price,
-                                        'quantity' => 1
-                                    ]);
-
-                                    SaleProduct::create([
-                                        'sale_id' => $sale_note->id,
-                                        'product_id' => $xpro->id,
-                                        'product' => json_encode($xpro),
-                                        'saleProduct' => json_encode($product),
-                                        'price' => $price,
-                                        'discount' => 0,
-                                        'quantity' => 1,
-                                        'total' => round($price, 2),
-                                        'entity_name_product' => AcaCourse::class
-                                    ]);
-
                                     AcaCapRegistration::create([
                                         'student_id'    => $student->id,
                                         'course_id'     => $xpro->id,
+                                        'status'        => true,
+                                        'sale_note_id'   => $sale_note->id
+                                    ]);
+                                } else {
+                                    AcaCapRegistration::whereColumn([
+                                        ['student_id', '=', $student->id],
+                                        ['course_id', '=', $xpro->id],
+                                    ])->update([
                                         'status'        => true,
                                         'sale_note_id'   => $sale_note->id
                                     ]);

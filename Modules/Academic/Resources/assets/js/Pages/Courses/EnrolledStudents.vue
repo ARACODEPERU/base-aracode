@@ -12,6 +12,7 @@
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     import textWriting from '@/Components/loader/text-writing.vue';
     import * as XLSX from "xlsx";
+    import Pagination from "@/Components/Pagination.vue";
 
     const props = defineProps({
         course: {
@@ -37,7 +38,7 @@
     const scrollContainerInvoice = ref(null);
 
     onMounted(() => {
-        studentsData.value = props.students;
+        studentsData.value = props.students.data;
 
         window.socketIo.on(channelListenOnli, (status) => {
             importStatus.value.push(status);
@@ -385,9 +386,9 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="(row, index) in studentsData">
-                                            <td class="flex justify-center items-center">
+                                            <td>
                                                 <label class="inline-flex">
-                                                    <input v-model="row.checkbox" :id="'chxStudent'+index" type="checkbox" class="form-checkbox outline-primary" />
+                                                    <input v-model="row.checkbox" :id="'chxStudent'+index" type="checkbox" class="form-checkbox" />
                                                 </label>
                                             </td>
                                             <td>{{ row.student.person.full_name }}</td>
@@ -416,7 +417,7 @@
                                         </tr>
                                     </tbody>
                                 </table>
-
+                                <Pagination :data="students" />
                             </ConfigProvider>
                         </div>
                     </div>

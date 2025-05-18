@@ -37,6 +37,7 @@ class OnliSaleController extends Controller
 
         $sales = DB::table('onli_sales')
             ->join('people', 'onli_sales.person_id', '=', 'people.id')
+            ->leftJoin('sales', 'sales.id', 'onli_sales.nota_sale_id')
             ->select(
                 'onli_sales.*',
                 'people.telephone',
@@ -81,7 +82,8 @@ class OnliSaleController extends Controller
                     )
                     FROM onli_sale_details osd
                     WHERE osd.sale_id = onli_sales.id
-                ) AS details")
+                ) AS details"),
+                'sales.invoice_type'
             )
             ->when($inputs, function ($query) use ($search) {
                 $query->whereDate('created_at', '=', $search);
@@ -102,6 +104,7 @@ class OnliSaleController extends Controller
     public function shoppingCart($mo)
     {
         return Inertia::render('Onlineshop::Sales/ShoppingCart', [
+            'personInvoice' => Person::find(Auth::user()->person_id),
             'payTipe' => $mo
         ]);
     }
@@ -114,6 +117,7 @@ class OnliSaleController extends Controller
         $msg = null;
         $success = true;
         $preference_id = null;
+        $personInvoice = $request->get('person');
         $products = $request->get('items');
         $student_id = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
         $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
@@ -160,7 +164,8 @@ class OnliSaleController extends Controller
         }
 
         return Inertia::render('Onlineshop::Sales/MercadopagoForm', [
-            'preference_id' => $preference_id
+            'preference_id' => $preference_id,
+            'personInvoice' => $personInvoice
         ]);
     }
 

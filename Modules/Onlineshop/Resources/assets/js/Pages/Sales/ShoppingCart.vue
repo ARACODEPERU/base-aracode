@@ -2,11 +2,13 @@
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { ref, onMounted, computed, reactive, watch } from 'vue';
-    import { Link } from '@inertiajs/vue3';
-    import { loadMercadoPago } from "@mercadopago/sdk-js";
+    import { Link, useForm } from '@inertiajs/vue3';
     import { usePage, router } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
     import Swal from 'sweetalert2';
+    import iconXCircle from '@/Components/vristo/icon/icon-x-circle.vue';
+    import iconCircleCheck from '@/Components/vristo/icon/icon-circle-check.vue';
+
 
     const store = useAppStore();
 
@@ -15,20 +17,15 @@
             type: String,
             default: 'me'
         },
-        preference_id: {
-            type: String,
+        personInvoice: {
+            type: Object,
             default: null
-        },
-
+        }
     });
 
     const itemsCart = ref([]);
-    const cardPaymentBrickContainer = ref(null);
     const totalSale = ref(0);
     const totalQuantity = ref(0);
-    const page = usePage();
-
-    const publicKey = ref(page.props.MERCADOPAGO_KEY);
 
     onMounted(() => {
         if(localStorage.getItem("shoppingCart")){
@@ -62,11 +59,67 @@
     const pageFormMercadoPago = () => {
         router.visit(route('onlineshop_sales_formmercadopago'), {
             method: 'post',
-            data: {items: itemsCart.value},
+            data: {
+                items: itemsCart.value,
+                person: formPerInvoice.value
+            },
             replace: true,
         });
     }
 
+    const formPerInvoice = ref({
+        document_type: props.personInvoice.document_type_id == 6 ? 1 : 2,
+        dni: props.personInvoice.number,
+        ruc: props.personInvoice.document_type_id == 6 ? props.personInvoice.number : null,
+        nombreCompleto: props.personInvoice.full_name,
+        razonSocial: props.personInvoice.document_type_id == 6 ? props.personInvoice.full_name : null,
+        email: props.personInvoice.email,
+        statusRuc: null,
+        conditionRuc: null
+    });
+
+    const apiesLoading = ref(false);
+    const activeBtnPaymer = ref(false);
+    const searchApispe = () => {
+        apiesLoading.value = true;
+        axios.post(route('sales_search_person_apies'), {
+            document_type: 6,
+            number: formPerInvoice.value.ruc
+        }).then((res) => {
+            console.log(res.data)
+            if(res.data.success){
+                formPerInvoice.value.razonSocial =  res.data.person.razonSocial;
+                formPerInvoice.value.statusRuc = res.data.person.estado;
+                formPerInvoice.value.conditionRuc = res.data.person.condicion;
+                if(formPerInvoice.value.statusRuc == 'ACTIVO' && formPerInvoice.value.conditionRuc == 'HABIDO'){
+                    activeBtnPaymer.value = false;
+                }
+            }else{
+                console.log(res.data)
+                Swal.fire({
+                    icon: 'error',
+                    text: res.data.error,
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                })
+            }
+        }).finally(()=> {
+            apiesLoading.value = false;
+        });
+    }
+
+    watch(() => {
+        if(formPerInvoice.value.document_type == 1){
+            activeBtnPaymer.value = true;
+        }else{
+            formPerInvoice.value.ruc = null;
+            formPerInvoice.value.razonSocial = null;
+            formPerInvoice.value.email = props.personInvoice.email;
+            formPerInvoice.value.statusRuc = null;
+            formPerInvoice.value.conditionRuc = null;
+            activeBtnPaymer.value = false;
+        }
+    });
 </script>
 <template>
     <AppLayout title="Resumen">
@@ -156,6 +209,98 @@
                             </div>
                         </div>
                     </div>
+                    <!-- horizontal form label sizing -->
+                    <div class="mt-6 panel">
+                        <!-- simple pills -->
+                        <div class="sm:grid sm:grid-cols-2 gap-6 w-full mb-6">
+                            <div class="flex items-center ps-4 border border-gray-200 rounded-sm dark:border-gray-700">
+                                <label class="inline-flex py-4 ms-2">
+                                    <input v-model="formPerInvoice.document_type" type="radio" :value="2" name="square_radio" class="form-radio rounded-none" />
+                                    <span>Boleta electrónica</span>
+                                </label>
+                            </div>
+                            <div class="flex items-center ps-4 border border-gray-200 rounded-sm dark:border-gray-700">
+                                <label class="inline-flex py-4 ms-2">
+                                    <input v-model="formPerInvoice.document_type" type="radio" :value="1" name="square_radio" class="form-radio rounded-none" />
+                                    <span>Factura electrónica</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div v-if="formPerInvoice.document_type == 2">
+                            <h4 class="font-semibold text-2xl mb-4">Datos para la boleta</h4>
+                            <form class="space-y-5" id="boleta">
+                                <div class="grid grid-cols-6 gap-4">
+                                    <label for="dni" class="sm:col-span-2">DNI</label>
+                                    <input v-model="formPerInvoice.dni" id="dni" type="text"  class="form-input sm:col-span-4" />
+                                </div>
+                                <div class="grid grid-cols-6 gap-4">
+                                    <label for="nombrecompleto" class="sm:col-span-2">Nombre Completo</label>
+                                    <input v-model="formPerInvoice.nombreCompleto" id="nombrecompleto" type="text" class="form-input sm:col-span-4" />
+                                </div>
+                                <div class="grid grid-cols-6 gap-4">
+                                    <label for="email" class="sm:col-span-2">Email</label>
+                                    <input v-model="formPerInvoice.email" id="email" type="email" class="form-input sm:col-span-4" />
+                                </div>
+                            </form>
+                        </div>
+                        <div v-if="formPerInvoice.document_type == 1">
+                            <h4 class="font-semibold text-2xl mb-4">Datos para la factura</h4>
+                            <form class="space-y-5" id="boleta">
+                                <div class="grid grid-cols-6 gap-4 items-center">
+                                    <label for="dni" class="sm:col-span-2">RUC</label>
+                                    <div class="col-span-4">
+                                        <div class="flex">
+                                            <input v-model="formPerInvoice.ruc" id="addonsRight" type="text" placeholder="" class="form-input ltr:rounded-r-none rtl:rounded-l-none" />
+                                            <button
+                                                @click="searchApispe"
+                                                type="button"
+                                                class="btn btn-warning ltr:rounded-l-none rtl:rounded-r-none"
+                                                :class="{ 'opacity-25': apiesLoading }" :disabled="apiesLoading"
+                                            >
+                                                <svg v-show="apiesLoading" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                                                </svg>
+                                                Buscar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-6 gap-4 items-center">
+                                    <label for="nombrecompleto" class="sm:col-span-2">Razón social</label>
+                                    <input v-model="formPerInvoice.razonSocial" id="nombrecompleto" type="text" class="form-input sm:col-span-4" />
+                                </div>
+                                <div class="grid grid-cols-6 gap-4 items-center">
+                                    <label for="email" class="sm:col-span-2">Email</label>
+                                    <input v-model="formPerInvoice.email" id="email" type="email" class="form-input sm:col-span-4" />
+                                </div>
+                                <div class="grid grid-cols-6 gap-4 items-center">
+                                    <label for="email" class="sm:col-span-2">Estado</label>
+                                    <div class="flex sm:col-span-4 gap-4">
+                                        <span v-if="formPerInvoice.statusRuc" class="badge py-1 my-4 flex justify-between items-center text-xs"
+                                            :class="formPerInvoice.statusRuc === 'ACTIVO' ? 'bg-success' : 'bg-danger'"
+                                        >
+                                            <span class="ltr:ml-2 rtl:mr-2">{{ formPerInvoice.statusRuc }}</span>
+                                            <span class="ltr:ml-4 rtl:mr-4 cursor-pointer hover:opacity-90">
+                                                <icon-circle-check v-if="formPerInvoice.conditionRuc === 'ACTIVO'" class="w-4 h-4" />
+                                                <icon-x-circle v-else class="w-4 h-4" />
+                                            </span>
+                                        </span>
+                                        <span v-if="formPerInvoice.conditionRuc" class="badge py-1 my-4 flex justify-between items-center text-xs"
+                                            :class="formPerInvoice.conditionRuc === 'HABIDO' ? 'bg-success' : 'bg-danger'"
+                                        >
+                                            <span class="ltr:ml-2 rtl:mr-2">{{ formPerInvoice.conditionRuc }}</span>
+                                            <span class="ltr:ml-2 rtl:mr-2 cursor-pointer hover:opacity-90">
+                                                <icon-circle-check v-if="formPerInvoice.conditionRuc === 'HABIDO'" class="w-4 h-4" />
+                                                <icon-x-circle v-else class="w-4 h-4" />
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
                 </div>
                 <div class="col-span-6 sm:col-span-2">
                     <div class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
@@ -190,7 +335,9 @@
                             </dl>
                         </div>
 
-                        <button @click="pageFormMercadoPago" class="flex w-full items-center justify-between rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        <button
+                            :class="{ 'opacity-25': activeBtnPaymer }" :disabled="activeBtnPaymer"
+                            @click="pageFormMercadoPago" class="flex w-full items-center justify-between rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                             <svg class="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
                                 <path d="M512 80c8.8 0 16 7.2 16 16l0 32L48 128l0-32c0-8.8 7.2-16 16-16l448 0zm16 144l0 192c0 8.8-7.2 16-16 16L64 432c-8.8 0-16-7.2-16-16l0-192 480 0zM64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zm56 304c-13.3 0-24 10.7-24 24s10.7 24 24 24l48 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-48 0zm128 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l112 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-112 0z"/>
                             </svg>

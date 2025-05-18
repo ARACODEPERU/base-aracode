@@ -7,6 +7,7 @@
     //import swal from "sweetalert";
     import * as XLSX from 'xlsx/dist/xlsx.full.min';
     //import jsPDF from 'jspdf';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
     const props = defineProps({
         subscribers: {
@@ -37,10 +38,10 @@
         {width:25}, // Columna "C" Correos
         { width: 15 }, // Columna "D" Teléfonos
         {width: 40}, //Mensajes
-        {width:9}, // Columna "F" 
-        {width:9}, // Columna "G" 
-        {width:9}, // Columna "H" 
-        {width:9}, // Columna "I" 
+        {width:9}, // Columna "F"
+        {width:9}, // Columna "G"
+        {width:9}, // Columna "H"
+        {width:9}, // Columna "I"
     ];
 
     XLSX.utils.book_append_sheet(workbook, worksheet, form.start+'-'+form.end);
@@ -51,6 +52,11 @@
 
 <template>
     <AppLayout title="Blog Suscriptores">
+        <Navigation :routeModule="route('cms_dashboard')" :titleModule="'CMS'">
+            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                <span>Suscriptores</span>
+            </li>
+        </Navigation>
         <div>
             <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
                 <div class="col-span-6 p-4 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
@@ -66,7 +72,7 @@
                         </form>
                         <div class="text-right">
                             <Keypad>
-                                <template #botones>     
+                                <template #botones>
                                     <button v-on:click="downloadExcel()"
                                     class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
                                      >Exportar en Excel
@@ -138,7 +144,7 @@
                                         <a ref="" class="mr-1 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                             <font-awesome-icon :icon="faPencilAlt" />
                                         </a>
-                                     
+
                                     </td> -->
                                     <td class="border px-6 py-4">
                                         {{ formatDateTime(subscriber.created_at) }}

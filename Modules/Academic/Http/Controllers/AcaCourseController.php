@@ -322,12 +322,12 @@ class AcaCourseController extends Controller
     {
         $course = AcaCourse::find($id);
 
-        $students = AcaCapRegistration::with('student.person')
-            ->with('document')
+        $students = AcaCapRegistration::with(['student.person', 'document'])
             ->where('course_id', $id)
-            ->get()
-            ->map(function ($student) {
+            ->paginate(20) // Puedes ajustar el número de resultados por página
+            ->through(function ($student) {
                 $student->checkbox = false;
+                $student->email_send = $student->document_id && $student->sale_note_id ? true : false;
                 return $student;
             });
 

@@ -14,6 +14,10 @@
         preference_id: {
             type: String,
             default: null
+        },
+        personInvoice: {
+            type: Array,
+            default: {}
         }
     });
 
@@ -87,6 +91,7 @@
                 },
                 onSubmit: (cardFormData) => {
                     cardFormData.products = itemsCart.value;
+                    cardFormData.personInvoice = props.personInvoice
                     return axios({
                             method: 'POST',
                             url: route("academic_processpayment_courses_mercadopago"),

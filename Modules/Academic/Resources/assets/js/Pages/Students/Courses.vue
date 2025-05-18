@@ -6,6 +6,7 @@
     import { useAppStore } from '@/stores/index';
     import Swal from "sweetalert2";
     import shortVideos from "../../Components/shortVideos.vue";
+    import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 
     const page = usePage();
     const store = useAppStore();
@@ -22,6 +23,14 @@
             default: () => ({}),
         },
         studentSubscribed: {
+            type: Object,
+            default: () => ({}),
+        },
+        mycourses: {
+            type: Object,
+            default: () => ({}),
+        },
+        courseTypes: {
             type: Object,
             default: () => ({}),
         }
@@ -111,13 +120,114 @@
                 <a href="javascript:;" class="text-primary hover:underline">Académico</a>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Mis cursos</span>
+                <span>Cursos Disponibles</span>
             </li>
         </ul>
         <div class="pt-5">
             <div class="grid gap-6 grid-cols-6">
                 <section class="col-span-6 sm:col-span-4">
-                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- justify pills -->
+                    <TabGroup as="div" class="mb-5 ">
+                        <TabList class="flex flex-wrap justify-between mt-3 space-x-2 rtl:space-x-reverse text-center">
+                            <Tab as="template" v-slot="{ selected }">
+                                <a
+                                    href="javascript:;"
+                                    class="btn btn-outline-info"
+                                    :class="{ 'bg-info text-white': selected }"
+                                >
+                                    Mis cursos
+                                </a>
+                            </Tab>
+                            <template v-for="ttype in courses">
+                                <Tab as="template" v-slot="{ selected }">
+                                    <a
+                                        href="javascript:;"
+                                        class="btn btn-outline-info"
+                                        :class="{ 'bg-info text-white': selected }"
+                                    >
+                                        {{ ttype.type_description }}
+                                    </a>
+                                </Tab>
+                            </template>
+                        </TabList>
+                        <TabPanels class="pt-5 flex-1 text-sm">
+                            <TabPanel>
+                                <div class="grid grid-cols-3 gap-4 mt-6">
+                                    <!-- From Uiverse.io by 00Kubi -->
+                                    <template v-for="(course, key) in mycourses">
+                                        <Link :href="route('aca_mycourses_lessons', course.id)"
+                                        class="panel p-0 rounded-xl duration-500 relative hover:-translate-y-2 hover:shadow-xl flex flex-col h-full">
+
+                                            <img class="w-full h-auto rounded-t-xl" :src="getImage(course.image)" alt="Card Image">
+
+
+                                            <div class="p-4 md:p-5 flex-1">
+                                                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                                                {{ course.modality.description }}
+                                                </h3>
+                                                <p class="mt-1 text-gray-500 dark:text-neutral-400">
+                                                {{ course.description }}
+                                                </p>
+                                            </div>
+
+                                            <!-- <div class="bg-yellow-100 border-t border-gray-200 py-3 px-4 md:py-4 md:px-5 dark:bg-neutral-900 dark:border-neutral-700">
+                                                Sector: {{ course.sector_description }}
+                                            </div>
+                                            <div class="bg-gray-100 border-t border-gray-200 rounded-b-xl py-3 px-4 md:py-4 md:px-5 dark:bg-neutral-900 dark:border-neutral-700">
+                                                Tipo: {{ course.type_description }}
+                                            </div> -->
+                                        </Link>
+                                    </template>
+                                </div>
+                            </TabPanel>
+                            <template v-for="item in courses">
+                                <TabPanel>
+                                    <div class="grid grid-cols-3 gap-4 mt-6">
+                                        <template v-for="(course, index) in item.courses">
+                                            <div v-if="course.price && course.price > 0" class="panel p-0 rounded-xl duration-500 relative hover:-translate-y-2 hover:shadow-xl flex flex-col h-full">
+                                                <img class="w-full h-auto rounded-t-xl" :src="getImage(course.image)" alt="Card Image">
+                                                <div class="p-4 md:p-5 flex-1">
+                                                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                                                    {{ course.modality.description }}
+                                                    </h3>
+                                                    <p class="mt-1 text-gray-500 dark:text-neutral-400">
+                                                    {{ course.description }}
+                                                    </p>
+                                                </div>
+
+                                                <div class="rounded-b-xl py-3 px-4 md:py-4 md:px-5 dark:bg-neutral-900 dark:border-neutral-700">
+                                                    <button v-on:click="addBuyCourse(course)" type="button" class="btn btn-success w-full">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 mr-2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                                                        </svg>
+                                                        Comprar curso
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <Link v-else :href="route('aca_mycourses_lessons',course.id)" class="panel p-0 cursor-pointer rounded-xl duration-500 relative hover:-translate-y-2 hover:shadow-xl flex flex-col h-full">
+                                                <img class="w-full h-auto rounded-t-xl" :src="getImage(course.image)" alt="Card Image">
+                                                <div class="p-4 md:p-5 flex-1">
+                                                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                                                    {{ course.modality.description }}
+                                                    </h3>
+                                                    <p class="mt-1 text-gray-500 dark:text-neutral-400">
+                                                    {{ course.description }}
+                                                    </p>
+                                                </div>
+                                                <!-- <div class="bg-yellow-100 border-t border-gray-200 py-3 px-4 md:py-4 md:px-5 dark:bg-neutral-900 dark:border-neutral-700">
+                                                    Sector: {{ course.sector_description }}
+                                                </div>
+                                                <div class="bg-gray-100 border-t border-gray-200 rounded-b-xl py-3 px-4 md:py-4 md:px-5 dark:bg-neutral-900 dark:border-neutral-700">
+                                                    Tipo: {{ course.type_description }}
+                                                </div> -->
+                                            </Link>
+                                        </template>
+                                    </div>
+                                </TabPanel>
+                            </template>
+                        </TabPanels>
+                    </TabGroup>
+                    <!-- <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <template v-for="(course, index) in courses">
                             <article class="rounded-xl bg-white p-3 shadow-lg hover:shadow-xl hover:transform hover:scale-105 duration-300 dark:bg-gray-900">
                                 <template v-if="course.can_view">
@@ -147,7 +257,7 @@
                                             <template v-if="course.discount && course.discount > 0">
                                                 <template v-if="course.discount_applies == '01'">
                                                     <p class="price-new">
-                                                        S./ {{ (course.price - (course.price * course.discount / 100)).toFixed(2) }} <!-- Precio con descuento -->
+                                                        S./ {{ (course.price - (course.price * course.discount / 100)).toFixed(2) }}
                                                     </p>
                                                     <p class="price-old line-through">S./ {{ course.price }}</p>
                                                     <span class="badge absolute ltr:right-2 rtl:left-0 -top-4 bg-danger p-0.5 px-1.5 rounded-full">
@@ -157,7 +267,7 @@
                                                 <template v-else-if="course.discount_applies == '02'">
                                                     <template v-if="studentSubscribed && studentSubscribed.status == 1">
                                                         <p class="price-new">
-                                                            S./ {{ (course.price - (course.price * course.discount / 100)).toFixed(2) }} <!-- Precio con descuento -->
+                                                            S./ {{ (course.price - (course.price * course.discount / 100)).toFixed(2) }}
                                                         </p>
                                                         <p class="price-old line-through">S./ {{ course.price }}</p>
                                                         <span class="badge absolute ltr:right-2 rtl:left-0 -top-4 bg-danger p-0.5 px-1.5 rounded-full">
@@ -184,7 +294,7 @@
                                 </template>
                             </article>
                         </template>
-                    </div>
+                    </div> -->
                 </section>
                 <section class="col-span-6 sm:col-span-2 rounded-md">
                     <shortVideos />
@@ -214,4 +324,5 @@
     font-size: 0.9rem;
     font-weight: 400;
 }
+
 </style>

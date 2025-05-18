@@ -66,8 +66,27 @@ class AcaSaleDocumentController extends Controller
                 $saleId = $venta['nota_sale_id'];
 
                 $sale = Sale::find($saleId);
-
                 $person = Person::find($sale->client_id);
+
+                if ($sale->invoice_type == 1) {
+                    $dtype =  $sale->invoice_type;
+
+                    $client_type_doc = 6;
+                    $client_number = $sale->invoice_ruc;
+                    $client_rzn_social  = $sale->invoice_razon_social;
+                    $client_address = $sale->invoice_direccion;
+                    $client_ubigeo_code = $sale->invoice_ubigeo;
+                    $client_ubigeo_description = $sale->invoice_ruc;
+                } else {
+                    $client_type_doc = $person->document_type_id;
+                    $client_number = $person->number;
+                    $client_rzn_social  = $person->full_name;
+                    $client_address = $person->address;
+                    $client_ubigeo_code = $person->ubigeo ?? null;
+                    $client_ubigeo_description = $person->ubigeo_description ?? null;
+                }
+
+
                 $student = AcaStudent::where('person_id', $person->id)->first();
                 ///obtenemos la serie elejida para hacer la venta
                 ///para traer tambien su numero correlativo
@@ -87,18 +106,20 @@ class AcaSaleDocumentController extends Controller
                 ///se convierte el total de la venta a letras
                 $numberletters = new NumberLetter();
                 $tido = SaleDocumentType::find($dtype);
+
                 ///creamos el documento de la venta para enviar a sunat
+
                 $document = SaleDocument::create([
                     'sale_id'                       => $sale->id,
                     'serie_id'                      => $serieid,
                     'number'                        => str_pad($serie->number, 9, '0', STR_PAD_LEFT),
                     'status'                        => true,
-                    'client_type_doc'               => $person->document_type_id,
-                    'client_number'                 => $person->number,
-                    'client_rzn_social'             => $person->full_name,
-                    'client_address'                => $person->address,
-                    'client_ubigeo_code'            => $person->ubigeo ?? null,
-                    'client_ubigeo_description'     => $person->ubigeo_description ?? null,
+                    'client_type_doc'               => $client_type_doc,
+                    'client_number'                 => $client_number,
+                    'client_rzn_social'             => $client_rzn_social,
+                    'client_address'                => $client_address,
+                    'client_ubigeo_code'            => $client_ubigeo_code,
+                    'client_ubigeo_description'     => $client_ubigeo_description,
                     'client_phone'                  => $person->telephone,
                     'client_email'                  => $person->email,
                     'invoice_ubl_version'           => $this->ubl,

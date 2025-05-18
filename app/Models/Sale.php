@@ -23,7 +23,12 @@ class Sale extends Model
         'petty_cash_id',
         'status',
         'sale_date',
-        'physical'
+        'physical',
+        'invoice_razon_social',
+        'invoice_ruc',
+        'invoice_direccion',
+        'invoice_ubigeo',
+        'invoice_type'
     ];
 
     public function saleProduct(): HasMany

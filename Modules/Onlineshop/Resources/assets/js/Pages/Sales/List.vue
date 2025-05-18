@@ -212,7 +212,7 @@
                                             <svg class="w-4 h-4 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
                                                 <path d="M128 0C110.3 0 96 14.3 96 32l0 192 96 0 0-32c0-35.3 28.7-64 64-64l224 0 0-96c0-17.7-14.3-32-32-32L128 0zM256 160c-17.7 0-32 14.3-32 32l0 32 96 0c35.3 0 64 28.7 64 64l0 128 192 0c17.7 0 32-14.3 32-32l0-192c0-17.7-14.3-32-32-32l-320 0zm240 64l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM64 256c-17.7 0-32 14.3-32 32l0 13L187.1 415.9c1.4 1 3.1 1.6 4.9 1.6s3.5-.6 4.9-1.6L352 301l0-13c0-17.7-14.3-32-32-32L64 256zm288 84.8L216 441.6c-6.9 5.1-15.3 7.9-24 7.9s-17-2.8-24-7.9L32 340.8 32 480c0 17.7 14.3 32 32 32l256 0c17.7 0 32-14.3 32-32l0-139.2z"/>
                                             </svg>
-                                            Enviar correos
+                                            Crear Comprobante Electrónico y Enviar correos
                                         </button>
                                     </template>
                                 </Keypad>
@@ -242,7 +242,7 @@
                                         Fecha
                                     </th>
                                     <th class=" ">
-                                        Boleta Electronica
+                                        Comprobante Electrónico
                                         <label class="w-12 h-6 relative">
                                             <input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="ventas_all absolute w-full h-full opacity-0 z-10 cursor-pointer peer" id="custom_switch_all" />
                                             <span for="ventas_all" class="outline_checkbox bg-icon border-2 border-[#bcc8e0] dark:border-white-dark block h-full rounded-full before:absolute before:left-1 before:bg-[#ebedf2] dark:before:bg-white-dark before:bottom-1 before:w-4 before:h-4 before:rounded-full before:bg-[url(/themes/vristo/images/close.svg)] before:bg-no-repeat before:bg-center peer-checked:before:left-7 peer-checked:before:bg-[url(/themes/vristo/images/checked.svg)] peer-checked:border-primary peer-checked:before:bg-primary before:transition-all before:duration-300"></span>
@@ -289,7 +289,14 @@
                                                         class="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" :id="`venta${index}`" />
                                                     <span :for="`venta${index}`" class="outline_checkbox bg-icon border-2 border-[#bcc8e0] dark:border-white-dark block h-full rounded-full before:absolute before:left-1 before:bg-[#ebedf2] dark:before:bg-white-dark before:bottom-1 before:w-4 before:h-4 before:rounded-full before:bg-[url(/themes/vristo/images/close.svg)] before:bg-no-repeat before:bg-center peer-checked:before:left-7 peer-checked:before:bg-[url(/themes/vristo/images/checked.svg)] peer-checked:border-primary peer-checked:before:bg-primary before:transition-all before:duration-300"></span>
                                                 </label>
-                                                <span v-else class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Boleta enviada</span>
+                                                <span v-else class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">
+                                                    <template v-if="item.invoice_type == 1">
+                                                        Factura enviada
+                                                    </template>
+                                                    <template v-if="item.invoice_type == 2">
+                                                        Boleta enviada
+                                                    </template>
+                                                </span>
                                             </template>
                                             <template v-else>
                                                 <div class="flex items-center justify-center">
@@ -297,6 +304,12 @@
                                                         <path d="M367.2 412.5L99.5 144.8C77.1 176.1 64 214.5 64 256c0 106 86 192 192 192c41.5 0 79.9-13.1 111.2-35.5zm45.3-45.3C434.9 335.9 448 297.5 448 256c0-106-86-192-192-192c-41.5 0-79.9 13.1-111.2 35.5L412.5 367.2zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256z"/>
                                                     </svg>
                                                 </div>
+                                            </template>
+                                            <template v-if="!item.email_sent && item.invoice_type == 1">
+                                                <span class="max-w-40 truncate whitespace-nowrap inline-block py-1 px-2 rounded-lg text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-500">Factura pendiente</span>
+                                            </template>
+                                            <template v-if="!item.email_sent && item.invoice_type == 2">
+                                                <span class="max-w-40 truncate whitespace-nowrap inline-block py-1 px-2 rounded-lg text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-500">Boleta pendiente</span>
                                             </template>
                                         </td>
                                         <td class="text-center">
