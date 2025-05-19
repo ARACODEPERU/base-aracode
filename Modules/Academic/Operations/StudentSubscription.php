@@ -33,6 +33,7 @@ class StudentSubscription
         ///se registra la venta en linea
         ///en la tabla onli_sale
 
+        $personInvoice = $response['personInvoice'];
 
         $dateStart = Carbon::today(); // Solo fecha sin hora
         $dateEnd = null;
@@ -117,38 +118,37 @@ class StudentSubscription
 
             if ($stsubscription) {
                 // Actualizar el registro existente
-                $stsubscription->update(
-                    [
-                        'student_id' => $student->id,
-                        'subscription_id' => $this->subscription_id,
-                        'date_start' => $dateStart,
-                        'date_end' => $dateEnd,
+                //dd($amount);
+                AcaStudentSubscription::where('student_id', $student->id)
+                    ->where('subscription_id', $this->subscription_id)
+                    ->update([
+                        'date_start' => $dateStart->toDateString(), // "Y-m-d"
+                        'date_end' => $dateEnd ? $dateEnd->toDateString() : null,
                         'status' => true,
                         'notes' => null,
                         'renewals' => true,
                         'registration_user_id' => Auth::id(),
                         'onli_sale_id' => $sale->id,
-                        'amount_paid' => $amount
-                    ]
-                );
+                        'amount_paid' => floatval($amount)
+                    ]);
             } else {
                 AcaStudentSubscription::create(
                     [
                         'student_id' => $student->id,
                         'subscription_id' => $this->subscription_id,
-                        'date_start' => $dateStart,
-                        'date_end' => $dateEnd,
+                        'date_start' => $dateStart->toDateString(), // "Y-m-d"
+                        'date_end' => $dateEnd ? $dateEnd->toDateString() : null,
                         'status' => true,
                         'notes' => null,
                         'renewals' => 0,
                         'registration_user_id' => Auth::id(),
                         'onli_sale_id' => $sale->id,
-                        'amount_paid' => $amount
+                        'amount_paid' => floatval($amount)
                     ]
                 );
             }
 
-            $payments = [array("type" => 6, "reference" => null, "amount" => $amount)];
+            $payments = [array("type" => 6, "reference" => null, "amount" => floatval($amount))];
 
             $sale_note = Sale::create([
                 'sale_date' => Carbon::now()->format('Y-m-d'),
@@ -160,7 +160,12 @@ class StudentSubscription
                 'total_discount' => 0,
                 'payments' => json_encode($payments),
                 'petty_cash_id' => null,
-                'physical' => 1
+                'physical' => 1,
+                'invoice_razon_social' => $personInvoice ? $personInvoice['razonSocial'] : null,
+                'invoice_ruc' => $personInvoice ? $personInvoice['ruc'] : null,
+                'invoice_direccion' => null,
+                'invoice_ubigeo' => null,
+                'invoice_type' => $personInvoice ? $personInvoice['document_type'] : null
             ]);
 
             $sale->nota_sale_id = $sale_note->id;

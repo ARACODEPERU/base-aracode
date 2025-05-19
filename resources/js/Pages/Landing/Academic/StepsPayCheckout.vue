@@ -19,6 +19,10 @@ const props = defineProps({
     samount: {
         type: Number,
         default: null,
+    },
+    personInvoice:{
+        type: Array,
+        default: {},
     }
 });
 
@@ -30,7 +34,8 @@ const props = defineProps({
         <div class="max-w-2xl mx-auto text-center">
             <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">Formulario de pago</h2>
             <p class="mt-1 text-gray-600 dark:text-neutral-400">pago seguro.</p>
-            <p class="mt-1 text-gray-600 dark:text-neutral-400">TOTAL A PAGAR: {{ samount }}</p>
+            <p class="mt-1 text-gray-600 dark:text-neutral-400">TOTAL A PAGAR</p>
+            <div class="my-7 p-2.5 text-center text-lg group-hover:text-primary"><strong class="text-[#3b3f5c] dark:text-white-dark text-3xl lg:text-5xl group-hover:text-primary">S/ {{ samount }}</strong> / {{ subscription.period }} </div>
         </div>
         <!-- End Title -->
         <div class="flex flex-wrap justify-center gap-6">
@@ -74,6 +79,7 @@ const props = defineProps({
                         :publicKey="publicKey"
                         :subscription="subscription"
                         :samount="samount"
+                        :personInvoice="personInvoice"
                     />
                 </div>
                 <!-- finstep uno -->

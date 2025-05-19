@@ -21,6 +21,10 @@ const props = defineProps({
     samount: {
         type: Number,
         default: null,
+    },
+    personInvoice:{
+        type: Array,
+        default: {},
     }
 });
 
@@ -62,6 +66,7 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                 console.log("Brick está listo");
             },
             onSubmit: (cardFormData) => {
+                cardFormData.personInvoice = props.personInvoice
                 return axios({
                         method: 'PUT',
                         url: route("aca_mercadopago_processpayment", props.subscription.id),
@@ -78,11 +83,15 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                             });
                         } else {
                             alert(data.message);
-                            window.location.reload();
+                            router.visit(route('academic_step_verification',props.subscription.id), {
+                                method: 'get',
+                            });
                         }
                     }).catch((error) => {
                         alert(error.message || "Error al procesar el pago.");
-                        window.location.reload();
+                        router.visit(route('academic_step_verification',props.subscription.id), {
+                            method: 'get',
+                        });
                     });
             },
             onError: (error) => {

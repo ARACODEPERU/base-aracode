@@ -91,9 +91,11 @@ class AcaAuthController extends Controller
 
     public function userVerification($id)
     {
+        $personInvoice = Person::find(Auth::user()->person_id);
 
         return Inertia::render('Landing/Academic/StepsPayVerification', [
-            'subscription' => AcaSubscriptionType::find($id)
+            'subscription' => AcaSubscriptionType::find($id),
+            'personInvoice' => $personInvoice
         ]);
     }
 }

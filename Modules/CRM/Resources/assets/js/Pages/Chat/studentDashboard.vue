@@ -108,7 +108,7 @@
     <AppLayout title="Contactos">
         <Navigation>
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Mensaje de solicitud de inteligencia artificial</span>
+                <span>Asesorias</span>
             </li>
         </Navigation>
         <div class="mt-5 panel">
@@ -161,10 +161,10 @@
                         </a>
 
                         <h1 class="text-3xl font-bold text-gray-800 sm:text-4xl dark:text-white">
-                            Bienvenido a {{ company.name }} AI
+                            Bienvenido a {{ company.name }}
                         </h1>
                         <p class="mt-3 text-gray-600 dark:text-neutral-400">
-                            Tu docente impulsado por IA para la web
+                            Consulta con nuestros docentes expertos.
                         </p>
                     </div>
                     <!-- End Title -->

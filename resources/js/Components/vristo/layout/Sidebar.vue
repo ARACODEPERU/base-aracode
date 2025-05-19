@@ -105,7 +105,7 @@
 
             menuChatAI.value = {
                 status: false,
-                text: "Chat",
+                text: "Asesorias",
                 icom: faUserGroup,
                 route: null,
                 permissions: "crm_clientes_preguntas_ia",

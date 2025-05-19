@@ -80,13 +80,13 @@
 
     const apiesLoading = ref(false);
     const activeBtnPaymer = ref(false);
+
     const searchApispe = () => {
         apiesLoading.value = true;
         axios.post(route('sales_search_person_apies'), {
             document_type: 6,
             number: formPerInvoice.value.ruc
         }).then((res) => {
-            console.log(res.data)
             if(res.data.success){
                 formPerInvoice.value.razonSocial =  res.data.person.razonSocial;
                 formPerInvoice.value.statusRuc = res.data.person.estado;
@@ -95,7 +95,6 @@
                     activeBtnPaymer.value = false;
                 }
             }else{
-                console.log(res.data)
                 Swal.fire({
                     icon: 'error',
                     text: res.data.error,
@@ -282,7 +281,7 @@
                                         >
                                             <span class="ltr:ml-2 rtl:mr-2">{{ formPerInvoice.statusRuc }}</span>
                                             <span class="ltr:ml-4 rtl:mr-4 cursor-pointer hover:opacity-90">
-                                                <icon-circle-check v-if="formPerInvoice.conditionRuc === 'ACTIVO'" class="w-4 h-4" />
+                                                <icon-circle-check v-if="formPerInvoice.statusRuc === 'ACTIVO'" class="w-4 h-4" />
                                                 <icon-x-circle v-else class="w-4 h-4" />
                                             </span>
                                         </span>

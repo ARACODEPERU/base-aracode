@@ -333,7 +333,7 @@ Route::put('create/payment/{id}/create', [AcaAuthController::class, 'create'])
 Route::middleware(['auth'])->get('create/payment/{id}/Verification', [AcaAuthController::class, 'userVerification'])
     ->name('academic_step_verification');
 
-Route::middleware(['auth'])->get('create/payment/{id}/pay', [MercadopagoController::class, 'formPay'])
+Route::middleware(['auth'])->put('create/payment/{id}/pay', [MercadopagoController::class, 'formPay'])
     ->name('academic_step_pay');
 
 Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoController::class, 'processPayment'])

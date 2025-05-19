@@ -30,8 +30,9 @@ use Illuminate\Support\Facades\Mail;
 
 class MercadopagoController extends Controller
 {
-    public function formPay($id)
+    public function formPay(Request $request, $id)
     {
+        $personInvoice = $request->get('personInvoice');
         MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
         $client = new PreferenceClient();
         $items = [];
@@ -65,7 +66,8 @@ class MercadopagoController extends Controller
         return Inertia::render('Landing/Academic/StepsPayCheckout', [
             'preference' => $preference_id,
             'subscription' => $subscription,
-            'samount' => floatval($amount)
+            'samount' => floatval($amount),
+            'personInvoice' => $personInvoice
         ]);
     }
 
