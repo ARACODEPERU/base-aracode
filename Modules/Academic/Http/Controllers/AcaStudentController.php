@@ -3,6 +3,7 @@
 namespace Modules\Academic\Http\Controllers;
 
 use App\Models\District;
+use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
@@ -100,20 +101,30 @@ class AcaStudentController extends Controller
     public function create()
     {
         $identityDocumentTypes = DB::table('identity_document_type')->get();
+        $industrias = Industry::select('id', 'description')
+            ->orderBy('id')
+            ->get();
+        $professions = DB::table('professions')
+            ->orderBy('id')
+            ->get();
+        $occupations = DB::table('occupations')
+            ->orderBy('id')
+            ->get();
 
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
                 'districts.id AS district_id',
-                'districts.name AS district_name',
-                'provinces.name AS province_name',
-                'departments.name AS department_name'
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS ubigeo_description")
             )
             ->get();
 
         return Inertia::render('Academic::Students/Create', [
             'identityDocumentTypes' => $identityDocumentTypes,
-            'ubigeo' => $ubigeo
+            'ubigeo' => $ubigeo,
+            'industrias' => $industrias,
+            'professions' => $professions,
+            'occupations' => $occupations
         ]);
     }
 
@@ -126,7 +137,7 @@ class AcaStudentController extends Controller
     {
         $update_id = $request->get('id');
         $user = User::where('person_id', $request->get('id'))->first();
-
+        //dd($request->all());
         $this->validate(
             $request,
             [
@@ -168,11 +179,18 @@ class AcaStudentController extends Controller
                 'is_provider'           => false,
                 'is_client'             => true,
                 'ubigeo'                => $request->get('ubigeo'),
+                'ubigeo_description'    => $request->get('ubigeo_description'),
                 'birthdate'             => $request->get('birthdate'),
                 'names'                 => trim($request->get('names')),
                 'father_lastname'       => trim($request->get('father_lastname')),
                 'mother_lastname'       => trim($request->get('mother_lastname')),
-                'gender'                => $request->get('gender') ?? 'M'
+                'gender'                => $request->get('gender') ?? 'M',
+                'industry_id'           => $request->get('industry_id') ? $request->get('industry_id')['id'] : null,
+                'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
+                'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
+                'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
+                'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
+                'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
             ]
         );
 
@@ -236,30 +254,37 @@ class AcaStudentController extends Controller
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
                 'districts.id AS district_id',
-                'districts.name AS district_name',
-                'provinces.name AS province_name',
-                'departments.name AS department_name'
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS ubigeo_description")
             )
             ->get();
 
         $student = AcaStudent::join('people', 'person_id', 'people.id')
-            ->leftJoin('districts', 'ubigeo', 'districts.id')
-            ->leftJoin('provinces', 'districts.province_id', 'provinces.id')
-            ->leftJoin('departments', 'provinces.department_id', 'departments.id')
             ->select(
                 'people.*',
-                'aca_students.id AS student_id',
-                DB::raw('CONCAT(departments.name,"-",provinces.name,"-",districts.name) AS city')
+                'aca_students.id AS student_id'
             )
             ->where('aca_students.id', $id)
             ->first();
+
+        $industrias = Industry::select('id', 'description')
+            ->orderBy('id')
+            ->get();
+        $professions = DB::table('professions')
+            ->orderBy('id')
+            ->get();
+        $occupations = DB::table('occupations')
+            ->orderBy('id')
+            ->get();
 
         $student->image_preview = $student->image;
 
         return Inertia::render('Academic::Students/Edit', [
             'identityDocumentTypes' => $identityDocumentTypes,
             'ubigeo'                => $ubigeo,
-            'student'               => $student
+            'student'               => $student,
+            'industrias'            => $industrias,
+            'professions'           => $professions,
+            'occupations'           => $occupations
         ]);
     }
 
@@ -327,17 +352,24 @@ class AcaStudentController extends Controller
             'is_provider'           => false,
             'is_client'             => true,
             'ubigeo'                => $request->get('ubigeo'),
+            'ubigeo_description'    => $request->get('ubigeo_description'),
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
             'mother_lastname'       => trim($request->get('mother_lastname')),
-            'gender'                => $request->get('gender') ?? 'M'
+            'gender'                => $request->get('gender') ?? 'M',
+            'industry_id'           => $request->get('industry_id') ? $request->get('industry_id')['id'] : null,
+            'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
+            'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
+            'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
+            'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
+            'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
         ]);
 
         $user->update([
             'name'          => $request->get('names'),
             'email'         => $request->get('email'),
-            'password'      => Hash::make($request->get('number')),
+            //'password'      => Hash::make($request->get('number')),
             'information'   => $request->get('description'),
             'avatar'        => $path
         ]);

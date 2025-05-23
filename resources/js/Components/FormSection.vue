@@ -8,7 +8,7 @@
 </script>
 
 <template>
-    <div class="md:grid md:grid-cols-3 md:gap-6 mb-4">
+    <div class="">
         <SectionTitle>
             <template #title>
                 <slot name="title" />
@@ -16,11 +16,14 @@
             <template #description>
                 <slot name="description" />
             </template>
+            <template #aside>
+                <slot name="aside" />
+            </template>
         </SectionTitle>
 
-        <div class="mt-5 md:mt-0 md:col-span-2">
+        <div class="mt-5 panel p-0">
             <form @submit.prevent="$emit('submitted')">
-                <div class="panel p-0">
+                <div class="">
                     <div class="p-6">
                         <div class="grid grid-cols-6 gap-6 ">
                             <slot name="form" />

@@ -43,7 +43,9 @@ class Person extends Model
         'industry',
         'profession',
         'company',
-        'industry_id'
+        'industry_id',
+        'profession_id',
+        'occupation_id'
     ];
     // se esta guardando la ruta completa por eso se comento
     // public function getImageAttribute($value)
