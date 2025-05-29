@@ -20,7 +20,7 @@ class AcaModuleController extends Controller
     {
         $course = AcaCourse::where('id', $id)
             ->with('teachers.teacher.person')
-            ->with('modules.themes.contents')
+            ->with('modules.themes.contents.exam.questions.answers')
             ->first();
 
         return Inertia::render('Academic::Courses/Modules', [

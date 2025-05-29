@@ -17,6 +17,9 @@ use Modules\Academic\Http\Controllers\AcaAuthController;
 use Modules\Academic\Http\Controllers\AcaCertificateController;
 use Modules\Academic\Http\Controllers\AcaContentController;
 use Modules\Academic\Http\Controllers\AcaCourseController;
+use Modules\Academic\Http\Controllers\AcaExamAnswerController;
+use Modules\Academic\Http\Controllers\AcaExamController;
+use Modules\Academic\Http\Controllers\AcaExamQuestionController;
 use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
@@ -313,6 +316,22 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_tutoriales_videos'])
         ->get('tutorials/video/list', [AcaShortVideoController::class, 'index'])
         ->name('aca_tutorials_videos_list');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->post('course/exam/store', [AcaExamController::class, 'store'])
+        ->name('aca_course_exam_store');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->post('course/exam/question/store', [AcaExamQuestionController::class, 'store'])
+        ->name('aca_course_exam_question_store');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->delete('course/exam/question/{id}/destroy', [AcaExamQuestionController::class, 'destroy'])
+        ->name('aca_course_exam_question_destroy');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->post('course/exam/answer/store', [AcaExamAnswerController::class, 'store'])
+        ->name('aca_course_exam_answer_store');
 
     ////////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');

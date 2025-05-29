@@ -238,7 +238,7 @@
                         </div>
                     </template>
                     <template v-else>
-                        <div class="flex items-center gap-x-3 max-w-xl">
+                        <div v-if="course.teacher" class="flex items-center gap-x-3 max-w-xl">
                             <div class="shrink-0">
                                 <img v-if="course.teacher.person.image" class="shrink-0 size-16 rounded-full" :src="getImage(course.teacher.person.image)" alt="Avatar">
                                 <img v-else :src="`https://ui-avatars.com/api/?name=${course.teacher.person.names}&size=150&rounded=true`" class="shrink-0 size-16 rounded-full" alt="avatar"/>

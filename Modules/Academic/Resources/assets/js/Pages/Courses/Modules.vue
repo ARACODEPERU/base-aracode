@@ -4,8 +4,9 @@
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { ref, onMounted, computed, watch } from 'vue';
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
-    // import { quillEditor } from 'vue3-quill';
-    // import 'vue3-quill/lib/vue3-quill.css';
+    import flatPickr from 'vue-flatpickr-component';
+    import 'flatpickr/dist/flatpickr.css';
+    import { Spanish } from "flatpickr/dist/l10n/es.js"
     import Swal2 from 'sweetalert2';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import SecondaryButton from '@/Components/SecondaryButton.vue';
@@ -20,9 +21,11 @@
     import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import InputError from '@/Components/InputError.vue';
-    import switchCheerful from '@/Components/switch/switch-cheerful.vue';
+    import ModalLargeXX from "@/Components/ModalLargeXX.vue";
+
 
     import ModalLarge from "@/Components/ModalLarge.vue";
+import { reactive } from "vue";
 
     const props = defineProps({
         course: {
@@ -198,6 +201,7 @@
             showLoaderOnConfirm: true,
             padding: '2em',
             customClass: 'sweet-alerts',
+            backdrop: true,
             preConfirm: () => {
                 return axios.delete(route('aca_courses_module_themes_content_destroy', id)).then((res) => {
                     if (!res.data.success) {
@@ -323,6 +327,7 @@
             showLoaderOnConfirm: true,
             padding: '2em',
             customClass: 'sweet-alerts',
+            backdrop: true,
             preConfirm: () => {
                 return axios.delete(route('aca_courses_module_themes_destroy', id)).then((res) => {
                     if (!res.data.success) {
@@ -520,6 +525,233 @@
     const toggleTeacher = (teacherId, event) => {
         formModuleTeacher.value.teacher_id = event.target.checked ? teacherId : null;
     };
+
+
+    //////////examen//////
+    const formQuestion = useForm({
+        id: null,
+        exam_id: null,
+        description: null,
+        scord: 1,
+        type: 'Escribir',
+    });
+
+    const displayModelConfigExam = ref(false);
+
+    const formExam = useForm({
+        id: null,
+        content_id: null,
+        description: null,
+        date_start: null,
+        date_end: null,
+        status: 1,
+    });
+
+    const formAnswer = useForm({
+        id: null,
+        question_id: null,
+        description: null,
+        correct: 0,
+        score: 1,
+        type_answers: null
+    });
+
+    const dateTime = ref({
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        locale: Spanish,
+    });
+
+    const questions = ref([]);
+
+    const opemModalConfigExam = (conte) => {
+        formExam.content_id = conte.id;
+        formExam.id = conte.exam ? conte.exam.id : null;
+        formExam.status = conte.exam ? conte.exam.status : true;
+        formExam.description = conte.exam ? conte.exam.description : conte.description;
+        formExam.date_start = conte.exam ? conte.exam.date_start : null;
+        formExam.date_end = conte.exam ? conte.exam.date_end : null;
+        formQuestion.exam_id = conte.exam ? conte.exam.id : null;
+
+        if(conte.exam && conte.exam.questions){
+            questions.value = conte.exam.questions;
+        }
+        displayModelConfigExam.value = true;
+        isOverlayVisible.value = true;
+    }
+
+    const closeModalConfigExam = () => {
+        displayModelConfigExam.value = false;
+    }
+
+    const saveExam = () => {
+        axios({
+            method: 'POST',
+            url: route('aca_course_exam_store'),
+            data: formExam
+        }).then((result)=> {
+            Swal2.fire({
+                title: result.data.title,
+                text: result.data.message,
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            formExam.id = result.data.idExam;
+            formQuestion.exam_id = result.data.idExam;
+        }).catch(function (error) {
+            console.log(error);
+        }).finally(() => {
+            formExam.value.processing = false;
+        });
+    }
+    const saveQuestion = () => {
+        if(formExam.id){
+            axios({
+                method: 'POST',
+                url: route('aca_course_exam_question_store'),
+                data: formQuestion
+            }).then((result)=> {
+                Swal2.fire({
+                    title: result.data.title,
+                    text: result.data.message,
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                if(formQuestion.id){
+                    const exam = questions.value.find(e => e.id === formQuestion.id)
+                    if (exam) {
+                        exam.description = result.data.question.description;
+                        exam.score = result.data.question.Errorscore;
+                        exam.type_answers = result.data.question.Errortype_answers;
+                    }
+                }else{
+                    questions.value.push(result.data.question);
+                }
+
+                formQuestion.id = null;
+                formQuestion.description = null;
+                formQuestion.scord = 1;
+                formQuestion.type= 'Escribir';
+
+            }).catch(function (error) {
+                console.log(error);
+            }).finally(() => {
+                formQuestion.processing = false;
+            });
+        }else{
+            showMessage('No existe examen para continuar')
+        }
+    }
+
+    const canselEditQuestion = () => {
+        formQuestion.id = null;
+        formQuestion.description = null;
+        formQuestion.scord = 1;
+        formQuestion.type = 'Escribir';
+        isOverlayVisible.value = true
+    }
+
+    const editQuestion = (item) => {
+        formQuestion.id = item.id;
+        formQuestion.description = item.description;
+        formQuestion.scord = item.score;
+        formQuestion.type = item.type_answers;
+    }
+
+    const deleteQuestion = (id) => {
+        Swal2.fire({
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto!",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            backdrop: true,
+            preConfirm: () => {
+                return axios.delete(route('aca_course_exam_question_destroy', id)).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message)
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: 'Se Eliminó correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                const index = questions.value.findIndex(e => e.id === id)
+                if (index !== -1) {
+                    questions.value.splice(index, 1)
+                }
+            }
+        });
+    }
+
+    const answersData = ref([]);
+    const answersActive = ref(null);
+    const isOverlayVisible = ref(true);
+
+    const configAnswer = (item) => {
+        answersData.value = item.answers;
+        isOverlayVisible.value = false;
+        answersActive.value = item.id;
+        formAnswer.question_id = item.id;
+        formAnswer.type_answers = item.type_answers;
+    }
+
+    const saveAnswer = () => {
+        if(formAnswer.question_id){
+            axios({
+                method: 'POST',
+                url: route('aca_course_exam_answer_store'),
+                data: formAnswer
+            }).then((result)=> {
+                Swal2.fire({
+                    title: result.data.title,
+                    text: result.data.message,
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                if(formAnswer.id){
+                    const xanswer = answersData.value.find(e => e.id === formAnswer.id)
+                    if (xanswer) {
+                        xanswer.description = result.data.answer.description;
+                        xanswer.score = result.data.answer.score;
+                        xanswer.correct = result.data.answer.correct;
+                    }
+                }else{
+                    answersData.value.push(result.data.answer);
+                }
+
+                formAnswer.id = null;
+                formAnswer.description = null;
+                formAnswer.score = 1;
+                formAnswer.correct = 0;
+
+            }).catch(function (error) {
+                console.log(error);
+            }).finally(() => {
+                formAnswer.processing = false;
+            });
+        }else{
+            showMessage('No existe examen para continuar')
+        }
+    }
+
 </script>
 
 <template>
@@ -831,6 +1063,7 @@
                                                                 <option value="0">frame de vídeo</option>
                                                                 <option value="3">Link videoconferencia</option>
                                                                 <option value="2">Subir Archivo</option>
+                                                                <option value="4">Examen</option>
                                                             </select>
                                                             <div class="text-danger text-sm mt-1" v-if="contentForm.errors.is_file">{{ contentForm.errors.is_file }}</div>
                                                         </div>
@@ -853,14 +1086,17 @@
 
                                                     <ol class="relative border-s border-gray-200 dark:border-gray-700">
                                                         <li v-for="(conte, hy) in dataContents"class="mb-10 ms-6">
-                                                            <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">
-                                                                <svg v-if="conte.is_file == 0" class="w-3 h-3 text-blue-800 dark:text-blue-300" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+                                                            <span class="absolute flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full -start-4 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">
+                                                                <svg v-if="conte.is_file == 0" class="w-4 h-4 text-blue-800 dark:text-blue-300" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
                                                                     <path d="M256 0L576 0c35.3 0 64 28.7 64 64l0 224c0 35.3-28.7 64-64 64l-320 0c-35.3 0-64-28.7-64-64l0-224c0-35.3 28.7-64 64-64zM476 106.7C471.5 100 464 96 456 96s-15.5 4-20 10.7l-56 84L362.7 169c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6l80 0 48 0 144 0c8.9 0 17-4.9 21.2-12.7s3.7-17.3-1.2-24.6l-96-144zM336 96a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zM64 128l96 0 0 256 0 32c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-32 160 0 0 64c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 192c0-35.3 28.7-64 64-64zm8 64c-8.8 0-16 7.2-16 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0zm0 104c-8.8 0-16 7.2-16 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0zm0 104c-8.8 0-16 7.2-16 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0zm336 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0c-8.8 0-16 7.2-16 16z"/>
                                                                 </svg>
-                                                                <svg v-else-if="conte.is_file == 3" xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-blue-800 dark:text-blue-300" fill="currentColor" viewBox="0 0 384 512">
+                                                                <svg v-else-if="conte.is_file == 3" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-800 dark:text-blue-300" fill="currentColor" viewBox="0 0 384 512">
                                                                     <path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
                                                                 </svg>
-                                                                <svg v-else class="w-3 h-3 text-blue-800 dark:text-blue-300" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                                                <svg v-else-if="conte.is_file == 4" class="w-4 h-4 text-blue-800 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                                                                        <path fill="currentColor" d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 38.6C310.1 219.5 256 287.4 256 368c0 59.1 29.1 111.3 73.7 143.3c-3.2 .5-6.4 .7-9.7 .7L64 512c-35.3 0-64-28.7-64-64L0 64zm384 64l-128 0L256 0 384 128zm48 96a144 144 0 1 1 0 288 144 144 0 1 1 0-288zm0 240a24 24 0 1 0 0-48 24 24 0 1 0 0 48zM368 321.6l0 6.4c0 8.8 7.2 16 16 16s16-7.2 16-16l0-6.4c0-5.3 4.3-9.6 9.6-9.6l40.5 0c7.7 0 13.9 6.2 13.9 13.9c0 5.2-2.9 9.9-7.4 12.3l-32 16.8c-5.3 2.8-8.6 8.2-8.6 14.2l0 14.8c0 8.8 7.2 16 16 16s16-7.2 16-16l0-5.1 23.5-12.3c15.1-7.9 24.5-23.6 24.5-40.6c0-25.4-20.6-45.9-45.9-45.9l-40.5 0c-23 0-41.6 18.6-41.6 41.6z"/>
+                                                                    </svg>
+                                                                <svg v-else class="w-4 h-4 text-blue-800 dark:text-blue-300" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
                                                                     <path d="M320 464c8.8 0 16-7.2 16-16l0-288-80 0c-17.7 0-32-14.3-32-32l0-80L64 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l256 0zM0 64C0 28.7 28.7 0 64 0L229.5 0c17 0 33.3 6.7 45.3 18.7l90.5 90.5c12 12 18.7 28.3 18.7 45.3L384 448c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64z"/>
                                                                 </svg>
                                                             </span>
@@ -883,6 +1119,12 @@
                                                                         <path d="M0 128C0 92.7 28.7 64 64 64l256 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2l0 256c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1l0-17.1 0-128 0-17.1 14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/>
                                                                     </svg> Unirse
                                                                 </a>
+                                                                <button v-else-if="conte.is_file == 4" @click="opemModalConfigExam(conte)" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
+                                                                    <svg class="w-3.5 h-3.5 me-2.5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                                        <path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z"/>
+                                                                    </svg>
+                                                                    Configurar preguntas y respuestas
+                                                                </button>
                                                                 <a v-else :href="getPath(conte.content)" target="_blank" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
                                                                     <svg class="w-3.5 h-3.5 me-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                                                         <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z"/>
@@ -1042,5 +1284,136 @@
                 </PrimaryButton>
             </template>
         </ModalLarge>
+        <ModalLargeXX
+            :show="displayModelConfigExam"
+            :onClose="closeModalConfigExam"
+            :icon="'/img/icons8-examen-50.png'"
+            style="z-index: 1000;"
+        >
+            <template #title>Configurar examen</template>
+            <template #content>
+                <div class="mt-6">
+                    <div class="flex flex-col md:flex-row gap-4 items-center w-[90%] mx-auto">
+                        <input v-model="formExam.description" type="text" placeholder="Descripción" class="form-input flex-1" />
+                        <div class="flex ">
+                            <div class="bg-[#eee] flex justify-center items-center ltr:rounded-l-md rtl:rounded-r-md px-3 font-semibold border ltr:border-r-0 rtl:border-l-0 border-[#e0e6ed] dark:border-[#17263c] dark:bg-[#1b2e4b]">
+                                <svg class="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                    <path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 48 0c26.5 0 48 21.5 48 48l0 48L0 160l0-48C0 85.5 21.5 64 48 64l48 0 0-32c0-17.7 14.3-32 32-32zM0 192l448 0 0 272c0 26.5-21.5 48-48 48L48 512c-26.5 0-48-21.5-48-48L0 192zm64 80l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm128 0l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM64 400l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zm112 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16z"/>
+                                </svg>
+                            </div>
+                            <flat-pickr v-model="formExam.date_start" class="form-input rounded-l-none hover:rounded-l-none" :config="dateTime"></flat-pickr>
+                        </div>
+                        <div class="flex ">
+                            <div class="bg-[#eee] flex justify-center items-center ltr:rounded-l-md rtl:rounded-r-md px-3 font-semibold border ltr:border-r-0 rtl:border-l-0 border-[#e0e6ed] dark:border-[#17263c] dark:bg-[#1b2e4b]">
+                                <svg class="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                                    <path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 48 0c26.5 0 48 21.5 48 48l0 48L0 160l0-48C0 85.5 21.5 64 48 64l48 0 0-32c0-17.7 14.3-32 32-32zM0 192l448 0 0 272c0 26.5-21.5 48-48 48L48 512c-26.5 0-48-21.5-48-48L0 192zm64 80l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm128 0l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM64 400l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zm112 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16z"/>
+                                </svg>
+                            </div>
+                            <flat-pickr v-model="formExam.date_end" class="form-input rounded-l-none hover:rounded-l-none" :config="dateTime"></flat-pickr>
+                        </div>
+                        <div>
+                            <select v-model="formExam.status" class="form-select">
+                                <option value="1">Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </div>
+                        <button @click="saveExam" type="button" class="btn btn-primary btn-sm text-xs">Guardar</button>
+                    </div>
+                </div>
+                <div class="mt-6 grid grid-cols-2 gap-6">
+                    <div class="border rounded-lg px-6 py-4">
+                        <h4 class="font-semibold text-lg dark:text-white-light mb-4">Preguntas</h4>
+                        <textarea v-model="formQuestion.description" rows="4" placeholder="Descripción" class="form-textarea mb-4"></textarea>
+                        <div class="flex flex-col md:flex-row gap-4 items-center w-full mx-auto">
+
+                            <input v-model="formQuestion.scord" type="number" placeholder="Puntos" class="form-input" />
+                            <select v-model="formQuestion.type" class="form-select">
+                                <option value="Escribir">Escribir</option>
+                                <option value="Alternativas">Alternativas</option>
+                                <option value="Varias respuestas">Varias respuestas</option>
+                                <option value="Subir Archivo">Subir Archivo</option>
+                            </select>
+                            <button @click="saveQuestion" type="button" class="btn btn-primary text-xs">Guardar</button>
+                            <button v-if="formQuestion.id" @click="canselEditQuestion" type="button" class="btn btn-danger text-xs">Cancelar</button>
+                        </div>
+                        <div class="mt-6 flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
+                            <div v-for="(item, key) in questions">
+                                <div class="border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5"
+                                    :class="answersActive == item.id ? 'bg-primary text-white shadow-[0_1px_15px_1px_rgba(67,97,238,0.15)]' : ''"
+                                >
+                                    <div class="w-full flex justify-between items-center">
+                                        <div>{{ item.description }}</div>
+                                        <div>
+                                            <div class="dropdown">
+                                                <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
+                                                    <button type="button" class="btn p-0 rounded-none border-0 shadow-none dropdown-toggle dark:text-white-dark hover:text-primary dark:hover:text-primary">
+                                                        <icon-horizontal-dots class="rotate-90 opacity-70" />
+                                                    </button>
+                                                    <template #content="{ close }">
+                                                        <ul @click="close()" class="whitespace-nowrap">
+                                                            <li><a @click="editQuestion(item)" href="javascript:;">Editar</a></li>
+                                                            <li><a @click="deleteQuestion(item.id)" href="javascript:;">Eliminar</a></li>
+                                                            <li><a @click="configAnswer(item)" href="javascript:;">Respuestas</a></li>
+                                                        </ul>
+                                                    </template>
+                                                </Popper>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative border rounded-lg px-6 py-4">
+                        <!-- Overlay que bloquea el contenido -->
+                        <div
+                            v-if="isOverlayVisible"
+                            class="absolute inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center"
+                            >
+                            <p class="text-white text-center">Elige una pregunta para continuar</p>
+                        </div>
+                        <h4 class="font-semibold text-lg dark:text-white-light mb-4">Respuestas</h4>
+                        <textarea v-model="formAnswer.description" placeholder="Descripción" class="form-textarea mb-4" rows="4"></textarea>
+                        <div class="flex flex-col md:flex-row gap-4 items-center w-full mx-auto">
+                            <input v-model="formAnswer.score" type="number" placeholder="Puntos" class="form-input" />
+
+                            <select v-model="formAnswer.correct" class="form-select">
+                                <option value="1">Correcto</option>
+                                <option value="0">Incorrecto</option>
+                            </select>
+
+                            <button @click="saveAnswer" class="btn btn-primary text-xs" type="button">Guardar</button>
+                        </div>
+                        <div class="mt-6">
+                            <div v-for="answer in answersData">
+                                <div v-if="formAnswer.type_answers == 'Escribir'">
+                                    <div class="p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800">
+                                        <div>
+                                            <div class="w-full flex justify-between items-center mb-2">
+                                                <div class="">{{ answer.description }}</div>
+                                                <div class="dropdown">
+                                                    <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
+                                                        <button type="button" class="btn p-0 rounded-none border-0 shadow-none dropdown-toggle dark:text-white-dark hover:text-primary dark:hover:text-primary">
+                                                            <icon-horizontal-dots class="rotate-90 opacity-70" />
+                                                        </button>
+                                                        <template #content="{ close }">
+                                                            <ul @click="close()" class="whitespace-nowrap">
+                                                                <li><a @click="editQuestion(answer)" href="javascript:;">Editar</a></li>
+                                                                <li><a @click="deleteQuestion(answer.id)" href="javascript:;">Eliminar</a></li>
+                                                            </ul>
+                                                        </template>
+                                                    </Popper>
+                                                </div>
+                                            </div>
+                                            <textarea id="ctnTextareax" rows="3" class="form-textarea" placeholder="Escribir respuesta"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </ModalLargeXX>
     </AppLayout>
 </template>

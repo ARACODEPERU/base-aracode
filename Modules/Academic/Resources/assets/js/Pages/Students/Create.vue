@@ -2,6 +2,7 @@
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import CreateForm from './Partials/CreateForm.vue';
 import { Link } from '@inertiajs/vue3';
+import Navigation from "@/Components/vristo/layout/Navigation.vue";
 
 const props = defineProps({
     identityDocumentTypes: {
@@ -30,17 +31,14 @@ const props = defineProps({
 
 <template>
     <AppLayout title="Crear Estudiante">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
+        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Estudiantes</span>
+                <Link :href="route('aca_students_list')" class="text-primary hover:underline">Estudiantes</Link>
             </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <span>Nuevo</span>
             </li>
-        </ul>
+        </Navigation>
         <div class="pt-5">
             <CreateForm
                 :identityDocumentTypes="identityDocumentTypes"

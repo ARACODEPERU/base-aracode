@@ -11,7 +11,7 @@
     import iconExcel from "@/Components/vristo/icon/icon-excel.vue";
     import ModalLarge from "@/Components/ModalLarge.vue";
     import { ref } from 'vue';
-
+    import Navigation from "@/Components/vristo/layout/Navigation.vue";
     import { useAppStore } from '@/stores/index';
     const store = useAppStore();
 
@@ -129,14 +129,11 @@
 
 <template>
     <AppLayout title="Estudiantes">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
+            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <span>Estudiantes</span>
             </li>
-        </ul>
+        </Navigation>
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Estudiantes</h2>
