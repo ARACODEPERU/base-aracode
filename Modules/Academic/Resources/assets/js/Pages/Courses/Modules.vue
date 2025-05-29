@@ -1385,9 +1385,10 @@ import { reactive } from "vue";
                             <button @click="saveAnswer" class="btn btn-primary text-xs" type="button">Guardar</button>
                         </div>
                         <div class="mt-6">
-                            <div v-for="answer in answersData">
-                                <div v-if="formAnswer.type_answers == 'Escribir'">
-                                    <div class="p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800">
+                            <div class="p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800">
+                                <div v-for="answer in answersData">
+                                    <div v-if="formAnswer.type_answers == 'Escribir'">
+
                                         <div>
                                             <div class="w-full flex justify-between items-center mb-2">
                                                 <div class="">{{ answer.description }}</div>
@@ -1407,6 +1408,13 @@ import { reactive } from "vue";
                                             </div>
                                             <textarea id="ctnTextareax" rows="3" class="form-textarea" placeholder="Escribir respuesta"></textarea>
                                         </div>
+
+                                    </div>
+                                    <div v-else-if="formAnswer.type_answers == 'Varias respuestas'">
+                                        <label class="inline-flex">
+                                            <input :id="'cbxanswer-'+answer.id" type="checkbox" class="form-checkbox" :checked="answer.correct" />
+                                            <span>{{ answer.description }}</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
