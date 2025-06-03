@@ -183,7 +183,8 @@ class SaleCreditNotesController extends Controller
 
         try {
             if ($request->get('note_type') == 3) {
-                $this->store($request);
+                $result = $this->store($request);
+                return response()->json($result);
             } elseif ($request->get('note_type') == 4) {
                 if ($request->get('note_overall_total') > $request->get('document_mto_total')) {
                     $result = $this->store($request);
