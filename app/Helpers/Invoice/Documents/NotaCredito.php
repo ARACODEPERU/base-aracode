@@ -118,7 +118,7 @@ class NotaCredito
         $invoice_name = $invoice->invoice_serie . '-' . $invoice->invoice_correlative;
 
         ////2.0 la version para notas
-        $note->setUblVersion('2.0')
+        $note->setUblVersion($document->invoice_ubl_version)
             ->setTipoDoc($document->invoice_type_doc)
             ->setSerie($document->invoice_serie)
             ->setCorrelativo($document->invoice_correlative)
