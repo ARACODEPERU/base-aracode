@@ -25,7 +25,7 @@
 
 
     import ModalLarge from "@/Components/ModalLarge.vue";
-import { reactive } from "vue";
+    import { reactive } from "vue";
 
     const props = defineProps({
         course: {
@@ -585,6 +585,7 @@ import { reactive } from "vue";
     }
 
     const saveExam = () => {
+        formExam.processing = true;
         axios({
             method: 'POST',
             url: route('aca_course_exam_store'),
@@ -602,11 +603,12 @@ import { reactive } from "vue";
         }).catch(function (error) {
             console.log(error);
         }).finally(() => {
-            formExam.value.processing = false;
+            formExam.processing = false;
         });
     }
     const saveQuestion = () => {
         if(formExam.id){
+            formQuestion.processing = true;
             axios({
                 method: 'POST',
                 url: route('aca_course_exam_question_store'),
@@ -623,8 +625,8 @@ import { reactive } from "vue";
                     const exam = questions.value.find(e => e.id === formQuestion.id)
                     if (exam) {
                         exam.description = result.data.question.description;
-                        exam.score = result.data.question.Errorscore;
-                        exam.type_answers = result.data.question.Errortype_answers;
+                        exam.score = result.data.question.score;
+                        exam.type_answers = result.data.question.type_answers;
                     }
                 }else{
                     questions.value.push(result.data.question);
@@ -705,6 +707,7 @@ import { reactive } from "vue";
     const isOverlayVisible = ref(true);
 
     const configAnswer = (item) => {
+        console.log(item.id);
         answersData.value = item.answers;
         isOverlayVisible.value = false;
         answersActive.value = item.id;
@@ -714,6 +717,7 @@ import { reactive } from "vue";
 
     const saveAnswer = () => {
         if(formAnswer.question_id){
+            formAnswer.processing = true;
             axios({
                 method: 'POST',
                 url: route('aca_course_exam_answer_store'),
@@ -752,6 +756,59 @@ import { reactive } from "vue";
         }
     }
 
+    const editAnswer = (item) => {
+        formAnswer.id = item.id;
+        formAnswer.description = item.description;
+        formAnswer.score = item.score;
+        formAnswer.correct = item.correct;
+    }
+
+    const deleteAnswer = (id) => {
+        Swal2.fire({
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto!",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            backdrop: true,
+            preConfirm: () => {
+                return axios.delete(route('aca_course_exam_answer_destroy', id)).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message)
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: 'Se Eliminó correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                const index = answersData.value.findIndex(e => e.id === id)
+                if (index !== -1) {
+                    answersData.value.splice(index, 1)
+                }
+            }
+        });
+    }
+
+    const canselEditAnswer = () => {
+        formAnswer.id = null;
+        formAnswer.description = null;
+        formAnswer.score = 1;
+        formAnswer.correct = 0;
+    }
 </script>
 
 <template>
@@ -1317,7 +1374,10 @@ import { reactive } from "vue";
                                 <option value="0">Inactivo</option>
                             </select>
                         </div>
-                        <button @click="saveExam" type="button" class="btn btn-primary btn-sm text-xs">Guardar</button>
+                        <button @click="saveExam" type="button" class="btn btn-primary text-xs">
+                            <SpinnerLoading :display="formExam.processing" />
+                            Guardar
+                        </button>
                     </div>
                 </div>
                 <div class="mt-6 grid grid-cols-2 gap-6">
@@ -1333,7 +1393,10 @@ import { reactive } from "vue";
                                 <option value="Varias respuestas">Varias respuestas</option>
                                 <option value="Subir Archivo">Subir Archivo</option>
                             </select>
-                            <button @click="saveQuestion" type="button" class="btn btn-primary text-xs">Guardar</button>
+                            <button @click="saveQuestion" type="button" class="btn btn-primary text-xs">
+                                <SpinnerLoading :display="formQuestion.processing" />
+                                Guardar
+                            </button>
                             <button v-if="formQuestion.id" @click="canselEditQuestion" type="button" class="btn btn-danger text-xs">Cancelar</button>
                         </div>
                         <div class="mt-6 flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
@@ -1382,10 +1445,15 @@ import { reactive } from "vue";
                                 <option value="0">Incorrecto</option>
                             </select>
 
-                            <button @click="saveAnswer" class="btn btn-primary text-xs" type="button">Guardar</button>
+                            <button @click="saveAnswer" class="btn btn-primary text-xs" type="button">
+                                <SpinnerLoading :display="formAnswer.processing" />
+                                Guardar
+                            </button>
+                            <button v-if="formAnswer.id" @click="canselEditAnswer" type="button" class="btn btn-danger text-xs">Cancelar</button>
                         </div>
                         <div class="mt-6">
                             <div class="p-4 mb-4 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800">
+                                <label>Tipo de respuesta: {{ formAnswer.type_answers }}</label>
                                 <div v-for="answer in answersData">
                                     <div v-if="formAnswer.type_answers == 'Escribir'">
 
@@ -1399,8 +1467,8 @@ import { reactive } from "vue";
                                                         </button>
                                                         <template #content="{ close }">
                                                             <ul @click="close()" class="whitespace-nowrap">
-                                                                <li><a @click="editQuestion(answer)" href="javascript:;">Editar</a></li>
-                                                                <li><a @click="deleteQuestion(answer.id)" href="javascript:;">Eliminar</a></li>
+                                                                <li><a @click="editAnswer(answer)" href="javascript:;">Editar</a></li>
+                                                                <li><a @click="deleteAnswer(answer.id)" href="javascript:;">Eliminar</a></li>
                                                             </ul>
                                                         </template>
                                                     </Popper>
@@ -1408,13 +1476,68 @@ import { reactive } from "vue";
                                             </div>
                                             <textarea id="ctnTextareax" rows="3" class="form-textarea" placeholder="Escribir respuesta"></textarea>
                                         </div>
-
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-medium">NOTA!</span> El docente deberá calificar esta respuesta</p>
                                     </div>
-                                    <div v-else-if="formAnswer.type_answers == 'Varias respuestas'">
+                                    
+                                    <div v-else-if="formAnswer.type_answers == 'Alternativas'" class="w-full flex justify-between items-center mb-2">
+                                        <label class="inline-flex">
+                                            <input :id="'rdbanswer-'+answer.id" type="radio" class="form-radio rounded-none" :checked="answer.correct" />
+                                            <span>{{ answer.description }}</span>
+                                        </label>
+                                        <div class="dropdown">
+                                            <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
+                                                <button type="button" class="btn p-0 rounded-none border-0 shadow-none dropdown-toggle dark:text-white-dark hover:text-primary dark:hover:text-primary">
+                                                    <icon-horizontal-dots class="rotate-90 opacity-70" />
+                                                </button>
+                                                <template #content="{ close }">
+                                                    <ul @click="close()" class="whitespace-nowrap">
+                                                        <li><a @click="editAnswer(answer)" href="javascript:;">Editar</a></li>
+                                                        <li><a @click="deleteAnswer(answer.id)" href="javascript:;">Eliminar</a></li>
+                                                    </ul>
+                                                </template>
+                                            </Popper>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="formAnswer.type_answers == 'Varias respuestas'" class="w-full flex justify-between items-center mb-2">
                                         <label class="inline-flex">
                                             <input :id="'cbxanswer-'+answer.id" type="checkbox" class="form-checkbox" :checked="answer.correct" />
                                             <span>{{ answer.description }}</span>
                                         </label>
+                                        <div class="dropdown">
+                                            <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
+                                                <button type="button" class="btn p-0 rounded-none border-0 shadow-none dropdown-toggle dark:text-white-dark hover:text-primary dark:hover:text-primary">
+                                                    <icon-horizontal-dots class="rotate-90 opacity-70" />
+                                                </button>
+                                                <template #content="{ close }">
+                                                    <ul @click="close()" class="whitespace-nowrap">
+                                                        <li><a @click="editAnswer(answer)" href="javascript:;">Editar</a></li>
+                                                        <li><a @click="deleteAnswer(answer.id)" href="javascript:;">Eliminar</a></li>
+                                                    </ul>
+                                                </template>
+                                            </Popper>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="formAnswer.type_answers == 'Subir Archivo'">
+                                        <div class="w-full flex justify-between items-center mb-2">
+                                            <div>
+                                                <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="small_size">{{ answer.description }}</label>
+                                                <input class="block w-full mb-5 text-xs text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="small_size" type="file">
+                                            </div>
+                                            <div class="dropdown">
+                                                <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
+                                                    <button type="button" class="btn p-0 rounded-none border-0 shadow-none dropdown-toggle dark:text-white-dark hover:text-primary dark:hover:text-primary">
+                                                        <icon-horizontal-dots class="rotate-90 opacity-70" />
+                                                    </button>
+                                                    <template #content="{ close }">
+                                                        <ul @click="close()" class="whitespace-nowrap">
+                                                            <li><a @click="editAnswer(answer)" href="javascript:;">Editar</a></li>
+                                                            <li><a @click="deleteAnswer(answer.id)" href="javascript:;">Eliminar</a></li>
+                                                        </ul>
+                                                    </template>
+                                                </Popper>
+                                            </div>
+                                        </div>
+                                        <p class="mt-2 text-sm text-red-600 dark:text-red-500"><span class="font-medium">NOTA!</span> El docente deberá calificar esta respuesta</p>
                                     </div>
                                 </div>
                             </div>

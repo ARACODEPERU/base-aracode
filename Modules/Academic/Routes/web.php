@@ -333,6 +333,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->post('course/exam/answer/store', [AcaExamAnswerController::class, 'store'])
         ->name('aca_course_exam_answer_store');
 
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->delete('course/exam/answer/{id}/destroy', [AcaExamAnswerController::class, 'destroy'])
+        ->name('aca_course_exam_answer_destroy');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_ver'])
+        ->get('student/exam/{id}/solve', [AcaExamController::class, 'solve'])
+        ->name('aca_student_exam_solve');
+
     ////////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
     Route::post('buy/course/items/mercadopago', [MercadopagoController::class, 'createItemsPreference'])->name('academic_create_items_preference_course');

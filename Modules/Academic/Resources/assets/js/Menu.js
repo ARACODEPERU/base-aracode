@@ -9,8 +9,6 @@ import {
     faPlay,
     faUserGroup
 } from "@fortawesome/free-solid-svg-icons";
-import { ref } from 'vue';
-import axios from 'axios';
 
 const menuAcademic = {
     status: false,

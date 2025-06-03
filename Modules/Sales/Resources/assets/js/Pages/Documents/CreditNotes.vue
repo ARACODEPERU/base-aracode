@@ -431,25 +431,9 @@ const refreshTable = () => {
                                             <li v-if="props.rowData.invoice_status != 'Aceptada'" >
                                                 <a @click="showModalEditDocument()" href="javascript:;" >Editar</a>
                                             </li>
-                                            <li
-                                                v-if="
-                                                    props.rowData
-                                                        .invoice_status ==
-                                                        'Pendiente' &&
-                                                    props.rowData
-                                                        .invoice_type_doc !=
-                                                        '03'
-                                                "
-                                            >
-                                                <a
-                                                    @click="
-                                                        sendSunatDocument(
-                                                            props.rowData
-                                                        )
-                                                    "
-                                                    v-can="
-                                                        'invo_documento_envio_sunat'
-                                                    "
+                                            <li v-if="props.rowData.invoice_status == 'Pendiente' && props.rowData.invoice_type_doc !='03'">
+                                                <a @click="sendSunatDocument(props.rowData)"
+                                                    v-can="'invo_documento_envio_sunat'"
                                                     href="javascript:;"
                                                     >Enviar a Sunat</a
                                                 >

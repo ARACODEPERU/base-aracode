@@ -170,7 +170,7 @@ class CompanyController extends Controller
         if ($isotipoNegative) {
 
             $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $isotipoNegative));
-
+            
             if (PHP_OS == 'WINNT') {
                 $tempFile = tempnam(sys_get_temp_dir(), 'img');
             } else {
@@ -181,8 +181,9 @@ class CompanyController extends Controller
             $mime = mime_content_type($tempFile);
 
             $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
+            
             $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
-
+          
             if ($file) {
                 $original_name = strtolower(trim($file->getClientOriginalName()));
                 $original_name = str_replace(" ", "_", $original_name);

@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Academic\Entities\AcaExamAnswer;
+use Illuminate\Support\Facades\DB;
 
 class AcaExamAnswerController extends Controller
 {
@@ -50,7 +51,7 @@ class AcaExamAnswerController extends Controller
             $message = 'Se actualizo correctamente';
         } else {
             $answer = AcaExamAnswer::create([
-                'exam_id' => $question_id,
+                'question_id' => $question_id,
                 'description' => $description,
                 'score' => $score,
                 'correct' => $correct
@@ -94,6 +95,33 @@ class AcaExamAnswerController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $message = null;
+        $success = false;
+        try {
+            // Usamos una transacción para asegurarnos de que la operación se realice de manera segura.
+            DB::beginTransaction();
+
+            // Verificamos si existe.
+            $item = AcaExamAnswer::findOrFail($id);
+
+            // Si no hay detalles asociados, eliminamos.
+            $item->delete();
+
+            // Si todo ha sido exitoso, confirmamos la transacción.
+            DB::commit();
+
+            $message =  'Respuesta eliminada correctamente';
+            $success = true;
+        } catch (\Exception $e) {
+            // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.
+            DB::rollback();
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
     }
 }

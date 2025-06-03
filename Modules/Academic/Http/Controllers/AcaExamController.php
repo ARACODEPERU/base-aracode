@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaExam;
+use Inertia\Inertia;
 
 class AcaExamController extends Controller
 {
@@ -117,5 +118,13 @@ class AcaExamController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function solve($id){
+
+        $content = AcaContent::with('exam.questions.answers')->where('id',$id)->first();
+        return Inertia::render('Academic::Students/Exam',[
+            'content' => $content
+        ]);
     }
 }

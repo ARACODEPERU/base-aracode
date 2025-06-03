@@ -333,9 +333,10 @@ class OnliItemController extends Controller
         $OnliItem->save();
 
         $specifications = $request->get('specifications');
+
         OnliItemSpecification::where('onli_item_id', $OnliItem->id)->delete();
 
-        if (count($specifications) > 0) {
+        if ($specifications && count($specifications) > 0) {
             foreach ($specifications as $specification) {
                 OnliItemSpecification::create([
                     'onli_item_id'  => $OnliItem->id,

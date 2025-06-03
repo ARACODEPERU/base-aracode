@@ -21,7 +21,10 @@ return new class extends Migration
             $table->dateTime('date_start')->nullable();
             $table->dateTime('date_end')->nullable();
             $table->boolean('status')->default(true);
+            $table->integer('attempts')->default(1);
             $table->timestamps();
+
+           $table->foreign('content_id')->references('id')->on('aca_contents')->onDelete('cascade');
         });
     }
 
