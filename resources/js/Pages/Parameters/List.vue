@@ -110,7 +110,7 @@
                                     </td>
                                     <td>
                                         <template v-if="parameter.control_type == 'in'">
-                                            <Input 
+                                            <Input
                                                 v-model:value="parameter.value_default"
                                                 @pressEnter="updateDefaultValue(parameter.id, parameter.value_default)"
                                             />
@@ -136,7 +136,7 @@
                                             <Textarea
                                                 v-model:value="parameter.value_default"
                                                 style="width: 100%"
-                                                show-count 
+                                                show-count
                                                 :maxlength="5000"
                                                 @change="updateDefaultValue(parameter.id, parameter.value_default)"
                                                 >
@@ -146,13 +146,31 @@
                                             <div>
                                                 <template v-for="(rdj, kec) in JSON.parse(parameter.json_query_data)">
                                                     <label class="inline-flex">
-                                                        <input 
+                                                        <input
                                                             v-model="parameter.value_default"
-                                                            type="radio" 
+                                                            type="radio"
                                                             :value="rdj.value"
                                                             :name="`radio-j-${index}`"
                                                             class="form-radio rounded-none"
                                                             @change="updateDefaultValue(parameter.id, parameter.value_default)"
+                                                        />
+                                                        <span>{{ rdj.label }}</span>
+                                                    </label>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <template v-else-if="parameter.control_type == 'chj'">
+                                            <div>
+                                                <template v-for="(rdj, kec) in JSON.parse(parameter.json_query_data)">
+                                                    <label class="inline-flex" :for="`checkbox-j-${index}-${kec}`">
+                                                        <input
+                                                            v-model="parameter.value_default"
+                                                            type="checkbox"
+                                                            :value="rdj.value"
+                                                            :name="`checkbox-j-${index}-${kec}`"
+                                                            :id="`checkbox-j-${index}-${kec}`"
+                                                            class="form-checkbox"
+                                                            @change="updateDefaultValue(parameter.id, rdj.value)"
                                                         />
                                                         <span>{{ rdj.label }}</span>
                                                     </label>
@@ -167,6 +185,6 @@
                 </div>
             </div>
         </div>
-        
+
     </AppLayout>
 </template>

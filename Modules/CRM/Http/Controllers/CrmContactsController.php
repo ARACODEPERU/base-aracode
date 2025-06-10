@@ -7,6 +7,7 @@ use App\Models\District;
 use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\Person;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -20,6 +21,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaTeacher;
 use Modules\CRM\Emails\MailwithUserAccount;
 use Modules\CRM\Emails\PersonalizedEmailStudent;
@@ -125,8 +127,6 @@ class CrmContactsController extends Controller
     {
         $correo = $request->get('correo');
 
-        $P000013 = Parameter::where('parameter_code', 'P000013')->value('value_default');
-
         $type = $correo['type'];
         $message = $correo['message'];
 
@@ -134,7 +134,7 @@ class CrmContactsController extends Controller
         $correosFallidos = [];
 
         $data = [
-            'from_mail' => $P000013 ?? env('MAIL_FROM_ADDRESS'),
+            'from_mail' => env('MAIL_FROM_ADDRESS'),
             'from_name' => env('MAIL_FROM_NAME'),
             'title' => $correo['title'],
             'contact' => $correo['contact'],
@@ -445,18 +445,30 @@ class CrmContactsController extends Controller
     {
         //dd(Auth::user()->person_id);
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+        $docents = [];
         //dd($student);
-        $docents = AcaCapRegistration::with('course.teacher.person')
-            ->where('student_id', $student->id)
-            ->where('status', true)
-            ->get()
-            ->map(function ($registration) {
-                return $registration->course->teacher ?? null;
-            })
-            ->filter() // Elimina valores nulos en caso de cursos sin teacher
-            ->unique('id') // Agrupa por ID del teacher
-            ->values(); // Reindexa el array
+        // $docents = AcaCapRegistration::with('course.teacher.person')
+        //     ->where('student_id', $student->id)
+        //     ->where('status', true)
+        //     ->get()
+        //     ->map(function ($registration) {
+        //         return $registration->course->teacher ?? null;
+        //     })
+        //     ->filter() // Elimina valores nulos en caso de cursos sin teacher
+        //     ->unique('id') // Agrupa por ID del teacher
+        //     ->values(); // Reindexa el array
         //dd($docents);
+
+        $existeActiva = AcaStudentSubscription::where('student_id', $student->id)
+            ->where('status', true)
+            ->exists();
+
+        if($existeActiva){
+            $docents = User::with('person')
+                ->role('Asistente') // Método de Spatie
+                ->get();
+        }
+
         return response()->json([
             'success' => true,
             'docents' => $docents

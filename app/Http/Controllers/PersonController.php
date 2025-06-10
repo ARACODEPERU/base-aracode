@@ -98,7 +98,7 @@ class PersonController extends Controller
         $person = Person::updateOrCreate(
             [
                 'document_type_id' => $request->input('document_type'),
-                'number' => $request->input('number')
+                'number' => $request->input('number'),
             ], // Buscamos a la persona
             [
                 'full_name' => trim($request->input('full_name')),

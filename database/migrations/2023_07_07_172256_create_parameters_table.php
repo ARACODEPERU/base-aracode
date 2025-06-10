@@ -97,7 +97,7 @@ return new class extends Migration
         Parameter::create([
             'parameter_code'    => 'P000011',
             'description'       => 'Correo electronico a donde llegaran los mensajes del modulo CRM  Buzón de correo',
-            'control_type'      => 'tx',
+            'control_type'      => 'in',
             'json_query_data'   => null,
             'value_default'     => 'aracode_atencion@gmail.com'
         ]);
@@ -112,8 +112,8 @@ return new class extends Migration
 
         Parameter::create([
             'parameter_code'    => 'P000013',
-            'description'       => 'Correo electronico remitente de mensajes del modulo CRM, correos enviados a estudiantes',
-            'control_type'      => 'tx',
+            'description'       => 'Correo electronico asistente para entencion de mensajes enviado por estudiantes',
+            'control_type'      => 'in',
             'json_query_data'   => null,
             'value_default'     => 'aracode_atencion@gmail.com'
         ]);
@@ -132,6 +132,22 @@ return new class extends Migration
             'control_type'      => 'sa',
             'json_query_data'   => '[{"value": "1","label":"OpenAI"},{"value": "2","label":"Gemini AI"}]',
             'value_default'     => 2
+        ]);
+
+        Parameter::create([
+            'parameter_code'    => 'P000016',
+            'description'       => 'Destino para guardar certificado del estudiante',
+            'control_type'      => 'rdj',
+            'json_query_data'   => '[{"value": "1","label":"Enlace del archivo en repositorios externos"},{"value": "2","label":"Guardar imagen en local o generar certificado automático"}]',
+            'value_default'     => 1
+        ]);
+
+        Parameter::create([
+            'parameter_code'    => 'P000017',
+            'description'       => 'Correo Electronico administrador 1',
+            'control_type'      => 'in',
+            'json_query_data'   => null,
+            'value_default'     => 'aracode_atencion@gmail.com'
         ]);
     }
 

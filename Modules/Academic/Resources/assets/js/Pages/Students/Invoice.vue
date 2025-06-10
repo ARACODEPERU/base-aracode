@@ -7,6 +7,7 @@
     import { useForm, Link, router } from "@inertiajs/vue3";
     import Swal2 from 'sweetalert2';
     import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+    import SearchClients from './Partials/SearchClients.vue';
 
     const props = defineProps({
         student: {
@@ -44,7 +45,11 @@
         standardIdentityDocument: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        departments: {
+            type: Object,
+            default: () => ({}),
+        },
     });
 
 
@@ -52,6 +57,7 @@
 
     const form = useForm({
         client_id: props.student.person.id,
+        client_name: props.student.person.number+"-"+props.student.person.full_name,
         client_rzn_social: props.student.person.full_name,
         client_ubigeo: props.student.person.ubigeo,
         client_dti: props.student.person.document_type_id,
@@ -277,6 +283,7 @@
     };
 
     const calculateTotals = (data) => {
+
         let c = parseFloat(data.quantity) ?? 0;
         let p = parseFloat(data.amount) ?? 0;
         let d = parseFloat(data.discount) ?? 0;
@@ -319,7 +326,42 @@
         form.total_igv = ti.toFixed(2);
         form.items.push(data);
         form.payments[0].amount = form.total;
+    }
 
+    const calculateTotalsInputs = (key) => {
+
+        let c = parseFloat(form.items[key].quantity) ?? 0;
+        let p = parseFloat(form.items[key].amount) ?? 0;
+        let d = parseFloat(form.items[key].discount) ?? 0;
+
+        let vu = p / taxes.value.nfactorIGV; //valor unitario
+        let fa = ((d * 100) / p) / 100; //factor del descuento
+        let md = fa * vu * c; //monto del descuento
+        let bi = (vu * c) - md; //base igv
+        let mi = bi * taxes.value.rfactorIGV; //total igv por item
+        let st = ((vu * c) - md) + mi;
+        let vs = (vu * c) - md;
+        // Verificar si el resultado es NaN y asignar 0 en su lugar
+        if (isNaN(st)) {
+            st = 0;
+        }
+        if (isNaN(mi)) {
+            mi = 0;
+        }
+        if (isNaN(vs)) {
+            vs = 0;
+        }
+
+        form.items[key].m_igv = mi.toFixed(2);
+        form.items[key].total = st.toFixed(2);
+        form.items[key].v_sale = vs.toFixed(2);
+
+        // Calcular la suma de los totales de todos los items
+        form.total = form.items.reduce((acc, item) => acc + parseFloat(item.total), 0).toFixed(2);
+        form.total_discount = form.items.reduce((acc, item) => acc + (parseFloat(item.discount)*c), 0).toFixed(2);
+        form.total_taxed = form.items.reduce((acc, item) => acc + parseFloat(item.v_sale), 0).toFixed(2);
+        form.total_igv = form.items.reduce((acc, item) => acc + parseFloat(item.m_igv), 0).toFixed(2);
+        form.payments[0].amount = form.total;
     }
 
     const removeCalculateTotals = (key) => {
@@ -329,6 +371,7 @@
         form.total_taxed = (parseFloat(form.total_taxed) - parseFloat(form.items[key].v_sale)).toFixed(2);
         form.total_igv = (parseFloat(form.total_igv) - parseFloat(form.items[key].m_igv)).toFixed(2);
         form.payments[0].amount = form.total;
+
     }
 
     const saveDocument = () => {
@@ -507,6 +550,58 @@
         let url = route('saledocuments_download',[id, type,file])
         window.open(url, "_blank");
     }
+
+    const isEdit = ref(false);
+
+    const displayModalClientSearch = ref(false);
+    const saleDocumentTypesId = ref({});
+
+    const openModalClientSearch = () => {
+        displayModalClientSearch.value = true;
+        saleDocumentTypesId.value = form.sale_documenttype_id
+    }
+    const closeModalClientSearch = () => {
+        saleDocumentTypesId.value =  null;
+        displayModalClientSearch.value = false;
+    }
+
+const getDataClient = async (data) => {
+        if(form.sale_documenttype_id == 2){
+            form.client_id = data.id;
+            form.client_name = data.number+"-"+data.full_name;
+            form.client_rzn_social = data.full_name;
+            form.client_ubigeo_description = data.city;
+            form.client_ubigeo = data.ubigeo;
+            form.client_direction = data.address;
+            form.client_dti = data.document_type_id;
+            form.client_number = data.number;
+            form.client_phone = data.telephone;
+            form.client_email = data.email;
+        }else{
+            if(data.document_type_id == '6'){
+                form.client_id = data.id;
+                form.client_name = data.number+"-"+data.full_name;
+                form.client_ubigeo_description = data.city;
+                form.client_ubigeo = data.ubigeo;
+                form.client_direction = data.address;
+                form.client_dti = data.document_type_id;
+                form.client_number = data.number;
+                form.client_phone = data.telephone;
+                form.client_email = data.email;
+                form.client_rzn_social = data.full_name;
+            }else{
+                Swal2.fire({
+                    title: 'Información Importante',
+                    text: "El cliente no cuenta con ruc para emitir una factura",
+                    icon: 'info',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            }
+        }
+        displayModalClientSearch.value = false;
+
+    }
 </script>
 
 <template>
@@ -521,6 +616,7 @@
                         </div>
                         <div class="space-y-1 mt-6 text-gray-500 dark:text-gray-400">
                             <div>{{ $page.props.company.fiscal_address }}</div>
+                            <div>{{ $page.props.company.ruc }}</div>
                             <div>{{ $page.props.company.email }}</div>
                             <div>{{ $page.props.company.phone }}</div>
                         </div>
@@ -562,10 +658,20 @@
                 </div>
                 <hr class="border-[#e0e6ed] dark:border-[#1b2e4b] my-6" />
                 <div class="mt-8 px-4">
-                    <div class="flex justify-between lg:flex-row flex-col">
+                    <div class="flex justify-between items-center">
                         <div class="w-full ltr:lg:mr-6 rtl:lg:ml-6 mb-6">
-                            <div class="text-xl">Cliente :-</div>
+                            <div class="text-xl">Cliente</div>
                         </div>
+                        <button @click="openModalClientSearch" type="button" class="btn btn-danger btn-sm text-xs uppercase">BUSCAR</button>
+                        <SearchClients
+                            :display="displayModalClientSearch"
+                            :closeModalClient="closeModalClientSearch"
+                            @clientId="getDataClient"
+                            :clientDefault="client"
+                            :documentTypes="standardIdentityDocument"
+                            :saleDocumentTypes="saleDocumentTypesId"
+                            :ubigeo="departments"
+                        />
                     </div>
                     <div class="grid sm:grid-cols-2 gap-6">
                         <div class="">
@@ -646,7 +752,7 @@
                 <div class="mt-8">
                     <div class="flex justify-between lg:flex-row flex-col">
                         <div class="w-full ltr:lg:mr-6 rtl:lg:ml-6 mb-6">
-                            <div class="text-xl px-4">Cobros pendientes :-</div>
+                            <div class="text-xl px-4">Cobros pendientes </div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -696,17 +802,17 @@
                 <div class="mt-8">
                     <div class="flex justify-between lg:flex-row flex-col">
                         <div class="w-full ltr:lg:mr-6 rtl:lg:ml-6 mb-6">
-                            <div class="text-xl px-4">Detalles de la compra :-</div>
+                            <div class="text-xl px-4">Detalles de la compra</div>
                         </div>
                     </div>
                     <div class="table-responsive">
                         <table class="w-full text-sm text-left rtl:text-right">
                             <thead class="text-xs text-white uppercase bg-blue-600 border-b border-t border-blue-400 dark:text-white">
                                 <tr>
-                                    <th class="w-1 bg-blue-600"></th>
+                                    <th class="w-8 bg-blue-600"></th>
                                     <th class="bg-blue-600">Item</th>
-                                    <th class="w-1 bg-blue-600">Cantidad</th>
-                                    <th class="w-1 bg-blue-600">Precio</th>
+                                    <th class="w-20 bg-blue-600">Cantidad</th>
+                                    <th class="w-20 bg-blue-600">Precio</th>
                                     <th class="bg-blue-600">Total</th>
                                 </tr>
                             </thead>
@@ -719,7 +825,7 @@
                                 <template v-for="(item, i) in form.items" :key="i">
                                     <tr class="align-center">
                                         <td class="border-b border-blue-400">
-                                            <button type="button" @click="removeItem(item, i)" class="text-primary">
+                                            <button type="button" @click="removeItem(item, i)" class="text-primary p-0">
                                                 <icon-x class="w-5 h-5" />
                                             </button>
                                         </td>
@@ -727,8 +833,16 @@
                                             <!-- <span>{{ item.title }}</span> -->
                                             <textarea class="form-textarea text-primary" placeholder="Enter Description" v-model="item.title"></textarea>
                                         </td>
-                                        <td class="text-primary text-right border-b border-blue-400">{{ item.quantity }}</td>
-                                        <td class="text-primary text-right border-b border-blue-400">{{ item.amount }}</td>
+                                        <td class="text-primary text-right border-b border-blue-400 w-20 px-1">{{ item.quantity }}</td>
+                                        <td class="text-primary text-right border-b border-blue-400">
+
+                                            <input v-model="item.amount"
+                                            @input="calculateTotalsInputs(i)"
+                                            :disabled="isEdit ? true : false"
+                                            :style="isEdit ? 'cursor: not-allowed': ''"
+                                            :class="isEdit ? 'bg-gray-100' : ''"
+                                            class="form-input form-input-sm text-right w-20 px-1" type="text" />
+                                        </td>
                                         <td class="text-primary text-right border-b border-blue-400">S/. {{ item.amount * item.quantity }}</td>
                                     </tr>
                                 </template>

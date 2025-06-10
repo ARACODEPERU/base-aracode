@@ -611,6 +611,16 @@ class AcaStudentController extends Controller
 
         $standardIdentityDocument = DB::table('identity_document_type')->get();
 
+        $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
+            ->join('departments', 'provinces.department_id', 'departments.id')
+            ->select(
+                'districts.id AS district_id',
+                'districts.name AS district_name',
+                'provinces.name AS province_name',
+                'departments.name AS department_name',
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS city_name")
+            )
+            ->get();
 
         return Inertia::render('Academic::Students/Invoice', [
             'payments' => $payments,
@@ -624,7 +634,8 @@ class AcaStudentController extends Controller
             ),
             'registrationCourses' => $registrationCourses,
             'subscriptions' => $subscriptions,
-            'standardIdentityDocument' => $standardIdentityDocument
+            'standardIdentityDocument' => $standardIdentityDocument,
+            'departments'       => $ubigeo,
         ]);
     }
 

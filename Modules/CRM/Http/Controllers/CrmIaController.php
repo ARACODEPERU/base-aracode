@@ -4,6 +4,7 @@ namespace Modules\CRM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
+use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -16,6 +17,8 @@ use Modules\CRM\Entities\CrmMessage;
 use Modules\CRM\Entities\CrmParticipant;
 use Modules\CRM\Entities\CrmUser;
 use Modules\CRM\Events\SendMessage;
+use Illuminate\Support\Facades\Mail;
+use Modules\CRM\Emails\NotifyChatMessage;
 
 class CrmIaController extends Controller
 {
@@ -159,6 +162,17 @@ class CrmIaController extends Controller
             'answer_ai' => false
         ]);
 
+        $data = [
+            'fullName' => Person::find($personId)->value('full_name'),
+            'message' => $request->get('text')
+        ];
+
+        $P000013 = Parameter::where('parameter_code', 'P000013')->value('value_default');
+        $P000017 = Parameter::where('parameter_code', 'P000017')->value('value_default');
+
+        Mail::to($P000013)
+            ->cc($P000017)
+            ->send(new NotifyChatMessage($data));
         // Devolver la conversación con los mensajes
         broadcast(new SendMessage($participants, $message, ['ofUserId' => $personId], $conversationId));
 

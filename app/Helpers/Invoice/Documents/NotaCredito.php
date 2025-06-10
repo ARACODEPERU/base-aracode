@@ -69,6 +69,7 @@ class NotaCredito
                 //return array('success' => $res->isSuccess(), 'details' => $this->util->getErrorResponse($res->getError()));
 
             }
+
             $document->invoice_response_code = $codeError;
             $document->invoice_response_description = $messageError;
             $document->invoice_notes = $notes;

@@ -350,9 +350,6 @@ class AcaSaleDocumentController extends Controller
     public function sendEmailBoleta(Request $request)
     {
 
-
-        $P000013 = Parameter::where('parameter_code', 'P000013')->value('value_default');
-
         $person_email = $request->get('person_email');
         $person_name = $request->get('person_name');
         $document_id = $request->get('document_id');
