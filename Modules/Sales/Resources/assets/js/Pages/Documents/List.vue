@@ -230,92 +230,92 @@
         });
     }
 
-const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
-}
+    const formatDate = (dateString) => {
+        const date = new Date(dateString)
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`
+    }
 
-const createFormReason = () => {
+    const createFormReason = () => {
 
-    let formHTML = document.createElement('form');
-    formHTML.classList.add('max-w-sm', 'mx-auto');
+        let formHTML = document.createElement('form');
+        formHTML.classList.add('max-w-sm', 'mx-auto');
 
 
-    let rLabel = document.createElement('label');
-    rLabel.setAttribute('for', 'ctnTextareaReason');
-    rLabel.classList.add('text-left','text-sm','mt-4');
-    rLabel.textContent = 'Ingresar motivo de anulacion';
+        let rLabel = document.createElement('label');
+        rLabel.setAttribute('for', 'ctnTextareaReason');
+        rLabel.classList.add('text-left','text-sm','mt-4');
+        rLabel.textContent = 'Ingresar motivo de anulacion';
 
-    let rInput = document.createElement('textarea');
-    rInput.id = 'ctnTextareaReason';
-    rInput.classList.add(
-        'form-textarea'
-    );
+        let rInput = document.createElement('textarea');
+        rInput.id = 'ctnTextareaReason';
+        rInput.classList.add(
+            'form-textarea'
+        );
 
-    rInput.required = true;
-    rInput.rows = 3;
+        rInput.required = true;
+        rInput.rows = 3;
 
-    formHTML.appendChild(rLabel);
-    formHTML.appendChild(rInput);
+        formHTML.appendChild(rLabel);
+        formHTML.appendChild(rInput);
 
-    return formHTML;
+        return formHTML;
 
-}
+    }
 
-const cancelDocument = (index, item) => {
-    Swal.fire({
-        icon: 'question',
-        title: '¿Estas seguro?',
-        text: "¡No podrás revertir esto!",
-        showCancelButton: true,
-        confirmButtonText: '¡Sí, Anularlo!',
-        cancelButtonText: '¡No, cancelar!',
-        padding: '2em',
-        customClass: 'sweet-alerts',
-    }).then((result) => {
-        if (result.value) {
-            Swal.fire({
-                html: createFormReason(),
-                showCloseButton: true,
-                showCancelButton: true,
-                focusConfirm: false,
-                confirmButtonText: 'Aceptar',
-                cancelButtonText: 'Cancelar',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-                showLoaderOnConfirm: true,
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                preConfirm: async (input) => {
-                    let textarea = document.getElementById("ctnTextareaReason").value;
-                    let resp = null;
-                    if(textarea){
-                        resp = axios.post(route('saledocuments_cancel_document'), {
-                            reason: textarea,
-                            id: item.document_id,
-                            type: item.invoice_type_doc
-                        }).then((res) => {
-                            if (!res.data.success) {
-                                Swal.showValidationMessage(res.data.alert)
-                            }
-                            return res
-                        });
-                    }else{
-                        Swal.showValidationMessage('El motivo es obligatorio')
+    const cancelDocument = (index, item) => {
+        Swal.fire({
+            icon: 'question',
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto!",
+            showCancelButton: true,
+            confirmButtonText: '¡Sí, Anularlo!',
+            cancelButtonText: '¡No, cancelar!',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (result.value) {
+                Swal.fire({
+                    html: createFormReason(),
+                    showCloseButton: true,
+                    showCancelButton: true,
+                    focusConfirm: false,
+                    confirmButtonText: 'Aceptar',
+                    cancelButtonText: 'Cancelar',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                    showLoaderOnConfirm: true,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    preConfirm: async (input) => {
+                        let textarea = document.getElementById("ctnTextareaReason").value;
+                        let resp = null;
+                        if(textarea){
+                            resp = axios.post(route('saledocuments_cancel_document'), {
+                                reason: textarea,
+                                id: item.document_id,
+                                type: item.invoice_type_doc
+                            }).then((res) => {
+                                if (!res.data.success) {
+                                    Swal.showValidationMessage(res.data.alert)
+                                }
+                                return res
+                            });
+                        }else{
+                            Swal.showValidationMessage('El motivo es obligatorio')
+                        }
+                        return resp;
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        showMessage('El documento fue anulado correctamente');
+                        //refreshTable();
                     }
-                    return resp;
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    showMessage('El documento fue anulado correctamente');
-                    //refreshTable();
-                }
-                refreshTable();
-            });
-        }
-    });
-}
+                    refreshTable();
+                });
+            }
+        });
+    }
 
     const showMessage = (msg = '', type = 'success') => {
         const toast = Swal.mixin({
@@ -353,13 +353,16 @@ const cancelDocument = (index, item) => {
     }
 
     const documentTable = ref(null);
+    let instance = null;
+
+    onMounted(() => {
+        instance = documentTable.value?.dt;
+    });
 
     const refreshTable = () => {
-        const dataTableInstance = documentTable.value?.dt; // accede a la instancia del DataTable
-        if (dataTableInstance) {
-            setInterval(function () {
-                dataTableInstance.ajax.reload();
-            }, 30000);
+        // accede a la instancia del DataTable
+        if (instance) {
+            instance.ajax.url(route('saledocuments_table_document')).load();
         }
     };
 

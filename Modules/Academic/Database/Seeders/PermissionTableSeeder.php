@@ -49,7 +49,7 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'aca_cursos_examen_configuracion']));
         array_push($permissions, Permission::create(['name' => 'aca_cursos_examen_ver']));
         array_push($permissions, Permission::create(['name' => 'aca_miscursos']));
-
+        array_push($permissions, Permission::create(['name' => 'aca_cursos_revisar_examenes']));
         array_push($permissions, Permission::create(['name' => 'aca_estudiante_listar_comprobantes']));
         array_push($permissions, Permission::create(['name' => 'aca_estudiante_cobrar']));
         array_push($permissions, Permission::create(['name' => 'aca_certificados_listado']));

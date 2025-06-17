@@ -380,9 +380,7 @@ class MercadopagoController extends Controller
                         $sale->mercado_payment_id = $payment->id;
                         $sale->mercado_payment = json_encode($payment);
 
-                        ////enviar correo de agradecimiento///
-                        Mail::to($sale->email)
-                            ->send(new CratitudeCoursePurchase(OnliSale::with('details.course')->where('id', $sale->id)->first()));
+
 
                         $message = 'Pago aprobado';
                         break;
@@ -399,6 +397,13 @@ class MercadopagoController extends Controller
 
                 $sale->save();
 
+                if($payment->status == 'approved'){
+                    ////enviar correo de agradecimiento///
+                    Mail::to($sale->email)
+                        ->send(new CratitudeCoursePurchase(OnliSale::with('details.course')->where('id', $sale->id)->first()));
+
+                }
+
                 return [
                     'payment' => $payment,
                     'message' => $message
@@ -409,6 +414,7 @@ class MercadopagoController extends Controller
             $url = route('aca_mycourses');
 
             $payment = $res['payment'];
+
             return response()->json([
                 'status' => $payment->status,
                 //'message' => $payment->status_detail,

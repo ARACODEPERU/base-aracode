@@ -4,6 +4,7 @@ namespace Modules\Academic\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Academic\Database\factories\AcaExamFactory;
 
@@ -28,5 +29,10 @@ class AcaExam extends Model
     public function questions(): HasMany
     {
         return $this->hasMany(AcaExamQuestion::class, 'exam_id');
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(AcaCourse::class,'course_id');
     }
 }

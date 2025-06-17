@@ -4,6 +4,7 @@ namespace Modules\Academic\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Academic\Database\factories\AcaStudentExamFactory;
 
 class AcaStudentExam extends Model
@@ -16,14 +17,25 @@ class AcaStudentExam extends Model
     protected $fillable = [
         'exam_id',
         'student_id',
-        'duration',
+        'date_start',
+        'date_End',
         'punctuation',
         'status',
         'details'
     ];
 
-    protected static function newFactory(): AcaStudentExamFactory
+    public function getDetailsAttribute($value)
     {
-        //return AcaStudentExamFactory::new();
+        return json_decode($value, true);
+    }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(AcaStudent::class,'student_id');
+    }
+
+    public function exam(): BelongsTo
+    {
+        return $this->belongsTo(AcaExam::class,'exam_id');
     }
 }

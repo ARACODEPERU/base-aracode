@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('exam_id');
             $table->unsignedBigInteger('student_id');
-            $table->time('duration')->nullable();
+            $table->datetime('date_start')->nullable();
+            $table->datetime('date_end')->nullable();
             $table->string('punctuation',2)->nullable();
             $table->string('status',10)->default('terminado')->comment('terminado,pendiente,calificado');
             $table->json('details')->nullable();

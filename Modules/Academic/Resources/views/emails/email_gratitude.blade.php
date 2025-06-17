@@ -185,9 +185,9 @@
                 <div class="card">
                     <img width="100%" src="{{ $course->image }}" alt="product" />
                     <h4 style="margin-top: 5px;">{{ $course->description }}</h4>
-                    <p style="color: #4f46e5; font-size: 16px; font-weight: 700; margin-top: -10px;">
+                    {{-- <p style="color: #4f46e5; font-size: 16px; font-weight: 700; margin-top: -10px;">
                         S/. {{ $course->price }}
-                    </p>
+                    </p> --}}
                 </div>
             @endforeach
             {{-- <div class="card">

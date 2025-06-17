@@ -7,7 +7,7 @@ import {
     faRocket,
     faCertificate,
     faPlay,
-    faUserGroup
+    faMugHot
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -89,6 +89,14 @@ const menuAcademic = {
             icom: faBookOpen,
             permissions: "aca_miscursos",
             id: 'btnMenuMycourses'
+        },
+        {
+            route: route("aca_student_exam_review_exams"),
+            status: false,
+            text: "Revisar examenes",
+            icom: faMugHot,
+            permissions: "aca_cursos_revisar_examenes",
+            id: 'btnReviewExams'
         }
     ],
 };

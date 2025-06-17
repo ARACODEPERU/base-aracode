@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Academic\Entities\AcaExamAnswer;
 use Illuminate\Support\Facades\DB;
+use Modules\Academic\Entities\AcaStudentExam;
 
 class AcaExamAnswerController extends Controller
 {
@@ -66,28 +67,48 @@ class AcaExamAnswerController extends Controller
         ]);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function gradeExamResponse(Request $request)
     {
-        return view('academic::show');
-    }
+        $examStudent = AcaStudentExam::find($request->get('exam_id'));
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('academic::edit');
-    }
+        // Obtener y asegurarnos de que sea un array
+        $details = $examStudent->details;
+        if (!is_array($details)) {
+            $details = json_decode($details, true);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        //
+        // Obtener datos del frontend
+        $questionId = (string) $request->input('qualifies.question_id');
+        $newScore = $request->input('qualifies.punctuation');
+        $total_score = 0;
+        // Actualizar puntuación de la pregunta correspondiente
+        foreach ($details as &$item) {
+            if ((string) $item['id'] === $questionId) {
+                $item['punctuation'] = (int) $newScore;
+            }
+            $total_score += is_numeric($item['punctuation']) ? (int) $item['punctuation'] : 0;
+        }
+
+        // Verificar si todas las preguntas ya están calificadas (todas con puntuación numérica)
+        $allGraded = collect($details)->every(function ($item) {
+            return is_numeric($item['punctuation']);
+        });
+
+        // Cambiar estado si ya está completamente calificado
+        if ($allGraded) {
+            $examStudent->status = 'calificado'; // Puedes cambiar a otro valor según tu lógica
+        }
+
+        // Guardar los cambios
+        $examStudent->details = $details;
+        $examStudent->punctuation = $total_score;
+        $examStudent->save();
+
+        return response()->json([
+            'message' => 'Puntuación actualizada correctamente.',
+            'status' => $examStudent->status,
+            'punctuation' => $examStudent->punctuation,
+        ]);
     }
 
     /**

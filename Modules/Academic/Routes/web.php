@@ -341,6 +341,16 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->get('student/exam/{id}/solve', [AcaExamController::class, 'solve'])
         ->name('aca_student_exam_solve');
 
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_ver'])
+        ->post('student/exam/solve/store', [AcaExamController::class, 'storeStudent'])
+        ->name('aca_student_exam_solve_store');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_revisar_examenes'])
+        ->get('student/review/exams', [AcaExamController::class, 'reviewExams'])
+        ->name('aca_student_exam_review_exams');
+
+    Route::get('student/review/exams/table', [AcaExamController::class, 'getAlumnsExam'])->name('aca_student_exam_review_exams_table');
+    Route::post('student/grade/exam/response/store', [AcaExamAnswerController::class, 'gradeExamResponse'])->name('aca_student_grade_exam_response_store');
     ////////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
     Route::post('buy/course/items/mercadopago', [MercadopagoController::class, 'createItemsPreference'])->name('academic_create_items_preference_course');
