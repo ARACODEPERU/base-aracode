@@ -328,6 +328,7 @@ const saveSocialNetworks = () => {
             formAccount.cci = item.cci;
             formAccount.currency_type_id = item.currency_type_id;
             formAccount.status = item.status == 1 ? true : false;
+            formAccount.invoice_show = item.invoice_show == 1 ? true : false;
         }
         displayModalBankAccount.value = true;
     }

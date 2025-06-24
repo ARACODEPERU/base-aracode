@@ -27,6 +27,7 @@ use Modules\Onlineshop\Entities\OnliSaleDetail;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Emails\StudentElectronicTicket;
 use App\Helpers\Invoice\Documents\Boleta;
+use App\Helpers\Invoice\Documents\Factura;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Jobs\SendBoletaJob;
@@ -360,14 +361,17 @@ class AcaSaleDocumentController extends Controller
 
         $dataFile = $this->generateBoletaPDF($document_id);
 
+
         $data = [
             'from_mail' => env('MAIL_FROM_ADDRESS'),
             'from_name' => env('MAIL_FROM_NAME'),
             'title' => 'Hola! Llegó tu comprobante electrónico',
             'for_mail' => $person_email,
             'for_name' => $person_name,
-            'file_path' => $dataFile['filePath'],
-            'file_name' => $dataFile['fileName']
+            'file_path' => $dataFile["pdf"]['filePath'],
+            'file_name' => $dataFile["pdf"]['fileName'],
+            'xml_file_path' => $dataFile["xml"]['filePath'],
+            'xml_file_name' => $dataFile["xml"]['fileName'],
         ];
 
         try {
@@ -416,16 +420,19 @@ class AcaSaleDocumentController extends Controller
         try {
             $format = 'A4';
             $boleta = new Boleta();
-
+            $factura = new Factura();
             // Intentar obtener la boleta
-            $res = $boleta->getBoletatDomPdf($id, $format);
-
+            $resb = $boleta->getBoletatDomPdf($id, $format); //metodo para generar pdf
+            $resF = $factura->getFacturaXML($id); // para generar el xml
             // Verificar si se obtuvo un resultado válido
-            if (!$res) {
+            if (!$resb) {
                 throw new \Exception("No se pudo generar la boleta.");
             }
 
-            return $res;
+            return array(
+                "pdf" => $resb,
+                "xml" => $resF
+            );
         } catch (\Exception $e) {
             // Lanzar una excepción con un mensaje descriptivo
             throw new \Exception("Error al generar la boleta: " . $e->getMessage());

@@ -9,6 +9,7 @@
     import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
     import iconExcel from "@/Components/vristo/icon/icon-excel.vue";
+    import iconPencil from '@/Components/vristo/icon/icon-pencil.vue';
     import ModalLarge from "@/Components/ModalLarge.vue";
     import { ref } from 'vue';
     import Navigation from "@/Components/vristo/layout/Navigation.vue";
@@ -171,59 +172,90 @@
             <template v-if="students.data && students.data.length > 0">
                 <ConfigProvider>
                     <div class="mt-5 p-0 border-0 overflow-hidden">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div v-for="(student, index) in students.data" class="relative">
+                        <div class="grid 2xl:grid-cols-4 xl:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6 w-full">
+                            <template v-for="(student, index) in students.data">
                                 <!-- Badge "Nuevo" en la parte superior izquierda -->
-                                <div v-if="student.new_student"  class="absolute top-6 left-10 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold py-1 px-3 rounded ">
+                                <!-- <div v-if="student.new_student"  class="absolute top-6 left-10 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold py-1 px-3 rounded ">
                                     Nuevo
-                                </div>
-                                <div class="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-                                    <div class="flex justify-end px-4 pt-4">
-                                        <div class="dropdown">
-                                            <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-start' : 'bottom-end'" offsetDistance="0" class="align-middle">
-                                                <button type="button" class="btn p-0 rounded-none border-0 shadow-none dropdown-toggle text-black dark:text-white-dark hover:text-primary dark:hover:text-primary">
-                                                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 3">
-                                                        <path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>
-                                                    </svg>
-                                                </button>
-                                                <template #content="{ close }">
-                                                    <ul @click="close()" class="whitespace-nowrap">
-                                                        <li>
-                                                            <Link :href="route('aca_students_edit', student.id)" type="Button" class="dark:text-white">
-                                                                Editar
-                                                            </Link>
-                                                        </li>
-                                                        <li v-can="'aca_estudiante_cobrar'">
-                                                            <Link :href="route('aca_student_invoice', student.id)" type="Button" class="text-warning">
-                                                                Cobrar
-                                                            </Link>
-                                                        </li>
-                                                        <li v-can="'aca_estudiante_listar_comprobantes'">
-                                                            <Link :href="route('aca_student_invoice_list', student.id)" type="Button" class="text-info">
-                                                                Lista de Comprobantes
-                                                            </Link>
-                                                        </li>
-                                                    </ul>
-                                                </template>
-                                            </Popper>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-center pb-10">
+                                </div> -->
+                                <div class="bg-white dark:bg-[#1c232f] rounded-md overflow-hidden text-center shadow relative">
+                                    <div :class="`bg-white/40 rounded-t-md bg-[url('/themes/vristo/images/notification-bg.png')] bg-center bg-cover p-6 pb-0`">
                                         <template v-if="student.people_image">
-                                            <img :src="getImage(student.people_image)" style="width: 96px; height: 96px;" class="mb-3 rounded-full shadow-lg" :alt="student.full_name"/>
+                                            <img :src="getImage(student.people_image)" class="object-contain w-4/5 max-h-40 mx-auto" :alt="student.full_name"/>
                                         </template>
                                         <template v-else>
-                                            <img :src="'https://ui-avatars.com/api/?name='+student.full_name+'&size=96&rounded=true'" class="w-24 h-24 mb-3 rounded-full shadow-lg" :alt="student.full_name"/>
+                                            <img :src="'https://ui-avatars.com/api/?name='+student.full_name+'&rounded=false'" class="object-contain w-4/5 max-h-40 mx-auto" :alt="student.full_name"/>
                                         </template>
-                                        <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ student.number }}</h5>
-                                        <span class="text-sm text-gray-500 dark:text-gray-400 p-2">{{ student.full_name }}</span>
-                                        <div class="flex mt-4 space-x-3 mb-2 md:mt-6">
-                                            <Link :href="route('aca_students_registrations_create',student.id)" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Matriculas</Link>
-                                            <Link v-can="'aca_estudiante_certificados_crear'" :href="route('aca_students_certificates_create',student.id)" class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-700 dark:focus:ring-gray-700">Certificados</Link>
+                                    </div>
+                                    <div class="px-6 pb-24 -mt-10 relative">
+                                        <div class="shadow-md bg-white dark:bg-gray-900 rounded-md px-2 py-4">
+                                            <div class="text-xl">{{ student.full_name }}</div>
+                                            <div class="text-white-dark">{{ student.role }}</div>
+                                            <div class="flex items-center justify-between flex-wrap mt-6 gap-3">
+                                                <div class="flex-auto">
+                                                    <div class="text-info">{{ student.countCourses ?? 0 }}</div>
+                                                    <div>Cursos</div>
+                                                </div>
+                                                <div class="flex-auto">
+                                                    <div class="text-info">{{ student.countSubscriptions ?? 0 }}</div>
+                                                    <div>Suscripciones</div>
+                                                </div>
+                                                <div class="flex-auto">
+                                                    <div class="text-info">{{ student.countCertificates ?? 0 }}</div>
+                                                    <div>Certificados</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-4">
+                                                <ul class="flex space-x-4 rtl:space-x-reverse items-center justify-center">
+                                                    <li>
+                                                        <Link :href="route('aca_students_edit', student.id)" v-tippy="{ content: 'Editar', placement: 'bottom'}" class="btn btn-outline-primary p-0 h-7 w-7 rounded-full">
+                                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                                <path fill="currentColor" d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/>
+                                                            </svg>
+                                                        </Link>
+                                                    </li>
+                                                    <li v-can="'aca_estudiante_cobrar'">
+                                                        <Link :href="route('aca_student_invoice', student.id)" v-tippy="{ content: 'Cobrar', placement: 'bottom'}" class="btn btn-outline-primary p-0 h-7 w-7 rounded-full">
+                                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                                <path fill="currentColor" d="M64 0C46.3 0 32 14.3 32 32l0 64c0 17.7 14.3 32 32 32l80 0 0 32-57 0c-31.6 0-58.5 23.1-63.3 54.4L1.1 364.1C.4 368.8 0 373.6 0 378.4L0 448c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-69.6c0-4.8-.4-9.6-1.1-14.4L488.2 214.4C483.5 183.1 456.6 160 425 160l-217 0 0-32 80 0c17.7 0 32-14.3 32-32l0-64c0-17.7-14.3-32-32-32L64 0zM96 48l160 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L96 80c-8.8 0-16-7.2-16-16s7.2-16 16-16zM64 432c0-8.8 7.2-16 16-16l352 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L80 448c-8.8 0-16-7.2-16-16zm48-168a24 24 0 1 1 0-48 24 24 0 1 1 0 48zm120-24a24 24 0 1 1 -48 0 24 24 0 1 1 48 0zM160 344a24 24 0 1 1 0-48 24 24 0 1 1 0 48zM328 240a24 24 0 1 1 -48 0 24 24 0 1 1 48 0zM256 344a24 24 0 1 1 0-48 24 24 0 1 1 0 48zM424 240a24 24 0 1 1 -48 0 24 24 0 1 1 48 0zM352 344a24 24 0 1 1 0-48 24 24 0 1 1 0 48z"/>
+                                                            </svg>
+                                                        </Link>
+                                                    </li>
+                                                    <li v-can="'aca_estudiante_listar_comprobantes'">
+                                                        <Link :href="route('aca_student_invoice_list', student.id)" v-tippy="{ content: 'Lista de comprobantes', placement: 'bottom'}" class="btn btn-outline-primary p-0 h-7 w-7 rounded-full">
+                                                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                                                <path fill="currentColor" d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM64 80c0-8.8 7.2-16 16-16l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L80 96c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16zm128 72c8.8 0 16 7.2 16 16l0 17.3c8.5 1.2 16.7 3.1 24.1 5.1c8.5 2.3 13.6 11 11.3 19.6s-11 13.6-19.6 11.3c-11.1-3-22-5.2-32.1-5.3c-8.4-.1-17.4 1.8-23.6 5.5c-5.7 3.4-8.1 7.3-8.1 12.8c0 3.7 1.3 6.5 7.3 10.1c6.9 4.1 16.6 7.1 29.2 10.9l.5 .1s0 0 0 0s0 0 0 0c11.3 3.4 25.3 7.6 36.3 14.6c12.1 7.6 22.4 19.7 22.7 38.2c.3 19.3-9.6 33.3-22.9 41.6c-7.7 4.8-16.4 7.6-25.1 9.1l0 17.1c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-17.8c-11.2-2.1-21.7-5.7-30.9-8.9c0 0 0 0 0 0c-2.1-.7-4.2-1.4-6.2-2.1c-8.4-2.8-12.9-11.9-10.1-20.2s11.9-12.9 20.2-10.1c2.5 .8 4.8 1.6 7.1 2.4c0 0 0 0 0 0s0 0 0 0s0 0 0 0c13.6 4.6 24.6 8.4 36.3 8.7c9.1 .3 17.9-1.7 23.7-5.3c5.1-3.2 7.9-7.3 7.8-14c-.1-4.6-1.8-7.8-7.7-11.6c-6.8-4.3-16.5-7.4-29-11.2l-1.6-.5s0 0 0 0c-11-3.3-24.3-7.3-34.8-13.7c-12-7.2-22.6-18.9-22.7-37.3c-.1-19.4 10.8-32.8 23.8-40.5c7.5-4.4 15.8-7.2 24.1-8.7l0-17.3c0-8.8 7.2-16 16-16z"/>
+                                                            </svg>
+                                                        </Link>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="mt-6 grid grid-cols-1 gap-4 ltr:text-left rtl:text-right">
+                                            <div class="flex items-center">
+                                                <div class="flex-none ltr:mr-2 rtl:ml-2">Num. de identificación :</div>
+                                                <div class="truncate text-white-dark">{{ student.number }}</div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="flex-none ltr:mr-2 rtl:ml-2">Email :</div>
+                                                <div class="truncate text-white-dark">{{ student.email }}</div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="flex-none ltr:mr-2 rtl:ml-2">Teléfono :</div>
+                                                <div class="text-white-dark">{{ student.telephone }}</div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <div class="flex-none ltr:mr-2 rtl:ml-2">Dirección :</div>
+                                                <div class="text-white-dark">{{ student.address }}</div>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="mt-6 flex gap-4 absolute bottom-0 w-full ltr:left-0 rtl:right-0 p-6">
+                                        <Link :href="route('aca_students_registrations_create',student.id)" class="btn btn-outline-primary w-1/2">Matriculas</Link>
+                                        <Link v-can="'aca_estudiante_certificados_crear'" :href="route('aca_students_certificates_create',student.id)" class="btn btn-outline-danger w-1/2">Certificados</Link>
+                                    </div>
                                 </div>
-                            </div>
+                            </template>
                         </div>
                         <div>
                             <Pagination :data="students" />

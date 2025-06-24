@@ -332,12 +332,33 @@
             :icon="'/img/lupa-documento.png'"
         >
             <template v-if="saleDetails" #title>
-                VEN-{{ saleDetails.id }}
+                VEN-{{ saleDetails.id }} | {{ saleDetails.student_number }} - {{ saleDetails.student_name }}
             </template>
             <template #message>
                 Detalles de la venta
             </template>
             <template #content>
+                <div class="border rounded-lg py-4 px-4 dark:border-gray-700 mb-6">
+                    <h4 class="mb-4">Información para la Boleta o Factura</h4>
+                    <div class="space-y-3">
+                        <dl class="flex flex-col sm:flex-row gap-1">
+                            <dt class="min-w-40">
+                                <span class="block text-sm text-gray-500 dark:text-neutral-500">Nombre o Razón social:</span>
+                            </dt>
+                            <dd>
+                                <span>{{ saleDetails.invoice_razon_social }}</span>
+                            </dd>
+                        </dl>
+                        <dl class="flex flex-col sm:flex-row gap-1">
+                            <dt class="min-w-40">
+                                <span class="block text-sm text-gray-500 dark:text-neutral-500">DNI o RUC:</span>
+                            </dt>
+                            <dd>
+                                <span>{{ saleDetails.invoice_ruc }}</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
                 <div  v-if="saleDetails" class="relative overflow-x-auto shadow-md sm:rounded-lg">
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -350,7 +371,7 @@
                                 </th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody v-if="saleDetails.details.length > 0">
                             <tr v-for="(row, key) in JSON.parse(saleDetails.details)" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                 <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     <p v-if="row.product.title" class="text-lg">{{ row.product.title }}</p>
@@ -409,7 +430,7 @@
                                                     <template v-if="resEmail.status && resEmail.step == 1">
                                                         <div v-if="resEmail.status">
                                                             <code style="color: #60a5fa;">
-                                                                <span>BOLETA ELECTRONICA: <strong>{{ resEmail.data.document.invoice_serie }}-{{ resEmail.data.document.invoice_correlative }}</strong> CLIENTE:  <strong>{{ resEmail.data.document.client_rzn_social }}</strong>&nbsp;</span>
+                                                                <span>COMPROBANTE: <strong>{{ resEmail.data.document.invoice_serie }}-{{ resEmail.data.document.invoice_correlative }}</strong> CLIENTE:  <strong>{{ resEmail.data.document.client_rzn_social }}</strong>&nbsp;</span>
                                                                 <span style="color: #a9cdf7;">Creado correctamente</span>
                                                             </code>
                                                         </div>

@@ -19,4 +19,5 @@ yarn-error.log
 /.idea
 /.vscode
 /app/Helpers/Invoice/Certificates/*.pem
+!/app/Helpers/Invoice/Certificates/certificate.pem
 

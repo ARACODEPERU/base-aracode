@@ -68,12 +68,20 @@ class AcaStudentController extends Controller
                 'people.birthdate',
                 'people.image AS people_image',
                 'aca_students.created_at',
-                'aca_students.new_student'
+                'aca_students.new_student',
+                DB::raw('(SELECT COUNT(course_id) FROM aca_cap_registrations WHERE student_id=aca_students.id) as countCourses'),
+                DB::raw('(SELECT COUNT(subscription_id) FROM aca_student_subscriptions WHERE student_id=aca_students.id) as countSubscriptions'),
+                DB::raw('(SELECT COUNT(course_id) FROM aca_certificates WHERE student_id=aca_students.id) as countCertificates')
             );
         if (request()->has('search')) {
-            $students->where('people.full_name', 'Like', '%' . request()->input('search') . '%');
-        }
+            $searchTerm = request()->input('search');
 
+            $students->where(function ($query) use ($searchTerm) {
+                $query->where('people.full_name', 'LIKE', '%' . $searchTerm . '%') // Búsqueda parcial por nombre
+                    ->orWhere('people.email', 'LIKE', '%' . $searchTerm . '%')     // Búsqueda parcial por email
+                    ->orWhere('people.number', '=', $searchTerm);                  // ¡Coincidencia EXACTA por DNI!
+            });
+        }
         if (request()->query('sort')) {
             $attribute = request()->query('sort');
             $sort_order = 'ASC';

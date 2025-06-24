@@ -42,6 +42,8 @@ class OnliSaleController extends Controller
                 'onli_sales.*',
                 'people.telephone',
                 'people.email',
+                'people.full_name AS student_name',
+                'people.number AS student_number',
                 DB::raw("(
                     SELECT JSON_ARRAYAGG(
                         JSON_OBJECT(
@@ -50,6 +52,15 @@ class OnliSaleController extends Controller
                             'quantity', osd.quantity,
                             'product', CASE
                                 WHEN osd.entitie = 'Modules\\\Academic\\\Entities\\\AcaCourse' THEN
+                                    (SELECT JSON_OBJECT(
+                                        'id', aca_courses.id,
+                                        'description', aca_courses.description,
+                                        'title', NULL,
+                                        'origin', 'ACA'
+                                    )
+                                    FROM aca_courses
+                                    WHERE aca_courses.id = osd.item_id)
+                                WHEN osd.entitie = 'Modules-Academic-Entities-AcaCourse' THEN
                                     (SELECT JSON_OBJECT(
                                         'id', aca_courses.id,
                                         'description', aca_courses.description,
@@ -83,7 +94,9 @@ class OnliSaleController extends Controller
                     FROM onli_sale_details osd
                     WHERE osd.sale_id = onli_sales.id
                 ) AS details"),
-                'sales.invoice_type'
+                'sales.invoice_type',
+                'sales.invoice_razon_social',
+                'sales.invoice_ruc',
             )
             ->when($inputs, function ($query) use ($search) {
                 $query->whereDate('created_at', '=', $search);

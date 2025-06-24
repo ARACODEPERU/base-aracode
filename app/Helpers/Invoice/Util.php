@@ -194,7 +194,7 @@ final class Util
                 'qr_path' => $qr_path,
                 'status' => $status
             ]);
-            $pdf->setPaper(array(0, 0, 273, 500), 'portrait');
+            $pdf->setPaper(array(0, 0, 273, 1000), 'portrait');
         }
 
 

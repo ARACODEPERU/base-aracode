@@ -53,10 +53,10 @@
             console.log(tableData.value)
         });
     }
-    
+
     const downloadDocument = (id,type,file) => {
         let url = route('saledocuments_download',[id, type,file])
-        window.open(url, "_blank");      
+        window.open(url, "_blank");
     }
 </script>
 <template>
@@ -76,7 +76,7 @@
                 <div class="relative w-full max-w-[870px] rounded-md bg-[linear-gradient(45deg,#fff9f9_0%,rgba(255,255,255,0)_25%,rgba(255,255,255,0)_75%,_#fff9f9_100%)] p-2 dark:bg-[linear-gradient(52.22deg,#0E1726_0%,rgba(14,23,38,0)_18.66%,rgba(14,23,38,0)_51.04%,rgba(14,23,38,0)_80.07%,#0E1726_100%)]">
                     <div class="relative flex flex-col justify-center rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 px-6 lg:min-h-[758px] py-20">
                         <div class="absolute top-6 end-6">
-                        
+
                         </div>
                         <div class="mx-auto w-full max-w-[640px]">
                             <div class="mb-10">
@@ -123,6 +123,7 @@
                                 </div>
                             </form>
                             <div v-if="tableData.length > 0" class="mt-10 relative overflow-x-auto shadow-md sm:rounded-lg">
+
                                 <table class="w-full text-sm text-left rtl:text-right text-blue-100 dark:text-blue-100">
                                     <thead >
                                         <tr>
@@ -137,7 +138,7 @@
                                         <tr class="bg-blue-500 border-b border-blue-400">
                                             <td>
                                                 <div class="flex">
-                                                    <p class="whitespace-nowrap">{{ data.client_rzn_social }} 
+                                                    <p class="whitespace-nowrap">{{ data.client_rzn_social }}
                                                         <span class="block">{{ data.client_number }}</span>
                                                     </p>
                                                 </div>
@@ -152,12 +153,12 @@
                                                         </a>
                                                         <tippy target="edit">Descargar PDF</tippy>
                                                     </li>
-                                                    <!-- <li>
-                                                        <a href="javascript:;" v-tippy:edit>
-                                                            <icon-file-xml />
+                                                    <li>
+                                                        <a @click="downloadDocument(data.id,data.invoice_type_doc,'XML')" href="javascript:;" v-tippy:edit>
+                                                            <icon-file-xml width="35" height="35" />
                                                         </a>
                                                         <tippy target="edit">Descargar XML</tippy>
-                                                    </li> -->
+                                                    </li>
                                                 </ul>
                                             </td>
                                         </tr>

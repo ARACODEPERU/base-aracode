@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\CRM\Http\Controllers\CrmChatbotController;
 use Modules\CRM\Http\Controllers\CrmChatController;
 use Modules\CRM\Http\Controllers\CrmContactsController;
 use Modules\CRM\Http\Controllers\CRMController;
@@ -168,4 +169,7 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_dudas_comunes_edicion'])
         ->delete('common-questions/{id}/destroy', [CrmInformationBankController::class, 'destroy'])
         ->name('crm_common_questions_destroy');
+    Route::middleware(['middleware' => 'permission:crm_chatbot'])
+        ->get('chatbot/index', [CrmChatbotController::class, 'index'])
+        ->name('crm_dasboard_chatbot');
 });

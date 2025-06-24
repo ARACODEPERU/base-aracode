@@ -204,7 +204,7 @@
     } else {
         $logo = public_path('storage' . DIRECTORY_SEPARATOR . $company->logo_document);
     }
-
+    $bankAccounts = \App\Models\BankAccount::with('bank')->where('invoice_show',true)->get();
 @endphp
 
 <body>
@@ -370,13 +370,65 @@
                         </td>
                     </tr>
                 </table>
-                <div class="break">
-                    *************************************
-                </div>
-                <br /><br />
-                <p class="centrado">¡GRACIAS POR SU COMPRA!</p>
             </div>
         </div>
+    </div>
+    <div>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tbody>
+                {{-- El bucle foreach crea una nueva fila (<tr>) para cada cuenta bancaria --}}
+                @foreach ($bankAccounts as $account)
+                    <tr>
+                        {{-- La única celda (<td>) por fila que contendrá toda la información de la cuenta --}}
+                        <td style="padding: 8px;"> {{-- Añadimos padding a la celda principal --}}
+                            <div style="border: 1px solid black;"> {{-- Contenedor con borde para cada cuenta --}}
+                                <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            <td style="border-bottom: 1px solid black; padding-bottom: 8px; padding-left: 12px; font-weight: bold; color: #4a5568;">
+                                                {{-- Tabla interna para la imagen y los dos textos --}}
+                                                <table>
+                                                    <tr>
+                                                        <td style="font-size: 0.60rem; vertical-align: top;">
+                                                            {{ $account->description }}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td style="vertical-align: top;">
+                                                            {{ $account->bank->full_name }}
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td style="padding-top: 8px; padding-bottom: 4px; padding-left: 12px; text-align: left;">
+                                                <b>Número de cuenta:</b> {{ $account->number }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 4px; padding-bottom: 8px; padding-left: 12px; text-align: left;">
+                                                <b>N° de cuenta interbancario (cci):</b> {{ $account->cci }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div style="padding: 8px;text-align:center">
+        <br /><br />
+        <div class="break">
+            *************************************
+        </div>
+        <br /><br />
+        <p class="centrado">¡GRACIAS POR SU COMPRA!</p>
     </div>
 </body>
 

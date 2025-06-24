@@ -579,7 +579,9 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
         .whitespace-nowrap {
             white-space: nowrap;
         }
-
+        .border {
+            border-width: 1px;
+        }
         .border-2 {
             border-width: 2px;
         }
@@ -757,6 +759,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
             /* Rojo con opacidad */
             white-space: nowrap;
         }
+
     </style>
 
 </head>
@@ -769,13 +772,15 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
         $logo = public_path('storage' . DIRECTORY_SEPARATOR . $company->logo_document);
     }
 
+    $bankAccounts = \App\Models\BankAccount::with('bank')->where('invoice_show',true)->get();
+
 @endphp
 
 <body>
     @if ($status == 3)
         <div class="watermark">ANULADO</div>
     @endif
-    <div>
+    <div class="relative">
         <div class="py-4">
             <div class="px-14 py-6">
                 <table class="w-full border-collapse border-spacing-0">
@@ -1108,16 +1113,84 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                     </p>
                 @endif
 
-                <div class="fixed bottom-0 left-0 bg-slate-100 w-full text-neutral-600 text-center text-xs py-3">
-                    {{ $document->getCompany()->getNombreComercial() }}
-                    <span class="text-slate-300 px-2">|</span>
-                    {{ $document->getCompany()->getEmail() }}
-                    <span class="text-slate-300 px-2">|</span>
-                    {{ $document->getCompany()->getTelephone() }}
-                </div>
+
             </div>
         </div>
+        <div class="relative fixed bottom-0 left-0 w-full">
+            <div class="pxy">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tbody>
+                        <tr>
+                            {{-- Inicializa el contador de columnas --}}
+                            @php $columnCount = 0; @endphp
+
+                            @foreach ($bankAccounts as $account)
+                                <td style="width: 33.33%; padding: 8px;"> {{-- Cada celda ocupa un tercio del ancho --}}
+                                    <div style="border: 1px solid #e2e8f0;"> {{-- Equivalente a border border-main --}}
+                                        <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                                            <thead>
+                                                <tr>
+                                                    <td style="border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; padding-left: 12px; font-weight: bold; color: #4a5568;">
+                                                        <table>
+                                                            <tr>
+                                                                <td style="vertical-align: middle; padding-right: 8px;" rowspan="2">
+                                                                    <img src="{{ public_path($account->bank->image) }}" style="width: 45px; display: block;">
+                                                                </td>
+                                                                <td style="font-size: 0.60rem; vertical-align: top;">
+                                                                    {{ $account->description }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td style="vertical-align: top;">
+                                                                    {{ $account->bank->full_name }}
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td style="border-bottom: 1px solid #e2e8f0; padding-top: 8px; padding-bottom: 8px; padding-left: 12px; text-align: left;">
+                                                        <b>Número de cuenta:</b> {{ $account->number }}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding-top: 8px; padding-bottom: 8px; padding-left: 12px; text-align: left;">
+                                                        <b>N° de cuenta interbancario (cci):</b> {{ $account->cci }}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+
+                                {{-- Incrementa el contador de columnas --}}
+                                @php $columnCount++; @endphp
+
+                                {{-- Si hemos añadido 3 columnas O es la última cuenta, cerramos la fila y abrimos una nueva (si no es la última cuenta) --}}
+                                @if ($columnCount % 3 === 0 && !$loop->last)
+                                    </tr><tr>
+                                @endif
+                            @endforeach
+
+                            {{-- Si la última fila no tiene exactamente 3 columnas, rellenar con celdas vacías para mantener el diseño --}}
+                            @while ($columnCount % 3 !== 0)
+                                <td style="width: 33.33%;"></td> {{-- Celda vacía --}}
+                                @php $columnCount++; @endphp
+                            @endwhile
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="bg-slate-100 w-full text-neutral-600 text-center text-xs py-3">
+                {{ $document->getCompany()->getNombreComercial() }}
+                <span class="text-slate-300 px-2">|</span>
+                {{ $document->getCompany()->getEmail() }}
+                <span class="text-slate-300 px-2">|</span>
+                {{ $document->getCompany()->getTelephone() }}
+            </div>
+        </div>
+    </div>
 </body>
-
-
 </html>

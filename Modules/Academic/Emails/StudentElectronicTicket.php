@@ -49,9 +49,21 @@ class StudentElectronicTicket extends Mailable
      */
     public function attachments(): array
     {
-        //dd($this->data['file_path']);
-        $Attachments = [Attachment::fromPath($this->data['file_path'])->as($this->data['file_name'])];
+        $attachments = [];
 
-        return $Attachments;
+        // El PDF siempre se adjunta. Es buena práctica verificar si existe.
+        // Asumimos que $this->data['file_path'] y $this->data['file_name'] siempre están presentes.
+        if (isset($this->data['file_path']) && file_exists($this->data['file_path'])) {
+            $attachments[] = Attachment::fromPath($this->data['file_path'])
+                                    ->as($this->data['file_name']);
+        }
+
+        // El XML se adjunta CONDICIONALMENTE (solo si existe su ruta y el archivo físico)
+        if (isset($this->data['xml_file_path']) && file_exists($this->data['xml_file_path'])) {
+            $attachments[] = Attachment::fromPath($this->data['xml_file_path'])
+                                    ->as($this->data['xml_file_name']);
+        }
+
+        return $attachments;
     }
 }
