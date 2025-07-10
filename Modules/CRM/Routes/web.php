@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ComplaintsBookAttentionController;
+use App\Http\Controllers\ComplaintsBookController;
 use Illuminate\Support\Facades\Route;
 use Modules\CRM\Http\Controllers\CrmChatbotController;
 use Modules\CRM\Http\Controllers\CrmChatController;
@@ -169,7 +171,12 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_dudas_comunes_edicion'])
         ->delete('common-questions/{id}/destroy', [CrmInformationBankController::class, 'destroy'])
         ->name('crm_common_questions_destroy');
+
     Route::middleware(['middleware' => 'permission:crm_chatbot'])
         ->get('chatbot/index', [CrmChatbotController::class, 'index'])
         ->name('crm_dasboard_chatbot');
+
+    Route::get('complaints-book', [ComplaintsBookController::class, 'index'])->name('complaints_book_list');
+    Route::post('complaints-book/attention/store', [ComplaintsBookAttentionController::class, 'store'])->name('complaints_book_attention_store');
+    Route::delete('complaints-book/attention/{id}/destroy', [ComplaintsBookAttentionController::class, 'destroy'])->name('complaints_book_attention_destroy');
 });

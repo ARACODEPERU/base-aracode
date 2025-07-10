@@ -15,3 +15,4 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('complaints-book', [ComplaintsBookController::class, 'createdByClient'])->name('complaints_book');
+Route::post('complaints-book/store', [ComplaintsBookController::class, 'storeByClient'])->name('complaints_book_store');

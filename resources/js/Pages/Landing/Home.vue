@@ -15,12 +15,12 @@ import WhatsappHome from './Components/WhatsappHome.vue';
 import ContactForm from './Components/ContactForm.vue';
 import ContinuousArrow from './Components/ContinuousArrow.vue';
 
-defineProps({
-    dataHome: {
-        type: Object,
-        default: () => ({})
-    }
-});
+    defineProps({
+        dataHome: {
+            type: Object,
+            default: () => ({})
+        }
+    });
 
     // Estado para controlar la visibilidad del botón
     const isVisible = ref(false);
@@ -49,7 +49,7 @@ defineProps({
 
 <template>
     <Head>
-        <title>Home</title>
+        <title>Aracode</title>
         <!-- Meta para Facturación Electrónica -->
         <meta name="description" content="Simplifica tu facturación electrónica con nuestra solución. Envía facturas y boletas electrónicas a SUNAT de forma rápida, segura y eficiente.">
         <meta name="keywords" content="facturación electrónica, enviar facturas SUNAT, boletas electrónicas, software SUNAT, sistema de facturación Perú, boletas Perú, SUNAT online">
@@ -63,20 +63,20 @@ defineProps({
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </Head>
     <Header :dataHeader="dataHome.header" />
-    
 
-    <section style="background-image: url('./img/Landing/bg/portadaWeb.jpg');" 
+
+    <section style="background-image: url('./img/Landing/bg/portadaWeb.jpg');"
             class="bg-center bg-no-repeat bg-gray-700 bg-blend-multiply block">
         <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
                 Haz Crecer Tu Negocio con <span class="text-[#0188ee]">Sistemas Web</span> que Generan Resultados
             </h1>
             <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">
-                Diseñamos sistemas web personalizados que optimizan tus procesos, mejoran la experiencia del cliente y 
+                Diseñamos sistemas web personalizados que optimizan tus procesos, mejoran la experiencia del cliente y
                 generan resultados para tu negocio.
             </p>
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
-                <a href="#contact" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white 
+                <a href="#contact" class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white
                     rounded-lg bg-[#0188ee] hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900
                     shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
                     Ver Demos
@@ -84,11 +84,11 @@ defineProps({
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
                     </svg>
                 </a>
-                <a href="#contact" class="inline-flex justify-center hover:text-gray-900 items-center py-3 px-5 sm:ms-4 text-base font-medium 
+                <a href="#contact" class="inline-flex justify-center hover:text-gray-900 items-center py-3 px-5 sm:ms-4 text-base font-medium
                     text-center text-white rounded-lg border border-white hover:bg-gray-100 focus:ring-4 focus:ring-gray-400
                     shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100">
                     Contactanos
-                </a>  
+                </a>
             </div>
         </div>
     </section>
@@ -101,10 +101,10 @@ defineProps({
 
 
     <!-- service -->
-    
+
     <ServicesTI />
     <!-- about -->
-    
+
     <About />
     <!-- Experience and Education -->
     <!-- <section id="experience" class="section-experience bg-[#f6f8ff] relative">
@@ -317,23 +317,23 @@ defineProps({
             </div>
         </div>
     </section> -->
-    
-    <Teams /> 
+
+    <Teams />
 
     <!-- contact -->
      <ContactForm />
 
     <!-- footer -->
-    
+
     <Footer />
 
     <WhatsappHome />
 
     <!-- scroll Top -->
     <div id="scrollup"
-        @click="scrollToTop" 
+        @click="scrollToTop"
         :class="{ show: isVisible }"
-        class="fixed bg-[#0188ee] text-white rounded-full flex justify-center 
+        class="fixed bg-[#0188ee] text-white rounded-full flex justify-center
         text-center items-center p-2 right-6 cursor-pointer bottom-6 h-10 w-10 z-20
         font-bold">
         <iconArrowLeft class="-rotate-90 font-bold" />

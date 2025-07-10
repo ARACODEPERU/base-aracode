@@ -106,7 +106,7 @@
                         <div class="flex items-center">
                             <div class="ltr:mr-4 rtl:ml-4">
                                 <img v-if="props.rowData.image" :src="getImage(props.rowData.image)" alt="" class="w-10 h-10 rounded" />
-                                <img v-else :src="'https://ui-avatars.com/api/?name='+props.rowData.full_name+'&size=96&rounded=false'" alt="" class="w-10 h-10 rounded" />
+                                <img v-else :src="'https://ui-avatars.com/api/?name='+props.rowData.full_name ?? props.rowData.name+'&size=96&rounded=false'" alt="" class="w-10 h-10 rounded" />
                             </div>
                             <div class="flex-1">
                                 <h4 class="font-semibold text-sm">{{ props.rowData.full_name ?? props.rowData.name }}</h4>

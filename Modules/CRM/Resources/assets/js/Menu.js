@@ -4,7 +4,8 @@ import {
     faComments,
     faEnvelopesBulk ,
     faBuildingUser,
-    faPersonCircleQuestion
+    faPersonCircleQuestion,
+    faBookBookmark
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuCRM = {
@@ -48,6 +49,13 @@ const menuCRM = {
             text: "Dudas Comunes",
             permissions: "crm_dudas_comunes",
             icom: faPersonCircleQuestion,
+        },
+        {
+            route: route("complaints_book_list"),
+            status: false,
+            text: "Libro de Reclamaciones",
+            permissions: "crm_dudas_comunes",
+            icom: faBookBookmark,
         },
     ],
 };

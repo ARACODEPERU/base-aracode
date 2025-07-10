@@ -31,7 +31,7 @@
                     </Link>
                 </div>
                 <div class="space-y-6">
-                    <Link class="flex" :href="route('complaints_book')">
+                    <a class="flex items-center" :href="route('complaints_book')">
                         <div class="ltr:mr-4 rtl:ml-4">
                             <img src="/img/Landing/libro-color/icons8-libro-96.png" alt="" class="w-16 h-16 rounded" />
                         </div>
@@ -39,7 +39,7 @@
                             <h4 class="font-semibold text-lg mb-2 text-primary">Libro de reclamaciones</h4>
                             <p class="media-text dark:text-white-dark">Registre aquí sus reclamos o quejas sobre nuestro servicio o producto.</p>
                         </div>
-                    </Link>
+                    </a>
                     <div class="grid grid-cols-2 gap-8 sm:gap-6 sm:grid-cols-3">
                         <div>
                             <h2 class="mb-6 text-sm font-semibold text-gray-900 uppercase dark:text-white">Resources</h2>

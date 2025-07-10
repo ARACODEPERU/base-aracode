@@ -21,7 +21,7 @@ const store = useAppStore();
 </script>
 <template>
     <!-- header -->
-    <header class="bg-[#f6f8ff] w-full bx-fixed dark:bg-[#1d1a29]">
+    <header v-if="dataHeader" class="bg-[#f6f8ff] w-full bx-fixed dark:bg-[#1d1a29]">
         <nav class="border-gray-200 py-2">
             <div
                 class="flex flex-wrap justify-between items-center px-6 mx-auto 2xl:max-w-[1320px] xl:max-w-[1140px] lg:max-w-[960px] md:max-w-[720px] sm:max-w-[540px] max-[320px]:px-[12px]">
@@ -38,7 +38,7 @@ const store = useAppStore();
                     <div class="flex gap-2">
                         <button
                             type="button"
-                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600] 
+                            class="btn rounded-full py-2 px-2.5 hover:bg-[#F11600]
                             shadow-lg transition duration-500 ease-in-out hover:-translate-y-1 hover:scale-100"
                             :class="[store.theme === 'light' ? 'bg-[#0188ee]' : 'btn-outline-[#0188ee]']"
                             @click="store.toggleTheme('light')"
@@ -88,7 +88,7 @@ const store = useAppStore();
                         <li class="nav-item">
                             <a href="#contact" class="block py-2 pr-4 pl-3 text-[#000] lg:p-0 dark:text-[#000]">Contactanos</a>
                         </li>
-                        
+
                     </ul>
                 </div>
             </div>
