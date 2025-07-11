@@ -306,8 +306,21 @@
                                                 </template>
                                             </Popper>
                                         </td>
+                                        <td>
+                                            <!-- danger -->
+                                            <span v-if="attention.priority == 'Alta'" class="badge bg-danger rounded-none">Alta</span>
+
+                                            <!-- warning -->
+                                            <span v-if="attention.priority == 'Media'" class="badge bg-warning rounded-none">Media</span>
+
+                                            <!-- info -->
+                                            <span v-if="attention.priority == 'Baja'" class="badge bg-info rounded-none">Baja</span>
+
+                                            <!-- dark -->
+                                            <span v-if="attention.priority == 'Crítica'" class="badge bg-dark rounded-none">Crítica</span>
+                                        </td>
                                         <td class="text-center">
-                                            <button @click="destroyAttention(attention.id, index)" type="button" v-tippy:delete>
+                                            <button @click="destroyAttention(attention.id, index)" type="button" v-tippy="{content: 'Eliminar', placement: 'bottom'}">
                                                 <icon-trash class="w-4 h-4" />
                                             </button>
                                         </td>

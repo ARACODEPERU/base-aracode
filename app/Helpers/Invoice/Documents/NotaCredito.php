@@ -10,6 +10,7 @@ use App\Helpers\Invoice\Util;
 use App\Models\LocalSale;
 use App\Models\SaleDocument;
 use App\Models\SaleDocumentItem;
+use Exception;
 use Greenter\Model\Sale\Note;
 use Greenter\Model\Company\Address;
 use Greenter\Model\Company\Company;
@@ -17,6 +18,7 @@ use Greenter\Model\Client\Client;
 use Greenter\Model\Sale\Charge;
 use Greenter\Model\Sale\Legend;
 use Greenter\Model\Sale\SaleDetail;
+use App\Helpers\Invoice\QrCodeGenerator;
 
 class NotaCredito
 {
@@ -118,6 +120,8 @@ class NotaCredito
         $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
         $invoice_name = $invoice->invoice_serie . '-' . $invoice->invoice_correlative;
 
+        $afe_broadcast_date = new DateTime($invoice->invoice_broadcast_date . ' ' . Carbon::parse($invoice->created_at)->format('H:m:s'));
+
         ////2.0 la version para notas
         $note->setUblVersion($document->invoice_ubl_version)
             ->setTipoDoc($document->invoice_type_doc)
@@ -129,6 +133,8 @@ class NotaCredito
             ->setCodMotivo($document->note_type_operation_id) // Catalogo. 09
             ->setDesMotivo($document->reason_cancellation)
             ->setTipoMoneda($invoice->invoice_type_currency)
+            ->setIdDocAfectado($invoice->id)
+            ->setFechaDocAfectado($afe_broadcast_date)
             // ->setGuias([/* Guias (Opcional) */
             //     (new Document())
             //         ->setTipoDoc('09')
@@ -195,5 +201,65 @@ class NotaCredito
         //dd($note);
 
         return $note;
+    }
+
+    public function getNotaCreditoPdf($id, $format = 'A4')
+    {
+        try {
+            $document = SaleDocument::find($id);
+            $afectada = SaleDocument::where('id', $document->document_id)->with('sale')->first();
+            $invoice = $this->setDocument($document, $afectada);
+
+            $generator = new QrCodeGenerator(300);
+            $dir = public_path() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tmp_qr';
+            $cadenaqr = $this->stringQr($document);
+
+            $qr_path = $generator->generateQR($cadenaqr, $dir, $invoice->getName() . '.png', 8, 2);
+
+
+            $seller = User::find($document->user_id);
+
+            $pdf = $this->util->generatePdf($invoice, $seller, $qr_path, $format, $document->status);
+
+            $document->invoice_pdf = $pdf;
+            $document->save();
+
+            return array(
+                'fileName' => $invoice->getName() . '.pdf',
+                'filePath' => $document->invoice_pdf
+            );
+        } catch (Exception $e) {
+            var_dump($e);
+        }
+    }
+    public function getNotaCreditoXML($id)
+    {
+        try {
+            $document = SaleDocument::find($id);
+
+            return array(
+                'fileName' => $document->invoice_document_name . '.xml',
+                'filePath' => $document->invoice_xml
+            );
+        } catch (Exception $e) {
+            var_dump($e);
+        }
+    }
+    public function getNotaCreditoCDR($id)
+    {
+        try {
+            $document = SaleDocument::find($id);
+
+            return array(
+                'fileName' => $document->invoice_document_name . '.zip',
+                'filePath' => $document->invoice_cdr
+            );
+        } catch (Exception $e) {
+            var_dump($e);
+        }
+    }
+    public function stringQr($document)
+    {
+        return $this->mycompany->ruc . '|' . $document->invoice_type_doc . '|' . $document->invoice_serie . '|' . $document->invoice_correlative . '|' . $document->invoice_mto_imp_sale . '|' . $document->invoice_broadcast_date . '|' . $document->client_type_doc . '|' . $document->client_number;
     }
 }

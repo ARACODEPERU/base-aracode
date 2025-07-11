@@ -68,6 +68,7 @@ const updateParameter = () => {
                     class="mt-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 >
                     <option value="in">Texto</option>
+                    <option value="chx">Checkbox Switch</option>
                     <option value="sq">Lista (consulta a una tabla de la BD)</option>
                     <option value="sa">Lista (desde un arreglo json)</option>
                     <option value="rdq">Elegir una opciones (consulta a una tabla de la BD)</option>
@@ -97,7 +98,7 @@ const updateParameter = () => {
                     v-model="form.value_default"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.value_default" class="mt-2" />
             </div>

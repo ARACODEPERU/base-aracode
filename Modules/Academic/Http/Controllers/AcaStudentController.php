@@ -318,7 +318,6 @@ class AcaStudentController extends Controller
                 'telephone'         => 'required|max:12',
                 'email'             => 'required|email|max:255',
                 'email'            => 'unique:people,email,' . $person_id . ',id',
-                'email'            => 'unique:users,email,' . $user->id . ',id',
                 'address'           => 'required|max:255',
                 'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
@@ -327,6 +326,15 @@ class AcaStudentController extends Controller
                 'mother_lastname'   => 'required|max:255',
             ]
         );
+
+        if($user){
+            $this->validate(
+                $request,
+                [
+                    'email'            => 'unique:users,email,' . $user->id . ',id',
+                ]
+            );
+        }
 
         // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
         // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';
@@ -374,13 +382,15 @@ class AcaStudentController extends Controller
             'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
         ]);
 
-        $user->update([
-            'name'          => $request->get('names'),
-            'email'         => $request->get('email'),
-            //'password'      => Hash::make($request->get('number')),
-            'information'   => $request->get('description'),
-            'avatar'        => $path
-        ]);
+        if($user){
+            $user->update([
+                'name'          => $request->get('names'),
+                'email'         => $request->get('email'),
+                //'password'      => Hash::make($request->get('number')),
+                'information'   => $request->get('description'),
+                'avatar'        => $path
+            ]);
+        }
 
         AcaStudent::where('person_id', $person_id)->update([
             'student_code'  => $request->get('number'),

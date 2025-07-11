@@ -19,6 +19,10 @@ const props = defineProps({
     sectors: {
         type: Object,
         default: () => ({}),
+    },
+    P000018: {
+        type: Boolean,
+        default: false,
     }
 });
 
@@ -38,7 +42,13 @@ const props = defineProps({
             </li>
         </ul>
         <div class="pt-5">
-            <CreateForm :modalities="modalities" :categories="categories" :types="types" :sectors="sectors" /> 
+            <CreateForm
+                :modalities="modalities"
+                :categories="categories"
+                :types="types"
+                :sectors="sectors"
+                :P000018="P000018"
+            />
         </div>
-    </AppLayout>  
+    </AppLayout>
 </template>

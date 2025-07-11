@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Helpers\Invoice\Documents\Factura;
+use App\Helpers\Invoice\Documents\NotaCredito;
 use Modules\Sales\Entities\SaleSummary;
 use Modules\Sales\Entities\SaleSummaryDetail;
 use App\Helpers\Invoice\Documents\Resumen;
@@ -824,11 +825,26 @@ class SaleDocumentController extends Controller
                 }
 
                 break;
+            case '07':
+                $notaCredito = new NotaCredito();
+                if ($file == 'PDF') {
+                    $content_type = 'application/pdf';
+
+                    $res = $notaCredito->getNotaCreditoPdf($id, $format);
+                } else if ($file == 'XML') {
+                    $content_type =  'application/xml';
+                    $res = $notaCredito->getBoletaXML($id);
+                } else {
+                    $content_type =  'application/zip';
+                    $res = $notaCredito->getBoletaCDR($id);
+                }
+
+                break;
             case 2:
                 echo "i es igual a 2";
                 break;
         }
-        //dd($res);
+
         //return response()->file($res['filePath'], ['content-type' => 'application/pdf']);
         return response()->download($res['filePath'], $res['fileName'], ['content-type' => $content_type]);
     }

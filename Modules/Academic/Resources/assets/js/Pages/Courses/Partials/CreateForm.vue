@@ -26,6 +26,10 @@ const props = defineProps({
     sectors: {
         type: Object,
         default: () => ({}),
+    },
+    P000018: {
+        type: Boolean,
+        default: false,
     }
 });
 
@@ -166,7 +170,8 @@ const handleImageCompressed = (file) => {
                 />
                 <InputError :message="form.errors.price" class="mt-2" />
             </div>
-            <div class="col-span-6">
+
+            <div v-if="P000018 == 1 || P000018 == true || P000018 == 'true'" class="col-span-6">
                 <InputLabel for="certificate_description" value="Descripción de los certificados *" />
                 <textarea
                     id="certificate_description"
@@ -175,10 +180,11 @@ const handleImageCompressed = (file) => {
                     rows="6"
                 >
                 </textarea>
+
                 <InputError :message="form.errors.certificate_description" class="mt-2" />
             </div>
 
-            <div class="col-span-6 sm:col-span-4">
+            <div v-if="P000018 == 1 || P000018 == true || P000018 == 'true'" class="col-span-6 sm:col-span-4">
                 <InputLabel for="discount" value="Descuento (Opcional)" />
                 <div>
                     <input type="range" id="discount" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" min="0" max="100" v-model="form.discount" />
@@ -187,7 +193,7 @@ const handleImageCompressed = (file) => {
                     </div>
                 </div>
             </div>
-            <div class="col-span-6 sm:col-span-2">
+            <div v-if="P000018 == 1 || P000018 == true || P000018 == 'true'" class="col-span-6 sm:col-span-2">
                 <InputLabel value="¿A que alumnos les aplica el descuento?" />
                 <div class="flex items-center space-x-2">
                     <label class="inline-flex">

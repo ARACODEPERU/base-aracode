@@ -168,6 +168,7 @@ final class Util
 
         $params = self::getParametersPdf($this->company, $seller);
 
+
         $fileDir = public_path();
 
         if (!file_exists($fileDir)) {
@@ -178,13 +179,22 @@ final class Util
         $filePath = $fileDir . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'invoice' . DIRECTORY_SEPARATOR . $filename;
 
         if ($format == 'A4') {
-
-            $pdf = Pdf::loadView('sales::sales.invoice_a4', [
-                'document' => $document,
-                'params' => $params,
-                'qr_path' => $qr_path,
-                'status' => $status
-            ]);
+            //dd($document);
+            if($document->getTipoDoc() == '07' || $document->getTipoDoc() == '07'){
+                $pdf = Pdf::loadView('sales::sales.notas_a4', [
+                    'document' => $document,
+                    'params' => $params,
+                    'qr_path' => $qr_path,
+                    'status' => $status
+                ]);
+            }else{
+                $pdf = Pdf::loadView('sales::sales.invoice_a4', [
+                    'document' => $document,
+                    'params' => $params,
+                    'qr_path' => $qr_path,
+                    'status' => $status
+                ]);
+            }
 
             $pdf->setPaper('a4', 'portrait');
         } else if ($format == 't80') {

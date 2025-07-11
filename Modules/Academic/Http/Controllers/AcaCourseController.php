@@ -30,6 +30,7 @@ class AcaCourseController extends Controller
      * @return Renderable
      */
     protected $P000010; ///token Tiny
+    protected $P000018;
 
     protected $RPTABLE;
 
@@ -37,6 +38,7 @@ class AcaCourseController extends Controller
     {
         $this->RPTABLE = env('RECORDS_PAGE_TABLE') ?? 10;
         $this->P000010  = Parameter::where('parameter_code', 'P000010')->value('value_default');
+        $this->P000018  = Parameter::where('parameter_code', 'P000018')->value('value_default');
     }
 
     public function index()
@@ -74,6 +76,7 @@ class AcaCourseController extends Controller
             'categories'    => $categories,
             'types'    => $types,
             'sectors'    => $sectors,
+            'P000018' => $this->P000018
         ]);
     }
 
@@ -195,6 +198,7 @@ class AcaCourseController extends Controller
             'categories'    => $categories,
             'types'    => $types,
             'sectors'    => $sectors,
+            'P000018' => $this->P000018
         ]);
     }
 

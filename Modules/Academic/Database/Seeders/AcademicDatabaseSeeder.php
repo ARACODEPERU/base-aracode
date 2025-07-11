@@ -15,7 +15,8 @@ class AcademicDatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            PermissionTableSeeder::class
+            PermissionTableSeeder::class,
+            ParametersTableSeeder::class,
         ]);
     }
 }

@@ -177,6 +177,19 @@
                                                 </template>
                                             </div>
                                         </template>
+                                        <template v-else-if="parameter.control_type == 'chx'">
+                                            <label class="w-12 h-6 relative">
+                                                <input
+                                                    v-model="parameter.value_default"
+                                                    type="checkbox"
+                                                    class="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer"
+                                                    :id="`custom_switch_checkbox-${index}`"
+                                                    :value="1"
+                                                    @change="updateDefaultValue(parameter.id, parameter.value_default)"
+                                                />
+                                                <span :for="`custom_switch_checkbox-${index}`" class="bg-[#ebedf2] dark:bg-dark block h-full before:absolute before:left-1 before:bg-white dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300 "></span>
+                                            </label>
+                                        </template>
                                     </td>
                                 </tr>
                             </tbody>

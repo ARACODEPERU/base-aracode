@@ -8,12 +8,14 @@
     import IconBox from '@/Components/vristo/icon/icon-box.vue';
     import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
-    import iconExcel from "@/Components/vristo/icon/icon-excel.vue";
     import iconPencil from '@/Components/vristo/icon/icon-pencil.vue';
     import ModalLarge from "@/Components/ModalLarge.vue";
-    import { ref } from 'vue';
+    import { ref, onUnmounted } from 'vue';
     import Navigation from "@/Components/vristo/layout/Navigation.vue";
     import { useAppStore } from '@/stores/index';
+    import iconExcel from "@/Components/vristo/icon/icon-excel.vue";
+
+
     const store = useAppStore();
 
     const props = defineProps({
@@ -63,27 +65,25 @@
         const formData = new FormData();
         formData.append("file", file.value);
 
-        axios.post(route('aca_student_import_file_excel'), formData)
-            .then((response) => {
-                importKey.value = response.data.importKey;
-                trackProgress(); // Inicia la actualización del progreso
-                showAlert("Procesando archivo, por favor espere.", 'success'); // Mostrar mensaje de éxito
-            }).catch((error) => {
-                // Verifica si hay un mensaje de error en la respuesta
-                if (error.response && error.response.data && error.response.data.message) {
-                    console.log('Error detectado:', error.response.data.message);
-                    showAlert(error.response.data.message, 'error');
-                } else {
-                    console.log('Error genérico detectado');
-                    showAlert("Ocurrió un error al importar el archivo.", 'error');
-                }
-            })
-            .finally(() => {
-                // Solo detener el estado de carga si no hay errores
-                if (!importKey.value) {
-                    loading.value = false;
-                }
-            });
+        axios.post(route('aca_student_import_file_excel'), formData).then((response) => {
+            importKey.value = response.data.importKey;
+            trackProgress(); // Inicia la actualización del progreso
+            showAlert("Procesando archivo, por favor espere.", 'success'); // Mostrar mensaje de éxito
+        }).catch((error) => {
+            // Verifica si hay un mensaje de error en la respuesta
+            if (error.response && error.response.data && error.response.data.message) {
+                console.log('Error detectado:', error.response.data.message);
+                showAlert(error.response.data.message, 'error');
+            } else {
+                console.log('Error genérico detectado');
+                showAlert("Ocurrió un error al importar el archivo.", 'error');
+            }
+        }).finally(() => {
+            // Solo detener el estado de carga si no hay errores
+            if (!importKey.value) {
+                loading.value = false;
+            }
+        });
     };
     const trackProgress = () => {
         const interval = setInterval(async () => {
@@ -126,6 +126,103 @@
             customClass: 'sweet-alerts',
         });
     }
+
+    // Estado de la exportación
+    const isExporting = ref(false);
+    const downloadUrl = ref(null);
+    const fileName = ref('');
+    const errorMessage = ref(null);
+    let pollingInterval = null; // Para controlar el intervalo de polling
+    let currentJobId = null; // Para guardar el ID del job actual
+
+    const generateExcelStudents = async () => {
+        // Resetear estados
+        isExporting.value = true;
+        downloadUrl.value = null;
+        fileName.value = '';
+        errorMessage.value = null;
+        currentJobId = null; // Resetear el ID del job anterior
+
+        try {
+            // 1. Iniciar la exportación en el backend y obtener el jobId
+            // Usa axios.post directamente si no necesitas enviar datos del form (e.g. filtros)
+            const response = await axios.post(route('aca_export_students_excel'));
+
+            // 2. Obtener el jobId de la respuesta
+            currentJobId = response.data.job_id;
+            console.log('Exportación iniciada. Job ID:', currentJobId);
+
+            // 3. Iniciar el polling para verificar el estado
+            startPolling();
+
+        } catch (error) {
+            console.error('Error al iniciar la exportación:', error);
+            // Mostrar mensaje de error al usuario
+            errorMessage.value = error.response?.data?.message || 'Hubo un problema al iniciar la exportación.';
+            isExporting.value = false; // Detener el indicador de carga
+        }
+    }
+
+    const startPolling = () => {
+        // Limpiar cualquier intervalo anterior para evitar múltiples pollings
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+
+        // Configurar un intervalo para verificar el estado del job cada 3 segundos
+        pollingInterval = setInterval(async () => {
+            if (!currentJobId) {
+                console.warn('No hay Job ID para hacer polling. Deteniendo polling.');
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                isExporting.value = false;
+                return;
+            }
+
+            try {
+                const response = await axios.get(route('aca_export_students_excel_status', currentJobId));
+                const jobStatus = response.data;
+
+                // Actualizar el estado local con los datos del job
+                // (aunque no haya barra de progreso, estos datos son útiles para depuración o si decides añadir una barra mínima)
+                // progress.value = jobStatus.progress; // Puedes mantener esta línea si el backend la sigue enviando
+                // processedCount.value = jobStatus.processed_count;
+                // totalCount.value = jobStatus.total_count;
+
+                if (jobStatus.status === 'completed') {
+                    downloadUrl.value = jobStatus.download_url; // La URL de descarga del archivo Excel
+                    fileName.value = jobStatus.file_name;
+                    isExporting.value = false; // Detener el indicador de carga
+                    clearInterval(pollingInterval); // Detener el polling
+                    pollingInterval = null;
+                    console.log('Exportación completada. Archivo listo para descargar:', downloadUrl.value);
+                } else if (jobStatus.status === 'failed') {
+                    errorMessage.value = jobStatus.error_message || 'La exportación falló por un error desconocido.';
+                    isExporting.value = false; // Detener el indicador de carga
+                    clearInterval(pollingInterval); // Detener el polling
+                    pollingInterval = null;
+                    console.error('Exportación fallida:', jobStatus.error_message);
+                } else {
+                    // El job sigue en 'pending' o 'processing'
+                    console.log('Exportación en curso. Estado:', jobStatus.status);
+                }
+            } catch (error) {
+                console.error('Error al obtener el estado de la exportación:', error);
+                errorMessage.value = 'No se pudo verificar el estado de la exportación.';
+                isExporting.value = false;
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }, 3000); // Poll cada 3 segundos (ajusta según necesites)
+    };
+
+    // Limpiar el intervalo cuando el componente se desmonte para evitar fugas de memoria
+    onUnmounted(() => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    });
+
 </script>
 
 <template>
@@ -140,6 +237,12 @@
                 <h2 class="text-xl">Estudiantes</h2>
                 <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
                     <div class="flex gap-3">
+                        <div v-can="'aca_estudiante_exportar_excel'">
+                            <button v-on:click="generateExcelStudents()" type="button" class="btn btn-warning">
+                                <icon-excel class="ltr:mr-2 rtl:ml-2" />
+                                Generar Excel
+                            </button>
+                        </div>
                         <div>
                             <Link :href="route('aca_students_create')" type="button" class="btn btn-primary">
                                 <icon-user-plus class="ltr:mr-2 rtl:ml-2" />
@@ -207,7 +310,7 @@
                                             </div>
                                             <div class="mt-4">
                                                 <ul class="flex space-x-4 rtl:space-x-reverse items-center justify-center">
-                                                    <li>
+                                                    <li v-can="'aca_estudiante_editar'">
                                                         <Link :href="route('aca_students_edit', student.id)" v-tippy="{ content: 'Editar', placement: 'bottom'}" class="btn btn-outline-primary p-0 h-7 w-7 rounded-full">
                                                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                                                                 <path fill="currentColor" d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/>
