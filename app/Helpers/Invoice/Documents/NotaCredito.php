@@ -138,7 +138,7 @@ class NotaCredito
             ->setTipoMoneda($invoice->invoice_type_currency)
             ->setIdDocAfectado($invoice->id)
             ->setFechaDocAfectado($afe_broadcast_date)
-            ->setDesMotivo($setDesMotivo)
+            ->setDesTypeMotivo($setDesMotivo)
             // ->setGuias([/* Guias (Opcional) */
             //     (new Document())
             //         ->setTipoDoc('09')
@@ -213,7 +213,7 @@ class NotaCredito
             $document = SaleDocument::find($id);
             $afectada = SaleDocument::where('id', $document->document_id)->with('sale')->first();
             $invoice = $this->setDocument($document, $afectada);
-
+            // dd($invoice);
             $generator = new QrCodeGenerator(300);
             $dir = public_path() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tmp_qr';
             $cadenaqr = $this->stringQr($document);

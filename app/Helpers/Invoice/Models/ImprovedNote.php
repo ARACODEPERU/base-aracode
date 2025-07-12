@@ -37,12 +37,12 @@ class ImprovedNote extends Note
         return $this;
     }
 
-    public function getDesMotivo(): ?string
+    public function getDesTypeMotivo(): ?string
     {
         return $this->desMotivo;
     }
 
-    public function setDesMotivo(?string $desMotivo): Note
+    public function setDesTypeMotivo(?string $desMotivo): Note
     {
         $this->desMotivo = $desMotivo;
 

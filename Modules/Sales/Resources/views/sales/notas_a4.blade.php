@@ -901,7 +901,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                         <tr>
                             <td colspan="5" class="border-b-2 border-main pb-2 pl-3 font-bold">
                                 <p class="mt-4 mb-4">FECHA EMISIÓN: {{ $document->getFechaEmision()->format('d/m/Y') }}</p>
-                                <p class="mt-4 mb-4">MOTIVO DE LA EMISIÓN DE LA NOTA DE {{ $document->getTipoDoc() == '07' ? 'CRÉDITO' : 'DÉBITO' }} ELECTRÓNICA: {{ $document->getDesMotivo() }}</p>
+                                <p class="mt-4 mb-4">MOTIVO DE LA EMISIÓN DE LA NOTA DE {{ $document->getTipoDoc() == '07' ? 'CRÉDITO' : 'DÉBITO' }} ELECTRÓNICA: {{ $document->getDesTypeMotivo() }}</p>
                             </td>
                         </tr>
                         <tr>
