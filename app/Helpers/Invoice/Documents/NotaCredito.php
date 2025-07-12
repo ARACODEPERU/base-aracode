@@ -19,6 +19,7 @@ use Greenter\Model\Sale\Charge;
 use Greenter\Model\Sale\Legend;
 use Greenter\Model\Sale\SaleDetail;
 use App\Helpers\Invoice\QrCodeGenerator;
+use Illuminate\Support\Facades\DB;
 
 class NotaCredito
 {
@@ -91,6 +92,8 @@ class NotaCredito
         $establishment = LocalSale::find($invoice->sale->local_id);
         $province = $establishment->district->province;
 
+        $setDesMotivo = DB::table('sunat_note_credit_types')->where('id',$document->note_type_operation_id)->value('description');
+
         $department = $province->department;
         $client = (new Client())
             ->setTipoDoc($document->client_type_doc)
@@ -135,6 +138,7 @@ class NotaCredito
             ->setTipoMoneda($invoice->invoice_type_currency)
             ->setIdDocAfectado($invoice->id)
             ->setFechaDocAfectado($afe_broadcast_date)
+            ->setDesMotivo($setDesMotivo)
             // ->setGuias([/* Guias (Opcional) */
             //     (new Document())
             //         ->setTipoDoc('09')

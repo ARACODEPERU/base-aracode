@@ -61,7 +61,7 @@ class SaleCreditNotesController extends Controller
     {
         $sales = (new Sale())->newQuery();
 
-        $isAdmin = Auth::user()->hasRole('admin');
+        $isAdmin = Auth::user()->hasAnyRole(['admin', 'Contabilidad']);
 
         $sales = $sales->join('people', 'client_id', 'people.id')
             ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')

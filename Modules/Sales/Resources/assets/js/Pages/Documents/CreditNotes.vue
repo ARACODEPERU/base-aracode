@@ -439,108 +439,42 @@ const refreshTable = () => {
                                                 >
                                             </li>
                                             <li>
-                                                <a
-                                                    @click="
-                                                        opemModalDetails(
-                                                            props.rowData
-                                                        )
-                                                    "
-                                                    href="javascript:;"
-                                                    >Detalles</a
-                                                >
+                                                <a @click="opemModalDetails(props.rowData)" href="javascript:;" >
+                                                    Detalles
+                                                </a>
                                             </li>
-                                            <li
-                                                v-if="
-                                                    props.rowData.status == 1 &&
-                                                    props.rowData
-                                                        .invoice_type_doc ==
-                                                        '03'
-                                                "
-                                            >
-                                                <a
-                                                    @click="
-                                                        cancelDocument(
-                                                            index,
-                                                            props.rowData
-                                                        )
-                                                    "
+                                            <li v-if="props.rowData.status == 1 && props.rowData.invoice_type_doc == '03'">
+                                                <a @click="cancelDocument(index, props.rowData)"
                                                     href="javascript:;"
-                                                    >Anular</a
                                                 >
+                                                    Anular
+                                                </a>
                                             </li>
                                             <li>
-                                                <a
-                                                    @click="
-                                                        downloadDocument(
-                                                            props.rowData
-                                                                .document_id,
-                                                            props.rowData
-                                                                .invoice_type_doc,
-                                                            'PDF'
-                                                        )
-                                                    "
+                                                <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'PDF')"
                                                     href="javascript:;"
-                                                    >PDF A4</a
                                                 >
+                                                    PDF A4
+                                                </a>
                                             </li>
-                                            <li>
-                                                <a
-                                                    @click="
-                                                        downloadDocument(
-                                                            props.rowData
-                                                                .document_id,
-                                                            props.rowData
-                                                                .invoice_type_doc,
-                                                            'PDF',
-                                                            't80'
-                                                        )
-                                                    "
+                                            <!-- <li>
+                                                <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'PDF','t80')"
+                                                    href="javascript:;">
+                                                    PDF 80x250
+                                                </a>
+                                            </li> -->
+                                            <!-- <li v-if="props.rowData.invoice_status === 'Aceptada'">
+                                                <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'XML')"
+                                                    href="javascript:;">
+                                                    Descargar XML
+                                                </a>
+                                            </li> -->
+                                            <!-- <li v-if="props.rowData.invoice_status ==='Aceptada'">
+                                                <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'CDR')"
                                                     href="javascript:;"
-                                                    >PDF 80x250</a
-                                                >
-                                            </li>
-                                            <li
-                                                v-if="
-                                                    props.rowData
-                                                        .invoice_status ===
-                                                    'Aceptada'
-                                                "
-                                            >
-                                                <a
-                                                    @click="
-                                                        downloadDocument(
-                                                            props.rowData
-                                                                .document_id,
-                                                            props.rowData
-                                                                .invoice_type_doc,
-                                                            'XML'
-                                                        )
-                                                    "
-                                                    href="javascript:;"
-                                                    >Descargar XML</a
-                                                >
-                                            </li>
-                                            <li
-                                                v-if="
-                                                    props.rowData
-                                                        .invoice_status ===
-                                                    'Aceptada'
-                                                "
-                                            >
-                                                <a
-                                                    @click="
-                                                        downloadDocument(
-                                                            props.rowData
-                                                                .document_id,
-                                                            props.rowData
-                                                                .invoice_type_doc,
-                                                            'CDR'
-                                                        )
-                                                    "
-                                                    href="javascript:;"
-                                                    >Descargar CDR</a
-                                                >
-                                            </li>
+                                                    >Descargar CDR
+                                                </a>
+                                            </li> -->
                                         </ul>
                                     </template>
                                 </Popper>
@@ -562,13 +496,7 @@ const refreshTable = () => {
                                 }}
                             </h6>
                             <span
-                                v-if="
-                                    props.rowData.invoice_status ==
-                                        'Rechazada' ||
-                                    props.rowData.invoice_status ===
-                                        'Aceptada' ||
-                                    props.rowData.invoice_status === 'Anulada'
-                                "
+                                v-if="props.rowData.invoice_status == 'Rechazada' || props.rowData.invoice_status === 'Aceptada' || props.rowData.invoice_status === 'Anulada'"
                                 class="block text-xs"
                             >
                                 <code

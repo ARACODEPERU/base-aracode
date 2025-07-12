@@ -11,17 +11,14 @@ class ImprovedNote extends Note
 
     private $fechaDocAfectado;
 
+    private $desMotivo;
+
     public function getIdDocAfectado(): ?string
     {
         return $this->idDocAfectado;
     }
 
-    /**
-     * @param string $tipDocAfectado
-     *
-     * @return Note
-     */
-    public function setIdDocAfectado( $idDocAfectado): Note
+    public function setIdDocAfectado(?int $idDocAfectado): Note
     {
         $this->idDocAfectado = $idDocAfectado;
 
@@ -33,14 +30,21 @@ class ImprovedNote extends Note
         return $this->fechaDocAfectado;
     }
 
-    /**
-     * @param string $tipDocAfectado
-     *
-     * @return Note
-     */
     public function setFechaDocAfectado(?DateTimeInterface $fechaDocAfectado): Note
     {
         $this->fechaDocAfectado = $fechaDocAfectado;
+
+        return $this;
+    }
+
+    public function getDesMotivo(): ?string
+    {
+        return $this->desMotivo;
+    }
+
+    public function setDesMotivo(?string $desMotivo): Note
+    {
+        $this->desMotivo = $desMotivo;
 
         return $this;
     }
