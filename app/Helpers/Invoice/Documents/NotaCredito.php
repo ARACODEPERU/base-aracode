@@ -2,6 +2,7 @@
 
 namespace App\Helpers\Invoice\Documents;
 
+use App\Helpers\Invoice\Models\ImprovedNote;
 use Carbon\Carbon;
 use DateTime;
 use App\Models\Company as MyCompany;
@@ -11,7 +12,6 @@ use App\Models\LocalSale;
 use App\Models\SaleDocument;
 use App\Models\SaleDocumentItem;
 use Exception;
-use Greenter\Model\Sale\Note;
 use Greenter\Model\Company\Address;
 use Greenter\Model\Company\Company;
 use Greenter\Model\Client\Client;
@@ -87,7 +87,7 @@ class NotaCredito
 
     public function setDocument($document, $invoice)
     {
-        $note = new Note();
+        $note = new ImprovedNote();
         $establishment = LocalSale::find($invoice->sale->local_id);
         $province = $establishment->district->province;
 
