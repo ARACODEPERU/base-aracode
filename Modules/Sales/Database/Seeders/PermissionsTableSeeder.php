@@ -2,8 +2,10 @@
 
 namespace Modules\Sales\Database\Seeders;
 
+use App\Models\Modulo;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -18,7 +20,11 @@ class PermissionsTableSeeder extends Seeder
     {
         $role = Role::find(1);
 
+        $modulo = Modulo::create(['identifier' => 'M002', 'description' => 'Ventas']);
+        $moduloFE = Modulo::create(['identifier' => 'M003', 'description' => 'Facturación Electrónica']);
+
         $permissions = [];
+        $permissionsFE = [];
 
         array_push($permissions, Permission::create(['name' => 'sale_dashboard']));
         array_push($permissions, Permission::create(['name' => 'productos']));
@@ -45,13 +51,6 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'sale_tienda_eliminar']));
         array_push($permissions, Permission::create(['name' => 'sale_tienda_series']));
         array_push($permissions, Permission::create(['name' => 'sale_tienda_agregar_vendedor']));
-        array_push($permissions, Permission::create(['name' => 'invo_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'invo_documento']));
-        array_push($permissions, Permission::create(['name' => 'invo_documento_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'invo_documento_lista']));
-        array_push($permissions, Permission::create(['name' => 'invo_documento_envio_sunat']));
-        array_push($permissions, Permission::create(['name' => 'invo_resumenes_lista']));
-        array_push($permissions, Permission::create(['name' => 'invo_comunicacion_baja']));
         array_push($permissions, Permission::create(['name' => 'sale_categorias']));
         array_push($permissions, Permission::create(['name' => 'sale_categorias_nuevo']));
         array_push($permissions, Permission::create(['name' => 'sale_categorias_editar']));
@@ -76,10 +75,35 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'sale_aplicar_descuento']));
         array_push($permissions, Permission::create(['name' => 'sale_registar_producto_alvender']));
         array_push($permissions, Permission::create(['name' => 'sale_enventas_buscar_por_presentacion']));
-        array_push($permissions, Permission::create(['name' => 'invo_nota_credito']));
+
+        array_push($permissionsFE, Permission::create(['name' => 'invo_dashboard']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_documento']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_documento_nuevo']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_documento_lista']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_documento_envio_sunat']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_resumenes_lista']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_comunicacion_baja']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_nota_credito']));
+        array_push($permissionsFE, Permission::create(['name' => 'invo_reportes']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
+
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $modulo->identifier
+            ]);
+        }
+
+        foreach ($permissionsFE as $permission) {
+            $role->givePermissionTo($permission->name);
+
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $moduloFE->identifier
+            ]);
         }
     }
 }

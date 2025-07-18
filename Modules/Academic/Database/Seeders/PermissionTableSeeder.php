@@ -2,9 +2,11 @@
 
 namespace Modules\Academic\Database\Seeders;
 
+use App\Models\Modulo;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -18,6 +20,8 @@ class PermissionTableSeeder extends Seeder
     public function run()
     {
         $role = Role::find(1);
+
+        $modulo = Modulo::create(['identifier' => 'M007', 'description' => 'Académico']);
 
         $permissions = [];
 
@@ -67,9 +71,15 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'aca_tutoriales_videos_eliminar']));
         array_push($permissions, Permission::create(['name' => 'aca_tutoriales_lista_agregar_video']));
         array_push($permissions, Permission::create(['name' => 'aca_estudiante_exportar_excel']));
+        array_push($permissions, Permission::create(['name' => 'aca_reportes']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $modulo->identifier
+            ]);
         }
 
         $alumno = Role::create(['name' => 'Alumno']);

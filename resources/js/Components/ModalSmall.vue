@@ -52,14 +52,14 @@
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                       </div>
-                      <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
-                          <slot name="title" />
-                        </h3>
-                        <div class="text-sm">
-                          <slot name="message" />
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                <slot name="title" />
+                            </h3>
+                            <div class="text-sm">
+                                <slot name="message" />
+                            </div>
                         </div>
-                      </div>
                     </div>
                   </div>
                   <div class="p-5">

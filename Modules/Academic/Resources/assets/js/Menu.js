@@ -7,7 +7,8 @@ import {
     faRocket,
     faCertificate,
     faPlay,
-    faMugHot
+    faMugHot,
+    faChartLine
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -97,6 +98,13 @@ const menuAcademic = {
             icom: faMugHot,
             permissions: "aca_cursos_revisar_examenes",
             id: 'btnReviewExams'
+        },
+        {
+            route: route('aca_reports_dashboard'),
+            status: false,
+            text: 'Reportes',
+            permissions: 'aca_reportes',
+            icom: faChartLine,
         }
     ],
 };

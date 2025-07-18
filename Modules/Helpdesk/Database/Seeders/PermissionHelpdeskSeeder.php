@@ -2,7 +2,9 @@
 
 namespace Modules\Helpdesk\Database\Seeders;
 
+use App\Models\Modulo;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -14,6 +16,8 @@ class PermissionHelpdeskSeeder extends Seeder
     public function run(): void
     {
         $role = Role::find(1);
+
+        $modulo = Modulo::create(['identifier' => 'M011', 'description' => 'Helpdesk']);
 
         $permissions = [];
 
@@ -36,6 +40,12 @@ class PermissionHelpdeskSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
+
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $modulo->identifier
+            ]);
         }
     }
 }

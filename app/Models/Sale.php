@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\Sales\Entities\SalePhysicalDocument;
 
 class Sale extends Model
@@ -44,5 +45,15 @@ class Sale extends Model
     public function physical(): HasMany
     {
         return $this->hasMany(SalePhysicalDocument::class, 'sale_id', 'id');
+    }
+
+    public function client(): HasOne
+    {
+        return $this->hasOne(Person::class, 'id', 'client_id');
+    }
+
+    public function document(): HasOne
+    {
+        return $this->hasOne(SaleDocument::class, 'sale_id', 'id');
     }
 }

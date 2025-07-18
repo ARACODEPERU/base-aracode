@@ -2,8 +2,10 @@
 
 namespace Modules\Onlineshop\Database\Seeders;
 
+use App\Models\Modulo;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -17,6 +19,8 @@ class OnliPermissionsTableSeeder extends Seeder
     public function run()
     {
         $admin = Role::find(1);
+
+        $modulo = Modulo::create(['identifier' => 'M004', 'description' => 'Ventas en línea']);
 
         $permissions = [];
 
@@ -32,6 +36,11 @@ class OnliPermissionsTableSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $modulo->identifier
+            ]);
         }
     }
 }

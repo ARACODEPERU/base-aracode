@@ -12,8 +12,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Str;
 
 use App\Models\Person; // <-- ASUMIENDO que tu modelo se llama 'Person'
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaExcelStudentsExportJob;
+use Modules\Academic\Entities\AcaPerson;
+use Modules\Academic\Entities\AcaStudent;
 
 class ExportStudentsExcel implements ShouldQueue
 {
@@ -30,7 +33,7 @@ class ExportStudentsExcel implements ShouldQueue
 
     public function handle()
     {
-        dd('aca llega');
+
         $excelExportJob = AcaExcelStudentsExportJob::find($this->jobId);
         if (!$excelExportJob) {
             Log::error("ExcelExportJob ID {$this->jobId} not found for user {$this->userId}. Aborting export.");
@@ -45,7 +48,6 @@ class ExportStudentsExcel implements ShouldQueue
         // 1. Definir las CABECERAS del Excel usando los nombres de las columnas SQL
         // Ajusta los nombres si quieres que sean más amigables en el Excel
         $headers = [
-            'ID',
             'Tipo Documento ID',
             'Nombre Corto',
             'Nombre Completo',
@@ -58,8 +60,6 @@ class ExportStudentsExcel implements ShouldQueue
             'Teléfono Contacto',
             'Nombre Contacto',
             'Email Contacto',
-            'Es Proveedor',
-            'Es Cliente',
             'Ubigeo',
             'Fecha Creación',
             'Fecha Actualización',
@@ -71,72 +71,59 @@ class ExportStudentsExcel implements ShouldQueue
             'Presentación', // Corresponde a 'presentacion'
             'Género', // Corresponde a 'gender'
             'Estado', // Corresponde a 'STATUS'
-            'Redes Sociales',
             'Descripción Ubigeo',
-            'ID Empresa/Persona',
-            'ID Industria',
             'Industria',
             'Profesión',
-            'Empresa',
-            'ID Profesión',
-            'ID Ocupación'
+            'Empresa'
         ];
 
         $sheet->fromArray($headers, NULL, 'A1');
 
         $chunkSize = 1000;
         // Asumiendo que tu modelo para la tabla `people` se llama `Person`
-        $totalRecords = Person::count();
+        $totalRecords = AcaStudent::count();
         $currentRow = 2;
 
-        Person::chunkById($chunkSize, function ($people) use (&$sheet, &$currentRow) {
-            foreach ($people as $person) {
+        AcaStudent::with('person')->chunkById($chunkSize, function ($people) use (&$sheet, &$currentRow) {
+            foreach ($people as $student) {
                 // 2. Mapear los datos de cada fila del modelo a las columnas del Excel
                 $rowData = [
-                    $person->id,
-                    $person->document_type_id,
-                    $person->short_name,
-                    $person->full_name,
-                    $person->description,
-                    $person->number,
-                    $person->telephone,
-                    $person->email,
-                    $person->image,
-                    $person->address,
-                    $person->contact_telephone,
-                    $person->contact_name,
-                    $person->contact_email,
-                    $person->is_provider ? 'Sí' : 'No', // Convertir booleano a texto legible
-                    $person->is_client ? 'Sí' : 'No',   // Convertir booleano a texto legible
-                    $person->ubigeo,
-                    $person->created_at ? $person->created_at->format('Y-m-d H:i:s') : '', // Formatear fechas
-                    $person->updated_at ? $person->updated_at->format('Y-m-d H:i:s') : '',
-                    $person->birthdate ? $person->birthdate->format('Y-m-d') : '',
-                    $person->NAMES,
-                    $person->father_lastname,
-                    $person->mother_lastname,
-                    $person->ocupacion,
-                    $person->presentacion,
-                    $person->gender,
-                    $person->STATUS,
-                    $person->social_networks,
-                    $person->ubigeo_description,
-                    $person->company_person_id,
-                    $person->industry_id,
-                    $person->industry,
-                    $person->profession,
-                    $person->company,
-                    $person->profession_id,
-                    $person->occupation_id
+                    $student->person->document_type_id,
+                    $student->person->short_name,
+                    $student->person->full_name,
+                    $student->person->description,
+                    $student->person->number,
+                    $student->person->telephone,
+                    $student->person->email,
+                    $student->person->image,
+                    $student->person->address,
+                    $student->person->contact_telephone,
+                    $student->person->contact_name,
+                    $student->person->contact_email,
+                    $student->person->ubigeo,
+                    $student->person->created_at ? Carbon::parse($student->person->created_at)->format('Y-m-d H:i:s') : '', // Formatear fechas
+                    $student->person->updated_at ? Carbon::parse($student->person->updated_at)->format('Y-m-d H:i:s') : '',
+                    $student->person->birthdate ? Carbon::parse($student->person->birthdate)->format('Y-m-d') : '',
+                    $student->person->names,
+                    $student->person->father_lastname,
+                    $student->person->mother_lastname,
+                    $student->person->ocupacion,
+                    $student->person->presentacion,
+                    $student->person->gender,
+                    $student->person->status,
+                    $student->person->ubigeo_description,
+                    $student->person->industry,
+                    $student->person->profession,
+                    $student->person->company,
                 ];
                 $sheet->fromArray($rowData, NULL, 'A' . $currentRow);
                 $currentRow++;
             }
         });
 
-        $fileName = 'personas_'. Str::random(10) . '.xlsx'; // Cambiamos el nombre del archivo
+        $fileName = 'ESTUDIANTES_'. Carbon::now()->format('d-m-Y') . '.xlsx'; // Cambiamos el nombre del archivo
         $filePath = 'exports/' . $fileName;
-        dd($filePath );
+
         $writer = new Xlsx($spreadsheet);
         // Para que el archivo sea accesible públicamente para descarga, guárdalo en el disco 'public'
         Storage::disk('public')->put($filePath, '');

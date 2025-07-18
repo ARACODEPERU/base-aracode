@@ -4,6 +4,7 @@ namespace Modules\Academic\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AcaPerson extends Model
 {
@@ -19,5 +20,9 @@ class AcaPerson extends Model
     public function student()
     {
         return $this->hasOne(AcaStudent::class, 'person_id');
+    }
+    public function resumes(): HasMany
+    {
+        return $this->hasMany(AcaTeachingResume::class, 'person_id');
     }
 }

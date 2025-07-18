@@ -2,6 +2,7 @@
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import EditUserForm from '@/Pages/Users/Partials/EditUserForm.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import { Link } from '@inertiajs/vue3';
 
     const props = defineProps({
         establishments: {
@@ -19,7 +20,19 @@
         roles:{
             type: Object,
             default: () => ({}),
-        }
+        },
+        person:{
+            type: Object,
+            default: () => ({}),
+        },
+        identityDocumentTypes: {
+            type: Object,
+            default: () => ({}),
+        },
+        ubigeo: {
+            type: Object,
+            default: () => ({})
+        },
     });
 
 </script>
@@ -38,11 +51,14 @@
             </li>
         </Navigation>
        <div class="mt-5">
-            <EditUserForm 
-                :roles = "roles" 
-                :establishments = "props.establishments" 
-                :xuser = "props.xuser"
-                :xrole = "props.xrole"
+            <EditUserForm
+                :roles = "roles"
+                :establishments = "establishments"
+                :xuser = "xuser"
+                :xrole = "xrole"
+                :person ="person"
+                :identityDocumentTypes = "identityDocumentTypes"
+                :ubigeo = "ubigeo"
             />
         </div>
     </AppLayout>

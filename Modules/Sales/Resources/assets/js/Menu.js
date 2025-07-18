@@ -139,7 +139,14 @@ const menuSales = [{
                 text: 'Comunicacion de Baja',
                 permissions: 'invo_comunicacion_baja',
                 icom: faFileArrowDown,
-            }
+            },
+            // {
+            //     route: route('reports_invoice'),
+            //     status: false,
+            //     text: 'Reportes',
+            //     permissions: 'invo_reportes',
+            //     icom: faChartLine,
+            // }
         ]
     }
 ];

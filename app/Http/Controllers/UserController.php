@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\District;
 use App\Models\LocalSale;
+use App\Models\Person;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 use DataTables;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -74,11 +77,28 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        $person = Person::find($user->person_id);
+
+        $identityDocumentTypes = DB::table('identity_document_type')->get();
+
+        $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
+            ->join('departments', 'provinces.department_id', 'departments.id')
+            ->select(
+                'districts.id AS district_id',
+                'districts.name AS district_name',
+                'provinces.name AS province_name',
+                'departments.name AS department_name'
+            )
+            ->get();
+
         return Inertia::render('Users/Edit', [
             'establishments' => LocalSale::all(),
             'xuser' => $user,
             'xrole' => $user->getRoleNames(),
-            'roles' => Role::all()
+            'roles' => Role::all(),
+            'person' => $person,
+            'identityDocumentTypes' => $identityDocumentTypes,
+            'ubigeo'       => $ubigeo
         ]);
     }
     public function update(Request $request, User $user)

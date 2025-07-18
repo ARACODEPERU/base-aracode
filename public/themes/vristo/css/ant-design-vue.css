@@ -42,6 +42,33 @@
     border-color: #253b5c !important;
     color: #888ea8 !important;
 }
+
+/* Reglas para el placeholder */
+.dark .ant-input::placeholder { /* Para la mayoría de los navegadores modernos */
+    color: #888ea8 !important; /* O el color que desees para el placeholder */
+    opacity: 1 !important; /* Asegura que no tenga transparencia predeterminada del navegador */
+}
+
+.dark .ant-input::-webkit-input-placeholder { /* Para navegadores basados en Webkit (Chrome, Safari, Edge anterior) */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-input::-moz-placeholder { /* Para Firefox */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-input:-ms-input-placeholder { /* Para Internet Explorer */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-input::ms-input-placeholder { /* Para Microsoft Edge (versiones más nuevas, aunque ::placeholder es suficiente) */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
 .dark .ant-select-dropdown{
     background-color: #1b2e4b !important;
     border-color: #253b5c !important;
@@ -80,6 +107,19 @@
 }
 .dark .ant-select-tree-node-selected {
     background-color: #4a5c77 !important;
+    color: #dcdde6 !important;
+}
+.ant-btn {
+    display: flex;
+    align-items: center; /* Centra verticalmente */
+}
+.ant-btn-icon-only{
+    justify-content: center;
+}
+
+.dark .ant-btn {
+    background-color: #4a5c77 !important;
+    border-color: #253b5c !important;
     color: #dcdde6 !important;
 }
 

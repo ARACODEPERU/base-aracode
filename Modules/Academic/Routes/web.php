@@ -23,6 +23,7 @@ use Modules\Academic\Http\Controllers\AcaExamController;
 use Modules\Academic\Http\Controllers\AcaExamQuestionController;
 use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
+use Modules\Academic\Http\Controllers\AcaReportsController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
 use Modules\Academic\Http\Controllers\AcaShortVideoController;
@@ -373,11 +374,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
         // Despacha el Job a la cola, pasándole el ID del registro de estado
         ExportStudentsExcel::dispatch(auth()->id(), $excelExportJob->id);
-dd('aca llega ruta');
+
         return response()->json([
             'message' => 'La exportación de Excel ha sido iniciada. Por favor, espere un momento.',
             'job_id' => $excelExportJob->id // Envía el ID del job al frontend
         ], 202);
+
     })->name('aca_export_students_excel');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_exportar_excel'])
@@ -397,6 +399,28 @@ dd('aca llega ruta');
 
         return response()->json($excelExportJob);
     })->name('aca_export_students_excel_status');
+
+
+    ////////reportes Academico/////////////////
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->get('reports/index', [AcaReportsController::class, 'index'])
+        ->name('aca_reports_dashboard');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->get('reports/student/payment/bank', [AcaReportsController::class, 'studentPaymentBank'])
+        ->name('aca_student_payment_report_bank');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->post('reports/student/payment/bank/table', [AcaReportsController::class, 'studentPaymentBankTable'])
+        ->name('aca_student_payment_report_bank_table');
+
+    Route::post('reports/student/payment/bank/export', [AcaReportsController::class, 'exportStudentPaymentBankSales'])
+        ->name('aca_student_payment_report_bank_export');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->get('reports/student/payment/bank/export/status/{id}',[AcaReportsController::class, 'exportStatus'])
+        ->name('aca_export_status');
+
 
 });
 

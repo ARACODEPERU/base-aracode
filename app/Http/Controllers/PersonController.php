@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
+use Illuminate\Validation\Rule;
+use Modules\Security\Rules\ValidationPersonUser;
 
 class PersonController extends Controller
 {
@@ -26,6 +28,7 @@ class PersonController extends Controller
 
     public function searchByNumberType(Request $request)
     {
+        //dd($request->all());
         $document_type = $request->input('document_type');
         $number = $request->input('number');
         $full_name = $request->input('full_name');
@@ -39,8 +42,8 @@ class PersonController extends Controller
         if ($document_type == '') {
             $msg1 = 'Elija Tipo docuemnto';
         }
-        if (!$number && !$full_name) {
-            $msg2 = 'Ingrese numero de documento o nombre';
+        if (!$number || $number == '') {
+            $msg2 = 'Ingrese numero';
         }
 
 
@@ -72,7 +75,7 @@ class PersonController extends Controller
             $alert = 'No existen datos para la busqueda';
             $ubigeo = [];
         }
-
+        //dd($person);
         return response()->json([
             'status'        => $status,
             'person'        => $person,
@@ -398,5 +401,75 @@ class PersonController extends Controller
             });
 
         return $persons;
+    }
+
+    public function updateInfoPersonByUser(Request $request){
+
+        $person_id = $request->get('id');
+        $user = User::find($request->get('user_id'));
+        //dd($request->all());
+        $this->validate(
+            $request,
+            [
+                'document_type'     => 'required',
+                'number'            => 'required|max:12',
+                'number'            => 'unique:people,number,' . $person_id . ',id,document_type_id,' . $request->get('document_type'),
+                'telephone'         => 'required|max:12',
+                'email'             => 'required|max:255',
+                'email'             => 'unique:people,email,' . $person_id . ',id',
+                'email'             => 'unique:users,email,' . $user->id . ',id',
+                'address'           => 'required|max:255',
+                'ubigeo'            => 'required|max:255',
+                'birthdate'         => 'required',
+                'names'             => 'required|max:255',
+                'father_lastname'   => 'required|max:255',
+                'mother_lastname'   => 'required|max:255',
+                'id' => [
+                    'nullable', // ¡Ahora es opcional! Si no se envía, la regla no verifica unicidad de usuario.
+                    'numeric', // Asegura que si se envía, sea un número válido.
+                    new ValidationPersonUser(), // Tu regla personalizada
+                ],
+            ]
+        );
+
+        $person = Person::find($person_id);
+
+        $user->name = $request->get('names');
+        $user->email = $request->get('email');
+
+        if($person){
+            $person->document_type_id = $request->get('document_type');
+            $person->number = $request->get('number');
+            $person->telephone = $request->get('telephone');
+            $person->email = $request->get('email');
+            $person->address = $request->get('address');
+            $person->ubigeo = $request->get('ubigeo');
+            $person->birthdate = $request->get('birthdate');
+            $person->names = $request->get('names');
+            $person->father_lastname = $request->get('father_lastname');
+            $person->mother_lastname = $request->get('mother_lastname');
+            $person->ubigeo_description = $request->get('document_type');
+            $person->gender = $request->get('gender');
+
+            $person->save();
+        }else{
+            $newPerson = Person::create([
+                'document_type_id' => $request->get('document_type_id'),
+                'number' => $request->get('number'),
+                'telephone' => $request->get('telephone'),
+                'email' => $request->get('email'),
+                'address' => $request->get('address'),
+                'ubigeo' => $request->get('ubigeo'),
+                'birthdate' => $request->get('birthdate'),
+                'names' => $request->get('names'),
+                'father_lastname' => $request->get('father_lastname'),
+                'mother_lastname' => $request->get('mother_lastname'),
+                'ubigeo_description' => $request->get('ubigeo_description'),
+                'gender' => $request->get('gender'),
+            ]);
+
+            $user->person_id = $newPerson->id;
+        }
+        $user->save();
     }
 }

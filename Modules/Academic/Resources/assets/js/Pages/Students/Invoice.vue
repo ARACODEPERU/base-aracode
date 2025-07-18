@@ -567,7 +567,7 @@
 
 const getDataClient = async (data) => {
         if(form.sale_documenttype_id == 2){
-            form.client_id = data.id;
+            //form.client_id = data.id;
             form.client_name = data.number+"-"+data.full_name;
             form.client_rzn_social = data.full_name;
             form.client_ubigeo_description = data.city;
@@ -579,7 +579,7 @@ const getDataClient = async (data) => {
             form.client_email = data.email;
         }else{
             if(data.document_type_id == '6'){
-                form.client_id = data.id;
+                //form.client_id = data.id;
                 form.client_name = data.number+"-"+data.full_name;
                 form.client_ubigeo_description = data.city;
                 form.client_ubigeo = data.ubigeo;

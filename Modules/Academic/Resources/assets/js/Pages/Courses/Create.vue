@@ -32,10 +32,10 @@ const props = defineProps({
     <AppLayout title="Crear Curso">
         <ul class="flex space-x-2 rtl:space-x-reverse">
             <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
+                <Link :href="route('aca_dashboard')" class="text-primary hover:underline">Académico</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <a :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</a>
+                <Link :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
                 <span>Nuevo</span>

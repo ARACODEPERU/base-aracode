@@ -2,7 +2,9 @@
 
 namespace Modules\Restaurant\Database\Seeders;
 
+use App\Models\Modulo;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -14,6 +16,8 @@ class RestaurantPermissionSeeder extends Seeder
     public function run(): void
     {
         $role = Role::find(1);
+
+        $modulo = Modulo::create(['identifier' => 'M012', 'description' => 'Restaurante']);
 
         $permissions = [];
 
@@ -38,6 +42,11 @@ class RestaurantPermissionSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $modulo->identifier
+            ]);
         }
     }
 }
