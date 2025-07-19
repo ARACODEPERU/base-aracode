@@ -4,6 +4,7 @@ namespace Modules\Sales\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SaleSummary extends Model
 {
@@ -28,10 +29,6 @@ class SaleSummary extends Model
         'reason'
     ];
 
-    protected static function newFactory()
-    {
-        return \Modules\Sales\Database\factories\SaleSummaryFactory::new();
-    }
 
     // Definimos el evento "creating"
     protected static function boot()
@@ -56,5 +53,10 @@ class SaleSummary extends Model
             // Actualizamos el campo "correlativo" del registro recién insertado
             $summary->update(['correlative' => $correlativo]);
         });
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(SaleSummaryDetail::class,'summary_id');
     }
 }

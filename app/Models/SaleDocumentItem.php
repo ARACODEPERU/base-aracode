@@ -32,7 +32,7 @@ class SaleDocumentItem extends Model
         'mto_total',
         'mto_discount',
         'json_discounts',
-        'entity_name_product'
+        'entity_name_product',
     ];
 
     public function document(): BelongsTo

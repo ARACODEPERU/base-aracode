@@ -38,9 +38,24 @@
         unitTypes:{
             type: Object,
             default: () => ({}),
+        },
+        operationTypes:{
+            type: Object,
+            default: () => ({}),
+        },
+        creditNoteType: {
+            type: Object,
+            default: () => ({}),
+        },
+        debitNoteType: {
+            type: Object,
+            default: () => ({}),
         }
     });
 
+    const findObjectById = (data, id) => {
+        return data.find(item => item.id === id);
+    };
 
     const displayModalDetails = ref(false);
     const displayLoaderDetails = ref(false);
@@ -52,8 +67,8 @@
         }else{
             disabledButtonDetailsSave.value = true
         }
-
-        documentDetails.value = sales.documents[0];
+        console.log(sales)
+        documentDetails.value = sales.document;
         displayModalDetails.value = true;
     }
 
@@ -191,7 +206,8 @@
         client_email: null,
         invoice_broadcast_date: null,
         invoice_due_date: null,
-        invoice_status: null
+        invoice_status: null,
+        type_operation: null
     });
     const closeModalEditDocument = () => {
         displayEditDocument.value = false ;
@@ -210,6 +226,7 @@
         formHead.invoice_broadcast_date = document.invoice_broadcast_date;
         formHead.invoice_due_date = document.invoice_due_date;
         formHead.invoice_status = document.invoice_status;
+        formHead.type_operation = document.invoice_type_operation;
         displayEditDocument.value = true ;
     }
 
@@ -422,12 +439,14 @@
                                         <li>
                                             <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'PDF','t80')" href="javascript:;">PDF 80x250</a>
                                         </li>
-                                        <li v-if="props.rowData.invoice_status === 'Aceptada'">
-                                            <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'XML')" href="javascript:;">Descargar XML</a>
-                                        </li>
-                                        <li v-if="props.rowData.invoice_status === 'Aceptada'">
-                                            <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'CDR')" href="javascript:;">Descargar CDR</a>
-                                        </li>
+                                        <template v-if="props.rowData.invoice_type_doc == '01'">
+                                            <li v-if="props.rowData.invoice_status === 'Aceptada'">
+                                                <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'XML')" href="javascript:;">Descargar XML</a>
+                                            </li>
+                                            <li v-if="props.rowData.invoice_status === 'Aceptada'">
+                                                <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'CDR')" href="javascript:;">Descargar CDR</a>
+                                            </li>
+                                        </template>
                                     </ul>
                                     </template>
                                 </Popper>
@@ -448,7 +467,15 @@
                                 </code>
                             </span>
                         </div>
-                        <p v-if="props.rowData.status == 3" class="text-xs font-black text-danger">Motivo de anulacion: {{ props.rowData.reason_cancellation }}</p>
+                        <div v-if="props.rowData.status == 3 && props.rowData.document.note">
+                            <h6 class="font-semibold" >
+                                NOTA DE {{ props.rowData.document.note.invoice_type_doc == '07' ? 'CRÉDITO': 'DÉBITO' }}: {{ props.rowData.document.note.invoice_serie }}-{{ props.rowData.document.note.invoice_correlative }}
+                            </h6>
+                            <p  class="text-xs font-black text-danger">
+                                <template v-if="props.rowData.document.note.invoice_type_doc == '07'" class="text-xs font-black text-danger">MOTIVO: {{ findObjectById(creditNoteType,props.rowData.document.note.note_type_operation_id)?.description }}</template>
+                                <template v-if="props.rowData.document.note.invoice_type_doc == '08'" class="text-xs font-black text-danger">MOTIVO: {{ findObjectById(debitNoteType,props.rowData.document.note.note_type_operation_id)?.description }}</template>
+                            </p>
+                        </div>
                     </template>
                     <template #created="props">
                         {{ formatDate(props.rowData.created_at) }}
@@ -641,12 +668,21 @@
                         <InputError :message="formHead.errors.invoice_due_date" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-2">
-                        <InputLabel for="invoice_status" value="Esatdo sunat" />
+                        <InputLabel for="invoice_status" value="Estado sunat" />
                         <select v-model="formHead.invoice_status" id="invoice_status" class="form-select">
                             <option :value="'Pendiente'">Pendiente</option>
                             <option :value="'Rechazada'">Rechazada</option>
                         </select>
                         <InputError :message="formHead.errors.invoice_status" class="mt-2" />
+                    </div>
+                    <div class="col-span-6 sm:col-span-2">
+                        <InputLabel for="type_operation" value="Tipo de operación" />
+                        <select v-model="formHead.type_operation" id="type_operation" class="form-select">
+                            <template v-for="operationType in operationTypes">
+                                <option :value="operationType.id">{{ operationType.description }}</option>
+                            </template>
+                        </select>
+                        <InputError :message="formHead.errors.type_operation" class="mt-2" />
                     </div>
                 </div>
             </template>

@@ -118,7 +118,7 @@ class AcaSalesController extends Controller
                 $tido = SaleDocumentType::find($request->get('sale_documenttype_id'));
                 ///creamos el documento de la venta para enviar a sunat
 
-                $typeOperation = $request->get('type_operation');
+                $typeOperation = '0101';
                 if ($request->get('total') > 700) {
                     $typeOperation = '1001';
                 }
@@ -272,7 +272,7 @@ class AcaSalesController extends Controller
                         'product_id'            => $product_id,
                         'cod_product'           => $product_id,
                         'decription_product'    => $produc['description'],
-                        'unit_type'             => $produc['amount'],
+                        'unit_type'             => 'ZZ',
                         'quantity'              => $produc['quantity'],
                         'mto_base_igv'          => $mto_base_igv,
                         'percentage_igv'        => $this->igv,

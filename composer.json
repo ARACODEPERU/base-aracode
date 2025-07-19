@@ -9,6 +9,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "chillerlan/php-qrcode": "^5.0",
         "choowx/rasterize-svg": "^0.1.2",
+        "greenter/consulta-cpe": "^1.1",
         "greenter/greenter": "^5.1.0",
         "guzzlehttp/guzzle": "^7.2",
         "inertiajs/inertia-laravel": "^2.0.3",

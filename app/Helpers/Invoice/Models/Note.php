@@ -2,10 +2,10 @@
 
 namespace App\Helpers\Invoice\Models;
 
-use Greenter\Model\Sale\Note;
+use Greenter\Model\Sale\Note as oldNote;
 use DateTimeInterface; // Importa DateTimeInterface
 
-class ImprovedNote extends Note
+class Note extends oldNote
 {
     private $idDocAfectado;
 

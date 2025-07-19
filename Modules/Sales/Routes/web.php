@@ -128,6 +128,7 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::post('salesummary/store', [SaleSummaryController::class, 'store'])->name('salesummaries_store_date');
     Route::get('salesummary/check/{id}/{ticket}', [SaleSummaryController::class, 'checkSummary'])->name('salesummaries_store_check');
     Route::get('salesummary/destroy/{id}', [SaleSummaryController::class, 'destroySummary'])->name('salesummaries_destroy');
+    Route::get('salesummary/download/{id}/{type}', [SaleSummaryController::class, 'downloadFile'])->name('salesummaries_download');
 
     ////rutas de comunicacion de baja
     Route::get('lowcommunication/list', [SaleLowCommunicationController::class, 'index'])->name('low_communication_list');
@@ -135,6 +136,7 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::post('lowcommunication/store', [SaleLowCommunicationController::class, 'store'])->name('low_communication_store');
     Route::get('lowcommunication/check/{id}/{ticket}', [SaleLowCommunicationController::class, 'check'])->name('low_communication_check');
     Route::get('lowcommunication/destroy/{id}', [SaleLowCommunicationController::class, 'destroy'])->name('low_communication_destroy');
+    Route::get('lowcommunication/download/{id}/{type}', [SaleLowCommunicationController::class, 'downloadFile'])->name('low_communication_download');
     ////rutas de notas de credito
     Route::get('creditnote/list', [SaleCreditNotesController::class, 'index'])->name('sale_credit_notes_list');
     Route::get('creditnote/table', [SaleCreditNotesController::class, 'tableDocument'])->name('sale_credit_notes_table');

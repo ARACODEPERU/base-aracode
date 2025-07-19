@@ -60,6 +60,9 @@ class SaleDocumentController extends Controller
 
         $affectations = DB::table('sunat_affectation_igv_types')->get();
         $unitTypes = DB::table('sunat_unit_types')->get();
+        $operationTypes = DB::table('sunat_operation_types')->whereIn('id',['0101','1001'])->get();
+        $creditNoteType = DB::table('sunat_note_credit_types')->get();
+        $debitNoteType = DB::table('sunat_note_debit_types')->get();
 
         return Inertia::render('Sales::Documents/List', [
             'affectations'  => $affectations,
@@ -67,7 +70,10 @@ class SaleDocumentController extends Controller
             'taxes'         => array(
                 'igv' => $this->igv,
                 'icbper' => $this->icbper
-            )
+            ),
+            'operationTypes' => $operationTypes,
+            'creditNoteType' => $creditNoteType,
+            'debitNoteType'  => $debitNoteType
         ]);
     }
 
@@ -110,13 +116,14 @@ class SaleDocumentController extends Controller
                 'sale_documents.client_email',
                 'sale_documents.invoice_broadcast_date',
                 'sale_documents.invoice_due_date',
-                'sale_documents.reason_cancellation'
+                'sale_documents.reason_cancellation',
+                'sale_documents.invoice_type_operation'
             )
             ->whereIn('series.document_type_id', [1, 2])
             ->when(!$hasFullAccess, function ($q) {
                 return $q->where('sales.user_id', Auth::id());
             })
-            ->with('documents.items')
+            ->with(['document.items','document.note'])
             ->orderBy('sales.id', 'DESC');
 
         return DataTables::of($sales)->toJson();
@@ -699,7 +706,7 @@ class SaleDocumentController extends Controller
                 $product = Product::find($item['product_id']);
 
                 if ($item['quantity'] > 0) {
-                    if ($product->is_product) {
+                    if ($product && $product->is_product) {
                         $k = Kardex::where('document_id', $document->id)
                             ->where('document_entity', SaleDocument::class)
                             ->first();
@@ -833,10 +840,10 @@ class SaleDocumentController extends Controller
                     $res = $notaCredito->getNotaCreditoPdf($id, $format);
                 } else if ($file == 'XML') {
                     $content_type =  'application/xml';
-                    $res = $notaCredito->getBoletaXML($id);
+                    //$res = $notaCredito->getBoletaXML($id);
                 } else {
                     $content_type =  'application/zip';
-                    $res = $notaCredito->getBoletaCDR($id);
+                    //$res = $notaCredito->getBoletaCDR($id);
                 }
 
                 break;
@@ -907,11 +914,13 @@ class SaleDocumentController extends Controller
             'client_address'            => 'required',
             'client_ubigeo_code'        => 'required',
             'invoice_broadcast_date'    => 'required',
-            'invoice_due_date'          => 'required'
+            'invoice_due_date'          => 'required',
+            'type_operation'            => 'required'
         ]);
         //dd($request->get('invoice_status'));
         SaleDocument::find($request->get('id'))
             ->update([
+                'invoice_type_operation'    => $request->get('type_operation'),
                 'client_number'             => $request->get('client_number'),
                 'client_rzn_social'         => $request->get('client_rzn_social'),
                 'client_address'            => $request->get('client_address'),
@@ -924,15 +933,15 @@ class SaleDocumentController extends Controller
                 'invoice_status'            => $request->get('invoice_status')
             ]);
 
-        Person::find($request->get('client_id'))
-            ->update([
-                'full_name' => $request->get('client_rzn_social'),
-                'number'    => $request->get('client_number'),
-                'telephone' => $request->get('client_phone'),
-                'email'     => $request->get('client_email'),
-                'address'   => $request->get('client_address'),
-                'ubigeo'    => $request->get('client_ubigeo_code')
-            ]);
+        // Person::find($request->get('client_id'))
+        //     ->update([
+        //         'full_name' => $request->get('client_rzn_social'),
+        //         'number'    => $request->get('client_number'),
+        //         'telephone' => $request->get('client_phone'),
+        //         'email'     => $request->get('client_email'),
+        //         'address'   => $request->get('client_address'),
+        //         'ubigeo'    => $request->get('client_ubigeo_code')
+        //     ]);
     }
 
     public function storeFromTicket(Request $request)

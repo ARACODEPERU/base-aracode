@@ -2,7 +2,7 @@
 
 namespace App\Helpers\Invoice\Documents;
 
-use App\Helpers\Invoice\Models\ImprovedNote;
+use App\Helpers\Invoice\Models\Note;
 use Carbon\Carbon;
 use DateTime;
 use App\Models\Company as MyCompany;
@@ -60,6 +60,9 @@ class NotaCredito
                 $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
                 if ($cdr->getCode() == 0) {
                     $status = 'Aceptada';
+                    $invoice->status = 3;
+                    $invoice->invoice_status = 'Por anular';
+                    $invoice->save();
                 } elseif ($cdr->getCode() == 2325) {
                     $status = 'Pendiente';
                 }
@@ -88,7 +91,7 @@ class NotaCredito
 
     public function setDocument($document, $invoice)
     {
-        $note = new ImprovedNote();
+        $note = new Note();
         $establishment = LocalSale::find($invoice->sale->local_id);
         $province = $establishment->district->province;
 

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SaleDocument extends Model
 {
@@ -70,4 +71,15 @@ class SaleDocument extends Model
     {
         return $this->belongsTo(Sale::class, 'sale_id', 'id');
     }
+
+    public function note(): HasOne
+    {
+        return $this->hasOne(SaleDocument::class,'document_id', 'id');
+    }
+
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(SaleDocument::class, 'id' , 'document_id');
+    }
+
 }

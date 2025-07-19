@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use DataTables;
 use Exception;
-use Greenter\Model\Sale\Note;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 
 class SaleCreditNotesController extends Controller
@@ -48,13 +47,18 @@ class SaleCreditNotesController extends Controller
 
         $affectations = DB::table('sunat_affectation_igv_types')->get();
         $unitTypes = DB::table('sunat_unit_types')->get();
+        $creditNoteType = DB::table('sunat_note_credit_types')->get();
+        $debitNoteType = DB::table('sunat_note_debit_types')->get();
+
         return Inertia::render('Sales::Documents/CreditNotes', [
             'affectations'  => $affectations,
             'unitTypes'     => $unitTypes,
             'taxes'         => array(
                 'igv' => $this->igv,
                 'icbper' => $this->icbper
-            )
+            ),
+            'creditNoteType' => $creditNoteType,
+            'debitNoteType'  => $debitNoteType
         ]);
     }
     public function tableDocument()
@@ -64,7 +68,10 @@ class SaleCreditNotesController extends Controller
         $isAdmin = Auth::user()->hasAnyRole(['admin', 'Contabilidad']);
 
         $sales = $sales->join('people', 'client_id', 'people.id')
-            ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
+            ->join('sale_documents', function($query) {
+                $query->on('sale_documents.sale_id', 'sales.id')
+                    ->whereIn('sale_documents.invoice_type_doc', ['08','07']);
+            })
             ->join('series', 'sale_documents.serie_id', 'series.id')
             ->select(
                 'sales.id',
@@ -95,13 +102,14 @@ class SaleCreditNotesController extends Controller
                 'sale_documents.client_email',
                 'sale_documents.invoice_broadcast_date',
                 'sale_documents.invoice_due_date',
-                'sale_documents.reason_cancellation'
+                'sale_documents.reason_cancellation',
+                'sale_documents.note_type_operation_id'
             )
             ->whereIn('series.document_type_id', [3, 4])
             ->when(!$isAdmin, function ($q) {
                 return $q->where('sales.user_id', Auth::id());
             })
-            ->with('documents.items')
+            ->with(['document.items'])
             ->orderBy('sales.id', 'DESC');
         //dd($sales);
         return DataTables::of($sales)->toJson();
@@ -218,16 +226,18 @@ class SaleCreditNotesController extends Controller
                 $total_discount = 0;
                 $total = 0;
 
+                $invoice = SaleDocument::find($request->get('document_id'));
+
                 $document = SaleDocument::create([
                     'sale_id'                       => $request->get('document_sale_id'),
                     'serie_id'                      => $request->get('note_serie'),
                     'number'                        => str_pad($serie->number, 9, '0', STR_PAD_LEFT),
                     'status'                        => true,
-                    'client_type_doc'               => $request->get('document_client_type'),
-                    'client_number'                 => $request->get('document_client_ruc'),
-                    'client_rzn_social'             => $request->get('document_client'),
-                    'client_address'                => $request->get('document_client_address'),
-                    'client_email'                  => $request->get('document_client_email'),
+                    'client_type_doc'               => $invoice->document_client_type,
+                    'client_number'                 => $invoice->document_client_ruc,
+                    'client_rzn_social'             => $invoice->document_client,
+                    'client_address'                => $invoice->document_client_address,
+                    'client_email'                  => $invoice->document_client_email,
                     'invoice_ubl_version'           => $this->ubl, ///para notas de credito
                     'note_type_operation_id'        => $request->get('note_operation_type'),
                     'invoice_type_doc'              => $tido->sunat_id,
@@ -429,35 +439,4 @@ class SaleCreditNotesController extends Controller
         ];
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('sales::show');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('sales::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }

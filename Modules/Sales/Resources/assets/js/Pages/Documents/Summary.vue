@@ -5,12 +5,15 @@
     import Keypad from '@/Components/Keypad.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, onMounted } from 'vue';
-    import ModalLarge from '@/Components/ModalLargeX.vue';
+    import ModalLargeX from '@/Components/ModalLargeX.vue';
     import Swal from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
     import IconBell from "@/Components/vristo/icon/icon-bell.vue";
     import IconX from "@/Components/vristo/icon/icon-x.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import iconFileCode from '@/Components/vristo/icon/icon-file-code.vue';
+    import iconZipFile from '@/Components/vristo/icon/icon-zip-file.vue';
+    import ModalLarge from '@/Components/ModalLarge.vue';
 
     const props = defineProps({
         summaries: {
@@ -88,10 +91,10 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('salesummaries_list'), { 
+                router.visit(route('salesummaries_list'), {
                     replace: false,
                     preserveState: true,
-                    preserveScroll: true, 
+                    preserveScroll: true,
                 });
             }else{
                 Swal.fire({
@@ -104,17 +107,17 @@
             }
             displaySaveLoading.value = false;
         }).then(() => {
-            router.visit(route('salesummaries_list'), { 
+            router.visit(route('salesummaries_list'), {
                 replace: false,
                 preserveState: true,
-                preserveScroll: true, 
+                preserveScroll: true,
             });
         });
     }
 
 
     const statusTicket = (id,ticket,index) => {
-        
+
         let btnCheck = document.getElementById('btn-check-summary'+ index);
         let spCheck = document.getElementById('sp-check-summary'+ index);
         let spBtn= document.getElementById('sp-btn-summary'+ index);
@@ -132,10 +135,10 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('salesummaries_list'), { 
+                router.visit(route('salesummaries_list'), {
                     replace: false,
                     preserveState: true,
-                    preserveScroll: true, 
+                    preserveScroll: true,
                 });
             }else{
                 Swal.fire({
@@ -145,16 +148,16 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('salesummaries_list'), { 
+                router.visit(route('salesummaries_list'), {
                     replace: false,
                     preserveState: true,
-                    preserveScroll: true, 
+                    preserveScroll: true,
                 });
             }
         });
     }
     const deleteSummary = (id,index) => {
-        
+
         let btnCheck = document.getElementById('btn-delete-summary'+ index);
         let spCheck = document.getElementById('sp-delete-summary'+ index);
         btnCheck.style.width = '120';
@@ -170,16 +173,28 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('salesummaries_list'), { 
+                router.visit(route('salesummaries_list'), {
                     replace: false,
                     preserveState: true,
-                    preserveScroll: true, 
+                    preserveScroll: true,
                 });
             }
         });
     }
 
-   
+    const  openDownloadTap = (id,type) => {
+        window.open(route('salesummaries_download',[id,type]), "_blank");
+    }
+
+    const displayModalDetailDocuments = ref(false);
+    const detailDocuments = ref([]);
+    const openModalDetailsDocuments = (summary) => {
+        detailDocuments.value = summary;
+        displayModalDetailDocuments.value = true;
+    }
+    const cloceModalDetailsDocuments = () => {
+        displayModalDetailDocuments.value = false;
+    }
 </script>
 
 <template>
@@ -252,7 +267,7 @@
                                 <template v-for="(summary, index) in summaries.data" :key="summary.id">
                                     <tr :class="summary.status ==='registrado' ? '' : summary.status ==='Rechazado' ? 'text-danger': summary.status ==='Enviado'? 'text-success' : 'text-primary'">
                                         <td class="text-center">
-                                            <div class="flex gap-4 items-center justify-center">
+                                            <div class="flex space-x-2 items-center justify-center">
                                                 <button :id="'btn-check-summary'+index" @click="statusTicket(summary.id,summary.ticket,index)" v-if="summary.status ==='Enviado'" type="button" class="btn btn-info text-sm btn-sm flex">
                                                     <svg :id="'sp-check-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
@@ -266,6 +281,34 @@
                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                                     </svg>
                                                     Eliminar
+                                                </button>
+                                                <button v-if="summary.status ==='Aceptado'"
+                                                    @click="openDownloadTap(summary.id,'XML')"
+                                                    type="button" class="text-success"
+                                                    v-tippy="{ content: 'Descargar xml', placement: 'bottom'}"
+                                                >
+                                                    <icon-file-code class="w-5 h-5" />
+
+                                                </button>
+                                                <button v-if="summary.status ==='Aceptado'"
+                                                    @click="openDownloadTap(summary.id,'CDR')"
+                                                    type="button"
+                                                    class="text-warning"
+                                                    v-tippy="{ content: 'Descargar cdr', placement: 'bottom'}"
+                                                >
+                                                    <icon-zip-file class="w-5 h-5" />
+
+                                                </button>
+                                                <button v-if="summary.status ==='Aceptado'"
+                                                    @click="openModalDetailsDocuments(summary)"
+                                                    type="button"
+                                                    class="text-info"
+                                                    v-tippy="{ content: 'Lista de Boletas', placement: 'bottom'}"
+                                                >
+                                                    <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                                                        <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM80 64l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L80 96c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm16 96l192 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32L96 352c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32zm0 32l0 64 192 0 0-64L96 256zM240 416l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>
+                                                    </svg>
+
                                                 </button>
                                             </div>
                                         </td>
@@ -300,7 +343,7 @@
                 </div>
             </div>
         </div>
-        <ModalLarge
+        <ModalLargeX
             :show="displayModalCreateSummary"
             :onClose="closeModalCreateSummary"
             :icon="'/img/papel.png'"
@@ -314,7 +357,7 @@
             <template #content>
                 <div class="grid grid-cols-6">
                     <div class="col-span-6 sm:col-span-2">
-                        <form class="flex items-center mb-4">   
+                        <form class="flex items-center mb-4">
                             <label for="simple-search" class="sr-only">Search</label>
                             <div class="relative w-full">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -342,7 +385,7 @@
                         <thead class="uppercase text-sm">
                             <tr>
                                 <th>
-                                    
+
                                 </th>
                                 <th scope="col">
                                     Tipo documento
@@ -367,7 +410,7 @@
                         <tbody>
                             <tr v-for="(item, ko) in documents" class="text-sm">
                                 <th scope="row">
-                                    
+
                                 </th>
                                 <td>
                                    {{ item.type_description }}
@@ -404,7 +447,33 @@
                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                     </svg>
                     Guardar
-                </PrimaryButton> 
+                </PrimaryButton>
+            </template>
+        </ModalLargeX>
+        <ModalLarge :show="displayModalDetailDocuments" :onClose="cloceModalDetailsDocuments" :icon="'/img/lupa-documento.png'">
+            <template #title>{{ detailDocuments.summary_name }}</template>
+            <template #message>Lista de boletas</template>
+            <template #content>
+                <div class="max-h-96 overflow-y-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Serie - Numero</th>
+                                <th>Cliente</th>
+                                <th class="text-center">total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="item in detailDocuments.details">
+                                <tr>
+                                    <td>{{ item.document.invoice_serie }}-{{ item.document.invoice_correlative }}</td>
+                                    <td>{{ item.document.client_rzn_social }}</td>
+                                    <td class="text-right">{{ item.document.overall_total }}</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </template>
         </ModalLarge>
     </AppLayout>

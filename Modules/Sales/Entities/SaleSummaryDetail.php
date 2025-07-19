@@ -2,8 +2,10 @@
 
 namespace Modules\Sales\Entities;
 
+use App\Models\SaleDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SaleSummaryDetail extends Model
 {
@@ -21,8 +23,8 @@ class SaleSummaryDetail extends Model
         'total'
     ];
 
-    protected static function newFactory()
+    public function document(): HasOne
     {
-        return \Modules\Sales\Database\factories\SaleSummaryDetailFactory::new();
+        return $this->hasOne(SaleDocument::class,'id','document_id');
     }
 }
