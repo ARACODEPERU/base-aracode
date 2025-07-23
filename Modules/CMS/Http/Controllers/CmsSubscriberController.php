@@ -8,6 +8,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Validator;
 use Modules\CMS\Entities\CmsSubscriber;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NotificacionDescarga_brochure;
 use Inertia\Inertia;
 
 class CmsSubscriberController extends Controller
@@ -42,13 +44,17 @@ class CmsSubscriberController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'email' => 'required|email|unique:cms_subscribers,email|max:255',
+                'email' => 'required|email|max:255',
+                'full_name' => 'required',
+                'phone' => 'required',
             ],
             [
-                'email.unique' => 'El correo electrónico ya existe',
+                //'email.unique' => 'El correo electrónico ya existe',
                 'email.required' => 'El correo electrónico es obligatorio',
                 'email.email' => 'Por favor, ingrese una dirección de correo electrónico válida.',
                 'email.max' => 'Limita la longitud máxima del campo de correo electrónico a 255 caracteres',
+                'full_name' => 'Agrega tu nombre por favor.',
+                'phone' => 'Ponga un numero de teléfono valido por favor.'
             ]
         );
 
@@ -57,8 +63,8 @@ class CmsSubscriberController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        CmsSubscriber::create([
-            'full_name'     => $request->get('full_name') ?? null,
+        $Subscriber = CmsSubscriber::create([
+            'full_name'     => $request->get('fullname') ?? null,
             'email'         => $request->get('email'),
             'phone'         => $request->get('phone') ?? null,
             'client_ip'     => $request->ip(),
@@ -66,6 +72,15 @@ class CmsSubscriberController extends Controller
             'subject'       => $request->get('subject') ?? null,
             'message'       => $request->get('message') ?? null,
         ]);
+
+        try {
+            //Correo a Ronald
+        Mail::to("jsuclupe@globalcpaperu.com")
+        ->send(new NotificacionDescarga_brochure($Subscriber));
+
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
 
         return response()->json([
             'success' => true,
