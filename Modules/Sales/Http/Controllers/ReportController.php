@@ -180,55 +180,43 @@ class ReportController extends Controller
     {
         $petty_cash = PettyCash::find($petty_cash_id);
 
-        $tickets = Sale::join('local_sales', 'sales.local_id', 'local_sales.id')
-            ->join('sale_products', 'sale_products.sale_id', 'sales.id')
-            ->join('products', 'products.id', 'sale_products.product_id')
-            ->select(
-                'sales.*',
-                'products.interne',
-                'products.description as product_description',
-                'products.image',
-                'sale_products.price as price',
-                'sale_products.quantity as quantity'
-            )
+        $tickets = Sale::with('establishment')
+            ->with('document.serie.documentType')
             ->where('sales.petty_cash_id', '=', $petty_cash_id)
             ->where('sales.status', '=', 1)
             ->where('physical', 1)
-            ->orderBy('id', 'desc')
-            ->orderBy('sale_products.id', 'desc')
-            ->get();
-        //dd($tickets);
-        $physicals = Sale::join('local_sales', 'sales.local_id', 'local_sales.id')
-            ->join('sale_physical_documents', 'sale_physical_documents.sale_id', 'sales.id')
-            ->select(
-                'sales.*',
-                'local_sales.description',
-                'sale_physical_documents.products'
-            )
-            ->where('sales.petty_cash_id', '=', $petty_cash_id)
-            ->where('sales.status', '=', 1)
-            ->where('physical', 3)
-            ->where('sale_physical_documents.status', '<>', 'A')
+            ->whereHas('document', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
+                $query->whereIn('invoice_type_doc', ['80'])
+                    ->where('status', 1);
+            })
             ->orderBy('id', 'desc')
             ->get();
 
-        $documents = Sale::join('local_sales', 'sales.local_id', 'local_sales.id')
-            ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
-            ->join('sale_document_items', 'sale_document_items.document_id', 'sale_documents.id')
-            ->join('products', 'products.id', 'sale_document_items.product_id')
-            ->select(
-                'sales.*',
-                'sale_document_items.cod_product AS interne',
-                'sale_document_items.decription_product as product_description',
-                'products.image',
-                'sale_document_items.price_sale as price',
-                'sale_document_items.quantity as quantity'
-            )
+        $physicals = Sale::with('establishment')
+            ->with('physicalDocument.saleDocumentType')
+            ->where('sales.petty_cash_id', '=', $petty_cash_id)
+            ->where('sales.status', '=', 1)
+            ->where('physical', 3)
+            ->whereHas('physicalDocument', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
+                $query->whereIn('document_type', ['1','2'])
+                    ->where('status', '<>', 'A');
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $documents = Sale::with('establishment')
+            ->with('document.serie.documentType')
             ->where('sales.petty_cash_id', '=', $petty_cash_id)
             ->where('sales.status', '=', 1)
             ->orderBy('id', 'desc')
-            ->orderBy('sale_document_items.id', 'desc')
+            ->where('physical', 2)
+            ->whereHas('document', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
+                $query->whereIn('invoice_type_doc', ['03','01'])
+                    ->where('status', 1)
+                        ->whereNotIn('invoice_status', ['Rechazada']); // Estado de la factura
+            })
             ->get();
+
 
 
         $total = 0;

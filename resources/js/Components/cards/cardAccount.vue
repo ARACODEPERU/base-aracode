@@ -3,6 +3,8 @@
     import iconHorizontalDots from '@/Components/vristo/icon/icon-horizontal-dots.vue';
     import Swal from "sweetalert2";
     import { router } from '@inertiajs/vue3'
+    import ModalSmall from '@/Components/ModalSmall.vue';
+    import { ref } from 'vue';
 
     const props = defineProps({
         bankAccount: {
@@ -84,6 +86,19 @@
             }
         });
     }
+
+    const displayModalPaymentMethods = ref(false);
+    const accountData = ref([]);
+
+    const opemModalPaymentMethods = (account) => {
+        displayModalPaymentMethods.value = true;
+        accountData.value = account;
+    }
+
+    const closeModalPaymentMethods = () => {
+        displayModalPaymentMethods.value = false;
+    }
+
 </script>
 <template>
     <div class="panel dark:bg-gray-800">
@@ -107,6 +122,11 @@
                             </li>
                             <li>
                                 <a @click="destroyAccount(bankAccount.id)" href="javascript:;">Eliminar</a>
+                            </li>
+                            <li>
+                                <a @click="opemModalPaymentMethods(bankAccount)" href="javascript:;">
+                                    Metodos de pago
+                                </a>
                             </li>
                         </ul>
                     </template>
@@ -147,5 +167,15 @@
             </div>
         </div>
     </div>
+    <ModalSmall :show="displayModalPaymentMethods" :onClose="closeModalPaymentMethods" :icon="'/img/punto-de-venta.png'">
+        <template #title>Metodo de pago</template>
+        <template #message>
+            <p>{{ accountData.bank.full_name }}</p>
+            <small>{{ accountData.description  }} / {{ bankAccount.number }}</small>
+        </template>
+        <template #content>
+
+        </template>
+    </ModalSmall>
 </template>
 

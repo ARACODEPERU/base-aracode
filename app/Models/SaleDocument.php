@@ -82,4 +82,8 @@ class SaleDocument extends Model
         return $this->hasOne(SaleDocument::class, 'id' , 'document_id');
     }
 
+    public function serie(): BelongsTo
+    {
+        return $this->belongsTo(Serie::class,'serie_id','id');
+    }
 }

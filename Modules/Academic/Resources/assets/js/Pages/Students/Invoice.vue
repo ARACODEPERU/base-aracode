@@ -565,7 +565,7 @@
         displayModalClientSearch.value = false;
     }
 
-const getDataClient = async (data) => {
+    const getDataClient = async (data) => {
         if(form.sale_documenttype_id == 2){
             //form.client_id = data.id;
             form.client_name = data.number+"-"+data.full_name;
@@ -601,6 +601,55 @@ const getDataClient = async (data) => {
         }
         displayModalClientSearch.value = false;
 
+    }
+
+    const sendSunatDocumentCreated = (document) => {
+        Swal2.fire({
+            title: document.invoice_serie+'-'+document.number,
+            text: 'Enviar documento',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            showLoaderOnConfirm: true,
+            clickOutside: false,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            preConfirm: () => {
+                return axios.get(route('saledocuments_send', [document.id,document.invoice_type_doc])).then((res) => {
+                    if (!res.data.success) {
+                        var cadena = `Error código: ${res.data.code}<br>Descripción:${res.data.message}`;
+                        let notes = res.data.notes;
+                        if (notes) {
+                            cadena += `<br>Nota: ${notes}`;
+                        }
+                        Swal2.showValidationMessage(cadena)
+                        router.visit(route('aca_student_invoice_list',props.student.id), { replace: true });
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var cadena = "";
+                let array = JSON.parse(result.value.data.notes);
+                for (var i = 0; i < array.length; i++) {
+                    cadena += array[i] + "<br>";
+                }
+
+                Swal2.fire({
+                    title: `${result.value.data.message}`,
+                    html: `${cadena}`,
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                }).then(() => {
+                    router.visit(route('saledocuments_list'),{
+                        method: 'get'
+                    });
+                });
+
+            }
+        });
     }
 </script>
 
@@ -831,7 +880,7 @@ const getDataClient = async (data) => {
                                         </td>
                                         <td class="text-primary border-b border-blue-400">
                                             <!-- <span>{{ item.title }}</span> -->
-                                            <textarea class="form-textarea text-primary" placeholder="Enter Description" v-model="item.title"></textarea>
+                                            <textarea class="form-textarea text-primary" placeholder="Enter Description" v-model="item.description"></textarea>
                                         </td>
                                         <td class="text-primary text-right border-b border-blue-400 w-20 px-1">{{ item.quantity }}</td>
                                         <td class="text-primary text-right border-b border-blue-400">

@@ -477,18 +477,18 @@ const refreshTable = () => {
                                                     PDF 80x250
                                                 </a>
                                             </li> -->
-                                            <!-- <li v-if="props.rowData.invoice_status === 'Aceptada'">
+                                            <li v-if="props.rowData.invoice_status === 'Aceptada'">
                                                 <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'XML')"
                                                     href="javascript:;">
                                                     Descargar XML
                                                 </a>
-                                            </li> -->
-                                            <!-- <li v-if="props.rowData.invoice_status ==='Aceptada'">
+                                            </li>
+                                            <li v-if="props.rowData.invoice_status ==='Aceptada'">
                                                 <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'CDR')"
                                                     href="javascript:;"
                                                     >Descargar CDR
                                                 </a>
-                                            </li> -->
+                                            </li>
                                         </ul>
                                     </template>
                                 </Popper>
@@ -502,10 +502,7 @@ const refreshTable = () => {
                                 :class="props.rowData.status == 3 ? 'line-through' : ''">
                                 {{ props.rowData.serie }}-{{ props.rowData.invoice_correlative }}
                             </h6>
-                            <span
-                                v-if="props.rowData.invoice_status == 'Rechazada' || props.rowData.invoice_status === 'Aceptada' || props.rowData.invoice_status === 'Anulada'"
-                                class="block text-xs"
-                            >
+                            <span v-if="props.rowData.invoice_response_description" class="block text-xs">
                                 <code v-if=" props.rowData.invoice_response_code != 0 " >
                                     Código: {{ props.rowData.invoice_response_code }}
                                 </code>

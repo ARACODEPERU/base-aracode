@@ -706,25 +706,4 @@
         </DialogModal>
     </AppLayout>
 </template>
-<style scoped>
-.invoice-select{
-    margin: 0px !important;
-    padding: 1px !important;
-    height: 26px !important;
-    width: 100% !important;
-    font-size: 12px;
-}
-.invoice-imput{
-    margin: 0px !important;
-    padding: 1px !important;
-    height: 26px !important;
-    width: 100% !important;
-    font-size: 12px;
-}
-.invoice-textarea{
-    margin: 0px !important;
-    padding: 1px !important;
-    width: 100% !important;
-    font-size: 12px;
-}
-</style>
+

@@ -63,7 +63,7 @@ const menuSales = [{
             {
                 route: route("establishments.index"),
                 status: false,
-                text: "Tiendas",
+                text: "Establecimiento",
                 permissions: "sale_tienda",
                 icom: faLocationDot,
             },

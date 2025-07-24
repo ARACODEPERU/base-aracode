@@ -4,6 +4,7 @@ namespace Modules\Sales\Http\Controllers;
 
 use App\Helpers\Invoice\Documents\Factura;
 use App\Helpers\Invoice\Documents\LowCommunication;
+use App\Models\Sale;
 use App\Models\SaleDocument;
 use Carbon\Carbon;
 use Exception;
@@ -110,11 +111,15 @@ class SaleLowCommunicationController extends Controller
                         'invoice_description' => $document['description_low']
                     ]);
 
-                    SaleDocument::where('id', $document['id'])
-                        ->update([
-                            'status'            => 3,
-                            'invoice_status'    => 'Enviada Por Anular'
-                        ]);
+                    $document = SaleDocument::where('id', $document['id'])->first();
+                    $document->update([
+                        'status'            => 3,
+                        'invoice_status'    => 'Enviada Por Anular'
+                    ]);
+
+                    Sale::find($document->sale_id)->update([
+                        'status'            => 0
+                    ]);
                 }
             }
         }

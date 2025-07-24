@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Helpers\Invoice\Documents\Factura;
 use App\Helpers\Invoice\Documents\NotaCredito;
+use App\Helpers\Invoice\Documents\NotaDebito;
 use Modules\Sales\Entities\SaleSummary;
 use Modules\Sales\Entities\SaleSummaryDetail;
 use App\Helpers\Invoice\Documents\Resumen;
@@ -575,6 +576,16 @@ class SaleDocumentController extends Controller
                 //dd($boleta);
                 $result = $boleta->create($id);
                 break;
+            case '07':
+                $notaCredito = new NotaCredito();
+                $document =  SaleDocument::find($id);
+                $result = $notaCredito->create($document);
+                break;
+            case '08':
+                $notaDebito = new NotaDebito();
+                $document =  SaleDocument::find($id);
+                $result = $notaDebito->create($document);
+                break;
             case 2:
                 echo "i es igual a 2";
                 break;
@@ -840,10 +851,10 @@ class SaleDocumentController extends Controller
                     $res = $notaCredito->getNotaCreditoPdf($id, $format);
                 } else if ($file == 'XML') {
                     $content_type =  'application/xml';
-                    //$res = $notaCredito->getBoletaXML($id);
+                    $res = $notaCredito->getNotaCreditoXML($id);
                 } else {
                     $content_type =  'application/zip';
-                    //$res = $notaCredito->getBoletaCDR($id);
+                    $res = $notaCredito->getNotaCreditoCDR($id);
                 }
 
                 break;

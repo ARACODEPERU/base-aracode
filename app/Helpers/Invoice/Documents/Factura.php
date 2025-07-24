@@ -20,6 +20,7 @@ use Greenter\Model\Sale\FormaPagos\FormaPagoContado;
 use Greenter\Model\Sale\Charge;
 use Greenter\Model\Sale\Detraction;
 use App\Helpers\Invoice\QrCodeGenerator;
+use App\Models\District;
 use App\Models\Kardex;
 use App\Models\KardexSize;
 use App\Models\Product;
@@ -96,10 +97,26 @@ class Factura
         $department = $province->department;
         $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
         // Cliente
+        $clientCity = District::with('province.department')->where('id',$document->client_ubigeo_code)->first();
+
         $client = (new Client())
             ->setTipoDoc($document->client_type_doc)
             ->setNumDoc($document->client_number)
             ->setRznSocial($document->client_rzn_social);
+
+        if($clientCity ){
+            $clientAddress = (new Address())
+                ->setUbigueo($document->client_ubigeo_code)
+                ->setDepartamento($clientCity->province->department->name)
+                ->setProvincia($clientCity->province->name)
+                ->setDistrito($clientCity->name)
+                ->setUrbanizacion('-')
+                ->setDireccion($document->client_address);
+
+            $client->setAddress($clientAddress);
+        }
+
+        //dd($client);
         // Emisor
         $address = (new Address())
             ->setUbigueo($establishment->ubigeo)
@@ -236,7 +253,7 @@ class Factura
             $cadenaqr = $this->stringQr($document);
 
             $qr_path = $generator->generateQR($cadenaqr, $dir, $invoice->getName() . '.png', 8, 2);
-
+            //dd($invoice);
 
             $seller = User::find($document->user_id);
             $pdf = $this->util->generatePdf($invoice, $seller, $qr_path, $format, $document->status);

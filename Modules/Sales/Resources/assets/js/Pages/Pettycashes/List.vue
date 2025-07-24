@@ -15,7 +15,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { 
+import {
     Textarea, Input, Dropdown, Menu, MenuItem, Button, Select
 } from 'ant-design-vue';
 import Swal2 from 'sweetalert2';
@@ -35,7 +35,7 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
             default: () => ({}),
         }
     });
-    
+
     const form = useForm({
         search: {
             date_start: props.filters.date_start,
@@ -84,9 +84,9 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
                         }
                     })
                 }).catch(error => console.log(error));
-            } 
+            }
         });
-        
+
     }
 
 
@@ -122,7 +122,7 @@ const closeModalExpense = () => {
     displayModalExpense.value = false;
 };
 
-    
+
 const createExpense = () => {
     formExpense.post(route('store_expense'), {
         forceFormData: true,
@@ -264,7 +264,7 @@ const showMessage = (msg = '', type = 'success') => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(pettycash, index) in pettycashes.data" :key="pettycash.id" :class="  pettycash.state==1? '' : 'bg-gray-100 hover:bg-gray-200'">
+                                <tr v-for="(pettycash, index) in pettycashes.data" :key="pettycash.id" :class="  pettycash.state==1? '' : 'bg-gray-100 hover:bg-gray-200 dark:bg-blue-900 '">
                                     <td class="">
                                         <Dropdown :placement="'bottomLeft'" arrow>
                                             <button class="border py-1.5 px-2 dropdown-button inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm dark:border-gray-600" type="button">

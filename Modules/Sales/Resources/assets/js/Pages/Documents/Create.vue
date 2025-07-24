@@ -652,13 +652,13 @@
                                              />
                                         </div>
                                     </th>
-                                    <th class="text-left text-xs uppercase px-2 py-1">Item</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1">Producto</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1">Tipo de Unidad</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1">Cantidad</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1">Precio unitario</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1">Descuento</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1">Total</th>
+                                    <th class="text-left text-xs uppercase px-2 py-1 dark:text-white-dark">Item</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Producto</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Tipo de Unidad</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Cantidad</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Precio unitario</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Descuento</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -750,26 +750,26 @@
                                     </tr>
                                 </template>
                             </tbody>
-                            <tfoot>
+                            <tfoot class="dark:text-gray-300">
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right text-xs uppercase"><b>OP. GRAVADAS: S/</b></td>
-                                    <td class="text-right text-xs">{{ formDocument.total_taxed }}</td>
+                                    <td colspan="4" class="text-right uppercase pt-4"><b>OP. GRAVADAS: S/</b></td>
+                                    <td class="text-right pr-8">{{ formDocument.total_taxed }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right text-xs uppercase"><b>descuento: S/</b></td>
-                                    <td class="text-right text-xs">{{ formDocument.total_discount  }}</td>
+                                    <td colspan="4" class="text-right uppercase"><b>descuento: S/</b></td>
+                                    <td class="text-right pr-8">{{ formDocument.total_discount  }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right text-xs uppercase"><b>IGV: S/</b></td>
-                                    <td class="text-right text-xs">{{ formDocument.total_igv }}</td>
+                                    <td colspan="4" class="text-right uppercase"><b>IGV: S/</b></td>
+                                    <td class="text-right pr-8">{{ formDocument.total_igv }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right text-xs uppercase"><b>TOTAL A PAGAR: S/</b></td>
-                                    <td class="text-right font-bold text-xs">
+                                    <td colspan="4" class="text-right uppercase pb-4"><b>TOTAL A PAGAR: S/</b></td>
+                                    <td class="text-right font-bold pr-8">
                                         {{ formDocument.total }}
                                         <InputError :message="formDocument.errors.total" class="mt-2" />
                                     </td>

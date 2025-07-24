@@ -2,8 +2,10 @@
 
 namespace Modules\Sales\Entities;
 
+use App\Models\SaleDocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Sales\Database\factories\SalePhysicalDocumentFactory;
 
 class SalePhysicalDocument extends Model
@@ -36,8 +38,8 @@ class SalePhysicalDocument extends Model
         'sale_id'
     ];
 
-    protected static function newFactory(): SalePhysicalDocumentFactory
+    public function saleDocumentType(): BelongsTo
     {
-        //return SalePhysicalDocumentFactory::new();
+        return $this->belongsTo(SaleDocumentType::class,'document_type','id');
     }
 }

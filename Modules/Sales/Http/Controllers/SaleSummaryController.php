@@ -25,8 +25,8 @@ class SaleSummaryController extends Controller
     {
         $summaries = (new SaleSummary())->newQuery();
 
-        if (request()->has('search')) {
-            $summaries->whereDate('summary_date', '=', '%' . request()->input('search') . '%');
+        if (request()->has('search') && request()->get('search')) {
+            $summaries->whereDate('summary_date', '=', request()->input('search'));
         }
         if (request()->query('sort')) {
             $attribute = request()->query('sort');

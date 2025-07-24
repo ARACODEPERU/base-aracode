@@ -161,6 +161,7 @@
                     preserveState: true,
                     preserveScroll: true,
                 });
+                displayModalCreateCommunication.value =  false;
             }else{
                 Swal.fire({
                     title: 'Error',

@@ -170,13 +170,46 @@ class PettyCashController extends Controller
         $v = PettyCash::find($petty_id)->state;
         if ($v) {
             try {
-                $amount = Sale::where('petty_cash_id', $petty_id)->where('status', "=", 1)->sum('total');
+                $amountDocuments = Sale::where('petty_cash_id', '=', $petty_id)
+                    ->where('sales.status', '=', 1)
+                    ->where('physical', 2)
+                    ->whereHas('document', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
+                        $query->whereIn('invoice_type_doc', ['03','01'])
+                            ->where('status', 1)
+                                ->whereNotIn('invoice_status', ['Rechazada']); // Estado de la factura
+                    })
+                    ->sum('total');
+
+                $amountTickets = Sale::where('petty_cash_id', '=', $petty_id)
+                    ->where('status', '=', 1)
+                    ->where('physical', 1)
+                    ->whereHas('document', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
+                        $query->whereIn('invoice_type_doc', ['80'])
+                            ->where('status', 1);
+                    })
+                    ->sum('total');
+
+                $amountPhysicals = Sale::where('petty_cash_id', '=', $petty_id)
+                    ->where('sales.status', '=', 1)
+                    ->where('physical', 3)
+                    ->whereHas('physicalDocument', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
+                        $query->whereIn('document_type', ['1','2'])
+                            ->where('status', '<>', 'A');
+                    })
+                    ->sum('total');
+
+                $amount = $amountPhysicals + $amountDocuments + $amountTickets;
+
                 $expenses = Expense::where('petty_cash_id', $petty_id)->selectRaw('sum(amount) as expenses')->first()->expenses;
+
+
+                $beginning_balance = PettyCash::find($petty_id)->value('beginning_balance') ?? 0;
+
                 PettyCash::where('id', $petty_id)->update([
                     'state' => false,
                     'date_closed' => Carbon::now()->format('Y-m-d'),
                     'time_closed' => date('H:i:s'),
-                    'final_balance' => PettyCash::where('id', $petty_id)->select('beginning_balance')->first()->beginning_balance + $amount - $expenses,
+                    'final_balance' =>  ($beginning_balance + $amount) - $expenses,
                     'income' => $amount
                 ]);
                 return true;

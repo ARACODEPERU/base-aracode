@@ -56,7 +56,7 @@
         presentations: false,
         is_client: true
     });
-    
+
     const disabledBtnSelect = ref(true);
     const person = ref({});
 
@@ -90,7 +90,7 @@
     }
 
     const emit = defineEmits(['clientId']);
-    
+
     const saveNewSearchClient = () => {
         axios.post(route('save_person_update_create'), form).then((res) => {
             disabledBtnSelect.value = false;
@@ -102,6 +102,58 @@
                 customClass: 'sweet-alerts',
             });
             person.value = res.data;
+        }).catch(error => {
+            let validationErrors = error.response.data.errors;
+            if (validationErrors && validationErrors.number) {
+                const numberErrors = validationErrors.number;
+
+                for (let i = 0; i < numberErrors.length; i++) {
+                    form.setError('number', numberErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.telephone) {
+                const telephoneErrors = validationErrors.telephone;
+
+                for (let i = 0; i < telephoneErrors.length; i++) {
+                    form.setError('telephone', telephoneErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.full_name) {
+                const fullNameErrors = validationErrors.full_name;
+
+                for (let i = 0; i < fullNameErrors.length; i++) {
+                    form.setError('full_name', fullNameErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.email) {
+                const emailErrors = validationErrors.email;
+
+                for (let i = 0; i < emailErrors.length; i++) {
+                    form.setError('email', emailErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.address) {
+                const addressErrors = validationErrors.address;
+
+                for (let i = 0; i < addressErrors.length; i++) {
+                    form.setError('address', addressErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.ubigeo) {
+                const ubigeoErrors = validationErrors.ubigeo;
+
+                for (let i = 0; i < ubigeoErrors.length; i++) {
+                    form.setError('ubigeo', ubigeoErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.ubigeo_description) {
+                const ubigeoDescriptionErrors = validationErrors.ubigeo_description;
+
+                for (let i = 0; i < ubigeoDescriptionErrors.length; i++) {
+                    form.setError('ubigeo_description', ubigeoDescriptionErrors[i]);
+                }
+            }
+            form.processing = false;
         });
     }
     watch(() => props.saleDocumentTypes, (id) => {
@@ -117,7 +169,7 @@
         emit('clientId', person.value);
     }
     const displayResultUbigeo = ref(false);
-    
+
 
     const searchUbigeos = ref([]); // Inicializa searchUbigeos como una matriz vacía en lugar de null
 
@@ -142,7 +194,7 @@
     const searchApispe = () => {
         apiesLoading.value = true;
         axios.post(route('sales_search_person_apies'), form).then((res) => {
-            
+
             if(res.data.success){
                 form.full_name =  res.data.person['razonSocial'];
                 form.email = null;
@@ -177,7 +229,7 @@
                 <div class="grid grid-cols-4 gap-4">
                     <div class="col-span-6 sm:col-span-1">
                         <InputLabel value="Tipo de Documento" />
-                        <select :disabled="saleDocumentTypes==1 ? true : false" 
+                        <select :disabled="saleDocumentTypes==1 ? true : false"
                             class="form-select text-white-dark"
                             v-model="form.document_type">
                             <option value="">Seleccionar</option>
@@ -204,13 +256,13 @@
                         <TextInput id="telephone" v-model="form.telephone" type="text" />
                         <InputError :message="form.errors.telephone" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-6 sm:col-span-1">
                         <InputLabel for="email" value="Email" />
                         <TextInput id="email" v-model="form.email" type="email" />
                         <InputError :message="form.errors.email" class="mt-2" />
                     </div>
-                    
+
                     <div class="col-span-6 sm:col-span-2">
                         <InputLabel for="city" value="Ciudad" />
                         <multiselect
@@ -239,8 +291,8 @@
             </template>
             <template #buttons>
                 <button @click="searchApispe" v-if="form.document_type != 0" type="button" class="btn btn-primary text-xs uppercase">
-                    <icon-loader v-if="apiesLoading" class="animate-spin mr-1" /> 
-                    <icon-company v-else class="w-4 h-4 mr-1" /> 
+                    <icon-loader v-if="apiesLoading" class="animate-spin mr-1" />
+                    <icon-company v-else class="w-4 h-4 mr-1" />
                     <span v-if="form.document_type == 6">SUNAT</span>
                     <span v-else-if="form.document_type == 1">RENIEC</span>
                 </button>
@@ -248,7 +300,7 @@
                 <PrimaryButton @click="saveNewSearchClient()" >
                     Guardar
                 </PrimaryButton>
-                <GreenButton 
+                <GreenButton
                     :disabled="disabledBtnSelect"
                     @click="selectPersonNew"
                 >

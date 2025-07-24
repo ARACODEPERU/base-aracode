@@ -42,9 +42,9 @@ class Sale extends Model
         return $this->hasMany(SaleDocument::class, 'sale_id', 'id');
     }
 
-    public function physical(): HasMany
+    public function physicalDocument(): HasOne
     {
-        return $this->hasMany(SalePhysicalDocument::class, 'sale_id', 'id');
+        return $this->hasOne(SalePhysicalDocument::class, 'sale_id', 'id');
     }
 
     public function client(): HasOne
@@ -55,5 +55,10 @@ class Sale extends Model
     public function document(): HasOne
     {
         return $this->hasOne(SaleDocument::class, 'sale_id', 'id');
+    }
+
+    public function establishment(): HasOne
+    {
+        return $this->hasOne(LocalSale::class, 'id', 'local_id');
     }
 }

@@ -50,7 +50,7 @@ class AcaSalesController extends Controller
     public function store(Request $request)
     {
         ///se validan los campos requeridos
-
+        //dd($request->all());
         $this->validate(
             $request,
             [
