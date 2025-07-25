@@ -267,7 +267,7 @@ const showMessage = (msg = '', type = 'success') => {
                                 <tr v-for="(pettycash, index) in pettycashes.data" :key="pettycash.id" :class="  pettycash.state==1? '' : 'bg-gray-100 hover:bg-gray-200 dark:bg-blue-900 '">
                                     <td class="">
                                         <Dropdown :placement="'bottomLeft'" arrow>
-                                            <button class="border py-1.5 px-2 dropdown-button inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm dark:border-gray-600" type="button">
+                                            <button class="btn btn-primary" type="button">
                                                 <font-awesome-icon :icon="faGears" />
                                             </button>
                                             <template #overlay>
