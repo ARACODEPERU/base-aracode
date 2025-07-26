@@ -37,11 +37,11 @@
         { width: 25 }, // Columna "B" Nombres
         {width:25}, // Columna "C" Correos
         { width: 15 }, // Columna "D" Teléfonos
+        { width: 55 }, // Curso/Tema
         {width: 40}, //Mensajes
         {width:9}, // Columna "F"
         {width:9}, // Columna "G"
         {width:9}, // Columna "H"
-        {width:9}, // Columna "I"
     ];
 
     XLSX.utils.book_append_sheet(workbook, worksheet, form.start+'-'+form.end);
@@ -158,9 +158,12 @@
                                     <td class="border px-6 py-4">
                                         {{ subscriber.phone }}
                                     </td>
-                                    <!-- <td class="border px-6 py-4">
-                                         {{ subscriber.subject }}
-                                    </td> -->
+                                    <td class="border px-6 py-4 relative group">
+                                        <span class="cursor-help"><b>Curso/Tema</b></span>
+                                        <div class="absolute z-10 invisible group-hover:visible bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap">
+                                            {{ subscriber.subject }}
+                                        </div>
+                                    </td>
                                     <td class="border px-6 py-4">
                                         {{ subscriber.message }}
                                     </td>
