@@ -134,13 +134,18 @@
                                         {{ item.sale_date }}
                                     </td>
                                     <td>
-                                        {{ item.document.client_rzn_social }}
+                                        <template v-if="item.document && item.document.client_rzn_social">
+                                            <span v-html="item.document?.client_rzn_social"></span>
+                                        </template>
+                                        <template v-else>
+                                            <span v-html="item.client.full_name"></span>
+                                        </template>
                                     </td>
                                     <td>
                                         <div class="space-y-2">
                                             <template v-for="product in item.sale_product">
                                                 <p class="text-secondary">
-                                                    {{ JSON.parse(product.saleProduct).title }}
+                                                    {{ JSON.parse(product.saleProduct).title ?? JSON.parse(product.saleProduct).name }}
                                                 </p>
                                             </template>
                                         </div>

@@ -24,6 +24,7 @@ use Inertia\Inertia;
 use PDF;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Support\Facades\Log;
 
 class SaleController extends Controller
 {
@@ -42,8 +43,8 @@ class SaleController extends Controller
         $isAdmin = Auth::user()->hasRole('admin');
 
         $sales = $sales->join('people', 'client_id', 'people.id')
-            ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
-            ->join('series', 'sale_documents.serie_id', 'series.id')
+            ->leftJoin('sale_documents', 'sale_documents.sale_id', 'sales.id')
+            ->leftJoin('series', 'sale_documents.serie_id', 'series.id')
             ->select(
                 'sales.id',
                 'people.full_name',
@@ -59,7 +60,7 @@ class SaleController extends Controller
                 DB::raw("(SELECT CONCAT(invoice_serie,'-',LPAD(invoice_correlative, 8, '0')) FROM sale_documents WHERE sale_documents.sale_id=sales.id AND invoice_serie IS NOT NULL) AS name_document"),
                 DB::raw("(SELECT COUNT(sale_id) FROM sale_documents WHERE sale_documents.sale_id=sales.id) AS have_document")
             )
-            ->where('series.document_type_id', 5)
+            ->where('physical', 1)
             ->when(!$isAdmin, function ($q) use ($search) {
                 return $q->where('sales.user_id', Auth::id());
             })
@@ -250,66 +251,78 @@ class SaleController extends Controller
 
                 $sale->update(['status' => false]);
 
+                // Busca el SaleDocument asociado a la venta
                 $document = SaleDocument::where('sale_id', $sale->id)->first();
 
-                $document->update([
-                    'status' => 3
-                ]);
+                // Verifica si se encontró el documento antes de intentar actualizarlo
+                if ($document) {
+                    $document->update([
+                        'status' => 3
+                    ]);
+                } else {
+                    // Opcional: Manejar el caso donde no se encontró el documento
+                    // Por ejemplo, loguear un error, emitir una advertencia, o lanzar una excepción.
+                    // Esto es útil para depurar o entender por qué falta el documento.
+                    Log::warning("No se encontró SaleDocument para la venta con ID: " . $sale->id . ". No se pudo actualizar el estado.");
+                    // O si es un error crítico:
+                    // throw new \Exception("SaleDocument no encontrado para la venta ID: " . $sale->id);
+                }
 
                 $products = SaleProduct::where('sale_id', $sale->id)->get();
 
                 foreach ($products as $item) {
-
-                    if (json_decode($item->product)->is_product == 1) {
-                        $k = Kardex::create([
-                            'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                            'motion' => 'sale',
-                            'product_id' => $item->product_id,
-                            'local_id' => $sale->local_id,
-                            'quantity' => $item->quantity,
-                            'document_id' => $document->id,
-                            'document_entity' => SaleDocument::class,
-                            'description' => 'Anulacion de Venta'
-                        ]);
-
-                        $product = Product::find($item->product_id);
-
-                        if ($product->presentations) {
-
-                            KardexSize::create([
-                                'kardex_id' => $k->id,
+                    if($item->entity_name_product == Product::class){
+                        if (json_decode($item->product)->is_product == 1) {
+                            $k = Kardex::create([
+                                'date_of_issue' => Carbon::now()->format('Y-m-d'),
+                                'motion' => 'sale',
                                 'product_id' => $item->product_id,
                                 'local_id' => $sale->local_id,
-                                'size'      => json_decode($item->saleProduct)->size,
-                                'quantity'  => $item->quantity
+                                'quantity' => $item->quantity,
+                                'document_id' => $document->id,
+                                'document_entity' => SaleDocument::class,
+                                'description' => 'Anulacion de Venta'
                             ]);
 
+                            $product = Product::find($item->product_id);
 
-                            $tallas = json_decode($product->sizes, true);
-                            $n_tallas = [];
-                            foreach ($tallas as &$size) {
-                                // Si el tamaño es igual a 22
-                                if ($size["size"] == json_decode($item->saleProduct)->size) {
+                            if ($product->presentations) {
 
-                                    // Obtiene la cantidad actual
-                                    $currentQuantity = intval($size["quantity"]); // Convierte a entero
+                                KardexSize::create([
+                                    'kardex_id' => $k->id,
+                                    'product_id' => $item->product_id,
+                                    'local_id' => $sale->local_id,
+                                    'size'      => json_decode($item->saleProduct)->size,
+                                    'quantity'  => $item->quantity
+                                ]);
 
-                                    // Suma 1 a la cantidad actual
-                                    $newQuantity = $currentQuantity + $item->quantity;
 
-                                    // Actualiza la cantidad
-                                    $size["quantity"] = $newQuantity;
+                                $tallas = json_decode($product->sizes, true);
+                                $n_tallas = [];
+                                foreach ($tallas as &$size) {
+                                    // Si el tamaño es igual a 22
+                                    if ($size["size"] == json_decode($item->saleProduct)->size) {
+
+                                        // Obtiene la cantidad actual
+                                        $currentQuantity = intval($size["quantity"]); // Convierte a entero
+
+                                        // Suma 1 a la cantidad actual
+                                        $newQuantity = $currentQuantity + $item->quantity;
+
+                                        // Actualiza la cantidad
+                                        $size["quantity"] = $newQuantity;
+                                    }
                                 }
+
+                                $n_tallas = $tallas;
+
+
+                                $product->update([
+                                    'sizes' => json_encode($n_tallas)
+                                ]);
                             }
-
-                            $n_tallas = $tallas;
-
-
-                            $product->update([
-                                'sizes' => json_encode($n_tallas)
-                            ]);
+                            //Product::find($produc->product_id)->increment('stock', $produc->quantity);
                         }
-                        //Product::find($produc->product_id)->increment('stock', $produc->quantity);
                     }
                 }
                 return $sale;
