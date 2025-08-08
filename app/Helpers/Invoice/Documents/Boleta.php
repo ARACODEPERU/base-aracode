@@ -25,7 +25,8 @@ use App\Models\Sale;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
-
+use Greenter\Model\Sale\FormaPagos\FormaPagoContado;
+use Greenter\Model\Sale\FormaPagos\FormaPagoCredito;
 class Boleta
 {
     protected $see;
@@ -113,6 +114,12 @@ class Boleta
                 ->setDireccion($this->mycompany->fiscal_address));
 
         $invoice = new Invoice();
+
+        if($document->forma_pago == 'Contado'){
+            $invoice->setFormaPago(new FormaPagoContado()); // FormaPago: Contado
+        }else{
+            $invoice->setFormaPago(new FormaPagoCredito($document->overall_total)); // FormaPago: Credito
+        }
 
         $invoice->setUblVersion($document->invoice_ubl_version)
             ->setTipoOperacion($document->invoice_type_operation)

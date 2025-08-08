@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue';
-import { 
-    faPoll, 
-    faChevronDown, 
-    faBolt, 
+import {
+    faPoll,
+    faChevronDown,
+    faBolt,
     faChevronUp,
     faArrowLeftLong,
     faKitMedical,
@@ -41,83 +41,8 @@ const menu = ref([
     menuConfig,
     menuPurchases,
     menuSales,
-    {
-        status:false,
-        text: 'Ventas en línea',
-        icom: faGlobe,
-        route: null,
-        permissions: 'onli_dashboard',
-        items: [
-            {
-                route: route('onlineshop_items'),
-                status: false,
-                text: 'Productos & servicios',
-                permissions: 'onli_items',
-            },
-            {
-                route: route('onlineshop_sales'),
-                status: false,
-                text: 'Pedidos',
-                permissions: 'onli_pedidos',
-            },
-        ]
-    },
-    {
-        status:false,
-        text: 'Facturación Electrónica',
-        icom: faBolt,
-        route: null,
-        permissions: 'invo_dashboard',
-        items: [
-            {
-                route: route('saledocuments_create'),
-                status: false,
-                text: 'Crear Documento',
-                permissions: 'invo_documento',
-            },
-            {
-                route: route('saledocuments_list'),
-                status: false,
-                text: 'Lista de Documentos',
-                permissions: 'invo_documento_lista',
-            },
-            {
-                route: route('salesummaries_list'),
-                status: false,
-                text: 'Resumen',
-                permissions: 'invo_resumenes_lista',
-            },
-            {
-                route: route('low_communication_list'),
-                status: false,
-                text: 'Comunicacion de Baja',
-                permissions: 'invo_comunicacion_baja',
-            }
-        ]
-    },
     menuHelpdesk,
     menuCMS,
-    {
-        status:false,
-        text: 'Salud',
-        icom: faKitMedical,
-        route: null,
-        permissions: 'heal_dashboard',
-        items: [
-            {
-                route: route('heal_patients_list'),
-                status: false,
-                text: 'Pacientes',
-                permissions: 'heal_pacientes_listado',
-            },
-            {
-                route: route('dental_dashboard'),
-                status: false,
-                text: 'Odontología',
-                permissions: 'cms_seccion',
-            },
-        ]
-    },
     menuAcademic,
     menuRestaurant,
     menuSocialevents
@@ -154,13 +79,13 @@ const xasset = assetUrl;
                 <!-- Menu Group -->
                 <div>
                     <h3 class="mb-4 ml-4 text-sm font-medium text-bodydark2">MENU</h3>
-                    
+
                     <ul class="mb-6 flex flex-col gap-1.5">
                         <template v-for="(item, index) in menu" :key="index">
                             <li v-can="item.permissions">
 
                                 <a v-if="item.route == null"
-                                    href="#" 
+                                    href="#"
                                     @click.prevent="toggleSubItems(index)"
                                     class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4">
                                     <font-awesome-icon :icon="item.icom" />
@@ -172,7 +97,7 @@ const xasset = assetUrl;
                                     </template>
                                 </a>
                                 <Link v-else
-                                    :href="item.route" 
+                                    :href="item.route"
                                     class="group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4">
                                     <font-awesome-icon :icon="item.icom" />
                                     {{ item.text }}
@@ -183,7 +108,7 @@ const xasset = assetUrl;
                                         <template v-for="(subItem, subIndex) in item.items" :key="subIndex">
                                             <li v-can="subItem.permissions">
                                                 <a v-if="subItem.route == null"
-                                                    href="#" 
+                                                    href="#"
                                                     @click.prevent="subItem.status = !subItem.status"
                                                     class="group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white">
                                                     {{ subItem.text }}

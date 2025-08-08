@@ -494,13 +494,15 @@ class ReportController extends Controller
         });
 
         if ($startDate) {
-            $documentsSales = $documentsSales->whereBetween('invoice_broadcast_date', [$startDate, $endDate]);
+            $documentsSales = $documentsSales->whereDate('invoice_broadcast_date','>=' ,$startDate)
+                ->whereDate('invoice_broadcast_date','<=', $endDate);
         } else {
-            $documentsSales = $documentsSales->whereDate('invoice_broadcast_date', $endDate);
+            $documentsSales = $documentsSales->whereDate('invoice_broadcast_date','=', $endDate);
         }
 
         if ($startDate) {
-            $documentsNotes = $documentsNotes->whereBetween('created_at', [$startDate, $endDate]);
+            $documentsNotes = $documentsNotes->whereDate('created_at','>=' ,$startDate)
+                ->whereDate('created_at','<=', $endDate);
         } else {
             $documentsNotes = $documentsNotes->whereDate('created_at', $endDate);
         }

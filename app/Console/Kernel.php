@@ -12,7 +12,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+
+        $schedule->command('sales:daily-tasks')->dailyAt('12:24'); // Horario distinto para Sales
+
     }
 
     /**
@@ -21,7 +23,7 @@ class Kernel extends ConsoleKernel
     protected function commands(): void
     {
         $this->load(__DIR__.'/Commands');
-
+        $this->load(base_path('Modules/Sales/Console'));
         require base_path('routes/console.php');
     }
 }

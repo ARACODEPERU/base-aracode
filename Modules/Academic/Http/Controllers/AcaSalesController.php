@@ -29,6 +29,7 @@ use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use DataTables;
+use Modules\Sales\Entities\SaleDocumentQuota;
 
 class AcaSalesController extends Controller
 {
@@ -50,31 +51,50 @@ class AcaSalesController extends Controller
     public function store(Request $request)
     {
         ///se validan los campos requeridos
-        //dd($request->all());
+
+        $rules = [
+            'serie' => 'required',
+            'client_number' => 'required',
+            'client_rzn_social' => 'required',
+            'date_issue' => 'required',
+            'date_end' => 'required',
+            'sale_documenttype_id' => 'required',
+            'total' => 'required|numeric|min:0|not_in:0',
+            'payments.*.type' => 'required',
+            'payments.*.amount' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
+            'items.*.quantity' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
+            'items.*.amount' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
+            'items.*.total' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
+            'client_id' => 'required',
+        ];
+
+        if($request->get('forma_pago') == 'Credito'){
+            $rules['quotas.amounts'] = [
+                'sometimes', // Esta regla solo se aplica si el campo 'quotas.amounts' está presente
+                'required_if:forma_pago,Credito', // Requerido SI 'forma_pago' es 'Credito'
+                'array', // Debe ser un array
+                'min:1', // Y debe tener al menos un elemento (al menos una cuota)
+            ];
+        }
+
+
+        $messages = [
+            'items.*.quantity.required' => 'Ingrese Cantidad',
+            'items.*.unit_price.required' => 'Ingrese precio',
+            'items.*.unit_price.numeric' => 'Solo Numeros',
+            'items.*.quantity.numeric' => 'Solo Numeros',
+            'items.*.total.required' => 'Ingrese total',
+            // --- MENSAJES PERSONALIZADOS PARA LA NUEVA REGLA ---
+            'quotas.amounts.required_if' => 'Debe configurar al menos una cuota de pago para la forma de pago "Crédito".',
+            'quotas.amounts.min' => 'Debe configurar al menos una cuota de pago para la forma de pago "Crédito".',
+            'quotas.amounts.array' => 'Los montos de las cuotas deben ser un formato válido.', // Mensaje si no es un array
+            // ----------------------------------------------------
+        ];
+
         $this->validate(
             $request,
-            [
-                'serie' => 'required',
-                'client_number' => 'required',
-                'client_rzn_social' => 'required',
-                'date_issue' => 'required',
-                'date_end' => 'required',
-                'sale_documenttype_id' => 'required',
-                'total' => 'required|numeric|min:0|not_in:0',
-                'payments.*.type' => 'required',
-                'payments.*.amount' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
-                'items.*.quantity' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
-                'items.*.amount' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
-                'items.*.total' => 'required|numeric|min:0|not_in:0|regex:/^[\d]{0,11}(\.[\d]{1,2})?$/',
-                'client_id' => 'required',
-            ],
-            [
-                'items.*.quantity.required' => 'Ingrese Cantidad',
-                'items.*.unit_price.required' => 'Ingrese precio',
-                'items.*.unit_price.numeric' => 'Solo Numeros',
-                'items.*.quantity.numeric' => 'Solo Numeros',
-                'items.*.total.required' => 'Ingrese total',
-            ]
+            $rules,
+            $messages
         );
 
         try {
@@ -103,10 +123,16 @@ class AcaSalesController extends Controller
                     'total' => $request->get('total'),
                     'advancement' => $request->get('total'),
                     'total_discount' => $request->get('total_discount'),
-                    'payments' => json_encode($request->get('payments')),
                     'petty_cash_id' => $petty_cash->id,
                     'physical' => 2
                 ]);
+
+                $forma_pago = $request->get('forma_pago');
+
+                if ($forma_pago && $forma_pago === 'Contado') {
+                    $sale->payments = json_encode($request->get('payments'));
+                    $sale->save();
+                }
 
                 ///obtenemos la serie elejida para hacer la venta
                 ///para traer tambien su numero correlativo
@@ -361,6 +387,28 @@ class AcaSalesController extends Controller
                 $difference = abs($ttotal - $subtotal);
                 $rounding = number_format($difference, 2);
 
+                // Obtener la forma de pago del request ---
+                $status_pay = true;
+                if ($forma_pago && $forma_pago === 'Credito') {
+                    $quotasData = $request->input('quotas.amounts');
+
+                    if (!empty($quotasData)) {
+                        foreach ($quotasData as $index => $quota) {
+                            $saleDocumentQuota = new SaleDocumentQuota();
+                            $saleDocumentQuota->sale_document_id = $document->id; // Vincular con el documento recién creado
+                            $saleDocumentQuota->quota_number = $index + 1; // El índice + 1 es el número de cuota
+                            $saleDocumentQuota->amount = $quota['amount'];
+                            $saleDocumentQuota->due_date = $quota['dueDate'];
+                            $saleDocumentQuota->balance = $quota['amount']; // Al inicio, el saldo es igual al monto de la cuota
+                            $saleDocumentQuota->status = 'Pendiente'; // Estado inicial
+                            $saleDocumentQuota->save();
+                        }
+                    }
+                    $sale->advancement = 0;
+                    $sale->save();
+                    $status_pay = false;
+                }
+
                 $document->update([
                     'invoice_mto_oper_taxed'    => $mto_oper_taxed,
                     'invoice_mto_igv'           => $mto_igv,
@@ -372,6 +420,8 @@ class AcaSalesController extends Controller
                     'invoice_mto_imp_sale'      => $ttotal,
                     'invoice_sunat_points'      => null,
                     'invoice_status'            => 'Pendiente',
+                    'forma_pago'                => $forma_pago,
+                    'status_pay'                => $status_pay
                 ]);
 
                 $serie->increment('number', 1);

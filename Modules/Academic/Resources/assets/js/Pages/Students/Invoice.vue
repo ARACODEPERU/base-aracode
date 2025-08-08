@@ -1,6 +1,6 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, watch } from 'vue';
     import InputError from "@/Components/InputError.vue";
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconSave from '@/Components/vristo/icon/icon-save.vue';
@@ -8,6 +8,14 @@
     import Swal2 from 'sweetalert2';
     import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
     import SearchClients from './Partials/SearchClients.vue';
+    import ModalLarge from '@/Components/ModalLarge.vue';
+    import TextInput from '@/Components/TextInput.vue';
+    import InputLabel from '@/Components/InputLabel.vue';
+    import { useAppStore } from '@/stores/index';
+    import { calcularMontosPorCuota } from 'Modules/Sales/Resources/assets/js/utilities/paymentCalculations';
+    import SuccessButton from '@/Components/SuccessButton.vue';
+
+    const store = useAppStore();
 
     const props = defineProps({
         student: {
@@ -86,7 +94,15 @@
         percentage_igv: 0,
         total: 0,
         total_taxed: 0,
-        additional_description: null
+        additional_description: null,
+        forma_pago: 'Contado',
+        quotas: {
+            number: 1,
+            days: 15,
+            amounts: [],
+            end_month: false,
+            amount: null
+        }
     });
 
     const getSeriesByDocumentType = () => {
@@ -406,6 +422,7 @@
                 }];
                 getSeriesByDocumentType();
                 form.processing =  false;
+                form.forma_pago = 'Contado;'
                 Swal2.fire({
                     title: 'Comprobante creado con éxito',
                     text: "¿deseas enviar a sunat y/o Imprimir?",
@@ -651,6 +668,103 @@
             }
         });
     }
+
+    const displayModalQuotas = ref();
+
+    const openModalQuotas = () => {
+        if(form.forma_pago == 'Credito' && form.total > 0){
+            displayModalQuotas.value = true;
+            form.quotas.amount = form.total;
+        } else {
+            displayModalQuotas.value = false;
+        }
+    }
+
+    const closeModalQuotas = () => {
+        displayModalQuotas.value = false;
+    }
+    // Watcher para recalcular las cuotas cuando cambian las dependencias
+    watch(() => [
+        form.total,
+        form.quotas.number,
+        form.quotas.end_month,
+        form.quotas.days,
+        form.date_issue,
+        form.forma_pago
+    ], ([newTotal, newNumber, newEndMonth, newDays, newDateIssue, newFormaPago]) => {
+        if (newFormaPago === 'Credito') {
+            form.quotas.amounts = calcularMontosPorCuota(
+                newTotal,
+                newNumber,
+                newDateIssue,
+                newEndMonth,
+                newDays
+            );
+        } else {
+            form.quotas.amounts = []; // Limpiar cuotas si no es a crédito
+        }
+    }, { immediate: true }); // 'immediate: true' para que se ejecute la primera vez al montar el componente
+
+    const cuotasCalculadas = () => {
+        showAlert()
+        displayModalQuotas.value = false;
+    }
+
+    const showAlert = async () => { // Puedes renombrarla a algo más descriptivo si quieres
+        const toast = Swal2.mixin({ // Usamos Swal directamente si ya lo importaste como Swal
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            showCloseButton: true,
+        });
+
+        toast.fire({
+            html: `
+                <div class="flex">
+                    <div class="shrink-0">
+                        <svg class="size-5 text-gray-100 mt-1 dark:text-neutral-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                            <path fill="currentColor" d="M192 96C156.7 96 128 124.7 128 160L128 384C128 419.3 156.7 448 192 448L544 448C579.3 448 608 419.3 608 384L608 160C608 124.7 579.3 96 544 96L192 96zM368 192C412.2 192 448 227.8 448 272C448 316.2 412.2 352 368 352C323.8 352 288 316.2 288 272C288 227.8 323.8 192 368 192zM192 216L192 168C192 163.6 195.6 160 200 160L248 160C252.4 160 256.1 163.6 255.5 168C251.9 197 228.9 219.9 200 223.5C195.6 224 192 220.4 192 216zM192 328C192 323.6 195.6 319.9 200 320.5C229 324.1 251.9 347.1 255.5 376C256 380.4 252.4 384 248 384L200 384C195.6 384 192 380.4 192 376L192 328zM536 223.5C507 219.9 484.1 196.9 480.5 168C480 163.6 483.6 160 488 160L536 160C540.4 160 544 163.6 544 168L544 216C544 220.4 540.4 224.1 536 223.5zM544 328L544 376C544 380.4 540.4 384 536 384L488 384C483.6 384 479.9 380.4 480.5 376C484.1 347 507.1 324.1 536 320.5C540.4 320 544 323.6 544 328zM80 216C80 202.7 69.3 192 56 192C42.7 192 32 202.7 32 216L32 480C32 515.3 60.7 544 96 544L488 544C501.3 544 512 533.3 512 520C512 506.7 501.3 496 488 496L96 496C87.2 496 80 488.8 80 480L80 216z"/>
+                        </svg>
+                    </div>
+                    <div class="ms-4">
+                        <h3 class="text-gray-100 font-semibold dark:text-white">
+                            Cuotas programadas con éxito
+                        </h3>
+                        <div class="mt-1 text-sm text-gray-100 dark:text-neutral-400">
+                            ${form.quotas.number } pagos cada ${form.quotas.end_month ? 'fin de mes' : form.quotas.days +' días'}
+                        </div>
+                        <div class="mt-4">
+                        <div class="flex gap-x-3">
+                            <button id="reopenModalBtn" type="button" class="text-blue-300 decoration-2 hover:underline font-medium text-sm focus:outline-hidden focus:underline dark:text-blue-500">
+                                Ver cuotas
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+            `, // Usamos 'html' para insertar el botón
+            padding: '2em',
+            customClass: {
+                // Puedes agregar clases personalizadas aquí si las necesitas para el toast en general
+                // por ejemplo, para ajustar el ancho o el estilo del texto.
+                // popup: 'sweet-alerts', // Si esta clase define el ancho del popup, puede afectar el toast
+                title: 'text-sm' // Ejemplo para hacer el título más pequeño
+            },
+            didOpen: (toastElement) => {
+                // Este callback se ejecuta cuando el toast está visible en el DOM
+                const reopenBtn = toastElement.querySelector('#reopenModalBtn');
+                if (reopenBtn) {
+                    reopenBtn.addEventListener('click', () => {
+                        displayModalQuotas.value = true; // Abre el modal
+                        Swal2.close(); // Cierra el toast inmediatamente al hacer clic en el botón
+                    });
+                }
+            }
+        });
+    };
+
+    const clientDefault = ref(null);
 </script>
 
 <template>
@@ -670,37 +784,43 @@
                             <div>{{ $page.props.company.phone }}</div>
                         </div>
                     </div>
-                    <div class="lg:w-1/2 w-full lg:max-w-fit">
-                        <div class="flex items-center">
-                            <label for="sale_documenttype_id" class="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">Tipo </label>
-                            <select @change="getSeriesByDocumentType" v-model="form.sale_documenttype_id" id="sale_documenttype_id" class="form-select form-select-sm text-white-dark flex-1">
-                                <option v-for="(type, index) in saleDocumentTypes" :value="type.id"> {{  type.description  }}</option>
-                            </select>
-                            <div class="flex-1 ">
-                                <InputError :message="form.errors.sale_documenttype_id" class="mt-2" />
+                    <div class="lg:w-1/2 w-full lg:max-w-fit space-y-4">
+                        <div class="items-center">
+                            <!-- <label for="sale_documenttype_id" class="sm:col-span-1">Tipo </label> -->
+                            <div >
+                                <select @change="getSeriesByDocumentType" v-model="form.sale_documenttype_id" id="sale_documenttype_id" class="w-full appearance-none text-3xl rounded-xl text-center font-extrabold text-blue-800 border-4  py-6 px-4 bg-green-100">
+                                    <option v-for="(type, index) in saleDocumentTypes" :value="type.id"> {{  type.description  }}</option>
+                                </select>
+                                <div class="flex-1 ">
+                                    <InputError :message="form.errors.sale_documenttype_id" class="mt-2" />
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center mt-4">
-                            <label for="serie" class="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">Serie </label>
-                            <select @change="getSeriesByDocumentType" v-model="form.serie" id="serie" class="form-select form-select-sm text-white-dark flex-1">
-                                <option v-for="(serie, index) in series" :value="serie.id"> {{  serie.description  }}</option>
-                            </select>
-                            <div class="flex-1 ">
-                                <InputError :message="form.errors.serie" class="mt-2" />
+                        <div class="grid grid-cols-3 gap-4 items-center">
+                            <label for="serie" class="sm:col-span-1">Serie </label>
+                            <div class="sm:col-span-2">
+                                <select @change="getSeriesByDocumentType" v-model="form.serie" id="serie" class="form-select text-white-dark">
+                                    <option v-for="(serie, index) in series" :value="serie.id"> {{  serie.description  }}</option>
+                                </select>
+                                <div class="flex-1 ">
+                                    <InputError :message="form.errors.serie" class="mt-2" />
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center mt-4">
-                            <label for="startDate" class="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">fecha de emisión</label>
-                            <div class="flex-1 ">
-                                <input id="startDate" type="date" name="inv-date" class="form-input flex-1 form-input-sm" v-model="form.date_issue" />
+                        <div class="grid grid-cols-3 gap-4 items-center">
+                            <label for="startDate" class="sm:col-span-1">fecha de emisión</label>
+                            <div class="sm:col-span-2">
+                                <input id="startDate" type="date" name="inv-date" class="form-input" v-model="form.date_issue" />
                                 <InputError :message="form.errors.date_issue" class="mt-2" />
                             </div>
                         </div>
-                        <div class="flex items-center mt-4">
-                            <label for="dueDate" class="ltr:mr-2 rtl:ml-2 w-1/3 mb-0">Fecha de vencimiento</label>
-                            <div class="flex-1 ">
-                                <input id="dueDate" type="date" name="due-date" class="form-input form-input-sm" v-model="form.date_end" />
+                        <div class="grid grid-cols-3 gap-4 items-center">
+                            <label for="dueDate" class="sm:col-span-1">Fecha de vencimiento</label>
+                            <div class="sm:col-span-2">
+
+                                <input id="dueDate" type="date" name="due-date" class="form-input" v-model="form.date_end" />
                                 <InputError :message="form.errors.date_end" class="mt-2" />
+
                             </div>
                         </div>
                     </div>
@@ -716,7 +836,7 @@
                             :display="displayModalClientSearch"
                             :closeModalClient="closeModalClientSearch"
                             @clientId="getDataClient"
-                            :clientDefault="client"
+                            :clientDefault="clientDefault"
                             :documentTypes="standardIdentityDocument"
                             :saleDocumentTypes="saleDocumentTypesId"
                             :ubigeo="departments"
@@ -1014,6 +1134,15 @@
                         </div>
                     </div>
                 </div>
+                <div class="panel mb-5">
+                    <h4 class="font-bold uppercase mb-4">Forma de pago</h4>
+                    <div>
+                        <select @change="openModalQuotas" v-model="form.forma_pago" class="form-select text-white-dark">
+                            <option value="Contado">Al contado</option>
+                            <option value="Credito">Al crédito</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="panel">
                     <div class="grid xl:grid-cols-1 lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-4">
                         <button @click="saveDocument" :class="{ 'opacity-25': form.processing }" :disabled="form.processing" type="button" class="btn btn-success w-full gap-2">
@@ -1035,5 +1164,50 @@
             </div>
         </div>
     </div>
+        <ModalLarge :show="displayModalQuotas" :onClose="closeModalQuotas" :icon="'/img/pago.png'">
+            <template #title>Programar pagos</template>
+            <template #message>Gestión interna de Cuentas por Cobrar.</template>
+            <template #content>
+                <div class="space-y-5">
+                    <div class="grid sm:grid-cols-2 gap-6">
+                        <div>
+                            <InputLabel for="small-range">Número de Cuota</InputLabel>
+                            <select v-model="form.quotas.number" id="small-range" class="form-select text-white-dark w-full">
+                                <option v-for="n in 36" :key="n" :value="n">
+                                    {{ n }}
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <InputLabel>Número de días / Cada fin de mes <input v-model="form.quotas.end_month" type="checkbox" class="form-checkbox" /></InputLabel>
+                            <select
+                                v-model="form.quotas.days"
+                                :disabled="form.quotas.end_month"
+                                id="small-range"
+                                class="form-select text-white-dark w-full"
+                                :class="form.quotas.end_month ? 'bg-gray-200': ''"
+                            >
+                                <option v-for="n in 31" :key="n" :value="n">
+                                    {{ n }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div v-for="(quota, index) in form.quotas.amounts" :key="quota.id" class="grid sm:grid-cols-2 gap-6">
+                        <div>
+                            <InputLabel>Monto de la Cuota {{ index + 1 }}:</InputLabel>
+                            <TextInput v-model="form.quotas.amounts[index].amount" type="number" />
+                        </div>
+                        <div>
+                            <InputLabel>Fecha de Vencimiento Cuota {{ index + 1 }}:</InputLabel>
+                            <TextInput v-model="form.quotas.amounts[index].dueDate" type="date" />
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template #buttons>
+                <SuccessButton @click="cuotasCalculadas">Hecho</SuccessButton>
+            </template>
+        </ModalLarge>
     </AppLayout>
 </template>

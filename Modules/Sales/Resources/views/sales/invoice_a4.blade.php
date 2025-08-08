@@ -760,6 +760,95 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
             white-space: nowrap;
         }
 
+        .min-w-full {
+            min-width: 100%;
+        }
+        .divide-y > :not([hidden]) ~ :not([hidden]) {
+            --tw-divide-y-reverse: 0;
+            border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+            border-bottom-width: calc(1px * var(--tw-divide-y-reverse));
+            border-color: #e5e7eb; /* de divide-gray-200 */
+        }
+        .x-table {
+            border-collapse: collapse !important;
+            text-indent: 0;
+        }
+        .x-table tr {
+            border-bottom: 1px solid #e5e7eb; /* Color de gray-200 */
+        }
+        /* Opcional: Quitar el borde de la última fila si no lo quieres */
+        .x-table tr:last-child {
+            border-bottom: none;
+        }
+        .mt-6 {
+            margin-top: 1.5rem; /* Esto es 24px si tu base es 16px */
+        }
+        .bg-gray-50 {
+            background-color: #f9fafb; /* Este es el color por defecto para gray-50 en Tailwind */
+        }
+        .px-6 {
+            padding-left: 1.5rem;   /* Equivale a 24px si 1rem = 16px */
+            padding-right: 1.5rem;  /* Equivale a 24px si 1rem = 16px */
+        }
+        .py-3 {
+            padding-top: 0.75rem;    /* Equivale a 12px si 1rem = 16px */
+            padding-bottom: 0.75rem; /* Equivale a 12px si 1rem = 16px */
+        }
+        .text-start {
+            text-align: start;
+        }
+        .text-xs {
+            font-size: 0.75rem; /* Equivale a 12px si 1rem = 16px */
+            line-height: 1rem;  /* Equivale a 16px si 1rem = 16px */
+        }
+        .font-medium {
+            font-weight: 500;
+        }
+        .text-gray-500 {
+            color: #6b7280; /* Este es el color por defecto para gray-500 en Tailwind */
+        }
+        .uppercase {
+            text-transform: uppercase;
+        }
+
+        .divide-y {
+            --tw-divide-y-reverse: 0;
+            border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+            border-bottom-width: calc(1px * var(--tw-divide-y-reverse));
+        }
+        .divide-gray-200 {
+            --tw-divide-opacity: 1;
+            border-color: rgb(229 231 235 / var(--tw-divide-opacity, 1));
+        }
+        .text-gray-800 {
+            color: #1f2937; /* Este es el color por defecto para gray-800 en Tailwind CSS */
+        }
+        .border-gray-200 {
+            border-color: #e5e7eb; /* Este es el color por defecto para gray-200 en Tailwind */
+        }
+        .rounded-lg {
+            border-radius: 0.5rem; /* Equivale a 8px si 1rem = 16px */
+        }
+        .inline-block {
+            display: inline-block;
+        }
+        .align-middle {
+            vertical-align: middle;
+        }
+        .whitespace-nowrap {
+            white-space: nowrap;
+        }
+        .text-end {
+            text-align: right;
+        }
+        .border-none {
+            border-style: none;
+            border-width: 0px;
+        }
+        .border-b-none {
+            border-bottom-style: none;
+            border-bottom-width: 0px;
+        }
     </style>
 
 </head>
@@ -774,6 +863,31 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
     $bankAccounts = \App\Models\BankAccount::with('bank')->where('invoice_show',true)->get();
 
+    $documentCredito = \App\Models\Sale::whereHas('document', function ($query) use ($document) {
+                $query->where('invoice_serie', $document->getSerie())
+                    ->where('invoice_correlative',$document->getCorrelativo())
+                    ->where('forma_pago','Credito'); // Estado de la factura
+        })
+        ->with('document.quotas.payments')
+        ->first();
+
+    $paymentMethods = \App\Models\PaymentMethod::get();
+
+    function getPaymentMethodById($id, $paymentMethods) {
+
+        // Verifica que $paymentMethods sea un array
+        if (count($paymentMethods) > 0) {
+            foreach ($paymentMethods as $method) {
+                // Compara el 'id' del método actual con el ID buscado
+                if (isset($method->id) && $method->id == $id) {
+                    return $method->description; // Devuelve el array del método si coincide
+                }
+            }
+        }
+        return null; // Retorna null si no es un array o no se encuentra el ID
+    }
+
+
 @endphp
 
 <body>
@@ -782,7 +896,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
     @endif
     <div class="relative">
         <div class="py-4">
-            <div class="px-14 py-6">
+            <div class="px-14 py-2">
                 <table class="w-full border-collapse border-spacing-0">
                     <tbody>
                         <tr>
@@ -905,7 +1019,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                 </table>
             </div>
 
-            <div class="px-14 py-10 text-xs text-neutral-700">
+            <div class="px-14 py-6 text-xs text-neutral-700">
                 <table class="w-full border-collapse border-spacing-0">
                     <thead>
                         <tr>
@@ -1046,6 +1160,115 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                         </tr>
                     </tbody>
                 </table>
+
+                @php
+                    $hasAnyPaymentsToShow = false;
+
+                    if($documentCredito->document->single_payment){
+                        foreach($documentCredito->document->quotas as $key => $quota){
+                            if(count($quota->payments) > 0){
+                                $hasAnyPaymentsToShow = true;
+                            }
+                        }
+                        if($documentCredito->payments){
+                            $hasAnyPaymentsToShow = true;
+                        }
+                    } else {
+                        foreach($documentCredito->document->quotas as $key => $quota){
+                            if(count($quota->payments) > 0){
+                                $hasAnyPaymentsToShow = true;
+                            }
+                        }
+                    }
+                @endphp
+
+                @if($hasAnyPaymentsToShow))
+                <div class="p-1.5 min-w-full inline-block align-middle mt-6">
+                    <p class="text-sm font-medium uppercase px-2 py-2">PAGOS</p>
+                    <div class="border border-gray-200 border-b-none">
+                        <table class="x-table min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-2 text-start text-xs font-medium text-gray-500 uppercase">Descripción</th>
+                                    <th scope="col" class="px-2 text-start text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                                    <th scope="col" class="px-2 text-start text-xs font-medium text-gray-500 uppercase">Método</th>
+                                    <th scope="col" class="px-2 text-start text-xs font-medium text-gray-500 uppercase">Código de referencia</th>
+                                    <th scope="col" class="px-2 text-end text-xs font-medium text-gray-500 uppercase">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+
+                                @if($documentCredito->document->single_payment)
+                                    @foreach($documentCredito->document->quotas as $key => $quota)
+                                        @foreach($quota->payments as $index => $pay)
+                                            @if($pay->estado)
+                                                <tr>
+                                                    <td class="px-2 whitespace-nowrap text-xs font-medium text-gray-800 ">
+                                                        <p>Pago cuota: {{ $quota->quota_number }} <em>{{ $pay->description }}</em></p>
+                                                    </td>
+                                                    <td class="px-2 whitespace-nowrap text-xs text-center font-medium text-gray-800 ">
+                                                        {{ $pay->payment_date }}
+                                                    </td>
+                                                    <td class="px-2 whitespace-nowrap text-xs text-gray-800 ">
+                                                        {{ getPaymentMethodById($pay->payment_method_id, $paymentMethods) }}
+                                                    </td>
+                                                    <td class="px-2 whitespace-nowrap text-end text-xs text-gray-800 ">
+                                                        {{ $pay->reference }}
+                                                    </td>
+                                                    <td class="px-2 whitespace-nowrap text-end text-xs font-medium">
+                                                        {{ number_format($pay->amount_applied, 2, '.', '') }}
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        @endforeach
+                                    @endforeach
+                                    @foreach($documentCredito->payments as $key => $pay)
+                                        <tr class="bg-orange-100 px-6 py-4 whitespace-nowrap text-xs text-gray-800 ">
+                                            <td class="px-2 whitespace-nowrap text-xs font-medium text-gray-800 ">
+                                                <p class=""><em>{{ $pay['description'] }}</em></p>
+                                            </td>
+                                            <td class="px-2 whitespace-nowrap text-xs text-center font-medium text-gray-800 ">
+                                                {{ $pay['payment_date'] }}
+                                            </td>
+                                            <td class="px-2 whitespace-nowrap text-xs text-gray-800 ">
+                                                {{ getPaymentMethodById($pay['type'], $paymentMethods) }}
+                                            </td>
+                                            <td class="px-2 whitespace-nowrap text-end text-xs text-gray-800 ">
+                                                {{ $pay['reference'] }}
+                                            </td>
+                                            <td class="px-2 whitespace-nowrap text-end text-xs font-medium">
+                                                {{ number_format($pay['amount'], 2, '.', '') }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    @foreach($documentCredito->document->quotas as $key => $quota)
+                                        @foreach($quota->payments as $index => $pay)
+                                            <tr>
+                                                <td class="px-2 whitespace-nowrap text-xs font-medium text-gray-800 ">
+                                                    <p class="">Pago cuota: {{ $quota->quota_number }} <em>{{ $pay->description }}</em></p>
+                                                </td>
+                                                <td class="px-2 whitespace-nowrap text-xs text-center font-medium text-gray-800 ">
+                                                    {{ $pay->payment_date }}
+                                                </td>
+                                                <td class="px-2 whitespace-nowrap text-xs text-gray-800 ">
+                                                    {{ getPaymentMethodById($pay->payment_method_id, $paymentMethods) }}
+                                                </td>
+                                                <td class="px-2 whitespace-nowrap text-xs text-end text-gray-800 ">
+                                                    {{ $pay->reference }}
+                                                </td>
+                                                <td class="px-2 whitespace-nowrap text-end text-xs font-medium">
+                                                    {{ number_format($pay->amount_applied, 2, '.', '') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @endforeach
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endif
             </div>
             @if ($document->getMtoImpVenta() > 0 && $document->getDetraccion())
                 @php

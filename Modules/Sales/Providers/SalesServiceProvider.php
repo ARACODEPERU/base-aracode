@@ -4,6 +4,7 @@ namespace Modules\Sales\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Modules\Sales\Console\DailySalesTasks;
 
 class SalesServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,13 @@ class SalesServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        // Asegúrate de que esta sección exista y esté correcta:
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                DailySalesTasks::class, // <-- ¡Agrega (o asegura) esta línea!
+            ]);
+        }
     }
 
     /**

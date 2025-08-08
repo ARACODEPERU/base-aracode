@@ -163,11 +163,10 @@ final class Util
         return $filePath;
     }
 
-    public function generatePdf(DocumentInterface $document, $seller = null, $qr_path = null, $format = 'A4', $status = 1,)
+    public function generatePdf(DocumentInterface $document, $seller = null, $qr_path = null, $format = 'A4', $status = 1, $forma_pago = 'Contado')
     {
 
-        $params = self::getParametersPdf($this->company, $seller);
-
+        $params = self::getParametersPdf($this->company, $seller, $forma_pago);
 
         $fileDir = public_path();
 
@@ -180,7 +179,7 @@ final class Util
 
         if ($format == 'A4') {
             //dd($document);
-            if($document->getTipoDoc() == '07' || $document->getTipoDoc() == '07'){
+            if($document->getTipoDoc() == '07' || $document->getTipoDoc() == '08'){
                 $pdf = Pdf::loadView('sales::sales.notas_a4', [
                     'document' => $document,
                     'params' => $params,
@@ -334,7 +333,7 @@ final class Util
     /**
      * @return array<string, array<string, array<int, array<string, string>>|bool|string>>
      */
-    private static function getParametersPdf($company, $seller = null): array
+    private static function getParametersPdf($company, $seller = null, $forma_pago = 'Contado'): array
     {
 
         $seller_name = 'ARACODE SELLER';
@@ -354,7 +353,7 @@ final class Util
                 'extras' => [
                     [
                         'name' => 'FORMA DE PAGO',
-                        'value' => 'Contado'
+                        'value' => $forma_pago
                     ],
                     [
                         'name' => 'VENDEDOR',

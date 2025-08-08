@@ -13,12 +13,12 @@
             displayData.value = true;
             axios.post(route('sales_dashboard_total_summary'),{period: per}).then((response) => {
                 summaryData.value = response.data;
-               
+
                 displayData.value = false;
             });
-            
+
         } catch (error) {
-            console.error(error);
+            //console.error(error);
         }
     }
 

@@ -32,6 +32,10 @@ class Sale extends Model
         'invoice_type'
     ];
 
+    protected $casts = [
+        'payments' => 'array',
+    ];
+
     public function saleProduct(): HasMany
     {
         return $this->hasMany(SaleProduct::class, 'sale_id', 'id');

@@ -17,6 +17,7 @@ use Exception;
 use Greenter\Model\Company\Address;
 use Greenter\Model\Company\Company;
 use Greenter\Model\Sale\FormaPagos\FormaPagoContado;
+use Greenter\Model\Sale\FormaPagos\FormaPagoCredito;
 use Greenter\Model\Sale\Charge;
 use Greenter\Model\Sale\Detraction;
 use App\Helpers\Invoice\QrCodeGenerator;
@@ -28,7 +29,7 @@ use App\Models\Sale;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
-
+use Greenter\Model\Sale\Cuota;
 class Factura
 {
     protected $see;
@@ -43,7 +44,10 @@ class Factura
     public function create($document_id)
     {
         try {
-            $document = SaleDocument::find($document_id);
+            $document = SaleDocument::with(['quotas' => function ($query) {
+                $query->orderBy('due_date', 'asc'); // Ordena las cuotas por fecha de pago ascendente
+            }])->find($document_id);
+
             $invoice = $this->setDocument($document);
             $see = $this->util->getSee();
             $res = $see->send($invoice);
@@ -137,13 +141,38 @@ class Factura
 
         // Venta
         $invoice = new Invoice();
+
+        if($document->forma_pago == 'Contado'){
+            $invoice->setFormaPago(new FormaPagoContado()); // FormaPago: Contado
+        }else{
+
+            $cuotasGreenter = [];
+            foreach ($document->quotas as $key => $quota) {
+                $dueDateStr = $quota->due_date ?? null;
+                $amount = $quota->amount ?? 0.01;
+                try {
+                    // Paso CRÍTICO: Crea un objeto DateTime a partir de la cadena de fecha
+                    $fechaPago = new DateTime($dueDateStr);
+
+                    $cuotasGreenter[] = (new Cuota())
+                        ->setMonto((float) $amount) // Asegúrate de que el monto sea float
+                        ->setFechaPago($fechaPago);
+
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            $invoice->setFormaPago(new FormaPagoCredito($document->overall_total))
+                ->setCuotas($cuotasGreenter); // FormaPago: Credito
+        }
+
         $invoice->setUblVersion($document->invoice_ubl_version)
             ->setTipoOperacion($document->invoice_type_operation)
             ->setTipoDoc($document->invoice_type_doc)
             ->setSerie($document->invoice_serie)
             ->setCorrelativo($document->invoice_correlative)
             ->setFechaEmision($broadcast_date)
-            ->setFormaPago(new FormaPagoContado()) // FormaPago: Contado
             ->setTipoMoneda('PEN')
             ->setCompany($company)
             ->setClient($client)
@@ -253,10 +282,10 @@ class Factura
             $cadenaqr = $this->stringQr($document);
 
             $qr_path = $generator->generateQR($cadenaqr, $dir, $invoice->getName() . '.png', 8, 2);
-            //dd($invoice);
 
             $seller = User::find($document->user_id);
-            $pdf = $this->util->generatePdf($invoice, $seller, $qr_path, $format, $document->status);
+            $pdf = $this->util->generatePdf($invoice, $seller, $qr_path, $format, $document->status, $document->forma_pago);
+
             $document->invoice_pdf = $pdf;
             $document->save();
 

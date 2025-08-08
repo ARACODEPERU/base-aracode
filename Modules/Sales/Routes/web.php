@@ -14,6 +14,7 @@
 use App\Http\Controllers\ApisnetPeController;
 use App\Http\Controllers\LocalSaleController;
 use Illuminate\Support\Facades\Route;
+use Modules\Sales\Http\Controllers\AccountsReceivableController;
 use Modules\Sales\Http\Controllers\InvoiceReportsController;
 use Modules\Sales\Http\Controllers\PettyCashController;
 use Modules\Sales\Http\Controllers\ProductController;
@@ -23,6 +24,7 @@ use Modules\Sales\Http\Controllers\SaleController;
 use Modules\Sales\Http\Controllers\SaleCreditNotesController;
 use Modules\Sales\Http\Controllers\SaleDocumentController;
 use Modules\Sales\Http\Controllers\SaleLowCommunicationController;
+use Modules\Sales\Http\Controllers\SalePaymentQuotaController;
 use Modules\Sales\Http\Controllers\SalePhysicalDocumentController;
 use Modules\Sales\Http\Controllers\SaleProductBrandController;
 use Modules\Sales\Http\Controllers\SaleProductCategoryController;
@@ -197,4 +199,11 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::post('netapies/search/person', [ApisnetPeController::class, 'consult'])->name('sales_search_person_apies');
 
     Route::get('reports/invoice', [InvoiceReportsController::class, 'index'])->name('reports_invoice');
+
+
+    Route::get('accountsreceivable/document/list', [AccountsReceivableController::class, 'index'])->name('acco_document_list');
+    Route::get('accountsreceivable/document/table', [AccountsReceivableController::class, 'tableDocument'])->name('acco_table_document');
+    Route::post('accountsreceivable/document/payments/store', [SalePaymentQuotaController::class, 'store'])->name('acco_table_document_payment_store');
+    Route::delete('accountsreceivable/document/payments/destroy/{id}', [SalePaymentQuotaController::class, 'destroy'])->name('acco_table_document_payment_destroy');
+    Route::post('accountsreceivable/document/paymentsfull/store', [SalePaymentQuotaController::class, 'storePayFull'])->name('acco_table_document_payment_full_store');
 });

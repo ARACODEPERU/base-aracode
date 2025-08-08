@@ -45,12 +45,18 @@ class SalesController extends Controller
 
         // Inicializar la consulta
         $query = SaleDocument::select('invoice_type_doc', DB::raw('SUM(overall_total) as total'))
-            ->whereNotNull('invoice_type_doc')
+            ->where(function ($query) {
+                $query->whereIn('invoice_type_doc', ['03', '01'])
+                    ->orWhereNull('invoice_type_doc');
+            })
             ->where('status', 1)
             ->groupBy('invoice_type_doc');
 
         $queryNote = SaleDocument::select('invoice_type_doc', DB::raw('SUM(overall_total) as total'))
-            ->whereNull('invoice_type_doc')
+            ->where(function ($query) {
+                $query->where('invoice_type_doc', '80')
+                    ->orWhereNull('invoice_type_doc');
+            })
             ->where('status', 1)
             ->groupBy('invoice_type_doc');
 
@@ -62,25 +68,25 @@ class SalesController extends Controller
         // Filtrar según el período
         switch ($period) {
             case 'day':
-                $query->whereDate('created_at', $now->format('Y-m-d'));
-                $queryNote->whereDate('created_at', $now->format('Y-m-d'));
-                $queryPhysical->whereDate('created_at', $now->format('Y-m-d'));
+                $query->whereDate('invoice_broadcast_date', $now->format('Y-m-d'));
+                $queryNote->whereDate('invoice_broadcast_date', $now->format('Y-m-d'));
+                $queryPhysical->whereDate('document_date', $now->format('Y-m-d'));
                 break;
 
             case 'week':
                 $startOfWeek = $now->startOfWeek()->format('Y-m-d');
                 $endOfWeek = $now->endOfWeek()->format('Y-m-d');
-                $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
-                $queryNote->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
-                $queryPhysical->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+                $query->whereBetween('invoice_broadcast_date', [$startOfWeek, $endOfWeek]);
+                $queryNote->whereBetween('invoice_broadcast_date', [$startOfWeek, $endOfWeek]);
+                $queryPhysical->whereBetween('document_date', [$startOfWeek, $endOfWeek]);
                 break;
 
             case 'month':
                 $startOfMonth = $now->startOfMonth()->format('Y-m-d');
                 $endOfMonth = $now->endOfMonth()->format('Y-m-d');
-                $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
-                $queryNote->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
-                $queryPhysical->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+                $query->whereBetween('invoice_broadcast_date', [$startOfMonth, $endOfMonth]);
+                $queryNote->whereBetween('invoice_broadcast_date', [$startOfMonth, $endOfMonth]);
+                $queryPhysical->whereBetween('document_date', [$startOfMonth, $endOfMonth]);
                 break;
         }
 
@@ -134,14 +140,14 @@ class SalesController extends Controller
         // Determinar el agrupamiento según el período
         switch ($period) {
             case 'day':
-                $query->whereDate('created_at', $now->format('Y-m-d'));
+                $query->whereDate('invoice_broadcast_date', $now->format('Y-m-d'));
                 $queryPhysical->whereDate('created_at', $now->format('Y-m-d'));
 
                 $previousDay = $now->subDay()->format('Y-m-d');
-                $previousTotal = SaleDocument::whereDate('created_at', $previousDay)
+                $previousTotal = SaleDocument::whereDate('invoice_broadcast_date', $previousDay)
                     ->where('status', 1)
                     ->sum('overall_total');
-                $previousTotalPhysical = SalePhysicalDocument::whereDate('created_at', $previousDay)
+                $previousTotalPhysical = SalePhysicalDocument::whereDate('document_date', $previousDay)
                     ->where('status', '<>', 'A')
                     ->sum('total');
                 break;
@@ -149,15 +155,17 @@ class SalesController extends Controller
             case 'week':
                 $startOfWeek = $now->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
                 $endOfWeek = $now->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
-                $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
-                $queryPhysical->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+                $query->whereBetween('invoice_broadcast_date', [$startOfWeek, $endOfWeek]);
+                $queryPhysical->whereBetween('document_date', [$startOfWeek, $endOfWeek]);
 
                 $previousWeekStart = $now->subWeek()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
                 $previousWeekEnd = $previousWeekStart . '+6 days';
-                $previousTotal = SaleDocument::whereBetween('created_at', [$previousWeekStart, $previousWeekEnd])
+
+                $previousTotal = SaleDocument::whereBetween('invoice_broadcast_date', [$previousWeekStart, $previousWeekEnd])
                     ->where('status', 1)
                     ->sum('overall_total');
-                $previousTotalPhysical = SalePhysicalDocument::whereBetween('created_at', [$previousWeekStart, $previousWeekEnd])
+
+                $previousTotalPhysical = SalePhysicalDocument::whereBetween('document_date', [$previousWeekStart, $previousWeekEnd])
                     ->where('status', '<>', 'A')
                     ->sum('total');
 
@@ -166,16 +174,17 @@ class SalesController extends Controller
             case 'month':
                 $startOfMonth = $now->startOfMonth()->format('Y-m-d');
                 $endOfMonth = $now->endOfMonth()->format('Y-m-d');
-                $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
-                $queryPhysical->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+                //dd($endOfMonth);
+                $query->whereBetween('invoice_broadcast_date', [$startOfMonth, $endOfMonth]);
+                $queryPhysical->whereBetween('document_date', [$startOfMonth, $endOfMonth]);
 
                 $previousMonthStart = $now->subMonth()->startOfMonth()->format('Y-m-d');
                 $previousMonthEnd = $now->subMonth()->endOfMonth()->format('Y-m-d');
-                $previousTotal = SaleDocument::whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+                $previousTotal = SaleDocument::whereBetween('invoice_broadcast_date', [$previousMonthStart, $previousMonthEnd])
                     ->where('status', 1)
                     ->sum('overall_total');
 
-                $previousTotalPhysical = SalePhysicalDocument::whereBetween('created_at', [$previousMonthStart, $previousMonthEnd])
+                $previousTotalPhysical = SalePhysicalDocument::whereBetween('document_date', [$previousMonthStart, $previousMonthEnd])
                     ->where('status', '<>', 'A')
                     ->sum('total');
                 break;

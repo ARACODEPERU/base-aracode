@@ -22,6 +22,7 @@ class PermissionsTableSeeder extends Seeder
 
         $modulo = Modulo::create(['identifier' => 'M002', 'description' => 'Ventas']);
         $moduloFE = Modulo::create(['identifier' => 'M003', 'description' => 'Facturación Electrónica']);
+        $moduloAC = Modulo::create(['identifier' => 'M015', 'description' => 'Cuentas por cobrar']);
 
         $permissions = [];
         $permissionsFE = [];
@@ -86,6 +87,9 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissionsFE, Permission::create(['name' => 'invo_nota_credito']));
         array_push($permissionsFE, Permission::create(['name' => 'invo_reportes']));
 
+        array_push($permissionsAC, Permission::create(['name' => 'acco_dashboard']));
+        array_push($permissionsAC, Permission::create(['name' => 'acco_documento_listado']));
+
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
 
@@ -103,6 +107,16 @@ class PermissionsTableSeeder extends Seeder
                 'permission_id' => $permission->id,
                 'model_type' => Modulo::class,
                 'model_id' => $moduloFE->identifier
+            ]);
+        }
+
+        foreach ($permissionsAC as $permission) {
+            $role->givePermissionTo($permission->name);
+
+            DB::table('model_has_permissions')->insert([
+                'permission_id' => $permission->id,
+                'model_type' => Modulo::class,
+                'model_id' => $moduloAC->identifier
             ]);
         }
     }

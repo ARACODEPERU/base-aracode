@@ -15,12 +15,12 @@
             hasData.value = true;
             axios.post(route('sales_dashboard_total_balance'),{period: per}).then((response) => {
                 balanceData.value = response.data;
-               
+
                 hasData.value = false;
             });
-            
+
         } catch (error) {
-            console.error(error);
+           // console.error(error);
         }
     }
 </script>
@@ -34,7 +34,7 @@
 
             <div class="relative text-xl whitespace-nowrap">
                 <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-32"></div>
-                <span class="table text-[#d3d3d3] bg-[#4361ee] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto"> 
+                <span class="table text-[#d3d3d3] bg-[#4361ee] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto">
                     <div class="h-2.5 ms-2 bg-gray-300 rounded-full dark:bg-gray-600 w-24"></div>
                 </span>
             </div>
@@ -76,7 +76,7 @@
 
             <div v-if="balanceData && balanceData.total_sales !== undefined" class="relative text-xl whitespace-nowrap">
                 S/ {{ (balanceData.total_sales).toFixed(2) }}
-                <span  v-if="balanceData && balanceData.difference !== undefined" class="table text-[#d3d3d3] bg-[#4361ee] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto"> 
+                <span  v-if="balanceData && balanceData.difference !== undefined" class="table text-[#d3d3d3] bg-[#4361ee] rounded p-1 text-xs mt-1 ltr:ml-auto rtl:mr-auto">
                     {{ (balanceData.difference < 0 ? '' : '+') + (balanceData.difference).toFixed(2) }}
                 </span>
             </div>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Sales\Entities\SaleDocumentQuota;
 
 class SaleDocument extends Model
 {
@@ -60,7 +61,11 @@ class SaleDocument extends Model
         'additional_description',
         'overall_total',
         'document_id',
-        'note_type_operation_id'
+        'note_type_operation_id',
+        'forma_pago',
+        'status_pay',
+        'overdue_fee',
+        'single_payment'
     ];
 
     public function items(): HasMany
@@ -85,5 +90,9 @@ class SaleDocument extends Model
     public function serie(): BelongsTo
     {
         return $this->belongsTo(Serie::class,'serie_id','id');
+    }
+    public function quotas(): HasMany
+    {
+        return $this->hasMany(SaleDocumentQuota::class,'sale_document_id','id');
     }
 }

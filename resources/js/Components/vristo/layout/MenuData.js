@@ -27,6 +27,7 @@ const MenuData = ref([
     menuPurchases,
     menuSales[0],
     menuSales[1],
+    menuSales[2],
     menuOnlineshop,
     // menuHelpdesk,
     menuCMS,
