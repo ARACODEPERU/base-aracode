@@ -105,9 +105,9 @@
                         Buscar
                     </button>
                     <DropdownExports
-                        :showPrint="true"
+
                         :showExcel="true"
-                        :showPdf="true"
+
                         :actionUrl="route('aca_student_payment_report_bank_export')"
                         :data="form"
                     />
@@ -123,6 +123,7 @@
                                 <th>CURSOS</th>
                                 <th>CELULAR</th>
                                 <th>ALUMNO</th>
+                                <th>FORMA DE PAGO</th>
                                 <th>IMPORTE DE COBRANZA</th>
                                 <th>NRO. DE OPERACIÓN</th>
                             </tr>
@@ -145,7 +146,7 @@
                                         <div class="space-y-2">
                                             <template v-for="product in item.sale_product">
                                                 <p class="text-secondary">
-                                                    {{ JSON.parse(product.saleProduct).title ?? JSON.parse(product.saleProduct).name }}
+                                                    {{ JSON.parse(product.saleProduct).title ? JSON.parse(product.saleProduct).title : JSON.parse(product.saleProduct).name ? JSON.parse(product.saleProduct).name : JSON.parse(product.saleProduct).title ? JSON.parse(product.saleProduct).title : JSON.parse(product.saleProduct).description }}
                                                 </p>
                                             </template>
                                         </div>
@@ -157,7 +158,13 @@
                                         {{ item.client.full_name }}
                                     </td>
                                     <td>
-                                        {{ item.total }}
+                                        <span v-if="item.document.forma_pago == 'Credito'" class="relative inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white z-10">
+                                            Al crédito
+                                        </span>
+                                        <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-500 text-white">Al contado</span>
+                                    </td>
+                                    <td>
+                                        {{ item.total}}
                                     </td>
                                     <td>
                                         <div class="ps relative mb-4 max-h-[290px] ltr:pr-3 rtl:pl-3 ltr:-mr-3 rtl:-ml-3 ps--active-y">

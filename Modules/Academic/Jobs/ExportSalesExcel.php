@@ -64,6 +64,7 @@ class ExportSalesExcel implements ShouldQueue
                 'CURSOS',
                 'CELULAR',
                 'ALUMNO',
+                'FORMA DE PAGO',
                 'IMPORTE DE COBRANZA',
                 'NRO. DE OPERACIÓN',
             ];
@@ -167,6 +168,7 @@ class ExportSalesExcel implements ShouldQueue
                     // 5. ALUMNO
                     $clientFullName = $sale->client->full_name ?? 'N/A';
 
+                    $formaPago = $sale->document->forma_pago == 'Contado' ? 'Contado' : 'Crédito';
                     // 6. IMPORTE DE COBRANZA
                     $totalAmount = number_format($sale->total, 2, '.', ''); // Formato numérico
 
@@ -174,24 +176,29 @@ class ExportSalesExcel implements ShouldQueue
                     // --- INICIO DE LA LÓGICA DE PAGOS MODIFICADA ---
                     $paymentsDetail = [];
                     // Decodificar el JSON del campo 'payments'
-                    $paymentsArray = json_decode($sale->payments, true);
+                    $paymentsDetailString =  null;
+                    if($sale->payments){
 
-                    // Asegurarse de que $paymentsArray es un array y no está vacío
-                    if (is_array($paymentsArray) && !empty($paymentsArray)) {
-                        foreach ($paymentsArray as $payment) {
-                            $paymentTypeDescription = $this->getPaymentTypeDescription($payment['type']);
-                            $paymentAmount = number_format($payment['amount'] ?? 0, 2, '.', '');
-                            $paymentReference = $payment['reference'] ?? null;
+                        $paymentsArray = $sale->payments;
 
-                            $detail = "{$paymentTypeDescription}: S/. {$paymentAmount}";
-                            if ($paymentReference) {
-                                $detail .= " (CÓDIGO: {$paymentReference})";
+                        // Asegurarse de que $paymentsArray es un array y no está vacío
+                        if (is_array($paymentsArray) && !empty($paymentsArray)) {
+                            foreach ($paymentsArray as $payment) {
+                                $paymentTypeDescription = $this->getPaymentTypeDescription($payment['type']);
+                                $paymentAmount = number_format($payment['amount'] ?? 0, 2, '.', '');
+                                $paymentReference = $payment['reference'] ?? null;
+
+                                $detail = "{$paymentTypeDescription}: S/. {$paymentAmount}";
+                                if ($paymentReference) {
+                                    $detail .= " (CÓDIGO: {$paymentReference})";
+                                }
+                                $paymentsDetail[] = $detail;
                             }
-                            $paymentsDetail[] = $detail;
                         }
+                        $paymentsDetailString = implode("\n", $paymentsDetail);
+                        // --- FIN DE LA LÓGICA DE PAGOS MODIFICADA ---
                     }
-                    $paymentsDetailString = implode("\n", $paymentsDetail);
-                    // --- FIN DE LA LÓGICA DE PAGOS MODIFICADA ---
+
 
                     $rowData = [
                         $saleDate,
@@ -199,6 +206,7 @@ class ExportSalesExcel implements ShouldQueue
                         $coursesString,
                         $clientTelephone,
                         $clientFullName,
+                        $formaPago,
                         $totalAmount,
                         $paymentsDetailString,
                     ];

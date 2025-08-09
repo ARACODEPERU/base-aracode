@@ -361,6 +361,7 @@
         { data: 'full_name', title: 'Cliente' },
         { data: 'total', title: 'Total' },
         { data: null, render: '#status', title: 'Estado' },
+        { data: null, render: '#forma_pago', title: 'Forma de pago' },
     ];
 
     const options = {
@@ -489,6 +490,12 @@
                             <small>Estado Sunat:</small>
                             {{ props.rowData.invoice_status }}
                         </span>
+                    </template>
+                    <template #forma_pago="props">
+                        <span v-if="props.rowData.document.forma_pago == 'Credito'" class="relative inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white z-10">
+                            Al crédito
+                        </span>
+                        <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-500 text-white">Al contado</span>
                     </template>
                 </DataTable>
 
