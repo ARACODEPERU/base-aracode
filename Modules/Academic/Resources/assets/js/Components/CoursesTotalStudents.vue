@@ -96,24 +96,26 @@
     });
 </script>
 <template>
-    <div class="panel">
-        <template v-if="displayChartBar">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="h-2.5 bg-gray-300 rounded-full dark:bg-gray-600 w-24 mb-2.5"></div>
-                    <div class="w-32 h-2 bg-gray-200 rounded-full dark:bg-gray-700"></div>
+    <div class="bg-white border border-gray-200 border-t-4 border-t-blue-600 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-blue-500 dark:shadow-neutral-700/70">
+        <div class="p-4 md:p-5">
+            <template v-if="displayChartBar">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="h-2.5 bg-gray-300 rounded-full dark:bg-gray-600 w-24 mb-2.5"></div>
+                        <div class="w-32 h-2 bg-gray-200 rounded-full dark:bg-gray-700"></div>
+                    </div>
+                    <div class="h-2.5 bg-gray-300 rounded-full dark:bg-gray-700 w-12"></div>
                 </div>
-                <div class="h-2.5 bg-gray-300 rounded-full dark:bg-gray-700 w-12"></div>
-            </div>
-        </template>
-        <template v-else>
-            <div class="flex items-center justify-between mb-5">
-                <h5 class="font-semibold text-lg dark:text-white-light uppercase">Matriculados Activos por curso</h5>
-                <span class="font-semibold hover:text-gray-400 dark:text-gray-400 dark:hover:text-gray-600" > TOTAL: {{ dataCourses.total }}</span>
-            </div>
-            <div>
-                <apexchart v-if="dataBarLoaded" type="bar" height="380" :options="chartOptions" :series="series"></apexchart>
-            </div>
-        </template>
+            </template>
+            <template v-else>
+                <div class="flex items-center justify-between mb-5">
+                    <h5 class="font-semibold text-lg dark:text-white-light uppercase">Matriculados Activos por curso</h5>
+                    <span class="font-semibold hover:text-gray-400 dark:text-gray-400 dark:hover:text-gray-600" > TOTAL: {{ dataCourses.total }}</span>
+                </div>
+                <div>
+                    <apexchart v-if="dataBarLoaded" type="bar" height="380" :options="chartOptions" :series="series"></apexchart>
+                </div>
+            </template>
+        </div>
     </div>
 </template>

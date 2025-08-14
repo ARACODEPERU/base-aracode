@@ -17,7 +17,7 @@ class ParametersTableSeeder extends Seeder
             'description'       => 'Activar campos para datos adicionales del curso (Descripción del Certificado, Aplicación de Descuento)',
             'control_type'      => 'chx',
             'json_query_data'   => null,
-            'value_default'     => 1
+            'value_default'     => 'false'
         ]);
     }
 }

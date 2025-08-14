@@ -82,7 +82,7 @@ return new class extends Migration
             'parameter_code'    => 'P000009',
             'description'       => 'Tipo de negocio o empresa, para ventas en linea',
             'control_type'      => 'sa',
-            'json_query_data'   => '[{"value": "1","label":"Cursos y capacitaciones"},{"value": "2","label":"Productos"},{"value": "3","label":"Productos con Especificaciónes"},{"value": "99","label":"Todos"}]',
+            'json_query_data'   => '[{"value": "1","label":"Cursos y capacitaciones"},{"value": "2","label":"Productos"},{"value": "3","label":"Productos con Especificaciónes"},{"value": "4","label":"Servicios"},{"value": "99","label":"Todos"}]',
             'value_default'     => 1
         ]);
 

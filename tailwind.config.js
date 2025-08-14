@@ -116,6 +116,18 @@ module.exports = {
                     },
                 },
             }),
+            keyframes: {
+                // Define la secuencia de la animación (cómo se mueve la flecha)
+                pointRight: {
+                '0%, 100%': { transform: 'translateX(0)' }, // En el inicio y al final, la flecha está en su posición original
+                '50%': { transform: 'translateX(4px)' },   // A la mitad de la animación, se mueve 4px a la derecha
+                }
+            },
+            animation: {
+                // Aplica el keyframe 'pointRight' con una duración de 1 segundo,
+                // una función de tiempo suave (ease-in-out) y repetición infinita
+                'point-right': 'pointRight 1s ease-in-out infinite',
+            }
         },
     },
     plugins: [

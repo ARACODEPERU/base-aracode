@@ -39,7 +39,7 @@
     }
 
     const createAction = () => {
-        loginRegister.put(route('academic_step_account_create',props.subscription.id), {
+        loginRegister.put(route('academic_step_account_create', props.subscription.id), {
             preserveScroll: true,
             onSuccess: () => loginRegister.reset(),
         });
@@ -56,7 +56,7 @@
         <!-- End Title -->
         <div class="flex flex-wrap justify-center gap-6">
             <div class="flex flex-col rounded-xl p-8 w-[800px]">
-                
+
 
                 <ol class="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
                     <li class="flex md:w-full items-center text-blue-600 dark:text-blue-500 sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10 dark:after:border-gray-700">
@@ -166,17 +166,23 @@
                         </div>
                         <div class="flex justify-between mt-6">
                             <button v-on:click="changeFormLoginRegister(true)" type="button" class="btn btn-danger mr-4">
+                                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                    <path fill="currentColor" d="M416 160L480 160C497.7 160 512 174.3 512 192L512 448C512 465.7 497.7 480 480 480L416 480C398.3 480 384 494.3 384 512C384 529.7 398.3 544 416 544L480 544C533 544 576 501 576 448L576 192C576 139 533 96 480 96L416 96C398.3 96 384 110.3 384 128C384 145.7 398.3 160 416 160zM406.6 342.6C419.1 330.1 419.1 309.8 406.6 297.3L278.6 169.3C266.1 156.8 245.8 156.8 233.3 169.3C220.8 181.8 220.8 202.1 233.3 214.6L306.7 288L96 288C78.3 288 64 302.3 64 320C64 337.7 78.3 352 96 352L306.7 352L233.3 425.4C220.8 437.9 220.8 458.2 233.3 470.7C245.8 483.2 266.1 483.2 278.6 470.7L406.6 342.7z"/>
+                                </svg>
                                 Iniciar sesión
                             </button>
                             <button type="submit" class="btn btn-primary">
-                                Crear
+                                <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                    <path fill="currentColor" d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 237.3C544 220.3 537.3 204 525.3 192L448 114.7C436 102.7 419.7 96 402.7 96L160 96zM192 192C192 174.3 206.3 160 224 160L384 160C401.7 160 416 174.3 416 192L416 256C416 273.7 401.7 288 384 288L224 288C206.3 288 192 273.7 192 256L192 192zM320 352C355.3 352 384 380.7 384 416C384 451.3 355.3 480 320 480C284.7 480 256 451.3 256 416C256 380.7 284.7 352 320 352z"/>
+                                </svg>
+                                Crear cuenta
                             </button>
                         </div>
                     </form>
                 </div>
                 <!-- finstep uno -->
             </div>
-            
+
         </div>
     </div>
 </template>

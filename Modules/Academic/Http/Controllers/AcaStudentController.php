@@ -1049,4 +1049,105 @@ class AcaStudentController extends Controller
             'type_content' => $request->get('type_content')
         ]);
     }
+
+    public function getSubscriptionStatuses()
+    {
+        $allSubscriptions = collect(); // Colección para almacenar todas las suscripciones con sus mensajes
+
+        // --- 1. Suscripciones a punto de vencer (en los próximos 7 días) ---
+
+        // Vence HOY
+        $today = Carbon::now()->startOfDay();
+        $endOfToday = Carbon::now()->endOfDay();
+        $expiringToday = AcaStudentSubscription::with('student.person')
+            ->whereBetween('date_end', [$today, $endOfToday])
+            ->where('status', true)
+            ->get()
+            ->each(function ($subscription) {
+                $subscription->number_days = 0;
+                $subscription->expiration_message = 'Termina hoy';
+            });
+
+        $allSubscriptions = $allSubscriptions->concat($expiringToday);
+
+        // Vence en 1 día (mañana)
+        $tomorrowStart = Carbon::now()->addDays(1)->startOfDay();
+        $tomorrowEnd = Carbon::now()->addDays(1)->endOfDay();
+        $expiringTomorrow = AcaStudentSubscription::with('student.person')
+            ->whereBetween('date_end', [$tomorrowStart, $tomorrowEnd])
+            ->where('status', true)
+            ->get()
+            ->each(function ($subscription) {
+                $subscription->number_days = 1;
+                $subscription->expiration_message = 'Termina en 1 día';
+            });
+        $allSubscriptions = $allSubscriptions->concat($expiringTomorrow);
+
+        // Vence en 6 días (específico para tu ejemplo, puedes ajustar el rango)
+        // Esto sería entre el inicio del día +2 y el final del día +6
+        $dayTwoStart = Carbon::now()->addDays(2)->startOfDay();
+        $daySixEnd = Carbon::now()->addDays(6)->endOfDay();
+        $expiringInSixDays = AcaStudentSubscription::with('student.person')
+            ->whereBetween('date_end', [$dayTwoStart, $daySixEnd])
+            ->where('status', true)
+            ->get()
+            ->each(function ($subscription) {
+                // Aquí calculamos cuántos días faltan para ser más precisos
+                $daysRemaining = Carbon::now()->startOfDay()->diffInDays($subscription->date_end, false);
+                $subscription->number_days = $daysRemaining;
+                $subscription->expiration_message = "Termina en {$daysRemaining} días";
+            });
+        $allSubscriptions = $allSubscriptions->concat($expiringInSixDays);
+
+
+        // --- 2. Suscripciones Vencidas ---
+
+        // Venció hace 1 día
+        $oneDayAgoStart = Carbon::now()->subDays(1)->startOfDay();
+        $oneDayAgoEnd = Carbon::now()->subDays(1)->endOfDay();
+        $expiredOneDayAgo = AcaStudentSubscription::with('student.person')
+            ->whereBetween('date_end', [$oneDayAgoStart, $oneDayAgoEnd])
+            ->where('status', false) // Asumiendo que false es "vencido"
+            ->get()
+            ->each(function ($subscription) {
+                $subscription->number_days = -1;
+                $subscription->expiration_message = 'Terminó hace 1 día';
+            });
+        $allSubscriptions = $allSubscriptions->concat($expiredOneDayAgo);
+
+
+        // Venció hace 2 días
+        $twoDaysAgoStart = Carbon::now()->subDays(2)->startOfDay();
+        $twoDaysAgoEnd = Carbon::now()->subDays(2)->endOfDay();
+        $expiredTwoDaysAgo = AcaStudentSubscription::with('student.person')
+            ->whereBetween('date_end', [$twoDaysAgoStart, $twoDaysAgoEnd])
+            ->where('status', false)
+            ->get()
+            ->each(function ($subscription) {
+                $subscription->number_days = -2;
+                $subscription->expiration_message = 'Terminó hace 2 días';
+            });
+        $allSubscriptions = $allSubscriptions->concat($expiredTwoDaysAgo);
+
+        // Si quieres capturar todas las demás que están simplemente "vencidas" (antes de 2 días)
+        $moreThanTwoDaysAgo = Carbon::now()->subDays(2)->startOfDay();
+        $expiredBeforeTwoDaysAgo = AcaStudentSubscription::with('student.person')
+            ->where('date_end', '<', $moreThanTwoDaysAgo)
+            ->where('status', false)
+            ->get()
+            ->each(function ($subscription) {
+                // Calcular días exactos transcurridos si es necesario, o un mensaje genérico
+                $daysAgo = Carbon::now()->startOfDay()->diffInDays($subscription->date_end, true); // true para valor absoluto
+                $subscription->number_days = -$daysAgo;
+                $subscription->expiration_message = "Terminó hace {$daysAgo} días";
+            });
+        $allSubscriptions = $allSubscriptions->concat($expiredBeforeTwoDaysAgo);
+
+
+        // Puedes ordenar la colección final si lo deseas, por ejemplo, por fecha de fin
+        $allSubscriptions = $allSubscriptions->sortBy('date_end')->values(); // .values() para reindexar el array
+        //dd($allSubscriptions);
+        return response()->json($allSubscriptions);
+    }
+
 }

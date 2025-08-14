@@ -49,7 +49,7 @@ class AcaAuthController extends Controller
                 'apps' => ['required', 'max:255'],
                 'apms' => ['required', 'max:255'],
                 'numberdni' => ['required', 'max:8'],
-                'email' => ['required', 'email'],
+                'email' => 'required|string|email|max:255|unique:' . User::class,
                 'password' => ['required'],
             ]
         );

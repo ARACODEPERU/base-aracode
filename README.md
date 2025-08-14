@@ -75,6 +75,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 cantidad actual M015
 
-## tareas
+## tareas recurrentes y programadas
 configurar en produccion
 php artisan schedule:run
+## tareas asíncronas y "bajo demanda"
+php artisan queue:work --queue=exports

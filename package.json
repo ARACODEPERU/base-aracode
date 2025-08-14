@@ -1,25 +1,21 @@
 {
     "private": true,
     "scripts": {
-        "build": "vite build",
-        "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
-        "format": "prettier --write resources/",
-        "format:check": "prettier --check resources/",
-        "lint": "eslint . --fix"
+        "build": "vite build && vite build --ssr"
     },
     "name": "aracode",
-    "version": "2.1.0",
+    "version": "2.0.0",
     "type": "module",
     "devDependencies": {
-        "@inertiajs/vue3": "^2.0.0",
+        "@inertiajs/vue3": "^1.0.0",
         "@tailwindcss/forms": "^0.5.3",
         "@vitejs/plugin-vue": "^4.6.0",
         "@vue/server-renderer": "^3.3.13",
         "autoprefixer": "^10.4.12",
         "axios": "^1.7.9",
         "postcss": "^8.4.18",
-        "tailwindcss": "^4.1.1",
+        "tailwindcss": "^3.4.1",
         "vite": "^5.2.12",
         "vue": "^3.4.27"
     },

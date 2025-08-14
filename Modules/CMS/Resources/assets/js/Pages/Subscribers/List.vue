@@ -88,7 +88,7 @@
                                     <!-- <th scope="col" class="px-6 py-4 border">
                                         Acciones
                                     </th> -->
-                                    <th scope="col" class="px-6 py-4">
+                                    <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
                                             Fecha
                                             <a href="">
@@ -96,7 +96,7 @@
                                             </a>
                                         </div>
                                     </th>
-                                    <th scope="col" class="px-6 py-4">
+                                    <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
                                             Nombres
                                             <a href="">
@@ -104,7 +104,7 @@
                                             </a>
                                         </div>
                                     </th>
-                                    <th scope="col" class="px-6 py-4">
+                                    <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
                                             Correo
                                             <a href="">
@@ -112,7 +112,7 @@
                                             </a>
                                         </div>
                                     </th>
-                                    <th scope="col" class="px-6 py-4">
+                                    <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
                                             Teléfono
                                             <a href="">
@@ -120,17 +120,18 @@
                                             </a>
                                         </div>
                                     </th>
-                                     <!-- <th scope="col" class="px-6 py-4">
+
+                                    <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
-                                            Asunto de mensaje
+                                            Mensaje
                                             <a href="">
                                                 <img style="max-width: 12px;height: auto;" class="svg-img" src="/icons-svg/clasificar.svg" alt="Descripción de la imagen">
                                             </a>
                                         </div>
-                                    </th> -->
-                                    <th scope="col" class="px-6 py-4">
+                                    </th>
+                                    <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
-                                            Mensaje
+                                            Acción realizada
                                             <a href="">
                                                 <img style="max-width: 12px;height: auto;" class="svg-img" src="/icons-svg/clasificar.svg" alt="Descripción de la imagen">
                                             </a>
@@ -146,25 +147,25 @@
                                         </a>
 
                                     </td> -->
-                                    <td class="border px-6 py-4">
+                                    <td class="border px-4 py-1.5">
                                         {{ formatDateTime(subscriber.created_at) }}
                                     </td>
-                                    <td class="border px-6 py-4">
+                                    <td class="border px-4 py-1.5">
                                         {{ subscriber.full_name }}
                                     </td>
-                                    <td class="border px-6 py-4">
+                                    <td class="border px-4 py-1.5">
                                         {{ subscriber.email }}
                                     </td>
-                                    <td class="border px-6 py-4">
+                                    <td class="border px-4 py-1.5">
                                         {{ subscriber.phone }}
                                     </td>
-                                    <td class="border px-6 py-4 relative group">
+                                    <td class="border px-4 py-1.5 relative group">
                                         <span class="cursor-help"><b>Curso/Tema</b></span>
                                         <div class="absolute z-10 invisible group-hover:visible bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap">
                                             {{ subscriber.subject }}
                                         </div>
                                     </td>
-                                    <td class="border px-6 py-4">
+                                    <td class="border px-4 py-1.5">
                                         {{ subscriber.message }}
                                     </td>
                                 </tr>

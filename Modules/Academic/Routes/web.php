@@ -271,6 +271,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('subscriptions/free/user', [AcaStudentController::class, 'startStudentFree'])
         ->name('aca_subscriptions_free_user');
 
+    Route::post('subscriptions/student/expired/expiring', [AcaStudentController::class, 'getSubscriptionStatuses'])
+        ->name('aca_subscriptions_expired_expiring');
+
+    //////////////fin de suscripciones
+
     Route::get('certificate/list', [AcaCertificateController::class, 'index'])
         ->name('aca_certificate_list');
 
@@ -422,6 +427,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->name('aca_export_status');
 
 
+    Route::middleware(['middleware' => 'permission:aca_reportes_estado_susc_estudiantes'])
+        ->get('reports/student/subscriptions/expired',[AcaReportsController::class, 'expiredSubscriptions'])
+        ->name('aca_subscriptions_expired_student');
 });
 
 /////////no nesesita aver iniciado session//////////

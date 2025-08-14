@@ -39,4 +39,9 @@ class AcaStudentSubscription extends Model
     {
         return $this->belongsTo(AcaSubscriptionType::class, 'subscription_id');
     }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(AcaStudent::class, 'student_id', 'id');
+    }
 }
