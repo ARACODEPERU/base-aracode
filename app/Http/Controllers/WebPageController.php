@@ -408,6 +408,21 @@ class WebPageController extends Controller
     }
 
     public function pagar_auth(Request $request){ //pago cuando es usuario autenticado
+
+        $personInvoice = $request->only([
+            'names',
+            'ruc',
+            'dni',
+            'nombreCompleto',
+            'document_type',
+            'razonSocial',
+            'email',
+            'statusRuc',
+            'conditionRuc'
+        ]);
+
+        // Convertir a JSON
+        $personInvoice = json_encode($personInvoice);
         $productids = $request->get('item_id');
         $person = Person::where('id', Auth::user()->person_id)->first();
         $comprador_nombre = $person->full_name;
@@ -500,12 +515,28 @@ class WebPageController extends Controller
             'products' => $products,
             'total' => $total,
             'sale_id' => $sale->id,
-            'student_id' => $student->id
+            'student_id' => $student->id,
+            'personInvoice' => $personInvoice,
         ]);
     }
 
     public function pagar(Request $request)
     {
+        $personInvoice = $request->only([
+            'names',
+            'ruc',
+            'dni',
+            'nombreCompleto',
+            'document_type',
+            'razonSocial',
+            'email',
+            'statusRuc',
+            'conditionRuc'
+        ]);
+
+        // Convertir a JSON
+        $personInvoice = json_encode($personInvoice);
+
         $validator = Validator::make($request->all(), [
             'names' => 'required|string|max:255',
             'app' => 'required|string|max:255',
@@ -666,7 +697,8 @@ class WebPageController extends Controller
             'products' => $products,
             'total' => $total,
             'sale_id' => $sale->id,
-            'student_id' => $student->id
+            'student_id' => $student->id,
+            'personInvoice' => $personInvoice,
         ]);
     }
 
