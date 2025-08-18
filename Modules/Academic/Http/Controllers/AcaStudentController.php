@@ -493,6 +493,7 @@ class AcaStudentController extends Controller
         $allCourses = AcaCourse::with('modules.themes.contents')
                 ->with('modality')
                 ->with('teacher.person')
+                ->orderBy('description')
                 ->get();
 
         // 4. Procesar cada curso para determinar 'can_view'
