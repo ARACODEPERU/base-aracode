@@ -501,7 +501,12 @@ class AcaStudentController extends Controller
 
             // Condición 4: Si el tipo es 'Programas de especialización', NUNCA se puede ver (a menos que haya una lógica de compra/pago específica no indicada)
             if ($course->type_description === 'Programas de especialización') {
-                $canView = false;
+                if (in_array($course->id, $registeredCourseIds)) {
+                    $canView = true;
+                } else {
+                    $canView = false;
+                }
+
             }
             // Condición 3: Suscripción activa (siempre puede ver, excepto los de especialización)
             elseif ($hasActiveSubscription) {
@@ -537,7 +542,15 @@ class AcaStudentController extends Controller
 
         // Condición 4: Si el tipo es 'Programas de especialización', NO pasa (a menos que haya lógica de compra/pago específica)
         if ($course->type_description === 'Programas de especialización') {
-            return false;
+
+            $isRegistered = AcaCapRegistration::where('student_id', $studentId)
+                                          ->where('course_id', $courseId)
+                                          ->exists();
+            if ($isRegistered) {
+                return true;
+            }else{
+                 return false;
+            }
         }
 
         // Condición 3: Si el estudiante tiene una suscripción activa, pasa

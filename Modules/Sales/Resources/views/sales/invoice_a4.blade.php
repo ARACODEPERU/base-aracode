@@ -853,6 +853,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
 </head>
 @php
+
     $company = \App\Models\Company::first();
     $logo = '';
     if ($company->logo_document == '/img/logo176x32.png') {
@@ -1163,20 +1164,22 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
                 @php
                     $hasAnyPaymentsToShow = false;
+                    if($documentCredito){
 
-                    if($documentCredito->document->single_payment){
-                        foreach($documentCredito->document->quotas as $key => $quota){
-                            if(count($quota->payments) > 0){
+                        if($documentCredito->document->single_payment){
+                            foreach($documentCredito->document->quotas as $key => $quota){
+                                if(count($quota->payments) > 0){
+                                    $hasAnyPaymentsToShow = true;
+                                }
+                            }
+                            if($documentCredito->payments){
                                 $hasAnyPaymentsToShow = true;
                             }
-                        }
-                        if($documentCredito->payments){
-                            $hasAnyPaymentsToShow = true;
-                        }
-                    } else {
-                        foreach($documentCredito->document->quotas as $key => $quota){
-                            if(count($quota->payments) > 0){
-                                $hasAnyPaymentsToShow = true;
+                        } else {
+                            foreach($documentCredito->document->quotas as $key => $quota){
+                                if(count($quota->payments) > 0){
+                                    $hasAnyPaymentsToShow = true;
+                                }
                             }
                         }
                     }

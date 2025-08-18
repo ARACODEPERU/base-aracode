@@ -138,7 +138,6 @@
             </li>
         </ul>
         <div class="pt-5">
-
             <div class="grid gap-6 grid-cols-6">
                 <section class="col-span-6 sm:col-span-4">
                     <!-- justify pills -->
