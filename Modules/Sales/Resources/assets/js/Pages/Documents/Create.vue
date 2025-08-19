@@ -335,7 +335,7 @@
                 formDocument.additional_description = null;
                 getSeriesByDocumentType();
                 formDocument.processing =  false;
-                formDocument.forma_pago = 'Contado;'
+                formDocument.forma_pago = 'Contado'
                 Swal2.fire({
                     title: 'Comprobante '+ res.data.invoice_serie +'-'+ res.data.invoice_correlative+ ' creado con éxito',
                     text: "¿deseas enviar a sunat y/o Imprimir?",
