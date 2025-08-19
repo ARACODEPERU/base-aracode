@@ -19,5 +19,12 @@ class ParametersTableSeeder extends Seeder
             'json_query_data'   => null,
             'value_default'     => 'false'
         ]);
+        Parameter::create([
+            'parameter_code'    => 'P000019',
+            'description'       => 'Activar reproductor de videos cortos en la vista del estudiante',
+            'control_type'      => 'chx',
+            'json_query_data'   => null,
+            'value_default'     => 'true'
+        ]);
     }
 }

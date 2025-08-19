@@ -33,6 +33,10 @@
         courseTypes: {
             type: Object,
             default: () => ({}),
+        },
+        P000019: {
+            type: Boolean,
+            default: null
         }
     });
 
@@ -138,8 +142,10 @@
             </li>
         </ul>
         <div class="pt-5">
-            <div class="grid gap-6 grid-cols-6">
-                <section class="col-span-6 sm:col-span-4">
+            <div class="grid gap-6"
+                :class="P000019 == true ? 'grid-cols-6' : ''"
+            >
+                <section :class="P000019 == true ? 'col-span-6 sm:col-span-4' : 'w-full'">
                     <!-- justify pills -->
                     <div class="w-[40%] mb-6">
                         <select class="form-select px-4 py-3 text-base">
@@ -149,8 +155,7 @@
                             </template>
                         </select>
                     </div>
-
-                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6 lg:gap-4">
                         <template v-for="(course, index) in coursesData">
                             <article class="rounded-xl bg-white p-3 shadow-lg hover:shadow-xl hover:transform hover:scale-105 duration-300 dark:bg-gray-900">
                                 <template v-if="course.can_view">
@@ -219,7 +224,7 @@
                         </template>
                     </div>
                 </section>
-                <section class="col-span-6 sm:col-span-2 rounded-md">
+                <section v-if="P000019" class="col-span-6 sm:col-span-2 rounded-md">
                     <shortVideos />
                 </section>
             </div>

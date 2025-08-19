@@ -38,6 +38,7 @@ class AcaStudentController extends Controller
     private $igv;
     private $top;
     private $icbper;
+    private $displayVideo = false;
 
     /**
      * Display a listing of the resource.
@@ -50,6 +51,11 @@ class AcaStudentController extends Controller
         $this->igv = Parameter::where('parameter_code', 'P000001')->value('value_default');
         $this->top = Parameter::where('parameter_code', 'P000002')->value('value_default');
         $this->icbper = Parameter::where('parameter_code', 'P000004')->value('value_default');
+        $parameterValue = Parameter::where('parameter_code', 'P000019')->value('value_default');
+        if($parameterValue){
+            $this->displayVideo = ($parameterValue === 'true');
+        }
+
     }
 
     public function index()
@@ -424,7 +430,7 @@ class AcaStudentController extends Controller
 
         // También puedes verificar múltiples roles a la vez
         if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
-            $courses = AcaCourse::with('modules.themes.contents')
+            $mycourses = AcaCourse::with('modules.themes.contents')
                 ->with('teacher.person')->where('status', true)
                 ->with('category')
                 ->with('modality')
@@ -434,43 +440,45 @@ class AcaStudentController extends Controller
                     $course->can_view = true; // Campo adicional
                     return $course;
                 });
+
+
         } else {
             $mycourses = $this->getAllCoursesWithAccessStatus();
-
-            // Agrupar cursos
-            $grouped = [];
-
-            foreach ($mycourses as $course) {
-                if (empty($course->price) || $course->price == 0) {
-                    $grouped['Cursos gratis'][] = $course;
-                } else {
-                    $grouped[$course->type_description][] = $course;
-                }
-            }
-
-            // Ordenar alfabéticamente por clave del grupo
-            ksort($grouped);
-
-            // Transformar al formato deseado
-            $courses = collect($grouped)->map(function ($items, $type_description) {
-                return [
-                    'type_description' => $type_description,
-                    'courses' => $items,
-                ];
-            })->values(); // values() para que los índices sean numéricos
-            //dd($courses);
         }
+        // Agrupar cursos
+        $grouped = [];
+
+        foreach ($mycourses as $course) {
+            if (empty($course->price) || $course->price == 0) {
+                $grouped['Cursos gratis'][] = $course;
+            } else {
+                $grouped[$course->type_description][] = $course;
+            }
+        }
+
+        // Ordenar alfabéticamente por clave del grupo
+        ksort($grouped);
+
+        // Transformar al formato deseado
+        $courses = collect($grouped)->map(function ($items, $type_description) {
+            return [
+                'type_description' => $type_description,
+                'courses' => $items,
+            ];
+        })->values(); // values() para que los índices sean numéricos
+        //dd($courses);
 
         $certificates = AcaCertificate::with('course')
             ->where('student_id', $student_id)
             ->get();
 
-
+        //dd($this->displayVideo);
         return Inertia::render('Academic::Students/Courses', [
             'mycourses' => $mycourses,
             'courses' => $courses,
             'studentSubscribed' => $studentSubscribed,
-            'certificates' => $certificates
+            'certificates' => $certificates,
+            'P000019' => $this->displayVideo
         ]);
     }
 
