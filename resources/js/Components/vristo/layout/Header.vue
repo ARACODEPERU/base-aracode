@@ -34,10 +34,11 @@
     import IconMenuForms from '@/Components/vristo/icon/menu/icon-menu-forms.vue';
     import IconMenuPages from '@/Components/vristo/icon/menu/icon-menu-pages.vue';
     import IconMenuMore from '@/Components/vristo/icon/menu/icon-menu-more.vue';
-    import { faCartPlus, faUserGroup } from  '@fortawesome/free-solid-svg-icons';
+    import { faCartPlus, faUserGroup, faChartPie } from  '@fortawesome/free-solid-svg-icons';
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
     import menuData from './MenuData.js'
+
 
     const userData = usePage().props.auth.user;
 
@@ -209,23 +210,37 @@
                                 <icon-calendar />
                             </Link>
                         </li>
-                        <!-- <li >
+                        <li>
                             <Link v-can="'empresa'"
                                 :href="route('company_show')"
                                 class="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
+                                v-tippy="{ content: 'Mi empresa', placement: 'bottom'}"
                             >
                                 <icon-edit />
                             </Link>
-                        </li> -->
+                        </li>
                         <li v-can="'punto_ventas'">
                             <Link
-                                v-tippy:bottom
                                 :href="route('sales.create')"
                                 class="block p-2 rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
+                                v-tippy="{ content: 'Crear nota de venta', placement: 'bottom'}"
                             >
                                 <font-awesome-icon :icon="faCartPlus" class="w-5" />
                             </Link>
-                            <tippy target="bottom" placement="bottom">Vender por notas de ventas</tippy>
+                        </li>
+                        <li v-can="'onli_dashboard'">
+                            <Link
+                                :href="route('onlineshop_dashboard')"
+                                class="block p-2 relative rounded-full bg-white-light/40 dark:bg-dark/40 hover:text-primary hover:bg-white-light/90 dark:hover:bg-dark/60"
+                                v-tippy="{ content: 'Dashboard ventas en linea', placement: 'bottom'}"
+                            >
+
+                                <font-awesome-icon :icon="faChartPie" class="w-5" />
+                                <span class="flex absolute size-3 ltr:right-0 rtl:left-0 top-0">
+                                    <span class="animate-ping absolute ltr:-left-[0px] rtl:-right-[0px] -top-[0px] inline-flex size-full rounded-full bg-red-400 opacity-75 dark:bg-red-600"></span>
+                                    <span class="relative inline-flex rounded-full size-3 bg-red-500"></span>
+                                </span>
+                            </Link>
                         </li>
                     </ul>
                 </div>

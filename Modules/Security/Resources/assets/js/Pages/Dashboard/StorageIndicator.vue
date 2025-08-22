@@ -77,43 +77,43 @@
                 },
             ],
             plotOptions: {
-            pie: {
-                donut: {
-                    size: '65%',
-                    background: 'transparent',
-                    labels: {
-                        show: true,
-                        name: {
+                pie: {
+                    donut: {
+                        size: '65%',
+                        background: 'transparent',
+                        labels: {
                             show: true,
-                            fontSize: '29px',
-                            offsetY: -10,
-                        },
-                        value: {
-                            show: true,
-                            fontSize: '26px',
-                            color: undefined,
-                            offsetY: 16,
-                            formatter: (val) => {
-                                return val;
+                            name: {
+                                show: true,
+                                fontSize: '29px',
+                                offsetY: -10,
                             },
-                        },
-                        total: {
-                            show: true,
-                            label: 'Total',
-                            color: '#888ea8',
-                            fontSize: '29px',
-                            formatter: (w) => {
-                                return w.globals.seriesTotals.reduce(function (a, b) {
-                                    return a + b;
-                                }, 0).toFixed(2);
+                            value: {
+                                show: true,
+                                fontSize: '26px',
+                                color: undefined,
+                                offsetY: 16,
+                                formatter: (val) => {
+                                    return val;
+                                },
+                            },
+                            total: {
+                                show: true,
+                                label: 'Total',
+                                color: '#888ea8',
+                                fontSize: '29px',
+                                formatter: (w) => {
+                                    return w.globals.seriesTotals.reduce(function (a, b) {
+                                        return a + b;
+                                    }, 0).toFixed(2);
+                                },
                             },
                         },
                     },
                 },
             },
-        },
             legend: {
-            position: 'top',
+                position: 'top',
             },
         };
     });

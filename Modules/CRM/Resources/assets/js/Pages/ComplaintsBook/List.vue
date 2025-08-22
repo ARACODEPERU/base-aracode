@@ -28,6 +28,10 @@
         priorities: {
             type: Object,
             default: () => ({})
+        },
+        meansCommunication: {
+            type: Array,
+            default: () => ([])
         }
     });
 
@@ -46,7 +50,8 @@
         priority: 'Baja',
         description: null,
         response: null,
-        attached_file: null
+        attached_file: null,
+        means_communication: null
     });
 
     const openModalDetailsBook = (item) => {
@@ -79,7 +84,9 @@
 
     const saveAttention = () => {
         formAttend.post(route('complaints_book_attention_store'), {
+            forceFormData: true,
             preserveScroll: true,
+            errorBag: "saveAttention",
             onSuccess: () => {
                 Swal2.fire({
                     icon: 'success',
@@ -132,6 +139,12 @@
 
     const removeTableItem = (index) => {
         bookDetails.value.attentions.splice(index, 1);
+    }
+
+    const xasset = assetUrl;
+
+    const getPathFile = (path) => {
+        return xasset + 'storage/'+ path;
     }
 </script>
 <template>
@@ -215,7 +228,7 @@
                 </div>
             </div>
         </div>
-        <ModalLarge :show="displayModalDetailsBook" :onClose="closeModalDetailsBook" :icon="'/img/lupa-documento.png'">
+        <ModalLargeX :show="displayModalDetailsBook" :onClose="closeModalDetailsBook" :icon="'/img/lupa-documento.png'">
             <template #title>
                 NUM. FOLIO: {{ bookDetails.composite_code }}
             </template>
@@ -223,35 +236,35 @@
                 {{ bookDetails.names }}
             </template>
             <template #content>
-                <div class="space-y-3 m-auto w-full">
+                <div class="space-y-3 m-auto w-3/5">
                     <div class="flex sm:flex-row flex-col">
-                        <label for="cbxSer" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Tipo de bien contratado</label>
+                        <label for="cbxSer" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Tipo de bien contratado</label>
                         <select v-model="bookDetails.type_service" id="cbxSer" disabled class="form-select flex-1">
                             <option value="product">Producto </option>
                             <option value="service">Servicio</option>
                         </select>
                     </div>
                     <div class="flex sm:flex-row flex-col">
-                        <label for="txtdesc" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Descripción del producto o servicio</label>
+                        <label for="txtdesc" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Descripción del producto o servicio</label>
                         <textarea v-model="bookDetails.description_service" id="txtdesc" disabled class="form-textarea flex-1"></textarea>
                     </div>
                     <div class="flex sm:flex-row flex-col">
-                        <label for="cbxTipoQueja" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Tipo de reclamación</label>
+                        <label for="cbxTipoQueja" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Tipo de reclamación</label>
                         <select v-model="bookDetails.type_claim" id="cbxTipoQueja" disabled class="form-select flex-1">
                             <option value="queja">Queja </option>
                             <option value="reclamo">Reclamo</option>
                         </select>
                     </div>
                     <div class="flex sm:flex-row flex-col">
-                        <label for="txtreclamo" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Reclamación</label>
+                        <label for="txtreclamo" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Reclamación</label>
                         <textarea v-model="bookDetails.claim" id="txtreclamo" disabled class="form-textarea flex-1"></textarea>
                     </div>
                     <div class="flex sm:flex-row flex-col">
-                        <label for="txtpedido" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Pedido</label>
+                        <label for="txtpedido" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Pedido</label>
                         <textarea v-model="bookDetails.called" id="txtpedido" disabled class="form-textarea flex-1"></textarea>
                     </div>
                     <div class="flex sm:flex-row flex-col">
-                        <label for="cbxMoneda" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Monto reclamado (moneda)</label>
+                        <label for="cbxMoneda" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Monto reclamado (moneda)</label>
                         <select v-model="bookDetails.currency" id="cbxMoneda" disabled class="form-select flex-1">
                             <template v-for="moneda in monedas">
                                 <option :value="moneda.id">{{ moneda.description }} ({{ moneda.symbol }})</option>
@@ -259,8 +272,8 @@
                         </select>
                     </div>
                     <div class="flex sm:flex-row flex-col">
-                        <label for="txtmonto" class="mb-0 sm:w-1/4 sm:ltr:mr-2 rtl:ml-2">Monto reclamado (valor)</label>
-                        <input v-model="bookDetails.amount" id="txtmonto" type="number"  class="form-input flex-1" />
+                        <label for="txtmonto" class="mb-0 sm:w-2/5 sm:ltr:mr-2 rtl:ml-2">Monto reclamado (valor)</label>
+                        <input v-model="bookDetails.amount" id="txtmonto" type="number" disabled class="form-input flex-1" />
                     </div>
                 </div>
                 <div class="mt-6" v-if="bookDetails.attentions && bookDetails.attentions.length > 0">
@@ -268,8 +281,10 @@
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th>Archivo</th>
                                     <th>Inicio</th>
                                     <th>Termino</th>
+                                    <th>Medio de comunicación</th>
                                     <th colspan="2" class="text-center">Detalles</th>
                                     <th>Prioridad</th>
                                     <th></th>
@@ -278,8 +293,25 @@
                             <tbody>
                                 <template v-for="(attention, index) in bookDetails.attentions" :key="attention.id">
                                     <tr>
+                                        <td class="text-center">
+                                            <a v-if="attention.attached_file"
+                                                :href="getPathFile(attention.attached_file)"
+                                                target="_blank"
+                                                v-tippy="{content: 'Descargar archivo',placement: 'bottom'}"
+                                            >
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                    <path fill="currentColor" d="M352 96C352 78.3 337.7 64 320 64C302.3 64 288 78.3 288 96L288 306.7L246.6 265.3C234.1 252.8 213.8 252.8 201.3 265.3C188.8 277.8 188.8 298.1 201.3 310.6L297.3 406.6C309.8 419.1 330.1 419.1 342.6 406.6L438.6 310.6C451.1 298.1 451.1 277.8 438.6 265.3C426.1 252.8 405.8 252.8 393.3 265.3L352 306.7L352 96zM160 384C124.7 384 96 412.7 96 448L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 448C544 412.7 515.3 384 480 384L433.1 384L376.5 440.6C345.3 471.8 294.6 471.8 263.4 440.6L206.9 384L160 384zM464 440C477.3 440 488 450.7 488 464C488 477.3 477.3 488 464 488C450.7 488 440 477.3 440 464C440 450.7 450.7 440 464 440z"/>
+                                                </svg>
+                                            </a>
+                                            <a v-else>
+                                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                    <path fill="currentColor" d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"/>
+                                                </svg>
+                                            </a>
+                                        </td>
                                         <td class="whitespace-nowrap">{{ attention.date_start }}</td>
                                         <td>{{ attention.date_end }}</td>
+                                        <td>{{ attention.means_communication }}</td>
                                         <td>
                                             <Popper :placement="'auto'" :zIndex="1000" offsetDistance="8">
                                                 <p class="flex items-center text-sm text-gray-500 dark:text-gray-400 cursor-pointer">Acciones realizadas</p>
@@ -336,7 +368,7 @@
                     Atender
                 </button>
             </template>
-        </ModalLarge>
+        </ModalLargeX>
         <ModalLargeX :show="displayModalAtender" :onClose="closeModalAtender" :icon="'/img/icons8-soporte-en-línea-48.png'">
             <template #title>
                 NUM. FOLIO: {{ bookDetails.composite_code }}
@@ -346,7 +378,7 @@
             </template>
             <template #content>
                 <form class="space-y-5">
-                    <div class="grid grid-cols-1 sm:grid-cols-6 gap-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-6 gap-4">
                         <div>
                             <label for="cbxStatus">Estado</label>
                             <select v-model="formAttend.status" id="cbxStatus" class="form-select">
@@ -361,7 +393,7 @@
                             </select>
                             <InputError :message="formAttend.errors.status" class="mt-2" />
                         </div>
-                        <div class="sm:col-span-2">
+                        <div>
                             <label for="fechainicio">Fecha atención</label>
                             <flat-pickr
                                 v-model="formAttend.date_start"
@@ -371,7 +403,7 @@
                             />
                             <InputError :message="formAttend.errors.date_start" class="mt-2" />
                         </div>
-                        <div class="sm:col-span-2">
+                        <div>
                             <label for="fechaentrega">Fecha resuelto</label>
                             <flat-pickr
                                 v-model="formAttend.date_end"
@@ -390,6 +422,15 @@
                             </select>
                             <InputError :message="formAttend.errors.priority" class="mt-2" />
                         </div>
+                        <div class="lg:col-span-2">
+                            <label for="cbxMedio">Medio de comunicación</label>
+                            <select v-model="formAttend.means_communication" id="cbxMedio" class="form-select">
+                                <template v-for="priority in meansCommunication">
+                                    <option :value="priority">{{ priority }}</option>
+                                </template>
+                            </select>
+                            <InputError :message="formAttend.errors.priority" class="mt-2" />
+                        </div>
                         <div class="sm:col-span-3">
                             <label for="txtdecription">Descripción de acciones realizadas</label>
                             <textarea v-model="formAttend.description" class="form-textarea" id="txtdecription" rows="8"></textarea>
@@ -398,6 +439,20 @@
                         <div class="sm:col-span-3">
                             <label for="txtresponse">Respuesta del consumidor</label>
                             <textarea v-model="formAttend.response" class="form-textarea" id="txtresponse" rows="8"></textarea>
+                            <InputError :message="formAttend.errors.response" class="mt-2" />
+                        </div>
+                        <div class="lg:col-span-6">
+                            <label for="txtresponse">Adjuntar Archivo</label>
+                            <div>
+                                <label for="small-file-input" class="sr-only">Choose file</label>
+                                <input type="file" name="small-file-input" id="small-file-input" class="block w-full border border-gray-200 shadow-sm rounded-lg text-sm focus:z-10 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400
+                                file:bg-gray-50 file:border-0
+                                file:me-4
+                                file:py-2 file:px-4
+                                dark:file:bg-neutral-700 dark:file:text-neutral-400"
+                                @input="formAttend.attached_file = $event.target.files[0]"
+                            >
+                            </div>
                             <InputError :message="formAttend.errors.response" class="mt-2" />
                         </div>
                     </div>

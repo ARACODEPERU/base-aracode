@@ -54,7 +54,7 @@ const menuCRM = {
             route: route("complaints_book_list"),
             status: false,
             text: "Libro de Reclamaciones",
-            permissions: "crm_dudas_comunes",
+            permissions: "crm_libro_reclamos",
             icom: faBookBookmark,
         },
     ],

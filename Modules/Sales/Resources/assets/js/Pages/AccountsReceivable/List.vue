@@ -143,6 +143,7 @@
 
 
     const openModalQuotas = (document) => {
+        //plan.value = [];
         plan.value = document;
         displayModalQuotas.value = true;
     }
@@ -162,8 +163,9 @@
 
 
     const openAddAbonos = (quota) => {
-
-        abonos.payments = quota.payments.length > 0 ? quota.payments : [];
+        console.log(quota)
+        console.log('pagos echos', quota.payments)
+        abonos.payments = quota.payments && quota.payments.length > 0 ? quota.payments : [];
         abonos.quota_id = quota.id;
 
         if(abonos.payments.length == 0){
@@ -539,17 +541,6 @@
                             Pendiente
                         </span>
                     </template>
-                    <template #overdue_fee="props">
-                        <span v-if="props.rowData.document.overdue_fee && !props.rowData.document.status_pay" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded uppercase text-xs font-medium bg-red-500 text-white">
-                            Vencido
-                        </span>
-                        <span v-else-if="!props.rowData.document.overdue_fee && props.rowData.total == props.rowData.advancement" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded uppercase text-xs font-medium bg-info text-white">
-                            Pagado
-                        </span>
-                        <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded uppercase text-xs font-medium bg-success text-white">
-                            Atiempo
-                        </span>
-                    </template>
                 </DataTable>
             </div>
         </div>
@@ -591,7 +582,7 @@
                                     </thead>
                                     <tbody class="divide-y divide-gray-200 dark:divide-neutral-700">
                                         <template v-for="(pago, key) in plan.document.quotas">
-                                            <tr :class="displayAbonar == pago.id ? 'bg-[#fbf1e2]' : ''">
+                                            <tr :class="displayAbonar == pago.id ? 'bg-[#F7E1E5]' : ''">
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-800 dark:text-neutral-200">
                                                     {{ pago.quota_number }}
                                                 </td>
@@ -624,7 +615,7 @@
                                                         class="inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-transparent text-blue-600 hover:text-blue-800 focus:outline-hidden focus:text-blue-800 disabled:opacity-50 disabled:pointer-events-none dark:text-blue-500 dark:hover:text-blue-400 dark:focus:text-blue-400"
                                                         :disabled="isAbonarDisabled(key, pago)"
                                                     >
-                                                        {{ pago.balance > 0 ? 'Abonar' : displayAbonar == pago.id ? 'Ocultar' :'Ver pagos' }}
+                                                        {{ pago.balance > 0 && displayAbonar != pago.id ? 'Abonar' : displayAbonar == pago.id ? 'Ocultar' : 'Ver pagos' }}
                                                     </button>
                                                 </td>
                                             </tr>

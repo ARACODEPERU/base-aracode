@@ -15,6 +15,7 @@ class ComplaintsBookAttention extends Model
         'priority',
         'internal_management_notes',
         'consumer_response',
-        'attached_file'
+        'attached_file',
+        'means_communication'
     ];
 }

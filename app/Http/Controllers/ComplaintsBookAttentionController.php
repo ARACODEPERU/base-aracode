@@ -8,21 +8,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ComplaintsBookAttentionController extends Controller
 {
     public function store(Request $request){
+
         $this->validate($request, [
             'status' => 'required|string|max:2',
             'date_start' => 'required',
             'date_end' => 'required',
             'priority' => 'required',
             'description' => 'required',
-            'response' => 'required'
+            'response' => 'required',
+            'means_communication' => 'required'
         ]);
 
         try {
             DB::transaction(function () use ($request) {
+                $file = $request->file('attached_file');
+
                 $attention = ComplaintsBookAttention::create([
                     'complaints_book_id' => $request->get('book_id'),
                     'user_id' => Auth::id(),
@@ -33,6 +38,19 @@ class ComplaintsBookAttentionController extends Controller
                     'internal_management_notes' => $request->get('description'),
                     'consumer_response' => $request->get('response'),
                 ]);
+
+                if($file){
+                    $destination = 'uploads' . DIRECTORY_SEPARATOR . 'complaintsbookattentions'.DIRECTORY_SEPARATOR . $attention->id;
+                    $original_name = strtolower(trim($file->getClientOriginalName()));
+                    $original_name = str_replace(" ", "_", $original_name);
+                    $extension = $file->getClientOriginalExtension();
+                    $file_name = time() . rand(100, 999) . '.' . $extension;
+                    $path_attached_file = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+
+                    $attention->attached_file = $path_attached_file;
+                    $attention->save();
+                }
+
 
                 ComplaintsBook::find($attention->complaints_book_id)
                 ->update([

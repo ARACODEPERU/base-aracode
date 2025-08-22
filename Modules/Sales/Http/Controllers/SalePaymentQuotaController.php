@@ -43,7 +43,6 @@ class SalePaymentQuotaController extends Controller
         try {
             DB::beginTransaction();
 
-
             $quota = SaleDocumentQuota::findOrFail($request->get('sale_document_quota_id'));
             $paymentData = null;
 
@@ -65,8 +64,7 @@ class SalePaymentQuotaController extends Controller
 
             if ($quota->balance <= 0) {
                 $quota->status = 'Pagado';
-                $saleDocument->status_pay = true;
-                $saleDocument->save();
+
                 $quota->balance = 0;
                 Log::info("Cuota ID {$quota->id} marcada como 'Pagada'.");
             } elseif ($quota->balance < $quota->amount) {
@@ -82,9 +80,14 @@ class SalePaymentQuotaController extends Controller
 
             $paymentData = $newPayment;
 
-
+            if($sale->advancement == $sale->total){
+                $saleDocument->status_pay = true;
+                $saleDocument->save();
+            }
 
             DB::commit();
+
+            $quota->load('payments');
 
             return response()->json([
                 'success' => true,

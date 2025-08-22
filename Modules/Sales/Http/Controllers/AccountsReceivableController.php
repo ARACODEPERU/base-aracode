@@ -50,7 +50,7 @@ class AccountsReceivableController extends Controller
                 if ($document) { // Asegúrate de que el documento exista
                     if ($document->overdue_fee && !$document->status_pay) {
                         return 'Vencido';
-                    } elseif (!$document->overdue_fee && $document->total == $document->advancement) {
+                    } elseif (!$document->overdue_fee && $sale->total == $sale->advancement) {
                         return 'Pagado';
                     } else {
                         return 'Atiempo';
