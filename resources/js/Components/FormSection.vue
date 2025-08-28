@@ -25,7 +25,7 @@
             <form @submit.prevent="$emit('submitted')">
                 <div class="">
                     <div class="p-6">
-                        <div class="grid grid-cols-6 gap-6 ">
+                        <div class="grid sm:grid-cols-4 lg:grid-cols-6 gap-6 ">
                             <slot name="form" />
                         </div>
                     </div>

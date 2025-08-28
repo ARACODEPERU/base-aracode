@@ -1,0 +1,11 @@
+{
+    "name": "Churchcommunity",
+    "alias": "churchcommunity",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Churchcommunity\\Providers\\ChurchcommunityServiceProvider"
+    ],
+    "files": []
+}

@@ -14,6 +14,7 @@ import menuHelpdesk from 'Modules/Helpdesk/Resources/assets/js/Menu.js';
 import menuHealth from 'Modules/Health/Resources/assets/js/Menu.js';
 import menuCRM from 'Modules/CRM/Resources/assets/js/Menu.js';
 import menuOnlineshop from 'Modules/Onlineshop/Resources/assets/js/Menu.js';
+import menuCiglesia from 'Modules/Churchcommunity/Resources/assets/js/Menu.js'
 
 const MenuData = ref([
     {
@@ -24,17 +25,18 @@ const MenuData = ref([
         permissions: 'dashboard',
     },
     menuConfig,
-    menuPurchases,
-    menuSales[0],
-    menuSales[1],
-    menuSales[2],
+    //menuPurchases,
+    // menuSales[0],
+    // menuSales[1],
+    // menuSales[2],
     menuOnlineshop,
     // menuHelpdesk,
     menuCMS,
-    menuHealth,
+    //menuHealth,
     menuAcademic,
     // menuRestaurant,
-    // menuSocialevents,
-    menuCRM
+    menuSocialevents,
+    // menuCRM,
+    menuCiglesia
 ]);
 export default MenuData;

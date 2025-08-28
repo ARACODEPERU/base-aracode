@@ -893,7 +893,7 @@
                             <p style="font-size: 14px;" class="italic font-bold uppercase mb-4">Medio de Pago <button @click="addPayment()" type="button" class="inline-block px-0 py-2 bg-transparent text-blue-600 font-medium text-xs leading-tight uppercase rounded transition duration-150 ease-in-out">Agregar (+)</button></p>
                             <div class="flex sm:flex-row flex-col items-center">
                                 <label  class="mb-0 sm:w-3/5 sm:ltr:mr-2 rtl:ml-2 text-right uppercase">Forma de pago</label>
-                                <select @change="openModalQuotas" v-model="formDocument.forma_pago" class="form-select form-select-sm text-white-dark flex-1">
+                                <select @change="openModalQuotas" v-model="formDocument.forma_pago" class="form-select form-select-sm flex-1">
                                     <option value="Contado">Al contado</option>
                                     <option value="Credito">Al crédito</option>
                                 </select>

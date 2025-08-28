@@ -23,6 +23,7 @@ export default defineConfig({
         alias: {
             'Modules': path.resolve(__dirname, './Modules'),
             '@Public': path.resolve(__dirname, './public'),
+            '@stores': path.resolve(__dirname, './resources/js/stores'),
         },
     },
     build: {

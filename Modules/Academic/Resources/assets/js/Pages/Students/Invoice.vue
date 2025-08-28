@@ -1137,7 +1137,7 @@
                 <div class="panel mb-5">
                     <h4 class="font-bold uppercase mb-4">Forma de pago</h4>
                     <div>
-                        <select @change="openModalQuotas" v-model="form.forma_pago" class="form-select text-white-dark">
+                        <select @change="openModalQuotas" v-model="form.forma_pago" class="form-select">
                             <option value="Contado">Al contado</option>
                             <option value="Credito">Al crédito</option>
                         </select>

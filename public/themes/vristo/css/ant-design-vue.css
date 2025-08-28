@@ -123,3 +123,17 @@
     color: #dcdde6 !important;
 }
 
+.ant-select-selector {
+    height: 38px !important;
+}
+.ant-cascader-menu {
+    padding-right: 26px !important;
+}
+.ant-cascader-menu-item {
+    width: 100% !important;
+}
+.ant-cascader-menu-item-content {
+    width: 100% !important;
+    padding-right: 10px !important;
+}
+
