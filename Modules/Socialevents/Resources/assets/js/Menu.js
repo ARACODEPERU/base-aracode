@@ -4,7 +4,7 @@ const menuSocialevents = {
     status: false,
     text: "Eventos",
     icom: faMasksTheater,
-    route: null,
+    route: 'module',
     permissions: "even_dashboard",
     items: [
         {
