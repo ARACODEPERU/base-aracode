@@ -20,24 +20,29 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
-        $company = Company::first(); // O cualquier otro método para obtener el modelo
-        $socialNetworksJson = $company->social_networks;
+        $socialNetworks=null;
+        try {
+            $company = Company::first(); // O cualquier otro método para obtener el modelo
+            $socialNetworksJson = $company->social_networks;
 
-        // Decodificar la cadena JSON a un array de PHP
-        $socialNetworks = json_decode($socialNetworksJson, true);
+            // Decodificar la cadena JSON a un array de PHP
+            $socialNetworks = json_decode($socialNetworksJson, true);
 
-        // Verificar que la decodificación fue exitosa y es un array
-        if (is_array($socialNetworks)) {
-            $socialLinks = [];
-            foreach ($socialNetworks as $network) {
-                if (isset($network['id']) && isset($network['route'])) {
-                    $socialLinks[] = [
-                        'name' => $network['id'],
-                        'url' => $network['route'],
-                    ];
+            // Verificar que la decodificación fue exitosa y es un array
+            if (is_array($socialNetworks)) {
+                $socialLinks = [];
+                foreach ($socialNetworks as $network) {
+                    if (isset($network['id']) && isset($network['route'])) {
+                        $socialLinks[] = [
+                            'name' => $network['id'],
+                            'url' => $network['route'],
+                        ];
+                    }
                 }
             }
+        } catch (\Throwable $th) {
         }
+
 
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
