@@ -106,7 +106,7 @@
         <hr>
         @if ($course != "")
         <div class="card group p-5"><p class="">
-            {!! $certificate->curriculum_plan !!}
+            {!! $certificate->curriculum_plan ?? 'No existe Registro, Verifica el curso y el número del Alumno.' !!}
           </p>
         </div>
         @endif
