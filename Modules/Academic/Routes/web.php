@@ -453,3 +453,4 @@ Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoContro
 
 
 Route::middleware(['auth'])->get('thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
+Route::get('/certificado-validar/{dni?}/{course_id?}', [AcaCertificateController::class, 'certificado_validar'])->name('certificado_validar');
