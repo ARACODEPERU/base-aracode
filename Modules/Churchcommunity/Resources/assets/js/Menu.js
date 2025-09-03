@@ -19,6 +19,12 @@ const menuCiglesia = {
             items: [
                 {
                     status: false,
+                    route: route("cigle_member_list"),
+                    text: "Listado",
+                    permissions: "cigle_miembros",
+                },
+                {
+                    status: false,
                     route: route("cigle_member_believing_create"),
                     text: "Ficha de nuevo creyente",
                     permissions: "cigle_creyente_nuevo",

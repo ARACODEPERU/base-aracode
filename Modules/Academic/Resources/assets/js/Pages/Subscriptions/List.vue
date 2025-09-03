@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import IconArrowleft from '@/Components/vristo/icon/icon-arrow-left.vue';
+    import iconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
     import { Link, router } from '@inertiajs/vue3';
     import Swal from 'sweetalert2';
 
@@ -37,7 +37,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 router.visit(route('aca_subscriptions_list'), {
-                    replace: false, 
+                    replace: false,
                     method: 'get',
                     preserveState: true,
                     preserveScroll: true,

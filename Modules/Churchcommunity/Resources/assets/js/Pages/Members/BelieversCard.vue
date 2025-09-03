@@ -17,6 +17,14 @@
             type: Object,
             default: () => ({})
         },
+        schedules: {
+            type: Object,
+            default: () => ({})
+        },
+        evangelizations: {
+            type: Object,
+            default: () => ({})
+        }
     });
 </script>
 <template>
@@ -34,6 +42,8 @@
                 :sedes="sedes"
                 :identityDocumentTypes="identityDocumentTypes"
                 :ubigeo="ubigeo"
+                :schedules="schedules"
+                :evangelizations="evangelizations"
             />
         </div>
     </AppLayout>

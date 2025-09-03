@@ -1,5 +1,5 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
+    import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import EditForm from './Partials/EditForm.vue';
 import { Link } from '@inertiajs/vue3';
 const props = defineProps({
@@ -67,15 +67,15 @@ const props = defineProps({
                     </li>
                 </ol>
             </nav>
-            <EditForm 
-                :tiny_api_key="tiny_api_key" 
-                :categories="categories" 
-                :instructors="instructors" 
-                :locales="locales" 
+            <EditForm
+                :tiny_api_key="tiny_api_key"
+                :categories="categories"
+                :instructors="instructors"
+                :locales="locales"
                 :socialevent="socialevent"
                 :eventLocales="eventLocales"
                 :eventExhibitors="eventExhibitors"
-            /> 
+            />
         </div>
     </AppLayout>
 </template>

@@ -4,6 +4,7 @@ namespace Modules\Churchcommunity\Database\Seeders;
 
 use App\Models\Sede;
 use Illuminate\Database\Seeder;
+use Modules\Churchcommunity\Entities\CigleMemberType;
 
 class SedesChurchcommunitySeeder extends Seeder
 {
@@ -62,5 +63,22 @@ class SedesChurchcommunitySeeder extends Seeder
         foreach ($data as $record) {
             Sede::create($record);
         }
+
+        $levels = [
+            ['description' => 'Creyente'],
+            ['description' => 'Discípulo'],
+            ['description' => 'Sub Líder'],
+            ['description' => 'Líder'],
+            ['description' => 'Mentor'],
+            ['description' => 'Anciano'],
+            ['description' => 'Ministro'],
+            ['description' => 'Efesio'], //(Pastor, Evangelista, Profeta)
+            ['description' => 'Apóstol'] //(Padre espiritual)
+        ];
+
+        foreach ($levels as $level) {
+            CigleMemberType::create($level);
+        }
     }
+
 }

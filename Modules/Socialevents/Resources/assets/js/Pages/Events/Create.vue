@@ -1,5 +1,5 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
+    import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import CreateForm from './Partials/CreateForm.vue';
 import { Link } from '@inertiajs/vue3';
 const props = defineProps({
@@ -55,7 +55,7 @@ const props = defineProps({
                     </li>
                 </ol>
             </nav>
-            <CreateForm :tiny_api_key="tiny_api_key" :categories="categories" :instructors="instructors" :locales="locales" /> 
+            <CreateForm :tiny_api_key="tiny_api_key" :categories="categories" :instructors="instructors" :locales="locales" />
         </div>
     </AppLayout>
 </template>

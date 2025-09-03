@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\ClientException;
 class ApisnetPeController extends Controller
 {
     protected $token = 'apis-token-11376.43LtemdBY9nZYES8Ky9uZ5oNaYmA0fYe';
+
     public function consult(Request $request)
     {
         $type = $request->get('document_type');
@@ -97,7 +98,10 @@ class ApisnetPeController extends Controller
                 return [
                     'success' => true,
                     'person' => [
-                        'razonSocial' => $data['apellidoPaterno'] . ' ' . $data['apellidoMaterno'] . ' ' . $data['nombres']
+                        'razonSocial' => $data['apellidoPaterno'] . ' ' . $data['apellidoMaterno'] . ' ' . $data['nombres'],
+                        'names' => $data['nombres'],
+                        'father_lastname' => $data['apellidoPaterno'],
+                        'mother_lastname' => $data['apellidoMaterno'],
                     ]
                 ];
             } catch (ClientException $e) {

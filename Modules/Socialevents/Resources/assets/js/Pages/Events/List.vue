@@ -1,18 +1,18 @@
 <script setup>
-    import AppLayout from '@/Layouts/AppLayout.vue';
+    import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import { useForm } from '@inertiajs/vue3';
     import Keypad from '@/Components/Keypad.vue';
     import Pagination from '@/Components/Pagination.vue';
     import ModalSmall from '@/Components/ModalSmall.vue';
-    import { 
+    import {
         ConfigProvider,
-        Dropdown, 
-        Menu, 
-        MenuItem, 
-        Image, 
-        AvatarGroup, 
-        Avatar, 
-        Tooltip, 
+        Dropdown,
+        Menu,
+        MenuItem,
+        Image,
+        AvatarGroup,
+        Avatar,
+        Tooltip,
         Badge,
         InputNumber,
         Input
@@ -23,7 +23,7 @@
     import esES from 'ant-design-vue/es/locale/es_ES';
     import { ref } from 'vue';
     import DangerButton from '@/Components/DangerButton.vue';
-    
+
     const props = defineProps({
         socialevents: {
             type: Object,
@@ -121,7 +121,7 @@
             if(pricesArray.length > 0){
                 foundObject = pricesArray.find(obj => obj.type_id === typeIdToFind);
             }
-            
+
             if (foundObject) {
                 ty.description = typ.description;
                 ty.price = foundObject.price;

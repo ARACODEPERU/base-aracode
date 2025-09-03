@@ -24,6 +24,7 @@
     import iconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import iconMinus from '@/Components/vristo/icon/icon-minus.vue';
+    import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const accordians3 = ref(1);
 
@@ -40,16 +41,31 @@
             type: Object,
             default: () => ({})
         },
+        schedules: {
+            type: Object,
+            default: () => ({})
+        },
+        evangelizations: {
+            type: Object,
+            default: () => ({})
+        }
     });
 
-    const ubigeoSelected = ref(null);
+    const ubigeoSelected = ref({
+        ubigeo_description: null,
+        district_id: null
+    });
 
     const form = useForm({
+        id: null,
+        member_id: null,
+        believer_id: null,
         sede_id: null,
         date_statement: null,
         document_type_id: null,
         number: null,
         birthdate: null,
+        full_name: null,
         names: null,
         father_lastname: null,
         mother_lastname: null,
@@ -61,9 +77,9 @@
         email: null,
         status: true,
         gender: 'M',
-        children: [],
-        accept_Christ: 1,
-        service_hours: 1,
+        relatives: [],
+        accept_Christ: 'SI',
+        schedule_id: 1,
         name_red: null,
         prayer_reason: null,
         soul_won: null,
@@ -98,10 +114,10 @@
         form.ubigeo = ubigeoSelected.value.district_id;
     }
 
-    const createBrand = () => {
-        form.post(route('sale_brand_product_store_2'), {
+    const createBeliever = () => {
+        form.post(route('cigle_member_believing_store'), {
             forceFormData: true,
-            errorBag: 'createBrand',
+            errorBag: 'createBeliever',
             preserveScroll: true,
             onSuccess: () => {
                 Swal2.fire({
@@ -111,13 +127,14 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                form.reset()
+                form.reset();
+                formIsDisabled.value = true;
             },
         });
     }
 
     const addRelationships = () => {
-        form.children.push({
+        form.relatives.push({
             birthdate: childrenForm.birthdate,
             document_type_id: childrenForm.document_type_id,
             number: childrenForm.number,
@@ -129,10 +146,11 @@
         });
 
         childrenForm.reset();
+        showAlertToast('Se agrego correctamente','success')
     }
 
     const removeRelationships = (index) => {
-        form.children.splice(index, 1);
+        form.relatives.splice(index, 1);
     }
 
     const configFlatPickr = {
@@ -140,20 +158,229 @@
         locale: Spanish
     };
 
-
+    const displayLoaderSearchBtn = ref(false);
     const formIsDisabled = ref(true); // El formulario está deshabilitado por defecto
-
+    const inputNumberRef = ref(null);
     // Función que se activa cuando la búsqueda es exitosa
     const handleBasedatosSearch = () => {
-        // Lógica de búsqueda...
-        // Si el registro existe o se puede crear uno nuevo, habilita el formulario
-        formIsDisabled.value = false;
+        displayLoaderSearchBtn.value = true;
+        axios({
+            method: "post",
+            url: route('cigle_member_search'),
+            data: {
+                from: 'believers',
+                documentType: form.document_type_id,
+                number: form.number,
+            },
+        }).then((result) => {
+            if(result.data.success){
+                form.relatives = [];
+                form.id = result.data.person.id;
+                form.believer_id = result.data.person.believer?.id;
+                form.member_id = result.data.person.member?.id;
+                form.full_name = result.data.person.full_name;
+                form.birthdate = result.data.person.birthdate;
+                form.names = result.data.person.names;
+                form.father_lastname = result.data.person.father_lastname;
+                form.mother_lastname = result.data.person.mother_lastname;
+                form.address = result.data.person.address;
+                form.ubigeo_description = result.data.person.ubigeo_description;
+                form.ubigeo = result.data.person.ubigeo;
+                form.telephone = result.data.person.telephone;
+                form.email = result.data.person.email;
+                form.status = result.data.person.status;
+                form.gender = result.data.person.gender;
+
+                ubigeoSelected.value.ubigeo_description = result.data.person.ubigeo_description;
+                ubigeoSelected.value.district_id = result.data.person.ubigeo;
+
+                let personRelatives = result.data.person.relatives;
+
+                for (const relative of personRelatives) {
+                    form.relatives.push({
+                        birthdate: relative.person.birthdate,
+                        document_type_id: relative.person.document_type_id,
+                        number: relative.person.number,
+                        names: relative.person.names,
+                        father_lastname: relative.person.father_lastname,
+                        mother_lastname: relative.person.mother_lastname,
+                        gender: relative.person.gender,
+                        relationship: relative.relationship
+                    });
+                }
+
+                form.sede_id = result.data.person.member?.sede_id;
+                form.date_statement = result.data.person.member?.date_statement;
+
+                form.accept_Christ = result.data.person.believer?.accept_Christ;
+                form.schedule_id = result.data.person.believer?.schedule_id;
+                form.name_red = result.data.person.believer?.name_red;
+                form.prayer_reason = result.data.person.believer?.prayer_reason;
+                form.soul_won = result.data.person.believer?.evangelization_id;
+                form.well_known_place = result.data.person.believer?.well_known_place;
+                form.contact = result.data.person.believer?.contact_full_names ? false : true;
+                form.contact_full_names = result.data.person.believer?.contact_full_names;
+                form.contact_person_id = result.data.person.believer?.contact_person_id;
+
+                Swal2.fire({
+                    icon: 'success',
+                    title: '¡Enhorabuena!',
+                    text: 'La persona existe en los registro, ¿desea continuar?',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                    showDenyButton: true,
+                    confirmButtonText: "Continuar",
+                    denyButtonText: `Cancelar`,
+                    allowOutsideClick: false, // 👈 no cerrar al hacer clic fuera
+                    allowEscapeKey: false,    // 👈 no cerrar con la tecla ESC
+                    allowEnterKey: false
+                }).then((result) => {
+                    /* Read more about isConfirmed, isDenied below */
+                    if (result.isDenied) {
+                        Swal2.fire({
+                            title: "Registrar nuevo creyente",
+                            icon: "info",
+                            padding: '2em',
+                            customClass: 'sweet-alerts',
+                            allowOutsideClick: false, // 👈 no cerrar al hacer clic fuera
+                            allowEscapeKey: false,    // 👈 no cerrar con la tecla ESC
+                            allowEnterKey: false
+                        }).then(() => {
+                            form.reset();
+                            inputNumberRef.value?.focus();
+                            formIsDisabled.value = true;
+                        });
+                    }
+                });
+
+            }else{
+                showAlertToast('No existe registros para: ' + form.number, 'error')
+            }
+        }).finally(() => {
+            formIsDisabled.value = false;
+            displayLoaderSearchBtn.value = false;
+        });
+
     };
 
+    const apiesLoading = ref(false);
+
+    const searchApispe = () => {
+        apiesLoading.value = true;
+        form.reset();
+        form.clearErrors();
+        if(form.document_type_id && form.number){
+            axios.post(route('sales_search_person_apies'), {
+                document_type: form.document_type_id,
+                number: form.number
+            }).then((res) => {
+
+                if(res.data.success){
+                    form.full_name =  res.data.person['razonSocial'];
+                    form.names = res.data.person['names'];
+                    form.father_lastname = res.data.person['father_lastname'];
+                    form.mother_lastname = res.data.person['mother_lastname'];
+                    form.email = null;
+                    form.address = null;
+                }else{
+                    showAlertToast(res.data.error, 'error')
+                }
+
+            }).finally(()=> {
+                apiesLoading.value = false;
+                formIsDisabled.value = false;
+            });
+        }else{
+            apiesLoading.value = false;
+            form.setError('document_type_id', 'Campo requerido')
+            form.setError('number', 'Campo requerido')
+        }
+
+    }
+
+    const showAlertToast = (text , type = 'success') => {
+        const toast = Swal2.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        toast.fire({
+            icon: type,
+            title: text,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    }
+
+    const formFamilyIsDisabled = ref(true); // El formulario está deshabilitado por defecto
+    const displayLoaderBtnSearchFamily = ref(false);
+    // Función que se activa cuando la búsqueda es exitosa
+    const handleBasedatosFamilySearch = () => {
+        displayLoaderBtnSearchFamily.value = true;
+        axios({
+            method: "post",
+            url: route('cigle_member_search'),
+            data: {
+                from: 'believers',
+                documentType: childrenForm.document_type_id,
+                number: childrenForm.number,
+            },
+        }).then((result) => {
+            if(result.data.success){
+                childrenForm.full_name = result.data.person.full_name;
+                childrenForm.birthdate = result.data.person.birthdate;
+                childrenForm.names = result.data.person.names;
+                childrenForm.father_lastname = result.data.person.father_lastname;
+                childrenForm.mother_lastname = result.data.person.mother_lastname;
+                childrenForm.gender = result.data.person.gender;
+            }else{
+                showAlertToast('No existe registros para: ' + form.number, 'error')
+            }
+        }).finally(() => {
+            formFamilyIsDisabled.value = false;
+            displayLoaderBtnSearchFamily.value = false;
+        });
+
+    };
+
+    const apiesFamilyLoading = ref(false);
+
+    const searchFamilyApispe = () => {
+        apiesFamilyLoading.value = true;
+        childrenForm.clearErrors();
+        if(childrenForm.document_type_id && childrenForm.number){
+            axios.post(route('sales_search_person_apies'), {
+                document_type: childrenForm.document_type_id,
+                number: childrenForm.number
+            }).then((res) => {
+
+                if(res.data.success){
+                    childrenForm.full_name =  res.data.person['razonSocial'];
+                    childrenForm.names = res.data.person['names'];
+                    childrenForm.father_lastname = res.data.person['father_lastname'];
+                    childrenForm.mother_lastname = res.data.person['mother_lastname'];
+                }else{
+                    showAlertToast(res.data.error, 'error')
+                }
+
+            }).finally(()=> {
+                apiesFamilyLoading.value = false;
+                formIsDisabled.value = false;
+            });
+        }else{
+            apiesFamilyLoading.value = false;
+            childrenForm.setError('document_type_id', 'Campo requerido')
+            childrenForm.setError('number', 'Campo requerido')
+        }
+
+    }
 </script>
 
 <template>
-    <FormSection @submitted="createBrand" class="">
+    <FormSection @submitted="createBeliever" class="">
         <template #title>
             Creyente Detalles
         </template>
@@ -178,18 +405,19 @@
                             <InputLabel for="number" value="Número" />
                             <TextInput
                                 id="number"
+                                ref="inputNumberRef"
                                 v-model="form.number"
                                 type="number"
-                                focus
                             />
                             <InputError :message="form.errors.number" class="mt-2" />
                         </div>
-
                         <div class="flex justify-end gap-x-2 mt-4 lg:mt-0 flex-shrink-0">
-                            <DarkButton type="button" class="py-2.5">
+                            <DarkButton @click="searchApispe" type="button" class="py-2.5">
+                               <icon-loader v-show="apiesLoading" class="w-4 h-4 mr-2" />
                                 RENIEC
                             </DarkButton>
                             <SuccessButton @click="handleBasedatosSearch" class="py-2.5">
+                                <icon-loader v-show="displayLoaderSearchBtn" class="w-4 h-4 mr-2" />
                                 Buscar
                             </SuccessButton>
                         </div>
@@ -356,9 +584,9 @@
                         </div>
                         <vue-collapsible :isOpen="accordians3 === 1 && !formIsDisabled">
                             <div class="space-y-2 p-4 text-white-dark text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
-                                <div v-if="form.children.length > 0">
+                                <div v-if="form.relatives.length > 0">
                                     <ol class="flex flex-col">
-                                        <template v-for="(children, index) in form.children">
+                                        <template v-for="(children, index) in form.relatives">
                                             <li class="inline-flex items-center gap-x-2 py-3 px-4 text-sm font-medium text-gray-800 -mt-px first:rounded-t-lg first:mt-0 dark:text-white">
                                                 <div>
                                                     <button @click="removeRelationships(index)" type="button" v-tippy:delete>
@@ -413,15 +641,15 @@
                         <div class="p-4 text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
                             <div class="flex items-center gap-6">
                                 <label class="inline-flex">
-                                    <input v-model="form.accept_Christ" value="1" type="radio" name="defaultAc" class="form-radio peer" />
+                                    <input v-model="form.accept_Christ" value="SI" type="radio" name="defaultAc" class="form-radio peer" />
                                     <span class="peer-checked:text-primary">SI</span>
                                 </label>
                                 <label class="inline-flex">
-                                    <input v-model="form.accept_Christ" value="2" type="radio" name="defaultAc" class="form-radio peer" />
+                                    <input v-model="form.accept_Christ" value="NO" type="radio" name="defaultAc" class="form-radio peer" />
                                     <span class="peer-checked:text-primary">NO</span>
                                 </label>
                                 <label class="inline-flex">
-                                    <input v-model="form.accept_Christ" value="3" type="radio" name="defaultAc" class="form-radio peer" />
+                                    <input v-model="form.accept_Christ" value="Reconciliación" type="radio" name="defaultAc" class="form-radio peer" />
                                     <span class="peer-checked:text-primary">Reconciliación</span>
                                 </label>
                             </div>
@@ -453,30 +681,12 @@
                         <vue-collapsible :isOpen="accordians3 === 3 && !formIsDisabled">
                             <div class="p-4 text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
                                 <div class="space-y-4 flex flex-col">
-                                    <label class="inline-flex">
-                                        <input v-model="form.service_hours" value="1" type="radio" name="defaultHc" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Primer Servicio</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.service_hours" value="2" type="radio" name="defaultHc" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Segundo Servicio</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.service_hours" value="3" type="radio" name="defaultHc" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Tercer Servicio</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.service_hours" value="4" type="radio" name="defaultHc" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Evangelismo</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.service_hours" value="5" type="radio" name="defaultHc" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Noche de Avivamiento</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.service_hours" value="6" type="radio" name="defaultHc" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">CDP</span>
-                                    </label>
+                                    <template v-for="schedule in schedules">
+                                        <label class="inline-flex">
+                                            <input v-model="form.schedule_id" :value="schedule.id" type="radio" name="defaultHc" class="form-radio peer" />
+                                            <span class="peer-checked:text-primary">{{ schedule.description }}</span>
+                                        </label>
+                                    </template>
                                 </div>
                             </div>
                         </vue-collapsible>
@@ -506,7 +716,7 @@
                             <div class="p-4 text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
                                 <div>
                                     <label for="name_red">Nombre de red</label>
-                                    <input id="name_red" type="text" class="form-input" />
+                                    <input v-model="form.name_red" id="name_red" type="text" class="form-input" />
                                     <span class="text-white-dark text-[11px] inline-block mt-1">Sí aún no pertenece a una red, coloque: Ninguna</span>
                                 </div>
                             </div>
@@ -567,30 +777,12 @@
                         <vue-collapsible :isOpen="accordians3 === 6 && !formIsDisabled">
                             <div class="p-4 text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
                                 <div class="space-y-4 flex flex-col">
-                                    <label class="inline-flex">
-                                        <input v-model="form.soul_won" value="1" type="radio" name="defaultAg" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">El Altar</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.soul_won" value="2" type="radio" name="defaultAg" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Evangelismo en la Calle</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.soul_won" value="3" type="radio" name="defaultAg" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Casa de Paz</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.soul_won" value="4" type="radio" name="defaultAg" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Cruzada Evangelística</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.soul_won" value="5" type="radio" name="defaultAg" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">TMC</span>
-                                    </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.soul_won" value="6" type="radio" name="defaultAg" class="form-radio peer" />
-                                        <span class="peer-checked:text-primary">Evento</span>
-                                    </label>
+                                    <template v-for="evangelization in evangelizations">
+                                        <label class="inline-flex">
+                                            <input v-model="form.soul_won" :value="evangelization.id" type="radio" name="defaultAg" class="form-radio peer" />
+                                            <span class="peer-checked:text-primary">{{ evangelization.description }}</span>
+                                        </label>
+                                    </template>
                                 </div>
                             </div>
                         </vue-collapsible>
@@ -620,43 +812,43 @@
                             <div class="p-4 text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
                                 <div class="space-y-4 flex flex-col">
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Por una amistad'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Por una amistad</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Por un familiar'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Por un familiar</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Evangelismo'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Evangelismo</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
+                                        <input v-model="form.well_known_place" :value="'Casa de Paz'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
                                         <span class="peer-checked:text-primary">Casa de Paz</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
+                                        <input v-model="form.well_known_place" :value="'Youtube'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
                                         <span class="peer-checked:text-primary">Youtube</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Facebook'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Facebook</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Tik tok'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Tik tok</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Instagram'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Instagram</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                        <input v-model="form.well_known_place" :value="'Busque Cobertura'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Busque Cobertura</span>
                                     </label>
                                     <label class="inline-flex">
-                                        <input v-model="form.well_known_place" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
+                                        <input v-model="form.well_known_place" :value="'Otros'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
                                         <span class="peer-checked:text-primary">Otros</span>
                                     </label>
                                 </div>
@@ -692,7 +884,7 @@
                                 </label>
                                  <div class="mt-4">
                                     <label for="contact_full_names">Nombre completo:</label>
-                                    <input v-model="contact_full_names" :disabled="form.contact" id="contact_full_names" type="text" class="form-input" />
+                                    <input v-model="form.contact_full_names" :disabled="form.contact" id="contact_full_names" type="text" class="form-input" />
                                     <span class="text-red text-[11px] inline-block mt-1">Sí ninguna persona lo invito y llegó solo, coloqué: Ninguna</span>
                                 </div>
                             </div>
@@ -715,7 +907,7 @@
                         </svg>
                         Guardar
                     </PrimaryButton>
-                    <Link :href="route('sale_brands_product_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
+                    <Link :href="route('cigle_member_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
                 </template>
             </Keypad>
         </template>
@@ -746,10 +938,12 @@
                     </div>
 
                     <div class="flex justify-end gap-x-2 mt-4 lg:mt-0 flex-shrink-0">
-                        <DarkButton type="button" class="py-2.5">
+                        <DarkButton @click="searchFamilyApispe" type="button" class="py-2.5">
+                            <icon-loader v-show="apiesFamilyLoading" class="w-4 h-4 mr-2" />
                             RENIEC
                         </DarkButton>
-                        <SuccessButton class="py-2.5">
+                        <SuccessButton @click="handleBasedatosFamilySearch" class="py-2.5">
+                            <icon-loader v-show="displayLoaderBtnSearchFamily" class="w-4 h-4 mr-2" />
                             Buscar
                         </SuccessButton>
                     </div>

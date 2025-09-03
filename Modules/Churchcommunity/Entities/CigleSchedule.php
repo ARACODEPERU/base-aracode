@@ -4,9 +4,9 @@ namespace Modules\Churchcommunity\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Modules\Churchcommunity\Database\factories\CigleMemberTypeFactory;
+use Modules\Churchcommunity\Database\factories\CigleScheduleFactory;
 
-class CigleMemberType extends Model
+class CigleSchedule extends Model
 {
     use HasFactory;
 
@@ -15,11 +15,12 @@ class CigleMemberType extends Model
      */
     protected $fillable = [
         'description',
-        'short'
+        'hour_from',
+        'hour_to'
     ];
 
-    protected static function newFactory(): CigleMemberTypeFactory
+    protected static function newFactory(): CigleScheduleFactory
     {
-        //return CigleMemberTypeFactory::new();
+        //return CigleScheduleFactory::new();
     }
 }
