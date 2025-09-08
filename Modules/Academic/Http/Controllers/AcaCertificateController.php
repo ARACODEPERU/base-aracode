@@ -5,6 +5,7 @@ namespace Modules\Academic\Http\Controllers;
 use App\Helpers\Barios;
 use App\Models\Parameter;
 use App\Rules\AcaRegistrationExists;
+use App\Models\Person;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
