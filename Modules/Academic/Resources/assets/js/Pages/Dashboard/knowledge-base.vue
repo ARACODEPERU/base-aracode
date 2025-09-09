@@ -1,21 +1,14 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
     import { ref, onMounted, nextTick } from "vue";
-    import VueCollapsible from 'vue-height-collapsible/vue3';
-    import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
-    import { useForm, router, Link  } from '@inertiajs/vue3';
+    import { useForm, router, Link, usePage  } from '@inertiajs/vue3';
     import IconArrowWaveLeftUp from '@/Components/vristo/icon/icon-arrow-wave-left-up.vue';
-    import IconGlobe from '@/Components/vristo/icon/icon-globe.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
-    import IconBox from '@/Components/vristo/icon/icon-box.vue';
-    import IconDollarSignCircle from '@/Components/vristo/icon/icon-dollar-sign-circle.vue';
-    import IconRouter from '@/Components/vristo/icon/icon-router.vue';
-    import IconPlusCircle from '@/Components/vristo/icon/icon-plus-circle.vue';
-    import IconMinusCircle from '@/Components/vristo/icon/icon-minus-circle.vue';
     import IconArrowForward from '@/Components/vristo/icon/icon-arrow-forward.vue';
-    import IconX from '@/Components/vristo/icon/icon-x.vue';
     import { Tour } from 'ant-design-vue';
     import LastRegisteredCourse from "../../Components/LastRegisteredCourse.vue";
+
+    const userData = usePage().props.auth.user;
 
     defineProps({
         interests:{
@@ -73,7 +66,8 @@
             btnMenuMycourses.value = document.getElementById("btnMenuMycourses");
             btnHeaderPerfilUser.value = document.getElementById("btnHeaderPerfilUser");
         });
-        if (!localStorage.getItem('tourShown')) {
+        //console.log(userData.tour_completed)
+        if (!localStorage.getItem('tourShown') && !userData.tour_completed) {
             open.value = true; // Mostrar el tour por primera vez
         }
     });
@@ -118,9 +112,18 @@
         open.value = val;
         if (!val) {
             // Guardar en localStorage que el tour ya se mostró
-            localStorage.setItem('tourShown', 'true');
+            updateTourUser();
         }
     };
+
+    const updateTourUser = () => {
+        axios({
+            method: "POST",
+            url: route('update_tour_user')
+        }).then(() => {
+            localStorage.setItem('tourShown', 'true');
+        });
+    }
 </script>
 <template>
     <AppLayout title="Dashboard">

@@ -37,7 +37,8 @@ class User extends Authenticatable
         'person_id',
         'status',
         'updated_information',
-        'api_token'
+        'api_token',
+        'tour_completed'
     ];
 
     /**

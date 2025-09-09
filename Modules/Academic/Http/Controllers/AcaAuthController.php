@@ -78,6 +78,7 @@ class AcaAuthController extends Controller
                 'password' => Hash::make($request->get('password')), // Encriptar la contraseña
                 'person_id' => $person->id,
                 'local_id' => 1,
+                'tour_completed' => false
             ]);
 
             // Loguear al usuario

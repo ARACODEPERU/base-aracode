@@ -166,7 +166,7 @@ const removePrice = (indexToRemove) => {
                                     <icon-x class="w-4 h-4" />
                                 </button>
                             </div>
-                            <InputError :message="form.errors[`details.${key}.label`]" class="mt-2" />
+                            <InputError :message="form.errors[`details.${ixdex}.label`]" class="mt-2" />
                         </template>
                     </div>
                 </div>

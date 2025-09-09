@@ -18,6 +18,7 @@ use Modules\Academic\Http\Controllers\AcaAuthController;
 use Modules\Academic\Http\Controllers\AcaCertificateController;
 use Modules\Academic\Http\Controllers\AcaContentController;
 use Modules\Academic\Http\Controllers\AcaCourseController;
+use Modules\Academic\Http\Controllers\AcademicController;
 use Modules\Academic\Http\Controllers\AcaExamAnswerController;
 use Modules\Academic\Http\Controllers\AcaExamController;
 use Modules\Academic\Http\Controllers\AcaExamQuestionController;
@@ -430,7 +431,13 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_reportes_estado_susc_estudiantes'])
         ->get('reports/student/subscriptions/expired',[AcaReportsController::class, 'expiredSubscriptions'])
         ->name('aca_subscriptions_expired_student');
+
+
 });
+
+Route::middleware(['auth', 'verified'])
+        ->post('users/student/update/tour',[AcademicController::class, 'updateTourUser'])
+        ->name('update_tour_user');
 
 /////////no nesesita aver iniciado session//////////
 Route::get('academic/certificate/image/{id}/download', [AcaCertificateController::class, 'generateCertificateStudent'])->name('aca_image_download');

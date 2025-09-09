@@ -217,7 +217,8 @@
                 form.name_red = result.data.person.believer?.name_red;
                 form.prayer_reason = result.data.person.believer?.prayer_reason;
                 form.soul_won = result.data.person.believer?.evangelization_id;
-                form.well_known_place = result.data.person.believer?.well_known_place;
+
+                form.well_known_place = result.data.person.believer?.well_known_place ?? [];
                 form.contact = result.data.person.believer?.contact_full_names ? false : true;
                 form.contact_full_names = result.data.person.believer?.contact_full_names;
                 form.contact_person_id = result.data.person.believer?.contact_person_id;
@@ -267,7 +268,7 @@
 
     const searchApispe = () => {
         apiesLoading.value = true;
-        form.reset();
+
         form.clearErrors();
         if(form.document_type_id && form.number){
             axios.post(route('sales_search_person_apies'), {
@@ -284,6 +285,7 @@
                     form.address = null;
                 }else{
                     showAlertToast(res.data.error, 'error')
+                    form.reset();
                 }
 
             }).finally(()=> {
@@ -432,12 +434,13 @@
                         </select>
                     </div>
                     <div class="sm:col-span-2">
-                        <InputLabel value="Fecha de afirmación *" />
+                        <InputLabel for="date_statement" value="Fecha de afirmación *" />
                         <flat-pickr
                             v-model="form.date_statement"
                             :config="configFlatPickr"
                             class="form-input"
                             placeholder="Selecciona fecha"
+                            id="date_statement"
                             :disabled="formIsDisabled" :class="formIsDisabled ? 'bg-gray-300/50 cursor-not-allowed' : ''"
                         />
                         <InputError :message="form.errors.next_appointmen_doctor_id" class="mt-1" />
@@ -811,44 +814,44 @@
                         <vue-collapsible :isOpen="accordians3 === 7 && !formIsDisabled">
                             <div class="p-4 text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
                                 <div class="space-y-4 flex flex-col">
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Por una amistad'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="amigo">
+                                        <input v-model="form.well_known_place" id="amigo" :value="'Por una amistad'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Por una amistad</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Por un familiar'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="familiar">
+                                        <input v-model="form.well_known_place" id="familiar" :value="'Por un familiar'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Por un familiar</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Evangelismo'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="evangelismo">
+                                        <input v-model="form.well_known_place" id="evangelismo" :value="'Evangelismo'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Evangelismo</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Casa de Paz'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
+                                    <label class="inline-flex" for="casa">
+                                        <input v-model="form.well_known_place" id="casa" :value="'Casa de Paz'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
                                         <span class="peer-checked:text-primary">Casa de Paz</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Youtube'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
+                                    <label class="inline-flex" for="youtube">
+                                        <input v-model="form.well_known_place" id="youtube" :value="'Youtube'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
                                         <span class="peer-checked:text-primary">Youtube</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Facebook'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="facebook">
+                                        <input v-model="form.well_known_place" id="facebook" :value="'Facebook'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Facebook</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Tik tok'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="tiktok">
+                                        <input v-model="form.well_known_place" id="tiktok" :value="'Tik tok'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Tik tok</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Instagram'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="instagran">
+                                        <input v-model="form.well_known_place" id="instagran" :value="'Instagram'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Instagram</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Busque Cobertura'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
+                                    <label class="inline-flex" for="cobertura">
+                                        <input v-model="form.well_known_place" id="cobertura" :value="'Busque Cobertura'" type="checkbox" class="form-checkbox peer" name="well_known_place[]"  />
                                         <span class="peer-checked:text-primary">Busque Cobertura</span>
                                     </label>
-                                    <label class="inline-flex">
-                                        <input v-model="form.well_known_place" :value="'Otros'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
+                                    <label class="inline-flex" for="otros">
+                                        <input v-model="form.well_known_place" id="otros" :value="'Otros'" type="checkbox" class="form-checkbox peer" name="well_known_place[]" />
                                         <span class="peer-checked:text-primary">Otros</span>
                                     </label>
                                 </div>
