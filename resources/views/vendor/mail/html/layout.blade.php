@@ -8,17 +8,15 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-EKDSRLYXFM"></script>
+        <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EKDSRLYXFM"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-EKDSRLYXFM');
-    </script>
-
+        gtag('config', 'G-EKDSRLYXFM');
+        </script>
     <style>
         @media only screen and (max-width: 600px) {
             .inner-body {
