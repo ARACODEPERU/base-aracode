@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Http\Controllers;
 
+use App\Models\Country;
 use App\Models\District;
 use App\Models\Person;
 use App\Models\User;
@@ -25,22 +26,14 @@ class AcaTeacherController extends Controller
     public function index()
     {
         $teachers = (new AcaTeacher())->newQuery();
-        $teachers = $teachers->join('people', 'aca_teachers.person_id', 'people.id')
-            ->select(
-                'aca_teachers.id',
-                'aca_teachers.teacher_code',
-                'people.document_type_id',
-                'people.full_name',
-                'people.number',
-                'people.telephone',
-                'people.email',
-                'people.address',
-                'people.birthdate',
-                'people.image as people_image',
-                'aca_teachers.created_at'
-            );
-        if (request()->has('search')) {
-            $teachers->where('people.full_name', 'Like', '%' . request()->input('search') . '%');
+        $teachers = $teachers->with('person.country');
+
+        if (request()->filled('search')) {
+            $search = request()->input('search');
+
+            $teachers->whereHas('person', function ($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%');
+            });
         }
 
         if (request()->query('sort')) {
@@ -70,20 +63,28 @@ class AcaTeacherController extends Controller
     public function create()
     {
         $identityDocumentTypes = DB::table('identity_document_type')->get();
+        $countries = Country::orderBy('description')->get();
 
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
                 'districts.id AS district_id',
-                'districts.name AS district_name',
-                'provinces.name AS province_name',
-                'departments.name AS department_name'
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS ubigeo_description")
             )
+            ->get();
+        $professions = DB::table('professions')
+            ->orderBy('id')
+            ->get();
+        $occupations = DB::table('occupations')
+            ->orderBy('id')
             ->get();
 
         return Inertia::render('Academic::Teachers/Create', [
             'identityDocumentTypes' => $identityDocumentTypes,
-            'ubigeo'       => $ubigeo
+            'ubigeo'        => $ubigeo,
+            'countries'     => $countries,
+            'professions'   => $professions,
+            'occupations'   => $occupations
         ]);
     }
 
@@ -109,16 +110,32 @@ class AcaTeacherController extends Controller
                 'email'             => 'unique:people,email,' . $update_id . ',id',
                 'email'             => 'unique:users,email,' . ($user ? $user->id : null) . ',id',
                 'address'           => 'required|max:255',
-                'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
                 'names'             => 'required|max:255',
                 'father_lastname'   => 'required|max:255',
                 'mother_lastname'   => 'required|max:255',
+                'ubigeo_description'=> 'required|max:255'
             ],
             [
-                'email.unique' => 'El email ya esta en uso en usuario o en persona'
+                'email.unique' => 'El email ya esta en uso en usuario o en persona',
+                'ubigeo_description.required' => 'La ciudad es nesesaria',
+                'ubigeo_description.max' => 'Excede el numero de caracteres permitidos'
             ]
         );
+
+        $country_id = $request->get('country_id') ?? 1;
+
+        if($country_id == 1){
+            $this->validate(
+                $request,
+                [
+                    'ubigeo' => 'required|max:255',
+                ],
+                [
+                    'ubigeo.required' => 'La ciudad es nesesaria'
+                ]
+            );
+        }
 
         $per = Person::updateOrCreate(
             [
@@ -136,11 +153,18 @@ class AcaTeacherController extends Controller
                 'is_provider'           => false,
                 'is_client'             => true,
                 'ubigeo'                => $request->get('ubigeo'),
+                'ubigeo_description'    => $request->get('ubigeo_description'),
                 'birthdate'             => $request->get('birthdate'),
                 'names'                 => trim($request->get('names')),
                 'father_lastname'       => trim($request->get('father_lastname')),
                 'mother_lastname'       => trim($request->get('mother_lastname')),
-                'presentacion'          => $request->get('presentacion')
+                'presentacion'          => $request->get('presentacion'),
+                'country_id'            => $request->get('country_id') ?? 1,
+                'gender'                => $request->get('gender') ?? 'M',
+                'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
+                'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
+                'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
+                'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
             ]
         );
 
@@ -173,7 +197,6 @@ class AcaTeacherController extends Controller
                 'password'      => Hash::make($request->get('number')),
                 'information'   => $request->get('description'),
                 'avatar'        => $path,
-
             ]
         );
 
@@ -201,34 +224,39 @@ class AcaTeacherController extends Controller
     {
         $identityDocumentTypes = DB::table('identity_document_type')->get();
 
+        $countries = Country::orderBy('description')->get();
+
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
                 'districts.id AS district_id',
-                'districts.name AS district_name',
-                'provinces.name AS province_name',
-                'departments.name AS department_name'
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS ubigeo_description")
             )
+            ->get();
+        $professions = DB::table('professions')
+            ->orderBy('id')
+            ->get();
+        $occupations = DB::table('occupations')
+            ->orderBy('id')
             ->get();
 
         $teacher = AcaTeacher::join('people', 'person_id', 'people.id')
-            ->leftJoin('districts', 'ubigeo', 'districts.id')
-            ->leftJoin('provinces', 'districts.province_id', 'provinces.id')
-            ->leftJoin('departments', 'provinces.department_id', 'departments.id')
-            ->select(
-                'people.*',
-                'aca_teachers.id AS teacher_id',
-                DB::raw('CONCAT(departments.name,"-",provinces.name,"-",districts.name) AS city')
-            )
+                ->select(
+                    'people.*',
+                    'aca_teachers.id AS teacher_id'
+                )
             ->where('aca_teachers.id', $id)
             ->first();
 
-        $teacher->image_preview = $teacher->image;  //Ruta completa
-
+        $teacher->image_preview = $teacher->image;
+        //dd($teacher);
         return Inertia::render('Academic::Teachers/Edit', [
             'identityDocumentTypes' => $identityDocumentTypes,
             'ubigeo'                => $ubigeo,
-            'teacher'               => $teacher
+            'teacher'               => $teacher,
+            'countries'             => $countries,
+            'professions'           => $professions,
+            'occupations'           => $occupations
         ]);
     }
 
@@ -257,13 +285,32 @@ class AcaTeacherController extends Controller
                 'email'             => 'unique:people,email,' . $person_id . ',id',
                 'email'             => 'unique:users,email,' . $user->id . ',id',
                 'address'           => 'required|max:255',
-                'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
                 'names'             => 'required|max:255',
                 'father_lastname'   => 'required|max:255',
                 'mother_lastname'   => 'required|max:255',
+                'ubigeo_description'=> 'required|max:255'
+            ],
+            [
+                'email.unique' => 'El email ya esta en uso en usuario o en persona',
+                'ubigeo_description.required' => 'La ciudad es nesesaria',
+                'ubigeo_description.max' => 'Excede el numero de caracteres permitidos'
             ]
         );
+
+        $country_id = $request->get('country_id') ?? 1;
+
+        if($country_id == 1){
+            $this->validate(
+                $request,
+                [
+                    'ubigeo' => 'required|max:255',
+                ],
+                [
+                    'ubigeo.required' => 'La ciudad es nesesaria'
+                ]
+            );
+        }
 
         $person = Person::find($person_id);
         $path = null;
@@ -295,12 +342,18 @@ class AcaTeacherController extends Controller
             'address'               => $request->get('address'),
             'is_provider'           => false,
             'is_client'             => true,
-            'ubigeo'                => $request->get('ubigeo'),
+            'ubigeo'                => $request->get('ubigeo') ?? null,
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
             'mother_lastname'       => trim($request->get('mother_lastname')),
-            'presentacion'          => $request->get('presentacion')
+            'presentacion'          => $request->get('presentacion'),
+            'country_id'            => $request->get('country_id') ?? 1,
+            'gender'                => $request->get('gender') ?? 'M',
+            'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
+            'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
+            'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
+            'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
         ]);
 
         $user->update([

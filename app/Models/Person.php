@@ -45,7 +45,8 @@ class Person extends Model
         'company',
         'industry_id',
         'profession_id',
-        'occupation_id'
+        'occupation_id',
+        'country_id'
     ];
     // se esta guardando la ruta completa por eso se comento
     // public function getImageAttribute($value)
@@ -64,5 +65,10 @@ class Person extends Model
     public function resumes(): HasMany
     {
         return $this->hasMany(AcaTeachingResume::class, 'person_id');
+    }
+
+    public function country(): HasOne
+    {
+        return $this->hasOne(Country::class, 'id', 'country_id');
     }
 }

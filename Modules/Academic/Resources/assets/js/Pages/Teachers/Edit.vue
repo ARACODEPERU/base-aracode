@@ -15,6 +15,18 @@ const props = defineProps({
     teacher:{
         type: Object,
         default : () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
+    },
+    professions: {
+        type: Object,
+        default: () => ({})
+    },
+    occupations: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -34,7 +46,14 @@ const props = defineProps({
             </li>
         </ul>
         <div class="pt-5">
-            <EditForm :teacher="teacher" :identityDocumentTypes="identityDocumentTypes" :ubigeo="ubigeo" /> 
+            <EditForm
+                :teacher="teacher"
+                :identityDocumentTypes="identityDocumentTypes"
+                :ubigeo="ubigeo"
+                :countries="countries"
+                :professions="professions"
+                :occupations="occupations"
+            />
         </div>
     </AppLayout>
 </template>

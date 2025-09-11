@@ -13,6 +13,18 @@ const props = defineProps({
     ubigeo: {
         type: Object,
         default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
+    },
+    professions: {
+        type: Object,
+        default: () => ({})
+    },
+    occupations: {
+        type: Object,
+        default: () => ({})
     }
 });
 </script>
@@ -31,10 +43,13 @@ const props = defineProps({
             </li>
         </ul>
         <div class="pt-5">
-            <CreateForm 
-                :identityDocumentTypes="identityDocumentTypes" 
+            <CreateForm
+                :identityDocumentTypes="identityDocumentTypes"
                 :ubigeo="ubigeo"
-             /> 
+                :countries="countries"
+                :professions="professions"
+                :occupations="occupations"
+             />
         </div>
     </AppLayout>
 </template>

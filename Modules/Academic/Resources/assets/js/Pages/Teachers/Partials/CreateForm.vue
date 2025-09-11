@@ -8,6 +8,9 @@ import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch, onMounted } from 'vue';
+import { Select, SelectOption } from 'ant-design-vue';
+import Multiselect from '@suadelabs/vue3-multiselect';
+import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 
 const props = defineProps({
     identityDocumentTypes: {
@@ -17,8 +20,22 @@ const props = defineProps({
     ubigeo: {
         type: Object,
         default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
+    },
+    professions: {
+        type: Object,
+        default: () => ({})
+    },
+    occupations: {
+        type: Object,
+        default: () => ({})
     }
 });
+
+const filteredCountries = ref([]);
 
 const form = useForm({
     id: null,
@@ -36,7 +53,11 @@ const form = useForm({
     father_lastname: null,
     mother_lastname: null,
     ubigeo_description: null,
-    presentacion: null
+    presentacion: null,
+    country_id: 1,
+    gender: 'M',
+    occupation_id: null,
+    profession_id: null
 });
 
 const createTeacher = () => {
@@ -51,46 +72,49 @@ const createTeacher = () => {
                 icon: 'success',
                 padding: '2em',
                 customClass: 'sweet-alerts',
+                backdrop: true, // Esto activa el telón de fondo
+                allowOutsideClick: true // Ahora este parámetro funcionará correctamente
             });
             form.reset()
         },
     });
 }
 
-const searchUbigeos = ref([]);
+const ubigeoSelected = ref({
+    district_id: null,
+    ubigeo_description: null
+});
 
-const filterCities = () => {
-    if (form.ubigeo_description.trim() === '') {
-        searchUbigeos.value = [];
+const selectCity = () => {
+    form.ubigeo_description = ubigeoSelected.value.ubigeo_description;
+    form.ubigeo = ubigeoSelected.value.district_id;
+}
+
+const imagePreviewRef = ref(null);
+const loadFile = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        // If the user cancels the file selection, clear the fields and exit
+        form.image = null;
+        form.image_preview = null;
         return;
     }
 
-    searchUbigeos.value = props.ubigeo.filter(row =>
-        row.district_name.toLowerCase().includes(form.ubigeo_description.toLowerCase())
-    );
-}
-const selectCity = (item) => {
-    form.ubigeo_description = item.department_name+'-'+item.province_name+'-'+item.district_name;
-    form.ubigeo = item.district_id;
-    searchUbigeos.value = []; // Limpiar la lista de búsqueda después de seleccionar una ciudad
-}
-
-const loadFile = (event) => {
-    const input = event.target;
-    const file = input.files[0];
-    const type = file.type;
-
-    // Obtén una referencia al elemento de imagen a través de Vue.js
-    const imagePreview = document.getElementById('preview_img');
-
-    // Crea un objeto de archivo de imagen y asigna la URL al formulario
-    const imageFile = URL.createObjectURL(event.target.files[0]);
-    form.image_preview = imageFile;
-    // Asigna el archivo a form.image
+    // Assign the file object to the `image` field for form submission
     form.image = file;
-    // Libera la URL del objeto una vez que la imagen se haya cargado
-    imagePreview.onload = function() {
-        URL.revokeObjectURL(imageFile); // libera memoria
+
+    // Create a temporary URL for the preview and assign it
+    const fileUrl = URL.createObjectURL(file);
+    form.image_preview = fileUrl;
+
+    // Use the template ref to get the <img> element
+    const imageElement = imagePreviewRef.value;
+
+    if (imageElement) {
+        // This is a good practice to free up memory when the image has loaded
+        imageElement.onload = () => {
+            URL.revokeObjectURL(fileUrl);
+        };
     }
 };
 
@@ -149,6 +173,7 @@ const createFormSearch = () => {
 
 onMounted(() => {
     openSwal2Search();
+    filteredCountries.value = props.countries;
 });
 
 const openSwal2Search = () => {
@@ -165,6 +190,7 @@ const openSwal2Search = () => {
         icon: "question",
         padding: '2em',
         customClass: 'sweet-alerts',
+        backdrop: true, // Esto activa el telón de fondo
         preConfirm: async (login) => {
             let data = {
                 document_type: document.getElementById("identityDocument").value,
@@ -194,6 +220,7 @@ const openSwal2Search = () => {
                 customClass: {
                     image: 'rounded-full',
                 },
+                backdrop: true, // Esto activa el telón de fondo
             }).then((res) => {
                 if (res.isConfirmed) {
                     getPersonData(result.value.data.person);
@@ -203,23 +230,64 @@ const openSwal2Search = () => {
     });
 }
 
+const baseUrl = assetUrl;
+
+const getImage = (path) => {
+    return baseUrl + 'storage/'+ path;
+}
+
+const getFlagImage = (path) => {
+    return baseUrl + path;
+}
+
 const getPersonData = (newValues) => {
-    form.id = newValues.id,
-    form.teacher_id = newValues.teacher_id,
-    form.document_type_id = newValues.document_type_id,
+    form.id = newValues.id;
+    form.teacher_id = newValues.teacher_id;
+    form.document_type_id = newValues.document_type_id;
     form.number = newValues.number,
-    form.telephone = newValues.telephone,
-    form.email = newValues.email,
+    form.telephone = newValues.telephone;
+    form.email = newValues.email;
     form.image = null,
-    form.image_preview = newValues.image ? getImage(newValues.image) : null,
-    form.address = newValues.address,
-    form.ubigeo = newValues.ubigeo,
-    form.birthdate = newValues.birthdate,
-    form.names = newValues.names,
-    form.father_lastname = newValues.father_lastname,
-    form.mother_lastname = newValues.mother_lastname,
-    form.ubigeo_description = newValues.city
-    form.presentacion = newValues.presentacion
+    form.image_preview = newValues.image ? getImage(newValues.image) : null;
+    form.address = newValues.address;
+    form.ubigeo = newValues.ubigeo;
+    form.birthdate = newValues.birthdate;
+    form.names = newValues.names;
+    form.father_lastname = newValues.father_lastname;
+    form.mother_lastname = newValues.mother_lastname;
+    form.ubigeo_description = newValues.city;
+    form.presentacion = newValues.presentacion;
+    form.country_id = newValues.country_id;
+    form.gender = newValues.gender;
+    form.occupation_id = newValues.occupation_id;
+    form.profession_id = newValues.profession_id;
+};
+
+const normalizeText = (text) => {
+    return (text || "")
+        .normalize("NFD")                // descompone letras + tildes (ej: "á" → "á")
+        .replace(/\p{Diacritic}/gu, "")  // elimina los diacríticos
+        .toLowerCase()
+        .trim();
+};
+
+const handleSearch = (input) => {
+    const term = normalizeText(input);
+
+    if (!term) {
+        filteredCountries.value = props.countries;
+        return;
+    }
+
+    filteredCountries.value = props.countries.filter(c =>
+        normalizeText(c.description).includes(term)
+    );
+};
+
+const countrySelected = ref(1);
+
+const handleChange = (val) => {
+    form.country_id = val;
 };
 
 </script>
@@ -237,7 +305,7 @@ const getPersonData = (newValues) => {
         <template #form>
             <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="document_type_id" value="Tipo *" />
-                <select v-model="form.document_type_id" id="document_type_id" class="mt-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <select v-model="form.document_type_id" id="document_type_id" class="form-select">
                     <option value="" selected>Seleccionar</option>
                     <option v-for="(identityDocumentType) in identityDocumentTypes" :value="identityDocumentType.id">{{ identityDocumentType.description }}</option>
                 </select>
@@ -245,11 +313,11 @@ const getPersonData = (newValues) => {
             </div>
             <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="number" value="Número *" />
-                <div class="flex items-center mt-1">
+                <div class="flex items-center">
                     <div class="relative w-full mr-1">
-                        <input v-model="form.number" type="text" id="number" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" required>
+                        <input v-model="form.number" type="text" id="number" class="form-input">
                     </div>
-                    <button @click="openSwal2Search" type="button" class="inline-flex items-center py-2.5 px-3 ms-2 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                    <button @click="openSwal2Search" type="button" class="btn btn-primary px-2.5 py-2.5">
                         <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                         </svg>
@@ -263,55 +331,88 @@ const getPersonData = (newValues) => {
                     id="birthdate"
                     v-model="form.birthdate"
                     type="date"
-                    class="block w-full mt-1"
-
                 />
                 <InputError :message="form.errors.birthdate" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-6 ">
-                <div class="flex items-center space-x-6">
-                    <div v-show="form.image_preview" class="shrink-0">
-                        <img id='preview_img' class="h-16 w-16 object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
-                    </div>
-                    <label class="block ml-1">
-                        <input @change="loadFile" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" type="file">
-                    </label>
-                </div>
-            </div>
-            <div class="col-span-6 sm:col-span-3 ">
+            <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="names" value="Nombres *" />
                 <TextInput
                     id="names"
                     v-model="form.names"
                     type="text"
-                    class="block w-full mt-1"
-
                 />
                 <InputError :message="form.errors.names" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-3 ">
+            <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="father_lastname" value="Apellido Paterno *" />
                 <TextInput
                     id="father_lastname"
                     v-model="form.father_lastname"
                     type="text"
-                    class="block w-full mt-1"
-
                 />
                 <InputError :message="form.errors.father_lastname" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-3 ">
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="mother_lastname" value="Apellido Materno *" />
                 <TextInput
                     id="mother_lastname"
                     v-model="form.mother_lastname"
                     type="text"
-                    class="block w-full mt-1"
-
                 />
                 <InputError :message="form.errors.mother_lastname" class="mt-2" />
             </div>
+            <div class="col-span-6 lg:col-span-3">
+                <InputLabel for="country" value="País *" />
+                <Select
+                    style="width: 100%"
+                    placeholder="Seleccione un país"
+                    show-search
+                    :filter-option="false"
+                    @search="handleSearch"
+                    @change="handleChange"
+                    v-model:value="countrySelected"
+                    :allowClear="true"
+                >
+                    <template v-for="country in filteredCountries">
+                        <SelectOption :value="country.id" :label="country.description">
+                            <div class="flex items-center gap-4">
+                                <img :src="getFlagImage(country.image)" class="w-4 h-4" />
+                                <span>{{ country.description }}</span>
+                            </div>
+                        </SelectOption>
+                   </template>
+                </Select>
+            </div>
             <div class="col-span-6 sm:col-span-3 ">
+                <InputLabel for="ubigeo" value="Ciudad *" />
+                <template v-if="form.country_id == 1">
+                    <multiselect
+                        id="ubigeo_id"
+                        :model-value="ubigeoSelected"
+                        v-model="ubigeoSelected"
+                        :options="ubigeo"
+                        class="custom-multiselect"
+                        :searchable="true"
+                        placeholder="Buscar"
+                        selected-label="seleccionado"
+                        select-label="Elegir"
+                        deselect-label="Quitar"
+                        label="ubigeo_description"
+                        track-by="district_id"
+                        @update:model-value="selectCity"
+                    ></multiselect>
+                    <InputError :message="form.errors.ubigeo" class="mt-2" />
+                </template>
+                <template v-else>
+                    <TextInput
+                        id="ubigeo_id"
+                        v-model="form.ubigeo_description"
+                        type="text"
+                    />
+                    <InputError :message="form.errors.ubigeo_description" class="mt-2" />
+                </template>
+            </div>
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="address" value="Dirección *" />
                 <TextInput
                     id="address"
@@ -322,35 +423,17 @@ const getPersonData = (newValues) => {
                 />
                 <InputError :message="form.errors.address" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-6 ">
-                <InputLabel for="ubigeo" value="Ciudad *" />
-                <div class="relative">
-                    <TextInput
-                    v-model="form.ubigeo_description"
-                    @input="filterCities"
-                    placeholder="Buscar Distrito"
-                    type="text"
-                    class="block w-full mt-1" />
-                    <ul v-if="searchUbigeos && searchUbigeos.length > 0" style="max-height: 200px; overflow-y: auto;" class="list-disc list-inside absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1">
-                        <li v-for="item in searchUbigeos" :key="item.id" class="px-4 cursor-pointer hover:bg-gray-100" @click="selectCity(item)">
-                            {{ item.department_name+'-'+item.province_name+'-'+item.district_name }}
-                        </li>
-                    </ul>
-                </div>
-                <InputError :message="form.errors.ubigeo" class="mt-2" />
-            </div>
-            <div class="col-span-6 sm:col-span-3 ">
+
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="telephone" value="Teléfono *" />
                 <TextInput
                     id="telephone"
                     v-model="form.telephone"
                     type="text"
-                    class="block w-full mt-1"
-
                 />
                 <InputError :message="form.errors.telephone" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-3">
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="email" value="Email *" />
                 <TextInput
                     id="email"
@@ -360,6 +443,92 @@ const getPersonData = (newValues) => {
 
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
+            </div>
+
+            <div class="lg:col-span-3">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <div v-if="form.image_preview" style="width: 80px;height: 80px;">
+                            <img id='preview_img' class="w-full h-full object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
+                        </div>
+                        <span v-else class="group-has-[div]:hidden flex shrink-0 justify-center items-center size-20 border-2 border-dotted border-gray-300 text-gray-400 cursor-pointer rounded-full hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-600 dark:hover:bg-neutral-700/50">
+                            <svg class="shrink-0 size-7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="10" r="3"></circle>
+                                <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block">
+                            <span class="sr-only">Elige tu foto de perfil</span>
+                            <input
+                                @change="loadFile"
+                                type="file" class="block w-full text-sm text-gray-500
+                                file:me-4 file:py-2 file:px-4
+                                file:rounded-lg file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-600 file:text-white
+                                hover:file:bg-blue-700
+                                file:disabled:opacity-50 file:disabled:pointer-events-none
+                                dark:text-neutral-500
+                                dark:file:bg-blue-500
+                                dark:hover:file:bg-blue-400"
+                                ref="imagePreviewRef"
+                            >
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="gender" value="Genero *" />
+                <div class="space-x-4">
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
+                        <span>Masculino</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
+                        <span>Femenino</span>
+                    </label>
+                </div>
+                <InputError :message="form.errors.gender" class="mt-2" />
+            </div>
+            <div class="col-span-2">
+                <InputLabel for="profession_id" value="Profesión" />
+                <multiselect
+                    id="profession_id"
+                    :model-value="form.profession_id"
+                    v-model="form.profession_id"
+                    :options="professions"
+                    class="custom-multiselect"
+                    :searchable="true"
+                    placeholder="Buscar"
+                    selected-label="seleccionado"
+                    select-label="Elegir"
+                    deselect-label="Quitar"
+                    label="description"
+                    track-by="id"
+                ></multiselect>
+                <InputError :message="form.errors.profession_id" class="mt-1" />
+            </div>
+            <div class="col-span-2">
+                <InputLabel for="occupation_id" value="Cargo/ocupacion" />
+                <multiselect
+                    id="occupation_id"
+                    :model-value="form.occupation_id"
+                    v-model="form.occupation_id"
+                    :options="occupations"
+                    class="custom-multiselect"
+                    :searchable="true"
+                    placeholder="Buscar"
+                    selected-label="seleccionado"
+                    select-label="Elegir"
+                    deselect-label="Quitar"
+                    label="description"
+                    track-by="id"
+                ></multiselect>
+                <InputError :message="form.errors.occupation_id" class="mt-1" />
             </div>
             <div class="col-span-6">
                 <InputLabel for="presentacion" value="Presentación *" />
