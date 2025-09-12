@@ -225,4 +225,18 @@ class AcaCapRegistrationController extends Controller
             ]);
         }
     }
+
+    public function updateSubscriptionStudent(Request $request){
+        $student = $request->get('student_id');
+        $subscription = $request->get('subscription_id');
+
+        AcaStudentSubscription::where('student_id', $student)
+            ->where('subscription_id', $subscription)
+            ->update([
+                'date_start' => $request->get('date_start'),
+                'date_end' => $request->get('date_end'),
+                'status' => $request->get('status') ?? false,
+                'notes' => $request->get('notes'),
+            ]);
+    }
 }

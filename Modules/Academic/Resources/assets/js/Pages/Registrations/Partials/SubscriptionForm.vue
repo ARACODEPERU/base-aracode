@@ -7,6 +7,7 @@
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import Swal2 from 'sweetalert2';
     import iconTrash from '@/Components/vristo/icon/icon-trash.vue';
+    import iconEdit from '@/Components/vristo/icon/icon-edit.vue';
 
     const props = defineProps({
         student:{
@@ -21,20 +22,33 @@
             type: Object,
             default : () => ({})
         },
+        faTrashAlt:{
+            type: Object,
+            default : () => ({})
+        }
     });
 
     const form = useForm({
         subscription_id: null,
         student_id: props.student.id
     });
-    
+
     const dataSubscriptions = ref([]);
+
+    const subscriptionStudentData = ref([]);
+
+    subscriptionStudentData.value = props.subscriptionStudent.map(item => ({
+        ...item,
+        status: item.status === 1 // true si es 1, false si es 0
+    }));
 
     onMounted(() => {
         dataSubscriptions.value = props.subscriptions.map((obj) => ({
             value: obj.id,
             label: `${obj.description} / precio: ${JSON.parse(obj.prices)[0].amount}`
         }));
+
+
     });
 
     const filterOption = (input, option) => {
@@ -93,16 +107,39 @@
             }
         });
     };
+
+    const loadingUpdate = ref(false);
+
+    const updateSubscription = (items) => {
+        loadingUpdate.value = true;
+
+        router.post(route('aca_subscriptions_update_student'), items, {
+            preserveScroll: true,   // mantiene scroll
+            preserveState: true,    // mantiene estado
+            onSuccess: () => {
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: 'Se actualizó correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+            onFinish: () => {
+                loadingUpdate.value = false;
+            }
+        });
+    };
 </script>
 <template>
     <div class="panel">
-        <form @submit.prevent="saveSubscription"> 
+        <form @submit.prevent="saveSubscription">
             <div class="space-y-6 mb-4">
                 <div class="mb-2">
                     <InputLabel for="subscription_id" value="Planes de suscripcion *" />
-                    <Select 
+                    <Select
                         show-search
-                        v-model:value="form.subscription_id" 
+                        v-model:value="form.subscription_id"
                         class="w-full mb-2"
                         placeholder="Seleccionar"
                         :options="dataSubscriptions"
@@ -122,25 +159,70 @@
                 Guardar
             </PrimaryButton>
            </div>
-            
+
         </form>
     </div>
     <div
-        v-for="item in subscriptionStudent"
+        v-for="item in subscriptionStudentData"
         class="panel"
     >
-        <div class="flex items-center gap-4">
-            <div class="flex-1 font-medium dark:text-primary-200">
-                <div>{{ item.subscription.title }}</div>
-                <p>{{ item.subscription.description }}</p>
+        <div class="space-y-4">
+            <div class="grid sm:grid-cols-4">
+                <div class="flex-1 font-medium dark:text-primary-200 mb-4 sm:mb-0 sm:col-span-3">
+                    <h4 class="text-xl dark:text-white">{{ item.subscription.title }}</h4>
+                    <p>{{ item.subscription.description }}</p>
+                    <div class="mt-4 flex items-center gap-6">
+                        <div>
+                            <InputLabel value="fecha Inicio" />
+                            <input v-model="item.date_start" type="date" class="form-input" />
+                        </div>
+                        <div>
+                            <InputLabel value="Fecha termino" />
+                            <input v-model="item.date_end" type="date" class="form-input" />
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <span class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-white">
+                        Precio {{ item.amount_paid }}
+                    </span>
+                    <div>
+                        <h4>Documento de venta</h4>
+                        <span v-if="item.xdocument_id" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-500">{{ Generado }}</span>
+                        <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500">Pendiente</span>
+                    </div>
+                </div>
             </div>
-            <button
-                @click="destroySubscription(item.student_id,item.subscription_id)"
-                type="button"
-                class="absolute top-2 right-2 px-3 py-2 text-xs font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-            >
-                <icon-trash class="w-4 h-4" />
-            </button>
+            <div>
+                <div>
+                    <InputLabel value="Observaciones (Opcional)" />
+                    <textarea v-model="item.notes" class="form-textarea" rows="2"></textarea>
+                </div>
+                <label class="inline-flex mt-4">
+                    <input v-model="item.status" type="checkbox" class="form-checkbox" />
+                    <span>Activo</span>
+                </label>
+            </div>
+            <div class="flex items-center gap-4" >
+                <button
+                    @click="destroySubscription(item.student_id, item.subscription_id)"
+                    type="button"
+                    class="btn btn-danger px-3 py-2"
+                >
+                    <font-awesome-icon :icon="faTrashAlt" class="w-4 h-4 mr-2" />
+                    Eliminar
+                </button>
+                <button
+                    v-can="'aca_suscripcion_estudiante_editar'"
+                    @click="updateSubscription(item)"
+                    type="button"
+                    class="btn btn-primary px-3 py-2"
+                    :class="{ 'opacity-25': loadingUpdate }" :disabled="loadingUpdate"
+                >
+                    <icon-edit class="w-4 h-4 mr-2" />
+                    Guardar cambios
+                </button>
+            </div>
         </div>
     </div>
 </template>

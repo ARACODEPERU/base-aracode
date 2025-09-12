@@ -161,11 +161,8 @@ import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
                                         <img :src="'https://ui-avatars.com/api/?name='+teacher.person.full_name+'&size=96&rounded=true'" class="w-16 h-16 rounded-xl shadow-lg" :alt="teacher.person.full_name"/>
                                     </template>
                                     <div>
-                                        <h2 class="text-lg font-bold truncate">
-                                            {{ teacher.person.names }}
-                                        </h2>
-                                        <h2 class="text-lg font-bold truncate">
-                                            {{ teacher.person.father_lastname }} {{ teacher.person.mother_lastname }}
+                                        <h2 class="text-lg font-bold break-words">
+                                            {{ teacher.person.formatted_name }}
                                         </h2>
                                         <span class="text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block bg-green-500/20">
                                             {{ teacher.person.number }}

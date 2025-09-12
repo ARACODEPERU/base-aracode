@@ -107,13 +107,13 @@ const getImage = (path) => {
 </script>
 <template>
     <div class="panel">
-        <form @submit.prevent="saveRegistration"> 
+        <form @submit.prevent="saveRegistration">
             <div class="space-y-6 mb-4">
                 <div class="mb-2">
                     <InputLabel for="course_date" value="Curso *" />
-                    <Select 
+                    <Select
                         show-search
-                        v-model:value="form.course_id" 
+                        v-model:value="form.course_id"
                         class="w-full mb-2"
                         placeholder="Seleccionar"
                         :options="dataCourses"
@@ -124,7 +124,7 @@ const getImage = (path) => {
                 </div>
             </div>
 
-            
+
             <div class="flex items-center justify-end">
                 <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                     <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -144,16 +144,16 @@ const getImage = (path) => {
             <img class="w-20 h-20" :src="getImage(registration.course.image)" alt="">
             <div class="flex-1 font-medium dark:text-primary-200">
                 <div>{{ registration.course.description }}</div>
-                
+
             </div>
             <button
                 @click="destroyCertificate(registration.id)"
                 type="button"
-                class="absolute top-2 right-2 px-3 py-2 text-xs font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+                class="btn btn-danger absolute top-2 right-2 px-3 py-2"
             >
-                <font-awesome-icon :icon="faTrashAlt" />
+                <font-awesome-icon :icon="faTrashAlt" class="w-4 h-4" />
             </button>
         </div>
     </div>
-        
+
 </template>

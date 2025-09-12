@@ -15,6 +15,7 @@ use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 use Modules\Academic\Entities\AcaExcelStudentsExportJob;
 use Modules\Academic\Http\Controllers\AcaAuthController;
+use Modules\Academic\Http\Controllers\AcaCapRegistrationController;
 use Modules\Academic\Http\Controllers\AcaCertificateController;
 use Modules\Academic\Http\Controllers\AcaContentController;
 use Modules\Academic\Http\Controllers\AcaCourseController;
@@ -107,7 +108,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('students/subscriptions_store', 'AcaCapRegistrationController@subscriptionStore')
         ->name('aca_students_subscriptions_store');
 
-    Route::delete('students/subscriptions_destroy/{student_id}/{subscription_id}', 'AcaCapRegistrationController@subscriptionDestroy')
+    Route::delete('students/subscriptions_destroy/{student_id}/{subscription_id}', [AcaCapRegistrationController::class, 'subscriptionDestroy'])
         ->name('aca_students_subscriptions_destroy');
 
     Route::delete('students/registrations_destroy/{id}', 'AcaCapRegistrationController@destroy')
@@ -432,7 +433,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->get('reports/student/subscriptions/expired',[AcaReportsController::class, 'expiredSubscriptions'])
         ->name('aca_subscriptions_expired_student');
 
-
+    Route::middleware(['middleware' => 'permission:aca_suscripcion_estudiante_editar'])
+        ->post('reports/student/subscription/update',[AcaCapRegistrationController::class, 'updateSubscriptionStudent'])
+        ->name('aca_subscriptions_update_student');
 });
 
 Route::middleware(['auth', 'verified'])

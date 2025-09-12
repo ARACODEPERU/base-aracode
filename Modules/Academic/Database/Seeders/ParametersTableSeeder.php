@@ -26,5 +26,14 @@ class ParametersTableSeeder extends Seeder
             'json_query_data'   => null,
             'value_default'     => 'true'
         ]);
-    }
+
+        Parameter::create([
+            'parameter_code'    => 'P000020',
+            'description'       => 'Orede del nombre completo de los usuarios',
+            'control_type'      => 'rdj',
+            'json_query_data'   => '[{"value": "1","label":"Pallido paterno Apellido materno Nombres"},{"value": "2","label":"Nombres Pallido paterno Apellido materno"},{"value": "3","label":"Nombres Pallido paterno"}]',
+            'value_default'     => '1'
+        ]);
+
+   }
 }
