@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Http\Controllers;
 
+use App\Models\Parameter;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Renderable;
@@ -20,6 +21,16 @@ use Modules\Academic\Entities\AcaSubscriptionType;
 class AcaCapRegistrationController extends Controller
 {
     use ValidatesRequests;
+
+    protected $P000021;
+
+    public function __construct()
+    {
+        $this->P000021 = filter_var(
+            Parameter::where('parameter_code', 'P000021')->value('value_default') ?? true,
+            FILTER_VALIDATE_BOOLEAN
+        );
+    }
 
     public function index()
     {
@@ -45,13 +56,13 @@ class AcaCapRegistrationController extends Controller
 
         $subscriptions = AcaSubscriptionType::where('status', true)->get();
 
-
         return Inertia::render('Academic::Registrations/Create', [
             'student'   => $student,
             'courses'   => $courses,
             'registrations' => $registrations,
             'subscriptions' => $subscriptions,
-            'subscriptionStudent' => $subscriptionStudent
+            'subscriptionStudent' => $subscriptionStudent,
+            'P000021' => $this->P000021,
         ]);
     }
 
@@ -177,8 +188,8 @@ class AcaCapRegistrationController extends Controller
             $stsubscription->update([
                 'student_id' => $student->id,
                 'subscription_id' => $subscription_id,
-                'date_start' => $dateStart,
-                'date_end' => $dateEnd,
+                'date_start' => $dateStart->format('Y-m-d'),
+                'date_end' => $dateEnd->format('Y-m-d'),
                 'status' => true,
                 'notes' => null,
                 'renewals' => true,
@@ -190,8 +201,8 @@ class AcaCapRegistrationController extends Controller
             AcaStudentSubscription::create([
                 'student_id' => $student->id,
                 'subscription_id' => $subscription_id,
-                'date_start' => $dateStart,
-                'date_end' => $dateEnd,
+                'date_start' => $dateStart->format('Y-m-d'),
+                'date_end' => $dateEnd->format('Y-m-d'),
                 'status' => true,
                 'notes' => null,
                 'renewals' => 0,

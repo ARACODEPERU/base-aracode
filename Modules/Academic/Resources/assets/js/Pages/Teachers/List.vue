@@ -127,7 +127,7 @@ import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
                             class="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 relative"
                         >
                             <div class="card-content p-4 relative z-10">
-                                <div class="flex justify-between pr-4 pt-0">
+                                <div class="flex justify-between pt-0">
                                     <div class="flex items-center gap-2 p-0">
                                         <img :src="getImageFlag(teacher.person.country.image)" class="w-6 h-6" />
                                         <span>{{ teacher.person.country.description }}</span>

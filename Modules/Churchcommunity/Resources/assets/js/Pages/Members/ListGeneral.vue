@@ -15,6 +15,7 @@
     import { ref, onMounted, computed } from 'vue';
     import Multiselect from '@suadelabs/vue3-multiselect';
     import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+    import { faPencil } from "@fortawesome/free-solid-svg-icons";
 
     DataTable.use(DataTablesCore);
 
@@ -191,6 +192,11 @@
                 </div>
                 <DataTable ref="memberTable" :options="options" :columns="columns">
                     <template #action="props">
+                        <div class="flex gap-1 items-center justify-center">
+                            <Link v-tippy="{ content: 'Editar', placement: 'bottom'}" :href="route('permissions.edit',props.rowData.id)" type="button" class="btn btn-sm btn-outline-primary">
+                                <font-awesome-icon  :icon="faPencil" class="m-0" />
+                            </Link>
+                        </div>
                     </template>
                 </DataTable>
             </div>

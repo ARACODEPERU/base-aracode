@@ -85,6 +85,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->get('students/create', 'AcaStudentController@create')
         ->name('aca_students_create');
 
+    Route::middleware(['middleware' => 'permission:aca_estudiante_eliminar'])
+        ->delete('students/destroy/{id}', [AcaStudentController::class, 'destroy'])
+        ->name('aca_students_destroy');
+
     Route::middleware(['permission:aca_estudiante_certificados_crear'])
         ->get('students/certificates/{id}', 'AcaCertificateController@studentCreate')
         ->name('aca_students_certificates_create');
@@ -105,7 +109,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::post('students/registrations_store', 'AcaCapRegistrationController@store')
         ->name('aca_students_registrations_store');
 
-    Route::post('students/subscriptions_store', 'AcaCapRegistrationController@subscriptionStore')
+    Route::post('students/subscriptions_store', [AcaCapRegistrationController::class,'subscriptionStore'])
         ->name('aca_students_subscriptions_store');
 
     Route::delete('students/subscriptions_destroy/{student_id}/{subscription_id}', [AcaCapRegistrationController::class, 'subscriptionDestroy'])

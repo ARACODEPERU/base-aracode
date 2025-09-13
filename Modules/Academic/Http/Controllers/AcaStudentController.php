@@ -407,16 +407,6 @@ class AcaStudentController extends Controller
             ->with('message', __('Estudiante creado con éxito'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     * @param int $id
-     * @return Renderable
-     */
-    public function destroy($id)
-    {
-        //
-    }
-
     public function myCourses()
     {
 
@@ -1220,4 +1210,36 @@ class AcaStudentController extends Controller
         return response()->json($allSubscriptions);
     }
 
+    public function destroy($id){
+        $message = null;
+        $success = false;
+
+        try {
+            // Usamos una transacción para asegurarnos de que la operación se realice de manera segura.
+            DB::beginTransaction();
+
+            $tea = AcaStudent::findOrFail($id);
+            $person_id = $tea->person_id;
+            // Verificamos si existe.
+            $per = Person::findOrFail($person_id);
+            $tea->delete();
+            // Si no hay detalles asociados, eliminamos.
+            $per->delete();
+            // Si todo ha sido exitoso, confirmamos la transacción.
+            DB::commit();
+
+            $message =  'Estudiante eliminada correctamente';
+            $success = true;
+        } catch (\Exception $e) {
+            // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.
+            DB::rollback();
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
+    }
 }

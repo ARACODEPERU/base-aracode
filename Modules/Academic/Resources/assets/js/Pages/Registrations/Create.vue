@@ -26,6 +26,10 @@ const props = defineProps({
     subscriptions:{
         type: Object,
         default : () => ({})
+    },
+    P000021: {
+        type: Boolean,
+        default: true
     }
 });
 
@@ -57,7 +61,8 @@ const props = defineProps({
                 </Keypad>
             </div>
             <div class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 sm:col-span-3 space-y-4">
+
+                <div v-if="P000021" class="col-span-6 sm:col-span-3 space-y-4">
                     <SubscriptionForm
                         :faTrashAlt="faTrashAlt"
                         :subscriptionStudent="subscriptionStudent"
