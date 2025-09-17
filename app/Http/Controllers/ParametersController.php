@@ -104,12 +104,19 @@ class ParametersController extends Controller
             'value_default'         => 'required'
         ]);
         //dd($id);
+
+        if($request->get('control_type') == 'tx'){
+            $value_default = $request->get('value_default');
+            // Convertir los caracteres especiales a entidades HTML
+            $valor_seguro = htmlspecialchars($value_default, ENT_QUOTES, 'UTF-8');
+        }
+
         Parameter::find($id)->update([
             'parameter_code'        => $request->get('parameter_code'),
             'description'           => $request->get('description'),
             'control_type'          => $request->get('control_type'),
             'json_query_data'       => $request->get('json_query_data'),
-            'value_default'         => $request->get('value_default')
+            'value_default'         => $valor_seguro
         ]);
     }
 
