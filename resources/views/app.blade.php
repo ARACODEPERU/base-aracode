@@ -12,15 +12,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
-            <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EKDSRLYXFM"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
 
-    gtag('config', 'G-EKDSRLYXFM');
-    </script>
+    @php
+        $parameters = new \App\Models\Parameters();
+        $P000022=$parameters::where('parameter_code', 'P000022')->value('value_default')?? "";
+    @endphp
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Scripts -->
     @routes
