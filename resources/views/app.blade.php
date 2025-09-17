@@ -15,8 +15,9 @@
 
     @php
         $parameters = new \App\Models\Parameters();
-        $P000022=$parameters::where('parameter_code', 'P000022')->value('value_default')?? "";
+        $P000022=$parameters->where('parameter_code', 'P000022')->value('value_default')?? "";
     @endphp
+    {!! $P000022 !!}
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Scripts -->
