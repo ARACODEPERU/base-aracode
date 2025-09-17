@@ -14,7 +14,7 @@
         rel="stylesheet" />
 
     @php
-        $parameters = new \App\Models\Parameters();
+        $parameters = new \App\Models\Parameter();
         $P000022=$parameters->where('parameter_code', 'P000022')->value('value_default')?? "";
     @endphp
     {!! $P000022 !!}
