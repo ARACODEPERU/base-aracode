@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaSubscriptionType;
 
@@ -49,44 +50,76 @@ class AcaAuthController extends Controller
                 'apps' => ['required', 'max:255'],
                 'apms' => ['required', 'max:255'],
                 'numberdni' => ['required', 'max:8'],
-                'email' => 'required|string|email|max:255|unique:' . User::class,
+                'email' => ['required', 'string', 'email', 'max:255'],
                 'password' => ['required'],
             ]
         );
 
-        $person = Person::firstOrCreate(
-            [
-                'document_type_id' => 1,
-                'email' => $request->get('email'),
-                'number' => $request->get('numberdni'),
-            ],
-            [
+        $documentType = 1; // fijo en tu ejemplo
+        $number = $request->get('numberdni');
+        $email = $request->get('email');
 
+        // Buscar si ya existe la persona
+        $person = Person::where('document_type_id', $documentType)
+            ->where('number', $number)
+            ->first();
+
+        if ($person) {
+            // Verificar si ya tiene usuario
+            $user = User::where('person_id', $person->id)->first();
+
+            if ($user) {
+                if ($user->email === $email) {
+                    // Caso 1: misma persona y mismo email -> iniciar sesión
+                    Auth::login($user);
+                    $request->session()->regenerate();
+                    return redirect()->route('academic_step_verification', $id);
+                } else {
+                    // Caso 2: misma persona pero email distinto -> error para useForm
+                    throw ValidationException::withMessages([
+                        'email' => 'Esta persona ya está registrada con otro correo electrónico.',
+                    ]);
+                }
+            } else {
+                // Caso raro: persona existe pero sin usuario -> crear usuario
+                $user = User::create([
+                    'name' => $request->get('names'),
+                    'email' => $email,
+                    'password' => Hash::make($request->get('password')),
+                    'person_id' => $person->id,
+                    'local_id' => 1,
+                    'tour_completed' => false
+                ]);
+
+                Auth::login($user);
+                $request->session()->regenerate();
+                return redirect()->route('academic_step_verification', $id);
+            }
+        } else {
+            // Caso 3: persona nueva -> crear persona y usuario
+            $person = Person::create([
+                'document_type_id' => $documentType,
+                'number' => $number,
                 'short_name' => $request->get('names'),
                 'full_name' => $request->get('apps') . ' ' . $request->get('apms') . ' ' . $request->get('names'),
                 'father_lastname' => $request->get('apps'),
                 'mother_lastname' => $request->get('apms'),
                 'gender' => $request->get('sexo'),
                 'status' => true,
-            ]
-        );
-        // Crear el usuario
-        if ($person->id) {
+            ]);
+
             $user = User::create([
                 'name' => $request->get('names'),
-                'email' => $request->get('email'),
-                'password' => Hash::make($request->get('password')), // Encriptar la contraseña
+                'email' => $email,
+                'password' => Hash::make($request->get('password')),
                 'person_id' => $person->id,
                 'local_id' => 1,
                 'tour_completed' => false
             ]);
 
-            // Loguear al usuario
             Auth::login($user);
             $request->session()->regenerate();
             return redirect()->route('academic_step_verification', $id);
-        } else {
-            return redirect()->route('academic_step_account', $id);
         }
     }
 

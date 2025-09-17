@@ -93,25 +93,35 @@ class PersonController extends Controller
             'number' => 'required',
             'full_name' => 'required|max:255',
             'address'   => 'required|max:255',
-            'ubigeo'   => 'required'
+            'ubigeo'   => 'required',
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('people')->where(function ($query) use ($request) {
+                    return $query
+                        ->where('document_type_id', '!=', $request->input('document_type'))
+                        ->orWhere('number', '!=', $request->input('number'));
+                })
+            ],
         ]);
 
         $ubigeo = $request->input('ubigeo');
+        $ubigeo_description = $request->input('ubigeo_description');
 
         $person = Person::updateOrCreate(
             [
                 'document_type_id' => $request->input('document_type'),
                 'number' => $request->input('number'),
-            ], // Buscamos a la persona
+            ],
             [
                 'full_name' => trim($request->input('full_name')),
                 'telephone' => $request->input('telephone'),
                 'email' => $request->input('email'),
                 'address' => $request->input('address'),
-                'is_client' => $request->input('is_client') ? true : false,
-                'is_provider' => $request->input('is_provider') ? true : false,
-                'ubigeo' => is_array($ubigeo) ? $ubigeo['district_id'] : $ubigeo
-                // otros campos que quieras actualizar o crear
+                'is_client' => $request->boolean('is_client'),
+                'is_provider' => $request->boolean('is_provider'),
+                'ubigeo' => is_array($ubigeo) ? $ubigeo['district_id'] : $ubigeo,
+                'ubigeo_description' => is_array($ubigeo) ? $ubigeo['ubigeo_description'] : $ubigeo_description,
             ]
         );
 

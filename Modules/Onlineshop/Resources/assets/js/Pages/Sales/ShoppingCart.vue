@@ -88,7 +88,8 @@
             number: formPerInvoice.value.ruc
         }).then((res) => {
             if(res.data.success){
-                formPerInvoice.value.razonSocial =  res.data.person.razonSocial;
+                //formPerInvoice.value.razonSocial =  res.data.person.razonSocial;
+                formPerInvoice.value.razonSocial =  res.data.person.razon_social;
                 formPerInvoice.value.statusRuc = res.data.person.estado;
                 formPerInvoice.value.conditionRuc = res.data.person.condicion;
                 if(formPerInvoice.value.statusRuc == 'ACTIVO' && formPerInvoice.value.conditionRuc == 'HABIDO'){

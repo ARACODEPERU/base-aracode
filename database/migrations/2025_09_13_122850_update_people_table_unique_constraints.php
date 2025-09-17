@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('people', function (Blueprint $table) {
+            // quitar unique de email
+            $table->dropUnique(['email']);
+
+            // agregar índice único compuesto en document_type_id + number
+            $table->unique(['document_type_id', 'number'], 'people_document_unique');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('people', function (Blueprint $table) {
+            $table->dropUnique('people_document_unique');
+            $table->unique('email');
+        });
+    }
+};

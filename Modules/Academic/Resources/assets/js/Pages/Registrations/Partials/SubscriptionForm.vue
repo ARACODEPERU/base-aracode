@@ -3,7 +3,7 @@
     import { Select } from 'ant-design-vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import InputError from '@/Components/InputError.vue';
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, watch } from 'vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import Swal2 from 'sweetalert2';
     import iconTrash from '@/Components/vristo/icon/icon-trash.vue';
@@ -37,18 +37,22 @@
 
     const subscriptionStudentData = ref([]);
 
-    subscriptionStudentData.value = props.subscriptionStudent.map(item => ({
-        ...item,
-        status: item.status === 1 // true si es 1, false si es 0
-    }));
+    watch(
+        () => props.subscriptionStudent,
+        (newVal) => {
+            subscriptionStudentData.value = newVal.map(item => ({
+            ...item,
+            status: item.status === 1
+            }))
+        },
+        { immediate: true } // para que también corra al inicio
+    )
 
     onMounted(() => {
         dataSubscriptions.value = props.subscriptions.map((obj) => ({
             value: obj.id,
             label: `${obj.description} / precio: ${JSON.parse(obj.prices)[0].amount}`
         }));
-
-
     });
 
     const filterOption = (input, option) => {
@@ -59,6 +63,8 @@
         form.post(route('aca_students_subscriptions_store'), {
             errorBag: 'saveSubscription',
             preserveScroll: true,
+            preserveState: true,
+            only: ['subscriptionStudent'],
             onSuccess: () => {
                 Swal2.fire({
                     title: 'Enhorabuena',
@@ -103,7 +109,13 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('aca_students_registrations_create', props.student.id), { replace: true, method: 'get' });
+                router.visit(route('aca_students_registrations_create', props.student.id), {
+                    replace: false,
+                    method: 'get',
+                    preserveState: true,
+                    preserveScroll: true,
+                    only: ['subscriptionStudent'],
+                });
             }
         });
     };

@@ -2,6 +2,7 @@
     import { ref } from 'vue';
     import { message } from 'ant-design-vue';
     import { useForm } from '@inertiajs/vue3';
+    import InputError from '@/Components/InputError.vue';
 
     const props = defineProps({
         subscription:{

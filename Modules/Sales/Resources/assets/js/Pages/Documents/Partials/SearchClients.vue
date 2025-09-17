@@ -196,7 +196,7 @@
         axios.post(route('sales_search_person_apies'), form).then((res) => {
 
             if(res.data.success){
-                form.full_name =  res.data.person['razonSocial'];
+                form.full_name =  res.data.person['razon_social'];
                 form.email = null;
                 form.address = null;
                 //form.search = res.data.person['razonSocial'];

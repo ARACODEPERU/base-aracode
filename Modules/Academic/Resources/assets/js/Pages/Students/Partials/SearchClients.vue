@@ -12,7 +12,6 @@
     import Swal2 from 'sweetalert2';
     import Multiselect from "@suadelabs/vue3-multiselect";
     import "@suadelabs/vue3-multiselect/dist/vue3-multiselect.css";
-    import iconDatabaseSearch from '@/Components/vristo/icon/icon-database-search.vue';
     import iconCompany from '@/Components/vristo/icon/icon-company.vue';
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
@@ -54,7 +53,9 @@
         ubigeo: '',
         ubigeo_description: '',
         presentations: false,
-        is_client: true
+        is_client: true,
+        estado: null,
+        condicion: null
     });
 
     const disabledBtnSelect = ref(true);
@@ -90,8 +91,10 @@
     }
 
     const emit = defineEmits(['clientId']);
+    const disabledBtnStore = ref(false);
 
     const saveNewSearchClient = () => {
+        disabledBtnStore.value = true;
         axios.post(route('save_person_update_create'), form).then((res) => {
             disabledBtnSelect.value = false;
             Swal2.fire({
@@ -154,6 +157,8 @@
                 }
             }
             form.processing = false;
+        }).finally(() => {
+            disabledBtnStore.value = false;
         });
     }
     watch(() => props.saleDocumentTypes, (id) => {
@@ -174,14 +179,26 @@
     const searchApispe = () => {
         apiesLoading.value = true;
         axios.post(route('sales_search_person_apies'), form).then((res) => {
-
+            //console.log(apiesLoading.value)
             if(res.data.success){
-                form.full_name =  res.data.person['razonSocial'];
-                form.email = null;
-                form.address = null;
-                //form.search = res.data.person['razonSocial'];
+                if(form.document_type == 6){
+                    form.full_name =  res.data.person['razon_social'];
+                    form.email = null;
+                    form.address = res.data.person['direccion'] == '-' ? null : res.data.person['direccion'];
+                    form.ubigeo = {
+                        district_id: res.data.person['ubigeo'],
+                        city_name: res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito']
+                    };
+                    form.ubigeo_description = res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito'];
+                    form.estado = res.data.person['estado'];
+                    form.condicion = res.data.person['condicion'];
+                }else{
+                    form.full_name =  res.data.person['razonSocial'];
+                    form.estado = null;
+                    form.condicion = null;
+                }
             }else{
-                console.log(res.data)
+                //console.log(res.data)
                 Swal2.fire({
                     icon: 'error',
                     text: res.data.error,
@@ -192,6 +209,7 @@
 
         }).finally(()=> {
             apiesLoading.value = false;
+            //console.log(apiesLoading.value)
         });
     }
 </script>
@@ -232,13 +250,13 @@
                         <InputError :message="form.errors.full_name" class="mt-2" />
                     </div>
                     <div class="col-span-6 sm:col-span-1">
-                        <InputLabel for="telephone" value="Teléfono" />
+                        <InputLabel for="telephone" value="Teléfono (Opcional)" />
                         <TextInput id="telephone" v-model="form.telephone" type="text" />
                         <InputError :message="form.errors.telephone" class="mt-2" />
                     </div>
 
                     <div class="col-span-6 sm:col-span-1">
-                        <InputLabel for="email" value="Email" />
+                        <InputLabel for="email" value="Email (Opcional)" />
                         <TextInput id="email" v-model="form.email" type="email" />
                         <InputError :message="form.errors.email" class="mt-2" />
                     </div>
@@ -267,17 +285,31 @@
                         <TextInput id="address" v-model="form.address" type="text" />
                         <InputError :message="form.errors.address" class="mt-2" />
                     </div>
+                    <div v-if="form.condicion && form.estado" class="col-span-6 sm:col-span-2">
+                        <div class="flex items-center gap-6">
+                            <div>
+                                <InputLabel for="condicion" value="Condicion" />
+                                <span class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500">{{ form.condicion }}</span>
+                            </div>
+                            <div>
+                                <InputLabel for="estado" value="Estado" />
+                                <span class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500">{{ form.estado }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </template>
             <template #buttons>
                 <button @click="searchApispe" v-if="form.document_type != 0" type="button" class="btn btn-primary text-xs uppercase">
-                    <icon-loader v-if="apiesLoading" class="animate-spin mr-1" />
+                    <icon-loader v-if="apiesLoading" class="w-4 h-4 animate-spin mr-1" />
                     <icon-company v-else class="w-4 h-4 mr-1" />
                     <span v-if="form.document_type == 6">SUNAT</span>
                     <span v-else-if="form.document_type == 1">RENIEC</span>
                 </button>
                 <RedButton @click="modalNewSearchClient()" >Buscar</RedButton>
-                <PrimaryButton @click="saveNewSearchClient()" >
+                <PrimaryButton @click="saveNewSearchClient()"
+                    :disabled="disabledBtnStore"
+                >
                     Guardar
                 </PrimaryButton>
                 <GreenButton
