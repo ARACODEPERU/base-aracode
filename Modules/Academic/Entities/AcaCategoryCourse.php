@@ -14,11 +14,6 @@ class AcaCategoryCourse extends Model
         'description', 'capacitation', 'image'
     ];
 
-    protected static function newFactory()
-    {
-        return \Modules\Academic\Database\factories\AcaCategoryCourseFactory::new();
-    }
-
     public function course(): HasMany
     {
         return $this->hasMany(AcaCourse::class);

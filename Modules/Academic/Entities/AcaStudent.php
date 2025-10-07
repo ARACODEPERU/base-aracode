@@ -5,6 +5,7 @@ namespace Modules\Academic\Entities;
 use App\Models\Person;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AcaStudent extends Model
@@ -14,13 +15,10 @@ class AcaStudent extends Model
     protected $fillable = [
         'student_code',
         'person_id',
-        'new_student'
+        'new_student',
+        'arrival_source_id',
+        'arrival_source_information'
     ];
-
-    protected static function newFactory()
-    {
-        return \Modules\Academic\Database\factories\AcaStudentFactory::new();
-    }
 
     public function person(): HasOne
     {
@@ -29,5 +27,19 @@ class AcaStudent extends Model
     public function registrations()
     {
         return $this->hasMany(AcaCapRegistration::class, 'student_id');
+    }
+    public function subscriptions()
+    {
+        return $this->hasMany(AcaStudentSubscription::class, 'student_id', 'id');
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(AcaCertificate::class, 'student_id', 'id');
+    }
+
+    public function arrivalSource(): BelongsTo
+    {
+        return $this->belongsTo(AcaArrivalSource::class, 'arrival_source_id');
     }
 }

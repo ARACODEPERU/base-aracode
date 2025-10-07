@@ -75,6 +75,11 @@ class Person extends Model
         return $this->hasOne(Country::class, 'id', 'country_id');
     }
 
+    public function identityDocumentType(): HasOne
+    {
+        return $this->hasOne(IdentityDocumentType::class, 'id', 'document_type_id');
+    }
+
     public function getFormattedNameAttribute()
     {
         // buscamos el parámetro una sola vez

@@ -24,6 +24,10 @@ const props = defineProps({
     occupations: {
         type: Object,
         default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -46,6 +50,7 @@ const props = defineProps({
                 :industrias="industrias"
                 :professions="professions"
                 :occupations="occupations"
+                :countries="countries"
             />
         </div>
     </AppLayout>

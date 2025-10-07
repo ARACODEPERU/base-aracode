@@ -57,6 +57,13 @@ const menuCRM = {
             permissions: "crm_libro_reclamos",
             icom: faBookBookmark,
         },
+        {
+            route: route("crm_new_catchments"),
+            status: false,
+            text: "Nuevas Captaciones",
+            permissions: "crm_nuevas_captaciones",
+            icom: faBuildingUser,
+        },
     ],
 };
 

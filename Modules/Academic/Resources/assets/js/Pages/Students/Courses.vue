@@ -155,7 +155,7 @@
                             </template>
                         </select>
                     </div>
-                    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6 lg:gap-4">
+                    <div class="grid sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 sm:gap-6 lg:gap-4">
                         <template v-for="(course, index) in coursesData">
                             <article class="rounded-xl bg-white p-3 shadow-lg hover:shadow-xl hover:transform hover:scale-105 duration-300 dark:bg-gray-900">
                                 <template v-if="course.can_view">

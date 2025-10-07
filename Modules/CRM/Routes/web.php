@@ -12,6 +12,7 @@ use Modules\CRM\Http\Controllers\CrmIaController;
 use Modules\CRM\Http\Controllers\CrmInformationBankController;
 use Modules\CRM\Http\Controllers\CrmMessagesController;
 use Modules\CRM\Http\Controllers\CrmMailboxController;
+use Modules\CRM\Http\Controllers\CrmNewRecruitmentsController;
 use Modules\CRM\Http\Controllers\CrmPersonController;
 
 /*
@@ -175,6 +176,14 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_chatbot'])
         ->get('chatbot/index', [CrmChatbotController::class, 'index'])
         ->name('crm_dasboard_chatbot');
+
+    Route::middleware(['middleware' => 'permission:crm_nuevas_captaciones'])
+        ->get('new_catchments', [CrmNewRecruitmentsController::class, 'index'])
+        ->name('crm_new_catchments');
+
+    Route::middleware(['middleware' => 'permission:crm_nuevas_captaciones'])
+        ->post('new_catchments/list', [CrmNewRecruitmentsController::class, 'getCatchments'])
+        ->name('crm_new_catchments_list');
 
     Route::get('complaints-book', [ComplaintsBookController::class, 'index'])->name('complaints_book_list');
     Route::post('complaints-book/attention/store', [ComplaintsBookAttentionController::class, 'store'])->name('complaints_book_attention_store');

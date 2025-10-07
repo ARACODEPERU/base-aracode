@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Http\Controllers;
 
+use App\Models\Country;
 use App\Models\District;
 use App\Models\Industry;
 use App\Models\Parameter;
@@ -60,48 +61,44 @@ class AcaStudentController extends Controller
 
     public function index()
     {
-        $students = (new AcaStudent())->newQuery();
-        $students = $students->join('people', 'aca_students.person_id', 'people.id')
-            ->select(
-                'aca_students.id',
-                'aca_students.student_code',
-                'people.document_type_id',
-                'people.full_name',
-                'people.number',
-                'people.telephone',
-                'people.email',
-                'people.address',
-                'people.birthdate',
-                'people.image AS people_image',
-                'aca_students.created_at',
-                'aca_students.new_student',
-                DB::raw('(SELECT COUNT(course_id) FROM aca_cap_registrations WHERE student_id=aca_students.id) as countCourses'),
-                DB::raw('(SELECT COUNT(subscription_id) FROM aca_student_subscriptions WHERE student_id=aca_students.id) as countSubscriptions'),
-                DB::raw('(SELECT COUNT(course_id) FROM aca_certificates WHERE student_id=aca_students.id) as countCertificates')
-            );
+        $students = AcaStudent::with([
+            'person.country'
+        ])
+        ->select('aca_students.*',
+            DB::raw('(SELECT COUNT(course_id) FROM aca_cap_registrations WHERE student_id=aca_students.id) as countCourses'),
+            DB::raw('(SELECT COUNT(subscription_id) FROM aca_student_subscriptions WHERE student_id=aca_students.id) as countSubscriptions'),
+            DB::raw('(SELECT COUNT(course_id) FROM aca_certificates WHERE student_id=aca_students.id) as countCertificates')
+        );
+
+        // 🔍 Filtro de búsqueda
         if (request()->has('search')) {
             $searchTerm = request()->input('search');
 
-            $students->where(function ($query) use ($searchTerm) {
-                $query->where('people.full_name', 'LIKE', '%' . $searchTerm . '%') // Búsqueda parcial por nombre
-                    ->orWhere('people.email', 'LIKE', '%' . $searchTerm . '%')     // Búsqueda parcial por email
-                    ->orWhere('people.number', '=', $searchTerm);                  // ¡Coincidencia EXACTA por DNI!
+            $students->whereHas('person', function ($query) use ($searchTerm) {
+                $query->where('full_name', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('email', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('number', '=', $searchTerm);
             });
         }
+
+        // 📌 Ordenamiento
         if (request()->query('sort')) {
             $attribute = request()->query('sort');
             $sort_order = 'ASC';
+
             if (strncmp($attribute, '-', 1) === 0) {
                 $sort_order = 'DESC';
                 $attribute = substr($attribute, 1);
             }
+
             $students->orderBy($attribute, $sort_order);
         } else {
             $students->latest();
         }
 
+        // 📄 Paginación
         $students = $students->paginate(12)->onEachSide(2);
-
+        //dd($students);
         return Inertia::render('Academic::Students/List', [
             'students' => $students,
             'filters' => request()->all('search')
@@ -133,12 +130,15 @@ class AcaStudentController extends Controller
             )
             ->get();
 
+        $countries = Country::orderBy('description')->get();
+
         return Inertia::render('Academic::Students/Create', [
             'identityDocumentTypes' => $identityDocumentTypes,
-            'ubigeo' => $ubigeo,
-            'industrias' => $industrias,
-            'professions' => $professions,
-            'occupations' => $occupations
+            'countries'             => $countries,
+            'ubigeo'                => $ubigeo,
+            'industrias'            => $industrias,
+            'professions'           => $professions,
+            'occupations'           => $occupations
         ]);
     }
 
@@ -163,16 +163,33 @@ class AcaStudentController extends Controller
                 'email'             => 'unique:people,email,' . $update_id . ',id',
                 'email'             => 'unique:users,email,' . ($user ? $user->id  : null) . ',id',
                 'address'           => 'required|max:255',
-                'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
                 'names'             => 'required|max:255',
                 'father_lastname'   => 'required|max:255',
                 'mother_lastname'   => 'required|max:255',
+                'ubigeo_description'=> 'required|max:255'
+            ],
+            [
+                'email.unique' => 'El email ya esta en uso en usuario o en persona',
+                'ubigeo_description.required' => 'La ciudad es nesesaria',
+                'ubigeo_description.max' => 'Excede el numero de caracteres permitidos'
             ]
         );
 
-        // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
-        // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';
+        $country_id = $request->get('country_id') ?? 1;
+
+        if($country_id == 1){
+            $this->validate(
+                $request,
+                [
+                    'ubigeo' => 'required|max:255',
+                ],
+                [
+                    'ubigeo.required' => 'La ciudad es nesesaria'
+                ]
+            );
+        }
+
         $path = null;
         $destination = 'uploads/students';
         $file = $request->file('image');
@@ -205,6 +222,7 @@ class AcaStudentController extends Controller
                 'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
                 'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
                 'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
+                'country_id'            => $request->get('country_id') ?? 1,
             ]
         );
 
@@ -291,10 +309,13 @@ class AcaStudentController extends Controller
             ->orderBy('id')
             ->get();
 
+        $countries = Country::orderBy('description')->get();
+
         $student->image_preview = $student->image;
 
         return Inertia::render('Academic::Students/Edit', [
             'identityDocumentTypes' => $identityDocumentTypes,
+            'countries'             => $countries,
             'ubigeo'                => $ubigeo,
             'student'               => $student,
             'industrias'            => $industrias,
@@ -325,12 +346,16 @@ class AcaStudentController extends Controller
                 'telephone'         => 'required|max:12',
                 'email'             => 'required|email|max:255',
                 'email'            => 'unique:people,email,' . $person_id . ',id',
-                'address'           => 'required|max:255',
-                'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
                 'names'             => 'required|max:255',
                 'father_lastname'   => 'required|max:255',
                 'mother_lastname'   => 'required|max:255',
+                'ubigeo_description'=> 'required|max:255'
+            ],
+            [
+                'email.unique' => 'El email ya esta en uso en usuario o en persona',
+                'ubigeo_description.required' => 'La ciudad es nesesaria',
+                'ubigeo_description.max' => 'Excede el numero de caracteres permitidos'
             ]
         );
 
@@ -338,31 +363,29 @@ class AcaStudentController extends Controller
             $this->validate(
                 $request,
                 [
-                    'email'            => 'unique:users,email,' . $user->id . ',id',
+                    'email' => 'unique:users,email,' . $user->id . ',id',
                 ]
             );
         }
 
-        // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
-        // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';
-        $path = null;
-        $destination = 'uploads/students';
-        $file = $request->file('image');
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = trim($request->get('number')) . '.' . $extension;
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
+        $country_id = $request->get('country_id') ?? 1;
+
+        if($country_id == 1){
+            $this->validate(
+                $request,
+                [
+                    'ubigeo' => 'required|max:255',
+                ],
+                [
+                    'ubigeo.required' => 'La ciudad es nesesaria'
+                ]
             );
-            //$path = asset('storage/' . $path);
-            $path =  $path;
         }
 
-        Person::find($person_id)->update([
+
+        $person = Person::find($person_id);
+
+        $person->update([
             'document_type_id'      => $request->get('document_type_id'),
             'short_name'            => trim($request->get('names')),
             'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
@@ -370,7 +393,6 @@ class AcaStudentController extends Controller
             'number'                => trim($request->get('number')),
             'telephone'             => $request->get('telephone'),
             'email'                 => trim($request->get('email')),
-            'image'                 => $path,
             'address'               => $request->get('address'),
             'is_provider'           => false,
             'is_client'             => true,
@@ -387,6 +409,7 @@ class AcaStudentController extends Controller
             'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
             'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
             'industry'              => $request->get('industry_id') ? $request->get('industry_id')['description'] : null,
+            'country_id'            => $request->get('country_id') ?? 1,
         ]);
 
         if($user){
@@ -395,8 +418,30 @@ class AcaStudentController extends Controller
                 'email'         => $request->get('email'),
                 //'password'      => Hash::make($request->get('number')),
                 'information'   => $request->get('description'),
-                'avatar'        => $path
             ]);
+        }
+
+        $path = null;
+        $destination = 'uploads/students';
+        $file = $request->file('image');
+        if ($file) {
+
+            $original_name = strtolower(trim($file->getClientOriginalName()));
+            $original_name = str_replace(" ", "_", $original_name);
+            $extension = $file->getClientOriginalExtension();
+            $file_name = trim($request->get('number')) . '.' . $extension;
+            $path = $request->file('image')->storeAs(
+                $destination,
+                $file_name,
+                'public'
+            );
+            $person->image = $path;
+            $person->save();
+
+            if($user){
+                $user->avatar = $path;
+                $user->save();
+            }
         }
 
         AcaStudent::where('person_id', $person_id)->update([
@@ -500,13 +545,13 @@ class AcaStudentController extends Controller
             $canView = false; // Valor por defecto
 
             // Condición 4: Si el tipo es 'Programas de especialización', NUNCA se puede ver (a menos que haya una lógica de compra/pago específica no indicada)
-            if ($course->type_description === 'Programas de especialización') {
+            // Normalizar ambas cadenas (recomendado)
+            if (strcasecmp($course->type_description, 'Programas de Especialización') === 0) {
                 if (in_array($course->id, $registeredCourseIds)) {
                     $canView = true;
                 } else {
                     $canView = false;
                 }
-
             }
             // Condición 3: Suscripción activa (siempre puede ver, excepto los de especialización)
             elseif ($hasActiveSubscription) {
@@ -592,7 +637,17 @@ class AcaStudentController extends Controller
 
         // Verificar si el estudiante está matriculado
         $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
-        $isEnrolled = $this->checkCourseAccess($studentId, $id);
+
+        $isEnrolled = false;
+
+        $user = Auth::user();
+        if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
+            $isEnrolled = true;
+        }
+
+        if($studentId){
+            $isEnrolled = $this->checkCourseAccess($studentId, $id);
+        }
 
         // Verificar si el curso es gratuito
         $isFree = $course->price == 0 || is_null($course->price);

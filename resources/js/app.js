@@ -28,7 +28,8 @@ const pinia = createPinia();
 const head = createHead();
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    //title: (title) => `${title} - ${appName}`,
+    title: (title) => `${appName} - ${title}`,
     resolve: (name) => {
         let parts = name.split("::");
         if (parts.length > 1) {

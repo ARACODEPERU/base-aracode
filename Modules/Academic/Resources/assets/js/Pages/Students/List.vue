@@ -39,6 +39,10 @@
         return baseUrl + 'storage/'+ path;
     }
 
+    const getImageFlag = (path) => {
+        return baseUrl + path;
+    }
+
     const displayModalImport = ref(false);
 
     const showModalImport = () => {
@@ -346,16 +350,16 @@
                                 </div> -->
                                 <div class="bg-white dark:bg-[#1c232f] rounded-md overflow-hidden text-center shadow relative">
                                     <div :class="`bg-white/40 rounded-t-md bg-[url('/themes/vristo/images/notification-bg.png')] bg-center bg-cover p-6 pb-0`">
-                                        <template v-if="student.people_image">
-                                            <img :src="getImage(student.people_image)" class="object-contain w-4/5 max-h-40 mx-auto" :alt="student.full_name"/>
+                                        <template v-if="student.person.image">
+                                            <img :src="getImage(student.person.image)" class="object-contain w-4/5 max-h-40 mx-auto" :alt="student.person.formatted_name"/>
                                         </template>
                                         <template v-else>
-                                            <img :src="'https://ui-avatars.com/api/?name='+student.full_name+'&rounded=false'" class="object-contain w-4/5 max-h-40 mx-auto" :alt="student.full_name"/>
+                                            <img :src="'https://ui-avatars.com/api/?name='+student.person.formatted_name+'&rounded=false'" class="object-contain w-4/5 max-h-40 mx-auto" :alt="student.person.formatted_name"/>
                                         </template>
                                     </div>
                                     <div class="px-6 pb-24 -mt-10 relative">
                                         <div class="shadow-md bg-white dark:bg-gray-900 rounded-md px-2 py-4">
-                                            <div class="text-xl">{{ student.full_name }}</div>
+                                            <div class="text-xl">{{ student.person.formatted_name }}</div>
                                             <div class="text-white-dark">{{ student.role }}</div>
                                             <div class="flex items-center justify-between flex-wrap mt-6 gap-3">
                                                 <div class="flex-auto">
@@ -406,20 +410,27 @@
                                         </div>
                                         <div class="mt-6 grid grid-cols-1 gap-4 ltr:text-left rtl:text-right">
                                             <div class="flex items-center">
+                                                <div class="flex-none ltr:mr-2 rtl:ml-2">País :</div>
+                                                <div class="flex gap-2 truncate text-white-dark">
+                                                    <span>{{ student.person.country.description }}</span>
+                                                    <img :src="getImageFlag(student.person.country.image)" class="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
                                                 <div class="flex-none ltr:mr-2 rtl:ml-2">Num. de identificación :</div>
-                                                <div class="truncate text-white-dark">{{ student.number }}</div>
+                                                <div class="truncate text-white-dark">{{ student.person.number }}</div>
                                             </div>
                                             <div class="flex items-center">
                                                 <div class="flex-none ltr:mr-2 rtl:ml-2">Email :</div>
-                                                <div class="truncate text-white-dark">{{ student.email }}</div>
+                                                <div class="truncate text-white-dark">{{ student.person.email }}</div>
                                             </div>
                                             <div class="flex items-center">
                                                 <div class="flex-none ltr:mr-2 rtl:ml-2">Teléfono :</div>
-                                                <div class="text-white-dark">{{ student.telephone }}</div>
+                                                <div class="text-white-dark">{{ student.person.telephone }}</div>
                                             </div>
                                             <div class="flex items-center">
                                                 <div class="flex-none ltr:mr-2 rtl:ml-2">Dirección :</div>
-                                                <div class="text-white-dark">{{ student.address }}</div>
+                                                <div class="text-white-dark">{{ student.person.address }}</div>
                                             </div>
                                         </div>
                                     </div>

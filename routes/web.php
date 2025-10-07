@@ -210,6 +210,7 @@ Route::middleware('auth')->group(function () {
     ///////////////META FACEBOOK WHATSAPP/////////////////
 
     Route::post('meta/whatsapp/message/send', [MetaController::class, 'sendMessageWhatsapp'])->name('meta_whatsapp_message_send');
+
 });
 
 require __DIR__ . '/auth.php';

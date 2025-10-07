@@ -343,6 +343,7 @@ class AcaTeacherController extends Controller
             'is_provider'           => false,
             'is_client'             => true,
             'ubigeo'                => $request->get('ubigeo') ?? null,
+            'ubigeo_description'    => $request->get('ubigeo_description'),
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),

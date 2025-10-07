@@ -1,0 +1,54 @@
+:root {
+    --editor-bg-color: #072142; /* 🎨 variable global */
+    --editor-border-color: #334257;
+}
+.dark .tox-tinymce{
+    background-color: var(--editor-bg-color) !important;
+    border-color: var(--editor-border-color) !important;
+}
+
+.dark .tox-editor-header{
+    background-color: var(--editor-bg-color) !important;
+}
+.dark .tox-toolbar-overlord{
+    background-color: var(--editor-bg-color) !important;
+}
+.dark .tox-toolbar__primary{
+    background-color: var(--editor-bg-color) !important;
+}
+.dark .tox-icon{
+    color: #dcdde6 !important;
+}
+.dark .tox-bottom-anchorbar{
+    background-color: var(--editor-bg-color) !important;
+}
+.dark .tox-sidebar-wrap{
+    background-color: var(--editor-bg-color) !important;
+}
+.dark .tox-statusbar{
+    background-color: var(--editor-bg-color) !important;
+}
+.dark .tox-menubar{
+    background-color: var(--editor-bg-color) !important;
+    color: #dcdde6 !important;
+}
+.dark .tox-mbtn{
+    background-color: var(--editor-bg-color) !important;
+    color: #dcdde6 !important;
+}
+
+.dark .tox .tox-icon svg,
+.dark .tox .tox-icon svg path {
+    fill: white !important; /* o usa currentColor */
+}
+
+.dark .tox-tbtn--select{
+    background-color: #294064 !important;
+    border-color: #253b5c !important;
+    color: #b5c4fa !important;
+}
+
+.dark .tox .tox-tbtn__select-chevron svg,
+.dark .tox .tox-tbtn__select-chevron svg path {
+    fill: white !important; /* o usa currentColor */
+}

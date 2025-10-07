@@ -145,3 +145,23 @@
     height: 20px !important;
 }
 
+/* css personalizado de aracode */
+
+.ara-ant-select .ant-select-selector {
+    min-height: 38px !important;
+    height: auto !important;
+}
+
+.ara-ant-select .ant-select-selection-item {
+    align-items: center !important;
+    height: 34px !important;
+}
+.ara-ant-select .ant-select-selection-item-remove{
+    display: flex !important;              /* ✅ que sea un hijo flex */
+    align-items: center !important;        /* ✅ centra el ícono verticalmente */
+    justify-content: center !important;
+}
+.dark .ant-select-selection-item-remove{
+    color: #dcdde6 !important;
+}
+

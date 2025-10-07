@@ -11,6 +11,7 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
 use Modules\CMS\Http\Controllers\CmsAdvertisingController;
 use Modules\CMS\Http\Controllers\CMSController;
 use Modules\CMS\Http\Controllers\CmsItemController;
@@ -20,6 +21,7 @@ use Modules\CMS\Http\Controllers\CmsSectionController;
 use Modules\CMS\Http\Controllers\CmsSectionItemController;
 use Modules\CMS\Http\Controllers\CmsSubscriberController;
 use Modules\CMS\Http\Controllers\CmsTestimonyController;
+use Modules\CMS\Http\Controllers\OneFreeCourseController;
 
 Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
     Route::get('dashboard', [CMSController::class, 'dashboard'])->name('cms_dashboard');
@@ -71,6 +73,14 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
 
     Route::middleware(['permission:cms_publicidad'])->get('advertising', [CmsAdvertisingController::class, 'index'])->name('cms_advertising_list');
     Route::middleware(['permission:cms_publicidad'])->get('advertising/create', [CmsAdvertisingController::class, 'create'])->name('cms_advertising_create');
+
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->get('one/free/course/{menu_id}', [OneFreeCourseController::class, 'index'])
+        ->name('cms_landing_course_free');
+    Route::middleware(['permission:cms_landing_curso_gratis'])
+        ->post('one/free/course/store', [OneFreeCourseController::class, 'store'])
+        ->name('cms_landing_course_free_store');
+
 });
 
 

@@ -53,6 +53,8 @@
 
 @import 'MyStyle.css';
 
+@import 'tiny.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

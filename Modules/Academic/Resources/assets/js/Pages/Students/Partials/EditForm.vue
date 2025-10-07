@@ -7,7 +7,8 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
-import { ref, watch } from 'vue';
+import { ref, onMounted } from 'vue';
+import { Select, SelectOption } from 'ant-design-vue';
 import Multiselect from '@suadelabs/vue3-multiselect';
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 
@@ -35,6 +36,10 @@ const props = defineProps({
     occupations: {
         type: Object,
         default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -44,6 +49,11 @@ const getImage = (path) => {
     return baseUrl + 'storage/'+ path;
 }
 
+const getFlagImage = (path) => {
+    return baseUrl + path;
+}
+
+const filteredCountries = ref([]);
 const ubigeoSelected = ref({
     district_id: props.student.ubigeo,
     ubigeo_description: props.student.ubigeo_description
@@ -77,7 +87,8 @@ const form = useForm({
     occupation_id: {
         id: props.student.occupation_id,
         description: props.student.ocupacion
-    }
+    },
+    country_id: props.student.country_id,
 });
 
 const createPatient = () => {
@@ -103,25 +114,65 @@ const selectCity = () => {
     form.ubigeo = ubigeoSelected.value.district_id;
 }
 
+const imagePreviewRef = ref(null);
+
 const loadFile = (event) => {
-    const input = event.target;
-    const file = input.files[0];
-    const type = file.type;
+    const file = event.target.files[0];
+    if (!file) {
+        // If the user cancels the file selection, clear the fields and exit
+        form.image = null;
+        form.image_preview = null;
+        return;
+    }
 
-    // Obtén una referencia al elemento de imagen a través de Vue.js
-    const imagePreview = document.getElementById('preview_img');
-
-    // Crea un objeto de archivo de imagen y asigna la URL al formulario
-    const imageFile = URL.createObjectURL(event.target.files[0]);
-    form.image_preview = imageFile;
-    // Asigna el archivo a form.image
+    // Assign the file object to the `image` field for form submission
     form.image = file;
-    // Libera la URL del objeto una vez que la imagen se haya cargado
-    imagePreview.onload = function() {
-        URL.revokeObjectURL(imageFile); // libera memoria
+
+    // Create a temporary URL for the preview and assign it
+    const fileUrl = URL.createObjectURL(file);
+    form.image_preview = fileUrl;
+
+    // Use the template ref to get the <img> element
+    const imageElement = imagePreviewRef.value;
+
+    if (imageElement) {
+        // This is a good practice to free up memory when the image has loaded
+        imageElement.onload = () => {
+            URL.revokeObjectURL(fileUrl);
+        };
     }
 };
 
+onMounted(() => {
+    filteredCountries.value = props.countries;
+});
+
+const normalizeText = (text) => {
+    return (text || "")
+        .normalize("NFD")                // descompone letras + tildes (ej: "á" → "á")
+        .replace(/\p{Diacritic}/gu, "")  // elimina los diacríticos
+        .toLowerCase()
+        .trim();
+};
+
+const handleSearch = (input) => {
+    const term = normalizeText(input);
+
+    if (!term) {
+        filteredCountries.value = props.countries;
+        return;
+    }
+
+    filteredCountries.value = props.countries.filter(c =>
+        normalizeText(c.description).includes(term)
+    );
+};
+
+const countrySelected = ref(props.student.country_id);
+
+const handleChange = (val) => {
+    form.country_id = val;
+};
 </script>
 
 <template>
@@ -165,16 +216,6 @@ const loadFile = (event) => {
                 />
                 <InputError :message="form.errors.birthdate" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-6 ">
-                <div class="flex items-center space-x-6">
-                    <div v-show="form.image_preview" class="shrink-0">
-                        <img id='preview_img' class="h-16 w-16 object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
-                    </div>
-                    <label class="block ml-1">
-                        <input @change="loadFile" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file">
-                    </label>
-                </div>
-            </div>
             <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="names" value="Nombres *" />
                 <TextInput
@@ -208,7 +249,59 @@ const loadFile = (event) => {
                 />
                 <InputError :message="form.errors.mother_lastname" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-3 ">
+            <div class="col-span-6 lg:col-span-3">
+                <InputLabel for="country" value="País *" />
+                <Select
+                    style="width: 100%"
+                    placeholder="Seleccione un país"
+                    show-search
+                    :filter-option="false"
+                    @search="handleSearch"
+                    @change="handleChange"
+                    v-model:value="countrySelected"
+                    :allowClear="true"
+                >
+                    <template v-for="country in filteredCountries">
+                        <SelectOption :value="country.id" :label="country.description">
+                            <div class="flex items-center gap-4">
+                                <img :src="getFlagImage(country.image)" class="w-4 h-4" />
+                                <span>{{ country.description }}</span>
+                            </div>
+                        </SelectOption>
+                   </template>
+                </Select>
+            </div>
+
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="ubigeo" value="Ciudad *" />
+                <template v-if="form.country_id == 1">
+                    <multiselect
+                        id="industry_id"
+                        :model-value="ubigeoSelected"
+                        v-model="ubigeoSelected"
+                        :options="ubigeo"
+                        class="custom-multiselect"
+                        :searchable="true"
+                        placeholder="Buscar"
+                        selected-label="seleccionado"
+                        select-label="Elegir"
+                        deselect-label="Quitar"
+                        label="ubigeo_description"
+                        track-by="district_id"
+                        @update:model-value="selectCity"
+                    ></multiselect>
+                    <InputError :message="form.errors.ubigeo" class="mt-2" />
+                </template>
+                <template v-else>
+                    <TextInput
+                        id="ubigeo_id"
+                        v-model="form.ubigeo_description"
+                        type="text"
+                    />
+                    <InputError :message="form.errors.ubigeo_description" class="mt-2" />
+                </template>
+            </div>
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="address" value="Dirección *" />
                 <TextInput
                     id="address"
@@ -219,26 +312,7 @@ const loadFile = (event) => {
                 />
                 <InputError :message="form.errors.address" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-3">
-                <InputLabel for="ubigeo" value="Ciudad *" />
-                <multiselect
-                    id="industry_id"
-                    :model-value="ubigeoSelected"
-                    v-model="ubigeoSelected"
-                    :options="ubigeo"
-                    class="custom-multiselect"
-                    :searchable="true"
-                    placeholder="Buscar"
-                    selected-label="seleccionado"
-                    select-label="Elegir"
-                    deselect-label="Quitar"
-                    label="ubigeo_description"
-                    track-by="district_id"
-                    @update:model-value="selectCity"
-                ></multiselect>
-                <InputError :message="form.errors.ubigeo" class="mt-2" />
-            </div>
-            <div class="col-span-6 sm:col-span-3 ">
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="telephone" value="Teléfono *" />
                 <TextInput
                     id="telephone"
@@ -249,7 +323,7 @@ const loadFile = (event) => {
                 />
                 <InputError :message="form.errors.telephone" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-3">
+            <div class="col-span-6 sm:col-span-2">
                 <InputLabel for="email" value="Email *" />
                 <TextInput
                     id="email"
@@ -313,6 +387,41 @@ const loadFile = (event) => {
                     track-by="id"
                 ></multiselect>
                 <InputError :message="form.errors.occupation_id" class="mt-1" />
+            </div>
+            <div class="lg:col-span-3">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <div v-if="form.image_preview" style="width: 80px;height: 80px;">
+                            <img id='preview_img' class="w-full h-full object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
+                        </div>
+                        <span v-else class="group-has-[div]:hidden flex shrink-0 justify-center items-center size-20 border-2 border-dotted border-gray-300 text-gray-400 cursor-pointer rounded-full hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-600 dark:hover:bg-neutral-700/50">
+                            <svg class="shrink-0 size-7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="10" r="3"></circle>
+                                <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block">
+                            <span class="sr-only">Elige tu foto de perfil</span>
+                            <input
+                                @change="loadFile"
+                                type="file" class="block w-full text-sm text-gray-500
+                                file:me-4 file:py-2 file:px-4
+                                file:rounded-lg file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-600 file:text-white
+                                hover:file:bg-blue-700
+                                file:disabled:opacity-50 file:disabled:pointer-events-none
+                                dark:text-neutral-500
+                                dark:file:bg-blue-500
+                                dark:hover:file:bg-blue-400"
+                                ref="imagePreviewRef"
+                            >
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel for="gender" value="Genero *" />

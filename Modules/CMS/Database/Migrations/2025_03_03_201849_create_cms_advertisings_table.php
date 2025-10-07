@@ -13,7 +13,11 @@ return new class extends Migration
     {
         Schema::create('cms_advertisings', function (Blueprint $table) {
             $table->id();
-            
+            $table->string('description')->nullable();
+            $table->text('script_code')->nullable()->comment('codigo');
+            $table->string('image')->nullable();
+            $table->integer('views_total')->comment('total de visitas');
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
     }

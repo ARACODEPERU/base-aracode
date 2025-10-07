@@ -113,9 +113,9 @@
                     />
                 </div>
             </div>
-            <div class="mt-6">
-                <div class="panel">
-                    <table>
+            <div class="panel mt-6 pt-0 px-0">
+                <div class="table-responsive">
+                    <table class="rounded-t-xl">
                         <thead>
                             <tr>
                                 <th>FECHA</th>
@@ -158,7 +158,7 @@
                                         {{ item.client.full_name }}
                                     </td>
                                     <td>
-                                        <span v-if="item.document.forma_pago == 'Credito'" class="relative inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white z-10">
+                                        <span v-if="item.document && item.document.forma_pago == 'Credito'" class="relative inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white z-10">
                                             Al crédito
                                         </span>
                                         <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-500 text-white">Al contado</span>
