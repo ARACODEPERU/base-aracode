@@ -909,5 +909,139 @@ class WebPageController extends Controller
         ]);
     }
 	
+	    public function storeCourseFree(Request $request)
+    {
+        // 🔹 VALIDACIÓN
+        $validator = Validator::make($request->all(), [
+            'courseFree' => 'required',
+            'courseInterest' => 'required',
+            'nombres' => 'required|string|max:255',
+            'apaterno' => 'required|string|max:255',
+            'amaterno' => 'required|string|max:255',
+            'tidocumento' => 'required',
+            'numero' => [
+                'required',
+                'string',
+                'max:20',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Validar combinación única de tipo documento + número
+                    $exists = DB::table('people')
+                        ->where('document_type_id', $request->tidocumento)
+                        ->where('number', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('El número de documento ya está registrado para este tipo de documento.');
+                    }
+                },
+            ],
+            'email' => 'required|email|unique:people,email',
+            'phone' => 'required|string|max:20',
+            'pais' => 'required',
+            'ciudad' => 'required',
+            'genero' => 'required',
+            'fecha_nacimiento' => 'required',
+            'politicas' => 'accepted', // debe estar marcado
+        ], [
+            'required' => 'El campo :attribute es obligatorio.',
+            'email.email' => 'Debe ingresar un correo electrónico válido.',
+            'email.unique' => 'El correo electrónico ya está registrado.',
+            'politicas.accepted' => 'Debe aceptar las políticas para continuar.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        DB::beginTransaction();
+        try {
+            // 🔹 REGISTRO EN TABLA people
+            $person = Person::create([
+                'short_name' => $request->nombres,
+                'full_name' => $request->apaterno. ' '.$request->amaterno.' '.$request->nombres,
+                'document_type_id' => $request->tidocumento,
+                'names' => $request->nombres,
+                'father_lastname' => $request->apaterno,
+                'mother_lastname' => $request->amaterno,
+                'number' => $request->numero,
+                'telephone' => $request->phone,
+                'email' => $request->email,
+                'country_id' => $request->pais,
+                'status' => true,
+                'ubigeo' => $request->ubigeo ?? null,
+                'ubigeo_description' => $request->ciudad ?? null,
+                'gender' => $request->genero ?? null,
+                'birthdate' => $request->fecha_nacimiento ?? null
+            ]);
+
+            // 🔹 REGISTRO EN TABLA aca_students
+            $student = AcaStudent::create([
+                'student_code' => $request->numero,
+                'person_id' => $person->id,
+                'new_student' => true,
+                'arrival_source_id' => 1,
+                'arrival_source_information' => '01'
+            ]);
+
+            // 🔹 REGISTRO EN TABLA aca_cap_registrations
+            AcaCapRegistration::create([
+                'student_id' => $student->id,
+                'course_id' => $request->courseFree,
+                'status' => true,
+                'certificate_date' => Carbon::now(),
+                'arrival_source_id' => 1,
+                'arrival_source_information' => '01'
+            ]);
+
+            AcaStudentCoursesInterest::create([
+                'student_id' => $student->id,
+                'course_id' => $request->courseInterest,
+                'status' => 0
+            ]);
+
+            // 🔹 REGISTRO EN TABLA users
+            User::create([
+                'name' => $request->nombres,
+                'email' => $request->email,
+                'email_verified_at' => Carbon::now(),
+                'password' => Hash::make($request->numero),
+                'local_id' => 1,
+                'person_id' => $person->id,
+                'status' => true,
+                'updated_information' => false,
+                'tour_completed' => true,
+            ]);
+
+            $courses = [];
+            $item = OnliItem::where('item_id', '=', $request->courseInterest)->first();
+            $courses[0] = [
+                'image'       => $item->image,
+                'name'        => $item->name,
+                'description' => $item->description,
+                'type'        => $item->additional,
+                'modality'    => $item->additional1,
+                'price'      => "Gratis",
+            ];
+
+            //////////codigo enviar correo /////
+            Mail::to($request->email)->send(new StudentRegistrationMailable([
+                'courses'   => $courses,
+                'names'     => $request->nombres,
+                'user'      => $request->email,
+                'password'  => $request->numero,
+            ]));
+            // 3. CONFIRMACIÓN (COMMIT)
+            DB::commit();
+            // 🔹 MENSAJE DE ÉXITO
+            return redirect()->back()->with('success', 'Registro completado exitosamente.');
+
+        } catch (\Throwable $th) {
+             // 5. REVERSIÓN (ROLLBACK) si algo falla
+             DB::rollBack();
+             dd($th);
+            return redirect()->back()->with('fail', 'Registro fallido Reintentar.');
+        }
+
+    }
 
 }

@@ -23,7 +23,9 @@ class AcaCapRegistration extends Model
         'unlimited',
         'certificate_date',
         'sale_note_id',
-        'document_id'
+        'document_id',
+        'arrival_source_id',
+        'arrival_source_information'
     ];
 
     protected static function newFactory()

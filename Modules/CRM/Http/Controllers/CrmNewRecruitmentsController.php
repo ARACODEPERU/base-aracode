@@ -40,6 +40,11 @@ class CrmNewRecruitmentsController extends Controller
                         ]);
                 },
                 'arrivalSource:id,name',
+                'coursesInterest.course',
+                'registrations' => function ($query) {
+                    $query->whereNotNull('arrival_source_id')
+                        ->with('course');
+                },
             ])
             ->whereNotNull('arrival_source_id')
             ->select([
@@ -54,7 +59,8 @@ class CrmNewRecruitmentsController extends Controller
                 ")
             ]);
 
-        return DataTables::eloquent($members)->filter(function ($query) use ($request) {
+        return DataTables::eloquent($members)
+            ->filter(function ($query) use ($request) {
                 if ($request->custom_search) {
                     $search = $request->custom_search;
                     $query->whereHas('person', function($q) use ($search) {
@@ -62,25 +68,12 @@ class CrmNewRecruitmentsController extends Controller
                     });
                 }
 
-                // $filters = $request->filters;
-                // if ($filters['nivel']) {
-                //     $query->where('type_id', $filters['nivel']);
-                // }
-                // if ($filters['sede']) {
-                //     $query->where('sede_id', $filters['sede']);
-                // }
-                // if ($filters['ubigeo']) {
-                //     $query->whereHas('person', function($q) use ($filters) {
-                //         $q->where('ubigeo', $filters['ubigeo']);
-                //     });
-                // }
-                // if($filters['evangelization'] && $hasFullAccess){
-                //     $query->whereHas('believers', function($q) use ($filters) {
-                //         $q->where('evangelization_id', $filters['evangelization']);
-                //     });
-                // }
-            })
-            ->toJson();
+                $filters = $request->filters;
+
+                if ($filters['arrival_source']) {
+                    $query->where('arrival_source_id', $filters['arrival_source']);
+                }
+            })->toJson();
     }
 
     /**

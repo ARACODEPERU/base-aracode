@@ -49,6 +49,37 @@
         { data: 'person.birthdate', name: 'person.birthdate', title: 'Fecha nacimiento' },
         { data: 'arrival_source.name', name: 'arrival_source.name', title: 'Fuentes de llegada', orderable: false, searchable: false},
         { data: 'arrival_source_text', name: 'arrival_source_text', title: 'Descripción', orderable: false, searchable: false },
+        {
+            data: null,
+            title: 'Curso gratuito',
+            orderable: false,
+            searchable: false,
+            render: function (data, type, row) {
+                if (row.registrations?.length) {
+                    // Supongamos que cada registro tiene un campo course.name
+                    const cursos = row.registrations.map(r => r.course?.description ?? 'Sin nombre');
+                    return `<div class="text-sm/6 text-gray-900 dark:text-white font-semibold">
+                            ${cursos.join('<br>')}
+                        </div>`;
+                }
+                return `<span class="text-gray-500">—</span>`;
+            }
+        },
+        {
+            data: null,
+            title: 'Cursos de interés',
+            orderable: false,
+            searchable: false,
+            render: function (data, type, row) {
+                if (row.courses_interest?.length) {
+                    const intereses = row.courses_interest.map(ci => ci.course?.description ?? 'Sin nombre');
+                    return `<div class="text-sm/6 text-gray-900 dark:text-white font-semibold">
+                            ${intereses.join('<br>')}
+                        </div>`;
+                }
+                return `<span class="text-gray-500">Sin intereses</span>`;
+            }
+        }
     ];
 
     const options = {
