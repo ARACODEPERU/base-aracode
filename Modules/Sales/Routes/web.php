@@ -196,7 +196,7 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::get('dashboard/minimum/stock', [SalesController::class, 'minimumStock'])->name('sales_dashboard_minimum_stock');
     Route::post('dashboard/total/balance/table', [SalesController::class, 'totalBalanceTables'])->name('sales_dashboard_total_balance');
     Route::post('dashboard/total/summary/document', [SalesController::class, 'getSummaryTotals'])->name('sales_dashboard_total_summary');
-    Route::post('netapies/search/person', [ApisnetPeController::class, 'consult'])->name('sales_search_person_apies');
+    Route::post('netapies/search/person', [ApisnetPeController::class, 'consultMigo'])->name('sales_search_person_apies');
 
     Route::get('reports/invoice', [InvoiceReportsController::class, 'index'])->name('reports_invoice');
 

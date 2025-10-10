@@ -121,7 +121,7 @@ class PersonController extends Controller
                 'is_client' => $request->boolean('is_client'),
                 'is_provider' => $request->boolean('is_provider'),
                 'ubigeo' => is_array($ubigeo) ? $ubigeo['district_id'] : $ubigeo,
-                'ubigeo_description' => is_array($ubigeo) ? $ubigeo['ubigeo_description'] : $ubigeo_description,
+                'ubigeo_description' => is_array($ubigeo) ? $ubigeo['city_name'] : $ubigeo_description,
             ]
         );
 

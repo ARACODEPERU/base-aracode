@@ -193,7 +193,7 @@
                     form.estado = res.data.person['estado'];
                     form.condicion = res.data.person['condicion'];
                 }else{
-                    form.full_name =  res.data.person['razonSocial'];
+                    form.full_name =  res.data.person['razon_social'];
                     form.estado = null;
                     form.condicion = null;
                 }

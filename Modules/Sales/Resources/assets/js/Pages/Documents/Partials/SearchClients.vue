@@ -196,10 +196,22 @@
         axios.post(route('sales_search_person_apies'), form).then((res) => {
 
             if(res.data.success){
-                form.full_name =  res.data.person['razon_social'];
-                form.email = null;
-                form.address = null;
-                //form.search = res.data.person['razonSocial'];
+                if(form.document_type == 6){
+                    form.full_name =  res.data.person['razon_social'];
+                    form.email = null;
+                    form.address = res.data.person['direccion'] == '-' ? null : res.data.person['direccion'];
+                    form.ubigeo = {
+                        district_id: res.data.person['ubigeo'],
+                        city_name: res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito']
+                    };
+                    form.ubigeo_description = res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito'];
+                    form.estado = res.data.person['estado'];
+                    form.condicion = res.data.person['condicion'];
+                }else{
+                    form.full_name =  res.data.person['razon_social'];
+                    form.estado = null;
+                    form.condicion = null;
+                }
             }else{
                 Swal2.fire({
                     icon: 'error',
@@ -290,7 +302,7 @@
             </template>
             <template #buttons>
                 <button @click="searchApispe" v-if="form.document_type != 0" type="button" class="btn btn-primary text-xs uppercase">
-                    <icon-loader v-if="apiesLoading" class="animate-spin mr-1" />
+                    <icon-loader v-if="apiesLoading" class="w-4 h-4 animate-spin mr-1" />
                     <icon-company v-else class="w-4 h-4 mr-1" />
                     <span v-if="form.document_type == 6">SUNAT</span>
                     <span v-else-if="form.document_type == 1">RENIEC</span>
