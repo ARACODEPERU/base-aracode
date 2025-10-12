@@ -12,6 +12,7 @@
     import 'datatables.net-buttons-dt'; // Importa los estilos de los botones
     import es_PE from '@/Components/vristo/datatables/datatables-es.js';
     import { ref, onMounted } from 'vue';
+    import DropdownExports from '@/Components/DropdownExports.vue';
 
     DataTable.use(DataTablesCore);
 
@@ -128,7 +129,13 @@
                     <div class="flex gap-3">
                         <Keypad>
                             <template #botones>
+                                <DropdownExports
 
+                                    :showExcel="true"
+                                    :statusRouteName="'crm_export_status'"
+                                    :actionUrl="route('crm_new_catchments_export')"
+                                    :data="filters"
+                                />
                             </template>
                         </Keypad>
 

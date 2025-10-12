@@ -8,6 +8,7 @@ use Modules\CRM\Http\Controllers\CrmChatController;
 use Modules\CRM\Http\Controllers\CrmContactsController;
 use Modules\CRM\Http\Controllers\CRMController;
 use Modules\CRM\Http\Controllers\CrmConversationController;
+use Modules\CRM\Http\Controllers\CrmExportController;
 use Modules\CRM\Http\Controllers\CrmIaController;
 use Modules\CRM\Http\Controllers\CrmInformationBankController;
 use Modules\CRM\Http\Controllers\CrmMessagesController;
@@ -184,6 +185,10 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_nuevas_captaciones'])
         ->post('new_catchments/list', [CrmNewRecruitmentsController::class, 'getCatchments'])
         ->name('crm_new_catchments_list');
+
+    Route::post('new_catchments/export', [CrmNewRecruitmentsController::class, 'exportCrmContacts'])
+        ->name('crm_new_catchments_export');
+    Route::get('/export-status/{id}', [CrmExportController::class, 'exportStatus'])->name('crm_export_status');
 
     Route::get('complaints-book', [ComplaintsBookController::class, 'index'])->name('complaints_book_list');
     Route::post('complaints-book/attention/store', [ComplaintsBookAttentionController::class, 'store'])->name('complaints_book_attention_store');

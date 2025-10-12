@@ -29,6 +29,10 @@
             type: String,
             default: null
         },
+        statusRouteName: {
+            type: String,
+            default: null
+        },
         data: {
             // Corrección aquí: usa un array para tipos múltiples
             type: [Object, Array],
@@ -104,9 +108,11 @@
                 return;
             }
 
+            let statusBase = props.statusRouteName ?? 'aca_export_status';
+
             try {
                 // Asegúrate de que esta ruta exista en tu backend y devuelva el estado del job
-                const response = await axios.get(route('aca_export_status', currentJobId));
+                const response = await axios.get(route(statusBase, currentJobId));
                 const jobStatus = response.data;
 
                 // Actualizar el estado de progreso para el mensaje de "Cargando..."
@@ -185,7 +191,7 @@
 <template>
     <div class="dropdown">
         <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
-            <button type="button" class="btn btn-outline-warning inline-flex items-center gap-x-2">
+            <button type="button" class="btn btn-outline-warning uppercase btn-sm py-2 inline-flex items-center gap-x-2">
                 <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>

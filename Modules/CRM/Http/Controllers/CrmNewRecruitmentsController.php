@@ -3,6 +3,7 @@
 namespace Modules\CRM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\ExcelExportJob;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -12,6 +13,8 @@ use Modules\Academic\Entities\AcaArrivalSource;
 use Modules\Academic\Entities\AcaStudent;
 use DataTables;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse;
+use Modules\CRM\Jobs\ExportCrmContactsExcel;
 
 class CrmNewRecruitmentsController extends Controller
 {
@@ -76,20 +79,39 @@ class CrmNewRecruitmentsController extends Controller
             })->toJson();
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
+    public function exportCrmContacts(Request $request): JsonResponse
     {
-        //
-    }
+        // $this->validate($request, [
+        //     'search' => 'nullable|string|max:255',
+        //     'status' => 'nullable|string|max:50',
+        //     'created_at' => [
+        //         'nullable',
+        //         'regex:/^\d{4}-\d{2}-\d{2}( a \d{4}-\d{2}-\d{2})?$/'
+        //     ],
+        // ]);
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('crm::show');
+        $filters = [
+            'search' => $request->get('search'),
+            'arrival_source' => $request->get('arrival_source'),
+        ];
+
+        $excelExportJob = ExcelExportJob::create([
+            'user_id' => Auth::id(),
+            'report_type' => 'CRM_CONTACTS',
+            'status' => 'pending',
+            'filters' => json_encode($filters),
+        ]);
+
+        ExportCrmContactsExcel::dispatch(
+            $filters,
+            $excelExportJob->id,
+            Auth::id()
+        )->onQueue('exports');
+
+        return response()->json([
+            'message' => 'La exportación de contactos CRM ha comenzado. Se le notificará cuando esté lista.',
+            'job_id' => $excelExportJob->id,
+        ], 202);
     }
 
     /**
