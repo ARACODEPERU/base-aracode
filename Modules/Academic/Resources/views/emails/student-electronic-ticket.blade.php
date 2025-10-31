@@ -172,43 +172,54 @@
             <img style="width: 25px;" data-emoji="🎉" class="an1" alt="🎉" aria-label="🎉" draggable="false"
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
         </h1>
-        <p>{{ $data->clie_full_name }},
+        <p>
             Gracias por estár con nosotros, te hemos enviado tu comprobante de pago.
         </p>
         <p>
-            revisa los datos adjuntos para poder descargar.
+            revisa los datos adjuntos para poder descargar y ver mas detalles.
         </p>
         <div class="card-container">
 
-            <h3>Cursos Incluidos en la Venta</h3>
-
-        @if ($sale->details->count() > 0)
-            @foreach ($sale->details as $detail)
             <div>
-                <h4>Importe #{{ $detail->price }}</h4>
+                <h3 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">Cursos Incluidos en Compra</h3>
 
-                @if ($detail->course)
-                    <p>
-                        **Nombre del Curso:** {{ $detail->course->description }}<br>
-                    </p>
+                @if ($sale->items->count() > 0)
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #3498db; color: white;">
+                                <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0;">Curso</th>
+                                <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0;">Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($sale->items as $item)
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                @if ($item)
+                                    <td style="padding: 12px 15px;">{{ $item->decription_product }}</td>
+                                    <td style="padding: 12px 15px; color: #27ae60; font-weight: bold;">S/. {{ $item->mto_total }}</td>
+                                @else
+                                    <td colspan="2" style="padding: 12px 15px; color: #e74c3c; font-weight: bold;">
+                                        ⚠️ No se encontró el curso asociado (ID de Item: {{ $item->product_id }}).
+                                    </td>
+                                @endif
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 @else
-                    <p>⚠️ No se encontró el curso asociado (ID de Item: {{ $detail->item_id }}).</p>
+                    <p style="text-align: center; color: #7f8c8d; font-style: italic; padding: 20px;">
+                        La venta no contiene elementos detallados.
+                    </p>
                 @endif
 
-                <hr>
+                <div style="background-color: #2c3e50; color: white; padding: 15px; border-radius: 8px; text-align: right; font-size: 1.2em; font-weight: bold;">
+                    Importe total: {{ $sale->overall_total }}
+                </div>
             </div>
-            @endforeach
-        @else
-            <p>La venta no contiene elementos detallados.</p>
-        @endif
 
         </div>
         <div class="card-container">
-            <p>
-                👤 Querido Usuario para seguir estudiando dirigete a la plataforma de nuestro Campus Virtual
-                <br>
-                🔑
-            </p>
+
             <a href="https://academy.globalcpaperu.com/login" style="margin-top: 20px;">
                 <button class="boton-degradado-campus">Ingresar a la plataforma</button>
             </a>
