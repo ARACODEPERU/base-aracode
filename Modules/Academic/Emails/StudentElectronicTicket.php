@@ -9,6 +9,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Address;
+use Modules\Onlineshop\Entities\OnliSale;
+use Modules\Onlineshop\Entities\OnliSaleDetail;
 
 class StudentElectronicTicket extends Mailable
 {
@@ -38,8 +40,10 @@ class StudentElectronicTicket extends Mailable
 
     public function build()
     {
+        $sale = OnliSale::with('details.course')->findOrFail($this->data['onlisale_id']);
         return $this->view('academic::emails.student-electronic-ticket', [
-            'data' => $this->data
+            'data' => $this->data,
+            'sale' => $sale,
         ]);
     }
     /**

@@ -372,6 +372,7 @@ class AcaSaleDocumentController extends Controller
             'file_name' => $dataFile["pdf"]['fileName'],
             'xml_file_path' => $dataFile["xml"]['filePath'],
             'xml_file_name' => $dataFile["xml"]['fileName'],
+            'onlisale_id'   => $onlisale_id,
         ];
 
         try {
