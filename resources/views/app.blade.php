@@ -13,12 +13,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
 
-    @php
+    {{-- @php
         $parameters = new \App\Models\Parameter();
         $P000022=$parameters->where('parameter_code', 'P000022')->value('value_default')?? "";
         $cadena_decodificada = htmlspecialchars_decode($P000022, ENT_QUOTES);
     @endphp
-    {!! $cadena_decodificada !!}
+    {!! $cadena_decodificada !!} --}}
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Scripts -->
