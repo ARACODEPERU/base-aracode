@@ -105,9 +105,9 @@
                                     </li>
                                     <li><a class="menu-item" href="#section-about">Nosotros</a></li>
                                     <li><a class="menu-item" href="#section-why-attend">Propuesta de Valor</a></li>
-                                    <li><a class="menu-item" href="#section-speakers">Speakers</a></li>
-                                    <li><a class="menu-item" href="#section-schedule">Schedule</a></li>
-                                    <li><a class="menu-item" href="#section-tickets">Tickets</a></li>
+                                    <li><a class="menu-item" href="#section-speakers">Visionarios</a></li>
+                                    {{-- <li><a class="menu-item" href="#section-schedule">Schedule</a></li> --}}
+                                    <li><a class="menu-item" href="#section-tickets">Productos</a></li>
                                     <li><a class="menu-item" href="#section-venue">Venue</a></li>
                                     <li><a class="menu-item" href="#section-faq">FAQ</a></li>
                                     <li><a class="menu-item" href="news.html">Pages</a>

@@ -25,69 +25,9 @@
 
         <x-commitment />
 
-        <section id="section-speakers" class="bg-dark section-dark text-light">
-            <div class="container">
-                <div class="row g-4 justify-content-center">
-                    <div class="col-lg-6 relative z-3">
-                        <div class="text-center">
-                            <div class="subtitle wow fadeInUp" data-wow-delay=".0s">Equipo</div>
-                            <h2 class="wow fadeInUp" data-wow-delay=".2s">Conoce a las visionarias</h2>
-                            <p class="lead wow fadeInUp">
-                                Su experiencia y compromiso nos permiten construir soluciones que transforman la manera en
-                                que las organizaciones crecen y se digitalizan.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <x-visionaries />
 
-                <div class="row g-4">
-                    <div class="col-lg-4">
-                        <div class="hover relative rounded-1 overflow-hidden wow fadeIn scale-in-mask">
-                            <img src="{{ asset('themes/webpage/images/team/1.webp') }}" class="w-100 hover-scale-1-1" alt="">
-                            <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
-                            <div class="abs w-100 start-0 bottom-0 z-3">
-                                <div class="bg-blur p-4 m-4 rounded-1 text-light text-center relative z-2">
-                                    <h3 class="mb-0">Jose Alarcon</h3>
-                                    <span>Founder / CEO</span>
-                                </div>
-                                <div class="gradient-edge-bottom h-100 op-8"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="hover relative rounded-1 overflow-hidden wow fadeIn scale-in-mask">
-                            <img src="{{ asset('themes/webpage/images/team/1.webp') }}" class="w-100 hover-scale-1-1" alt="">
-                            <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
-                            <div class="abs w-100 start-0 bottom-0 z-3">
-                                <div class="bg-blur p-4 m-4 rounded-1 text-light text-center relative z-2">
-                                    <h3 class="mb-0">Jesus Anaya</h3>
-                                    <span>Founder / UI / UX Designer</span>
-                                </div>
-                                <div class="gradient-edge-bottom h-100 op-8"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="hover relative rounded-1 overflow-hidden wow fadeIn scale-in-mask">
-                            <img src="{{ asset('themes/webpage/images/team/1.webp') }}" class="w-100 hover-scale-1-1" alt="">
-                            <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
-                            <div class="abs w-100 start-0 bottom-0 z-3">
-                                <div class="bg-blur p-4 m-4 rounded-1 text-light text-center relative z-2">
-                                    <h3 class="mb-0">Elmer Rodriguez</h3>
-                                    <span>Founder / CTO / Tech Lead</span>
-                                </div>
-                                <div class="gradient-edge-bottom h-100 op-8"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <section class="bg-dark section-dark pt-80 relative jarallax" aria-label="section">
+        {{-- <section class="bg-dark section-dark pt-80 relative jarallax" aria-label="section">
             <img src="images/background/1.webp" class="jarallax-img" alt="">
             <div class="gradient-edge-top"></div>
             <div class="gradient-edge-bottom"></div>
@@ -111,9 +51,9 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </section> --}}
 
-        <section id="section-schedule" class="bg-dark section-dark text-light">
+        {{-- <section id="section-schedule" class="bg-dark section-dark text-light">
             <div class="container">
                 <div class="row g-4 gx-5 justify-content-center">
                     <div class="col-lg-6 text-center">
@@ -687,11 +627,11 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </section> --}}
 
         <section id="section-tickets" class="bg-dark section-dark text-light pt-80 relative jarallax"
             aria-label="section">
-            <img src="images/background/7.webp" class="jarallax-img" alt="">
+            <img src="{{ asset('themes/webpage/images/background/7.webp') }}" class="jarallax-img" alt="">
             <div class="gradient-edge-top"></div>
             <div class="gradient-edge-bottom"></div>
             <div class="sw-overlay op-7"></div>
@@ -712,10 +652,10 @@
                             <!-- ticket item begin -->
                             <div class="item">
                                 <div class="d-ticket">
-                                    <img src="images/logo.webp" class="w-80px mb-4" alt="">
-                                    <img src="images/misc/barcode.webp" class="w-20 p-2 abs abs-middle end-0 me-2"
+                                    <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4" alt="">
+                                    <img src="{{ asset('themes/webpage/images/misc/barcode.webp') }}" class="w-20 p-2 abs abs-middle end-0 me-2"
                                         alt="">
-                                    <img src="images/logo-big-white.webp" class="w-40 abs abs-centered me-4 op-2"
+                                    <img src="{{ asset('themes/webpage/images/logo-big-white.webp') }}" class="w-40 abs abs-centered me-4 op-2"
                                         alt="">
                                     <h2>Standard</h2>
                                     <h4 class="mb-4">$299</h4>
