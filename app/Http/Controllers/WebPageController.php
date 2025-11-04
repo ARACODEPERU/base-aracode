@@ -45,7 +45,7 @@ class WebPageController extends Controller
             ->get();
     }
 
-    public function index()
+    public function home()
     {
         return view('pages.home');
     }

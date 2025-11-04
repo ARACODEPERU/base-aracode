@@ -26,7 +26,12 @@ use Illuminate\Support\Facades\Mail;
 use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 
-Route::get('/', [LandingController::class, 'index'])->name('index_main');
+// Rutas Webs en Blade
+Route::get('/', [WebPageController::class, 'home'])->name('index_main');
+Route::get('/home', [WebPageController::class, 'home'])->name('index_main');
+Route::get('/nosotros', [WebPageController::class, 'about'])->name('web_about');
+
+// Route::get('/', [LandingController::class, 'index'])->name('index_main');
 Route::get('/facturador', [LandingController::class, 'biller'])->name('biller_main');
 Route::get('/news', [LandingController::class, 'blog'])->name('blog_main');
 Route::get('/terms', [LandingController::class, 'terms'])->name('terms_main');
