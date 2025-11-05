@@ -20,37 +20,39 @@
             <div class="row g-4 justify-content-center">
                 <div class="col-lg-12">
                     <div class="owl-carousel owl-theme owl-3-dots wow mask-right">
+                        
                         <!-- ticket item begin -->
                         <div class="item">
-                            <div class="d-ticket">
+                            <div class="d-ticket s2">
                                 <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
                                     alt="">
                                 <img src="{{ asset('themes/webpage/images/misc/barcode.webp') }}"
-                                    class="w-20 p-2 abs abs-middle end-0 me-2" alt="">
+                                    class="w-20 p-2 abs abs-middle end-0 me-2" alt="img-producto-3">
                                 <img src="{{ asset('themes/webpage/images/logo-big-white.webp') }}"
                                     class="w-40 abs abs-centered me-4 op-2" alt="">
-                                <h2>Facturación</h2>
-                                <h4 class="mb-4"> Electrónica / Sunat / Perú</h4>
+                                <h2>Campus Virtual</h2>
+                                <h4 class="mb-4">Plataforma E-Learning (LMS)</h4>
                                 <div class="fs-14">Características principales</div>
                             </div>
-
-                            <div class="relative overflow-hidden">
+                            <div class="relative">
                                 <div class="py-4 z-2">
                                     <ul class="ul-check mb-4">
-                                        <li>Emisión de facturas, boletas, notas de crédito, débito y más.</li>
-                                        {{-- <li>Integración API para conectar sistemas externos.</li> --}}
-                                        <li>Panel comercial con reportes de ventas y estadísticas.</li>
-                                        <li>Generación automática de XML y PDF.</li>
-                                        <li>Alertas, validaciones y seguridad avanzada.</li>
+                                        <li>Gestión completa de cursos, módulos y evaluaciones.</li>
+                                        <li>Aulas virtuales con contenido multimedia (videos, documentos, SCORM, PDF,
+                                            enlaces).</li>
+                                        <li>Certificación automática personalizada.</li>
+                                        <li>Control de matrículas y seguimiento académico.</li>
+                                        <li>Integración con pasarelas de pago.</li>
+                                        <li>Panel administrativo con métricas de rendimiento.</li>
+                                        <li>Optimizado con IA para análisis de progreso y generación de reportes.</li>
                                     </ul>
                                 </div>
-
-                                <a class="btn-main fx-slide w-100" href=""><span>Más Información</span></a>
-
                             </div>
+
+                            <a class="btn-main fx-slide w-100" href=""><span>Más Información</span></a>
                         </div>
                         <!-- ticket item end -->
-
+                        
                         <!-- ticket item begin -->
                         <div class="item">
                             <div class="d-ticket">
@@ -87,38 +89,39 @@
 
                         <!-- ticket item begin -->
                         <div class="item">
-                            <div class="d-ticket s2">
+                            <div class="d-ticket">
                                 <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
                                     alt="">
                                 <img src="{{ asset('themes/webpage/images/misc/barcode.webp') }}"
-                                    class="w-20 p-2 abs abs-middle end-0 me-2" alt="img-producto-3">
+                                    class="w-20 p-2 abs abs-middle end-0 me-2" alt="">
                                 <img src="{{ asset('themes/webpage/images/logo-big-white.webp') }}"
                                     class="w-40 abs abs-centered me-4 op-2" alt="">
-                                <h2>Campus Virtual</h2>
-                                <h4 class="mb-4">Plataforma E-Learning (LMS)</h4>
+                                <h2>Facturación</h2>
+                                <h4 class="mb-4"> Electrónica / Sunat / Perú</h4>
                                 <div class="fs-14">Características principales</div>
                             </div>
-                            <div class="relative">
+
+                            <div class="relative overflow-hidden">
                                 <div class="py-4 z-2">
                                     <ul class="ul-check mb-4">
-                                        <li>Gestión completa de cursos, módulos y evaluaciones.</li>
-                                        <li>Aulas virtuales con contenido multimedia (videos, documentos, SCORM, PDF,
-                                            enlaces).</li>
-                                        <li>Certificación automática personalizada.</li>
-                                        <li>Control de matrículas y seguimiento académico.</li>
-                                        <li>Integración con pasarelas de pago.</li>
-                                        <li>Panel administrativo con métricas de rendimiento.</li>
-                                        <li>Optimizado con IA para análisis de progreso y generación de reportes.</li>
+                                        <li>Emisión de facturas, boletas, notas de crédito, débito y más.</li>
+                                        {{-- <li>Integración API para conectar sistemas externos.</li> --}}
+                                        <li>Panel comercial con reportes de ventas y estadísticas.</li>
+                                        <li>Generación automática de XML y PDF.</li>
+                                        <li>Alertas, validaciones y seguridad avanzada.</li>
                                     </ul>
                                 </div>
-                            </div>
 
-                            <a class="btn-main fx-slide w-100" href=""><span>Más Información</span></a>
+                                <a class="btn-main fx-slide w-100" href=""><span>Más Información</span></a>
+
+                            </div>
                         </div>
                         <!-- ticket item end -->
 
+
+
                         <!-- ticket item begin -->
-                        <div class="item">
+                        {{-- <div class="item">
                             <div class="d-ticket s2">
                                 <img src="images/logo.webp" class="w-80px mb-4" alt="">
                                 <img src="images/misc/barcode.webp" class="w-20 p-2 abs abs-middle end-0 me-2"
@@ -141,11 +144,11 @@
                             </div>
 
                             <a class="btn-main fx-slide w-100" href="tickets.html"><span>Buy Ticket</span></a>
-                        </div>
+                        </div> --}}
                         <!-- ticket item end -->
 
                         <!-- ticket item begin -->
-                        <div class="item">
+                        {{-- <div class="item">
                             <div class="d-ticket s3">
                                 <img src="images/logo.webp" class="w-80px mb-4" alt="">
                                 <img src="images/misc/barcode.webp" class="w-20 p-2 abs abs-middle end-0 me-2"
@@ -168,11 +171,11 @@
                             </div>
 
                             <a class="btn-main fx-slide w-100" href="tickets.html"><span>Buy Ticket</span></a>
-                        </div>
+                        </div> --}}
                         <!-- ticket item end -->
 
                         <!-- ticket item begin -->
-                        <div class="item">
+                        {{-- <div class="item">
                             <div class="d-ticket s3">
                                 <img src="images/logo.webp" class="w-80px mb-4" alt="">
                                 <img src="images/misc/barcode.webp" class="w-20 p-2 abs abs-middle end-0 me-2"
@@ -195,7 +198,7 @@
                             </div>
 
                             <a class="btn-main fx-slide w-100" href="tickets.html"><span>Buy Ticket</span></a>
-                        </div>
+                        </div> --}}
                         <!-- ticket item end -->
                     </div>
                 </div>
