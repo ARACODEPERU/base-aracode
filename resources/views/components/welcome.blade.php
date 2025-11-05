@@ -7,9 +7,11 @@
         <div class="abs abs-centered z-2 w-80">
             <div class="container wow scaleIn" data-wow-duration="3s">
                 <div class="row">
-                    <div class="col-lg-12 text-center">
+                    <div class="col-md-12 text-center">
                         <div class="subtitle">Tecnología + IA que transforma tu negocio</div>
-                        <h1 class="fs-120 text-uppercase fs-sm-12vw mb-4 lh-1">SOLUCIONES WEBS A MEDIDA CON IA</h1>
+                        <h1 class="fs-120 text-uppercase fs-sm-12vw mb-4 lh-1">
+                            SOLUCIONES WEBS A MEDIDA CON IA
+                        </h1>
 
                         {{-- <div class="d-block d-md-flex justify-content-center">
                             <div class="d-flex justify-content-center align-items-center mx-4">
