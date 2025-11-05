@@ -11,24 +11,24 @@
                         <div class="subtitle">Tecnología + IA que transforma tu negocio</div>
                         <h1 class="fs-120 text-uppercase fs-sm-12vw mb-4 lh-1">SOLUCIONES WEBS A MEDIDA CON IA</h1>
 
-                        <div class="d-block d-md-flex justify-content-center">
+                        {{-- <div class="d-block d-md-flex justify-content-center">
                             <div class="d-flex justify-content-center align-items-center mx-4">
                                 <i class="fa fa-calendar id-color me-3"></i>
-                                <h4 class="mb-0">October 1–5, 2025</h4>
+                                <h4 class="mb-0">Noviembre, 2025</h4>
                             </div>
 
                             <div class="d-flex justify-content-center align-items-center mx-4">
                                 <i class="fa fa-location-pin id-color me-3"></i>
-                                <h4 class="mb-0">San Francisco, CA</h4>
+                                <h4 class="mb-0">Nvo Chimbote, Perú</h4>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="spacer-single"></div>
 
-                        <a class="btn-main mx-2 fx-slide" href="#section-tickets">
+                        <a class="btn-main mx-2 fx-slide" href="#productos">
                             <span>Productos</span>
                         </a>
-                        <a class="btn-main btn-line mx-2 fx-slide" href="#section-schedule">
+                        <a class="btn-main btn-line mx-2 fx-slide" href="#">
                             <span>Servicios</span>
                         </a>
                     </div>
