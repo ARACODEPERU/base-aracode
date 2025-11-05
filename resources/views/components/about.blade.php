@@ -29,11 +29,23 @@
                 </div>
 
                 <div class="col-lg-5">
+                    <div class="hover">
+                        <div
+                            class="bg-dark-2 relative rounded-1 overflow-hidden hover-bg-color hover-text-light wow scale-in-mask">
+                            
+                            <div class="gradient-edge-bottom h-100"></div>
+                            <img src="{{ asset('themes/webpage/images/about.jpg') }}" class="w-100 hover-scale-1-1"
+                                alt="">
+                            <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
+                        </div>
+                    </div>
+                </div>
+                {{-- <div class="col-lg-5">
                     <div class="wow scaleIn">
                         <img src="{{ asset('themes/webpage/images/misc/c1.webp') }}" class="w-100 rotate-animation"
                             alt="">
                     </div>
-                </div>
+                </div> --}}
 
             </div>
         </div>

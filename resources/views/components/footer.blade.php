@@ -4,12 +4,12 @@
             <div class="row g-4 align-items-center">
                 <div class="col-md-12">
                     <div class="d-lg-flex align-items-center justify-content-between text-center">
-                        <div>
+                        <div style="padding: 15px;">
                             <h3 class="fs-20">Dirección</h3>
                             Nuevo Chimbote<br>
                             Perú
                         </div>
-                        <div>
+                        <div style="padding: 15px;">
                             <img style="width: 280px;" src="{{ asset('themes/webpage/images/logo.png') }}" class="w-150px"
                                 alt=""><br>
                             <div class="social-icons mb-sm-30 mt-4">
@@ -22,7 +22,7 @@
                             </div>
 
                         </div>
-                        <div>
+                        <div style="padding: 15px;">
                             <h3 class="fs-20">Contactanos</h3>
                             (+51) 917 295 856<br>
                             contacto@aracodeperu.com

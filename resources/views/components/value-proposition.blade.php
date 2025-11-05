@@ -1,12 +1,13 @@
 <div>
     <section id="valor" class="bg-dark section-dark text-light">
-        <div class="container">
+        <div class="container-fluid">
             <div class="row g-4">
                 <div class="col-lg-6 offset-lg-3 text-center">
                     <div class="subtitle wow fadeInUp mb-3">Tecnología que impulsa</div>
                     <h2 class="wow fadeInUp" data-wow-delay=".2s">¿Qué nos hace diferentes?</h2>
                     <p class="lead mb-0 wow fadeInUp">
-                        En Aracode, ofrecemos soluciones digitales potenciados con IA para tu empresa o institución.
+                        En Aracode, ofrecemos soluciones digitales potenciados <br> 
+                        con IA para tu empresa o institución.
                     </p>
                 </div>
             </div>
@@ -140,7 +141,7 @@
                                 </div>
                             </div>
                             <div class="gradient-edge-bottom h-100"></div>
-                            <img src="{{ asset('themes/webpage/images/misc/s8.webp') }}" class="w-100 hover-scale-1-1"
+                            <img src="{{ asset('themes/webpage/images/misc/s6.jpg') }}" class="w-100 hover-scale-1-1"
                                 alt="">
                             <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
                         </div>
