@@ -24,11 +24,11 @@
                         <!-- ticket item begin -->
                         <div class="item">
                             <div class="d-ticket s2">
-                                <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
-                                    alt="">
+                                {{-- <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
+                                    alt=""> --}}
                                 <img src="{{ asset('themes/webpage/images/misc/barcode.webp') }}"
                                     class="w-20 p-2 abs abs-middle end-0 me-2" alt="img-producto-3">
-                                <img src="{{ asset('themes/webpage/images/logo-big-white.webp') }}"
+                                <img src="{{ asset('themes/webpage/images/icono-white.png') }}"
                                     class="w-40 abs abs-centered me-4 op-2" alt="">
                                 <h2>Campus Virtual</h2>
                                 <h4 class="mb-4">Plataforma E-Learning (LMS)</h4>
@@ -56,14 +56,14 @@
                         <!-- ticket item begin -->
                         <div class="item">
                             <div class="d-ticket">
-                                <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
-                                    alt="">
+                                {{-- <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
+                                    alt=""> --}}
                                 <img src="{{ asset('themes/webpage/images/misc/barcode.webp') }}"
                                     class="w-20 p-2 abs abs-middle end-0 me-2" alt="">
-                                <img src="{{ asset('themes/webpage/images/logo-big-white.webp') }}"
+                                <img src="{{ asset('themes/webpage/images/icono-white.png') }}"
                                     class="w-40 abs abs-centered me-4 op-2" alt="">
                                 <h2>Sitios Webs</h2>
-                                <h4 class="mb-4">Sis. de Gestión de Contenidos</h4>
+                                <h4 class="mb-4">Gestión de Contenidos</h4>
                                 <div class="fs-14">Características principales</div>
                             </div>
 
@@ -90,11 +90,11 @@
                         <!-- ticket item begin -->
                         <div class="item">
                             <div class="d-ticket">
-                                <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
-                                    alt="">
+                                {{-- <img src="{{ asset('themes/webpage/images/logo.webp') }}" class="w-80px mb-4"
+                                    alt=""> --}}
                                 <img src="{{ asset('themes/webpage/images/misc/barcode.webp') }}"
                                     class="w-20 p-2 abs abs-middle end-0 me-2" alt="">
-                                <img src="{{ asset('themes/webpage/images/logo-big-white.webp') }}"
+                                <img src="{{ asset('themes/webpage/images/icono-white.png') }}"
                                     class="w-40 abs abs-centered me-4 op-2" alt="">
                                 <h2>Facturación</h2>
                                 <h4 class="mb-4"> Electrónica / Sunat / Perú</h4>
