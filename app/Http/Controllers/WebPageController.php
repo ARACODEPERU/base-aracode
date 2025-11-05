@@ -50,6 +50,11 @@ class WebPageController extends Controller
         return view('pages.home');
     }
 
+    public function contact()
+    {
+        return view('pages.contact');
+    }
+
     public function nosotros()
     {
 
@@ -91,96 +96,6 @@ class WebPageController extends Controller
         ]);
     }
 
-    public function courses()
-    {
-        $courses = OnliItem::with('course')->get();
-        $courses = $courses->shuffle();
-        $categories = AcaCategoryCourse::all();
-
-        // $banner = CmsSection::where('component_id', 'cursos_banner_area_14')  //siempre cambiar el id del componente
-        //     ->join('cms_section_items', 'section_id', 'cms_sections.id')
-        //     ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-        //     ->select(
-        //         'cms_items.content',
-        //         'cms_section_items.position'
-        //     )
-        //     ->orderBy('cms_section_items.position')
-        //     ->first();
-
-        $title = CmsSection::where('component_id', 'cursos_titulo_area_15')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-            ->select(
-                'cms_items.content',
-                'cms_section_items.position'
-            )
-            ->orderBy('cms_section_items.position')
-            ->get();
-
-        return view('pages.courses', [
-            'courses' => $courses,
-            'categories' => $categories,
-            // 'banner' => $banner,
-            'title' => $title
-        ]);
-    }
-
-    public function coursedescription($id)
-    {
-        $item = OnliItem::find($id);
-
-        $course = AcaCourse::with('category')
-            ->with('modality')
-            ->with('modules')
-            ->with('teachers.teacher.person.resumes')
-            ->with('brochure')
-            ->with('agreements')
-            ->where('id', $item->item_id)
-            ->first();
-
-        $latest_courses = OnliItem::with('course')
-            ->orderBy('id', 'desc')
-            ->where('id', '!=', $id)
-            ->take(10)
-            ->get()
-            ->shuffle()
-            ->take(3);
-
-
-        return view('pages.course-description', [
-            'course' => $course,
-            'item' => $item,
-            'latest_courses' => $latest_courses
-        ]);
-    }
-
-    public function cursodescripcion($id)
-    {
-        $item = OnliItem::find($id);
-
-        $course = AcaCourse::with('category')
-            ->with('modality')
-            ->with('modules')
-            ->with('teachers.teacher.person.resumes')
-            ->with('brochure')
-            ->with('agreements')
-            ->where('id', $item->item_id)
-            ->first();
-
-        $latest_courses = OnliItem::with('course')
-            ->orderBy('id', 'desc')
-            ->where('id', '!=', $id)
-            ->take(10)
-            ->get()
-            ->shuffle()
-            ->take(3);
-
-        return view('pages.course-description', [
-            'course' => $course,
-            'item' => $item,
-            'latest_courses' => $latest_courses
-        ]);
-    }
 
     public function shopcart()
     {

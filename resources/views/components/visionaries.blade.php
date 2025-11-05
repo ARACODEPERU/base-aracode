@@ -1,5 +1,5 @@
 <div>
-    <section id="section-speakers" class="bg-dark section-dark text-light">
+    <section id="visionarios" class="bg-dark section-dark text-light">
         <div class="container">
             <div class="row g-4 justify-content-center">
                 <div class="col-lg-6 relative z-3">

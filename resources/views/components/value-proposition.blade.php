@@ -1,5 +1,5 @@
 <div>
-    <section id="section-why-attend" class="bg-dark section-dark text-light">
+    <section id="valor" class="bg-dark section-dark text-light">
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-6 offset-lg-3 text-center">

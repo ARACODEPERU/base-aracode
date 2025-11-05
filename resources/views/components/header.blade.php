@@ -19,7 +19,8 @@
                         <div class="de-flex-col">
                             <div class="de-flex-col header-col-mid">
                                 <ul id="mainmenu">
-                                    <li><a class="menu-item active" href="#section-hero">Home</a>
+                                    <li><a class="menu-item active" href="{{ route('index_main') }}">Home</a></li>
+                                    {{-- <li><a class="menu-item active" href="{{ route('index_main') }}">Home</a>
                                         <ul class="mega">
                                             <li>
                                                 <div class="container">
@@ -102,15 +103,16 @@
                                                 </div>
                                             </li>
                                         </ul>
-                                    </li>
-                                    <li><a class="menu-item" href="#section-about">Nosotros</a></li>
-                                    <li><a class="menu-item" href="#section-why-attend">Propuesta de Valor</a></li>
-                                    <li><a class="menu-item" href="#section-speakers">Visionarios</a></li>
+                                    </li> --}}
+                                    <li><a class="menu-item" href="#nosotros">Nosotros</a></li>
+                                    <li><a class="menu-item" href="#valor">Propuesta de Valor</a></li>
+                                    <li><a class="menu-item" href="#visionarios">Visionarios</a></li>
                                     {{-- <li><a class="menu-item" href="#section-schedule">Schedule</a></li> --}}
-                                    <li><a class="menu-item" href="#section-tickets">Productos</a></li>
-                                    <li><a class="menu-item" href="#section-venue">Venue</a></li>
-                                    <li><a class="menu-item" href="#section-faq">FAQ</a></li>
-                                    <li><a class="menu-item" href="news.html">Pages</a>
+                                    <li><a class="menu-item" href="#productos">Productos</a></li>
+                                    <li><a class="menu-item" href="#ubicación">Ubicación</a></li>
+                                    {{-- <li><a class="menu-item" href="#section-faq">FAQ</a></li> --}}
+                                    {{-- <li>
+                                        <a class="menu-item" href="">Pages</a>
                                         <ul>
                                             <li><a class="menu-item" href="tickets.html">Tickets Style 1</a></li>
                                             <li><a class="menu-item" href="tickets-2.html">Tickets Style 2</a></li>
@@ -118,13 +120,13 @@
                                             <li><a class="menu-item" href="news-single.html">News Single</a></li>
                                             <li><a class="menu-item" href="contact.html">Contact</a>
                                         </ul>
-                                    </li>
+                                    </li> --}}
                                 </ul>
                             </div>
                         </div>
 
                         <div class="de-flex-col">
-                            <a class="btn-main fx-slide w-100" href="tickets-2.html"><span>Buy Tickets</span></a>
+                            <a class="btn-main fx-slide w-100" href="{{ route('web_contact') }}"><span>Contactanos</span></a>
 
                             <div class="menu_side_area">
                                 <span id="menu-btn"></span>

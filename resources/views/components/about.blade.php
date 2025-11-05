@@ -1,5 +1,5 @@
 <div>
-    <section id="section-about" class="bg-dark section-dark text-light">
+    <section id="nosotros" class="bg-dark section-dark text-light">
         <div class="container">
             <div class="row  gx-5 align-items-center justify-content-between">
                 <div class="col-lg-6">
