@@ -114,7 +114,7 @@
                                             <li><a class="menu-item" href="{{ route('web_billing') }}">Facturación Electrónica</a></li>
                                         </ul>
                                     </li>
-                                    <li><a class="menu-item" href="#ubicación">Ubicación</a></li>
+                                    <li><a class="menu-item" href="{{ route('index_main') }}#ubicación">Ubicación</a></li>
                                     {{-- <li><a class="menu-item" href="#section-faq">FAQ</a></li> --}}
                                     {{-- <li>
                                         <a class="menu-item" href="">Pages</a>
