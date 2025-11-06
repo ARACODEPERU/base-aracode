@@ -358,8 +358,8 @@
                                         <div class="text-center"
                                             style="background-size: cover; background-repeat: no-repeat;">
                                             <h2 class="fs-40 mb-0">PYME</h2>
-                                            <h3 class="id-color mb-4">S/ 35.00 | Mensual</h3>
-                                            <h4>S/ 350.00 | Anual</h4>
+                                            <h3 class="id-color mb-4">S/ 50.00 | Mensual</h3>
+                                            <h4>S/ 500.00 | Anual</h4>
                                         </div>
 
                                         <div class="border-white-bottom-op-2 mb-4"
@@ -400,8 +400,8 @@
                                         <div class="text-center"
                                             style="background-size: cover; background-repeat: no-repeat;">
                                             <h2 class="fs-40 mb-0">PRO</h2>
-                                            <h3 class="id-color mb-4">S/ 35.00 | Mensual</h3>
-                                            <h4>S/ 350.00 | Anual</h4>
+                                            <h3 class="id-color mb-4">S/ 80.00 | Mensual</h3>
+                                            <h4>S/ 800.00 | Anual</h4>
                                         </div>
 
                                         <div class="border-white-bottom-op-2 mb-4"
