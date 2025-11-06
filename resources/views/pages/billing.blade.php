@@ -135,15 +135,34 @@
 
         <section id="section-faq" class="bg-dark section-dark text-light">
             <div class="container">
-                <div class="row g-4">
-                    <div class="col-lg-5">
-                        <div class="subtitle wow fadeInUp" data-wow-delay=".0s">Everything You Need to Know</div>
+                
+            <div class="row g-4">
+                <div class="col-lg-6 offset-lg-3 text-center">
+                    <div class="subtitle wow fadeInUp mb-3">Información de valor</div>
                         <h2 class="wow fadeInUp" data-wow-delay=".2s">
                             PREGUNTAS FRECUENTES
                         </h2>
+                    <p class="lead mb-0 wow fadeInUp">
+                        Te ayudamos a obtener la información que necesitas <br> de forma clara y sencilla.
+                    </p>
+                </div>
+            </div>
+                <div class="row g-4 mt-4">
+                    <div class="col-lg-5">
+                        <div class="hover">
+                            <div class="bg-dark-2 relative rounded-1 overflow-hidden hover-bg-color hover-text-light wow scale-in-mask"
+                                data-wow-delay=".3s">
+
+                                <div class="gradient-edge-bottom h-100"></div>
+                                <img src="{{ asset('themes/webpage/images/questions.jpg') }}" class="w-100 hover-scale-1-1"
+                                    alt="">
+                                <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-lg-7">
+                        <br>
                         <div class="accordion s2 wow fadeInUp">
                             <div class="accordion-section">
                                 <div class="accordion-section-title" data-tab="#accordion-a1">
@@ -327,7 +346,7 @@
                                 </div>
                             </div>
                             <!-- ticket item end -->
-                            
+
                             <!-- ticket item begin -->
                             <div class="col-md-4" style="background-size: cover; background-repeat: no-repeat;">
                                 <div class="relative overflow-hidden h-100 border-white-op-3 rounded-1 bg-blur"
@@ -338,7 +357,7 @@
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <div class="text-center"
                                             style="background-size: cover; background-repeat: no-repeat;">
-                                            <h2 class="fs-40 mb-0">EMPRENDEDOR</h2>
+                                            <h2 class="fs-40 mb-0">PYME</h2>
                                             <h3 class="id-color mb-4">S/ 35.00 | Mensual</h3>
                                             <h4>S/ 350.00 | Anual</h4>
                                         </div>
@@ -369,7 +388,7 @@
                                 </div>
                             </div>
                             <!-- ticket item end -->
-                            
+
                             <!-- ticket item begin -->
                             <div class="col-md-4" style="background-size: cover; background-repeat: no-repeat;">
                                 <div class="relative overflow-hidden h-100 border-white-op-3 rounded-1 bg-blur"
@@ -380,7 +399,7 @@
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <div class="text-center"
                                             style="background-size: cover; background-repeat: no-repeat;">
-                                            <h2 class="fs-40 mb-0">EMPRENDEDOR</h2>
+                                            <h2 class="fs-40 mb-0">PRO</h2>
                                             <h3 class="id-color mb-4">S/ 35.00 | Mensual</h3>
                                             <h4>S/ 350.00 | Anual</h4>
                                         </div>

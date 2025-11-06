@@ -31,7 +31,7 @@
                 <div class="col-lg-5">
                     <div class="hover">
                         <div
-                            class="bg-dark-2 relative rounded-1 overflow-hidden hover-bg-color hover-text-light wow scale-in-mask">
+                            class="bg-dark-2 relative rounded-1 overflow-hidden hover-bg-color hover-text-light wow scale-in-mask" data-wow-delay="1.3s">
                             
                             <div class="gradient-edge-bottom h-100"></div>
                             <img src="{{ asset('themes/webpage/images/about.jpg') }}" class="w-100 hover-scale-1-1"
