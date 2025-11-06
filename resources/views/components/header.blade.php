@@ -104,11 +104,16 @@
                                             </li>
                                         </ul>
                                     </li> --}}
-                                    <li><a class="menu-item" href="#nosotros">Nosotros</a></li>
-                                    <li><a class="menu-item" href="#valor">Propuesta de Valor</a></li>
-                                    <li><a class="menu-item" href="#visionarios">Visionarios</a></li>
+                                    <li><a class="menu-item" href="{{ route('index_main') }}#nosotros">Nosotros</a></li>
+                                    <li><a class="menu-item" href="{{ route('index_main') }}#valor">Propuesta de Valor</a></li>
+                                    <li><a class="menu-item" href="{{ route('index_main') }}#visionarios">Visionarios</a></li>
                                     {{-- <li><a class="menu-item" href="#section-schedule">Schedule</a></li> --}}
-                                    <li><a class="menu-item" href="#productos">Productos</a></li>
+                                    <li>
+                                        <a class="menu-item" href="{{ route('index_main') }}#productos">Productos</a>
+                                        <ul>
+                                            <li><a class="menu-item" href="{{ route('web_billing') }}">Facturación Electrónica</a></li>
+                                        </ul>
+                                    </li>
                                     <li><a class="menu-item" href="#ubicación">Ubicación</a></li>
                                     {{-- <li><a class="menu-item" href="#section-faq">FAQ</a></li> --}}
                                     {{-- <li>
