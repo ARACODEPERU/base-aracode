@@ -30,7 +30,7 @@
                                 </div>
                             </div>
                             <div class="gradient-edge-bottom h-100"></div>
-                            <img src="{{ asset('themes/webpage/images/misc/s3.webp') }}" class="w-100 hover-scale-1-1"
+                            <img src="{{ asset('themes/webpage/images/misc/s1.jpg') }}" class="w-100 hover-scale-1-1"
                                 alt="">
                             <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
                         </div>
@@ -75,7 +75,7 @@
                                 </div>
                             </div>
                             <div class="gradient-edge-bottom h-100"></div>
-                            <img src="{{ asset('themes/webpage/images/misc/s5.webp') }}" class="w-100 hover-scale-1-1"
+                            <img src="{{ asset('themes/webpage/images/misc/s3.jpg') }}" class="w-100 hover-scale-1-1"
                                 alt="">
                             <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
                         </div>

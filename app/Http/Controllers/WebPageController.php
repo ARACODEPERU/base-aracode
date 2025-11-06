@@ -49,6 +49,16 @@ class WebPageController extends Controller
     {
         return view('pages.home');
     }
+    
+    public function about()
+    {
+        return view('pages.about');
+    }
+    
+    public function billing()
+    {
+        return view('pages.billing');
+    }
 
     public function contact()
     {
