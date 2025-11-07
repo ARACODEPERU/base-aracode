@@ -59,6 +59,11 @@ class WebPageController extends Controller
     {
         return view('pages.billing');
     }
+    
+    public function lms()
+    {
+        return view('pages.lms');
+    }
 
     public function contact()
     {

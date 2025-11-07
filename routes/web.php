@@ -31,6 +31,7 @@ Route::get('/', [WebPageController::class, 'home'])->name('index_main');
 Route::get('/home', [WebPageController::class, 'home'])->name('index_main');
 Route::get('/nosotros', [WebPageController::class, 'about'])->name('web_about');
 Route::get('/facturador', [WebPageController::class, 'billing'])->name('web_billing');
+Route::get('/lms', [WebPageController::class, 'lms'])->name('web_lms');
 Route::get('/contactanos', [WebPageController::class, 'contact'])->name('web_contact');
 
 // Route::get('/', [LandingController::class, 'index'])->name('index_main');
