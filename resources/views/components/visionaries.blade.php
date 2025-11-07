@@ -32,7 +32,7 @@
 
                 <div class="col-lg-4">
                     <div class="hover relative rounded-1 overflow-hidden wow fadeIn scale-in-mask">
-                        <img src="{{ asset('themes/webpage/images/team/1.webp') }}" class="w-100 hover-scale-1-1"
+                        <img src="{{ asset('themes/webpage/images/j1.jpg') }}" class="w-100 hover-scale-1-1"
                             alt="">
                         <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
                         <div class="abs w-100 start-0 bottom-0 z-3">
