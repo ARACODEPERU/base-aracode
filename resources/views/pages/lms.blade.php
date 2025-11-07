@@ -29,14 +29,15 @@
                         </div>
                     </div>
                     <div class="col-lg-6">
-                        <div class="subtitle s2 mb-3 wow fadeInUp" data-wow-delay=".0s">Simplifica tu Negocio</div>
+                        <div class="subtitle s2 mb-3 wow fadeInUp" data-wow-delay=".0s">KAPTA (LMS)</div>
                         <h1 class="wow fadeInUp" data-wow-delay=".2s">
-                            Facturación Electrónica Segura y Eficiente
+                            Plataforma de Educación Virtual
                         </h1>
                         <p class="col-lg-10 wow fadeInUp" data-wow-delay=".4s">
-                            Implementa nuestra solución de facturación electrónica y lleva el control de tus ventas de forma
-                            rápida, segura y cumpliendo con la normativa vigente. Optimiza tu gestión y ahorra tiempo en
-                            cada transacción.
+                            <b>KAPTA</b> es un sistema de aprendizaje online diseñado para instituciones educativas, empresas de
+                            capacitación y organizaciones que requieren gestionar formación a gran escala. La plataforma
+                            permite crear cursos, administrar estudiantes, evaluar el progreso y automatizar procesos
+                            académicos con total eficiencia.
                         </p>
                         <a class="btn-main fx-slide mb10 mb-3 wow fadeInUp" data-wow-delay=".6s"
                             href="#planes"><span>Planes</span></a>
@@ -135,18 +136,18 @@
 
         <section id="section-faq" class="bg-dark section-dark text-light">
             <div class="container">
-                
-            <div class="row g-4">
-                <div class="col-lg-6 offset-lg-3 text-center">
-                    <div class="subtitle wow fadeInUp mb-3">Información de valor</div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6 offset-lg-3 text-center">
+                        <div class="subtitle wow fadeInUp mb-3">Información de valor</div>
                         <h2 class="wow fadeInUp" data-wow-delay=".2s">
                             PREGUNTAS FRECUENTES
                         </h2>
-                    <p class="lead mb-0 wow fadeInUp">
-                        Te ayudamos a obtener la información que necesitas <br> de forma clara y sencilla.
-                    </p>
+                        <p class="lead mb-0 wow fadeInUp">
+                            Te ayudamos a obtener la información que necesitas <br> de forma clara y sencilla.
+                        </p>
+                    </div>
                 </div>
-            </div>
                 <div class="row g-4 mt-4">
                     <div class="col-lg-5">
                         <div class="hover">
