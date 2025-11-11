@@ -23,10 +23,6 @@
 
         <x-value-proposition />
 
-        <x-commitment />
-
-        <x-visionaries />
-
         {{-- <section class="bg-dark section-dark pt-80 relative jarallax" aria-label="section">
             <img src="images/background/1.webp" class="jarallax-img" alt="">
             <div class="gradient-edge-top"></div>
@@ -632,6 +628,9 @@
         <x-products />
 
         <x-location />
+        
+
+        <x-commitment />
 
         {{-- <section id="section-faq" class="bg-dark section-dark text-light">
             <div class="container">

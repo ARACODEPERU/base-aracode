@@ -22,7 +22,7 @@
                             <li class="wow fadeInUp" data-wow-delay="1s">Mejore la experiencia de sus usuarios</li>
                             <li class="wow fadeInUp" data-wow-delay="1.1s">Crezca de manera escalable y eficiente</li>
                         </ul>
-                        <a class="btn-main mx-2 fx-slide" href="{{ route('web_about') }}">
+                        <a class="btn-main mx-2 fx-slide wow fadeInUp" data-wow-delay="1.2s" href="{{ route('web_about') }}">
                             <span>Saber más</span>
                         </a>
                     </div>
@@ -31,7 +31,7 @@
                 <div class="col-lg-5">
                     <div class="hover">
                         <div
-                            class="bg-dark-2 relative rounded-1 overflow-hidden hover-bg-color hover-text-light wow scale-in-mask" data-wow-delay="1.3s">
+                            class="bg-dark-2 relative rounded-1 overflow-hidden hover-bg-color hover-text-light wow fadeInUp" data-wow-delay=".9s">
                             
                             <div class="gradient-edge-bottom h-100"></div>
                             <img src="{{ asset('themes/webpage/images/about.jpg') }}" class="w-100 hover-scale-1-1"

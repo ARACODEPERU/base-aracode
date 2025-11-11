@@ -46,16 +46,40 @@
         <section class="section-dark relative">
             <div class="container">
                 <div class="row align-items-center justify-content-center">
-                    <div class="col-lg-6">
-                        df
+                    <div class="col-lg-6 wow fadeInLeft" data-wow-delay=".4s">
+                        <h2>Visión</h2>
+                        <p>
+                            Ser la empresa líder en soluciones digitales inteligentes en Perú y Latinoamérica, reconocida
+                            por transformar procesos empresariales mediante tecnología moderna, desarrollo de software de
+                            alta calidad e integración avanzada de inteligencia artificial
+                        </p>
                     </div>
 
-                    <div class="col-lg-6">
-                        f
+                    <div class="col-lg-6 wow fadeInRight" data-wow-delay=".4s">
+                        <h2>Misión</h2>
+                        <p>
+                            Desarrollar productos y sistemas innovadores que potencien la gestión, productividad y
+                            crecimiento de empresas e instituciones, integrando herramientas inteligentes, automatización y
+                            software escalable adaptado a cada cliente.
+                        </p>
+                    </div>
+                </div>
+                <div class="row align-items-center justify-content-center">
+                    <div class="col-md-12 wow fadeInUp" data-wow-delay=".5s">
+                        <h2>Valores Corporativos</h2>
+                        <p>
+                            Ser la empresa líder en soluciones digitales inteligentes en Perú y Latinoamérica, reconocida
+                            por transformar procesos empresariales mediante tecnología moderna, desarrollo de software de
+                            alta calidad e integración avanzada de inteligencia artificial
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
+
+        <x-value-proposition />
+
+        <x-visionaries />
 
     </div>
 

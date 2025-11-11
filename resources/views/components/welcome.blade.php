@@ -13,17 +13,17 @@
                             SOLUCIONES WEBS A MEDIDA CON IA
                         </h1>
 
-                        {{-- <div class="d-block d-md-flex justify-content-center">
+                        <div class="d-block d-md-flex justify-content-center">
                             <div class="d-flex justify-content-center align-items-center mx-4">
-                                <i class="fa fa-calendar id-color me-3"></i>
-                                <h4 class="mb-0">Noviembre, 2025</h4>
+                                <i class="fa fa-location-pin id-color me-3"></i>
+                                <h4 class="mb-0">Tecnología que impulsa.</h4>
                             </div>
 
                             <div class="d-flex justify-content-center align-items-center mx-4">
                                 <i class="fa fa-location-pin id-color me-3"></i>
-                                <h4 class="mb-0">Nvo Chimbote, Perú</h4>
+                                <h4 class="mb-0">IA que transforma.</h4>
                             </div>
-                        </div> --}}
+                        </div> 
 
                         <div class="spacer-single"></div>
 
