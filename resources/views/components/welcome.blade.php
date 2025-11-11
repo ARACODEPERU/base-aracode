@@ -8,7 +8,7 @@
             <div class="container wow scaleIn" data-wow-duration="3s">
                 <div class="row">
                     <div class="col-md-12 text-center">
-                        <div class="subtitle">Tecnología + IA que transforma tu negocio</div>
+                        <div class="subtitle">Somos Aracode Smart Solutions</div>
                         <h1 class="fs-120 text-uppercase fs-sm-12vw mb-4 lh-1">
                             SOLUCIONES WEBS A MEDIDA CON IA
                         </h1>
