@@ -105,8 +105,8 @@
                                         </ul>
                                     </li> --}}
                                     <li><a class="menu-item" href="{{ route('web_about') }}">Nosotros</a></li>
-                                    <li><a class="menu-item" href="{{ route('index_main') }}#valor">Propuesta de Valor</a></li>
-                                    <li><a class="menu-item" href="{{ route('index_main') }}#visionarios">Visionarios</a></li>
+                                    <li><a class="menu-item" href="{{ route('web_about') }}#valor">Propuesta de Valor</a></li>
+                                    <li><a class="menu-item" href="{{ route('web_about') }}#visionarios">Visionarios</a></li>
                                     {{-- <li><a class="menu-item" href="#section-schedule">Schedule</a></li> --}}
                                     <li>
                                         <a class="menu-item" href="{{ route('index_main') }}#productos">Productos</a>

@@ -26,7 +26,7 @@
 
 
                         <div class="col-md-12 mb-sm-30">
-                            <div class="d-flex wow fadeInUp" data-wow-delay=".4s" style="padding-top: 15px;">
+                            <div class="d-flex wow fadeInUp" data-wow-delay=".2s" style="padding-top: 15px;">
                                 <i class="fs-60 id-color icofont-phone"></i>
                                 <div class="ms-3">
                                     <h4 class="mb-0">Teléfono</h4>
@@ -36,7 +36,7 @@
                         </div>
 
                         <div class="col-md-12 mb-sm-30">
-                            <div class="d-flex wow fadeInUp" data-wow-delay=".6s" style="padding-top: 15px;">
+                            <div class="d-flex wow fadeInUp" data-wow-delay=".4s" style="padding-top: 15px;">
                                 <i class="fs-60 id-color icofont-envelope"></i>
                                 <div class="ms-3">
                                     <h4 class="mb-0">Email</h4>
@@ -46,7 +46,7 @@
                         </div>
                         
                         <div class="col-md-12 mb-sm-30">
-                            <div class="d-flex wow fadeInUp" data-wow-delay=".2s" style="padding-top: 15px;">
+                            <div class="d-flex wow fadeInUp" data-wow-delay=".6s" style="padding-top: 15px;">
                                 <i class="fs-60 id-color icofont-edit"></i>
                                 <div class="ms-3">
                                     <h4 class="mb-0">R.U.C</h4>
