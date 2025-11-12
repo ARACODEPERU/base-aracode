@@ -15,7 +15,7 @@
 
         <x-header />
 
-        <x-welcome-billing />
+        <x-billing-welcome />
 
         <x-billing-questions />
 

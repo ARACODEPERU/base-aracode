@@ -1,4 +1,5 @@
 <div>
+    
     <section id="section-hero" class="section-dark no-top no-bottom text-light jarallax relative mh-800"
         data-video-src="mp4:{{ asset('themes/webpage/video/2.mp4') }}">
         <div class="gradient-edge-top op-6 h-50 color"></div>

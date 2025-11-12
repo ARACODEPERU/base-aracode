@@ -15,7 +15,7 @@
 
         <x-header />
 
-        <x-welcome />
+        <x-home-welcome />
 
         <x-about />
 

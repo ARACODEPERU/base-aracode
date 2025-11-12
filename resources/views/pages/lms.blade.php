@@ -15,7 +15,7 @@
 
         <x-header />
 
-        <x-welcome-lms />
+        <x-lms-welcome />
 
         {{-- <section id="section-about" class="bg-dark section-dark text-light">
             <div class="container">
@@ -74,7 +74,7 @@
             </div>
         </section> --}}
 
-        <x-benefits-lms />
+        <x-lms-benefits />
 
         {{-- <section id="section-tickets" class="bg-dark section-dark text-light pt-80 relative" aria-label="section"
             style="background-size: cover; background-repeat: no-repeat;">
