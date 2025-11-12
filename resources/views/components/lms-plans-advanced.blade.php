@@ -14,7 +14,7 @@
                     </h2>
                     <p class="lead wow fadeInUp animated" data-wow-delay=".6s"
                         style="visibility: visible; animation-delay: 0.6s; animation-name: fadeInUp;">
-                        Para instituciones pequeñas que inician <br> su transformación digital.
+                        Para instituciones grandes que necesitan <br> escalabilidad total.
                     </p>
                 </div>
             </div>

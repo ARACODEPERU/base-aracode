@@ -15,7 +15,7 @@
                     </h2>
                     <p class="lead wow fadeInUp animated" data-wow-delay=".6s"
                         style="visibility: visible; animation-delay: 0.6s; animation-name: fadeInUp;">
-                        Para instituciones pequeñas que inician <br> su transformación digital.
+                        Para instituciones en crecimiento que requieren <br> vender cursos y automatizar procesos.
                     </p>
                 </div>
             </div>
@@ -64,7 +64,7 @@
 
                                 <div class="abs abs-center p-40 pb-30 bottom-0 z-2 w-100 text-center"
                                     style="background-size: cover; background-repeat: no-repeat;">
-                                    <a class="btn-main fx-slide w-100" href=""><span>Lo Quiero</span></a>
+                                    <a class="btn-main fx-slide w-100" href=""><span>SOLICITAR PLAN</span></a>
                                 </div>
                             </div>
                         </div>
@@ -110,7 +110,7 @@
 
                                 <div class="abs abs-center p-40 pb-30 bottom-0 z-2 w-100 text-center"
                                     style="background-size: cover; background-repeat: no-repeat;">
-                                    <a class="btn-main fx-slide w-100" href=""><span>Lo Quiero</span></a>
+                                    <a class="btn-main fx-slide w-100" href=""><span>SOLICITAR PLAN</span></a>
                                 </div>
 
                             </div>
