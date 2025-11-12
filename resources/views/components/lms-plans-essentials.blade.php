@@ -44,11 +44,12 @@
                                     <ul class="ul-check mb-4">
                                         <li><strong>Dominio + SSL + hosting</strong></li>
                                         <li><strong>Landing page</strong></li>
-                                        <li>1 correo corporativo</li>
                                         <li>Campus Virtual: Gestión de cursos, docentes, alumnos, matrículas</li>
-                                        <li>Almacenamiento: 2 GB nativo + Integración de link de google drive para mayor almacenamiento</li>
+                                        <li>Almacenamiento: 2 GB nativo + Integración de link de google drive para mayor 
+                                            almacenamiento</li>
                                         <li>1 usuario administrativo</li>
-                                        <li>Hasta 200 alumnos activos</li>
+                                        <li>Hasta 150 alumnos activos</li>
+                                        <li>1 correo corporativo</li>
                                         <li>Mantenimiento del sistema</li>
                                     </ul>
                                 </div>
@@ -82,12 +83,12 @@
                                         <li><strong>Dominio + SSL + hosting</strong></li>
                                         <li><strong>Pagina web (Estandar)</strong></li>
                                         <li>Pagina web contara con: Inicio, Nosotros, Cursos y Contacto.</li>
-                                        <li>Gestionar contenidos con sistema CMS</li>
+                                        <li>Sistema CMS para gestionar los contenidos de la web</li>
                                         <li>Campus Virtual: Gestión de cursos, docentes, alumnos, matrículas, certificados subidos en pdf</li>
-                                        <li>Almacenamiento: 4 GB nativo + Integración de link de google drive para mayor almacenamiento</li>
+                                        <li>Almacenamiento: 3 GB nativo + Integración de link de google drive para mayor almacenamiento</li>
                                         <li>2 usuario administrativo</li>
-                                        <li>Hasta 350 alumnos activos</li>
-                                        <li>2 correo corporativo</li>
+                                        <li>Hasta 250 alumnos activos</li>
+                                        <li>1 correo corporativo</li>
                                         <li>Mantenimiento del sistema y Pagina web</li>
                                     </ul>
                                 </div>
