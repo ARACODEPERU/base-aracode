@@ -76,6 +76,12 @@
 
         <x-lms-benefits />
 
+        <x-lms-plans-essentials />
+
+        <x-lms-plans-professionals />
+        
+        <x-lms-plans-advanced />
+
         {{-- <section id="section-tickets" class="bg-dark section-dark text-light pt-80 relative" aria-label="section"
             style="background-size: cover; background-repeat: no-repeat;">
             <div class="container relative z-2" style="background-size: cover; background-repeat: no-repeat;">

@@ -25,7 +25,7 @@
                         académicos con total eficiencia.
                     </p>
                     <a class="btn-main fx-slide mb10 mb-3 wow fadeInUp" data-wow-delay=".6s"
-                        href="#planes"><span>Planes</span></a>
+                        href="{{ route('web_lms') }}#planes"><span>Planes</span></a>
                 </div>
             </div>
         </div>
