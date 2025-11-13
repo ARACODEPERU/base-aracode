@@ -22,7 +22,7 @@
                         <div class="abs w-100 h-100 start-0 top-0 hover-op-1 radial-gradient-color"></div>
                         <div class="abs w-100 start-0 bottom-0 z-3">
                             <div class="bg-blur p-4 m-4 rounded-1 text-light text-center relative z-2">
-                                <h3 class="mb-0">Jose Alarcon</h3>
+                                <h3 class="mb-0">José Alarcón</h3>
                                 <span>Founder / CEO</span>
                             </div>
                             <div class="gradient-edge-bottom h-100 op-8"></div>

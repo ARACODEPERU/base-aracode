@@ -10,7 +10,7 @@
         <div id="teams" class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
             <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
                 <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">
-                    NUESTRO <span class="text-[#0188ee]">EQUIPO</span> 
+                    NUESTRO <span class="text-[#0188ee]">EQUIPO</span>
                 </h2>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">Gente creativa</p>
             </div>
@@ -20,8 +20,8 @@
                         <img class="rounded-full size-20" src="/img/socios/jose.jpg" alt="Avatar">
                         <div class="grow">
                             <h3 class="font-medium text-gray-800 dark:text-[#0188ee]">
-                                Jose Alarcon
-                            </h3> 
+                                José Alarcón
+                            </h3>
                             <p class="text-xs uppercase text-gray-500 dark:text-[#ddd]">
                                 Founder / CEO
                             </p>

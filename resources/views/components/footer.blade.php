@@ -23,7 +23,7 @@
 
                         </div>
                         <div style="padding: 15px;">
-                            <h3 class="fs-20">Contactanos</h3>
+                            <h3 class="fs-20">Contáctanos</h3>
                             (+51) 917 295 856<br>
                             contacto@aracodeperu.com
                         </div>
@@ -35,7 +35,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-12 text-center">
-                        Copyright 2025 - Derechos reervados por Aracode Smart Solutions
+                        Copyright 2025 - Derechos reservados por Aracode Smart Solutions
                     </div>
                 </div>
             </div>

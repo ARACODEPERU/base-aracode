@@ -46,7 +46,7 @@
 
                     <div class="col-lg-6">
                         <div class="bg-dark-2 rounded-1 p-60 relative">
-                            <form name="contactForm" id="contact_form" method="post" action="#">
+                            <form name="contactForm" id="pageContactForm" method="post" action="#">
                                 <div class="row g-4">
                                     <div class="col-lg-12">
                                         <h3>Ponte en contacto</h3>
@@ -55,7 +55,7 @@
                                         </p>
 
                                         <div class="field-set">
-                                            <input type="text" name="name" id="name" class="form-underline"
+                                            <input type="text" name="full_name" id="full_name" class="form-underline"
                                                 placeholder="Nombre Completo" required>
                                         </div>
 
@@ -81,9 +81,11 @@
                                 </div>
 
 
-                                <div class="g-recaptcha" data-sitekey="6LdW03QgAAAAAJko8aINFd1eJUdHlpvT4vNKakj6"></div>
                                 <div id='submit' class="mt-3">
-                                    <input type='submit' id='send_message' value='Enviar Mensaje' class="btn-main">
+                                    <button type='submit' id='submitPageContactButton' class="btn-main">
+                                        <i class="fa fa-envelope"></i> &nbsp;
+                                        <span>Enviar Ahora</span>
+                                    </button>
                                 </div>
 
                                 <div id="success_message" class='success'>
@@ -94,6 +96,68 @@
                                     Lo sentimos, hubo un error al enviar su formulario.
                                 </div>
                             </form>
+                            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    let form = document.getElementById('pageContactForm');
+                                    form.addEventListener('submit', function(e) {
+                                        e.preventDefault();
+
+                                        var formulario = document.getElementById('pageContactForm');
+                                        var formData = new FormData(formulario);
+
+                                        // Deshabilitar el botón
+                                        var submitButton = document.getElementById('submitPageContactButton');
+                                        submitButton.disabled = true;
+                                        submitButton.style.opacity = 0.25;
+
+                                        // Crear una nueva solicitud XMLHttpRequest
+                                        var xhr = new XMLHttpRequest();
+
+                                        // Configurar la solicitud POST al servidor
+                                        xhr.open('POST', "{{ route('apisubscriber') }}", true);
+
+                                        // Configurar la función de callback para manejar la respuesta
+                                        xhr.onload = function() {
+                                            // Habilitar nuevamente el botón
+                                            submitButton.disabled = false;
+                                            submitButton.style.opacity = 1;
+                                            if (xhr.status === 200) {
+                                                var response = JSON.parse(xhr.responseText);
+                                                Swal.fire({
+                                                    icon: 'success',
+                                                    title: 'Enhorabuena',
+                                                    text: response.message,
+                                                    customClass: {
+                                                        container: 'sweet-modal-zindex' // Clase personalizada para controlar el z-index
+                                                    }
+                                                });
+                                                formulario.reset();
+                                            } else if (xhr.status === 422) {
+                                                var errorResponse = JSON.parse(xhr.responseText);
+                                                // Maneja los errores de validación aquí, por ejemplo, mostrando los mensajes de error en algún lugar de tu página.
+                                                var errorMessages = errorResponse.errors;
+                                                var errorMessageContainer = document.getElementById('messagePageContact');
+                                                errorMessageContainer.innerHTML = 'Errores de validación:<br>';
+                                                for (var field in errorMessages) {
+                                                    if (errorMessages.hasOwnProperty(field)) {
+                                                        errorMessageContainer.innerHTML += field + ': ' + errorMessages[field]
+                                                            .join(', ') +
+                                                            '<br>';
+                                                    }
+                                                }
+                                            } else {
+                                                console.error('Error en la solicitud: ' + xhr.status);
+                                            }
+
+
+                                        };
+
+                                        // Enviar la solicitud al servidor
+                                        xhr.send(formData);
+                                    });
+                                });
+                            </script>
                         </div>
                     </div>
                 </div>
