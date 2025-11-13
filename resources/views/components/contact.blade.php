@@ -99,64 +99,40 @@
                             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
-                                    let form = document.getElementById('pageContactForm');
-                                    form.addEventListener('submit', function(e) {
-                                        e.preventDefault();
+    let form = document.getElementById('pageContactForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-                                        var formulario = document.getElementById('pageContactForm');
-                                        var formData = new FormData(formulario);
+        var formulario = document.getElementById('pageContactForm');
+        var formData = new FormData(formulario);
 
-                                        // Deshabilitar el botón
-                                        var submitButton = document.getElementById('submitPageContactButton');
-                                        submitButton.disabled = true;
-                                        submitButton.style.opacity = 0.25;
+        // --- 🔴 PASO CRÍTICO: Obtener el Token ---
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        // ----------------------------------------
 
-                                        // Crear una nueva solicitud XMLHttpRequest
-                                        var xhr = new XMLHttpRequest();
+        var submitButton = document.getElementById('submitPageContactButton');
+        submitButton.disabled = true;
+        submitButton.style.opacity = 0.25;
 
-                                        // Configurar la solicitud POST al servidor
-                                        xhr.open('POST', "{{ route('apisubscriber') }}", true);
+        var xhr = new XMLHttpRequest();
 
-                                        // Configurar la función de callback para manejar la respuesta
-                                        xhr.onload = function() {
-                                            // Habilitar nuevamente el botón
-                                            submitButton.disabled = false;
-                                            submitButton.style.opacity = 1;
-                                            if (xhr.status === 200) {
-                                                var response = JSON.parse(xhr.responseText);
-                                                Swal.fire({
-                                                    icon: 'success',
-                                                    title: 'Enhorabuena',
-                                                    text: response.message,
-                                                    customClass: {
-                                                        container: 'sweet-modal-zindex' // Clase personalizada para controlar el z-index
-                                                    }
-                                                });
-                                                formulario.reset();
-                                            } else if (xhr.status === 422) {
-                                                var errorResponse = JSON.parse(xhr.responseText);
-                                                // Maneja los errores de validación aquí, por ejemplo, mostrando los mensajes de error en algún lugar de tu página.
-                                                var errorMessages = errorResponse.errors;
-                                                var errorMessageContainer = document.getElementById('messagePageContact');
-                                                errorMessageContainer.innerHTML = 'Errores de validación:<br>';
-                                                for (var field in errorMessages) {
-                                                    if (errorMessages.hasOwnProperty(field)) {
-                                                        errorMessageContainer.innerHTML += field + ': ' + errorMessages[field]
-                                                            .join(', ') +
-                                                            '<br>';
-                                                    }
-                                                }
-                                            } else {
-                                                console.error('Error en la solicitud: ' + xhr.status);
-                                            }
+        xhr.open('POST', "{{ route('apisubscriber') }}", true);
 
+        // --- 🔴 PASO CRÍTICO: Configurar el Encabezado CSRF ---
+        xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+        // -----------------------------------------------------
 
-                                        };
+        // ... resto de tu código para onload ...
 
-                                        // Enviar la solicitud al servidor
-                                        xhr.send(formData);
-                                    });
-                                });
+        xhr.onload = function() {
+            submitButton.disabled = false;
+            submitButton.style.opacity = 1;
+            // ... resto del manejo de la respuesta (200, 422, etc.) ...
+        };
+
+        xhr.send(formData);
+    });
+});
                             </script>
                         </div>
                     </div>
