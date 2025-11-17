@@ -83,6 +83,8 @@
         <x-lms-plans-professionals />
         
         <x-lms-plans-advanced /> --}}
+        
+        <x-bulletin />
 
     </div>
 

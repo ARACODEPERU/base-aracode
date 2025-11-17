@@ -22,6 +22,8 @@
         <x-value-proposition />
 
         <x-visionaries />
+        
+        <x-bulletin />
 
     </div>
 

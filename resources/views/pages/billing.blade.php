@@ -20,6 +20,8 @@
         <x-billing-questions />
 
         <x-billing-plans />
+        
+        <x-bulletin />
 
     </div>
 
