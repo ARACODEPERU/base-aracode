@@ -6,7 +6,7 @@
                     <div class="subtitle wow fadeInUp mb-3">Tecnología que impulsa</div>
                     <h2 class="wow fadeInUp" data-wow-delay=".2s">BENEFICIOS</h2>
                     <p class="lead mb-0 wow fadeInUp">
-                        Una plataforma E-Learning robusta, moderna y <br> personalizable.
+                        {{-- Una plataforma E-Learning robusta, moderna y <br> personalizable. --}}
                     </p>
                 </div>
             </div>
