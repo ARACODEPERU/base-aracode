@@ -1,5 +1,4 @@
 <div>
-
     <section id="valor" class="bg-dark section-dark text-light">
         <div class="container-fluid">
             <div class="row g-4">

@@ -55,14 +55,19 @@ class WebPageController extends Controller
         return view('pages.about');
     }
     
-    public function billing()
-    {
-        return view('pages.billing');
-    }
-    
     public function lms()
     {
         return view('pages.lms');
+    }
+    
+    public function cms()
+    {
+        return view('pages.cms');
+    }
+    
+    public function billing()
+    {
+        return view('pages.billing');
     }
 
     public function contact()
