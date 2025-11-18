@@ -15,9 +15,9 @@
 
         <x-header />
 
-        <x-cms-welcome />
+        <x-store-online-welcome />
 
-        <x-cms-benefits />
+        <x-store-online-benefits />
         
         <x-cms-questions />
 
