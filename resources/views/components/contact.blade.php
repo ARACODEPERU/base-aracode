@@ -71,7 +71,7 @@
                                         </div>
 
                                         <div class="field-set">
-                                            <input type="text" name=" " id=" " class="form-underline"
+                                            <input type="text" name="subject" id="subject" class="form-underline"
                                                 placeholder="Asunto" required>
                                         </div>
 

@@ -123,7 +123,7 @@
 
                                     <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
-                                            Mensaje
+                                            Asunto
                                             <a href="">
                                                 <img style="max-width: 12px;height: auto;" class="svg-img" src="/icons-svg/clasificar.svg" alt="Descripción de la imagen">
                                             </a>
@@ -131,7 +131,7 @@
                                     </th>
                                     <th scope="col" class="px-4 py-1.5">
                                         <div class="flex items-center">
-                                            Acción realizada
+                                            Mensaje
                                             <a href="">
                                                 <img style="max-width: 12px;height: auto;" class="svg-img" src="/icons-svg/clasificar.svg" alt="Descripción de la imagen">
                                             </a>
@@ -160,7 +160,7 @@
                                         {{ subscriber.phone }}
                                     </td>
                                     <td class="border px-4 py-1.5 relative group">
-                                        <span class="cursor-help"><b>Curso/Tema</b></span>
+                                        <span class="cursor-help"><b>Asunto</b></span>
                                         <div class="absolute z-10 invisible group-hover:visible bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-2 whitespace-nowrap">
                                             {{ subscriber.subject }}
                                         </div>
