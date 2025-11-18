@@ -112,6 +112,7 @@
                                         <a class="menu-item" href="{{ route('index_main') }}#productos">Productos</a>
                                         <ul>
                                             <li><a class="menu-item" href="{{ route('web_cms') }}">Sitios Webs</a></li>
+                                            <li><a class="menu-item" href="{{ route('web_store_online') }}">Tiendas Online</a></li>
                                             <li><a class="menu-item" href="{{ route('web_lms') }}">Plataforma E-Learning</a></li>
                                             <li><a class="menu-item" href="{{ route('web_billing') }}">Facturación Electrónica</a></li>
                                         </ul>
