@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Entities;
 
+use App\Models\Sale;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +28,8 @@ class AcaStudentSubscription extends Model
         'registration_user_id',
         'onli_sale_id',
         'xdocument_id',
-        'amount_paid'
+        'amount_paid',
+        'xsale_note_id'
     ];
 
     protected static function newFactory(): AcaStudentSubscriptionFactory
@@ -43,5 +45,9 @@ class AcaStudentSubscription extends Model
     public function student(): BelongsTo
     {
         return $this->belongsTo(AcaStudent::class, 'student_id', 'id');
+    }
+    public function salenote(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'xsale_note_id');
     }
 }

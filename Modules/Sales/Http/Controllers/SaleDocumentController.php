@@ -100,6 +100,7 @@ class SaleDocumentController extends Controller
                 'payments',
                 'sales.created_at',
                 'sales.local_id',
+                'sale_documents.overall_total',
                 'sale_documents.invoice_status',
                 'sale_documents.invoice_response_description',
                 'sale_documents.invoice_response_code',

@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, watch, nextTick } from 'vue';
 
     import { useAppStore } from '@/stores/index';
     import IconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
@@ -8,7 +8,7 @@
 
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
     import { faUserGroup } from  '@fortawesome/free-solid-svg-icons';
-
+    import { Popover } from 'ant-design-vue';
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js'
 
@@ -120,6 +120,7 @@
         }
     }
 
+
 </script>
 <template>
     <div :class="{ 'dark text-white-dark': store.semidark }">
@@ -149,7 +150,7 @@
                 <perfect-scrollbar
                     :options="{
                         swipeEasing: true,
-                        wheelPropagation: false,
+                        wheelPropagation: false
                     }"
                     class="h-[calc(100vh-80px)] relative"
                 >
@@ -244,7 +245,37 @@
                                         </template>
                                         <template v-else>
                                             <li v-can="subItem.permissions" class="menu nav-item">
+                                                <Popover
+                                                    v-if="subItem.info"
+                                                    :placement="subItem.info.placement"
+                                                >
+                                                    <template #content>
+                                                        <div v-html="subItem.info?.content"></div>
+                                                    </template>
+                                                    <template #title>
+                                                        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                                                            {{ subItem.info?.title }}
+                                                        </h3>
+                                                    </template>
+                                                    <Link
+                                                        v-bind="{ id: subItem.id }"
+                                                        :href="subItem.route"
+                                                        class="nav-link group"
+                                                        @click="toggleMobileMenu"
+                                                        preserve-state
+                                                        preserve-scroll
+                                                    >
+                                                        <div class="flex items-center">
+                                                            <font-awesome-icon :icon="subItem.icom" class="group-hover:!text-primary shrink-0" />
+
+                                                            <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
+                                                                {{ subItem.text }}
+                                                            </span>
+                                                        </div>
+                                                    </Link>
+                                                </Popover>
                                                 <Link
+                                                    v-else
                                                     v-bind="{ id: subItem.id }"
                                                     :href="subItem.route"
                                                     class="nav-link group"
@@ -406,9 +437,9 @@
     </div>
 </template>
 
-<style>
-ul.sub-menu-before li a.active {
-  --tw-text-opacity: 1;
-  color: rgb(67 97 238 / var(--tw-text-opacity));
-}
+<style scoped>
+    ul.sub-menu-before li a.active {
+        --tw-text-opacity: 1;
+        color: rgb(67 97 238 / var(--tw-text-opacity));
+    }
 </style>

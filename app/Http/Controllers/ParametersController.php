@@ -104,6 +104,8 @@ class ParametersController extends Controller
             'value_default'         => 'required'
         ]);
 
+        $valor_seguro = $request->get('value_default');
+
         if($request->get('control_type') == 'tx'){
             $value_default = $request->get('value_default');
             // Convertir los caracteres especiales a entidades HTML

@@ -5,7 +5,7 @@
     import ModalLarge from '@/Components/ModalLarge.vue';
     import Swal from "sweetalert2";
     import { useForm, Link, usePage, router } from '@inertiajs/vue3';
-    import { faMagnifyingGlass, faRotate } from "@fortawesome/free-solid-svg-icons";
+    import { faGears } from "@fortawesome/free-solid-svg-icons";
     import { ref, watch, onMounted, nextTick } from "vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
@@ -208,12 +208,15 @@
                             <div class="col-span-3 sm:col-span-2">
                                 <Keypad>
                                     <template #botones>
-                                        <button v-can="'onli_pedidos_enviar_boletas'" @click="sendOnliEmails" class="btn btn-primary uppercase text-xs">
+                                        <button v-can="'onli_pedidos_enviar_boletas'" @click="sendOnliEmails" class="btn btn-success uppercase text-xs">
                                             <svg class="w-4 h-4 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
                                                 <path d="M128 0C110.3 0 96 14.3 96 32l0 192 96 0 0-32c0-35.3 28.7-64 64-64l224 0 0-96c0-17.7-14.3-32-32-32L128 0zM256 160c-17.7 0-32 14.3-32 32l0 32 96 0c35.3 0 64 28.7 64 64l0 128 192 0c17.7 0 32-14.3 32-32l0-192c0-17.7-14.3-32-32-32l-320 0zm240 64l32 0c8.8 0 16 7.2 16 16l0 32c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-32c0-8.8 7.2-16 16-16zM64 256c-17.7 0-32 14.3-32 32l0 13L187.1 415.9c1.4 1 3.1 1.6 4.9 1.6s3.5-.6 4.9-1.6L352 301l0-13c0-17.7-14.3-32-32-32L64 256zm288 84.8L216 441.6c-6.9 5.1-15.3 7.9-24 7.9s-17-2.8-24-7.9L32 340.8 32 480c0 17.7 14.3 32 32 32l256 0c17.7 0 32-14.3 32-32l0-139.2z"/>
                                             </svg>
                                             Crear Comprobante Electrónico y Enviar correos
                                         </button>
+                                        <Link v-can="'onli_pedidos_nuevo'" :href="route('onlineshop_sales_create')" class="btn btn-primary uppercase text-xs">
+                                            Nuevo
+                                        </Link>
                                     </template>
                                 </Keypad>
                             </div>
@@ -257,12 +260,25 @@
                                 <template v-for="(item, index) in sales.data" :key="item.id">
                                     <tr >
                                         <td class="text-center">
-                                            <button @click="openModalDetails(item)" type="button" title="ver detalles" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                                                <font-awesome-icon :icon="faMagnifyingGlass" />
-                                            </button>
-                                            <!-- <button @click="destroyItem(item.id)" type="button" title="Consultar a mercado pago" class="text-white bg-gray-700 hover:bg-gray-800 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center me-2 dark:bg-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
-                                                <font-awesome-icon :icon="faRotate" />
-                                            </button> -->
+                                            <div class="flex gap-4 items-center justify-center">
+                                                <div class="dropdown">
+                                                    <Popper :placement="'bottom-start'" offsetDistance="0" class="align-middle">
+                                                        <button type="button" class="btn btn-outline-primary px-2 py-2 dropdown-toggle">
+                                                            <font-awesome-icon :icon="faGears" />
+                                                        </button>
+                                                        <template #content="{ close }">
+                                                        <ul @click="close()" class="whitespace-nowrap">
+                                                            <li>
+                                                                <a @click="openModalDetails(item)" href="javascript:;">Ver detalles</a>
+                                                            </li>
+                                                            <li v-if="item.response_status != 'approved'">
+                                                                <Link v-if="item.student_id" :href="route('aca_student_invoice', [item.student_id, item.installments])">Ir a realizar un pago</Link>
+                                                            </li>
+                                                        </ul>
+                                                        </template>
+                                                    </Popper>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td >
                                             {{ item.clie_full_name }}
@@ -314,6 +330,9 @@
                                         </td>
                                         <td class="text-center">
                                            <span v-if="item.response_status == 'pendiente'"  class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-red-400 border border-red-400">No completó el pago</span>
+                                           <span v-if="item.response_status == 'pago_en_cuotas'"
+                                                v-tippy="{ content: 'El alumno cuenta con acceso activo, pero tiene un saldo pendiente por completar dentro del plazo acordado para el pago de cuotas.', placement: 'bottom'}"
+                                                class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-red-400 border border-red-400">Venta activa con saldo pendiente</span>
                                            <span v-else-if="item.response_status == 'approved'" class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Pago aprobado</span>
                                            <span v-else class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Error en la transacción</span>
                                         </td>

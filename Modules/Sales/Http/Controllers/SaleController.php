@@ -43,7 +43,10 @@ class SaleController extends Controller
         $isAdmin = Auth::user()->hasRole('admin');
 
         $sales = $sales->join('people', 'client_id', 'people.id')
-            ->leftJoin('sale_documents', 'sale_documents.sale_id', 'sales.id')
+            ->leftJoin('sale_documents', function($q) {
+                $q->on('sale_documents.sale_id', 'sales.id')
+                    ->where('physical','<>', 0);
+            })
             ->leftJoin('series', 'sale_documents.serie_id', 'series.id')
             ->select(
                 'sales.id',

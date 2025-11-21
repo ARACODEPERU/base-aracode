@@ -110,7 +110,7 @@ const loadFile = (event) => {
 
     // Obtén una referencia al elemento de imagen a través de Vue.js
     const imagePreview = document.getElementById('preview_img');
-    
+
     // Crea un objeto de archivo de imagen y asigna la URL al formulario
     const imageFile = URL.createObjectURL(event.target.files[0]);
     form.image_view = imageFile;
@@ -165,7 +165,7 @@ const removeSpecifications= (key) => {
                 />
                 <InputError :message="form.errors.name" class="mt-2" />
             </div>
-            
+
             <div v-if="form.type == 1" class="col-span-6 sm:col-span-6 ">
                 <InputLabel for="description" value="Descripción" />
                 <textarea v-model="form.description" id="description" rows="2" autofocus class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Escribe descripción aquí..."></textarea>
@@ -187,17 +187,15 @@ const removeSpecifications= (key) => {
             </div>
             <div v-if="form.type == 1" class="col-span-6 sm:col-span-6">
                 <InputLabel for="category_description" value="Sector" />
-                <select id="category_description" v-model="form.category_description" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <select id="category_description" v-model="form.category_description" class="form-select text-white-dark">
                     <option selected value="">Seleccionar Sector</option>
-                    <option value="Derecho">Derecho</option>
-                    <option value="Empresarial">Empresarial</option>
-                    <option value="Publico">Público</option>
+                    <option v-for="(sector) in sectorsCourses" :value="sector" >{{ sector }}</option>
                     <!-- Agrega más opciones según tus necesidades -->
                 </select>
                 <InputError :message="form.errors.category_description" class="mt-2" />
             </div>
             <div v-else class="col-span-6 sm:col-span-6">
-                <InputLabel for="category_description" value="Sector" />                       
+                <InputLabel for="category_description" value="Sector" />
                 <TextInput
                     id="category_description"
                     v-model="form.category_description"
@@ -228,14 +226,13 @@ const removeSpecifications= (key) => {
 
             <div v-if="form.type == 1" class="col-span-6 sm:col-span-6">
                 <InputLabel for="additional" value="Tipo*" />
-                <select id="additional" v-model="form.additional" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                <select id="additional" v-model="form.additional" class="form-select text-white-dark">
                     <option value="">Seleccionar tipo</option>
-                    <option value="Curso">Curso</option>
-                    <option value="Diplomado">Diplomado</option>
+                    <option v-for="(type) in typesCourses" :value="type" > {{ type }}</option>
                 </select>
                 <InputError :message="form.errors.additional" class="mt-2" />
             </div>
-           
+
             <div v-if="form.type == 2 || form.type == 3" class="col-span-6 sm:col-span-6">
                 <InputLabel for="additional" :value="titles.additional+'*'" />
                 <Editor
@@ -258,7 +255,7 @@ const removeSpecifications= (key) => {
                         <figcaption class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">Imagen Actual</figcaption>
                     </figure>
                 </div>
-                
+
                 <input @change="loadFile" accept=".svg, .png, .jpg, .jpeg, .gif" class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="file_input" type="file">
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">PNG, JPG or GIF (RECOMENDADO. 800x400px).</p>
                 <InputError :message="form.errors.image" class="mt-2" />
@@ -328,7 +325,7 @@ const removeSpecifications= (key) => {
                             <tr class="px-6 py-3 bg-gray-200 dark:bg-gray-800">
                                 <th colspan="3" scope="col" class="px-6 py-3">
                                     <div class="flex items-center justify-between">
-                                        <span>ESPECIFICACIONES DEL PRODUCTO</span> 
+                                        <span>ESPECIFICACIONES DEL PRODUCTO</span>
                                         <button @click="addSpecifications" type="button" class="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                             Agregar
                                         </button>

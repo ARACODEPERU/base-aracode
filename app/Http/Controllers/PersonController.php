@@ -28,61 +28,84 @@ class PersonController extends Controller
 
     public function searchByNumberType(Request $request)
     {
-        //dd($request->all());
         $document_type = $request->input('document_type');
-        $number = $request->input('number');
-        $full_name = $request->input('full_name');
+        $number        = $request->input('number');
+        $full_name     = $request->input('full_name');
+        $searchBy      = $request->input('searchBy'); // 1 = number, 2 = full_name
 
         $msg1 = '';
         $msg2 = '';
         $status = true;
-        $person = [];
-        $alert = 'No existen datos para la busqueda';
-
-        if ($document_type == '') {
-            $msg1 = 'Elija Tipo docuemnto';
-        }
-        if (!$number || $number == '') {
-            $msg2 = 'Ingrese numero';
-        }
-
-
-        $person = Person::leftJoin('districts', 'ubigeo', 'districts.id')
-            ->leftJoin('provinces', 'districts.province_id', 'provinces.id')
-            ->leftJoin('departments', 'provinces.department_id', 'departments.id')
-            ->select(
-                'people.*',
-                'districts.id AS district_id',
-                DB::raw('CONCAT(departments.name,"-",provinces.name,"-",districts.name) AS city')
-            )
-            ->where('people.document_type_id', $document_type)
-            ->where(function ($query) use ($number, $full_name) {
-                $query->where('people.number', $number);
-            })
-            ->first();
-        //dd($person);
+        $alert  = 'No existen datos para la búsqueda';
         $ubigeo = [];
 
-        if ($person) {
-            $status = true;
-            $alert = null;
-            $ubigeo = array(
-                'district_id' => $person->district_id,
-                'city_name' => $person->city
-            );
+        // Validación usando Laravel
+        $this->validate($request, [
+            'searchBy'      => 'required|in:1,2',
+
+            // Obligatorio solo si searchBy = 1
+            'document_type' => 'required_if:searchBy,1',
+
+            // Obligatorio si la búsqueda es por número
+            'number'        => 'required_if:searchBy,1',
+
+            // Obligatorio si la búsqueda es por nombre
+            'full_name'     => 'required_if:searchBy,2',
+        ],[
+            // Mensajes personalizados
+            'document_type.required_if' => 'Para la búsqueda por número es necesario elegir el tipo de documento.',
+            'number.required_if'        => 'Para la búsqueda por número es necesario ingresar un número.',
+            'full_name.required_if'     => 'Para la búsqueda por nombre o razón social es obligatorio ingresar un nombre o razón social.',
+        ]);
+
+        // Base query
+        $query = new Person();
+
+        // Ejecutar búsqueda según tipo
+        if ($searchBy == 1) {
+            // SOLO 1 RESULTADO
+            $person = $query->where('people.document_type_id', $document_type)
+                ->where('people.number', $number)
+                ->first();
         } else {
-            $status = false;
-            $alert = 'No existen datos para la busqueda';
-            $ubigeo = [];
+            // VARIOS RESULTADOS
+            $person = $query->where('people.full_name', 'LIKE', "%{$full_name}%")->get();
         }
-        //dd($person);
+
+        // Si buscó por DNI → verificar objeto
+        if ($searchBy == 1) {
+            if ($person) {
+                $status = true;
+                $alert = null;
+
+                // construir ubigeo
+                $ubigeo = [
+                    'district_id' => $person->ubigeo,
+                    'city_name'   => $person->ubigeo_description
+                ];
+            } else {
+                $status = false;
+            }
+        }
+
+        // Si buscó por nombre → verificar colección
+        if ($searchBy == 2) {
+            if ($person->count() > 0) {
+                $status = true;
+                $alert  = null;
+                $ubigeo = []; // no devolver ubigeo porque hay varios resultados
+            } else {
+                $status = false;
+            }
+        }
+
         return response()->json([
             'status'        => $status,
             'person'        => $person,
             'document_type' => $msg1,
             'number'        => $msg2,
             'alert'         => $alert,
-            'ubigeo' => $ubigeo
+            'ubigeo'        => $ubigeo
         ]);
     }
 

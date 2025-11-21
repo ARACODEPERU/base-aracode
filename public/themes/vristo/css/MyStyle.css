@@ -226,3 +226,41 @@
 .italic {
     font-style: italic;
 }
+:where(.divide-gray-200>:not(:last-child)) {
+    border-color: var(--color-gray-200);
+}
+:where(.divide-y>:not(:last-child)) {
+    --tw-divide-y-reverse: 0;
+    border-bottom-style: var(--tw-border-style);
+    border-top-style: var(--tw-border-style);
+    border-top-width: calc(1px * var(--tw-divide-y-reverse));
+    border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+}
+.bg-gray-50 {
+    background-color: var(--color-gray-50) !important;
+}
+.bg-blue-100 {
+    background-color: var(--color-blue-100) !important;
+}
+.bg-blue-600 {
+    background-color: var(--color-blue-600) !important;
+}
+.bg-blue-900 {
+    background-color: var(--color-blue-900) !important;
+}
+.bg-teal-600 {
+    background-color: var(--color-teal-600) !important;
+}
+.bg-neutral-700 {
+    background-color: var(--color-neutral-700) !important;
+}
+.bg-red-100 {
+    background-color: var(--color-red-100) !important;
+}
+.bg-red-200 {
+    background-color: var(--color-red-200) !important;
+}
+.bg-info-100 {
+    background-color: var(--color-info-200) !important;
+}
+

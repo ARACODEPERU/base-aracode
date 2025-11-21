@@ -12,5 +12,6 @@
     "Restaurant": true,
     "Socialevents": true,
     "CRM": true,
-    "Churchcommunity": true
+    "Churchcommunity": true,
+    "Bibliodata": true
 }

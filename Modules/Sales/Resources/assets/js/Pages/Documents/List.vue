@@ -359,7 +359,7 @@
         { data: null, render: '#created',title: 'Fecha Registrado' },
         { data: 'invoice_broadcast_date', title: 'Fecha Emitido' },
         { data: 'full_name', title: 'Cliente' },
-        { data: 'total', title: 'Total' },
+        { data: 'overall_total', title: 'Total' },
         { data: null, render: '#status', title: 'Estado' },
         { data: null, render: '#forma_pago', title: 'Forma de pago' },
     ];
@@ -479,7 +479,7 @@
                         </div>
                     </template>
                     <template #created="props">
-                        {{ formatDate(props.rowData.created_at) }}
+                        {{ formatDate(props.rowData.document.created_at) }}
                     </template>
                     <template #status="props">
                         <div>

@@ -714,7 +714,7 @@ class AcaStudentController extends Controller
         ]);
     }
 
-    public function invoice($id)
+    public function invoice($id, $installments = 'not')
     {
         $payments = PaymentMethod::all();
         $saleDocumentTypes = DB::table('sale_document_types')->whereIn('sunat_id', ['01', '03'])->get();
@@ -726,20 +726,30 @@ class AcaStudentController extends Controller
             })
             ->get();
 
-        $registrationCourses = AcaCapRegistration::with('course')
-            ->with('salenote')
-            ->where('student_id', $id)
-            ->whereNull('document_id')
-            ->whereHas('course', function ($query) {
-                $query->whereNotNull('price')->where('price', '>', 0);
+        $registrationCourses = AcaCapRegistration::query()
+            ->select('aca_cap_registrations.*')
+            ->join('aca_courses', 'aca_courses.id', '=', 'aca_cap_registrations.course_id')
+            ->with(['course', 'salenote'])
+            ->where('aca_cap_registrations.student_id', $id)
+            ->where(function ($query) {
+                $query->where(function($qDoc){
+                    $qDoc->whereNull('aca_cap_registrations.document_id')
+                        ->whereNull('aca_cap_registrations.sale_note_id');
+                })->orWhere(function ($qCre) {
+                        $qCre->where('aca_cap_registrations.payment_installments', true)
+                            ->whereColumn('aca_cap_registrations.advancement', '<', 'aca_courses.price');
+                    });
             })
-            ->whereNull('sale_note_id')
+            ->whereNotNull('aca_courses.price')
+            ->where('aca_courses.price', '>', 0)
             ->get();
 
-        $subscriptions = AcaStudentSubscription::with('subscription')
+
+        $subscriptions = AcaStudentSubscription::with(['subscription','salenote'])
             ->where('student_id', $id)
             ->whereNull('onli_sale_id')
             ->whereNull('xdocument_id') ///si esta lleno es porque lo compro en linea
+            ->whereNull('xsale_note_id')
             ->get();
 
         $standardIdentityDocument = DB::table('identity_document_type')->get();
@@ -769,6 +779,7 @@ class AcaStudentController extends Controller
             'subscriptions' => $subscriptions,
             'standardIdentityDocument' => $standardIdentityDocument,
             'departments'       => $ubigeo,
+            'installments'  => $installments
         ]);
     }
 

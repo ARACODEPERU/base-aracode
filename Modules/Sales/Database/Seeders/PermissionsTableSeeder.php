@@ -26,6 +26,7 @@ class PermissionsTableSeeder extends Seeder
 
         $permissions = [];
         $permissionsFE = [];
+        $permissionsAC = [];
 
         array_push($permissions, Permission::create(['name' => 'sale_dashboard']));
         array_push($permissions, Permission::create(['name' => 'productos']));

@@ -1,0 +1,11 @@
+{
+    "name": "Bibliodata",
+    "alias": "bibliodata",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Bibliodata\\Providers\\BibliodataServiceProvider"
+    ],
+    "files": []
+}

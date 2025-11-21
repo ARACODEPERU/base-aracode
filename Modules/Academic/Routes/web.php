@@ -211,11 +211,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->name('aca_lesson_comments_destroy');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_cobrar'])
-        ->get('student/invoice/create/{id}', 'AcaStudentController@invoice')
+        ->get('student/invoice/create/{id}/{installments?}', [AcaStudentController::class, 'invoice'])
         ->name('aca_student_invoice');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_cobrar'])
-        ->post('student/sale/store', 'AcaSalesController@store')
+        ->post('student/sale/store', [AcaSalesController::class, 'store'])
         ->name('aca_student_invoice_store');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_listar_comprobantes'])
@@ -224,6 +224,21 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::get('student/sale/listtable/{id}', [AcaSalesController::class, 'tableDocumentStudent'])
         ->name('aca_student_invoice_list_table');
+
+    Route::middleware(['middleware' => 'permission:aca_estudiante_listar_cuotas_espaciales'])
+        ->get('student/sale/spacesales/{id}/list', [AcaSalesController::class, 'spaceSalesList'])
+        ->name('aca_student_space_sales_list');
+
+    Route::get('student/sale/spacesales/{id}/listtable', [AcaSalesController::class, 'tableSpaceSalesList'])
+        ->name('aca_student_space_sales_list_table');
+
+    Route::middleware(['middleware' => 'permission:aca_estudiante_listar_cuotas_espaciales'])
+        ->get('student/sale/spacesales/{id}/create', [AcaSalesController::class, 'spaceSalesCreate'])
+        ->name('aca_student_space_sales_create');
+
+    Route::middleware(['middleware' => 'permission:aca_estudiante_listar_cuotas_espaciales'])
+        ->put('student/sale/spacesales/{id}/store', [AcaSalesController::class, 'storeSpacePayments'])
+        ->name('aca_student_space_sales_store');
 
     Route::post('student/send/mail/student/ticket', [AcaSaleDocumentController::class, 'sendEmailBoleta'])
         ->name('aca_send_email_student_document');

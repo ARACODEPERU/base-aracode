@@ -29,7 +29,8 @@ class Sale extends Model
         'invoice_ruc',
         'invoice_direccion',
         'invoice_ubigeo',
-        'invoice_type'
+        'invoice_type',
+        'payment_installments'
     ];
 
     protected $casts = [
