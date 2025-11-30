@@ -416,7 +416,7 @@
                                             </div>
                                         </div>
                                         <div class="mt-6 grid grid-cols-1 gap-4 ltr:text-left rtl:text-right">
-                                            <div class="flex items-center">
+                                            <div v-if="student.person.country" class="flex items-center">
                                                 <div class="flex-none ltr:mr-2 rtl:ml-2">País :</div>
                                                 <div class="flex gap-2 truncate text-white-dark">
                                                     <span>{{ student.person.country.description }}</span>

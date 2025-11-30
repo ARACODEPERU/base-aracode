@@ -464,7 +464,7 @@ class AcaStudentController extends Controller
             ->where('status', true)
             ->first();
 
-        // También puedes verificar múltiples roles a la vez
+        // roles superiores que no sea alumno pueden ver todos los curso
         if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
             $mycourses = AcaCourse::with('modules.themes.contents')
                 ->with('teacher.person')->where('status', true)
@@ -479,6 +479,7 @@ class AcaStudentController extends Controller
 
 
         } else {
+            //si es un alumno se tiene que verificar que tenga los accesos nesesarios
             $mycourses = $this->getAllCoursesWithAccessStatus();
         }
         // Agrupar cursos
@@ -523,15 +524,30 @@ class AcaStudentController extends Controller
         $user = Auth::user();
         $studentId = AcaStudent::where('person_id', $user->person_id)->value('id');
 
+        $today = Carbon::today();
+
         // 1. Verificar si el estudiante tiene una suscripción activa
         $hasActiveSubscription = AcaStudentSubscription::where('student_id', $studentId)
-                                                      ->where('status', true)
-                                                      ->exists();
+                                                    ->where(function ($query) use ($today) {
+                                                        $query->where('status', true)
+                                                            ->orWhere(function ($q) use ($today) {
+                                                                $q->whereDate('date_start', '<=', $today)
+                                                                    ->whereDate('date_end', '>=', $today);
+                                                            });
+                                                    })
+                                                    ->exists();
 
         // 2. Obtener los IDs de los cursos en los que el estudiante está matriculado
         $registeredCourseIds = AcaCapRegistration::where('student_id', $studentId)
-                                                  ->pluck('course_id')
-                                                  ->toArray();
+                                                ->where(function ($query) use ($today) {
+                                                    $query->where('unlimited', true)
+                                                        ->orWhere(function ($q) use ($today) {
+                                                            $q->whereDate('date_start', '<=', $today)
+                                                                ->whereDate('date_end', '>=', $today);
+                                                        });
+                                                })
+                                                ->pluck('course_id')
+                                                ->toArray();
 
         // 3. Obtener todos los cursos disponibles
         $allCourses = AcaCourse::with('modules.themes.contents')
@@ -607,10 +623,19 @@ class AcaStudentController extends Controller
             return true;
         }
 
+        $today = Carbon::today();
+
         // Condición 2: Si el estudiante está matriculado en este curso, pasa
         $isRegistered = AcaCapRegistration::where('student_id', $studentId)
-                                          ->where('course_id', $courseId)
-                                          ->exists();
+                                            ->where('course_id', $courseId)
+                                            ->where(function ($query) use ($today) {
+                                                $query->where('unlimited', true)
+                                                    ->orWhere(function ($q) use ($today) {
+                                                        $q->whereDate('date_start', '<=', $today)
+                                                            ->whereDate('date_end', '>=', $today);
+                                                    });
+                                            })
+                                            ->exists();
         if ($isRegistered) {
             return true;
         }

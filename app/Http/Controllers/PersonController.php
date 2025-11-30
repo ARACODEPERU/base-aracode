@@ -31,7 +31,7 @@ class PersonController extends Controller
         $document_type = $request->input('document_type');
         $number        = $request->input('number');
         $full_name     = $request->input('full_name');
-        $searchBy      = $request->input('searchBy'); // 1 = number, 2 = full_name
+        $searchBy      = $request->input('searchBy') ?? 1; // 1 = number, 2 = full_name
 
         $msg1 = '';
         $msg2 = '';
@@ -41,7 +41,7 @@ class PersonController extends Controller
 
         // Validación usando Laravel
         $this->validate($request, [
-            'searchBy'      => 'required|in:1,2',
+            'searchBy'      => 'nullable|in:1,2',
 
             // Obligatorio solo si searchBy = 1
             'document_type' => 'required_if:searchBy,1',
@@ -59,7 +59,8 @@ class PersonController extends Controller
         ]);
 
         // Base query
-        $query = new Person();
+        $query = Person::query()->with(['teacher', 'student']);
+
 
         // Ejecutar búsqueda según tipo
         if ($searchBy == 1) {

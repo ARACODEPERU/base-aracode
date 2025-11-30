@@ -27,7 +27,8 @@ class AcaCapRegistration extends Model
         'arrival_source_id',
         'arrival_source_information',
         'payment_installments',
-        'advancement'
+        'advancement',
+        'amount_paid'
     ];
 
     protected static function newFactory()

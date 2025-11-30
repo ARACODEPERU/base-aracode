@@ -171,42 +171,69 @@ const openSwal2Search = () => {
         icon: "question",
         padding: '2em',
         customClass: 'sweet-alerts',
-        preConfirm: async (login) => {
-            let data = {
-                document_type: document.getElementById("identityDocument").value,
-                number: document.getElementById("txtdni").value
+
+        preConfirm: async () => {
+
+            const type = document.getElementById("identityDocument").value?.trim();
+            const number = document.getElementById("txtdni").value?.trim();
+
+            // 🔥 VALIDACIONES
+            if (!type) {
+                Swal2.showValidationMessage("Por favor, seleccione el tipo de documento.");
+                return false;
             }
-            return axios.post(route('search_person_number'),data).then((res) => {
-                if (!res.data.status) {
-                    form.document_type_id = data.document_type,
-                    form.number = data.number,
-                    Swal2.showValidationMessage(res.data.alert)
-                }
-                return res
-            });
+
+            if (!number) {
+                Swal2.showValidationMessage("Por favor, ingrese el número de documento.");
+                return false;
+            }
+
+            let data = {
+                document_type: type,
+                number: number
+            };
+
+            // 🔥 Petición al servidor
+            return axios.post(route('search_person_number'), data)
+                .then(res => {
+                    if (!res.data.status) {
+                        form.document_type_id = type;
+                        form.number = number;
+                        Swal2.showValidationMessage(res.data.alert);
+                    }
+                    return res;
+                })
+                .catch(() => {
+                    Swal2.showValidationMessage("Ocurrió un error al verificar el documento.");
+                });
         },
+
         allowOutsideClick: () => !Swal2.isLoading()
-    }).then((result) => {
+    }).then(result => {
+
         if (result.isConfirmed) {
+            const person = result.value.data.person;
+
             Swal2.fire({
                 allowOutsideClick: false,
-                title: result.value.data.person.full_name,
-                imageUrl: result.value.data.person.image ? getImage(result.value.data.person.image) : null,
-                text: `Ya fue registrado con el DNI ` + result.value.data.person.number,
+                title: person.full_name,
+                imageUrl: person.image ? getImage(person.image) : null,
+                text: `Ya fue registrado con el DNI ${person.number}`,
                 imageHeight: 180,
                 imageWidth: 180,
                 customClass: {
                     image: 'rounded-full',
                 },
                 padding: '2em',
-            }).then((res) => {
+            }).then(res => {
                 if (res.isConfirmed) {
-                    getPersonData(result.value.data.person);
+                    getPersonData(person);
                 }
             });
         }
     });
-}
+};
+
 const getPersonData = (newValues) => {
     form.id = newValues.id;
     form.teacher_id = newValues.teacher_id;

@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sales', function (Blueprint $table) {
+            $table->string('invoice_ubigeo_description', 500)->nullable()->comment('departamento-provincia-distrito');
             $table->boolean('payment_installments')->default(false)->comment('si esta en true el pago sera en cuotas');
         });
     }
@@ -23,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn('payment_installments');
+            $table->dropColumn('invoice_ubigeo_description');
         });
     }
 };

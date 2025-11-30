@@ -10,7 +10,7 @@ window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 // Configurar un timeout global de 10 segundos (10000 milisegundos)
-window.axios.defaults.timeout = 10000; // 10 segundos
+window.axios.defaults.timeout = 20000; // 10 segundos
 // Interceptor para capturar respuestas con código de estado 401
 window.axios.interceptors.response.use(
     (response) => {
@@ -21,14 +21,14 @@ window.axios.interceptors.response.use(
       if (error.response && error.response.status === 401) {
         // Si la respuesta tiene un código de estado 401, significa que el usuario no está autenticado.
         // Aquí redirigiremos al usuario a la página de inicio de sesión.
-  
+
         // Redirigir al usuario a la página de inicio de sesión (reemplaza "/login" con la ruta real)
         window.location.href = '/login';
       }
       if (error.response && error.response.status === 419) {
         // Si la respuesta tiene un código de estado 401, significa que el usuario no está autenticado.
         // Aquí redirigiremos al usuario a la página de inicio de sesión.
-  
+
         // Redirigir al usuario a la página de inicio de sesión (reemplaza "/login" con la ruta real)
         window.location.href = '/login';
       }

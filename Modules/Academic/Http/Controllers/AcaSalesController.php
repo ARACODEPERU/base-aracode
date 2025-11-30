@@ -949,7 +949,6 @@ class AcaSalesController extends Controller
                 return $document;
             });
 
-
             return response()->json($res);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()]);

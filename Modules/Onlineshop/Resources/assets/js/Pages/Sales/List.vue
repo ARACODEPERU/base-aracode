@@ -272,7 +272,7 @@
                                                                 <a @click="openModalDetails(item)" href="javascript:;">Ver detalles</a>
                                                             </li>
                                                             <li v-if="item.response_status != 'approved'">
-                                                                <Link v-if="item.student_id" :href="route('aca_student_invoice', [item.student_id, item.installments])">Ir a realizar un pago</Link>
+                                                                <Link v-if="item.student_id" :href="route('aca_student_space_sales_list', [item.student_id, item.installments])">Ir a realizar un pago</Link>
                                                             </li>
                                                         </ul>
                                                         </template>
@@ -304,6 +304,7 @@
                                                         type="checkbox"
                                                         class="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer" :id="`venta${index}`" />
                                                     <span :for="`venta${index}`" class="outline_checkbox bg-icon border-2 border-[#bcc8e0] dark:border-white-dark block h-full rounded-full before:absolute before:left-1 before:bg-[#ebedf2] dark:before:bg-white-dark before:bottom-1 before:w-4 before:h-4 before:rounded-full before:bg-[url(/themes/vristo/images/close.svg)] before:bg-no-repeat before:bg-center peer-checked:before:left-7 peer-checked:before:bg-[url(/themes/vristo/images/checked.svg)] peer-checked:border-primary peer-checked:before:bg-primary before:transition-all before:duration-300"></span>
+
                                                 </label>
                                                 <span v-else class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">
                                                     <template v-if="item.invoice_type == 1">

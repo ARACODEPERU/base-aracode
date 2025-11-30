@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaTeacher;
 use Modules\Academic\Entities\AcaTeachingResume;
 
@@ -64,6 +65,10 @@ class Person extends Model
     public function teacher(): HasOne
     {
         return $this->hasOne(AcaTeacher::class, 'id', 'person_id');
+    }
+    public function student()
+    {
+        return $this->hasOne(AcaStudent::class, 'person_id');
     }
     public function resumes(): HasMany
     {

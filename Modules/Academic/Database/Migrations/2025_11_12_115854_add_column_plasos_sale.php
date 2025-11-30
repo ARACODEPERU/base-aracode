@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('aca_cap_registrations', function (Blueprint $table) {
             $table->boolean('payment_installments')->default(false)->comment('si esta en true la matricula se pagare en cuotas');
+            $table->decimal('amount_paid', 12, 2)->default(0)->comment('para saber a cuanto le cotara el curso');
             $table->decimal('advancement', 12, 2)->default(0)->comment('para saber si el alumno a pago algun monto');
         });
     }

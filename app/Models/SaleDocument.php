@@ -65,7 +65,8 @@ class SaleDocument extends Model
         'forma_pago',
         'status_pay',
         'overdue_fee',
-        'single_payment'
+        'single_payment',
+        'schedule_id'
     ];
 
     public function items(): HasMany

@@ -11,7 +11,8 @@ import {
     faFileLines,
     faFileArrowDown,
     faFileFragment,
-    faFileCircleQuestion
+    faFileCircleQuestion,
+    faCircleDollarToSlot
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSales = [
@@ -161,12 +162,43 @@ const menuSales = [
             {
                 route: route('acco_document_list'),
                 status: false,
-                text: 'Lista Documento',
+                text: 'Documentos al Crédito',
                 permissions: 'acco_documento_listado',
                 icom: faFileCircleQuestion,
+                info: {
+                    title: "Documentos al Crédito",
+                    content: `<p class="text-sm text-gray-500 mb-3">
+                        Registrar pagos sin emitir comprobantes
+                        </p>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li>✔ <span> Se entiende que son ventas a crédito</span></li>
+                            <li>✔ <span>Solo se registran pagos.</span></li>
+                            <li>✔ <span>No genera boletas/facturas por los abonos.</span></li>
+                        </ul>`,
+                    placement: 'right'
+                }
+            },
+            {
+                route: route('acco_sales_special_rates'),
+                status: false,
+                text: 'Gestión Ventas en Cuotas',
+                permissions: 'acco_pagos_cuotas_especiales',
+                icom: faCircleDollarToSlot,
+                info: {
+                    title: "Gestión Ventas en Cuotas",
+                    content: `<p class="text-sm text-gray-500 mb-3">
+                        Registrar pagos con emisión de factura/boleta por cada cuota
+                        </p>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li>✔ <span>Se entiende que es un financiamiento por cuotas.</span></li>
+                            <li>✔ <span>Sí genera documento de venta por cada pago.</span></li>
+                        </ul>`,
+                    placement: 'right'
+                }
             },
         ]
-    }
+    },
+
 ];
 
 export default menuSales;

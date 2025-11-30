@@ -94,6 +94,7 @@
     });
 
     const formSale = useForm({
+        person_id: null,
         courses: [],
         names: null,
         alu_number: null,
@@ -103,10 +104,12 @@
         address: null,
         ubigeo: null,
         ubigeo_description: null,
+        student_id: null,
         telephone: null,
         email: null,
         gender: 'M',
         country_id: 1,
+        birthdate: null,
         sale_document_type: 2,
         document_type: 1,
         sale_full_name: null,
@@ -125,14 +128,19 @@
         estado_pago: 'approved',
         aplasos: false,
         date_end: null,
-        subscriptions: []
+        subscriptions: [],
+        number_installments: 0
     });
 
     const filteredCountries = ref([]);
+    const filteredCourses = ref([]);
+    const selectType = ref('Cursos Taller');
 
     onMounted(() => {
         filteredCountries.value = props.countries;
-        console.log(filteredCountries.value)
+        filteredCourses.value = props.courses.filter(
+            course => course.type_description === selectType.value
+        );
     });
 
     const normalizeText = (text) => {
@@ -167,8 +175,14 @@
         formSale.country_id = val;
     };
 
-    const ubigeoSelected = ref(null);
-    const saleUbigeoSelected = ref(null);
+    const ubigeoSelected = ref({
+        ubigeo_description: null,
+        district_id: null
+    });
+    const saleUbigeoSelected = ref({
+        ubigeo_description: null,
+        district_id: null
+    });
 
     const selectCity = () => {
         formSale.ubigeo_description = ubigeoSelected.value.ubigeo_description;
@@ -194,7 +208,7 @@
                     formSale.sale_ubigeo = res.data.person['ubigeo'];
                     saleUbigeoSelected.value = {
                         district_id: res.data.person['ubigeo'],
-                        city_name: res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito']
+                        ubigeo_description: res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito']
                     };
                     //console.log(saleUbigeoSelected.value)
                     formSale.sale_ubigeo_description = res.data.person['departamento'] + '-' + res.data.person['provincia'] + '-'+ res.data.person['distrito'];
@@ -341,15 +355,8 @@
         return formSale.subscriptions.find((c) => c.id === id) || {}
     }
 
-    const saveFinish = () => {
-        formSale.date_end = null;
-        formSale.aplasos = false;
-        formSale.post(route('onlineshop_sales_store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                formSale.reset();
-            },
-        });
+    const getImage = (path) => {
+        return baseUrl + 'storage/'+ path;
     }
 
     const addPayment = () => {
@@ -418,9 +425,8 @@
             confirmButtonText: 'Guardar',
             html: `<div class="flex flex-col justify-start space-y-2">
                     <span class="text-justify leading-relaxed">
-                        Con esta opción registrarás la venta y se activarán los accesos del alumno.
-                        Se fijará una fecha límite de pago; si no se realiza ningún abono antes de esa fecha,
-                        la cuenta será bloqueada.
+                        Fecha del primer pago.
+                        A partir de esta fecha se realizará el cálculo mensual según el número de cuotas.
                     </span>
                     <input
                         id="dateEnd"
@@ -429,28 +435,47 @@
                         class="form-input border rounded-md px-3 py-2 focus:ring focus:ring-blue-200"
                     >
                 </div>
+                <div class="flex flex-col justify-start space-y-2 mt-4">
+                    <span class="text-justify leading-relaxed">
+                        Numero de cuotas.
+                    </span>
+                    <input
+                        id="numCuotas"
+                        name="numCuotas"
+                        type="number"
+                        class="form-input border rounded-md px-3 py-2 focus:ring focus:ring-blue-200"
+                    >
+                </div>
             `,
             padding: '2em',
             customClass: 'sweet-alerts',
-            footer: 'Se define una fecha de pago inicial. El usuario podrá liquidar el total o reagendar una nueva fecha para cancelar el saldo pendiente.',
+            footer: 'Se define una fecha de pago inicial. El usuario podrá liquidar el total o reagendar una nueva fecha para cancelar el saldo pendiente. Si no se realiza ningún abono antes de esa fecha, los accesos a los cursos de pago serán bloqueados automáticamente.',
             focusConfirm: false,
             allowOutsideClick: false, // ❌ No se cierra al hacer clic fuera
             allowEscapeKey: false,    // ❌ No se cierra con la tecla Esc
             allowEnterKey: true,      // ✅ Permite presionar Enter para confirmar
             preConfirm: () => {
                 const date = document.getElementById("dateEnd").value;
+                const cuotas = document.getElementById("numCuotas").value;
                 if (!date) {
                     Swal2.showValidationMessage("Por favor selecciona una fecha de pago");
                     return false;
                 }
-                return date; // retorna directamente el valor
+
+                return {
+                    fecha: date,
+                    cuotas: cuotas
+                }; // retorna directamente el valor
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                const selectedDate = result.value;
+                const selectedDate = result.value.fecha;
+                const selectedCuotas = result.value.cuotas;
+
                 formSale.date_end = selectedDate;
+                formSale.number_installments = selectedCuotas;
                 formSale.aplasos = true;
-                formSale.post(route('onlineshop_sales_store'), {
+                formSale.post(route('acco_sales_special_rates_store'), {
                     preserveScroll: true,
                     onSuccess: () => {
                         formSale.reset();
@@ -463,7 +488,7 @@
         });
     }
 
-    const selectType = ref('Cursos Taller');
+
     const displayCourse = ref(true);
 
     const changeSelectType = () => {
@@ -472,8 +497,178 @@
             displayCourse.value = false;
         } else {
             displayCourse.value = true;
+            filteredCourses.value = props.courses.filter(
+                course => course.type_description === selectType.value
+            );
         }
     }
+
+    const searchTextCourse = ref(null);
+
+    const searchByName = () => {
+        const text = searchTextCourse.value.toLowerCase().trim();
+
+        filteredCourses.value = props.courses.filter(course => {
+            const matchType = course.type_description === selectType.value;
+
+            const courseName = course.description.toLowerCase();
+
+            // Coincidencia parcial
+            const matchName = courseName.includes(text);
+
+            return matchType && matchName;
+        });
+    };
+
+    const createFormSearch = () => {
+
+        let formHTML = document.createElement('form');
+        formHTML.classList.add('max-w-sm', 'mx-auto');
+
+        let selectLabel = document.createElement('label');
+        selectLabel.setAttribute('for', 'identityDocument');
+        selectLabel.classList.add('text-left','text-sm');
+        selectLabel.textContent = 'Tipo de documento de identidad';
+
+        let typeSelect = document.createElement('select');
+        typeSelect.id = 'identityDocument';
+        typeSelect.classList.add(
+            'form-select',
+            'text-white-dark',
+        );
+
+        let defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Seleccionar tipo de documento';
+        typeSelect.appendChild(defaultOption);
+
+        // Crear opciones dinámicamente
+        for (const [key, value] of Object.entries(props.identityDocumentTypes)) {
+            let option = document.createElement('option');
+            option.value = value.id;
+            option.textContent = value.description;
+            typeSelect.appendChild(option);
+        }
+
+        let dniLabel = document.createElement('label');
+        dniLabel.setAttribute('for', 'txtdni');
+        dniLabel.classList.add('text-left','text-sm','mt-4');
+        dniLabel.textContent = 'Número de DNI';
+
+        let dnilInput = document.createElement('input');
+        dnilInput.type = 'text';
+        dnilInput.id = 'txtdni';
+        dnilInput.classList.add(
+            'form-input'
+        );
+
+        dnilInput.placeholder = 'Escribir número de identificación';
+        dnilInput.required = true;
+
+        formHTML.appendChild(selectLabel);
+        formHTML.appendChild(typeSelect);
+        formHTML.appendChild(dniLabel);
+        formHTML.appendChild(dnilInput);
+
+        return formHTML;
+
+    }
+    const openSwal2Search = () => {
+        Swal2.fire({
+            title: "Verificar DNI",
+            text: 'Por favor, ingrese el número de DNI para verificar si la persona ya está registrada.',
+            html: createFormSearch(),
+            showCancelButton: true,
+            confirmButtonText: 'Buscar',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            icon: "question",
+            padding: '2em',
+            customClass: 'sweet-alerts',
+
+            preConfirm: async () => {
+
+                const type = document.getElementById("identityDocument").value?.trim();
+                const number = document.getElementById("txtdni").value?.trim();
+
+                // 🔥 VALIDACIONES
+                if (!type) {
+                    Swal2.showValidationMessage("Por favor, seleccione el tipo de documento.");
+                    return false;
+                }
+
+                if (!number) {
+                    Swal2.showValidationMessage("Por favor, ingrese el número de documento.");
+                    return false;
+                }
+
+                let data = {
+                    document_type: type,
+                    number: number
+                };
+
+                // 🔥 Petición al servidor
+                return axios.post(route('search_person_number'), data).then(res => {
+                    if (!res.data.status) {
+                        form.document_type_id = type;
+                        form.number = number;
+                        Swal2.showValidationMessage(res.data.alert);
+                    }
+                    return res;
+                }).catch(() => {
+                    Swal2.showValidationMessage("Ocurrió un error al verificar el documento.");
+                });
+            },
+
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then(result => {
+
+            if (result.isConfirmed) {
+                const person = result.value.data.person;
+
+                Swal2.fire({
+                    allowOutsideClick: false,
+                    title: person.full_name,
+                    imageUrl: person.image ? getImage(person.image) : null,
+                    text: `Ya fue registrado con el DNI ${person.number}`,
+                    imageHeight: 180,
+                    imageWidth: 180,
+                    customClass: {
+                        image: 'rounded-full',
+                    },
+                    padding: '2em',
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        getPersonData(person);
+                    }
+                });
+            }
+        });
+    };
+
+    const getPersonData = (newValues) => {
+        formSale.person_id = newValues.id;
+        formSale.student_id = newValues.student.id;
+        formSale.alu_document_type = newValues.document_type_id;
+        formSale.alu_number = newValues.number;
+        formSale.telephone = newValues.telephone;
+        formSale.email = newValues.email;
+        formSale.address = newValues.address;
+        formSale.ubigeo = newValues.ubigeo;
+        formSale.birthdate = newValues.birthdate;
+        formSale.names = newValues.names;
+        formSale.afather = newValues.father_lastname;
+        formSale.amother = newValues.mother_lastname;
+        formSale.ubigeo_description = newValues.ubigeo_description;
+        formSale.gender = newValues.gender;
+        formSale.country_id = newValues.country_id
+        ubigeoSelected.value = {
+            district_id: newValues.ubigeo,
+            ubigeo_description: newValues.ubigeo_description
+        }
+    };
 
 </script>
 
@@ -573,8 +768,8 @@
                         <option :value="'subscription'">Suscripción</option>
                     </select>
                     <div class="relative w-full flex-1">
-                        <input type="search" id="search-dropdown" class="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg border-s-gray-50 border-s-2 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500" />
-                        <button type="submit" class="absolute top-0 end-0 p-2.5 text-sm font-medium h-full text-white bg-blue-700 rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        <input v-model="searchTextCourse" type="search" id="search-dropdown" class="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg border-s-gray-50 border-s-2 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500" />
+                        <button @click="searchByName" type="submit" class="absolute top-0 end-0 p-2.5 text-sm font-medium h-full text-white bg-blue-700 rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                             <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
                             </svg>
@@ -595,7 +790,7 @@
                     <div class="grid sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
                         <template v-if="displayCourse">
                             <div
-                                v-for="course in courses"
+                                v-for="course in filteredCourses"
                                 :key="course.id"
                                 :class="[
                                     'p-3 w-full border border-gray-200 rounded-lg text-sm transition-colors duration-200 dark:border-neutral-700 dark:text-neutral-400',
@@ -703,7 +898,10 @@
 
         <div v-show="currentStep === 2">
             <div class="max-w-lg mx-auto mb-4 justify-center">
-                <h4>Los campos con * son requeridos</h4>
+                <div class="flex flex-col sm:flex-row items-center justify-between">
+                    <h4>Los campos con * son requeridos</h4>
+                    <button @click="openSwal2Search" type="button" class="btn btn-danger btn-sm text-xs uppercase" >Buscar</button>
+                </div>
             </div>
             <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl">
                 <div class="space-y-5">
@@ -723,6 +921,16 @@
                             <InputError :message="formSale.errors.alu_number" class="mt-2" />
                         </div>
                         <div>
+                            <label for="birthdate">Fecha de nacimiento *</label>
+                            <input v-model="formSale.birthdate" id="birthdate" type="date" class="form-input" />
+                            <InputError :message="formSale.errors.birthdate" class="mt-2" />
+                        </div>
+                        <div>
+                            <label for="email">Correo electrónico *</label>
+                            <input v-model="formSale.email" id="email" type="email" class="form-input" />
+                            <InputError :message="formSale.errors.email" class="mt-2" />
+                        </div>
+                        <div>
                             <label for="names">Nombres *</label>
                             <input v-model="formSale.names" id="names" type="text" class="form-input" />
                             <InputError :message="formSale.errors.names" class="mt-2" />
@@ -736,11 +944,6 @@
                             <label for="materno">Apellido Materno *</label>
                             <input v-model="formSale.amother"  id="materno" type="text" class="form-input" />
                             <InputError :message="formSale.errors.amother" class="mt-2" />
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label for="address">Dirección</label>
-                            <input v-model="formSale.address" id="address" type="text" class="form-input" />
-                            <InputError :message="formSale.errors.address" class="mt-2" />
                         </div>
                         <div>
                             <label for="pais">país</label>
@@ -794,30 +997,31 @@
                                 <InputError :message="formSale.errors.ubigeo_description" class="mt-2" />
                             </template>
                         </div>
-                        <div>
-                            <label for="email">Correo electrónico *</label>
-                            <input v-model="formSale.email" id="email" type="email" class="form-input" />
-                            <InputError :message="formSale.errors.email" class="mt-2" />
+                        <div class="sm:col-span-2">
+                            <label for="address">Dirección</label>
+                            <input v-model="formSale.address" id="address" type="text" class="form-input" />
+                            <InputError :message="formSale.errors.address" class="mt-2" />
                         </div>
                         <div>
                             <label for="telefono">Teléfono</label>
                             <input v-model="formSale.telephone" id="telefono" type="number" class="form-input" />
                             <InputError :message="formSale.errors.telephone" class="mt-2" />
                         </div>
-                    </div>
-                    <div>
-                        <label for="telefono">Sexo</label>
-                        <div class="flex flex-col ">
-                            <label class="inline-flex">
-                                <input v-model="formSale.gender" :value="'M'" type="radio" name="gender_radio" class="form-radio" />
-                                <span>Masculino</span>
-                            </label>
-                            <label class="inline-flex">
-                                <input v-model="formSale.gender" :value="'F'" type="radio" name="gender_radio" class="form-radio text-success" />
-                                <span>Femenino</span>
-                            </label>
+                        <div class="sm:col-span-2">
+                            <label for="telefono">Sexo</label>
+                            <div class="flex flex-col sm:flex-row items-center gap-4">
+                                <label class="inline-flex">
+                                    <input v-model="formSale.gender" :value="'M'" type="radio" name="gender_radio" class="form-radio" />
+                                    <span>Masculino</span>
+                                </label>
+                                <label class="inline-flex">
+                                    <input v-model="formSale.gender" :value="'F'" type="radio" name="gender_radio" class="form-radio text-success" />
+                                    <span>Femenino</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -895,39 +1099,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6">
-                    <div class="grid sm:grid-cols-2 items-center gap-6">
-                        <p style="font-size: 14px;" class="italic font-bold uppercase mb-4">Medio de Pago <button @click="addPayment()" type="button" class="inline-block px-0 py-2 bg-transparent text-blue-600 font-medium text-xs leading-tight uppercase rounded transition duration-150 ease-in-out">Agregar (+)</button></p>
-                    </div>
-                    <table class="table-bordered w-full ltr:text-left rtl:text-right text-gray-600">
-                        <tbody>
-                            <tr v-for="(row, index) in formSale.payments" v-bind:key="index">
-                                <td style="width: 70px;" class="text-right">
-                                    <button @click="removePayment(index)" type="button" class="btn btn-sm btn-outline-danger">
-                                        <IconTrash class="w-4 h-4" />
-                                    </button>
-                                </td>
-                                <td >
-                                    <select v-model="row.type" class="form-select text-white-dark py-1.5 text-xs">
-                                        <template v-for="(payment) in payments">
-                                            <option :value="payment.id">{{ payment.description }}</option>
-                                        </template>
-                                    </select>
-                                    <InputError :message="formSale.errors[`payments.${index}.id`]" class="mt-2" />
-                                </td>
-                                <td>
-                                    <input v-model="row.reference" type="text" id="first_name" class="form-input form-input-sm text-right" placeholder="Referencia">
-                                    <InputError :message="formSale.errors[`payments.${index}.reference`]" class="mt-2" />
-                                </td>
-                                <td style="width: 110px;">
-                                    <input v-model="row.amount" type="text" id="first_name" class="form-input form-input-sm text-right" autofocus placeholder="Monto" required>
-                                    <InputError :message="formSale.errors[`payments.${index}.amount`]" class="mt-2" />
-                                </td>
-
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
         <!-- End First Content -->
@@ -966,10 +1137,10 @@
             <div v-else class="sm:flex gap-6">
                 <button
                     type="button"
-                    @click="saveFinish"
-                    class="btn btn-primary uppercase text-xs"
+                    @click="alertCuotas"
+                    class="btn btn-warning uppercase text-xs"
                 >
-                    Guardar y finalizar
+                    Generar cuotas de pago
                 </button>
             </div>
         </div>
