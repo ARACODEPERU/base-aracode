@@ -37,6 +37,10 @@
         P000019: {
             type: Boolean,
             default: null
+        },
+        coursesRegistered: {
+            type: Object,
+            default: () => ({}),
         }
     });
 
@@ -117,17 +121,21 @@
     }
 
     const coursesData = ref(null);
+    const courseIndex = ref(null);
 
     const changeSelectCourses = (courses, index = 0) => {
-        if(index != 99){
-            coursesData.value = courses;
-        }else{
+        if(index == 99){
             coursesData.value = props.mycourses;
+        }else if(index == 100){
+            coursesData.value = props.coursesRegistered;
+        }else{
+            coursesData.value = courses;
         }
+        courseIndex.value = index;
     }
 
     onMounted(() => {
-        changeSelectCourses(props.mycourses, 0);
+        changeSelectCourses(props.coursesRegistered, 100);
     });
 </script>
 
@@ -146,15 +154,50 @@
                 :class="P000019 == true ? 'grid-cols-6' : ''"
             >
                 <section :class="P000019 == true ? 'col-span-6 sm:col-span-4' : 'w-full'">
-                    <!-- justify pills -->
-                    <div class="w-[40%] mb-6">
-                        <select class="form-select px-4 py-3 text-base">
-                            <option :value="'Todos'" @click="changeSelectCourses(null, 99)">Todos</option>
-                            <template v-for="(type, key) in courses">
-                                <option :value="type.type_description" @click="changeSelectCourses(type.courses, key)">{{ type.type_description }}</option>
-                            </template>
-                        </select>
-                    </div>
+
+
+                    <ul class="flex flex-wrap items-center text-sm font-medium text-center text-body mb-6">
+                        <li class="me-2">
+                            <a
+                                @click="changeSelectCourses(null, 99)"
+                                href="#"
+                                class="inline-block px-4 py-2.5 rounded-lg"
+                                :class="courseIndex === 99
+                                    ? 'btn btn-primary'
+                                    : 'hover:text-heading hover:bg-gray-100'
+                                "
+                            >
+                                Todos
+                            </a>
+                        </li>
+                        <li class="me-2">
+                            <a
+                                @click="changeSelectCourses(null, 100)"
+                                href="#"
+                                class="inline-block px-4 py-2.5 rounded-lg"
+                                :class="courseIndex === 100
+                                    ? 'btn btn-primary'
+                                    : 'hover:text-heading hover:bg-gray-100'
+                                "
+                            >
+                                Matriculados
+                            </a>
+                        </li>
+                        <template v-for="(type, key) in courses">
+                            <li class="me-2">
+                                <a
+                                    @click="changeSelectCourses(type.courses, key)" href="#"
+                                    class="inline-block px-4 py-2.5 rounded-lg"
+                                    :class="courseIndex === key
+                                        ? 'btn btn-primary'
+                                        : 'hover:text-heading hover:bg-gray-100'
+                                    "
+                                >
+                                    {{ type.type_description }}
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
                     <div class="grid sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 sm:gap-6 lg:gap-4">
                         <template v-for="(course, index) in coursesData">
                             <article class="rounded-xl bg-white p-3 shadow-lg hover:shadow-xl hover:transform hover:scale-105 duration-300 dark:bg-gray-900">

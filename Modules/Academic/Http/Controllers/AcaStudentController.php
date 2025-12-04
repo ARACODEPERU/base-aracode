@@ -509,13 +509,40 @@ class AcaStudentController extends Controller
             ->where('student_id', $student_id)
             ->get();
 
-        //dd($this->displayVideo);
+        $today = Carbon::today();
+
+        $coursesRegistered = AcaCapRegistration::query()
+            ->join('aca_courses', 'aca_cap_registrations.course_id', '=', 'aca_courses.id')
+            ->where('aca_cap_registrations.student_id', $student_id)
+            ->where(function ($query) use ($today) {
+                $query->where('aca_cap_registrations.unlimited', true)
+                    ->orWhere(function ($q) use ($today) {
+                        $q->where('aca_cap_registrations.unlimited', false)
+                            ->whereDate('aca_cap_registrations.date_end', '>=', $today);
+                    });
+            })
+            ->with([
+                'course.modules.themes.contents',
+                'course.modality',
+                'course.teacher.person',
+                'course.category',
+            ])
+            ->orderBy('aca_courses.description')
+            ->get()
+            ->map(function ($registration) {
+                $course = $registration->course;
+                $course->can_view = true;
+                return $course;
+            });
+
+        //dd($coursesRegistered);
         return Inertia::render('Academic::Students/Courses', [
             'mycourses' => $mycourses,
             'courses' => $courses,
             'studentSubscribed' => $studentSubscribed,
             'certificates' => $certificates,
-            'P000019' => $this->displayVideo
+            'P000019' => $this->displayVideo,
+            'coursesRegistered' => $coursesRegistered
         ]);
     }
 
@@ -629,10 +656,10 @@ class AcaStudentController extends Controller
         $isRegistered = AcaCapRegistration::where('student_id', $studentId)
                                             ->where('course_id', $courseId)
                                             ->where(function ($query) use ($today) {
-                                                $query->where('unlimited', true)
+                                                $query->where('unlimited', true) // cursos ilimitados siempre cuentan
                                                     ->orWhere(function ($q) use ($today) {
-                                                        $q->whereDate('date_start', '<=', $today)
-                                                            ->whereDate('date_end', '>=', $today);
+                                                        $q->where('unlimited', false) // explícito: solo cursos no ilimitados
+                                                            ->whereDate('date_end', '>=', $today); // aún vigentes
                                                     });
                                             })
                                             ->exists();
@@ -674,9 +701,6 @@ class AcaStudentController extends Controller
             $isEnrolled = $this->checkCourseAccess($studentId, $id);
         }
 
-        // Verificar si el curso es gratuito
-        $isFree = $course->price == 0 || is_null($course->price);
-        //dd($isEnrolled);
         // Denegar acceso si no está matriculado y el curso no es gratis
         if (!$isEnrolled) {
             abort(403, 'No tienes acceso a este curso.');
@@ -720,7 +744,6 @@ class AcaStudentController extends Controller
     public function courseLessonThemes($id)
     {
 
-
         $module = AcaModule::with('teacher.person')
             ->with(['themes' => function ($query) {
                 $query->orderBy('position')
@@ -732,6 +755,25 @@ class AcaStudentController extends Controller
 
         $course = AcaCourse::with('teacher.person')->where('id', $module->course_id)
             ->first();
+
+            $isEnrolled = false;
+
+        // Verificar si el estudiante está matriculado
+        $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+
+        $user = Auth::user();
+        if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
+            $isEnrolled = true;
+        }
+
+        if($studentId){
+            $isEnrolled = $this->checkCourseAccess($studentId, $id);
+        }
+
+        // Denegar acceso si no está matriculado y el curso no es gratis
+        if (!$isEnrolled) {
+            abort(403, 'No tienes acceso a este curso.');
+        }
 
         return Inertia::render('Academic::Students/Themes', [
             'course' => $course,
