@@ -151,7 +151,8 @@
     }
 
     const openDialogCreateFeeDocument = (sale) => {
-        let url = route('acco_sales_special_rates_quota_create', sale.id);
+        let fromId = 'v1';
+        let url = route('acco_sales_special_rates_quota_create', [sale.id, fromId]);
 
         if (Number(sale.advancement) >= Number(sale.total)) {
             showMessage('El documento ya fue pagado en su totalidad', 'success');
@@ -295,7 +296,7 @@
     onMounted(() => {
         window.addEventListener("message", (event) => {
             if (event.data === "refresh-payment") {
-                router.visit(route('acco_sales_special_rates'), {
+                router.visit(route('refresh-payment-all'), {
                     only: ['sales'], // opcional
                     replace: true,
                     preserveScroll: true,
@@ -606,7 +607,7 @@
                                     {{ row.remaining_amount }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    {{ formatDate(row.updated_at) }}
+                                    <span v-if="row.amount_paid > 0">{{ formatDate(row.updated_at) }}</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -674,7 +675,9 @@
                                     {{ formatDate(row.invoice_broadcast_date) }}
                                 </td>
                                 <td class="px-6 py-4 text-justify hyphens-auto">
-                                    {{ row.items[0].decription_product }}
+                                    <template v-if="row.items.length > 0">
+                                        {{ row.items[0].decription_product }}
+                                    </template>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     {{ row.overall_total }}

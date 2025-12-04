@@ -528,26 +528,26 @@ class AcaStudentController extends Controller
 
         // 1. Verificar si el estudiante tiene una suscripción activa
         $hasActiveSubscription = AcaStudentSubscription::where('student_id', $studentId)
-                                                    ->where(function ($query) use ($today) {
-                                                        $query->where('status', true)
-                                                            ->orWhere(function ($q) use ($today) {
-                                                                $q->whereDate('date_start', '<=', $today)
-                                                                    ->whereDate('date_end', '>=', $today);
-                                                            });
-                                                    })
-                                                    ->exists();
+            ->where(function ($query) use ($today) {
+                $query->where('status', true)
+                    ->orWhere(function ($q) use ($today) {
+                        $q->whereDate('date_start', '<=', $today)
+                            ->whereDate('date_end', '>=', $today);
+                    });
+            })
+            ->exists();
 
         // 2. Obtener los IDs de los cursos en los que el estudiante está matriculado
         $registeredCourseIds = AcaCapRegistration::where('student_id', $studentId)
-                                                ->where(function ($query) use ($today) {
-                                                    $query->where('unlimited', true)
-                                                        ->orWhere(function ($q) use ($today) {
-                                                            $q->whereDate('date_start', '<=', $today)
-                                                                ->whereDate('date_end', '>=', $today);
-                                                        });
-                                                })
-                                                ->pluck('course_id')
-                                                ->toArray();
+            ->where(function ($query) use ($today) {
+                $query->where('unlimited', true) // cursos ilimitados siempre cuentan
+                    ->orWhere(function ($q) use ($today) {
+                        $q->where('unlimited', false) // explícito: solo cursos no ilimitados
+                            ->whereDate('date_end', '>=', $today); // aún vigentes
+                    });
+            })
+            ->pluck('course_id')
+            ->toArray();
 
         // 3. Obtener todos los cursos disponibles
         $allCourses = AcaCourse::with('modules.themes.contents')

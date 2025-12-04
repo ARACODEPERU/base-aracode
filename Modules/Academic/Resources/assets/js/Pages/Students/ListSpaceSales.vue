@@ -7,6 +7,7 @@
     import GreenButton from '@/Components/GreenButton.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, onMounted } from 'vue';
+    import ModalLarge from '@/Components/ModalLarge.vue';
     import ModalLargeXX from '@/Components/ModalLargeXX.vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import TextInput from '@/Components/TextInput.vue';
@@ -58,34 +59,136 @@
     };
 
     const openDialogCreateFeeDocument = (sale) => {
-        let url = route('aca_student_space_sales_create', sale.id);
+        let fromId = 'v2';
+        let url = route('acco_sales_special_rates_quota_create', [sale.id, fromId]);
 
-        if(sale.advancement >= sale.total ){
-            showMessage('El documento ya fue pagado en su totalidad', 'success')
-        } else {
-
-            // Tamaño del popup
-            let width = 900;
-            let height = 700;
-
-            // Dimensiones de pantalla
-            let screenWidth = window.screen.availWidth;
-            let screenHeight = window.screen.availHeight;
-
-            // Calcular centro
-            let left = (screenWidth - width) / 2;
-            let top = (screenHeight - height) / 2;
-
-            // Abrir popup centrado
-            window.open(
-                url,
-                "feeWindow",
-                `width=${width},height=${height},
-                top=${top},left=${left},
-                resizable=yes,scrollbars=yes,
-                toolbar=no,menubar=no,location=no,status=no`
-            );
+        if (Number(sale.advancement) >= Number(sale.total)) {
+            showMessage('El documento ya fue pagado en su totalidad', 'success');
+            return;
         }
+
+        let width = 900;
+        let height = 700;
+
+        let screenWidth = window.screen.availWidth;
+        let screenHeight = window.screen.availHeight;
+
+        let left = (screenWidth - width) / 2;
+        let top = (screenHeight - height) / 2;
+
+        // 1. Abrir ventana
+        const w = window.open(
+            "",
+            "feeWindow",
+            `width=${width},height=${height},
+            top=${top},left=${left},
+            resizable=yes,scrollbars=yes`
+        );
+
+        // 2. Mostrar loader temporal
+        w.document.write(`
+            <html>
+                <head>
+                    <title>Cargando...</title>
+                    <style>
+                        body {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            flex-direction: column;
+                            height: 100vh;
+                            margin: 0;
+                            background: #f7f7f7;
+                            font-family: sans-serif;
+                            text-align: center;
+                        }
+
+                        .loader-con {
+                            position: relative;
+                            width: 100%;            /* Ocupar todo el ancho */
+                            max-width: 600px;       /* Para que no exceda demasiado */
+                            height: 120px;
+                            overflow: hidden;
+                        }
+
+                        .pfile {
+                            position: absolute;
+                            bottom: 25px;
+                            width: 50px;            /* Más grande para mejor visibilidad */
+                            height: 60px;
+                            background: linear-gradient(90deg, #b324db, #ac8dcb);
+                            border-radius: 4px;
+                            transform-origin: center;
+                            animation: flyRight 3s ease-in-out infinite;
+                            opacity: 0;
+                        }
+
+                        .pfile::before {
+                            content: "";
+                            position: absolute;
+                            top: 8px;
+                            left: 8px;
+                            width: 30px;
+                            height: 5px;
+                            background-color: #ffffff;
+                            border-radius: 2px;
+                        }
+
+                        .pfile::after {
+                            content: "";
+                            position: absolute;
+                            top: 18px;
+                            left: 8px;
+                            width: 20px;
+                            height: 5px;
+                            background-color: #ffffff;
+                            border-radius: 2px;
+                        }
+
+                        @keyframes flyRight {
+                            0% {
+                                left: -15%;          /* Más atrás */
+                                transform: scale(0.3);
+                                opacity: 0;
+                            }
+                            50% {
+                                left: 40%;
+                                transform: scale(1.3);
+                                opacity: 1;
+                            }
+                            100% {
+                                left: 110%;          /* Más adelante */
+                                transform: scale(0.3);
+                                opacity: 0;
+                            }
+                        }
+
+                        .pfile {
+                            animation-delay: calc(var(--i) * 0.5s);
+                        }
+                    </style>
+                </head>
+
+                <body>
+                    <div class="loader-con">
+                        <div style="--i: 0;" class="pfile"></div>
+                        <div style="--i: 1;" class="pfile"></div>
+                        <div style="--i: 2;" class="pfile"></div>
+                        <div style="--i: 3;" class="pfile"></div>
+                        <div style="--i: 4;" class="pfile"></div>
+                        <div style="--i: 5;" class="pfile"></div>
+                    </div>
+
+                    <p style="margin-top: 20px; color: #555; font-size: 18px;">
+                        Cargando contenido...
+                    </p>
+                </body>
+            </html>
+
+        `);
+
+        // 3. Cargar la URL real
+        w.location.href = url;
     };
 
 
@@ -132,12 +235,15 @@
 
     const documentTable = ref(null);
 
+    let instance = null;
+
+    onMounted(() => {
+        instance = documentTable.value?.dt;
+    });
+
     const refreshTable = () => {
-        const dataTableInstance = documentTable.value?.dt; // accede a la instancia del DataTable
-        if (dataTableInstance) {
-            setInterval(function () {
-                dataTableInstance.ajax.reload();
-            }, 30000);
+        if (instance) {
+            instance.ajax.url(route('aca_student_space_sales_list_table', props.student.person.id)).load();
         }
     };
 
@@ -279,6 +385,24 @@
         return formHTML;
 
     }
+
+    const displayModalDetails = ref(false);
+    const saleDetails = ref(null);
+    const openModalDetails = (data) => {
+        saleDetails.value = data;
+        console.log(saleDetails.value)
+        displayModalDetails.value = true;
+    }
+    const closeModalDetails = () => {
+        displayModalDetails.value = false;
+    }
+    onMounted(() => {
+        window.addEventListener("message", (event) => {
+            if (event.data === "refresh-payment-students") {
+                refreshTable();
+            }
+        });
+    });
 </script>
 
 <template>
@@ -308,7 +432,7 @@
             </div>
             <div class="panel pb-1.5 mt-6">
 
-                <DataTable ref="documentTable" :options="options" :ajax="route('aca_student_space_sales_list_table',student.person.id)" :columns="columns">
+                <DataTable ref="documentTable" :options="options" :ajax="route('aca_student_space_sales_list_table', student.person.id)" :columns="columns">
                     <template #action="props">
                         <div class="flex gap-4 items-center justify-center">
                             <div class="dropdown">
@@ -319,13 +443,13 @@
                                     <template #content="{ close }">
                                     <ul @click="close()" class="whitespace-nowrap">
                                         <li>
-                                            <a href="javascript:;">Ver detalles de la venta</a>
+                                            <a @click="openModalDetails(props.rowData)" href="javascript:;">Ver detalles</a>
                                         </li>
                                         <li>
-                                            <a @click="openModalDocuments(props.rowData)" href="javascript:;">Documentos de pago</a>
+                                            <a @click="openModalDocuments(props.rowData)" href="javascript:;" class="text-red-600 hover:text-red-800">Ver Documentos de venta</a>
                                         </li>
                                         <li>
-                                            <a @click="openDialogCreateFeeDocument(props.rowData)" href="javascript:;" class="text-primary" >Registrar pago</a>
+                                            <a @click="openDialogCreateFeeDocument(props.rowData)" href="javascript:;" class="text-blue-600 underline hover:text-blue-800 visited:text-purple-700" >Registrar pago</a>
                                         </li>
                                     </ul>
                                     </template>
@@ -349,6 +473,66 @@
 
             </div>
         </div>
+        <ModalLarge
+            :show="displayModalDetails"
+            :onClose="closeModalDetails"
+            :icon="'/img/lupa-documento.png'"
+        >
+            <template v-if="saleDetails" #title>
+                VEN-{{ saleDetails.id }} | {{ saleDetails.client.number }} - {{ saleDetails.client.full_name }}
+            </template>
+            <template #message>
+                Detalles de la venta
+            </template>
+            <template #content>
+                <div class="border rounded-lg py-4 px-4 dark:border-gray-700 mb-6">
+                    <h4 class="mb-4">Información para la Boleta o Factura</h4>
+                    <div class="space-y-3">
+                        <dl class="flex flex-col sm:flex-row gap-1">
+                            <dt class="min-w-40">
+                                <span class="block text-sm text-gray-500 dark:text-neutral-500">Nombre o Razón social:</span>
+                            </dt>
+                            <dd>
+                                <span>{{ saleDetails.invoice_razon_social }}</span>
+                            </dd>
+                        </dl>
+                        <dl class="flex flex-col sm:flex-row gap-1">
+                            <dt class="min-w-40">
+                                <span class="block text-sm text-gray-500 dark:text-neutral-500">DNI o RUC:</span>
+                            </dt>
+                            <dd>
+                                <span>{{ saleDetails.invoice_ruc }}</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                <div  v-if="saleDetails" class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">
+                                    Producto o servicio
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Precio
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody v-if="saleDetails.sale_product.length > 0">
+                            <tr v-for="(row, key) in saleDetails.sale_product" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    <p v-if="JSON.parse(row.product).title" class="text-lg">{{ JSON.parse(row.product).title }}</p>
+                                    <p>{{ JSON.parse(row.product).description }}</p>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    {{ row.price }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+        </ModalLarge>
         <ModalLargeXX :onClose="closeModalDocuments" :show="displayModalDocument" :icon="'/img/papel.png'" >
             <template #title>Documentos de venta</template>
             <template #message>Lista de pago realizados</template>

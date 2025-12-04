@@ -15,6 +15,7 @@
     import Checkbox from '@/Components/vristo/inputs/Checkbox.vue';
     import InputError from '@/Components/InputError.vue';
 
+
     const store = useAppStore();
     const company = usePage().props.company;
     const socialNetworks = usePage().props.socialNetworks;
@@ -63,7 +64,7 @@
                     class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[758px] lg:flex-row lg:gap-10 xl:gap-0"
                 >
                     <div
-                        class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(239,18,98,1)_0%,rgba(67,97,238,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] xl:-ms-28 ltr:xl:skew-x-[14deg] rtl:xl:skew-x-[-14deg]"
+                        class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(255,245,245,1)_0%,rgba(205,69,250,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] xl:-ms-28 ltr:xl:skew-x-[14deg] rtl:xl:skew-x-[-14deg]"
                     >
                         <div
                             class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent ltr:-right-10 ltr:bg-gradient-to-r rtl:-left-10 rtl:bg-gradient-to-l xl:w-16 ltr:xl:-right-20 rtl:xl:-left-20"
@@ -71,7 +72,7 @@
                         <div class="ltr:xl:-skew-x-[14deg] rtl:xl:skew-x-[14deg]">
                             <Link href="/" class="w-48 block lg:w-72 ms-10">
                                 <img v-if="company.logo_negative == '/img/logo176x32_negativo.png'" :src="`${baseUrl}/img/logo176x32_negativo.png`" alt="Logo" class="w-full" />
-                                <img v-else :src="`${baseUrl}storage/${company.logo_negative}`" alt="Logo" class="w-full" />
+                                <img v-else :src="`${baseUrl}storage/${company.logo}`" alt="Logo" class="w-full" />
                             </Link>
                             <div class="mt-24 hidden w-full max-w-[430px] lg:block">
                                 <img :src="`${baseUrl}/themes/vristo/images/auth/login.svg`" alt="Cover Image" class="w-full" />
@@ -189,34 +190,36 @@
                                 <ul class="flex justify-center gap-3.5 text-white">
 
                                     <li v-for="network in socialNetworks" :key="network.id">
-                    <a v-if="network.route"
-                        :href="network.route"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
-                        style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
-                    >
-                        <template v-if="network.id === 'instagram'">
-                            <icon-instagram />
-                        </template>
-                        <template v-else-if="network.id === 'facebook'">
-                            <icon-facebook-circle />
-                        </template>
-                        <template v-else-if="network.id === 'x-twiter'">
-                            <icon-twitter :fill="true" />
-                        </template>
-                        <template v-else-if="network.id === 'youtube'">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free v5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/></svg>
-                        </template>
-                        <template v-else-if="network.id === 'linkedin'">
-                            <span>IN</span>
-                        </template>
-                        <template v-else-if="network.id === 'tiktok'">
-                            <span>TK</span>
-                        </template>
-                        <template v-else>
-                            <span>{{ network.id }}</span>
-                        </template>
-                    </a>
-                </li>
+                                        <a v-if="network.route"
+                                            :href="network.route"
+                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
+                                            style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
+                                        >
+                                            <template v-if="network.id === 'instagram'">
+                                                <icon-instagram />
+                                            </template>
+                                            <template v-else-if="network.id === 'facebook'">
+                                                <icon-facebook-circle />
+                                            </template>
+                                            <template v-else-if="network.id === 'x-twiter'">
+                                                <icon-twitter :fill="true" />
+                                            </template>
+                                            <template v-else-if="network.id === 'youtube'">
+                                                <svg fill="currentColor" class="w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                                                    <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/>
+                                                </svg>
+                                            </template>
+                                            <template v-else-if="network.id === 'linkedin'">
+                                                <span>IN</span>
+                                            </template>
+                                            <template v-else-if="network.id === 'tiktok'">
+                                                <span>TK</span>
+                                            </template>
+                                            <template v-else>
+                                                <span>{{ network.id }}</span>
+                                            </template>
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                             <!-- <div class="text-center dark:text-white">

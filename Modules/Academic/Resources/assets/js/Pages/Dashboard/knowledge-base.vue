@@ -7,11 +7,17 @@
     import IconArrowForward from '@/Components/vristo/icon/icon-arrow-forward.vue';
     import { Tour } from 'ant-design-vue';
     import LastRegisteredCourse from "../../Components/LastRegisteredCourse.vue";
+    import { Drawer } from 'ant-design-vue';
+import { bottom } from "@popperjs/core";
 
     const userData = usePage().props.auth.user;
 
-    defineProps({
-        interests:{
+    const props = defineProps({
+        interests: {
+            type: Object,
+            default: () => ({})
+        },
+        expiring: {
             type: Object,
             default: () => ({})
         }
@@ -33,6 +39,53 @@
 
         return texto;
     }
+
+    const messageAlert = ref(null);
+    const getExpiringItems = () => {
+        const c = props.expiring.courses ?? [];
+        const s = props.expiring.subscriptions ?? [];
+
+        if (c.length > 0 || s.length > 0) {
+
+            let message = `<p class="mb-6">Estimado alumno, algunos de sus servicios están próximos a vencer:</p>`;
+
+            message += `<div class="text-justify">`;
+            if (c.length > 0) {
+                message += `<span class="font-medium text-gray-600 font-mono mb-6 dark:text-neutral-400">📘 Cursos por vencer:</span>`;
+                message += `<ol class="list-decimal list-inside text-gray-800 dark:text-white">`;
+                c.forEach(item => {
+                    message += `<li class="p-2"> ${item.course.description} — vence el ${item.date_end}
+                    (faltan <b>${item.days_left}</b> días)</li>`;
+                });
+                message += "<ol>";
+            }
+
+            if (s.length > 0) {
+                message += `<span class="font-medium text-gray-600 font-mono mb-6 dark:text-neutral-400">📗 Suscripciones por vencer:</span>`;
+                message += `<ol class="list-decimal list-inside text-gray-800 dark:text-white">`;
+                s.forEach(item => {
+                    message += `<li class="p-2">${item.subscription_id} — vence el ${item.date_end}
+                    (faltan <b>${item.days_left}</b> días)</li>`;
+                });
+                message += "<ol>";
+            }
+            message += "</div><br>";
+
+            message += "<p>Por favor comuníquese con un <b>asesor académico</b> para regularizar sus pagos.</p>";
+            messageAlert.value = message;
+            showDrawerAlert();
+        }
+    };
+
+    const openAlert = ref(false);
+
+    const showDrawerAlert = () => {
+        openAlert.value = true;
+    };
+
+    const onCloseAlert = () => {
+        openAlert.value = false;
+    };
 
     const searchArticles = () => {
         articlesLoading.value = true;
@@ -70,6 +123,8 @@
         if (!localStorage.getItem('tourShown') && !userData.tour_completed) {
             open.value = true; // Mostrar el tour por primera vez
         }
+
+        getExpiringItems();
     });
 
     const steps = [
@@ -370,6 +425,22 @@
                 </div>
             </div>
         </div>
+        <Drawer
+            :width="'100%'"
+            :height="'auto'"
+            title="⚠️ Aviso Importante"
+            :placement="bottom"
+            :open="openAlert"
+            :closable="false"
+            class="text-center"
+        >
+            <template #extra>
+                <button class="btn btn-danger btn-sm uppercase" @click="onCloseAlert">Entendido</button>
+            </template>
+            <div class="w-[40%] mx-auto text-justify">
+                <div v-html="messageAlert"></div>
+            </div>
+        </Drawer>
     </AppLayout>
 </template>
 

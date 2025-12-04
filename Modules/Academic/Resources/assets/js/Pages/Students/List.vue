@@ -334,7 +334,7 @@
                             @keyup.enter="form.get(route('aca_students_list'))"
                         />
                         <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
-                            <icon-search class="mx-auto" />
+                            <icon-search @click="form.get(route('aca_students_list'))" class="mx-auto" />
                         </div>
                     </div>
                 </div>

@@ -13,6 +13,7 @@ use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentHistory;
+use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaThemeComment;
 use Modules\Blog\Entities\BlogArticle;
 use Modules\Blog\Entities\BlogCategory;
@@ -30,16 +31,65 @@ class DashboardController extends Controller
     {
         if (Auth::user()->hasRole('Alumno')) {
             return Inertia::render('Academic::Dashboard/knowledge-base', [
-                'interests' => $this->getDataStudent()
+                'interests' => $this->getDataStudent(),
+                'expiring'  => $this->getExpiringItems()
             ]);
+
         } else {
             $person = Person::where('id', Auth::user()->person_id)->with('district')->first();
-
             return Inertia::render('Dashboard', [
                 'authPerson' => $person,
                 'P000009' => $this->P000009
             ]);
         }
+    }
+
+    public function getExpiringItems()
+    {
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+        $studentId = $student->id;
+
+        // --- Cursos por vencer ---
+        $coursesExpiring = AcaCapRegistration::where('student_id', $studentId)
+            ->with('course')
+            ->where('unlimited', false)
+            ->whereNotNull('date_end')
+            ->whereDate('date_end', '>=', today())
+            ->whereDate('date_end', '<=', today()->addDays(5))
+            ->get()
+            ->map(function ($item) {
+                $end = Carbon::parse($item->date_end);
+                $item->days_left = today()->diffInDays($end, false); // días restantes
+                return $item;
+            });
+
+        // --- Suscripciones por vencer o vencidas ---
+        $subscriptionsExpiring = AcaStudentSubscription::where('student_id', $studentId)
+            ->where(function ($q) {
+                $q->where('status', false)
+                ->orWhere(function ($q2) {
+                    $q2->whereNotNull('date_end')
+                        ->whereDate('date_end', '>=', today())
+                        ->whereDate('date_end', '<=', today()->addDays(5));
+                });
+            })
+            ->get()
+            ->map(function ($item) {
+                if ($item->date_end) {
+                    $end = Carbon::parse($item->date_end);
+                    $item->days_left = today()->greaterThan($end)
+                        ? 0
+                        : today()->diffInDays($end, false);
+                } else {
+                    $item->days_left = null;
+                }
+                return $item;
+            });
+
+        return [
+            'courses' => $coursesExpiring,
+            'subscriptions' => $subscriptionsExpiring,
+        ];
     }
 
     private function getDataStudent()

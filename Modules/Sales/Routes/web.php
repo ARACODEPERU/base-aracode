@@ -211,7 +211,7 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])->get('accountsreceivable/special/rates/create', [AccountsReceivableController::class, 'specialRatesCreate'])->name('acco_sales_special_rates_create');
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])->post('accountsreceivable/special/rates/store', [AccountsReceivableController::class, 'specialRatesStore'])->name('acco_sales_special_rates_store');
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
-        ->get('accountsreceivable/special/rates/quota/{id}/form', [AccountsReceivableController::class, 'spaceSalesCreate'])
+        ->get('accountsreceivable/special/rates/quota/{id}/form/{fromId}', [AccountsReceivableController::class, 'spaceSalesCreate'])
         ->name('acco_sales_special_rates_quota_create');
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
         ->put('accountsreceivable/special/rates/quota/{id}/store', [AccountsReceivableController::class, 'storeSpacePayments'])

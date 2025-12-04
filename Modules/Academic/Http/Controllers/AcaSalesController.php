@@ -531,7 +531,12 @@ class AcaSalesController extends Controller
             ->where('sales.client_id', $id)
             ->orderBy('sales.id', 'DESC');
 
-        return DataTables::of($sales)->toJson();
+        return DataTables::of($sales)
+            ->editColumn('product', function ($row) {
+                return $row->product; // texto puro sin escapar
+            })
+            ->escapeColumns([]) // desactiva el escape para todos los campos
+            ->toJson();
     }
 
     public function spaceSalesCreate($id){
