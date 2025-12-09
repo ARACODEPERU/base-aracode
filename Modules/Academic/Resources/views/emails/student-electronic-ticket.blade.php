@@ -173,7 +173,7 @@
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
         </h1>
         <p>
-            Estimado(a) {{ $data['from_name'] }},<br>
+            Estimado(a) {{ $data['form_name'] }},<br>
 Gracias por tu compra. Tu comprobante de pago ha sido enviado correctamente y puedes descargarlo en los archivos adjuntos. La transacción ha sido registrada sin inconvenientes.
 <br><br>
 Detalle de tu compra
@@ -231,9 +231,25 @@ Detalle de tu compra
         </table>
 
         <div class="card-container">
-
-            <a href="https://academy.globalcpaperu.com/login" style="margin-top: 20px;">
-                <button class="boton-degradado-campus">Ingresar a la plataforma</button>
+            <a href="https://academy.globalcpaperu.com/login"
+               style="
+                   /* Estilos de fondo azul */
+                   background-color: #4947ce;
+                   border: 1px solid #4947ce;
+                   /* Padding (espacio) para que parezca botón */
+                   padding: 10px 20px;
+                   /* Color y decoración del texto */
+                   color: #ffffff;
+                   text-decoration: none;
+                   /* Esquinas redondeadas (opcional) */
+                   border-radius: 5px;
+                   /* Display inline-block para que el padding y margen funcionen bien */
+                   display: inline-block;
+                   font-size: 16px;
+                   font-weight: bold;
+                   margin-top: 20px;
+               ">
+                Ingresar a la plataforma
             </a>
         </div>
         <br>
@@ -249,8 +265,8 @@ Puedes ingresar ahora y comenzar a vivir la experiencia.<br><br>
 
 <b>Confianza y respaldo técnico</b><br>
 Formarás parte de una escuela respaldada por profesionales con experiencia en <b>firmas líderes</b>, y reconocida como <b>Approved Learning Partner (ALP) de ACCA</b>. Este estándar garantiza rigurosidad técnica y aplicabilidad práctica desde el primer día.
-<br>
-<b>Soporte inmediato</b><br>
+<br><br>
+<b>Soporte inmediato</b><br><br>
 Si necesitas asistencia, puedes escribirnos en todo momento al WhatsApp: <b>+51 967 052 506</b>.<br>
 Gracias por confiar en <b>CPA Academy</b>. Estamos comprometidos en acompañarte en cada etapa de tu avance profesional.<br><br>
 
