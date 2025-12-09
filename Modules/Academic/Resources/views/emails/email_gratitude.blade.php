@@ -168,7 +168,7 @@
         <h1>
             <img style="width: 25px;" data-emoji="🎉" class="an1" alt="🎉" aria-label="🎉" draggable="false"
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
-            &nbsp; ¡Bienvenido(a) a Global CPA Business School! &nbsp;
+            &nbsp; ¡Bienvenido(a) a CPA Academy! &nbsp;
             <img style="width: 25px;" data-emoji="🎉" class="an1" alt="🎉" aria-label="🎉" draggable="false"
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
         </h1>
@@ -228,10 +228,10 @@
         </p>
         <p>
             <b>Atentamente,</b><br>
-            Equipo de GLOBAL CPA BUSINESS SCHOOL
+            Equipo de CPA Academy
         </p>
         <p style="text-align: center; font-size: 14px;">
-            GLOBAL CPA BUSINESS SCHOOL, Jirón Pedro Conde Nro. 514, Oficina 203., Distrito de Lince, Provincia de Lima,
+            CPA Academy, Jirón Pedro Conde Nro. 514, Oficina 203., Distrito de Lince, Provincia de Lima,
             Perú, +51 967052506
         </p>
         <br>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global CPA - Business School - Comprobante de Pago</title>
+    <title>CPA Academy - Comprobante de Pago</title>
 
     <!--Google Fonts-->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
@@ -168,56 +168,68 @@
         <h1>
             <img style="width: 25px;" data-emoji="🎉" class="an1" alt="🎉" aria-label="🎉" draggable="false"
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
-            &nbsp; ¡Gracias por tu pago - Global CPA Business School! &nbsp;
+            &nbsp; ¡Gracias por tu compra! &nbsp;
             <img style="width: 25px;" data-emoji="🎉" class="an1" alt="🎉" aria-label="🎉" draggable="false"
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
         </h1>
         <p>
-            Gracias por estár con nosotros, te hemos enviado tu comprobante de pago.
+            Estimado(a) {{ $data['from_name'] }},<br>
+Gracias por tu compra. Tu comprobante de pago ha sido enviado correctamente y puedes descargarlo en los archivos adjuntos. La transacción ha sido registrada sin inconvenientes.
+<br><br>
+Detalle de tu compra
         </p>
-        <p>
-            revisa los datos adjuntos para poder descargar y ver mas detalles.
-        </p>
-        <div class="card-container">
 
-            <div>
-                <h3 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px;">Cursos Incluidos en Compra</h3>
+        <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; margin: 20px 0;">
+            <!-- Header azul suave -->
+            <thead>
+                <tr style="background-color: #3498db;">
+                    <th style="padding: 12px 15px; text-align: left; border: 1px solid #3498db; color: #ffffff; font-weight: bold;">
+                        Curso
+                    </th>
+                    <th style="padding: 12px 15px; text-align: right; border: 1px solid #3498db; color: #ffffff; font-weight: bold;">
+                        Precio
+                    </th>
+                </tr>
+            </thead>
+            @if ($sale->items->count() > 0)
 
-                @if ($sale->items->count() > 0)
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                        <thead>
-                            <tr style="background-color: #3498db; color: white;">
-                                <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0;">Curso</th>
-                                <th style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0;">Precio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($sale->items as $item)
-                            <tr style="border-bottom: 1px solid #e0e0e0;">
-                                @if ($item)
-                                    <td style="padding: 12px 15px;">{{ $item->decription_product }}</td>
-                                    <td style="padding: 12px 15px; color: #27ae60; font-weight: bold;">S/. {{ $item->mto_total }}</td>
-                                @else
-                                    <td colspan="2" style="padding: 12px 15px; color: #e74c3c; font-weight: bold;">
-                                        ⚠️ No se encontró el curso asociado (ID de Item: {{ $item->product_id }}).
-                                    </td>
-                                @endif
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @else
+            <!-- Cuerpo de la tabla -->
+            <tbody>
+
+                @foreach ($sale->items as $item)
+                <tr>
+                    <td style="padding: 12px 15px; border: 1px solid #e5e7eb;">
+                        <h4 style="margin: 0; font-size: 16px; font-weight: 600;">
+                            {{ $item->decription_product }}
+                        </h4>
+                    </td>
+                    <td style="padding: 12px 15px; border: 1px solid #e5e7eb; text-align: right;">
+                        <p style="color: #4f46e5; font-size: 16px; font-weight: 700; margin: 0;">
+                            S/. {{ $item->mto_total }}
+                        </p>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+
+            <!-- Footer azul oscuro con total -->
+            <tfoot>
+                <tr style="background-color: #2c3e50;">
+                    <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 16px;">
+                        TOTAL:
+                    </td>
+                    <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 18px;">
+                        S/. {{ $sale->overall_total }}
+                    </td>
+                </tr>
+            </tfoot>
+            @else
                     <p style="text-align: center; color: #7f8c8d; font-style: italic; padding: 20px;">
                         La venta no contiene elementos detallados.
                     </p>
-                @endif
+            @endif
+        </table>
 
-                <div style="background-color: #2c3e50; color: white; padding: 15px; border-radius: 8px; text-align: right; font-size: 1.2em; font-weight: bold;">
-                    Importe total: {{ $sale->overall_total }}
-                </div>
-            </div>
-
-        </div>
         <div class="card-container">
 
             <a href="https://academy.globalcpaperu.com/login" style="margin-top: 20px;">
@@ -225,22 +237,33 @@
             </a>
         </div>
         <br>
+
         <p>
-            En nuestra plataforma encontrarás todo lo necesario para aprovechar al máximo esta experiencia: material de
-            estudio,
-            foros de interacción y acceso directo a nuestros instructores. Te invitamos a iniciar sesión cuanto antes y
-            familiarizarte con las herramientas que hemos preparado para ti.
+<b>Tu acceso ya está habilitado.</b><br>
+Puedes ingresar ahora y comenzar a vivir la experiencia.<br><br>
+
+<b>Dentro de la plataforma podrás:</b><br>
+– Acceder y descargar los materiales de trabajo<br>
+– Revisar las grabaciones sin fecha de caducidad<br>
+– Certificado <br><br>
+
+<b>Confianza y respaldo técnico</b><br>
+Formarás parte de una escuela respaldada por profesionales con experiencia en <b>firmas líderes</b>, y reconocida como <b>Approved Learning Partner (ALP) de ACCA</b>. Este estándar garantiza rigurosidad técnica y aplicabilidad práctica desde el primer día.
+<br>
+<b>Soporte inmediato</b><br>
+Si necesitas asistencia, puedes escribirnos en todo momento al WhatsApp: <b>+51 967 052 506</b>.<br>
+Gracias por confiar en <b>CPA Academy</b>. Estamos comprometidos en acompañarte en cada etapa de tu avance profesional.<br><br>
+
+Atentamente,<br><br><br>
+
+
+Equipo de CPA Academy<br>
+academy.globalcpaperu.com<br>
+
         </p>
-        <p style="line-height: 22px;">
-            Estamos seguros de que este será un paso transformador para tu desarrollo. <br>
-            <b>¡Te deseamos mucho éxito en esta nueva etapa con nosotros!</b>
-        </p>
-        <p>
-            <b>Atentamente,</b><br>
-            Equipo de GLOBAL CPA BUSINESS SCHOOL
-        </p>
+
         <p style="text-align: center; font-size: 14px;">
-            GLOBAL CPA BUSINESS SCHOOL, Jirón Pedro Conde Nro. 514, Oficina 203., Distrito de Lince, Provincia de Lima,
+            CPA Academy, Jirón Pedro Conde Nro. 514, Oficina 203., Distrito de Lince, Provincia de Lima,
             Perú, +51 967052506
         </p>
         <br>

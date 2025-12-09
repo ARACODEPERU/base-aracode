@@ -34,7 +34,7 @@ class CuotasMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                env('MAIL_FROM_ADDRESS', 'contacto@globalcpa.com'),
+                env('MAIL_FROM_ADDRESS', 'informes@globalcpaperu.com'),
                 env('MAIL_FROM_NAME', 'CPA Academy')
             ),
             subject: 'Gracias por estar con nosotros - ' . env('APP_NAME', 'CPA Academy'),

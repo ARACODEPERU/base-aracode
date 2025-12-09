@@ -256,20 +256,20 @@
         </div>
         <br>
         <p>
-            Tu acceso ya está habilitado. <br>
+            <b>Tu acceso ya está habilitado.</b> <br>
             Puedes ingresar ahora y comenzar a vivir la experiencia.<br><br>
 
-            Dentro de la plataforma podrás:<br>
+            <b>Dentro de la plataforma podrás:</b><br>
             – Acceder y descargar los materiales de trabajo<br>
             – Revisar las grabaciones sin fecha de caducidad<br>
             – Certificado <br><br>
 
-            Confianza y respaldo técnico<br>
-            Formarás parte de una escuela respaldada por profesionales con experiencia en firmas líderes, y reconocida como Approved Learning Partner (ALP) de ACCA. Este estándar garantiza rigurosidad técnica y aplicabilidad práctica desde el primer día.
+            <b>Confianza y respaldo técnico</b><br>
+            Formarás parte de una escuela respaldada por profesionales con experiencia en <b>firmas líderes</b>, y reconocida como <b>Approved Learning Partner (ALP) de ACCA</b>. Este estándar garantiza rigurosidad técnica y aplicabilidad práctica desde el primer día.
             <br>
-            Soporte inmediato<br>
-            Si necesitas asistencia, puedes escribirnos en todo momento al WhatsApp: +51 967 052 506.<br><br>
-            Gracias por confiar en CPA Academy. Estamos comprometidos en acompañarte en cada etapa de tu avance profesional.<br><br>
+            <b>Soporte inmediato</b><br>
+            Si necesitas asistencia, puedes escribirnos en todo momento al WhatsApp: <b>+51 967 052 506</b>.<br><br>
+            Gracias por confiar en <b>CPA Academy</b>. Estamos comprometidos en acompañarte en cada etapa de tu avance profesional.<br><br>
 
             Atentamente,<br><br><br>
 
