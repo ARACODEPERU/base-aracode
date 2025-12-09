@@ -173,7 +173,7 @@
                 src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f389/32.png" loading="lazy">
         </h1>
         <p>
-            Estimado(a) {{ $data['form_name'] }},<br>
+            Estimado(a) {{ $data['for_name'] }},<br>
 Gracias por tu compra. Tu comprobante de pago ha sido enviado correctamente y puedes descargarlo en los archivos adjuntos. La transacción ha sido registrada sin inconvenientes.
 <br><br>
 Detalle de tu compra
