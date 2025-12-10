@@ -7,6 +7,7 @@ use App\Models\SaleDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Sales\Database\factories\SalePaymentScheduleFactory;
 
 class SalePaymentSchedule extends Model
@@ -35,5 +36,9 @@ class SalePaymentSchedule extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(SaleDocument::class, 'document_id');
+    }
+    public function destinations(): HasMany
+    {
+        return $this->hasMany(SalePaymentScheduleDestination::class, 'schedule_id', 'id');
     }
 }

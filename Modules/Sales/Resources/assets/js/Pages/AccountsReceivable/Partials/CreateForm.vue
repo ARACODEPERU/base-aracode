@@ -14,7 +14,7 @@
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import previewInvoice from './previewInvoice.vue';
-    import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
+    import iconSave from '@/Components/vristo/icon/icon-save.vue';
 
     const disReset = ref(true);
     const isFinalStep = ref(false);
@@ -142,9 +142,14 @@
 
     onMounted(() => {
         filteredCountries.value = props.countries;
-        filteredCourses.value = props.courses.filter(
+            const filtered = props.courses.filter(
             course => course.type_description === selectType.value
         );
+
+        // Si no se encontró ninguno, mostrar todos
+        filteredCourses.value = filtered.length > 0
+            ? filtered
+            : props.courses;
     });
 
     const normalizeText = (text) => {
@@ -685,7 +690,7 @@
         <ul class="relative flex flex-row gap-x-2">
             <li class="flex items-center gap-x-2 shrink basis-0 flex-1 group">
                 <span class="min-w-7 min-h-7 group inline-flex items-center text-xs align-middle">
-                    <span class="size-7 flex justify-center items-center shrink-0  font-medium bg-blue-600 text-white dark:bg-blue-500 rounded-full dark:text-white"
+                    <span class="size-7 flex justify-center items-center shrink-0  font-medium bg-blue-600 text-white dark:bg-blue-500 rounded-full dark:text-white dark:bg-gray-700"
                         :class="[
                             {'bg-red-100 text-red-800 group-focus:bg-red-200 dark:group-focus:bg-red-600' : currentStep === 0},
                             {'bg-teal-500 group-focus:bg-teal-600 dark:bg-teal-500 dark:group-focus:bg-teal-600' : currentStep === 4}
@@ -708,7 +713,7 @@
 
             <li class="flex items-center gap-x-2 shrink basis-0 flex-1 group">
                 <span class="min-w-7 min-h-7 group inline-flex items-center text-xs align-middle">
-                    <span class="size-7 flex justify-center items-center shrink-0 bg-gray-100 text-gray-800 group-focus:bg-gray-200 dark:group-focus:bg-gray-600 font-medium rounded-full dark:text-white"
+                    <span class="size-7 flex justify-center items-center shrink-0 bg-gray-100 text-gray-800 group-focus:bg-gray-200 dark:group-focus:bg-gray-600 font-medium rounded-full dark:text-white dark:bg-gray-700"
                         :class="[
                             {'bg-red-100 text-red-800 group-focus:bg-red-200 dark:group-focus:bg-red-600' : currentStep === 0},
                             {'bg-blue-600 text-white dark:bg-blue-500': currentStep >= 2},
@@ -732,7 +737,7 @@
 
             <li class="flex items-center gap-x-2 shrink basis-0 flex-1 group">
                 <span class="min-w-7 min-h-7 group inline-flex items-center text-xs align-middle">
-                    <span class="size-7 flex justify-center items-center shrink-0 bg-gray-100 text-gray-800 group-focus:bg-gray-200 dark:group-focus:bg-gray-600 font-medium rounded-full dark:text-white"
+                    <span class="size-7 flex justify-center items-center shrink-0 bg-gray-100 text-gray-800 group-focus:bg-gray-200 dark:group-focus:bg-gray-600 font-medium rounded-full dark:text-white dark:bg-gray-700"
                         :class="[
                             {'bg-red-100 text-red-800 group-focus:bg-red-200 dark:group-focus:bg-red-600' : currentStep === 0},
                             {'bg-blue-600 text-white dark:bg-blue-500': currentStep >= 3},
@@ -763,23 +768,20 @@
 
         <div v-show="currentStep === 1">
             <div class="max-w-lg mx-auto mb-4">
-                <div class="flex">
-                    <label for="search-dropdown" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Your Email</label>
-                    <select @change="changeSelectType" v-model="selectType" class="p-2.5 text-sm text-gray-900 bg-gray-50 border border-gray-300 ltr:rounded-l-lg rtl:rounded-r-none">
+                <div class="flex items-center gap-4">
+                    <select @change="changeSelectType" v-model="selectType" class="form-select">
                         <template v-for="type in types">
                            <option :value="type">{{ type }}</option>
                         </template>
                         <option :value="'subscription'">Suscripción</option>
                     </select>
-                    <div class="relative w-full flex-1">
-                        <input v-model="searchTextCourse" type="search" id="search-dropdown" class="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg border-s-gray-50 border-s-2 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500" />
-                        <button @click="searchByName" type="submit" class="absolute top-0 end-0 p-2.5 text-sm font-medium h-full text-white bg-blue-700 rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                            <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                            </svg>
-                            <span class="sr-only">Buscar</span>
-                        </button>
-                    </div>
+                    <input v-model="searchTextCourse" type="search" id="search-dropdown" class="form-input" placeholder="Buscar curso" />
+                    <button @click="searchByName" type="submit" class="btn btn-primary">
+                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                        <span class="sr-only">Buscar</span>
+                    </button>
                 </div>
             </div>
             <perfect-scrollbar
@@ -789,9 +791,9 @@
                 }"
                 class="min-h-[380px] max-h-[calc(100vh-80px)] relative overflow-auto"
             >
-                <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl">
+                <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl dark-forces-gray-700">
 
-                    <div class="grid sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
+                    <div class="grid sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 dark:bg-gray-700">
                         <template v-if="displayCourse">
                             <div
                                 v-for="course in filteredCourses"
@@ -799,7 +801,7 @@
                                 :class="[
                                     'p-3 w-full border border-gray-200 rounded-lg text-sm transition-colors duration-200 dark:border-neutral-700 dark:text-neutral-400',
                                     isSelected(course.id)
-                                    ? 'bg-blue-100 dark:bg-blue-900/40'
+                                    ? 'bg-blue-100 dark-forces-blue-900'
                                     : 'bg-white dark:bg-neutral-900'
                                 ]"
                             >
@@ -841,7 +843,7 @@
                                 :class="[
                                     'p-3 w-full border border-gray-200 rounded-lg text-sm transition-colors duration-200 dark:border-neutral-700 dark:text-neutral-400',
                                     isSelected2(subscriptionType.id)
-                                    ? 'bg-blue-100 dark:bg-blue-900/40'
+                                    ? 'bg-blue-100 dark-forces-blue-900'
                                     : 'bg-white dark:bg-neutral-900'
                                 ]"
                             >
@@ -907,7 +909,7 @@
                     <button @click="openSwal2Search" type="button" class="btn btn-danger btn-sm text-xs uppercase" >Buscar</button>
                 </div>
             </div>
-            <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl">
+            <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl dark-forces-gray-700">
                 <div class="space-y-5">
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <div>
@@ -1031,7 +1033,7 @@
         </div>
 
         <div v-show="currentStep === 3">
-            <div class="p-4 bg-gray-50 justify-center items-center border border-dashed border-gray-200 rounded-xl">
+            <div class="p-4 bg-gray-50 justify-center items-center border border-dashed border-gray-200 rounded-xl dark-forces-gray-700">
                 <div class="space-y-5">
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         <div>
@@ -1109,7 +1111,7 @@
 
         <!-- Final Content -->
         <div v-show="isFinalStep">
-            <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl dark:bg-gray-800 dark:text-white-dark dark:border-gray-600">
+            <div class="p-4 bg-gray-50 flex justify-center items-center border border-dashed border-gray-200 rounded-xl  dark:text-white-dark dark-forces-gray-700">
                 <previewInvoice :invoice="formSale" :courses="courses" :igv="igv" />
             </div>
         </div>

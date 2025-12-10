@@ -201,20 +201,45 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
     Route::get('reports/invoice', [InvoiceReportsController::class, 'index'])->name('reports_invoice');
 
 
-    Route::get('accountsreceivable/document/list', [AccountsReceivableController::class, 'index'])->name('acco_document_list');
-    Route::get('accountsreceivable/document/table', [AccountsReceivableController::class, 'tableDocument'])->name('acco_table_document');
-    Route::post('accountsreceivable/document/payments/store', [SalePaymentQuotaController::class, 'store'])->name('acco_table_document_payment_store');
-    Route::delete('accountsreceivable/document/payments/destroy/{id}', [SalePaymentQuotaController::class, 'destroy'])->name('acco_table_document_payment_destroy');
-    Route::post('accountsreceivable/document/paymentsfull/store', [SalePaymentQuotaController::class, 'storePayFull'])->name('acco_table_document_payment_full_store');
+    Route::middleware(['middleware' => 'permission:acco_dashboard'])
+        ->get('accountsreceivable/document/list', [AccountsReceivableController::class, 'index'])
+        ->name('acco_document_list');
+    Route::middleware(['middleware' => 'permission:acco_dashboard'])
+        ->get('accountsreceivable/document/table', [AccountsReceivableController::class, 'tableDocument'])
+        ->name('acco_table_document');
+    Route::middleware(['middleware' => 'permission:acco_dashboard'])
+        ->post('accountsreceivable/document/payments/store', [SalePaymentQuotaController::class, 'store'])
+        ->name('acco_table_document_payment_store');
+    Route::middleware(['middleware' => 'permission:acco_dashboard'])
+        ->delete('accountsreceivable/document/payments/destroy/{id}', [SalePaymentQuotaController::class, 'destroy'])
+        ->name('acco_table_document_payment_destroy');
+    Route::middleware(['middleware' => 'permission:acco_dashboard'])
+        ->post('accountsreceivable/document/paymentsfull/store', [SalePaymentQuotaController::class, 'storePayFull'])
+        ->name('acco_table_document_payment_full_store');
 
-    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales'])->get('accountsreceivable/special/rates', [AccountsReceivableController::class, 'specialRates'])->name('acco_sales_special_rates');
-    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])->get('accountsreceivable/special/rates/create', [AccountsReceivableController::class, 'specialRatesCreate'])->name('acco_sales_special_rates_create');
-    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])->post('accountsreceivable/special/rates/store', [AccountsReceivableController::class, 'specialRatesStore'])->name('acco_sales_special_rates_store');
+    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales'])
+        ->get('accountsreceivable/special/rates', [AccountsReceivableController::class, 'specialRates'])
+        ->name('acco_sales_special_rates');
+    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
+        ->get('accountsreceivable/special/rates/create', [AccountsReceivableController::class, 'specialRatesCreate'])
+        ->name('acco_sales_special_rates_create');
+    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
+        ->post('accountsreceivable/special/rates/store', [AccountsReceivableController::class, 'specialRatesStore'])
+        ->name('acco_sales_special_rates_store');
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
         ->get('accountsreceivable/special/rates/quota/{id}/form/{fromId}', [AccountsReceivableController::class, 'spaceSalesCreate'])
         ->name('acco_sales_special_rates_quota_create');
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
         ->put('accountsreceivable/special/rates/quota/{id}/store', [AccountsReceivableController::class, 'storeSpacePayments'])
         ->name('acco_sales_special_rates_quota_store');
+
+    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_excel'])
+        ->post('accountsreceivable/special/rates/quota/export/excel', [AccountsReceivableController::class, 'paymentDestinationsExportExcel'])
+        ->name('acco_sales_special_rates_quota_excel');
+
+    Route::middleware(['middleware' => 'permission:acco_dashboard'])
+        ->get('accountsreceivable/special/rates/quota/export/{id}/excel',[AccountsReceivableController::class, 'exportStatus'])
+        ->name('acco_export_status');
+
 
 });

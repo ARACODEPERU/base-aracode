@@ -7,12 +7,16 @@
     import Swal from "sweetalert2";
     import { useForm, Link, usePage, router } from '@inertiajs/vue3';
     import { faGears } from "@fortawesome/free-solid-svg-icons";
-    import { ref, watch, onMounted, nextTick } from "vue";
+    import { ref, watch, onMounted, nextTick, onUnmounted } from "vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     import textWriting from '@/Components/loader/text-writing.vue';
     import iconExcel from '@/Components/vristo/icon/icon-excel.vue';
-
+    import { Dropdown, Menu, MenuItem } from 'ant-design-vue';
+    import ModalStatus from "@/Components/ModalStatus.vue";
+    import flatPickr from 'vue-flatpickr-component';
+    import 'flatpickr/dist/flatpickr.css';
+    import { Spanish } from "flatpickr/dist/l10n/es.js"
+    import iconMail from '@/Components/vristo/icon/icon-mail.vue';
 
     const props = defineProps({
         sales: {
@@ -27,77 +31,38 @@
 
     const form = useForm({
         search: props.filters.search,
+        issue_date: null
     });
+
+     // Función auxiliar para formatear la fecha a 'YYYY-MM-DD'
+    const formatDateToYYYYMMDD = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Meses son 0-11
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const today = new Date();
+    const todayFormatted = formatDateToYYYYMMDD(today);
+
+    const basic = ref({
+        dateFormat: 'Y-m-d',
+        mode: 'range',
+        locale: Spanish,
+        defaultDate: [todayFormatted, todayFormatted]
+    });
+
+
+
     const displayModalDetails = ref(false);
     const saleDetails = ref(null);
     const openModalDetails = (data) => {
         saleDetails.value = data;
-        console.log(saleDetails.value)
         displayModalDetails.value = true;
     }
     const closeModalDetails = () => {
         displayModalDetails.value = false;
     }
-
-    const contador = 0.5;
-
-    const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
-    const channelListenOnli = "onli-email-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
-
-    const emailStatus = ref([])
-    const porsentaje = ref(0);
-    const progressSend = ref(0);
-    const loadingSend = ref(false);
-    const displayModalSendDetails = ref(false);
-    const scrollContainer = ref(null);
-
-    const emailForm = useForm({
-        csrfToken: null,
-        apiBackenStepOne: route('aca_create_students_tickets'),
-        apiBackenStepTwo: route('aca_send_email_student_boleta'),
-        channelListen: channelListenOnli,
-        documenttypeId: 2,
-        serie: null,
-        enline: true,
-        local: 1,
-        ventas: [],
-        userId: usePage().props.auth.user.id
-    });
-
-
-    const selectAll = ref(false);
-
-    // Función para verificar si un item ya está seleccionado
-    const isSelected = (item) => {
-        return emailForm.ventas.some((venta) => venta.id === item.id);
-    };
-
-    // Función para agregar o eliminar un item del array
-    const toggleItem = (item) => {
-        if (isSelected(item)) {
-            // Si el item ya está seleccionado, lo eliminamos
-            emailForm.ventas = emailForm.ventas.filter((venta) => venta.id !== item.id);
-        } else {
-            // Si el item no está seleccionado, lo agregamos
-            emailForm.ventas.push(item);
-        }
-    };
-
-    // Función para seleccionar o deseleccionar todos los items
-    const toggleSelectAll = () => {
-        if (selectAll.value) {
-            // Agregar todos los items al array
-            emailForm.ventas = [...props.sales.data];
-        } else {
-            // Limpiar el array
-            emailForm.ventas = [];
-        }
-    };
-
-    // Watcher para sincronizar el estado de "Seleccionar todos"
-    watch(emailForm.ventas, (newVal) => {
-        selectAll.value = newVal.length === props.sales.data.length;
-    });
 
     const showMessage = (msg = '', type = 'success') => {
         const toast = Swal.mixin({
@@ -295,8 +260,8 @@
 
     onMounted(() => {
         window.addEventListener("message", (event) => {
-            if (event.data === "refresh-payment") {
-                router.visit(route('refresh-payment-all'), {
+            if (event.data === "refresh-payment-all") {
+                router.visit(route('acco_sales_special_rates'), {
                     only: ['sales'], // opcional
                     replace: true,
                     preserveScroll: true,
@@ -321,6 +286,195 @@
         let url = route('saledocuments_download',[id, type,file,format])
         window.open(url, "_blank");
     }
+
+    // Estado de la exportación
+    const isExporting = ref(false);
+    const downloadUrl = ref(null);
+    const fileName = ref('');
+    const errorMessage = ref(null);
+    const displayModalExportStatus = ref(false);
+    let pollingInterval = null; // Para controlar el intervalo de polling
+    let currentJobId = null; // Para guardar el ID del job actual
+    const mensajeExporting = ref([]);
+
+    const generateExcelSales = async () => {
+        mensajeExporting.value = [];
+        // Resetear estados
+        isExporting.value = true;
+        downloadUrl.value = null;
+        fileName.value = '';
+        errorMessage.value = null;
+        currentJobId = null; // Resetear el ID del job anterior
+        displayModalExportStatus.value = true;
+
+        try {
+            // 1. Iniciar la exportación en el backend y obtener el jobId
+            // Usa axios.post directamente si no necesitas enviar datos del form (e.g. filtros)
+            const response = await axios.post(route('acco_sales_special_rates_quota_excel'), form);
+
+            // 2. Obtener el jobId de la respuesta
+            currentJobId = response.data.job_id;
+            // console.log('Exportación iniciada. Job ID:', currentJobId);
+            mensajeExporting.value.push({success: true, label: 'Exportación iniciada.', path: null});
+            // 3. Iniciar el polling para verificar el estado
+            startPolling();
+
+        } catch (error) {
+            // console.error('Error al iniciar la exportación:', error);
+            // Mostrar mensaje de error al usuario
+            errorMessage.value = error.response?.data?.message || 'Hubo un problema al iniciar la exportación.';
+            isExporting.value = false; // Detener el indicador de carga
+            mensajeExporting.value.push({success: false, label: 'Error al iniciar la exportación:'+ error.response?.data?.message, path: null});
+        }
+    }
+
+    const startPolling = () => {
+        // Limpiar cualquier intervalo anterior para evitar múltiples pollings
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+
+        // Configurar un intervalo para verificar el estado del job cada 3 segundos
+        pollingInterval = setInterval(async () => {
+            if (!currentJobId) {
+                //console.warn('No hay Job ID para hacer polling. Deteniendo polling.');
+                mensajeExporting.value.push({success: false, label: 'No hay Job ID para hacer polling. Deteniendo polling.', path: null});
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                isExporting.value = false;
+                return;
+            }
+
+            try {
+                const response = await axios.get(route('acco_export_status', currentJobId));
+                const jobStatus = response.data;
+
+                // Actualizar el estado local con los datos del job
+                // (aunque no haya barra de progreso, estos datos son útiles para depuración o si decides añadir una barra mínima)
+                // progress.value = jobStatus.progress; // Puedes mantener esta línea si el backend la sigue enviando
+                // processedCount.value = jobStatus.processed_count;
+                // totalCount.value = jobStatus.total_count;
+
+                if (jobStatus.status === 'completed') {
+                    downloadUrl.value = jobStatus.download_url; // La URL de descarga del archivo Excel
+                    fileName.value = jobStatus.file_name;
+                    isExporting.value = false; // Detener el indicador de carga
+                    clearInterval(pollingInterval); // Detener el polling
+                    pollingInterval = null;
+                    //console.log('Exportación completada. Archivo listo para descargar:', downloadUrl.value);
+                    mensajeExporting.value.push({success: true, label: 'Exportación completada. Archivo listo para descargar', path: downloadUrl.value});
+                } else if (jobStatus.status === 'failed') {
+                    errorMessage.value = jobStatus.error_message || 'La exportación falló por un error desconocido.';
+                    isExporting.value = false; // Detener el indicador de carga
+                    clearInterval(pollingInterval); // Detener el polling
+                    pollingInterval = null;
+                    // console.error('Exportación fallida:', jobStatus.error_message);
+                    mensajeExporting.value.push({success: false, label: 'Exportación fallida:'+ jobStatus.error_message, path: null});
+                } else {
+                    // El job sigue en 'pending' o 'processing'
+                    // console.log('Exportación en curso. Estado:', jobStatus.status);
+                    mensajeExporting.value.push({success: false, label: 'Exportación en curso. Estado:'+ jobStatus.status, path: null});
+                }
+            } catch (error) {
+                //console.error('Error al obtener el estado de la exportación:', error);
+                errorMessage.value = 'No se pudo verificar el estado de la exportación.';
+                isExporting.value = false;
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                mensajeExporting.value.push({success: false, label: errorMessage.value, path: null});
+            }
+        }, 3000); // Poll cada 3 segundos (ajusta según necesites)
+    };
+
+    // Limpiar el intervalo cuando el componente se desmonte para evitar fugas de memoria
+    onUnmounted(() => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+    });
+
+    const closeModalExportStatus = () => {
+        displayModalExportStatus.value = false;
+    }
+
+    const sendEmailDocument = (sale, email) => {
+        Swal.fire({
+            icon: 'question',
+            title: '¿Estas seguro?',
+            html: createFormSendEmail(sale, email),
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: false,
+            confirmButtonText: 'Aceptar',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            backdrop: true,
+            preConfirm: async (input) => {
+                let inputEmailSend = document.getElementById("ctnTextSendEmailDocument").value;
+                let resp = null;
+                if(inputEmailSend){
+                    resp = axios.post(route('aca_send_email_student_document'), {
+                        person_email: inputEmailSend,
+                        person_name: sale.client_rzn_social,
+                        document_id: sale.id,
+                        onlisaleId: null
+                    },
+                    {
+                        timeout: 0,
+                    }).then((res) => {
+                        if (!res.data.success) {
+                            Swal.showValidationMessage(res.data.alert)
+                        }
+                        return res
+                    });
+                }else{
+                    Swal.showValidationMessage('El correo electrónico es obligatorio.')
+                }
+                return resp;
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((res) => {
+            console.log();
+            if (res.isConfirmed) {
+                showMessage('El mensaje se envió correctamente.');
+            }
+            refreshTable();
+        });
+
+    }
+
+    const createFormSendEmail = (sale, email) => {
+
+        let formHTML = document.createElement('form');
+        formHTML.classList.add('max-w-sm', 'mx-auto');
+
+        let rParrafo = document.createElement('p');
+        rParrafo.classList.add('text-center','text-lg','mt-4');
+        rParrafo.innerHTML = 'Se enviará un mensaje con el documento de venta <b>' + sale.invoice_serie + '-' + sale.invoice_correlative +'</b> adjunto';
+
+        let rLabel = document.createElement('label');
+        rLabel.setAttribute('for', 'ctnTextSendEmailDocument');
+        rLabel.classList.add('text-left','text-sm','mt-4');
+        rLabel.textContent = 'Correo Electronico';
+
+        let rInput = document.createElement('input');
+        rInput.id = 'ctnTextSendEmailDocument';
+        rInput.value = email;
+        rInput.classList.add(
+            'form-input'
+        );
+        rInput.required = true;
+        formHTML.appendChild(rParrafo);
+        formHTML.appendChild(rLabel);
+        formHTML.appendChild(rInput);
+
+        return formHTML;
+
+    }
 </script>
 
 <template>
@@ -338,25 +492,27 @@
                     <div class="w-full p-4">
                         <div class="grid grid-cols-3">
                             <div class="col-span-3 sm:col-span-1">
-                                <form id="form-search-items" @submit.prevent="form.get(route('cms_items_list'))">
-                                    <label for="table-search" class="sr-only">Search</label>
+                                <form  class="grid sm:grid-cols-2 gap-6">
+                                    <div class="w-full">
+                                        <flat-pickr v-model="form.issue_date" class="form-input" :config="basic"></flat-pickr>
+                                    </div>
                                     <div class="relative">
                                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                             <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
                                         </div>
-                                        <input v-model="form.search" type="text" id="table-search-users" class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar por Descripción">
+                                        <input v-model="form.search" type="text" id="table-search-users" class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar por Descripción">
                                     </div>
                                 </form>
                             </div>
                             <div class="col-span-3 sm:col-span-2">
                                 <Keypad>
                                     <template #botones>
-                                        <button class="btn btn-success uppercase text-xs">
+                                        <button @click="form.get(route('acco_sales_special_rates'))" type="button" class="btn btn-danger text-xs">BUSCAR</button>
+                                        <button v-can="'acco_pagos_cuotas_especiales_excel'" v-on:click="generateExcelSales()" class="btn btn-success uppercase text-xs">
                                             <icon-excel class="w-4 h-4 mr-1" />
                                             Exportar Excel
                                         </button>
                                         <Link :href="route('acco_sales_special_rates_create')" class="btn btn-primary uppercase text-xs">Nuevo</Link>
-
                                     </template>
                                 </Keypad>
                             </div>
@@ -393,9 +549,6 @@
                                     <th class=" ">
                                         Saldo por Pagar
                                     </th>
-                                    <!-- <th >
-                                        Estado
-                                    </th> -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -404,27 +557,27 @@
                                         <td class="text-center">
                                             <div class="flex gap-4 items-center justify-center">
                                                 <div class="dropdown">
-                                                    <Popper :placement="'bottom-start'" offsetDistance="0" class="align-middle">
+                                                    <Dropdown>
                                                         <button type="button" class="btn btn-outline-primary px-2 py-2 dropdown-toggle">
                                                             <font-awesome-icon :icon="faGears" />
                                                         </button>
-                                                        <template #content="{ close }">
-                                                        <ul @click="close()" class="whitespace-nowrap">
-                                                            <li>
-                                                                <a @click="openModalDetails(item)" href="javascript:;">Ver detalles</a>
-                                                            </li>
-                                                            <li>
-                                                                <a @click="openModalCronograma(item)" href="javascript:;">Ver cronograma</a>
-                                                            </li>
-                                                            <li>
-                                                                <a @click="openModalDocuments(item)" href="javascript:;" class="text-red-600 hover:text-red-800">Ver Documentos de venta</a>
-                                                            </li>
-                                                            <li>
-                                                                <a @click="openDialogCreateFeeDocument(item)" href="javascript:;" class="text-blue-600 underline hover:text-blue-800 visited:text-purple-700" >Registrar pago</a>
-                                                            </li>
-                                                        </ul>
+                                                        <template #overlay>
+                                                            <Menu>
+                                                                <MenuItem>
+                                                                    <a @click="openModalDetails(item)" href="javascript:;">Ver detalles</a>
+                                                                </MenuItem>
+                                                                <MenuItem>
+                                                                    <a @click="openModalCronograma(item)" href="javascript:;">Ver cronograma</a>
+                                                                </MenuItem>
+                                                                <MenuItem>
+                                                                    <a @click="openModalDocuments(item)" href="javascript:;" class="text-red-600 hover:text-red-800">Ver Documentos de venta</a>
+                                                                </MenuItem>
+                                                                <MenuItem>
+                                                                    <a @click="openDialogCreateFeeDocument(item)" href="javascript:;" class="text-blue-600 underline hover:text-blue-800 visited:text-purple-700" >Registrar pago</a>
+                                                                </MenuItem>
+                                                            </Menu>
                                                         </template>
-                                                    </Popper>
+                                                    </Dropdown>
                                                 </div>
                                             </div>
                                         </td>
@@ -653,6 +806,9 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
                                 <th scope="col" class="px-6 py-3">
+                                    Acción
+                                </th>
+                                <th scope="col" class="px-6 py-3">
                                     serie-número
                                 </th>
                                 <th scope="col" class="px-6 py-3">
@@ -668,6 +824,13 @@
                         </thead>
                         <tbody v-if="saleDocuments.documents.length > 0">
                             <tr v-for="(row, key) in saleDocuments.documents" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                <td class="text-center">
+                                    <div class="flex items-center ">
+                                        <button @click="sendEmailDocument(row, saleDocuments.client.email)" type="button">
+                                            <iconMail class="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </td>
                                 <td>
                                     <a @click="downloadDocument(row.id,row.invoice_type_doc,'PDF')" href="javascript:;" class="text-blue-600 underline hover:text-blue-800 visited:text-purple-700">{{ row.invoice_serie+'-'+row.invoice_correlative }}</a>
                                 </td>
@@ -688,5 +851,29 @@
                 </div>
             </template>
         </ModalLarge>
+        <ModalStatus :show="displayModalExportStatus" :onClose="closeModalExportStatus">
+            <template #title>Estado de Exportación</template>
+            <template #content>
+                <div v-if="mensajeExporting.length == 0">
+                    <span class="mr-2">Iniciando</span>
+                    <span class="animate-[ping_1.5s_0.5s_ease-in-out_infinite]">.</span>
+                    <span class="animate-[ping_1.5s_0.7s_ease-in-out_infinite]">.</span>
+                    <span class="animate-[ping_1.5s_0.9s_ease-in-out_infinite]">.</span>
+                </div>
+                <div v-for="(msg, inx) in mensajeExporting" class="space-y-4">
+                    <div v-if="msg.success" class="text-[#9CA3AF]">{{ msg.label }}</div>
+                    <div v-if="!msg.success" class="text-[#FFD60A]">{{ msg.label }}</div>
+                    <div v-if="msg.path" class="flex justify-center">
+                        <a :href="msg.path" type="button" class="btn btn-primary text-xs btn-sm uppercase" target="_blank">Descargar</a>
+                    </div>
+                    <div v-if="isExporting">
+                        <span class="mr-2">Cargando</span>
+                        <span class="animate-[ping_1.5s_0.5s_ease-in-out_infinite]">.</span>
+                        <span class="animate-[ping_1.5s_0.7s_ease-in-out_infinite]">.</span>
+                        <span class="animate-[ping_1.5s_0.9s_ease-in-out_infinite]">.</span>
+                    </div>
+                </div>
+            </template>
+        </ModalStatus>
     </AppLayout>
 </template>

@@ -32,7 +32,7 @@ class StudentElectronicTicket extends Mailable
     {
         $from_mail = $this->data['from_mail'];
         $from_name = $this->data['from_name'];
-        $title = $this->data['from_name'];
+        $title = "Comprobante de Pago";//$this->data['from_name'];
 
         return new Envelope(
             from: new Address($from_mail, $from_name),

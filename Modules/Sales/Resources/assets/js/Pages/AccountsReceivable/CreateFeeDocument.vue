@@ -14,8 +14,6 @@
     import { calcularMontosPorCuota } from 'Modules/Sales/Resources/assets/js/utilities/paymentCalculations';
     import SuccessButton from '@/Components/SuccessButton.vue';
 
-    const store = useAppStore();
-
     const props = defineProps({
         saleNote: {
             type: Object,
@@ -62,6 +60,16 @@
 
     const series = ref([]);
 
+    const getCurrentDate = () => {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Los meses son base 0, por eso se suma 1
+        const day = String(currentDate.getDate()).padStart(2, '0');
+
+        // Formato de fecha: YYYY-MM-DD
+        return`${year}-${month}-${day}`;
+    };
+
     const form = useForm({
         sale_id: props.saleNote.id,
         client_id: props.saleNote.client.id,
@@ -80,6 +88,7 @@
         number: null,
         payments: [
             {
+                date_payment: getCurrentDate(),
                 type: 1,
                 reference: null,
                 amount: 0
@@ -186,6 +195,7 @@
 
     const addPayment = () => {
         let ar = {
+            date_payment: getCurrentDate(),
             type: 1,
             reference: null,
             amount: 0
@@ -213,16 +223,9 @@
         taxes.value = xa;
     }
 
-    const getCurrentDate = () => {
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Los meses son base 0, por eso se suma 1
-        const day = String(currentDate.getDate()).padStart(2, '0');
-
-        // Formato de fecha: YYYY-MM-DD
-        form.date_issue = `${year}-${month}-${day}`;
-        form.date_end = `${year}-${month}-${day}`;
-
+    const setCurrentDateForm = () => {
+        form.date_issue = getCurrentDate();
+        form.date_end = getCurrentDate();
     };
 
     const calculateTotals = (data) => {
@@ -613,12 +616,13 @@
 
     onMounted(() => {
         getSeriesByDocumentType();
-        getCurrentDate();
+        setCurrentDateForm();
         startTaxes();
         addItem(props.feeItem, 4);
     });
 
     const closeMyPopup = () => {
+        //alert(props.fromId)
         if (window.opener) {
             // Enviar mensaje a la ventana principal
             if(props.fromId == 'v1'){
@@ -867,7 +871,7 @@
                 <div class="mt-8 px-4">
                     <h4 class="font-bold">Medio de Pago <span @click="addPayment" class="text-primary italic" style="cursor: pointer;">(+) agregar</span></h4>
                     <div v-for="(pay, key) in form.payments" class="border rounded p-4 mt-4">
-                        <div class="grid sm:grid-cols-3 grid-cols-1 gap-4">
+                        <div class="grid sm:grid-cols-4 grid-cols-1 gap-4">
                             <div>
                                 <label for="reference">Tipo </label>
                                 <select id="type" name="type" class="form-select" v-model="pay.type">
@@ -879,6 +883,10 @@
                             <div>
                                 <label for="reference">Referencia </label>
                                 <input v-model="pay.reference" id="reference" type="number" name="reference" class="form-input" />
+                            </div>
+                            <div>
+                                <label for="date_payment">Fecha de pago </label>
+                                <input v-model="pay.date_payment" id="date_payment" type="date" name="date_payment" class="form-input" />
                             </div>
                             <div>
                                 <label for="amount">Monto </label>

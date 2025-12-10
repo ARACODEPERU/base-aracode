@@ -124,14 +124,32 @@
     const courseIndex = ref(null);
 
     const changeSelectCourses = (courses, index = 0) => {
+        let result = [];
+
         if(index == 99){
-            coursesData.value = props.mycourses;
+            let mycourses = props.mycourses;
+            result = [...mycourses].sort((a, b) => {
+                // 1. Primero can_view = true
+                if (a.can_view && !b.can_view) return -1;
+                if (!a.can_view && b.can_view) return 1;
+
+                // 2. Luego ordenar por descripción (alfabético)
+                return a.description.localeCompare(b.description);
+            });
         }else if(index == 100){
-            coursesData.value = props.coursesRegistered;
+            result = props.coursesRegistered;
         }else{
-            coursesData.value = courses;
+            result = [...courses].sort((a, b) => {
+                // 1. Primero can_view = true
+                if (a.can_view && !b.can_view) return -1;
+                if (!a.can_view && b.can_view) return 1;
+
+                // 2. Luego ordenar por descripción (alfabético)
+                return a.description.localeCompare(b.description);
+            });
         }
         courseIndex.value = index;
+        coursesData.value = result;
     }
 
     onMounted(() => {

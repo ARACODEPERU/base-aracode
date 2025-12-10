@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sale_products', function (Blueprint $table) {
-            $table->decimal('advancement', 12, 2)->comment('pagos realizados');
+            $table->decimal('advancement', 12, 2)->nullable()->comment('pagos realizados');
         });
     }
 

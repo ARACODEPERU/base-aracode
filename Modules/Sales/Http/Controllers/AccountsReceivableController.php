@@ -6,6 +6,7 @@ use App\Helpers\NumberLetter;
 use App\Http\Controllers\Controller;
 use App\Models\Country;
 use App\Models\District;
+use App\Models\ExcelExportJob;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
@@ -33,10 +34,11 @@ use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Sales\Entities\SalePaymentSchedule;
+use Modules\Sales\Entities\SalePaymentScheduleDestination;
+use Modules\Sales\Jobs\PaymentDestinations;
 use Modules\Sales\Rules\ValidationRuleCourseSubscriptions;
-use Modules\Sales\Emails\CuotasMail;
-use Illuminate\Support\Facades\Mail;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Builder;
 class AccountsReceivableController extends Controller
 {
     private $ubl;
@@ -99,15 +101,58 @@ class AccountsReceivableController extends Controller
 
     public function specialRates(){
 
-        $inputs = request()->has('search');
         $search = request()->input('search');
+        $issueDateRange = request()->input('issue_date');
 
-        $sales = Sale::with(['client','saleProduct','documents.items','schedules'])
-            ->where('payment_installments', true)
-            ->when($inputs, function ($query) use ($search) {
-                $query->whereDate('created_at', '=', $search);
-            })
-            ->orderBy('id', 'DESC')
+        $query = Sale::query()->with(['client','saleProduct','documents.items','schedules'])
+            ->where('payment_installments', true);
+
+        if (isset($issueDateRange)) {
+
+            $dates = explode(' a ', $issueDateRange);
+
+            try {
+                if (count($dates) === 2) {
+                    // Es un rango de fechas
+                    $startDate = Carbon::parse($dates[0])->startOfDay();
+                    $endDate = Carbon::parse($dates[1])->endOfDay();
+                } else {
+                    // Es una sola fecha
+                    $startDate = Carbon::parse($dates[0])->startOfDay();
+                    $endDate = Carbon::parse($dates[0])->endOfDay();
+                }
+                $query->whereHas('documents', function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('invoice_broadcast_date', [$startDate, $endDate]);
+                });
+
+            } catch (\Exception $e) {
+                Log::error("Error al parsear fecha " . $e->getMessage());
+            }
+        }
+        // --- FIN DE LA LÓGICA DE FECHA MODIFICADA ---
+
+        if (isset($search)) {
+            $query->whereHas('client', function (Builder $q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                    ->orWhere('number', $search);
+            });
+        }
+        // ----------------------------------------------------
+        $sales = $query->addSelect([
+                'next_payment_date' => SalePaymentSchedule::select('payment_date')
+                    ->whereColumn('sale_payment_schedules.sale_id', 'sales.id')
+                    ->whereColumn('sale_payment_schedules.amount_to_pay', '>', 'sale_payment_schedules.amount_paid')
+                    ->orderBy('payment_date', 'ASC')
+                    ->limit(1)
+            ])
+            ->orderByRaw('
+                CASE
+                    WHEN sales.total = sales.advancement THEN 1
+                    ELSE 0
+                END ASC
+            ')
+            ->orderBy('next_payment_date', 'ASC')
+            ->orderBy('sales.id', 'DESC')
             ->paginate(20);
 
         return Inertia::render('Sales::AccountsReceivable/ListSpecialRates', [
@@ -140,7 +185,7 @@ class AccountsReceivableController extends Controller
 
         $subscriptionTypes = AcaSubscriptionType::where('status',true)->get();
 
-        //dd($subscriptionTypes);
+        //dd($courses);
         return Inertia::render('Sales::AccountsReceivable/CreateSpecialRates',[
             'courses'               => $courses,
             'types'                 => $types,
@@ -209,7 +254,6 @@ class AccountsReceivableController extends Controller
                 'max:10'
             ],
         ]);
-        $sale_note=null;
 
         try {
             $res = DB::transaction(function () use ($request) {
@@ -325,9 +369,11 @@ class AccountsReceivableController extends Controller
                             'advancement' => $request->get('aplasos') ? 0 :  round($course['price'], 2),
                         ]);
 
-                        AcaCapRegistration::create([
+                        AcaCapRegistration::updateOrCreate([
                             'student_id'        => $student->id,
-                            'course_id'         => $course['id'],
+                            'course_id'         => $course['id']
+                        ],
+                        [
                             'status'            => true,
                             'sale_note_id'      => $sale_note->id,
                             'modality_id'       => 3,
@@ -348,8 +394,8 @@ class AccountsReceivableController extends Controller
                         SaleProduct::create([
                             'sale_id' => $sale_note->id,
                             'product_id' => $suscription['id'],
-                            'product' => json_encode($xSuscription), //producto original
-                            'saleProduct' => json_encode($suscription), //producto modificado o no(este va)
+                            'product' => json_encode($xSuscription),
+                            'saleProduct' => json_encode($suscription),
                             'price' => $suscription['price'],
                             'discount' => 0,
                             'quantity' => 1,
@@ -397,9 +443,11 @@ class AccountsReceivableController extends Controller
                         }
 
 
-                        AcaStudentSubscription::create([
+                        AcaStudentSubscription::updateOrCreate([
                             'student_id' => $student->id,
-                            'subscription_id' => $suscription['id'],
+                            'subscription_id' => $suscription['id']
+                        ],
+                        [
                             'date_start' => $dateStart->format('Y-m-d'),
                             'date_end' => $request->get('date_end') ?? $dateEnd->format('Y-m-d'),
                             'status' => true,
@@ -443,23 +491,7 @@ class AccountsReceivableController extends Controller
                     // Siguiente mes
                     $date->addMonth();
                 }
-
-
-                 //enviar correo con credenciales y cronograma de pagos
-
-                //  $sale = Sale::with(['saleProduct', 'client'])
-                //  ->where('id', $sale_note->id)
-                //  ->first();
-                 $name = Person::where('id', $sale_note->client_id)->first()->short_name;
-                 $cronograma = SalePaymentSchedule::where('sale_id', $sale_note->id)->get();
-
-                 Mail::to($request->get('email'))
-                 ->send(new CuotasMail($sale_note, $name, $cronograma));
-
             });
-
-
-
 
 
             //return response()->json($res);
@@ -604,7 +636,7 @@ class AccountsReceivableController extends Controller
     public function storeSpacePayments(Request $request, $id)
     {
         ///se validan los campos requeridos
-
+        //dd($request->get('payments'));
         $rules = [
             'serie' => 'required',
             'client_number' => 'required',
@@ -913,6 +945,9 @@ class AccountsReceivableController extends Controller
                 $sale->petty_cash_id = $petty_cash->id;
                 $sale->save();
 
+
+                $this->paymentDestinationsStore($request->get('payments'), $scheduleId, $document->id, $sale->id);
+
                 return $document;
             });
 
@@ -1017,5 +1052,72 @@ class AccountsReceivableController extends Controller
 
         } // END FOREACH
 
+    }
+
+    public function paymentDestinationsStore($payments, $schedule_id, $document_id, $sale_id){
+        foreach($payments as $payment){
+            SalePaymentScheduleDestination::create([
+                'method_id' => $payment['type'],
+                'date_payment' => $payment['date_payment'],
+                'reference' => $payment['reference'],
+                'amount' => $payment['amount'],
+                'schedule_id' => $schedule_id,
+                'document_id' => $document_id,
+                'sale_id' => $sale_id,
+                'status' => 'paid',
+                'user_id' => Auth::id(),
+            ]);
+        }
+    }
+
+    public function paymentDestinationsExportExcel(Request $request)
+    {
+        $this->validate($request, [
+            'search'           => 'nullable|string|max:255',
+            'issue_date'       => [
+                'required',
+                'string',
+                // Cambiamos la expresión regular para aceptar un solo YYYY-MM-DD O el rango
+                'regex:/^\d{4}-\d{2}-\d{2}( a \d{4}-\d{2}-\d{2})?$/'
+            ]
+        ]);
+
+        $filters = [
+            'issue_date' => $request->get('issue_date'),
+            'search' => $request->get('search'),
+        ];
+
+        $excelExportJob = ExcelExportJob::create([
+            'user_id' => Auth::id(),
+            'report_type' => 'VENTAS',
+            'status' => 'pending',
+            'filters' => json_encode($filters), // Guardar los filtros para referencia
+        ]);
+
+        // 2. Despachar el Job de exportación a la cola
+        PaymentDestinations::dispatch(
+            $filters,
+            $excelExportJob->id,
+            Auth::id()
+        )->onQueue('exports'); // O la cola que uses para exportaciones
+
+        return response()->json([
+            'message' => 'La exportación se ha iniciado. Se le notificará cuando esté lista para descargar.',
+            'job_id' => $excelExportJob->id,
+        ], 202); // 202 Accepted, indica que la petición ha sido aceptada para procesamiento.
+    }
+
+    public function exportStatus($id)
+    {
+       // Busca el job por ID y verifica que pertenezca al usuario
+        $excelExportJob = ExcelExportJob::where('id', $id)
+                                        ->where('user_id', Auth::id())
+                                        ->first();
+
+        if (!$excelExportJob) {
+            return response()->json(['message' => 'Estado de exportación no encontrado o no autorizado.'], 404);
+        }
+
+        return response()->json($excelExportJob);
     }
 }

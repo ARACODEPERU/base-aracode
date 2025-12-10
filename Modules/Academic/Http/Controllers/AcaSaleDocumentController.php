@@ -363,8 +363,8 @@ class AcaSaleDocumentController extends Controller
 
 
         $data = [
-            'from_mail' => env('MAIL_FROM_ADDRESS'),
-            'from_name' => env('MAIL_FROM_NAME'),
+            'from_mail' => env('MAIL_FROM_ADDRESS', "informes@globalcpaperu.com"),
+            'from_name' => env('MAIL_FROM_NAME', "CPA Academy"),
             'title' => 'Hola! Llegó tu comprobante electrónico',
             'for_mail' => $person_email,
             'for_name' => $person_name,

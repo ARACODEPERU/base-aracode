@@ -9,10 +9,9 @@
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, onMounted } from 'vue';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
-    import InputLabel from '@/Components/InputLabel.vue';
     import TextInput from '@/Components/TextInput.vue';
     import InputError from '@/Components/InputError.vue';
-    import DangerButton from '@/Components/DangerButton.vue';
+    import iconBell from '@/Components/vristo/icon/icon-bell.vue';
     import ModalLargeXX from '@/Components/ModalLargeXX.vue';
     import Swal from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
@@ -439,6 +438,12 @@
         let url = route('saledocuments_download',[id, type, file, format])
         window.open(url, "_blank");
     };
+
+    const displayMessageCreate = ref(true);
+
+    const closeMessageCreate = () => {
+        displayMessageCreate.value = false;
+    }
 </script>
 
 <template>
@@ -449,6 +454,62 @@
             </li>
         </Navigation>
         <div class="mt-5">
+            <div v-show="displayMessageCreate"
+                class="
+                    relative
+                    flex
+                    items-center
+                    border
+                    p-3.5
+                    rounded
+                    before:absolute before:top-1/2
+                    ltr:before:left-0
+                    rtl:before:right-0 rtl:before:rotate-180
+                    before:-mt-2 before:border-l-8 before:border-t-8 before:border-b-8 before:border-t-transparent before:border-b-transparent before:border-l-inherit
+                    text-primary
+                    bg-primary-light
+                    !border-primary
+                    ltr:border-l-[64px]
+                    rtl:border-r-[64px]
+                    dark:bg-primary-dark-light
+                    mb-6
+                "
+                >
+                <span class="absolute ltr:-left-11 rtl:-right-11 inset-y-0 text-white w-6 h-6 m-auto">
+                    <icon-bell class="w-6 h-6" />
+                </span>
+                <span class="ltr:pr-2 rtl:pl-2">
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-bold text-gray-800">
+                            Información importante sobre facturas por cobrar
+                        </h2>
+
+                        <p class="text-gray-700">
+                            Las facturas por cobrar se generan de manera normal. Para que aparezcan en esta lista, debes seleccionar la opción
+                            <span class="font-semibold text-blue-700">“Al crédito”</span> en la forma de pago.
+                        </p>
+
+                        <div class="mt-4 space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-blue-600 text-xl">📄</span>
+                                <span class="text-gray-800 font-medium">
+                                    Facturación Electrónica → Crear documento
+                                </span>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <span class="text-green-600 text-xl">🎓</span>
+                                <span class="text-gray-800 font-medium">
+                                    Académico → Estudiantes → Cobrar
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </span>
+                <button @click="closeMessageCreate" type="button" class="ltr:ml-auto rtl:mr-auto hover:opacity-80">
+                    <icon-x class="w-5 h-5" />
+                </button>
+            </div>
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Lista de Documentos </h2>
                 <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">

@@ -703,6 +703,7 @@ class AcaStudentController extends Controller
 
         // Denegar acceso si no está matriculado y el curso no es gratis
         if (!$isEnrolled) {
+
             abort(403, 'No tienes acceso a este curso.');
         }
 
@@ -767,7 +768,7 @@ class AcaStudentController extends Controller
         }
 
         if($studentId){
-            $isEnrolled = $this->checkCourseAccess($studentId, $id);
+            $isEnrolled = $this->checkCourseAccess($studentId, $course->id);
         }
 
         // Denegar acceso si no está matriculado y el curso no es gratis

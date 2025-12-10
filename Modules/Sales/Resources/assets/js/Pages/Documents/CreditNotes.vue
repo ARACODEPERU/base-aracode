@@ -442,28 +442,28 @@ const refreshTable = () => {
                                             @click="close()"
                                             class="whitespace-nowrap"
                                         >
-                                            <li v-if="props.rowData.invoice_status != 'Aceptada'" >
-                                                <a @click="showModalEditDocument()" href="javascript:;" >Editar</a>
-                                            </li>
-                                            <li v-if="props.rowData.invoice_status == 'Pendiente' && props.rowData.invoice_type_doc !='03'">
+                                            <!-- <li v-if="props.rowData.invoice_status != 'Aceptada'" >
+                                                <a @click="showModalEditDocument(props.rowData)" href="javascript:;" >Editar</a>
+                                            </li> -->
+                                            <li v-if="props.rowData.invoice_status == 'Pendiente'">
                                                 <a @click="sendSunatDocument(props.rowData)"
                                                     v-can="'invo_documento_envio_sunat'"
                                                     href="javascript:;"
                                                     >Enviar a Sunat</a
                                                 >
                                             </li>
-                                            <li>
+                                            <!-- <li>
                                                 <a @click="opemModalDetails(props.rowData)" href="javascript:;" >
                                                     Detalles
                                                 </a>
-                                            </li>
-                                            <li v-if="props.rowData.status == 1 && props.rowData.invoice_type_doc == '03'">
+                                            </li> -->
+                                            <!-- <li v-if="props.rowData.status == 1 && props.rowData.invoice_type_doc == '03'">
                                                 <a @click="cancelDocument(index, props.rowData)"
                                                     href="javascript:;"
                                                 >
                                                     Anular
                                                 </a>
-                                            </li>
+                                            </li> -->
                                             <li>
                                                 <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'PDF')"
                                                     href="javascript:;"
@@ -508,7 +508,7 @@ const refreshTable = () => {
                                 </code>
                                 <code>
                                     Descripción:
-                                    {{ props.rowData.invoice_response_description }}
+                                    <span v-html="props.rowData.invoice_response_description"></span>
                                 </code>
                             </span>
                         </div>

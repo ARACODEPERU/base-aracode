@@ -388,9 +388,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_exportar_excel'])
         ->post('/export/students-excel', function (Request $request) {
-        if (!auth()->check()) {
-            return response()->json(['message' => 'No autenticado.'], 401);
-        }
 
         // Crea un registro en la base de datos para el estado del job
         $excelExportJob = AcaExcelStudentsExportJob::create([
