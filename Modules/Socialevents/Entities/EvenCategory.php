@@ -4,6 +4,7 @@ namespace Modules\Socialevents\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Socialevents\Database\factories\EvenCategoryFactory;
 
 class EvenCategory extends Model
@@ -17,10 +18,12 @@ class EvenCategory extends Model
         'icon',
         'description',
         'status',
+        'main_category_id',
+        'informations'
     ];
 
-    protected static function newFactory(): EvenCategoryFactory
+    public function subcategories(): HasMany
     {
-        //return EvenCategoryFactory::new();
+        return $this->hasMany(EvenCategory::class, 'main_category_id', 'id');
     }
 }

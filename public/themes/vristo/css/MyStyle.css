@@ -263,4 +263,10 @@
 .bg-info-100 {
     background-color: var(--color-info-200) !important;
 }
+.dark .dark-bg-gray-800 {
+    background-color: var(--color-gray-800) !important;
+}
+.dark .ant-badge-status-text{
+    color: #b5c4fa !important;
+}
 

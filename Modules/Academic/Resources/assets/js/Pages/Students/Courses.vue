@@ -180,10 +180,7 @@
                                 @click="changeSelectCourses(null, 99)"
                                 href="#"
                                 class="inline-block px-4 py-2.5 rounded-lg"
-                                :class="courseIndex === 99
-                                    ? 'btn btn-primary'
-                                    : 'hover:text-heading hover:bg-gray-100'
-                                "
+                                :class="courseIndex === 99 ? 'btn btn-primary' : 'hover:text-heading hover:bg-gray-100'"
                             >
                                 Todos
                             </a>

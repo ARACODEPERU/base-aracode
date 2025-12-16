@@ -39,6 +39,14 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'even_ventas_editar']));
         array_push($permissions, Permission::create(['name' => 'even_ventas_nuevo']));
         array_push($permissions, Permission::create(['name' => 'even_ventas_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'even_equipos_listado']));
+        array_push($permissions, Permission::create(['name' => 'even_equipos_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'even_equipos_editar']));
+        array_push($permissions, Permission::create(['name' => 'even_equipos_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'even_ediciones_listado']));
+        array_push($permissions, Permission::create(['name' => 'even_ediciones_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'even_ediciones_editar']));
+        array_push($permissions, Permission::create(['name' => 'even_ediciones_eliminar']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);

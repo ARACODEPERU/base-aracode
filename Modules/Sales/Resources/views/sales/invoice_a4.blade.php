@@ -982,7 +982,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                             <td class="w-1/2 align-top">
                                 <table class="text-neutral-600 text-xs">
                                     <tr>
-                                        <td>Razón Social:</td> <td>{{ $document->getClient()->getRznSocial() }}</td>
+                                        <td>Nombre / Razón Social:</td> <td>{{ $document->getClient()->getRznSocial() }}</td>
                                     </tr>
                                     <tr>
                                         <td>

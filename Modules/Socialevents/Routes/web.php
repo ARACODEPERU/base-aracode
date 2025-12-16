@@ -6,6 +6,9 @@ use Modules\Socialevents\Http\Controllers\EvenEventController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickeClientController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickePriceController;
 use Modules\Socialevents\Http\Controllers\EvenLocalController;
+use Modules\Socialevents\Http\Controllers\EventEditionController;
+use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
+use Modules\Socialevents\Http\Controllers\EventTeamController;
 use Modules\Socialevents\Http\Controllers\SocialeventsController;
 
 /*
@@ -20,7 +23,7 @@ use Modules\Socialevents\Http\Controllers\SocialeventsController;
 */
 
 Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function () {
-    Route::get('/', 'SocialeventsController@index');
+    Route::get('dashboard', 'SocialeventsController@index')->name('even_dashboard');
 
     Route::middleware(['middleware' => 'permission:even_categoria_listado'])->get('categories', [EvenCategoryController::class, 'index'])->name('even_categories_list');
     Route::middleware(['middleware' => 'permission:even_categoria_nuevo'])->get('categories/create', [EvenCategoryController::class, 'create'])->name('even_categoriess_create');
@@ -44,4 +47,17 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_evento_eliminar'])->delete('events/destroy/{id}', [EvenEventController::class, 'destroy'])->name('even_eventos_destroy');
     Route::post('events/prices/tickets/store', [EvenEventTickePriceController::class, 'store'])->name('even_events_preices_ticket_store');
     Route::middleware(['middleware' => 'permission:even_ventas_listado'])->get('tickets', [EvenEventTickeClientController::class, 'index'])->name('even_tickets_listado');
+    Route::middleware(['middleware' => 'permission:even_equipos_listado'])->get('teams', [EventTeamController::class, 'index'])->name('even_equipos_listado');
+    Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->get('teams/create', [EventTeamController::class, 'create'])->name('even_equipos_create');
+    Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/store', [EventTeamController::class, 'store'])->name('even_equipos_store');
+    Route::middleware(['middleware' => 'permission:even_equipos_editar'])->get('teams/{id}/edit', [EventTeamController::class, 'edit'])->name('even_equipos_edit');
+    Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/update', [EventTeamController::class, 'update'])->name('even_equipos_update');
+    Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->delete('teams/{id}/destroy', [EventTeamController::class, 'destroy'])->name('even_equipos_destroy');
+    Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions', [EventEditionController::class, 'index'])->name('even_ediciones_listado');
+    Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->get('editions/create', [EventEditionController::class, 'create'])->name('even_ediciones_nuevo');
+    Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->post('editions/store', [EventEditionController::class, 'store'])->name('even_ediciones_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->get('editions/{id}/edit', [EventEditionController::class, 'edit'])->name('even_ediciones_editar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->post('editions/update', [EventEditionController::class, 'update'])->name('even_ediciones_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_eliminar'])->delete('editions/{id}/destroy', [EventEditionController::class, 'destroy'])->name('even_ediciones_destroy');
+    Route::middleware(['middleware' => 'permission:even_ediciones_eliminar'])->get('editions/{id}/teams', [EventEditionTeamController::class, 'index'])->name('even_ediciones_equipos');
 });

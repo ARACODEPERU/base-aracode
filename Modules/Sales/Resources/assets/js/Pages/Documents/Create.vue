@@ -18,8 +18,6 @@
     import { calcularMontosPorCuota } from '../../utilities/paymentCalculations'; // Ajusta la ruta según sea necesario
 
 
-    const store = useAppStore();
-
     const props = defineProps({
         payments: {
             type: Object,

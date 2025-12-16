@@ -42,6 +42,8 @@
             confirmButtonText: '¡Sí, Eliminar!',
             cancelButtonText: 'Cancelar',
             showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
             preConfirm: () => {
                 return axios.delete(route('aca_courses_destroy', id)).then((res) => {
                     if (!res.data.success) {

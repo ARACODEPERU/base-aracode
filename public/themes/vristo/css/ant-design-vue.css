@@ -42,6 +42,11 @@
     border-color: #253b5c !important;
     color: #888ea8 !important;
 }
+.dark .ant-picker {
+    background-color: #1b2e4b !important;
+    border-color: #253b5c !important;
+    color: #888ea8 !important;
+}
 
 /* Reglas para el placeholder */
 .dark .ant-input::placeholder { /* Para la mayoría de los navegadores modernos */
@@ -165,3 +170,69 @@
     color: #dcdde6 !important;
 }
 
+.ant-picker-range {
+    height: 38px !important;
+}
+/* Reglas para el placeholder */
+.dark .ant-picker-input > input::placeholder { /* Para la mayoría de los navegadores modernos */
+    color: #888ea8 !important; /* O el color que desees para el placeholder */
+    opacity: 1 !important; /* Asegura que no tenga transparencia predeterminada del navegador */
+}
+
+.dark .ant-picker-input > input::-webkit-input-placeholder { /* Para navegadores basados en Webkit (Chrome, Safari, Edge anterior) */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-picker-input > input::-moz-placeholder { /* Para Firefox */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-picker-input > input:-ms-input-placeholder { /* Para Internet Explorer */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-picker-input > input::ms-input-placeholder { /* Para Microsoft Edge (versiones más nuevas, aunque ::placeholder es suficiente) */
+    color: #888ea8 !important;
+    opacity: 1 !important;
+}
+
+.dark .ant-picker-panels{
+    background-color: #294064 !important;
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-header-super-prev-btn{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-header-prev-btn{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-header-next-btn{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-header-super-next-btn{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-month-btn{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-year-btn{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-content > thead > tr > td, th{
+    color: #b5c4fa !important;
+}
+.dark .ant-picker-content > tbody > tr > td, th{
+    color: #b5c4fa !important;
+}
+.dark .ant-input-number-input{
+    border-color: #253b5c !important;
+    height: 38px !important;
+    background-color: #294064 !important;
+    color: #b5c4fa !important;
+}
+.dark .ant-avatar-circle{
+    border-color: #253b5c !important;
+}

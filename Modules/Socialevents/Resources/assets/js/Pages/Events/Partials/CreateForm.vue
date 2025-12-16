@@ -9,14 +9,14 @@ import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch, onMounted } from 'vue';
 import Editor from '@tinymce/tinymce-vue'
-import { 
+import {
     ConfigProvider,
-    Select, 
+    Select,
     InputNumber,
     Textarea,
     RangePicker,
-    Switch, 
-    Input, 
+    Switch,
+    TreeSelect,
     Upload,
     Flex
 } from 'ant-design-vue';
@@ -90,6 +90,10 @@ watch(() => form.just_transmit, (data) => {
         form.broadcast = true
     }
 });
+
+const treeLine = ref(true);
+const showLeafIcon = ref(false);
+
 </script>
 
 <template>
@@ -114,17 +118,45 @@ watch(() => form.just_transmit, (data) => {
                         </div>
                     </Flex>
                 </div>
-                <div v-if="form.just_transmit == 0" class="col-span-6 sm:col-span-2">
+                <div v-if="form.just_transmit == 0" class="col-span-6 sm:col-span-3">
                     <InputLabel for="category_id" value="Categoría *" class="mb-1" />
-                    <Select 
-                        style="width: 100%;"
-                        v-model:value="form.category_id" 
+                    <TreeSelect
+                        v-model:value="form.category_id"
+                        style="width: 100%"
+                        placeholder="Por favor seleccione"
+                        :tree-line="treeLine && { showLeafIcon }"
+                        :tree-data="categories.map((obj) => (
+                            {
+                                value: obj.id,
+                                title: obj.description,
+                                informations: obj.informations,
+                                children: obj.subcategories?.map((subObj) => (
+                                    {
+                                        value: subObj.id,
+                                        title: subObj.description,
+                                        informations: subObj.informations,
+                                        children: subObj.subcategories?.map((xSubObj) => (
+                                            {
+                                                value: xSubObj.id,
+                                                title: xSubObj.description,
+                                                informations: xSubObj.informations
+                                            })
+                                        )
+                                    })
+                                )
+                            })
+                        )"
+                        tree-node-filter-prop="title"
                         id="category_id"
-                        :options="categories.map((obj) => ({value:obj.id,label:obj.description}))"
-                    />
+                    >
+                        <template #title="{ value: val, title, informations }">
+                            <span>{{ title }}</span><br />
+                            <small v-if="informations" class="text-info">{{ informations }}</small>
+                        </template>
+                    </TreeSelect>
                     <InputError :message="form.errors.category_id" class="mt-2" />
                 </div>
-                <div v-if="form.just_transmit == 0" class="col-span-6 sm:col-span-4">
+                <div v-if="form.just_transmit == 0" class="col-span-6 sm:col-span-3">
                     <InputLabel for="dates" value="Fechas desde Hasta *" class="mb-1" />
                     <RangePicker id="dates" v-model:value="form.date" style="width: 100%;" :locale="esES" />
                     <InputError :message="form.errors.date" class="mt-2" />
@@ -164,7 +196,7 @@ watch(() => form.just_transmit, (data) => {
                     <InputError :message="form.errors.iframe_transmission" class="mt-2" />
                 </div>
 
-                
+
                 <div v-if="form.just_transmit == 0" class="col-span-6">
                     <InputLabel for="file_input" value="Imagen *" />
                     <CropperImage

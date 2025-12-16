@@ -58,7 +58,10 @@ class EvenEventController extends Controller
      */
     public function create()
     {
-        $categories = EvenCategory::where('status', true)->get();
+        $categories = EvenCategory::with('subcategories.subcategories')
+            ->where('status', true)
+            ->whereNull('main_category_id')
+            ->get();
         $instructors = AcaTeacher::with('person')->get();
         $locales = EvenLocal::where('status', true)->get();
 

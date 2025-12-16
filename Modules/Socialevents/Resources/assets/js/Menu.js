@@ -3,7 +3,9 @@ import {
     faLayerGroup,
     faBuildingFlag,
     faElevator,
-    faTicket
+    faTicket,
+    faPeopleGroup,
+    faBoltLightning
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSocialevents = {
@@ -33,6 +35,20 @@ const menuSocialevents = {
             text: "Eventos",
             permissions: "even_evento_listado",
             icom: faElevator,
+        },
+        {
+            route: route("even_equipos_listado"),
+            status: false,
+            text: "Equipos",
+            permissions: "even_equipos_listado",
+            icom: faPeopleGroup,
+        },
+        {
+            route: route("even_ediciones_listado"),
+            status: false,
+            text: "Ediciones",
+            permissions: "even_ediciones_listado",
+            icom: faBoltLightning,
         },
         {
             route: route("even_tickets_listado"),
