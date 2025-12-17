@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
+use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventTeam;
 
@@ -21,9 +22,12 @@ class EventEditionTeamController extends Controller
 
         $urrentEquipment = EventEditionTeam::where('edition_id', $id)->get();
 
+        $edicion = EventEdition::find($id);
+
         return Inertia::render('Socialevents::Editions/Teams', [
             'teams' => $teams,
-            'urrentEquipment' => $urrentEquipment
+            'urrentEquipment' => $urrentEquipment,
+            'edicion' => $edicion
         ]);
     }
 

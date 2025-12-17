@@ -486,7 +486,7 @@ class SaleDocumentController extends Controller
                         'discount' => $produc['discount'],
                         'quantity' => $produc['quantity'],
                         'total' => round($unit_price * $produc['quantity'], 2),
-                        'entity_name_product' => Product::class
+                        'entity_name_product' => Product::class,
                     ]);
 
                     if ($produc['is_product']) {
@@ -549,7 +549,7 @@ class SaleDocumentController extends Controller
                 $status_pay = true;
                 if ($forma_pago && $forma_pago === 'Credito') {
                     $quotasData = $request->input('quotas.amounts');
-
+                    $due_date = null;
                     if (!empty($quotasData)) {
                         foreach ($quotasData as $index => $quota) {
                             $saleDocumentQuota = new SaleDocumentQuota();
@@ -560,27 +560,31 @@ class SaleDocumentController extends Controller
                             $saleDocumentQuota->balance = $quota['amount']; // Al inicio, el saldo es igual al monto de la cuota
                             $saleDocumentQuota->status = 'Pendiente'; // Estado inicial
                             $saleDocumentQuota->save();
+                            $due_date = $quota['dueDate'];
                         }
+
+                        $document->invoice_due_date = $due_date;
                     }
+
                     $sale->advancement = 0;
                     $sale->save();
                     $status_pay = false;
                 }
 
-                $document->update([
-                    'invoice_mto_oper_taxed'    => $mto_oper_taxed,
-                    'invoice_mto_igv'           => $mto_igv,
-                    'invoice_icbper'            => $total_icbper,
-                    'invoice_total_taxes'       => $total_taxes,
-                    'invoice_value_sale'        => $mto_oper_taxed,
-                    'invoice_subtotal'          => $subtotal,
-                    'invoice_rounding'          => $rounding,
-                    'invoice_mto_imp_sale'      => $ttotal,
-                    'invoice_sunat_points'      => null,
-                    'invoice_status'            => 'Pendiente',
-                    'forma_pago'                => $forma_pago,
-                    'status_pay'                => $status_pay
-                ]);
+                $document->invoice_mto_oper_taxed    = $mto_oper_taxed;
+                $document->invoice_mto_igv           = $mto_igv;
+                $document->invoice_icbper            = $total_icbper;
+                $document->invoice_total_taxes       = $total_taxes;
+                $document->invoice_value_sale        = $mto_oper_taxed;
+                $document->invoice_subtotal          = $subtotal;
+                $document->invoice_rounding          = $rounding;
+                $document->invoice_mto_imp_sale      = $ttotal;
+                $document->invoice_sunat_points      = null;
+                $document->invoice_status            = 'Pendiente';
+                $document->forma_pago                = $forma_pago;
+                $document->status_pay                = $status_pay;
+
+                $document->save();
 
                 $serie->increment('number', 1);
 
@@ -589,7 +593,10 @@ class SaleDocumentController extends Controller
 
             return response()->json($res);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
             // Devuelve una respuesta de error
         }
     }

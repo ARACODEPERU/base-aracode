@@ -358,6 +358,7 @@
         { data: null, render: '#document', title: 'Nmr. Documento' },
         { data: null, render: '#created',title: 'Fecha Registrado' },
         { data: 'invoice_broadcast_date', title: 'Fecha Emitido' },
+        { data: 'invoice_due_date', title: 'Fecha de vencimiento' },
         { data: 'full_name', title: 'Cliente' },
         { data: 'overall_total', title: 'Total' },
         { data: null, render: '#status', title: 'Estado' },

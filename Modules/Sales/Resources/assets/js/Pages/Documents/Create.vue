@@ -157,11 +157,12 @@
     };
 
     const getDataClient = async (data) => {
+
         if(formDocument.sale_documenttype_id == 2){
             formDocument.client_id = data.id;
             formDocument.client_name = data.number+"-"+data.full_name;
             formDocument.client_rzn_social = data.full_name;
-            formDocument.client_ubigeo_description = data.city;
+            formDocument.client_ubigeo_description = data.ubigeo_description;
             formDocument.client_ubigeo = data.ubigeo;
             formDocument.client_direction = data.address;
             formDocument.client_dti = data.document_type_id;
@@ -172,7 +173,7 @@
             if(data.document_type_id == '6'){
                 formDocument.client_id = data.id;
                 formDocument.client_name = data.number+"-"+data.full_name;
-                formDocument.client_ubigeo_description = data.city;
+                formDocument.client_ubigeo_description = data.ubigeo_description;
                 formDocument.client_ubigeo = data.ubigeo;
                 formDocument.client_direction = data.address;
                 formDocument.client_dti = data.document_type_id;
@@ -308,6 +309,19 @@
             }
 
             axios.post(route('saledocuments_store'), formDocument ).then((res) => {
+                console.log(res)
+                if (res.data?.success === false) {
+                    Swal2.fire({
+                        title: 'Error SQL / Exception 500',
+                        text: res.data.message,
+                        icon: 'error',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                    formDocument.processing = false
+                    return
+                }
+
                 formDocument.client_id = props.client.id,
                 formDocument.client_name = props.client.number+"-"+props.client.full_name,
                 formDocument.client_ubigeo = props.client.ubigeo,

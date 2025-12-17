@@ -15,6 +15,10 @@
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 
     const props = defineProps({
+        edicion: {
+            type: Object,
+            default: () => ({}),
+        },
         teams: {
             type: Object,
             default: () => ({}),
@@ -26,6 +30,7 @@
     });
 
     const form = useForm({
+        edition_id: props.edicion.id,
         team_id: null,
         team_name: null
     });
@@ -79,44 +84,7 @@
         form.team_id = eventSelected.value.id;
     }
 
-    const tableData = ref([
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'johndoe@yahoo.com',
-    date: '10/08/2020',
-    sale: 120,
-    status: 'Complete',
-    register: '5 min ago',
-    progress: '40%',
-    position: 'Developer',
-    office: 'London',
-  },
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'johndoe@yahoo.com',
-    date: '10/08/2020',
-    sale: 120,
-    status: 'Complete',
-    register: '5 min ago',
-    progress: '40%',
-    position: 'Developer',
-    office: 'London',
-  },
-    {
-    id: 1,
-    name: 'John Doe',
-    email: 'johndoe@yahoo.com',
-    date: '10/08/2020',
-    sale: 120,
-    status: 'Complete',
-    register: '5 min ago',
-    progress: '40%',
-    position: 'Developer',
-    office: 'London',
-  },
-]);
+
 </script>
 <template>
     <AppLayout title="Ediciones">
@@ -152,34 +120,54 @@
                     <button class="btn btn-primary" type="button"><icon-plus class="w-4 h-4 mr-1" />Agregar</button>
                 </div>
             </div>
-            <div class="panel p-0 mt-6">
-                <div class="table-responsive">
-
-
-                    <div class="relative overflow-x-auto bg-neutral-primary shadow-xs rounded-base border border-default">
-                        <table class="w-full text-sm text-left rtl:text-right text-body">
-                            <thead class="text-sm text-body border-b border-default">
+            <div class="mt-6">
+                <div class="panel pt-4">
+                    <h3 class="text-lg uppercase mb-4 font-medium">Tabla de posiciones</h3>
+                    <div class="table-responsive">
+                        <table class="w-full text-sm text-left rtl:text-right">
+                            <thead class="text-sm text-white border border-dark">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 bg-neutral-secondary-soft font-medium">
-                                        Product name
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        #
                                     </th>
-                                    <th scope="col" class="px-6 py-3 font-medium">
-                                        Color
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        Equipo
                                     </th>
-                                    <th scope="col" class="px-6 py-3 bg-neutral-secondary-soft font-medium">
-                                        Category
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        PTS
                                     </th>
-                                    <th scope="col" class="px-6 py-3 font-medium">
-                                        Price
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        PJ
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        PG
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        PE
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        PP
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        DG
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        GF
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 bg-dark font-medium">
+                                        GC
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr class="border-b border-default">
+                                    <td class="px-6 py-4">
+                                        12
+                                    </td>
                                     <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
                                         Apple MacBook Pro 17"
                                     </th>
-                                    <td class="px-6 py-4">
+                                    <td class="px-6 py-4 bg-dark font-medium">
                                         Silver
                                     </td>
                                     <td class="px-6 py-4 bg-neutral-secondary-soft">
@@ -188,61 +176,20 @@
                                     <td class="px-6 py-4">
                                         $2999
                                     </td>
-                                </tr>
-                                <tr class="border-b border-default">
-                                    <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                        Microsoft Surface Pro
-                                    </th>
                                     <td class="px-6 py-4">
-                                        White
-                                    </td>
-                                    <td class="px-6 py-4 bg-neutral-secondary-soft">
-                                        Laptop PC
+                                        $2999
                                     </td>
                                     <td class="px-6 py-4">
-                                        $1999
-                                    </td>
-                                </tr>
-                                <tr class="border-b border-default">
-                                    <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                        Magic Mouse 2
-                                    </th>
-                                    <td class="px-6 py-4">
-                                        Black
-                                    </td>
-                                    <td class="px-6 py-4 bg-neutral-secondary-soft">
-                                        Accessories
+                                        $2999
                                     </td>
                                     <td class="px-6 py-4">
-                                        $99
-                                    </td>
-                                </tr>
-                                <tr class="border-b border-default">
-                                    <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                        Google Pixel Phone
-                                    </th>
-                                    <td class="px-6 py-4">
-                                        Gray
-                                    </td>
-                                    <td class="px-6 py-4 bg-neutral-secondary-soft">
-                                        Phone
+                                        $2999
                                     </td>
                                     <td class="px-6 py-4">
-                                        $799
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap bg-neutral-secondary-soft">
-                                        Apple Watch 5
-                                    </th>
-                                    <td class="px-6 py-4">
-                                        Red
-                                    </td>
-                                    <td class="px-6 py-4 bg-neutral-secondary-soft">
-                                        Wearables
+                                        $2999
                                     </td>
                                     <td class="px-6 py-4">
-                                        $999
+                                        $2999
                                     </td>
                                 </tr>
                             </tbody>

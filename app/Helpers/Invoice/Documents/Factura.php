@@ -100,6 +100,7 @@ class Factura
 
         $department = $province->department;
         $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
+        $due_date = new DateTime($document->invoice_due_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
         // Cliente
         $clientCity = District::with('province.department')->where('id',$document->client_ubigeo_code)->first();
 
@@ -173,6 +174,7 @@ class Factura
             ->setSerie($document->invoice_serie)
             ->setCorrelativo($document->invoice_correlative)
             ->setFechaEmision($broadcast_date)
+            ->setFecVencimiento($due_date)
             ->setTipoMoneda('PEN')
             ->setCompany($company)
             ->setClient($client)
@@ -240,7 +242,11 @@ class Factura
             $valuePercent = 0.12; // 12% del total de la venta
             $percent = 12;
             $totalV = $document->invoice_mto_imp_sale;
-            $detMount = $totalV * $valuePercent;
+
+            $montoUnoRaw  = $totalV * $valuePercent;
+            //$detMount = round($montoUnoRaw  * 2) / 2;
+            $detMount = ceil($montoUnoRaw);
+
             $invoice->setDetraccion(
                 // MONEDA SIEMPRE EN SOLES
                 (new Detraction())

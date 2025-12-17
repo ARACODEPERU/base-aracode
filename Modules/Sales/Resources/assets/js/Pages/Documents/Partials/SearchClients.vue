@@ -45,7 +45,7 @@
 
     const form = useForm({
         id: '',
-        document_type: '',
+        document_type: 1,
         number: '',
         telephone: '',
         full_name: '',
@@ -61,7 +61,7 @@
     });
 
     const disabledBtnSelect = ref(true);
-    const person = ref({});
+    const persona = ref({});
     const searchResults = ref([]); // resultados múltiples
 
     const modalNewSearchClient = () => {
@@ -105,6 +105,7 @@
 
     // Rellenar formulario con el item seleccionado
     const fillForm = (person, ubigeo) => {
+        console.log(ubigeo)
         form.id = person.id;
         form.document_type = person.document_type_id;
         form.number = person.number;
@@ -112,9 +113,9 @@
         form.full_name = person.full_name;
         form.email = person.email;
         form.address = person.address;
-        form.ubigeo_description = person.city;
+        form.ubigeo_description = person.ubigeo_description;
         form.ubigeo = ubigeo;
-
+        persona.value = person;
         disabledBtnSelect.value = false;
         searchResults.value = []; // cerrar dropdown
     };
@@ -147,7 +148,7 @@
                 padding: '2em',
                 customClass: 'sweet-alerts',
             });
-            person.value = res.data;
+            persona.value = res.data;
         }).catch(error => {
             setErrorFormSearch(error.response.data.errors);
             form.processing = false;
@@ -217,7 +218,7 @@
     });
     const selectPersonNew = () => {
         form.reset();
-        emit('clientId', person.value);
+        emit('clientId', persona.value);
     }
 
     const apiesLoading = ref(false);
@@ -271,7 +272,7 @@
                 <div class="grid grid-cols-4 gap-4">
                     <div class="col-span-6 sm:col-span-1">
                         <InputLabel value="Tipo de Documento" />
-                        <select :disabled="saleDocumentTypes==1 ? true : false"
+                        <select :disabled="saleDocumentTypes == 1 ? true : false"
                             class="form-select text-white-dark"
                             v-model="form.document_type">
                             <option value="">Seleccionar</option>
@@ -297,7 +298,7 @@
                     <div class="col-span-6 sm:col-span-2">
                         <InputLabel v-if="form.document_type == 6" for="full_name" value="Razón Social" />
                         <InputLabel v-else for="full_name" value="Nombres" />
-                        <div>
+                        <div class="w-full relative">
                             <div class="flex">
                                 <input id="full_name" v-model="form.full_name" type="text" placeholder="Buscar por razon social o nombres" class="form-input ltr:rounded-r-none rtl:rounded-l-none" />
                                 <div
@@ -308,18 +309,18 @@
                                 </div>
                             </div>
                             <div v-if="searchResults.length"
-                                class="mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto
+                                class="mt-1 absolute z-40 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto
                                         transition-all duration-200 ease-out animate-fadeIn">
 
                                 <div v-for="(item, index) in searchResults" :key="index"
-                                    @click="fillForm(item, { district_id: item.district_id, city_name: item.city })"
+                                    @click="fillForm(item, { district_id: item.ubigeo, city_name: item.ubigeo_description })"
                                     class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
 
                                     <p class="font-semibold text-gray-700 dark:text-gray-200">
                                         {{ item.full_name }}
                                     </p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                                        DNI: {{ item.number }} — {{ item.city }}
+                                        DNI: {{ item.number }} — {{ item.ubigeo_description }}
                                     </p>
                                 </div>
                             </div>
