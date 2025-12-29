@@ -453,7 +453,7 @@ class AcaCertificateController extends Controller
     {
         $xcer = AcaCertificate::find($id);
 
-        $student = AcaStudent::where($xcer->student_id)->first();
+        $student = AcaStudent::where('id', $xcer->student_id)->first();
 
         $student_id = $student->id;
         $course_id = $xcer->course_id;
