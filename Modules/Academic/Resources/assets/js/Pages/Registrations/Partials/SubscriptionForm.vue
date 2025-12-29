@@ -51,7 +51,7 @@
     onMounted(() => {
         dataSubscriptions.value = props.subscriptions.map((obj) => ({
             value: obj.id,
-            label: `${obj.description} / precio: ${JSON.parse(obj.prices)[0].amount}`
+            label: `${obj.description} / precio: ${obj.prices[0].amount}`
         }));
     });
 

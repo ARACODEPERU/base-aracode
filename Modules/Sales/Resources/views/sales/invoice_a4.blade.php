@@ -1011,7 +1011,9 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                             <td class="w-1/2 align-top text-right">
                                 <div class="text-xs text-neutral-600">
                                     <p>Fecha Emisión: {{ $document->getFechaEmision()->format('d/m/Y') }}</p>
-                                    <p>Fecha de vencimiento: {{ $document->getFecVencimiento()->format('d/m/Y') }}</p>
+                                    @if ($document->getFecVencimiento())
+                                        <p>Fecha de vencimiento: {{ $document->getFecVencimiento()->format('d/m/Y') }}</p>
+                                    @endif
                                     <p></p>
                                 </div>
                             </td>

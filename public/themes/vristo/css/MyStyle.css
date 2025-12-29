@@ -269,4 +269,6 @@
 .dark .ant-badge-status-text{
     color: #b5c4fa !important;
 }
-
+.dark .dark-bg-red-900{
+    background-color: var(--color-red-900) !important;
+}

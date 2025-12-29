@@ -62,6 +62,7 @@
         "laravel-echo": "^1.16.1",
         "laravel-vite-plugin": "^1.0.4",
         "maska": "^2.1.11",
+        "modern-screenshot": "^4.6.7",
         "nice-select2": "^2.2.0",
         "pdfmake": "^0.2.18",
         "pinia": "^2.1.7",

@@ -12,6 +12,7 @@ class EventEditionTeamPlayer extends Model
     use HasFactory;
 
     // Asegúrate de que Laravel sepa que esta es la tabla pivote custom
+
     protected $table = 'event_edition_team_players';
 
     protected $fillable = [
@@ -38,7 +39,7 @@ class EventEditionTeamPlayer extends Model
         return $this->belongsTo(EventTeam::class, 'team_id');
     }
 
-    public function player()
+    public function person()
     {
         return $this->belongsTo(Person::class, 'person_id'); // Asumiendo que tu modelo se llama Person
     }

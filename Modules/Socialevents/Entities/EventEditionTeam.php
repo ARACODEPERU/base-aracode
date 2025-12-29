@@ -4,15 +4,15 @@ namespace Modules\Socialevents\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Socialevents\Database\factories\EventEditionTeamFactory;
 
 class EventEditionTeam extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
+    public $incrementing = false;
+
     protected $fillable = [
         'edition_id',
         'team_id',
@@ -28,8 +28,8 @@ class EventEditionTeam extends Model
         'is_champion'
     ];
 
-    protected static function newFactory(): EventEditionTeamFactory
+    public function equipo(): BelongsTo
     {
-        //return EventEditionTeamFactory::new();
+        return $this->belongsTo(EventTeam::class, 'team_id');
     }
 }

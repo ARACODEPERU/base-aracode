@@ -7,9 +7,10 @@ use Modules\Socialevents\Http\Controllers\EvenEventTickeClientController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickePriceController;
 use Modules\Socialevents\Http\Controllers\EvenLocalController;
 use Modules\Socialevents\Http\Controllers\EventEditionController;
+use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
+use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
-use Modules\Socialevents\Http\Controllers\SocialeventsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,5 +60,16 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->get('editions/{id}/edit', [EventEditionController::class, 'edit'])->name('even_ediciones_editar');
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->post('editions/update', [EventEditionController::class, 'update'])->name('even_ediciones_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_eliminar'])->delete('editions/{id}/destroy', [EventEditionController::class, 'destroy'])->name('even_ediciones_destroy');
-    Route::middleware(['middleware' => 'permission:even_ediciones_eliminar'])->get('editions/{id}/teams', [EventEditionTeamController::class, 'index'])->name('even_ediciones_equipos');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->get('editions/{id}/teams', [EventEditionTeamController::class, 'index'])->name('even_ediciones_equipos');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->post('editions/{id}/teams/add', [EventEditionTeamController::class, 'store'])->name('even_ediciones_equipos_agregar');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipos_eliminar'])->delete('editions/{eId}/teams/{tId}/destroy', [EventEditionTeamController::class, 'destroy'])->name('even_ediciones_equipos_destroy');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->get('editions/{eId}/teams/{tId}/payers', [EventEditionTeamPlayerController::class, 'teamPlayersCreate'])->name('even_ediciones_equipo_jugadores');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->post('editions/teams/player/store', [EventEditionTeamPlayerController::class, 'teamPlayersStore'])->name('even_team_player_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->post('editions/teams/player/update', [EventEditionTeamPlayerController::class, 'teamPlayersUpdate'])->name('even_team_player_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->delete('editions/{eId}/teams/{tId}/player/{pId}/destroy', [EventEditionTeamPlayerController::class, 'teamPlayersDestroy'])->name('even_ediciones_equipos_player_destroy');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->get('editions/{id}/fixtures', [EventEditionMatchController::class, 'editionFixtures'])->name('even_ediciones_fixtures');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->put('editions/{id}/fixtures/generate', [EventEditionMatchController::class, 'editionFixturesGenerate'])->name('even_ediciones_fixtures_generate');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->put('editions/fixtures/{fId}/update', [EventEditionMatchController::class, 'editionFixturesUpdate'])->name('even_ediciones_fixtures_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures_nuevo'])->get('editions/{id}/fixtures/create', [EventEditionMatchController::class, 'editionFixturesCreate'])->name('even_ediciones_fixtures_create');
+    Route::middleware(['middleware' => 'permission:even_ediciones_fixtures_nuevo'])->post('editions/fixtures/store', [EventEditionMatchController::class, 'editionFixturesStore'])->name('even_ediciones_fixtures_store');
 });

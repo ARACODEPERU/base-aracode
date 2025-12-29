@@ -436,7 +436,7 @@
 
         let rInput = document.createElement('input');
         rInput.id = 'ctnTextSendEmailDocument';
-        rInput.value = sale.client_email;
+        rInput.value = sale.sale_person_email;
         rInput.classList.add(
             'form-input'
         );

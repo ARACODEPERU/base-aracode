@@ -177,9 +177,9 @@ class AcaCapRegistrationController extends Controller
 
         $amount = 0;
         if ($subscription->prices) {
-            foreach (json_decode($subscription->prices) as $price) {
-                if ($price->currency == 'PEN') {
-                    $amount = $price->amount;
+            foreach ($subscription->prices as $price) {
+                if ($price['currency'] == 'PEN') {
+                    $amount = $price['amount'];
                 }
             }
         }

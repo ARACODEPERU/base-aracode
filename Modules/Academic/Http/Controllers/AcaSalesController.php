@@ -468,6 +468,7 @@ class AcaSalesController extends Controller
                 'sales.client_id',
                 'sale_documents.id AS document_id',
                 'people.full_name',
+                'people.email AS sale_person_email',
                 'total',
                 'advancement',
                 'total_discount',

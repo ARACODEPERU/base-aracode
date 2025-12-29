@@ -146,6 +146,9 @@ class PersonController extends Controller
                 'is_provider' => $request->boolean('is_provider'),
                 'ubigeo' => is_array($ubigeo) ? $ubigeo['district_id'] : $ubigeo,
                 'ubigeo_description' => is_array($ubigeo) ? $ubigeo['city_name'] : $ubigeo_description,
+                'names' => $request->input('names') ?? null,
+                'father_lastname' => $request->input('father_lastname') ?? null,
+                'mother_lastname' => $request->input('mother_lastname') ?? null
             ]
         );
 
@@ -399,41 +402,72 @@ class PersonController extends Controller
 
     public function getBirthdays()
     {
-        $startDate = Carbon::now()->subDays(2)->format('m-d'); // Hace 2 días (MM-DD)
-        $endDate = Carbon::now()->addWeek()->format('m-d'); // Próxima semana (MM-DD)
+        $today = Carbon::today();
+        $start = $today->copy()->subDays(2);
+        $end   = $today->copy()->addWeek();
 
-        $persons = Person::whereRaw("DATE_FORMAT(birthdate, '%m-%d') BETWEEN ? AND ?", [$startDate, $endDate])
-            ->orderByRaw("DATE_FORMAT(birthdate, '%m-%d')")
-            ->get()
-            ->map(function ($person) {
+        $startDay = $start->dayOfYear;
+        $endDay   = $end->dayOfYear;
+        $daysInYear = $today->isLeapYear() ? 366 : 365;
+
+        $persons = Person::all()
+            ->filter(function ($person) use ($startDay, $endDay, $daysInYear) {
+                if (!$person->birthdate) {
+                    return false;
+                }
+
+                $birthday = Carbon::parse($person->birthdate)->dayOfYear;
+
+                // 🔥 Rango normal
+                if ($startDay <= $endDay) {
+                    return $birthday >= $startDay && $birthday <= $endDay;
+                }
+
+                // 🔥 Cruza fin de año
+                return $birthday >= $startDay || $birthday <= $endDay;
+            })
+            ->sortBy(function ($person) use ($startDay, $endDay) {
+                $birthday = Carbon::parse($person->birthdate)->dayOfYear;
+
+                // Ajuste para ordenar bien cuando cruza el año
+                return $birthday < $startDay ? $birthday + 366 : $birthday;
+            })
+            ->values()
+            ->map(function ($person) use ($today) {
+
                 $birthdate = Carbon::parse($person->birthdate);
-                $currentYear = Carbon::now()->year;
-                $today = Carbon::now()->format('m-d');
-                $birthdayThisYear = Carbon::createFromDate($currentYear, $birthdate->month, $birthdate->day)->format('m-d');
+                $currentYear = $today->year;
 
-                // Determinar el estado (status)
-                if ($birthdayThisYear < $today) {
+                $birthdayThisYear = Carbon::create(
+                    $currentYear,
+                    $birthdate->month,
+                    $birthdate->day
+                );
+
+                $todayDOY = $today->dayOfYear;
+                $birthdayDOY = $birthdayThisYear->dayOfYear;
+
+                if ($birthdayDOY < $todayDOY) {
                     $status = 'pasado';
-                } elseif ($birthdayThisYear > $today) {
+                } elseif ($birthdayDOY > $todayDOY) {
                     $status = 'proximo';
                 } else {
                     $status = 'hoy';
                 }
 
-                $day = Carbon::createFromDate($currentYear, $birthdate->month, $birthdate->day)->format('Y-m-d');
-
                 return [
                     'image' => $person->image,
                     'name' => $person->full_name,
-                    'birthdate' => Carbon::parse($day)->translatedFormat('d \d\e F'),
+                    'birthdate' => $birthdayThisYear->translatedFormat('d \d\e F'),
                     'age' => $currentYear - $birthdate->year,
                     'status' => $status,
                     'id' => $person->id,
                     'email' => $person->email,
-                    'telephone' => $person->telephone
+                    'telephone' => $person->telephone,
                 ];
             });
 
+            //dd($persons);
         return $persons;
     }
 

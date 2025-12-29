@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeam;
@@ -20,7 +21,7 @@ class EventEditionTeamController extends Controller
     {
         $teams = EventTeam::get();
 
-        $urrentEquipment = EventEditionTeam::where('edition_id', $id)->get();
+        $urrentEquipment = EventEditionTeam::with('equipo')->where('edition_id', $id)->get();
 
         $edicion = EventEdition::find($id);
 
@@ -31,20 +32,20 @@ class EventEditionTeamController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request)
     {
-        return view('socialevents::create');
-    }
+        $this->validate(
+            $request,
+            [
+                'team_id' => 'required',
+                'edition_id' => 'required'
+            ]
+        );
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        //
+        EventEditionTeam::create([
+            'edition_id' => $request->get('edition_id'),
+            'team_id' => $request->get('team_id')
+        ]);
     }
 
     /**
@@ -74,8 +75,40 @@ class EventEditionTeamController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy($eId, $tId)
     {
-        //
+        $message = null;
+        $success = false;
+        try {
+            // Usamos una transacción para asegurarnos de que la operación se realice de manera segura.
+            DB::beginTransaction();
+
+            // Verificamos si existe.
+            $item = EventEditionTeam::where('edition_id', $eId)
+                ->where('team_id', $tId)
+                ->firstOrFail();
+
+            if($item){
+                EventEditionTeam::where('edition_id', $eId)
+                    ->where('team_id', $tId)
+                    ->delete();
+            }
+
+            // Si todo ha sido exitoso, confirmamos la transacción.
+            DB::commit();
+
+            $message =  'Eliminado correctamente';
+            $success = true;
+        } catch (\Exception $e) {
+            // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.
+            DB::rollback();
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
     }
 }

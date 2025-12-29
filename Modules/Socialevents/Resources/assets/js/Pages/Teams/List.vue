@@ -6,19 +6,6 @@
     import Swal2 from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import {
-        ConfigProvider,
-        Dropdown,
-        Menu,
-        MenuItem,
-        Image,
-        AvatarGroup,
-        Avatar,
-        Tooltip,
-        Badge,
-        InputNumber,
-        Input
-    } from 'ant-design-vue';
 
     import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
     import iconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';

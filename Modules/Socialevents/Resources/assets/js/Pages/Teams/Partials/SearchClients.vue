@@ -51,7 +51,10 @@
         estado: null,
         condicion: null,
         searchBy: 1,
-        gender: 'F'
+        gender: 'M',
+        father_lastname: null,
+        mother_lastname: null,
+        names: null
     });
 
     const disabledBtnSelect = ref(true);
@@ -120,8 +123,15 @@
             district_id: person.ubigeo,
             ubigeo_description: person.ubigeo_description
         };
-        form.gender = person.gender
-        persona.value = person
+        ubigeoSelected.value = {
+            district_id: person.ubigeo,
+            ubigeo_description: person.ubigeo_description
+        }
+        form.father_lastname =  person.father_lastname;
+        form.mother_lastname =  person.mother_lastname;
+        form.names =  person.names;
+        form.gender = person.gender;
+        persona.value = person;
         disabledBtnSelect.value = false;
         searchResults.value = []; // cerrar dropdown
     };
@@ -225,7 +235,6 @@
     const searchApispe = () => {
         apiesLoading.value = true;
         axios.post(route('sales_search_person_apies'), form).then((res) => {
-
             if(res.data.success){
                 if(form.document_type == 6){
                     form.full_name =  res.data.person['razon_social'];
@@ -240,6 +249,9 @@
                     form.condicion = res.data.person['condicion'];
                 }else{
                     form.full_name =  res.data.person['razon_social'];
+                    form.father_lastname =  res.data.person['father_lastname'];
+                    form.mother_lastname =  res.data.person['mother_lastname'];
+                    form.names =  res.data.person['names'];
                     form.estado = null;
                     form.condicion = null;
                 }
@@ -274,7 +286,7 @@
     <div>
         <ModalLargeX :show="display" :onClose="closeModalClient" :icon="'/img/comunidad.png'">
             <template #title>
-                Cliente
+                Persona
             </template>
             <template #message>
                 Registrar nuevo o editar buscando por su numero de documento
