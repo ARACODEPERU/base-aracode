@@ -11,8 +11,13 @@
     import flatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
+    import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
+        edition: {
+            type: Object,
+            default: () => ({}),
+        },
         teams: {
             type: Object,
             default: () => ({}),
@@ -24,11 +29,13 @@
     });
 
     const form = useForm({
+        edition_id: props.edition.id,
         team_h: null,
         team_a: null,
         phase: null,
         round_number: null,
         group_name: null,
+        match_date: null,
         location: null
     });
 
@@ -83,7 +90,7 @@
                         <option :value="teamA.id">{{ teamA.name }}</option>
                     </template>
                 </select>
-                <InputError :message="form.errors.description" class="mt-2" />
+                <InputError :message="form.errors.team_a" class="mt-2" />
             </div>
             <div class="col-span-2">
                 <InputLabel for="match_date" value="Fecha y hora *" class="mb-1" />
@@ -96,13 +103,13 @@
                 <InputError :message="form.errors.match_date" class="mt-2" />
             </div>
             <div class="sm:col-span-2">
-                <InputLabel for="team_a" value="Fase *" class="mb-1" />
-                <select v-model="form.team_a" id="team_h" class="form-select">
-                    <template v-for="teamA in teams">
-                        <option :value="teamA.id">{{ teamA.name }}</option>
-                    </template>
+                <InputLabel for="phase" value="Fase *" class="mb-1" />
+                <select v-model="form.phase" id="team_h" class="form-select">
+                    <option value="league">Fase de Liga</option>
+                    <option value="quarterfinals">Cuartos de Final</option>
+                    <option value="final">Gran Final</option>
                 </select>
-                <InputError :message="form.errors.description" class="mt-2" />
+                <InputError :message="form.errors.phase" class="mt-2" />
             </div>
             <div class="sm:col-span-2">
                 <InputLabel for="round_number" value="Jornada / Fecha" />
@@ -154,13 +161,10 @@
             <Keypad>
                 <template #botones>
                     <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                        <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
-                            <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
-                        </svg>
+                        <IconLoader v-if="form.processing" class="w-4 h-4 mr-1" />
                         Guardar
                     </PrimaryButton>
-                    <Link :href="route('even_categories_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
+                    <Link :href="route('even_ediciones_fixtures', edition.id)"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
                 </template>
             </Keypad>
         </template>

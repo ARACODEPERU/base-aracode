@@ -21,7 +21,7 @@
             type: Object,
             default: () => ({}),
         },
-        urrentEquipment: {
+        currentEquipment: {
             type: Object,
             default: () => ({}),
         },
@@ -151,7 +151,7 @@
                 <Link :href="route('even_ediciones_listado')" class="text-primary hover:underline">Ediciones</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Equipos</span>
+                <span>Inscripciones y Tabla</span>
             </li>
         </Navigation>
         <div class="mt-5">
@@ -174,13 +174,13 @@
                         >
                         </Multiselect>
                     </div>
-                    <button @click="addTeamSave" class="btn btn-primary uppercase" type="button"><icon-plus class="w-4 h-4 mr-1" />Agregar</button>
+                    <button @click="addTeamSave" class="btn btn-primary uppercase text-xs" type="button"><icon-plus class="w-4 h-4 mr-1" />Agregar</button>
                 </div>
                 <div class="flex items-center justify-end gap-6">
-                    <button @click="exportImage" class="btn btn-danger uppercase">
+                    <button @click="exportImage" class="btn btn-danger uppercase text-xs">
                         Exportar imagen
                     </button>
-                    <Link :href="route('even_ediciones_listado')" :preserveState="true" class="btn btn-warning uppercase">
+                    <Link :href="route('even_ediciones_listado')" :preserveState="true" class="btn btn-warning uppercase text-xs">
                         Ir atras
                     </Link>
                 </div>
@@ -228,8 +228,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <template v-if="urrentEquipment.length > 0">
-                                    <tr v-for="(team, index) in urrentEquipment" class="border-b border-default">
+                                <template v-if="currentEquipment.length > 0">
+                                    <tr v-for="(team, index) in currentEquipment" class="border-b border-default">
                                         <td class="px-6 py-4 text-center">
                                             {{ index + 1 }}
                                         </td>

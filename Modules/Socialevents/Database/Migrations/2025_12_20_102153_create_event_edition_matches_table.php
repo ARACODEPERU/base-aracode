@@ -31,12 +31,13 @@ return new class extends Migration
             // --- Resultados ---
             $table->integer('score_h')->default(0)->comment('goles local');
             $table->integer('score_a')->default(0)->comment('goles visitante');
-            $table->enum('status', ['pending', 'live', 'finished', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'live', 'finished', 'cancelled', 'walk_over', 'closed'])->default('pending');
 
             // --- Lógica de Eliminatorias (Cruces) ---
             // Estos campos guardan texto como "Ganador Partido 10" hasta que se defina el equipo
             $table->string('placeholder_h')->nullable();
             $table->string('placeholder_a')->nullable();
+            $table->string('original_score', 10)->nullable();
             $table->timestamps();
         });
     }

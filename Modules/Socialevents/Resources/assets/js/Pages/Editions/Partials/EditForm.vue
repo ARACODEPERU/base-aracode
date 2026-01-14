@@ -32,7 +32,7 @@
         },
         tinyApiKey: {
             type: String,
-            default: () => ({}),
+            default: null,
         },
         edicion: {
             type: Object,
@@ -80,7 +80,10 @@
         status: props.edicion.status == 1 ? true : false,
         name_database_file: props.edicion.name_database_file,
         path_database_file: props.edicion.path_database_file,
-        file: null
+        file: null,
+        yellow_price: props.edicion.yellow_price,
+        direct_red_price: props.edicion.direct_red_price,
+        double_yellow_price: props.edicion.double_yellow_price
     });
 
     const updateEdition = () => {
@@ -230,7 +233,9 @@
                                     {{
                                         fforma == 'round_robin' ? 'Todos contra todos' :
                                         fforma == 'group_stage_and_playoffs' ? 'Fase de grupos' :
-                                        'Eliminación simple'
+                                        fforma == 'round_robin_playoff' ? 'Liga con Eliminatorias' :
+                                        fforma == 'single_elimination' ? 'Eliminación simple' :
+                                        'relampago'
                                     }}
                                 </option>
                             </select>
@@ -271,7 +276,7 @@
                         </div>
                         <div>
                             <InputLabel for="inscription_fee" value="Precio de inscripción *" class="mb-1" />
-                            <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'########'" placeholder="_____" maxlength="8" type="text" />
                             <InputError :message="form.errors.inscription_fee" class="mt-2" />
                         </div>
                         <div>
@@ -288,6 +293,27 @@
                             <InputLabel for="prize_details" value="Premios" class="mb-1" />
                             <textarea v-model="form.prize_details" id="prize_details" class="form-textarea" rows="4"></textarea>
                             <InputError :message="form.errors.prize_details" class="mt-2" />
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Sanciones</h4>
+                        </div>
+                        <div>
+                            <InputLabel for="yellow_price" value="Precio Amarilla" class="mb-1" />
+                            <input v-model="form.yellow_price" id="yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.yellow_price" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="direct_red_price" value="Precio Roja directa" class="mb-1" />
+                            <input v-model="form.direct_red_price" id="direct_red_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.direct_red_price" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="double_yellow_price" value="Precio Roja doble amarilla" class="mb-1" />
+                            <input v-model="form.double_yellow_price" id="double_yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.double_yellow_price" class="mt-2" />
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Archivos</h4>
                         </div>
                         <div class="sm:col-span-3">
                             <InputLabel for="path_database_file" value="Bases de la competición (Archivos: PDF)" class="mb-1" />
@@ -358,7 +384,7 @@
                 <template #botones>
                     <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                         <icon-loader v-show="form.processing" class="w-4 h-4 animate-spin mr-1" />
-                        Guardar
+                        Actualizar
                     </PrimaryButton>
                     <Link :href="route('even_ediciones_listado')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
                 </template>

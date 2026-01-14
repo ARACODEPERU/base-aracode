@@ -38,29 +38,36 @@ class TournamentService
     // --- FORMATO 1: TODOS CONTRA TODOS ---
     private function generateRoundRobin($teams, $editionId, $groupName = null)
     {
+        // Si la cantidad de equipos es impar, añadimos un equipo "fantasma" (descanso)
         if (count($teams) % 2 != 0) $teams[] = null;
 
         $totalTeams = count($teams);
-        $rounds = $totalTeams - 1;
+        $rounds = $totalTeams - 1; // Número total de jornadas
         $matchesPerRound = $totalTeams / 2;
 
         for ($i = 0; $i < $rounds; $i++) {
+            // $i + 1 representa la Jornada actual (Jornada 1, Jornada 2...)
+            $roundNumber = $i + 1;
+
             for ($j = 0; $j < $matchesPerRound; $j++) {
                 $home = $teams[$j];
                 $away = $teams[$totalTeams - 1 - $j];
 
+                // Solo creamos el partido si ninguno de los dos es el equipo de descanso (null)
                 if ($home && $away) {
                     EventEditionMatch::create([
                         'edition_id'   => $editionId,
-                        'team_h_id'    => $home, // Corregido
-                        'team_a_id'    => $away, // Corregido
-                        'round_number' => $i + 1,
+                        'team_h_id'    => $home,
+                        'team_a_id'    => $away,
+                        'round_number' => $roundNumber, // <-- AQUÍ SE ASIGNA LA JORNADA CORRECTA
                         'group_name'   => $groupName,
                         'phase'        => $groupName ? 'group' : 'league',
                         'status'       => 'pending'
                     ]);
                 }
             }
+
+            // Algoritmo de Rotación de Berger (mantiene el primer equipo fijo y rota los demás)
             $pivot = array_shift($teams);
             array_unshift($teams, array_pop($teams));
             array_unshift($teams, $pivot);
@@ -105,12 +112,10 @@ class TournamentService
     // --- FORMATO HÍBRIDO (LIGA + PLAYOFFS) ---
     protected function generateHybridFormat($teamIds, $editionId)
     {
-        // 1. FASE DE LIGA (Round Robin completo)
+        // 1. Genera la Liga con jornadas automáticas (ej. del 1 al 9 si son 10 equipos)
         $this->generateRoundRobin($teamIds, $editionId);
 
-        // 2. FASE DE PLAYOFFS (Estructura vacía)
-        // Corregidos todos los nombres de campos a team_h_id y team_a_id
-
+        // 2. FASE DE PLAYOFFS
         $playoffPhases = [
             ['phase' => 'quarterfinals', 'count' => 4],
             ['phase' => 'semifinals',    'count' => 2],
@@ -122,10 +127,10 @@ class TournamentService
             for ($i = 1; $i <= $config['count']; $i++) {
                 EventEditionMatch::create([
                     'edition_id'    => $editionId,
-                    'team_h_id'     => null, // Correcto
-                    'team_a_id'     => null, // Correcto
+                    'team_h_id'     => null,
+                    'team_a_id'     => null,
                     'phase'         => $config['phase'],
-                    'round_number'  => 1,
+                    'round_number'  => 1, // En eliminatorias suele ser 1 por fase
                     'status'        => 'pending',
                     'placeholder_h' => $this->getPlaceholderName($config['phase'], $i, 'h'),
                     'placeholder_a' => $this->getPlaceholderName($config['phase'], $i, 'a'),

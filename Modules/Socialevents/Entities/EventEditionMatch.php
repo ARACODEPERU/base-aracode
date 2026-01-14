@@ -28,6 +28,7 @@ class EventEditionMatch extends Model
         'status',
         'placeholder_h',
         'placeholder_a',
+        'original_score'
     ];
 
     public function equipolocal(): BelongsTo
@@ -38,4 +39,9 @@ class EventEditionMatch extends Model
     {
         return $this->belongsTo(EventTeam::class, 'team_a_id', 'id');
     }
+    public function edicion(): BelongsTo
+    {
+        return $this->belongsTo(EventEdition::class, 'edition_id', 'id');
+    }
+
 }

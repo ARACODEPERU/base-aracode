@@ -319,7 +319,7 @@
                     </div>
                     <div class="col-span-6 sm:col-span-2">
                         <InputLabel for="full_name" value="Nombres" />
-                        <div>
+                        <div class="w-full relative">
                             <div class="flex">
                                 <input id="full_name" v-model="form.full_name" type="text" placeholder="Buscar por nombres" class="form-input ltr:rounded-r-none rtl:rounded-l-none" />
                                 <div
@@ -331,11 +331,11 @@
                             </div>
                             <div v-if="searchResults.length"
                                 class="mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto
-                                        transition-all duration-200 ease-out animate-fadeIn">
+                                        transition-all duration-200 ease-out animate-fadeIn absolute z-40 w-full">
 
                                 <div v-for="(item, index) in searchResults" :key="index"
                                     @click="fillForm(item, { district_id: item.district_id, city_name: item.city })"
-                                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ">
 
                                     <p class="font-semibold text-gray-700 dark:text-gray-200">
                                         {{ item.full_name }}

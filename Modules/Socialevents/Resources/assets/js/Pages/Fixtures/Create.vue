@@ -44,6 +44,7 @@
             <CreateForm
                 :locales="locales"
                 :teams="teams"
+                :edition="edition"
             />
         </div>
     </AppLayout>

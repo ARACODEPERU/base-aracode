@@ -70,7 +70,7 @@ class AcaStudentController extends Controller
             DB::raw('(SELECT COUNT(course_id) FROM aca_certificates WHERE student_id=aca_students.id) as countCertificates')
         );
 
-        // 🔍 Filtro de búsqueda
+        //Filtro de búsqueda
         if (request()->has('search')) {
             $searchTerm = request()->input('search');
 
@@ -96,7 +96,7 @@ class AcaStudentController extends Controller
             $students->latest();
         }
 
-        // 📄 Paginación
+        //Paginación
         $students = $students->paginate(12)->onEachSide(2);
         //dd($students);
         return Inertia::render('Academic::Students/List', [

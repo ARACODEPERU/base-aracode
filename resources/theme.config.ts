@@ -1,7 +1,7 @@
 // APP CONFIG
 export const $themeConfig = {
     locale: 'es', // en, da, de, el, es, fr, hu, it, ja, pl, pt, ru, sv, tr, zh
-    theme: 'light', // light, dark, system
+    theme: import.meta.env.VITE_APP_THEME || 'dark', // light, dark, system
     menu: 'vertical', // vertical, collapsible-vertical, horizontal
     layout: 'full', // full, boxed-layout
     rtlClass: 'ltr', // rtl, ltr

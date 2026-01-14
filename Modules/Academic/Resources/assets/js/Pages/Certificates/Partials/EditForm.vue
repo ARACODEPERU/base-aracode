@@ -84,7 +84,7 @@
 
     const isShowChatMenu = ref(false);
     const accordians3 = ref(0);
-    
+
     // Cargar la imagen principal desde la URL
     const loadMainImage = (urlImage) => {
         form.certificate_img_preview = urlImage;
@@ -92,7 +92,7 @@
 
 
 
-   
+
 
     // Cargar la imagen principal al montar el componente
     onMounted(() => {
@@ -155,7 +155,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <InputLabel for="name_certificate">Nombre</InputLabel>
-                        <TextInput 
+                        <TextInput
                             id="name_certificate"
                             v-model="form.name_certificate"
                             placeholder="Ejemplo: Modelo 1"
@@ -193,7 +193,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="font_size_date">Tamaño de fuente</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="font_size_date"
                                                 v-model="form.font_size_date"
                                                 placeholder="22, 23, etc..."
@@ -217,7 +217,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_date_x">Posición X</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_date_x"
                                                 v-model="form.position_date_x"
                                                 placeholder="1, 2, etc.."
@@ -225,7 +225,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_date_y">Posición Y</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_date_y"
                                                 v-model="form.position_date_y"
                                                 placeholder="1, 2, etc.."
@@ -233,23 +233,20 @@
                                         </div>
                                         <div class="col-span-4">
                                             <InputLabel for="color_date">Color</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="color_date"
                                                 v-model="form.color_date"
                                                 type="color"
                                                 placeholder="#000"
                                             />
                                         </div>
-                                        <div class="col-span-4">
-                                            <switch-mobinkakei
-                                                :title="'Visible'"
-                                                :uId="'visible_date'"
-                                                v-model="form.visible_date"
-                                             />
+                                        <div class="col-span-4 flex items-center justify-between">
+                                            <InputLabel for="visible_description" class="text-lg" value="Visible" />
+                                            <input type="checkbox" id="visible_date" class="form-checkbox" v-model="form.visible_date"  />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
-                                        <button @click="updateCertificateData(1)" class="btn btn-success">vista previa</button>
+                                        <button @click="updateCertificateData(1)" class="btn btn-success">Guardar cambios y ver resultado</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
@@ -283,7 +280,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="font_size_names">Tamaño de fuente</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="font_size_names"
                                                 v-model="form.font_size_names"
                                                 placeholder="22, 23, etc..."
@@ -307,7 +304,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_names_x">Posición X</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_names_x"
                                                 v-model="form.position_names_x"
                                                 placeholder="1, 2, etc.."
@@ -315,7 +312,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_names_y">Posición Y</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_names_y"
                                                 v-model="form.position_names_y"
                                                 placeholder="1, 2, etc.."
@@ -323,23 +320,20 @@
                                         </div>
                                         <div class="col-span-4">
                                             <InputLabel for="color_names">Color</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="color_names"
                                                 v-model="form.color_names"
                                                 type="color"
                                                 placeholder="#000"
                                             />
                                         </div>
-                                        <div class="col-span-4">
-                                            <switch-mobinkakei
-                                                :title="'Visible'"
-                                                :uId="'visible_names'"
-                                                v-model="form.visible_names"
-                                             />
+                                        <div class="col-span-4 flex items-center justify-between">
+                                            <InputLabel for="visible_description" class="text-lg" value="Visible" />
+                                            <input type="checkbox" id="visible_names" class="form-checkbox" v-model="form.visible_names"  />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
-                                        <button @click="updateCertificateData(2)" class="btn btn-success">vista previa</button>
+                                        <button @click="updateCertificateData(2)" class="btn btn-success">Guardar cambios y ver resultado</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
@@ -373,7 +367,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="font_size_title">Tamaño de fuente</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="font_size_title"
                                                 v-model="form.font_size_title"
                                                 placeholder="22, 23, etc..."
@@ -397,7 +391,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_title_x">Posición X</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_title_x"
                                                 v-model="form.position_title_x"
                                                 placeholder="1, 2, etc.."
@@ -405,7 +399,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_title_y">Posición Y</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_title_y"
                                                 v-model="form.position_title_y"
                                                 placeholder="1, 2, etc.."
@@ -413,7 +407,7 @@
                                         </div>
                                         <div class="col-span-4">
                                             <InputLabel for="max_width_title">Ancho máximo en píxeles</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="max_width_title"
                                                 v-model="form.max_width_title"
                                                 placeholder="900"
@@ -421,23 +415,20 @@
                                         </div>
                                         <div class="col-span-4">
                                             <InputLabel for="color_title">Color</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="color_title"
                                                 v-model="form.color_title"
                                                 type="color"
                                                 placeholder="#000"
                                             />
                                         </div>
-                                        <div class="col-span-4">
-                                            <switch-mobinkakei
-                                                :title="'Visible'"
-                                                :uId="'visible_title'"
-                                                v-model="form.visible_title"
-                                             />
+                                        <div class="col-span-4 flex items-center justify-between">
+                                            <InputLabel for="visible_description" class="text-lg" value="Visible" />
+                                            <input type="checkbox" id="visible_title" class="form-checkbox" v-model="form.visible_title"  />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
-                                        <button @click="updateCertificateData(3)" class="btn btn-success">vista previa</button>
+                                        <button @click="updateCertificateData(3)" class="btn btn-success">Guardar cambios y ver resultado</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
@@ -460,7 +451,7 @@
                                     <div class="grid grid-cols-4 gap-4">
                                         <div class="col-span-2">
                                             <InputLabel for="size_qr">Tamaño</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="size_qr"
                                                 v-model="form.size_qr"
                                                 placeholder="22, 23, etc..."
@@ -479,7 +470,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_qr_x">Posición X</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_qr_x"
                                                 v-model="form.position_qr_x"
                                                 placeholder="1, 2, etc.."
@@ -487,22 +478,19 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_qr_y">Posición Y</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_qr_y"
                                                 v-model="form.position_qr_y"
                                                 placeholder="1, 2, etc.."
                                             />
                                         </div>
-                                        <div class="col-span-4">
-                                            <switch-mobinkakei
-                                                :title="'Visible'"
-                                                :uId="'visible_image_qr'"
-                                                v-model="form.visible_image_qr"
-                                             />
+                                        <div class="col-span-4 flex items-center justify-between">
+                                            <InputLabel for="visible_description" class="text-lg" value="Visible" />
+                                            <input type="checkbox" id="visible_image_qr" class="form-checkbox" v-model="form.visible_image_qr"  />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
-                                        <button @click="updateCertificateData(4)" class="btn btn-success">vista previa</button>
+                                        <button @click="updateCertificateData(4)" class="btn btn-success">Guardar cambios y ver resultado</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
@@ -535,7 +523,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="font_size_description">Tamaño de fuente</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="font_size_description"
                                                 v-model="form.font_size_description"
                                                 placeholder="22, 23, etc..."
@@ -559,7 +547,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_description_x">Posición X</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_description_x"
                                                 v-model="form.position_description_x"
                                                 placeholder="1, 2, etc.."
@@ -567,7 +555,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="position_description_y">Posición Y</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="position_description_y"
                                                 v-model="form.position_description_y"
                                                 placeholder="1, 2, etc.."
@@ -575,7 +563,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="max_width_description">Ancho máximo en píxeles</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="max_width_description"
                                                 v-model="form.max_width_description"
                                                 placeholder="800"
@@ -583,7 +571,7 @@
                                         </div>
                                         <div class="col-span-2">
                                             <InputLabel for="interspace_description">Espaciado entre líneas</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="interspace_description"
                                                 v-model="form.interspace_description"
                                                 placeholder="2.5"
@@ -591,23 +579,20 @@
                                         </div>
                                         <div class="col-span-4">
                                             <InputLabel for="color_description">Color</InputLabel>
-                                            <TextInput 
+                                            <TextInput
                                                 id="color_description"
                                                 v-model="form.color_description"
                                                 type="color"
                                                 placeholder="#000"
                                             />
                                         </div>
-                                        <div class="col-span-4">
-                                            <switch-mobinkakei
-                                                :title="'Visible'"
-                                                :uId="'visible_description'"
-                                                v-model="form.visible_description"
-                                             />
+                                        <div class="col-span-4 flex items-center justify-between">
+                                            <InputLabel for="visible_description" class="text-lg" value="Visible" />
+                                            <input type="checkbox" id="visible_description" class="form-checkbox" v-model="form.visible_description"  />
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
-                                        <button @click="updateCertificateData(5)" class="btn btn-success">vista previa</button>
+                                        <button @click="updateCertificateData(5)" class="btn btn-success">Guardar cambios y ver resultado</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
@@ -625,7 +610,7 @@
                                 <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                 <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                             </svg>
-                            Guardar
+                            Guardar datos principales
                         </button>
                     </div>
                 </div>
@@ -643,18 +628,18 @@
                         </button>
                     </div>
                     <div class="flex items-center">
-                        <h4 class="uppercase font-bold">Vista previa del certificado</h4>
+                        <h4 class="uppercase font-bold">Guardar cambios y ver resultado del certificado</h4>
                     </div>
                 </div>
                 <div class="h-px w-full border-b border-[#e0e6ed] dark:border-[#1b2e4b]"></div>
                 <div>
 
-                        <image-png v-if="imagePreviewLoading" :alt="'Maximizar'" /> 
-                        <Image v-else 
-                            :src="form.certificate_img_preview" 
-                            style="width: 100%; height: auto;" 
+                        <image-png v-if="imagePreviewLoading" :alt="'Maximizar'" />
+                        <Image v-else
+                            :src="form.certificate_img_preview"
+                            style="width: 100%; height: auto;"
                         />
-                    
+
                 </div>
             </div>
         </div>

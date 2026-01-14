@@ -30,7 +30,7 @@
         },
         tinyApiKey: {
             type: String,
-            default: () => ({}),
+            default: null,
         },
     });
 
@@ -73,7 +73,10 @@
         status: true,
         name_database_file: null,
         path_database_file: null,
-        file: null
+        file: null,
+        yellow_price: null,
+        direct_red_price: null,
+        double_yellow_price: null
     });
 
     const createNow = () => {
@@ -221,7 +224,9 @@
                                     {{
                                         fforma == 'round_robin' ? 'Todos contra todos' :
                                         fforma == 'group_stage_and_playoffs' ? 'Fase de grupos' :
-                                        'Eliminación simple'
+                                        fforma == 'round_robin_playoff' ? 'Liga con Eliminatorias' :
+                                        fforma == 'single_elimination' ? 'Eliminación simple' :
+                                        'relampago'
                                     }}
                                 </option>
                             </select>
@@ -262,7 +267,7 @@
                         </div>
                         <div>
                             <InputLabel for="inscription_fee" value="Precio de inscripción *" class="mb-1" />
-                            <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'########'" placeholder="_____" maxlength="8" type="text" />
                             <InputError :message="form.errors.inscription_fee" class="mt-2" />
                         </div>
                         <div>
@@ -279,6 +284,27 @@
                             <InputLabel for="prize_details" value="Premios" class="mb-1" />
                             <textarea v-model="form.prize_details" id="prize_details" class="form-textarea" rows="4"></textarea>
                             <InputError :message="form.errors.prize_details" class="mt-2" />
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Sanciones</h4>
+                        </div>
+                        <div>
+                            <InputLabel for="yellow_price" value="Precio Amarilla" class="mb-1" />
+                            <input v-model="form.yellow_price" id="yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.yellow_price" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="direct_red_price" value="Precio Roja directa" class="mb-1" />
+                            <input v-model="form.direct_red_price" id="direct_red_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.direct_red_price" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="double_yellow_price" value="Precio Roja doble amarilla" class="mb-1" />
+                            <input v-model="form.double_yellow_price" id="double_yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.double_yellow_price" class="mt-2" />
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Archivos</h4>
                         </div>
                         <div class="sm:col-span-3">
                             <InputLabel for="path_database_file" value="Bases de la competición (Archivos: PDF)" class="mb-1" />

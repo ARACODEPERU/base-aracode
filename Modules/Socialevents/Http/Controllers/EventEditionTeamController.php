@@ -21,14 +21,20 @@ class EventEditionTeamController extends Controller
     {
         $teams = EventTeam::get();
 
-        $urrentEquipment = EventEditionTeam::with('equipo')->where('edition_id', $id)->get();
-
+        $currentEquipment = EventEditionTeam::with('equipo')
+            ->where('edition_id', $id)
+            ->orderBy('points', 'desc')           // 1° Más puntos arriba
+            ->orderBy('goal_difference', 'desc')  // 2° Mejor diferencia de goles
+            ->orderBy('goals_for', 'desc')        // 3° Más goles marcados
+            ->orderBy('matches_won', 'desc')      // 4° Más partidos ganados
+            ->get();
+        //dd($currentEquipment);
         $edicion = EventEdition::find($id);
 
         return Inertia::render('Socialevents::Editions/Teams', [
             'teams' => $teams,
-            'urrentEquipment' => $urrentEquipment,
-            'edicion' => $edicion
+            'currentEquipment' => $currentEquipment,
+            'edicion' => $edicion,
         ]);
     }
 

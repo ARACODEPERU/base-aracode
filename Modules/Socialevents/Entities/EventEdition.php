@@ -33,7 +33,10 @@ class EventEdition extends Model
         'path_database_file',
         'name_database_file',
         'details',
-        'status'
+        'status',
+        'yellow_price',
+        'direct_red_price',
+        'double_yellow_price'
     ];
 
     public function evento(): BelongsTo

@@ -73,7 +73,7 @@
 <body style="padding: 0px">
     <div>
         <div style="margin-top:10px;width:100%;text-align: center">
-            <img src="{{ $logo }}" alt="Logotipo" class="centrado" width="180px" height="180px">
+            <img src="{{ $logo }}" alt="Logotipo" class="centrado" width="180px">
         </div>
         <p class="centrado">
             {{-- {{ $company->name }} --}}
@@ -97,10 +97,29 @@
                     @endphp
                     <tr>
                         <td style="text-align: center" class="cantidad">{{ (int) $item->quantity }}</td>
-                        <td class="producto">
-                            {{ json_decode($item->product, true)['interne'] }}-{{ json_decode($item->product, true)['description'] }}
-                            {{ $size ? ' / ' . $size : '' }}
-                        </td>
+                        @if ($item->entity_name_product == 'App\Models\Product')
+                            <td class="producto">
+                                {{ json_decode($item->product, true)['interne'] }}-{{ json_decode($item->product, true)['description'] }}
+                                {{ $size ? ' / ' . $size : '' }}
+                            </td>
+                        @elseif($item->entity_name_product == 'Modules\Socialevents\Entities\EventEditionMatchSanction')
+                            @php
+                                $productData = json_decode($item->product, true);
+                                $type = $productData['type'] ?? '';
+                            @endphp
+
+                            <td>
+                                @if($type == 'double_yellow')
+                                    Roja por doble amarilla
+                                @elseif($type == 'yellow')
+                                    Amarilla
+                                @elseif($type == 'red')
+                                    Roja directa
+                                @else
+                                    Por sanciones
+                                @endif
+                            </td>
+                        @endif
                         <td style="text-align: right" class="precio">{{ $item->total }}</td>
                     </tr>
                 @endforeach
@@ -150,9 +169,9 @@
             </tbody>
         </table>
         <div style="margin-top:16px;margin-bottom:16px;width:100%;">
-            <p class="centrado">
+            {{-- <p class="centrado">
                 ¡Vuelve a amar cada paso con {{ $company->name }}!
-            </p>
+            </p> --}}
         </div>
         <p class="centrado">¡GRACIAS POR SU COMPRA!</p>
     </div>

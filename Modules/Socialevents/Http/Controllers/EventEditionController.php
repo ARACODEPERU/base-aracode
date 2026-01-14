@@ -68,6 +68,9 @@ class EventEditionController extends Controller
                 'inscription_fee'   => 'required',
                 'min_players_per_team'   => 'required',
                 'max_players_per_team'   => 'required',
+                'yellow_price'   => 'required',
+                'direct_red_price'   => 'required',
+                'double_yellow_price'   => 'required',
             ]
         );
 
@@ -90,6 +93,9 @@ class EventEditionController extends Controller
             'prize_details' =>htmlentities($prize_details, ENT_QUOTES, "UTF-8"),
             'details' =>htmlentities($details, ENT_QUOTES, "UTF-8"),
             'status' => $request->get('status') ? true : false,
+            'yellow_price' => $request->get('yellow_price'),
+            'direct_red_price' => $request->get('direct_red_price'),
+            'double_yellow_price' => $request->get('double_yellow_price'),
         ]);
 
         $path = null;
@@ -160,6 +166,9 @@ class EventEditionController extends Controller
                 'inscription_fee'   => 'required',
                 'min_players_per_team'   => 'required',
                 'max_players_per_team'   => 'required',
+                'yellow_price'   => 'required',
+                'direct_red_price'   => 'required',
+                'double_yellow_price'   => 'required',
             ]
         );
 
@@ -183,6 +192,9 @@ class EventEditionController extends Controller
             'prize_details' =>htmlentities($prize_details, ENT_QUOTES, "UTF-8"),
             'details' =>htmlentities($details, ENT_QUOTES, "UTF-8"),
             'status' => $request->get('status') ? true : false,
+            'yellow_price' => $request->get('yellow_price'),
+            'direct_red_price' => $request->get('direct_red_price'),
+            'double_yellow_price' => $request->get('double_yellow_price'),
         ]);
 
         $path = null;

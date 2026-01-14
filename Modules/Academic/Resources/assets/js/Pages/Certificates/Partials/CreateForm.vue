@@ -80,14 +80,15 @@
 
 
     const isShowChatMenu = ref(false);
+    const selectCourse = ref(null);
 
     const modifyPreview = () => {
-        alert('se ejecuta change');
+        form.course_id = selectCourse.value.id;
     }
 
     const canvas = ref(null);
 
-    
+
     // Manejar la subida de la imagen
     const handleImageUpload = (event) => {
         const file = event.target.files[0];
@@ -147,7 +148,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <InputLabel for="name_certificate">Nombre</InputLabel>
-                        <TextInput 
+                        <TextInput
                             id="name_certificate"
                             v-model="form.name_certificate"
                             placeholder="Ejemplo: Modelo 1"
@@ -157,8 +158,8 @@
                     <div class="col-span-2">
                         <InputLabel for="course_id">Curso (Opcional)</InputLabel>
                         <multiselect
-                            id="course_id" :model-value="form.course_id"
-                            v-model="form.course_id"
+                            id="course_id" :model-value="selectCourse"
+                            v-model="selectCourse"
                             :options="courses"
                             class="custom-multiselect"
                             :searchable="true"
@@ -215,8 +216,8 @@
                 </div>
                 <div class="h-px w-full border-b border-[#e0e6ed] dark:border-[#1b2e4b]"></div>
                 <div>
-                    <canvas 
-                        ref="canvas" 
+                    <canvas
+                        ref="canvas"
                         class="canvas-code-block"
                     ></canvas>
                 </div>
