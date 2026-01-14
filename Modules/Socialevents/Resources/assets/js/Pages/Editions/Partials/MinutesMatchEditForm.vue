@@ -67,17 +67,34 @@
         protest_details: props.accordance.protest_details || '',
         payment_arvitraje_h: props.accordance.payment_arvitraje_h || 0,
         payment_arvitraje_a: props.accordance.payment_arvitraje_a || 0,
-
+        referees: props.accordance.referees || [],
         // --- CAMPOS EDITABLES (RESOLUCIÓN) ---
         observations: props.accordance.observations || '',        // Comentarios de la comisión
         resolution_details: props.accordance.resolution_details || '', // La solución final
         protest_status: props.accordance.protest_status || 'pending',  // pending, resolved, dismissed
         status: props.accordance.status || 'open',                // open o closed
     });
+
+    const updateMatchAccordance = () => {
+        form.post(route('even_ediciones_match_accordance_update'), {
+            forceFormData: true,
+            errorBag: 'updateMatchAccordance',
+            preserveScroll: true,
+            onSuccess: () => {
+                Swal2.fire({
+                    icon: 'success',
+                    title: 'Acta Actualizada',
+                    text: 'Los detalles del acta han sido actualizados correctamente.',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            }
+        });
+    };
 </script>
 
 <template>
-    <FormSection @submitted="updateAccordance" class="">
+    <FormSection @submitted="updateMatchAccordance" class="">
         <template #title>
             Acta Detalles
         </template>
@@ -110,9 +127,26 @@
                             <p class="text-xs text-gray-600 dark:text-gray-400 italic">Delegado: {{ form.participants[1]?.full_name }}</p>
                         </div>
                     </div>
-                </div>
+                 </div>
 
-                <div v-if="form.has_protest" class="col-span-full md:col-span-4 bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-4 rounded-r-xl">
+                 <div v-if="accordance.referees && accordance.referees.length > 0" class="col-span-full bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                     <h4 class="text-sm font-bold text-blue-800 dark:text-blue-400 mb-2 flex items-center">
+                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                         </svg>
+                         Árbitros del Partido
+                     </h4>
+                     <div class="flex flex-wrap gap-2">
+                         <span v-for="referee in accordance.referees" :key="referee.id" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                             </svg>
+                             {{ referee.full_name }}
+                         </span>
+                     </div>
+                 </div>
+
+                 <div v-if="form.has_protest" class="col-span-full md:col-span-4 bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-4 rounded-r-xl">
                     <div class="flex items-start">
                         <icon-alert class="w-5 h-5 text-red-600 mt-0.5 mr-3" />
                         <div>
@@ -124,16 +158,7 @@
                     </div>
                 </div>
 
-                <div class="col-span-full md:col-span-2 grid grid-cols-2 gap-2">
-                    <div class="bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                        <p class="text-[9px] text-emerald-600 font-bold uppercase">Arbitraje Local</p>
-                        <p class="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400">S/ {{ form.payment_arvitraje_h || '0.00' }}</p>
-                    </div>
-                    <div class="bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800">
-                        <p class="text-[9px] text-emerald-600 font-bold uppercase">Arbitraje Vis.</p>
-                        <p class="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400">S/ {{ form.payment_arvitraje_a || '0.00' }}</p>
-                    </div>
-                </div>
+
 
                 <hr class="col-span-full border-gray-200 dark:border-gray-700 my-2" />
 
@@ -149,7 +174,7 @@
                     <InputError :message="form.errors.observations" class="mt-2" />
                 </div>
 
-                <div class="col-span-full md:col-span-3">
+                <div v-if="form.has_protest" class="col-span-full md:col-span-3">
                     <InputLabel for="resolution_details" value="Resolución Final del Conflicto *" />
                     <textarea
                         id="resolution_details"
@@ -162,7 +187,7 @@
                     <InputError :message="form.errors.resolution_details" class="mt-2" />
                 </div>
 
-                <div class="col-span-full md:col-span-3">
+                <div v-if="form.has_protest" class="col-span-full md:col-span-3">
                     <InputLabel value="Estado de la Resolución" />
                     <select
                         v-model="form.protest_status"
@@ -186,11 +211,11 @@
                     <InputLabel value="Cierre de Acta" />
                     <div class="mt-3 flex items-center space-x-6">
                         <label class="inline-flex items-center group cursor-pointer">
-                            <input type="radio" v-model="form.status" value="open" class="text-amber-500 focus:ring-amber-500">
+                            <input type="radio" v-model="form.status" value="pending" class="text-amber-500 focus:ring-amber-500">
                             <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-amber-600 transition">Mantener Abierto</span>
                         </label>
                         <label class="inline-flex items-center group cursor-pointer">
-                            <input type="radio" v-model="form.status" value="closed" class="text-indigo-600 focus:ring-indigo-500">
+                            <input type="radio" v-model="form.status" value="accepted" class="text-indigo-600 focus:ring-indigo-500">
                             <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 group-hover:text-indigo-600 transition">Cerrar y Oficializar</span>
                         </label>
                     </div>
@@ -210,7 +235,7 @@
                         :disabled="form.processing"
                     >
                         <icon-loader v-show="form.processing" class="w-4 h-4 animate-spin mr-1" />
-                        Guardar
+                        Actualizar
                     </PrimaryButton>
                     <Link :href="route('even_ediciones_actas_listado', edicion.id)"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
                 </template>

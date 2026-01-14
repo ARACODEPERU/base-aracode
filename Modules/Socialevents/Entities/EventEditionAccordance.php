@@ -24,7 +24,8 @@ class EventEditionAccordance extends Model
         'participants',
         'minutes_body',
         'user_by',
-        'status'
+        'status',
+        'observations'
     ];
 
     protected $casts = [

@@ -75,7 +75,7 @@ import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
 
     const loadingId = ref(null);
 
-    const printPdfDownload = async (acta, index) => {
+    const printPdfDownload = async (acta) => {
         if(acta.has_protest && acta.protest_status == 'pending'){
             Swal.fire({
                 title: 'Reclamo Pendiente',
@@ -99,8 +99,9 @@ import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
             return; // Detenemos la ejecución aquí
         }else{
             try {
-                loadingId.value = index + acta.id;
-                const response = await axios.post(route('even_ediciones_actas_pdf'), {
+                loadingId.value = acta.minutes_code; // Indicamos qué acta está cargando
+                const routeName = acta.minutes_type === 'partido' ? 'even_ediciones_actas_pdf' : 'even_ediciones_accordance_pdf';
+                const response = await axios.post(route(routeName), {
                     acta: acta
                 });
 
@@ -309,12 +310,12 @@ import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
                                                 <IconPencilPaper class="w-5 h-5" />
                                             </Link>
                                             <button
-                                                @click="printPdfDownload(item, index)"
-                                                :disabled="loadingId === index + item.id"
+                                                @click="printPdfDownload(item)"
+                                                :disabled="loadingId === item.minutes_code"
                                                 v-tippy="{content: 'Descargar PDF', placement: 'bottom'}"
                                                 class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                <svg v-if="loadingId !== index + item.id" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg v-if="loadingId !== item.minutes_code" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                                 </svg>
 

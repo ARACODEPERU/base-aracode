@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('minutes_file_name')->nullable()->comment('nombre real archivo subido del acata firmada');
             $table->string('minutes_file_path')->nullable()->comment('ruta archivo subido del acata firmada');
             $table->enum('status', ['none', 'pending', 'accepted'])->default('none');
+            $table->text('observations')->nullable();
             $table->timestamps();
         });
     }

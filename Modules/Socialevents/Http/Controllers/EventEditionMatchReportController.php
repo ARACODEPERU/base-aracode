@@ -255,6 +255,24 @@ class EventEditionMatchReportController extends Controller
             'accordance' => $accordance
         ]);
     }
+    public function update(Request $request)
+    {
+
+        $id = $request->get('id');
+        $report = EventEditionMatchReport::findOrFail($id);
+
+        $report->update([
+            'observations' => $request->get('observations'),
+            'protest_status' => $request->get('protest_status'),
+            'protest_description' => $request->get('protest_description'),
+            'resolution_status' => $request->get('resolution_status'),
+            'resolution_description' => $request->get('resolution_description'),
+            'status' => $request->get('status')
+        ]);
+
+        return Redirect::back()->with('success', 'Actualizado correctamente');
+    }
+
     public function destroy($id)
     {
         //

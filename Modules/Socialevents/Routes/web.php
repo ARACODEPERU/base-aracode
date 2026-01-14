@@ -84,9 +84,11 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_actas'])->post('editions/reports/pdf', [EventEditionMatchReportController::class, 'generateTemporaryPdf'])->name('even_ediciones_actas_pdf');
     Route::middleware(['middleware' => 'permission:even_ediciones_actas'])->post('editions/reports/update', [EventEditionMatchReportController::class, 'updateReportSolution'])->name('even_ediciones_actas_solucion_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_actas'])->post('editions/reports/upload/file', [EventEditionMatchReportController::class, 'updateReportFile'])->name('even_ediciones_actas_file_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_actas'])->post('editions/accordance/pdf', [EventEditionAccordanceController::class, 'generateAccordancePdf'])->name('even_ediciones_accordance_pdf');
     Route::middleware(['middleware' => 'permission:even_ediciones_actas_nuevo'])->get('editions/{id}/reports/create', [EventEditionAccordanceController::class, 'create'])->name('even_ediciones_actas_crear');
     Route::middleware(['middleware' => 'permission:even_ediciones_actas_nuevo'])->post('editions/reports/accordance/store', [EventEditionAccordanceController::class, 'store'])->name('even_ediciones_accordance_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_partido_acta_editar'])->get('editions/match/reports/{id}/edit', [EventEditionMatchReportController::class, 'edit'])->name('even_ediciones_pertido_actas_editar');
     Route::middleware(['middleware' => 'permission:even_ediciones_acta_editar'])->get('editions/accordance/{id}/edit', [EventEditionAccordanceController::class, 'edit'])->name('even_ediciones_actas_editar');
     Route::middleware(['middleware' => 'permission:even_ediciones_acta_editar'])->post('editions/accordance/update', [EventEditionAccordanceController::class, 'update'])->name('even_ediciones_actas_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_partido_acta_editar'])->post('editions/match/accordance/update', [EventEditionMatchReportController::class, 'update'])->name('even_ediciones_match_accordance_update');
 });

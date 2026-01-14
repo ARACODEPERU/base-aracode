@@ -231,9 +231,9 @@
                                 disabled
                             />
                         </div>
-                        <div class="flex sm:col-span-2 gap-6">
-                            <button @click="openModalClientSearch" class="btn btn-info uppercase">Buscar</button>
-                            <button @click="savePlayer" class="btn btn-primary uppercase">Agregar al equipo</button>
+                        <div class="flex sm:col-span-2 gap-6 items-center">
+                            <button @click="openModalClientSearch" class="btn btn-info uppercase text-xs">Buscar</button>
+                            <button @click="savePlayer" class="btn btn-primary uppercase text-xs">Agregar al equipo</button>
                         </div>
                     </div>
                     <SearchClients
@@ -248,10 +248,10 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-end gap-6">
-                    <button @click="exportImage" class="btn btn-danger uppercase">
+                    <button @click="exportImage" class="btn btn-danger uppercase text-xs">
                         Exportar imagen
                     </button>
-                    <Link :href="route('even_ediciones_equipos', edicion.id)" :preserveState="true" class="btn btn-warning uppercase">
+                    <Link :href="route('even_ediciones_equipos', edicion.id)" :preserveState="true" class="btn btn-warning uppercase text-xs">
                         Ir atras
                     </Link>
                 </div>
@@ -284,12 +284,12 @@
                             <tbody>
                                 <template v-if="players.length > 0">
                                     <tr v-for="player in players" class="bg-neutral-primary-soft border-b border-default hover:bg-neutral-secondary-medium">
-                                        <td class="px-6 py-4 no-export">
+                                        <td class="px-6 py-2 no-export">
                                             <button @click="destroyPlayer(player)" v-tippy="{content: 'Eliminar', placement: 'bottom'}" >
                                                 <IconTrashLines class="w-5 h-5" />
                                             </button>
                                         </td>
-                                        <td scope="row" class="flex items-center px-6 py-4 text-heading whitespace-nowrap">
+                                        <td scope="row" class="flex items-center px-6 py-2 text-heading whitespace-nowrap">
                                             <img v-if="player.person.image" class="w-10 h-10 rounded-full" :src="xhttp + 'storage/' + player.person.image" alt="Jese image">
                                             <img v-else class="w-10 h-10 rounded-full" src="/img/icon-user.png" alt="Jese image">
                                             <div class="ps-3">
@@ -297,10 +297,10 @@
                                                 <div class="font-normal text-body">{{ player.person.number }}</div>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-2">
                                             {{ formatDate(player.registration_date) }}
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-2">
                                             <InlineEditable
                                                 v-model="player.jersey_number"
                                                 placeholder="S/N"
@@ -310,7 +310,7 @@
                                                 @save="value => updatePlayer(value, player.person_id, 1)"
                                             />
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-2">
                                             <InlineEditable
                                                 v-model="player.position"
                                                 placeholder="S/R"
@@ -344,7 +344,7 @@
                                                 @save="value => updatePlayer(value, player.person_id, 2)"
                                             />
                                         </td>
-                                        <td class="px-6 py-4">
+                                        <td class="px-6 py-2">
                                             <InlineEditable
                                                 v-model="player.role_in_team"
                                                 placeholder="S/R"

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Modules\Socialevents\Entities\EventEditionAccordance;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class EventEditionAccordanceController extends Controller
 {
@@ -177,6 +179,35 @@ class EventEditionAccordanceController extends Controller
                 'sql_errors' => 'Error al guardar el acta: ' . $e->getMessage()
             ]);
         }
+    }
+
+    public function generateAccordancePdf(Request $request)
+    {
+        $acta = $request->get('acta');
+        //dd($acta);
+        $pdf = Pdf::loadView('socialevents::minutes.pdf.minutes_accordance', [
+            'acta' => $acta
+        ]);
+
+        $directory = 'temp_pdfs';
+
+        // 1. Limpiar la carpeta por completo antes de guardar el nuevo
+        Storage::disk('public')->deleteDirectory($directory);
+
+        // 2. Volver a crear la carpeta (ahora está vacía)
+        Storage::disk('public')->makeDirectory($directory);
+
+        // 3. Definir el nombre y la ruta
+        $fileName = 'temp_accordance_' . date('Ymd') . $acta['id'] . '.pdf';
+        $filePath = $directory . '/' . $fileName;
+
+        // 4. Guardar el archivo nuevo
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        // 5. Devolver la URL pública
+        return response()->json([
+            'url' => asset('storage/' . $filePath)
+        ]);
     }
 
     /**

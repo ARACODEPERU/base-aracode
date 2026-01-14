@@ -13,6 +13,8 @@ class EventEditionMatchReport extends Model
 {
     use HasFactory;
 
+    protected $table = 'event_edition_match_reports';
+
     /**
      * The attributes that are mass assignable.
      */
@@ -32,7 +34,8 @@ class EventEditionMatchReport extends Model
         'minutes_file_name',
         'minutes_file_path',
         'payment_arvitraje_h',
-        'payment_arvitraje_a'
+        'payment_arvitraje_a',
+        'status'
     ];
 
     protected $casts = [
