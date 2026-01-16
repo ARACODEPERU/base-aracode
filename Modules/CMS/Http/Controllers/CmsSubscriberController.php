@@ -11,6 +11,9 @@ use Modules\CMS\Entities\CmsSubscriber;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificacionDescarga_brochure;
 use Inertia\Inertia;
+use App\Models\ExcelExportJob;
+use Modules\CMS\Jobs\ExportCmsSubscribersExcel;
+use Carbon\Carbon;
 
 class CmsSubscriberController extends Controller
 {
@@ -154,6 +157,7 @@ class CmsSubscriberController extends Controller
 
     public function list_subscribers()
     {
+        //dd(request()->input('dates'));
         $subscribers = (new CmsSubscriber())->newQuery();
         $subscribers->orderBy('created_at', 'desc'); // Ordenar por la columna "created_at" de forma descendente
 
@@ -161,11 +165,66 @@ class CmsSubscriberController extends Controller
             $subscribers->where('email', 'like', '%' . request()->input('search') . '%');
         }
 
-        $subscribers = $subscribers->paginate(20)->onEachSide(2)->appends(request()->query());
+        if (request()->has('dates')) {
+            $dates = request()->input('dates');
+            if ($dates) {
+                if (str_contains($dates, ' to ') || str_contains($dates, ' a ')) {
+                    $separator = str_contains($dates, ' to ') ? ' to ' : ' a ';
+                    [$startDate, $endDate] = explode($separator, $dates);
+                    $subscribers->whereDate('created_at', '>=', Carbon::parse($startDate)->startOfDay())
+                                ->whereDate('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+                } else {
+                    $subscribers->whereDate('created_at', Carbon::parse($dates)->toDateString());
+                }
+            }
+        }
+
+        $subscribers = $subscribers->paginate(20)
+            ->onEachSide(2)
+            ->appends(request()->query());
 
         return Inertia::render('CMS::Subscribers/List', [
             'subscribers' => $subscribers,
-            'filters' => request()->all('search')
+            'filters' => request()->all(['search', 'dates'])
         ]);
+    }
+
+    public function exportSubscribersExcel(Request $request)
+    {
+        $filters = [
+            'dates' => $request->input('dates'),
+            'search' => $request->input('search'),
+        ];
+
+        $excelExportJob = ExcelExportJob::create([
+            'user_id' => auth()->id(),
+            'report_type' => 'cms_subscribers',
+            'status' => 'pending',
+            'filters' => json_encode($filters),
+        ]);
+
+        ExportCmsSubscribersExcel::dispatch(auth()->id(), $excelExportJob->id, $request->input('dates'), $request->input('search'));
+
+        return response()->json([
+            'message' => 'La exportación de Excel ha sido iniciada. Por favor, espere un momento.',
+            'job_id' => $excelExportJob->id
+        ], 202);
+    }
+
+    public function exportSubscribersExcelStatus($jobId)
+    {
+        if (!auth()->check()) {
+            return response()->json(['message' => 'No autenticado.'], 401);
+        }
+
+        $excelExportJob = ExcelExportJob::where('id', $jobId)
+                            ->where('user_id', auth()->id())
+                            ->first();
+
+        if (!$excelExportJob) {
+            return response()->json(['message' => 'Estado de exportación no encontrado o no autorizado.'], 404);
+        }
+
+        return response()->json($excelExportJob);
     }
 }
