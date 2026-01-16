@@ -1,20 +1,20 @@
 <script setup>
-    import { computed, reactive } from 'vue';
+    import { computed, reactive, ref, watch } from 'vue';
     import { useI18n } from 'vue-i18n';
     import appSetting from '@/app-setting';
     import { useAppStore } from '@/stores/index';
     import AuthLayout from '@/Layouts/Vristo/AuthLayout.vue';
-    import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
     import IconMail from '@/Components/vristo/icon/icon-mail.vue';
     import IconLockDots from '@/Components/vristo/icon/icon-lock-dots.vue';
     import IconInstagram from '@/Components/vristo/icon/icon-instagram.vue';
     import IconFacebookCircle from '@/Components/vristo/icon/icon-facebook-circle.vue';
     import IconTwitter from '@/Components/vristo/icon/icon-twitter.vue';
     import IconGoogle from '@/Components/vristo/icon/icon-google.vue';
+    import IconSun from '@/Components/vristo/icon/icon-sun.vue';
+    import IconMoon from '@/Components/vristo/icon/icon-moon.vue';
     import { Link, router, useForm, Head, usePage } from '@inertiajs/vue3';
     import Checkbox from '@/Components/vristo/inputs/Checkbox.vue';
     import InputError from '@/Components/InputError.vue';
-
 
     const store = useAppStore();
     const company = usePage().props.company;
@@ -26,11 +26,12 @@
         appSetting.toggleLanguage(item);
     };
 
-    const baseUrl = assetUrl;
+    // dark mode toggle function
+    const toggleTheme = (checked) => {
+        store.toggleTheme(checked ? 'dark' : 'light');
+    };
 
-    const currentFlag = computed(() => {
-        return baseUrl  + `/themes/vristo/images/flags/${i18n.locale.toUpperCase()}.svg`;
-    });
+    const baseUrl = assetUrl;
 
     const form = useForm({
         email: '',
@@ -43,197 +44,158 @@
             onFinish: () => form.reset('password'),
         });
     }
-
 </script>
 <template>
     <AuthLayout>
         <Head title="Acceso" />
-        <div>
-            <div class="absolute inset-0">
-                <img :src="`${baseUrl}/themes/vristo/images/auth/bg-gradient.png`" alt="image" class="h-full w-full object-cover" />
-            </div>
-            <div
-                class="relative flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat px-6 py-10 dark:bg-[#060818] sm:px-16"
-                :style="`background-image:url('${baseUrl}/themes/vristo/images/auth/map.png');`"
-            >
-                <img :src="`${baseUrl}/themes/vristo/images/auth/coming-soon-object1.png`" alt="image" class="absolute left-0 top-1/2 h-full max-h-[893px] -translate-y-1/2" />
-                <img :src="`${baseUrl}/themes/vristo/images/auth/coming-soon-object2.png`" alt="image" class="absolute left-24 top-0 h-40 md:left-[30%]" />
-                <img :src="`${baseUrl}/themes/vristo/images/auth/coming-soon-object3.png`" alt="image" class="absolute right-0 top-0 h-[300px]" />
-                <img :src="`${baseUrl}/themes/vristo/images/auth/polygon-object.svg`" alt="image" class="absolute bottom-0 end-[28%]" />
-                <div
-                    class="relative flex w-full max-w-[1502px] flex-col justify-between overflow-hidden rounded-md bg-white/60 backdrop-blur-lg dark:bg-black/50 lg:min-h-[758px] lg:flex-row lg:gap-10 xl:gap-0"
-                >
-                    <div
-                        class="relative hidden w-full items-center justify-center bg-[linear-gradient(225deg,rgba(255,245,245,1)_0%,rgba(205,69,250,1)_100%)] p-5 lg:inline-flex lg:max-w-[835px] xl:-ms-28 ltr:xl:skew-x-[14deg] rtl:xl:skew-x-[-14deg]"
-                    >
-                        <div
-                            class="absolute inset-y-0 w-8 from-primary/10 via-transparent to-transparent ltr:-right-10 ltr:bg-gradient-to-r rtl:-left-10 rtl:bg-gradient-to-l xl:w-16 ltr:xl:-right-20 rtl:xl:-left-20"
-                        ></div>
-                        <div class="ltr:xl:-skew-x-[14deg] rtl:xl:skew-x-[14deg]">
-                            <Link href="/" class="w-48 block lg:w-72 ms-10">
-                                <img v-if="company.logo_negative == '/img/logo176x32_negativo.png'" :src="`${baseUrl}/img/logo176x32_negativo.png`" alt="Logo" class="w-full" />
-                                <img v-else :src="`${baseUrl}storage/${company.logo}`" alt="Logo" class="w-full" />
-                            </Link>
-                            <div class="mt-24 hidden w-full max-w-[430px] lg:block">
-                                <img :src="`${baseUrl}/themes/vristo/images/auth/login.svg`" alt="Cover Image" class="w-full" />
+        <div class="flex items-center justify-center min-h-screen px-4 py-8" :style="{ background: store.isDarkMode ? 'linear-gradient(to bottom right, #1e293b, #334155, #0f172a)' : 'linear-gradient(to bottom right, #e0f2fe, #dbeafe, #e8eaf6)', transition: 'background 2s ease' }">
+            <div class="w-full max-w-4xl">
+                <div class="flex flex-col lg:flex-row bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+                    <!-- Left Side - Branding -->
+                    <div class="lg:w-1/2 bg-gray-50 dark:bg-gray-800 p-8 flex items-center justify-center">
+                        <div class="text-center text-gray-800 dark:text-white">
+                            <div class="mb-6">
+                                <img v-if="company.logo_negative == '/img/logo176x32_negativo.png'" :src="`${baseUrl}/img/logo176x32_negativo.png`" alt="Logo" class="h-16" />
+                                <img v-else :src="`${baseUrl}storage/${company.logo}`" alt="Logo" class="h-16" />
                             </div>
+                            <h1 class="text-3xl font-bold mb-4">Bienvenido</h1>
+                            <p class="text-blue-700 dark:text-blue-300">Ingresa tus credenciales para acceder a tu cuenta</p>
                         </div>
                     </div>
-                    <div class="relative flex w-full flex-col items-center justify-center gap-6 px-4 pb-16 pt-6 sm:px-6 lg:max-w-[667px]">
-                        <div class="flex w-full max-w-[440px] items-center gap-2 lg:absolute lg:end-6 lg:top-6 lg:max-w-full">
-                            <Link :href="route('index_main')" class="w-8 block lg:hidden">
-                                <template v-if="store.theme === 'light'">
-                                    <img v-if="company.isotipo == '/img/isotipo.png'" :src="`${baseUrl}/img/isotipo.png`" alt="Logo" class="mx-auto w-10" />
-                                    <img v-else :src="`${baseUrl}storage/${company.isotipo}`" alt="Logo" class="mx-auto w-10" />
-                                </template>
-                                <template v-if="store.theme === 'dark'">
-                                    <img v-if="company.isotipo_negative == '/img/isotipo_negativo.png'" :src="`${baseUrl}/img/isotipo_negativo.png`" alt="Logo" class="mx-auto w-10" />
-                                    <img v-else :src="`${baseUrl}storage/${company.isotipo_negative}`" alt="Logo" class="mx-auto w-10" />
-                                </template>
-                            </Link>
-                            <!-- <div class="dropdown ms-auto w-max">
-                                <Popper :placement="store.rtlClass === 'rtl' ? 'bottom-start' : 'bottom-end'" offsetDistance="8">
-                                    <button
-                                        type="button"
-                                        class="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark hover:border-primary hover:text-primary dark:bg-black"
-                                    >
-                                        <div>
-                                            <img :src="currentFlag" alt="image" class="h-5 w-5 rounded-full object-cover" />
-                                        </div>
-                                        <div class="text-base font-bold uppercase">{{ store.locale }}</div>
-                                        <span class="shrink-0">
-                                            <icon-caret-down />
-                                        </span>
-                                    </button>
-                                    <template #content="{ close }">
-                                        <ul class="!px-2 text-dark dark:text-white-dark grid grid-cols-2 gap-2 font-semibold dark:text-white-light/90 w-[280px]">
-                                            <template v-for="item in store.languageList" :key="item.code">
-                                                <li>
-                                                    <button
-                                                        type="button"
-                                                        class="w-full hover:text-primary"
-                                                        :class="{ 'bg-primary/10 text-primary': i18n.locale === item.code }"
-                                                        @click="changeLanguage(item), close()"
-                                                    >
-                                                        <img
-                                                            class="w-5 h-5 object-cover rounded-full"
-                                                            :src="`${baseUrl}/themes/vristo/images/flags/${item.code.toUpperCase()}.svg`"
-                                                            alt=""
-                                                        />
-                                                        <span class="ltr:ml-3 rtl:mr-3">{{ item.name }}</span>
-                                                    </button>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </template>
-                                </Popper>
-                            </div> -->
+
+                    <!-- Right Side - Form -->
+                     <div class="lg:w-1/2 p-8 relative">
+                        <!-- Dark Mode Toggle -->
+                        <div class="absolute top-4 right-4 flex items-center space-x-2">
+                            <IconSun class="w-5 h-5 text-yellow-500 opacity-100 dark:opacity-0 transition-opacity duration-300" />
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" :checked="store.isDarkMode" @change="toggleTheme($event.target.checked)" />
+                                <div class="w-14 h-7 bg-gradient-to-r from-cyan-200 to-blue-300 dark:from-gray-600 dark:to-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-gradient-to-r after:from-yellow-300 after:to-orange-400 after:rounded-full after:h-5 after:w-5 after:transition-all after:duration-500 after:shadow-lg peer-checked:after:from-indigo-400 peer-checked:after:to-purple-500 hover:shadow-xl hover:scale-105 transition-transform duration-200"></div>
+                            </label>
+                            <IconMoon class="w-5 h-5 text-gray-400 opacity-0 dark:opacity-100 transition-opacity duration-300" />
                         </div>
-                        <div class="w-full max-w-[440px] lg:mt-16">
-                            <div class="mb-10">
-                                <h1 class="text-3xl font-extrabold uppercase !leading-snug text-primary md:text-4xl">Iniciar sesión</h1>
-                                <p class="text-base font-bold leading-normal text-white-dark">Ingrese su correo electrónico y contraseña para iniciar sesión</p>
-                            </div>
-                            <form class="space-y-5 dark:text-white" @submit.prevent="submit" novalidate>
+                        <div class="max-w-md mx-auto">
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Iniciar Sesión</h2>
+
+                            <form class="space-y-4" @submit.prevent="submit" novalidate>
+                                <!-- Email -->
                                 <div>
-                                    <label for="Email">Correo Electrónico</label>
-                                    <div class="relative text-white-dark">
+                                    <label for="Email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo Electrónico</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <IconMail class="h-5 w-5 text-gray-400" />
+                                        </div>
                                         <input
                                             v-model="form.email"
                                             id="Email"
-                                            type="text"
-                                            placeholder="Ingrese correo electrónico"
-                                            class="form-input ps-10 placeholder:text-white-dark" tabindex="1"
+                                            type="email"
+                                            placeholder="tu@email.com"
+                                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                            tabindex="1"
                                             @input="(e) => form.email = e.target.value.trim()"
                                         />
-                                        <span class="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <icon-mail :fill="true" />
-                                        </span>
                                     </div>
-                                    <InputError class="mt-2" :message="form.errors.email" />
+                                    <InputError class="mt-1 text-sm" :message="form.errors.email" />
                                 </div>
+
+                                <!-- Password -->
                                 <div>
-                                    <div class="flex justify-between items-center">
-                                        <label for="password" class="block text-sm mb-2 dark:text-white">Contraseña</label>
-                                        <Link :href="route('password.request')" class="inline-flex items-center gap-x-1 text-sm text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500">¿Has olvidado tu contraseña?</Link>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label for="Password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
+                                        <Link :href="route('password.request')" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition">¿Olvidaste tu contraseña?</Link>
                                     </div>
-                                    <div class="relative text-white-dark">
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <IconLockDots class="h-5 w-5 text-gray-400" />
+                                        </div>
                                         <input
                                             v-model="form.password"
-                                            id="Password" type="password"
-                                            placeholder="Ingrese la contraseña"
-                                            class="form-input ps-10 placeholder:text-white-dark" tabindex="2"
+                                            id="Password"
+                                            type="password"
+                                            placeholder="••••••••"
+                                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                            tabindex="2"
                                             @input="(e) => form.password = e.target.value.trim()"
                                         />
-                                        <span class="absolute start-4 top-1/2 -translate-y-1/2">
-                                            <icon-lock-dots :fill="true" />
-                                        </span>
                                     </div>
-                                    <InputError class="mt-2" :message="form.errors.password" />
+                                    <InputError class="mt-1 text-sm" :message="form.errors.password" />
                                 </div>
-                                <div>
-                                    <label class="flex cursor-pointer items-center">
-                                        <Checkbox v-model:checked="form.remember" />
-                                        <span class="text-white-dark">Acuérdate de mí</span>
-                                    </label>
+
+                                <!-- Remember Me -->
+                                <div class="flex items-center">
+                                    <Checkbox v-model:checked="form.remember" />
+                                    <label class="ml-2 text-sm text-gray-700 dark:text-gray-300">Recordarme</label>
                                 </div>
-                                <button type="submit" class="btn btn-gradient !mt-6 w-full border-0 uppercase shadow-[0_10px_20px_-10px_rgba(67,97,238,0.44)]">
-                                    Iniciar sesión
+
+                                <!-- Submit -->
+                                <button
+                                    type="submit"
+                                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 transition transform hover:scale-105 shadow-lg"
+                                    :disabled="form.processing"
+                                >
+                                    <span v-if="form.processing" class="inline-flex items-center">
+                                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Iniciando...
+                                    </span>
+                                    <span v-else>Iniciar Sesión</span>
                                 </button>
                             </form>
 
-                            <div class="relative my-7 text-center md:mb-9">
-                                <span class="absolute inset-x-0 top-1/2 h-px w-full -translate-y-1/2 bg-white-light dark:bg-white-dark"></span>
-                                <span class="relative bg-white px-2 font-bold uppercase text-white-dark dark:bg-dark dark:text-white-light">or</span>
+                            <!-- Divider -->
+                            <div class="mt-6 mb-4 relative">
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                                </div>
+                                <div class="relative flex justify-center text-sm">
+                                    <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">O continúa con</span>
+                                </div>
                             </div>
-                            <div class="mb-10 md:mb-[60px]">
-                                <ul class="flex justify-center gap-3.5 text-white">
 
-                                    <li v-for="network in socialNetworks" :key="network.id">
-                                        <a v-if="network.route"
-                                            :href="network.route"
-                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition hover:scale-110"
-                                            style="background: linear-gradient(135deg, rgba(239, 18, 98, 1) 0%, rgba(67, 97, 238, 1) 100%)"
-                                        >
-                                            <template v-if="network.id === 'instagram'">
-                                                <icon-instagram />
-                                            </template>
-                                            <template v-else-if="network.id === 'facebook'">
-                                                <icon-facebook-circle />
-                                            </template>
-                                            <template v-else-if="network.id === 'x-twiter'">
-                                                <icon-twitter :fill="true" />
-                                            </template>
-                                            <template v-else-if="network.id === 'youtube'">
-                                                <svg fill="currentColor" class="w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                                                    <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/>
-                                                </svg>
-                                            </template>
-                                            <template v-else-if="network.id === 'linkedin'">
-                                                <span>IN</span>
-                                            </template>
-                                            <template v-else-if="network.id === 'tiktok'">
-                                                <span>TK</span>
-                                            </template>
-                                            <template v-else>
-                                                <span>{{ network.id }}</span>
-                                            </template>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <!-- <div class="text-center dark:text-white">
-                                ¿No tienes una cuenta?
-                                <Link :href="route('register')" class="uppercase text-primary underline transition hover:text-black dark:hover:text-white">
-                                    REGISTRATE
-                                </Link>
-                            </div> -->
+                            <!-- Social -->
+                            <ul class="flex justify-center gap-4 mb-6">
+                                <li v-for="network in socialNetworks" :key="network.id">
+                                    <a v-if="network.route"
+                                        :href="network.route"
+                                        class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                                    >
+                                        <template v-if="network.id === 'instagram'">
+                                            <IconInstagram class="h-5 w-5" />
+                                        </template>
+                                        <template v-else-if="network.id === 'facebook'">
+                                            <IconFacebookCircle class="h-5 w-5" />
+                                        </template>
+                                        <template v-else-if="network.id === 'x-twiter'">
+                                            <IconTwitter class="h-5 w-5" :fill="true" />
+                                        </template>
+                                        <template v-else-if="network.id === 'youtube'">
+                                            <svg class="h-5 w-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                                                <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/>
+                                            </svg>
+                                        </template>
+                                        <template v-else-if="network.id === 'linkedin'">
+                                            <span class="text-xs font-bold">IN</span>
+                                        </template>
+                                        <template v-else-if="network.id === 'tiktok'">
+                                            <span class="text-xs font-bold">TK</span>
+                                        </template>
+                                        <template v-else>
+                                            <span class="text-xs font-bold">{{ network.id.substring(0, 2).toUpperCase() }}</span>
+                                        </template>
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <!-- Footer -->
+                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                                © {{ new Date().getFullYear() }} ARACODE. Todos los derechos reservados.
+                            </p>
                         </div>
-                        <p class="absolute bottom-6 w-full text-center dark:text-white">© {{ new Date().getFullYear() }}.ARACODE All Rights Reserved.</p>
                     </div>
                 </div>
             </div>
         </div>
     </AuthLayout>
 </template>
-

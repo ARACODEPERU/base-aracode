@@ -542,7 +542,8 @@ class AcaStudentController extends Controller
             'studentSubscribed' => $studentSubscribed,
             'certificates' => $certificates,
             'P000019' => $this->displayVideo,
-            'coursesRegistered' => $coursesRegistered
+            'coursesRegistered' => $coursesRegistered,
+            'MERCADOPAGO_KEY' => config('services.mercadopago.key')
         ]);
     }
 

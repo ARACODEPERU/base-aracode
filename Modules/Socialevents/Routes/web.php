@@ -14,6 +14,7 @@ use Modules\Socialevents\Http\Controllers\EventEditionMatchSanctionController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
+use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,3 +93,6 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_acta_editar'])->post('editions/accordance/update', [EventEditionAccordanceController::class, 'update'])->name('even_ediciones_actas_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_partido_acta_editar'])->post('editions/match/accordance/update', [EventEditionMatchReportController::class, 'update'])->name('even_ediciones_match_accordance_update');
 });
+
+// Ruta pública para landing de torneos
+Route::get('torneos/{eId}', [TournamentLandingController::class, 'show'])->name('socialevents_torneos_landing');

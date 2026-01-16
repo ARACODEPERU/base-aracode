@@ -269,7 +269,7 @@ class EventEditionMatchController extends Controller
 
             // Al final de la transacción, recalculamos la tabla
             // se suman al crear el acta
-            $this->positionService->updateTablePositions($match->edition_id);
+            $this->positionService->updateTablePositions($edition_id);
         });
     }
 
