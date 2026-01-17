@@ -30,7 +30,7 @@
                             <div class="h-100 d-flex align-items-center justify-content-center p-4 rounded-1" style="background: rgba(255,255,255,0.05);">
                                 
                                 <a href="">
-                                    <img src="{{ asset('themes/webpage/images/logo-light/' . '.webp') }}" class="img-fluid" style="max-height: 60px; opacity: 0.7;" alt="Cliente">
+                                    <img src="{{ asset('themes/webpage/images/customers/kentha.png') }}" class="img-fluid" style="max-height: 60px; opacity: 0.7;" alt="Cliente">
                                 </a>
                             </div>
                         </div>
