@@ -630,7 +630,7 @@
         <x-location />
         
 
-        <x-commitment />
+        <x-customers />
 
         {{-- <section id="section-faq" class="bg-dark section-dark text-light">
             <div class="container">
