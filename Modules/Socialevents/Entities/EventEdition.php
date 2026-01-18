@@ -45,7 +45,8 @@ class EventEdition extends Model
         return $this->belongsTo(EvenEvent::class, 'event_id', 'id');
     }
 
-    protected function prizeDetails(): Attribute
+
+    protected function details(): Attribute
     {
         return Attribute::make(
             get: fn ($value) =>
@@ -60,17 +61,17 @@ class EventEdition extends Model
         );
     }
 
-    protected function details(): Attribute
+    protected function prizeDetails(): Attribute
     {
         return Attribute::make(
             get: fn ($value) =>
                 $value !== null
-                    ? html_entity_decode($value, ENT_QUOTES, 'UTF-8')
+                    ? json_decode($value, true)
                     : null,
 
             set: fn ($value) =>
                 $value !== null
-                    ? htmlentities($value, ENT_QUOTES, 'UTF-8')
+                    ? json_encode($value)
                     : null
         );
     }

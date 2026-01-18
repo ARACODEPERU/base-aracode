@@ -9,6 +9,7 @@
 
     import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
     import iconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';
+    import { faUsers, faCalendarAlt, faTrophy } from "@fortawesome/free-solid-svg-icons";
 
     const props = defineProps({
         teams: {
@@ -100,59 +101,57 @@
                 </div>
             </div>
             <div class="mt-5">
-                <!-- Grid -->
-                <div class="grid grid-cols-1
-                    sm:grid-cols-2
-                    md:grid-cols-3
-                    lg:grid-cols-3
-                    xl:grid-cols-3
-                    2xl:grid-cols-5
-                    gap-6"
-                >
+                 <!-- Grid -->
+                 <div class="grid grid-cols-1
+                     sm:grid-cols-2
+                     md:grid-cols-3
+                     lg:grid-cols-3
+                     xl:grid-cols-3
+                     2xl:grid-cols-5
+                     gap-6"
+                 >
                     <!-- From Uiverse.io by narmesh_sah -->
-                    <div v-for="team in teams.data" class="panel profile-card">
-                        <div class="profile-image">
-                            <div>
-                                <img v-if="team.logo_path" :src="xhttp + 'storage/' + team.logo_path" />
-                                <img v-else :src="'/img/team1.png'" />
-                            </div>
+                    <div v-for="team in teams.data" class="relative bg-white border border-gray-200 border-t-4 border-t-blue-600 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-blue-500 dark:shadow-neutral-700/70 p-6">
+                        <div class="w-24 h-24 rounded-full bg-gray-100 mx-auto mb-4 overflow-hidden border-2 border-white shadow-md flex items-center justify-center">
+                            <img v-if="team.logo_path" :src="xhttp + 'storage/' + team.logo_path" class="w-full h-full object-cover" />
+                            <img v-else :src="'/img/team1.png'" class="w-full h-full object-cover" />
                         </div>
-                        <div class="profile-info">
-                            <p class="profile-name">{{ team.name }}</p>
-                            <div class="profile-title">
+                        <div class="text-center mb-4">
+                            <p class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ team.name }}</p>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
                                 <template v-if="team.manager">@{{ team.manager.full_name }}</template>
                                 <template v-else>No tiene representante</template>
                             </div>
-                            <div class="profile-bio">
-                            Creative design and web enthusiast. Building digital experiences that
-                            matter.
-                            </div>
                         </div>
-                        <div class="social-links">
-                            <Link :href="route('even_equipos_edit', team.id)" v-tippy="{content:'Editar', placement:'bottom'}" class="btn btn-info w-10 h-10 p-0 rounded-full toolbar-btn">
-                                <IconPencilPaper class="w-5 h-5" />
+                        <div class="flex justify-center gap-2 mb-4">
+                            <Link :href="route('even_equipos_edit', team.id)" v-tippy="{content:'Editar', placement:'bottom'}" class="btn btn-info w-8 h-8 p-0 rounded-full flex items-center justify-center">
+                                <IconPencilPaper class="w-4 h-4" />
                             </Link>
-                            <!-- <button v-tippy="{content:'Jugadores',placement:'bottom'}" class="btn btn-success w-10 h-10 p-0 rounded-full toolbar-btn">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                    <path fill="currentColor" d="M96 192C96 130.1 146.1 80 208 80C269.9 80 320 130.1 320 192C320 253.9 269.9 304 208 304C146.1 304 96 253.9 96 192zM32 528C32 430.8 110.8 352 208 352C305.2 352 384 430.8 384 528L384 534C384 557.2 365.2 576 342 576L74 576C50.8 576 32 557.2 32 534L32 528zM464 128C517 128 560 171 560 224C560 277 517 320 464 320C411 320 368 277 368 224C368 171 411 128 464 128zM464 368C543.5 368 608 432.5 608 512L608 534.4C608 557.4 589.4 576 566.4 576L421.6 576C428.2 563.5 432 549.2 432 534L432 528C432 476.5 414.6 429.1 385.5 391.3C408.1 376.6 435.1 368 464 368z"/>
-                                </svg>
-                            </button> -->
-                            <button @click="destroyTeam(team.id)" v-tippy="{content:'Eliminar', placement:'bottom'}" class="btn btn-danger w-10 h-10 p-0 rounded-full toolbar-btn">
-                                <iconTrashLines class="w-5 h-5" />
+                            <button @click="destroyTeam(team.id)" v-tippy="{content:'Eliminar', placement:'bottom'}" class="btn btn-danger w-8 h-8 p-0 rounded-full flex items-center justify-center">
+                                <iconTrashLines class="w-4 h-4" />
                             </button>
                         </div>
-                        <div class="stats">
-                            <div class="stat-item">
-                                <div class="stat-value">15k</div>
-                                <div class="stat-label">Followers</div>
+                        <div class="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <div class="text-center">
+                                <div class="flex items-center justify-center mb-1">
+                                    <font-awesome-icon :icon="faUsers" class="w-4 h-4 text-blue-500 mr-1" />
+                                </div>
+                                <div class="text-sm font-bold text-gray-900 dark:text-white">{{ team.players.length }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Jugadores</div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-value">82</div>
-                                <div class="stat-label">Posts</div>
+                            <div class="text-center">
+                                <div class="flex items-center justify-center mb-1">
+                                    <font-awesome-icon :icon="faCalendarAlt" class="w-4 h-4 text-green-500 mr-1" />
+                                </div>
+                                <div class="text-sm font-bold text-gray-900 dark:text-white">{{ team.editions.length }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Ediciones</div>
                             </div>
-                            <div class="stat-item">
-                                <div class="stat-value">4.8</div>
-                                <div class="stat-label">Rating</div>
+                            <div class="text-center">
+                                <div class="flex items-center justify-center mb-1">
+                                    <font-awesome-icon :icon="faTrophy" class="w-4 h-4 text-yellow-500 mr-1" />
+                                </div>
+                                <div class="text-sm font-bold text-gray-900 dark:text-white">{{ team.editions.filter(e => e.is_champion).length || 0 }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Victorias</div>
                             </div>
                         </div>
                     </div>
@@ -163,131 +162,4 @@
         </div>
     </AppLayout>
 </template>
-<style lang="css" scoped>
-   /* From Uiverse.io by narmesh_sah */
-    .profile-card {
-        -webkit-backdrop-filter: blur(48px);
-        backdrop-filter: blur(48px);
-    }
 
-    .profile-image {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background-color: #f0f2f5;
-        margin: 0 auto 1rem;
-        overflow: hidden;
-        border: 3px solid white;
-        box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .profile-image::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 96px;
-        background-color: #7d988a;
-        border-radius: 0.375rem 0.375rem 0 0;
-        z-index: -1;
-    }
-
-    .profile-info {
-        text-align: left;
-        margin-bottom: 1.5rem;
-    }
-
-    .profile-name {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin-bottom: 0.25rem;
-    }
-
-    .profile-title {
-        font-size: 0.9rem;
-        color: #666;
-        margin-bottom: 0.5rem;
-    }
-
-    .profile-bio {
-        font-size: 0.85rem;
-        color: #777;
-        line-height: 1.4;
-        margin-bottom: 1.5rem;
-    }
-
-    .social-links {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .toolbar-btn {
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .toolbar-btn:hover {
-        transform: translateY(-6px);
-    }
-
-    /* Specific colors for each social platform */
-    .social-btn.twitter:hover svg {
-        fill: #1da1f2;
-    }
-    .social-btn.instagram:hover svg {
-        fill: #e4405f;
-    }
-    .social-btn.linkedin:hover svg {
-        fill: #0a66c2;
-    }
-    .social-btn.github:hover svg {
-        fill: #333333;
-    }
-
-    .cta-button {
-        width: 100%;
-        padding: 0.8rem;
-        border: none;
-        border-radius: 10px;
-        background: #7d988a;
-        color: white;
-        font-weight: 600;
-        cursor: pointer;
-        transition:
-            transform 0.2s,
-            background 0.2s;
-    }
-
-    .cta-button:hover {
-        background: #4d5d54;
-        transform: translateY(-2px);
-    }
-
-    .stats {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-
-    .stat-item {
-        text-align: center;
-    }
-
-    .stat-value {
-        font-weight: 600;
-        color: #1a1a1a;
-    }
-
-    .stat-label {
-        font-size: 0.8rem;
-        color: #666;
-    }
-
-</style>

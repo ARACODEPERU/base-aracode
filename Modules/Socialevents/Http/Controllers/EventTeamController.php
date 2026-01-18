@@ -20,7 +20,10 @@ class EventTeamController extends Controller
      */
     public function index()
     {
-        $teams = EventTeam::with('manager')->orderBy('name')->paginate(20);
+        $teams = EventTeam::with(['manager', 'editions', 'players'])
+            ->orderBy('name')
+            ->paginate(20);
+        //dd($teams);
         return Inertia::render('Socialevents::Teams/List',[
             'teams' => $teams
         ]);

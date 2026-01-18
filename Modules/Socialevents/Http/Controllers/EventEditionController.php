@@ -29,7 +29,13 @@ class EventEditionController extends Controller
 
     public function index()
     {
-        $editions = EventEdition::with('evento')->orderBy('start_date', 'DESC')->paginate(20);
+        $editions = EventEdition::with([
+            'evento',
+            'equipos'
+        ])
+            ->orderBy('start_date', 'DESC')
+            ->paginate(20);
+
         return Inertia::render('Socialevents::Editions/List',[
             'editions' => $editions
         ]);
@@ -90,8 +96,8 @@ class EventEditionController extends Controller
             'inscription_fee' => $request->get('inscription_fee'),
             'min_players_per_team' => $request->get('min_players_per_team'),
             'max_players_per_team' => $request->get('max_players_per_team'),
-            'prize_details' =>htmlentities($prize_details, ENT_QUOTES, "UTF-8"),
-            'details' =>htmlentities($details, ENT_QUOTES, "UTF-8"),
+            'prize_details' => $prize_details,
+            'details' => $details,
             'status' => $request->get('status') ? true : false,
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),
@@ -189,8 +195,8 @@ class EventEditionController extends Controller
             'inscription_fee' => $request->get('inscription_fee'),
             'min_players_per_team' => $request->get('min_players_per_team'),
             'max_players_per_team' => $request->get('max_players_per_team'),
-            'prize_details' =>htmlentities($prize_details, ENT_QUOTES, "UTF-8"),
-            'details' =>htmlentities($details, ENT_QUOTES, "UTF-8"),
+            'prize_details' => $prize_details,
+            'details' => $details,
             'status' => $request->get('status') ? true : false,
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),

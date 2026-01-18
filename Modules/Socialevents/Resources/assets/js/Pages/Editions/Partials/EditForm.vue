@@ -251,71 +251,13 @@
                                     plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
                                     language: 'es',
                                 }"
-
                             />
                             <InputError :message="form.errors.details" class="mt-2" />
                         </div>
-                    </div>
-                </div>
-                <div class="sm:col-span-2">
-                    <div class="grid sm:grid-cols-3 gap-6">
-                        <div>
-                            <InputLabel for="score_points_win" value="Puntos al ganador *" class="mb-1" />
-                            <input v-model="form.score_points_win" id="score_points_win" class="form-input text-right" v-maska="'##'" maxlength="2" type="text" />
-                            <InputError :message="form.errors.score_points_win" class="mt-2" />
+                        <div class="col-span-6">
+                            <h4 class="text-lg font-bold mt-4 mb-2">Archivos</h4>
                         </div>
-                        <div>
-                            <InputLabel for="score_points_draw" value="Puntos empate *" class="mb-1" />
-                            <input v-model="form.score_points_draw" id="score_points_draw" class="form-input text-right" v-maska="'##'" maxlength="2" type="text" />
-                            <InputError :message="form.errors.score_points_draw" class="mt-2" />
-                        </div>
-                        <div>
-                            <InputLabel for="score_points_loss" value="Puntos perdedor *" class="mb-1" />
-                            <input v-model="form.score_points_loss" id="score_points_loss" class="form-input text-right" placeholder="__" v-maska="'##'" maxlength="2" type="text" />
-                            <InputError :message="form.errors.score_points_loss" class="mt-2" />
-                        </div>
-                        <div>
-                            <InputLabel for="inscription_fee" value="Precio de inscripción *" class="mb-1" />
-                            <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'########'" placeholder="_____" maxlength="8" type="text" />
-                            <InputError :message="form.errors.inscription_fee" class="mt-2" />
-                        </div>
-                        <div>
-                            <InputLabel for="min_players_per_team" value="Cantidad jugadores en campo *" class="mb-1" />
-                            <input v-model="form.min_players_per_team" id="min_players_per_team" class="form-input text-right" v-maska="'###'" placeholder="___" maxlength="3" type="text" />
-                            <InputError :message="form.errors.min_players_per_team" class="mt-2" />
-                        </div>
-                        <div>
-                            <InputLabel for="max_players_per_team" value="Cantidad jugadores por equipo" class="mb-1" />
-                            <input v-model="form.max_players_per_team" id="max_players_per_team" class="form-input text-right" v-maska="'###'" placeholder="___" maxlength="3" type="text" />
-                            <InputError :message="form.errors.max_players_per_team" class="mt-2" />
-                        </div>
-                        <div class="sm:col-span-3">
-                            <InputLabel for="prize_details" value="Premios" class="mb-1" />
-                            <textarea v-model="form.prize_details" id="prize_details" class="form-textarea" rows="4"></textarea>
-                            <InputError :message="form.errors.prize_details" class="mt-2" />
-                        </div>
-                        <div class="col-span-3">
-                            <h4 class="text-lg font-bold mt-6 mb-2">Sanciones</h4>
-                        </div>
-                        <div>
-                            <InputLabel for="yellow_price" value="Precio Amarilla" class="mb-1" />
-                            <input v-model="form.yellow_price" id="yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
-                            <InputError :message="form.errors.yellow_price" class="mt-2" />
-                        </div>
-                        <div>
-                            <InputLabel for="direct_red_price" value="Precio Roja directa" class="mb-1" />
-                            <input v-model="form.direct_red_price" id="direct_red_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
-                            <InputError :message="form.errors.direct_red_price" class="mt-2" />
-                        </div>
-                        <div>
-                            <InputLabel for="double_yellow_price" value="Precio Roja doble amarilla" class="mb-1" />
-                            <input v-model="form.double_yellow_price" id="double_yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
-                            <InputError :message="form.errors.double_yellow_price" class="mt-2" />
-                        </div>
-                        <div class="col-span-3">
-                            <h4 class="text-lg font-bold mt-6 mb-2">Archivos</h4>
-                        </div>
-                        <div class="sm:col-span-3">
+                        <div class="col-span-6">
                             <InputLabel for="path_database_file" value="Bases de la competición (Archivos: PDF)" class="mb-1" />
                             <div class="space-y-3">
                                 <!-- Botón subir archivo -->
@@ -365,6 +307,96 @@
                             </div>
                             <InputError :message="form.errors.path_database_file" class="mt-2" />
                         </div>
+                    </div>
+                </div>
+                <div class="sm:col-span-2">
+                    <div class="grid sm:grid-cols-3 gap-6">
+                        <div>
+                            <InputLabel for="score_points_win" value="Puntos al ganador *" class="mb-1" />
+                            <input v-model="form.score_points_win" id="score_points_win" class="form-input text-right" v-maska="'##'" maxlength="2" type="text" />
+                            <InputError :message="form.errors.score_points_win" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="score_points_draw" value="Puntos empate *" class="mb-1" />
+                            <input v-model="form.score_points_draw" id="score_points_draw" class="form-input text-right" v-maska="'##'" maxlength="2" type="text" />
+                            <InputError :message="form.errors.score_points_draw" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="score_points_loss" value="Puntos perdedor *" class="mb-1" />
+                            <input v-model="form.score_points_loss" id="score_points_loss" class="form-input text-right" placeholder="__" v-maska="'##'" maxlength="2" type="text" />
+                            <InputError :message="form.errors.score_points_loss" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="inscription_fee" value="Precio de inscripción *" class="mb-1" />
+                            <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'########'" placeholder="_____" maxlength="8" type="text" />
+                            <InputError :message="form.errors.inscription_fee" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="min_players_per_team" value="Cantidad jugadores en campo *" class="mb-1" />
+                            <input v-model="form.min_players_per_team" id="min_players_per_team" class="form-input text-right" v-maska="'###'" placeholder="___" maxlength="3" type="text" />
+                            <InputError :message="form.errors.min_players_per_team" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="max_players_per_team" value="Cantidad jugadores por equipo" class="mb-1" />
+                            <input v-model="form.max_players_per_team" id="max_players_per_team" class="form-input text-right" v-maska="'###'" placeholder="___" maxlength="3" type="text" />
+                            <InputError :message="form.errors.max_players_per_team" class="mt-2" />
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Premios</h4>
+                        </div>
+                        <div class="sm:col-span-3 space-y-4">
+                            <div>
+                                <InputLabel for="primer_money" value="Primer puesto" class="mb-1" />
+                                <div class="flex items-center gap-4">
+                                    <input v-model="form.prize_details.first.money" id="primer_money" class="form-input w-20" placeholder="Dinero" />
+                                    <input v-model="form.prize_details.first.gift" id="primer_regalo" class="form-input" placeholder="Regalo/Presente" />
+                                </div>
+                                <InputError :message="form.errors.prize_details" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="segundo_money" value="Segundo puesto" class="mb-1" />
+                                <div class="flex items-center gap-4">
+                                    <input v-model="form.prize_details.second.money" id="segundo_money" class="form-input" placeholder="Dinero" />
+                                    <input v-model="form.prize_details.second.gift" id="segundo_regalo" class="form-input" placeholder="Regalo/Presente" />
+                                </div>
+                                <InputError :message="form.errors.prize_details" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="tercero_money" value="Tercer puesto" class="mb-1" />
+                                <div class="flex items-center gap-4">
+                                    <input v-model="form.prize_details.third.money" id="tercero_money" class="form-input" placeholder="Dinero" />
+                                    <input v-model="form.prize_details.third.gift" id="tercero_regalo" class="form-input" placeholder="Regalo/Presente" />
+                                </div>
+                                <InputError :message="form.errors.prize_details" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="cuarto_money" value="Cuarto puesto" class="mb-1" />
+                                <div class="flex items-center gap-4">
+                                    <input v-model="form.prize_details.fourth.money" id="cuarto_money" class="form-input" placeholder="Dinero" />
+                                    <input v-model="form.prize_details.fourth.gift" id="cuarto_regalo" class="form-input" placeholder="Regalo/Presente" />
+                                </div>
+                                <InputError :message="form.errors.prize_details" class="mt-2" />
+                            </div>
+                        </div>
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Sanciones</h4>
+                        </div>
+                        <div>
+                            <InputLabel for="yellow_price" value="Precio Amarilla" class="mb-1" />
+                            <input v-model="form.yellow_price" id="yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.yellow_price" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="direct_red_price" value="Precio Roja directa" class="mb-1" />
+                            <input v-model="form.direct_red_price" id="direct_red_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.direct_red_price" class="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel for="double_yellow_price" value="Precio Roja doble amarilla" class="mb-1" />
+                            <input v-model="form.double_yellow_price" id="double_yellow_price" class="form-input text-right" v-maska="'#####'" placeholder="_____" maxlength="5" type="text" />
+                            <InputError :message="form.errors.double_yellow_price" class="mt-2" />
+                        </div>
+
                         <div class="sm:col-span-3">
                             <label class="inline-flex">
                                 <input v-model="form.status" type="checkbox" class="form-checkbox" />
