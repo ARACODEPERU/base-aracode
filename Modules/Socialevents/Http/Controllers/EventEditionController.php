@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EvenEvent;
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Entities\EventEditionTeam;
+use Modules\Socialevents\Services\PositionTableService;
 
 class EventEditionController extends Controller
 {
@@ -21,10 +23,13 @@ class EventEditionController extends Controller
 
     protected $RPTABLE;
 
+    protected $positionService;
+
     public function __construct()
     {
         $this->RPTABLE = env('RECORDS_PAGE_TABLE') ?? 10;
         $this->P000010  = Parameter::where('parameter_code', 'P000010')->value('value_default');
+        $this->positionService = new PositionTableService();
     }
 
     public function index()
@@ -98,7 +103,7 @@ class EventEditionController extends Controller
             'max_players_per_team' => $request->get('max_players_per_team'),
             'prize_details' => $prize_details,
             'details' => $details,
-            'status' => $request->get('status') ? true : false,
+            'status' => 'pending',
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),
             'double_yellow_price' => $request->get('double_yellow_price'),
@@ -197,7 +202,7 @@ class EventEditionController extends Controller
             'max_players_per_team' => $request->get('max_players_per_team'),
             'prize_details' => $prize_details,
             'details' => $details,
-            'status' => $request->get('status') ? true : false,
+            'status' => $request->get('status') ?? 'pending',
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),
             'double_yellow_price' => $request->get('double_yellow_price'),
@@ -255,6 +260,39 @@ class EventEditionController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message
+        ]);
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:finished',
+        ]);
+
+        $edition = EventEdition::findOrFail($id);
+
+        if ($edition->status !== 'in_progress') {
+            return response()->json([
+                'success' => false,
+                'message' => 'La edición no está en progreso.'
+            ], 400);
+        }
+
+        // Get standings to find the champion
+        $standings = $this->positionService->getStandings($id);
+        $champion = collect($standings)->firstWhere('position', 1);
+
+        if ($champion) {
+            EventEditionTeam::where('edition_id', $id)
+                ->where('team_id', $champion['team_id'])
+                ->update(['is_champion' => true]);
+        }
+
+        $edition->update(['status' => $request->status]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Estado actualizado correctamente.'
         ]);
     }
 }

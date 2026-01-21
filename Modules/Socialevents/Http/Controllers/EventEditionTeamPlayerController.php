@@ -4,16 +4,19 @@ namespace Modules\Socialevents\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\District;
+use App\Models\Person;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\UploadedFile;
 class EventEditionTeamPlayerController extends Controller
 {
     /**
@@ -188,5 +191,53 @@ class EventEditionTeamPlayerController extends Controller
             'success' => $success,
             'message' => $message
         ]);
+    }
+
+    public function teamPlayerImageUpdate(Request $request)
+    {
+        $this->validate(
+            $request,
+            [
+                'player_id' => 'required|exists:people,id',
+                'image' => 'required|string',
+            ],
+            [
+                'player_id.required' => 'El jugador es obligatorio.',
+                'player_id.exists' => 'El jugador no existe.',
+                'image.required' => 'La imagen es obligatoria.',
+                'image.string' => 'La imagen debe ser una cadena base64.',
+            ]
+        );
+
+        $person = Person::find($request->player_id);
+
+        $base64Image = $request->get('image');
+
+        if ($base64Image) {
+            // Eliminar imagen anterior si existe
+            if ($person->image && Storage::disk('public')->exists($person->image)) {
+                Storage::disk('public')->delete($person->image);
+            }
+
+            // Procesar base64
+            $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+            if (PHP_OS == 'WINNT') {
+                $tempFile = tempnam(sys_get_temp_dir(), 'img');
+            } else {
+                $tempFile = tempnam('/tmp', 'img');
+            }
+            file_put_contents($tempFile, $fileData);
+            $mime = mime_content_type($tempFile);
+
+            $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
+            $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
+
+            if ($file) {
+                $destination = 'players';
+                $file_name = time() . rand(100, 999) . '.' . $file->getClientOriginalExtension();
+                $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+                $person->update(['image' => $path]);
+            }
+        }
     }
 }

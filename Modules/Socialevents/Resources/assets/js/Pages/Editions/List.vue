@@ -9,6 +9,7 @@ import { Link, router } from '@inertiajs/vue3';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
 import iconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';
+import IconBallSoccer from '@/Components/vristo/icon/icon-ball-soccer.vue';
 
 const props = defineProps({
     editions: {
@@ -78,6 +79,52 @@ const destroyEdition = async (id) => {
 
 const hasEditions = computed(() => props.editions?.data?.length > 0);
 
+const finishEdition = async (editionId, event) => {
+    const result = await Swal2.fire({
+        title: '¿Finalizar edición?',
+        text: 'Esta acción marcará la edición como finalizada y no se podrán realizar más cambios.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, finalizar',
+        cancelButtonText: 'Cancelar',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+
+    if (!result.isConfirmed) {
+        event.target.checked = false;
+        return;
+    }
+
+    try {
+        await axios.put(route('even_ediciones_update_status', editionId), { status: 'finished' });
+        Swal2.fire({
+            title: 'Finalizada',
+            text: 'La edición ha sido marcada como finalizada.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+
+        router.visit(route('even_ediciones_listado'), {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['editions'],
+        });
+    } catch (error) {
+        event.target.checked = false;
+        Swal2.fire({
+            title: 'Error',
+            text: 'No se pudo finalizar la edición. Inténtalo de nuevo.',
+            icon: 'error',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    }
+};
+
 const translateCompetitionFormat = (format) => {
     if (!format) return 'N/A';
     const translations = {
@@ -116,7 +163,7 @@ const getPositionLabel = (position) => {
             </li>
         </Navigation>
 
-        <div class="container mx-auto px-4 py-8">
+        <div class="mt-6">
             <!-- Header con búsqueda y botón -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
                 <div class="w-full sm:w-auto">
@@ -132,7 +179,7 @@ const getPositionLabel = (position) => {
                                 id="search"
                                 v-model="form.search"
                                 type="text"
-                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                class="form-input"
                                 placeholder="Buscar por nombre o evento..."
                             />
                         </div>
@@ -143,7 +190,7 @@ const getPositionLabel = (position) => {
                         <Link
                             v-can="'even_ediciones_nuevo'"
                             :href="route('even_ediciones_nuevo')"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150"
+                            class="btn btn-primary text-xs uppercase"
                         >
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -170,30 +217,30 @@ const getPositionLabel = (position) => {
                         />
                     </svg>
                      <!-- Header de la edición -->
-                     <div class="bg-gray-100 px-6 py-4 border-b border-gray-200">
+                     <div class="bg-gray-100 px-6 py-4 border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                          <div class="flex justify-between items-center pl-4">
-                             <h3 class="text-xl font-bold text-gray-800">{{ edition.name }}</h3>
-                             <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-sm font-medium">
+                             <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ edition.name }}</h3>
+                             <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
                                  {{ edition.year }}
                              </span>
                          </div>
                          <p class="text-gray-600 mt-1 pl-4">{{ edition.evento.title }}</p>
                      </div>
 
-                     <!-- Información principal -->
-                     <div class="px-6 py-6 bg-gray-50">
+                      <!-- Información principal -->
+                      <div class="px-6 py-6 bg-gray-50 dark:bg-gray-900">
                          <div class="grid sm:grid-cols-6">
                              <div class="sm:col-span-4">
-                                 <ul class="w-full flex flex-col divide-y divide-gray-200">
+                                  <ul class="w-full flex flex-col divide-y divide-gray-200 dark:divide-gray-700">
                                      <li class="py-3 px-4">
                                          <div class="flex items-center justify-between">
                                              <div class="flex items-center">
                                                  <svg class="w-6 h-6 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                  </svg>
-                                                 <span class="text-sm font-medium text-gray-700">Duración</span>
-                                             </div>
-                                             <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-sm font-medium">
+                                                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Duración</span>
+                                              </div>
+                                              <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-300 text-sm font-medium">
                                                  {{ edition.start_date }} - {{ edition.end_date }}
                                              </span>
                                          </div>
@@ -258,25 +305,25 @@ const getPositionLabel = (position) => {
                                  </ul>
                               </div>
                              <div class="sm:col-span-2">
-                                 <div class="p-6 bg-white border border-gray-300 rounded-lg shadow-sm">
-                                     <h5 class="mb-4 text-lg font-medium text-gray-800">Inscripción</h5>
+                                 <div class="p-6 bg-white border border-gray-300 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+                                     <h5 class="mb-4 text-lg font-medium text-gray-800 dark:text-white">Inscripción</h5>
                                      <div class="flex items-baseline">
-                                         <span class="text-4xl font-bold text-gray-900">S/ {{ edition.inscription_fee }}</span>
-                                         <span class="ml-2 text-sm text-gray-600">/ soles</span>
+                                         <span class="text-4xl font-bold text-gray-900 dark:text-white">S/ {{ edition.inscription_fee }}</span>
+                                         <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">/ soles</span>
                                      </div>
                                  </div>
                                  <!-- Premios -->
-                                 <div v-if="getPrizes(edition.prize_details).length > 0" class="mt-4 px-4 py-1 bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg shadow-sm">
-                                     <h5 class="mb-1 text-lg font-medium text-gray-800 flex items-center">
+                                 <div v-if="getPrizes(edition.prize_details).length > 0" class="mt-4 px-4 py-1 bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg shadow-sm dark:from-gray-800 dark:to-gray-900 dark:border-yellow-700">
+                                     <h5 class="mb-1 text-lg font-medium text-gray-800 flex items-center dark:text-white">
                                          <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
                                          </svg>
                                          Premios
                                      </h5>
                                      <div class="space-y-1">
-                                         <div v-for="(prize, position) in getPrizes(edition.prize_details)" :key="position" class="flex items-center justify-between bg-white px-2 py-1 rounded-md shadow-sm border border-yellow-100">
+                                         <div v-for="(prize, position) in getPrizes(edition.prize_details)" :key="position" class="flex items-center justify-between bg-white px-2 py-1 rounded-md shadow-sm border border-yellow-100 dark:bg-gray-800 dark:border-yellow-700">
                                              <div class="flex items-center">
-                                                 <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-800 text-sm font-bold rounded-full mr-3">
+                                                 <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-800 text-sm font-bold rounded-full mr-3 dark:bg-yellow-700 dark:text-yellow-200">
                                                      {{ getPositionLabel(position) }}
                                                  </span>
                                                  <div class="flex flex-col">
@@ -294,10 +341,22 @@ const getPositionLabel = (position) => {
                          </div>
                      </div>
 
-                     <!-- Botones de acción -->
-                     <div class="px-6 py-4 bg-gray-100 border-t border-gray-200">
-                        <div class="flex flex-wrap justify-end gap-3">
-                            <Link
+                      <!-- Botones de acción -->
+                      <div class="px-6 py-4 bg-gray-100 border-t border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+                         <div class="flex flex-wrap items-center gap-3" :class="edition.status == 'in_progress' ? 'justify-between' : 'justify-end'">
+                             <div v-if="edition.status === 'in_progress'" class="flex items-center gap-3">
+                                 <span class="text-sm font-medium text-gray-700">Finalizar Edición</span>
+                                 <label class="relative inline-flex items-center cursor-pointer">
+                                     <input type="checkbox" class="sr-only peer" @change="finishEdition(edition.id, $event)">
+                                     <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-green-400 peer-checked:to-green-600 shadow-lg">
+                                         <div class="absolute inset-0 flex items-center justify-center">
+                                             <IconBallSoccer class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                         </div>
+                                     </div>
+                                 </label>
+                             </div>
+                             <div class="flex flex-wrap gap-3">
+                                 <Link
                                 v-can="'even_ediciones_editar'"
                                 :href="route('even_ediciones_editar', edition.id)"
                                 class="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 transition-colors duration-200"
@@ -352,9 +411,10 @@ const getPositionLabel = (position) => {
                             >
                                 <iconTrashLines class="w-4 h-4 mr-2" />
                                 Eliminar
-                            </button>
-                        </div>
-                    </div>
+                             </button>
+                             </div>
+                         </div>
+                     </div>
                 </div>
             </div>
 

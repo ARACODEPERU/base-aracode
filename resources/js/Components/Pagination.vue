@@ -89,67 +89,67 @@
                     </p>
                 </div>
                 <div>
-                    <ul class="flex items-center space-x-2">
+                    <ul class="flex items-center space-x-1">
                         <li>
-                            <Link v-if="data.current_page > 1" :href="data.first_page_url"
-                                class="flex justify-center items-center px-3 py-2 font-bold rounded-lg transition-all duration-300 bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700"
-                                aria-label="Ir a la primera página">
-                                <font-awesome-icon :icon="faStepBackward" class="w-4 h-4" />
-                            </Link>
-                            <button v-else type="button"
-                                    class="flex justify-center items-center px-3 py-2 font-bold rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400"
-                                    disabled
-                                    aria-label="Primera página no disponible">
-                                <font-awesome-icon :icon="faStepBackward" class="w-4 h-4" />
-                            </button>
+                             <Link v-if="data.current_page > 1" :href="data.first_page_url"
+                                 class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                 aria-label="Ir a la primera página">
+                                 «
+                             </Link>
+                             <button v-else type="button"
+                                     class="flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F5F9] text-[#BDC5D8] text-sm cursor-not-allowed dark:bg-gray-800/50 dark:text-gray-600"
+                                     disabled
+                                     aria-label="Primera página no disponible">
+                                 «
+                             </button>
                         </li>
                         <template v-for="(link, key) in data.links" :key="key">
                             <template v-if="key > 0 && key < data.last_page + 1">
-                                <li v-if="!link.active && link.url === null">
-                                    <button type="button"
-                                            class="flex justify-center items-center px-3 py-2 font-bold rounded-lg transition-all duration-300 bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-600 dark:text-gray-500"
-                                            disabled>
-                                        <template v-if="link.label.includes('Next')">
-                                            <font-awesome-icon :icon="faArrowRight" class="w-4 h-4" />
-                                        </template>
-                                        <template v-else>
-                                            <span v-html="link.label"></span>
-                                        </template>
-                                    </button>
-                                </li>
-                                <li v-else-if="link.active">
-                                    <button type="button"
-                                            class="flex justify-center items-center px-4 py-2 font-bold rounded-lg bg-indigo-600 text-white dark:bg-indigo-500"
-                                            aria-current="page">
-                                        {{ link.label }}
-                                    </button>
-                                </li>
-                                <li v-else>
-                                    <Link :href="link.url"
-                                        class="flex justify-center items-center px-3 py-2 font-bold rounded-lg transition-all duration-300 bg-gray-100 text-gray-700 hover:bg-indigo-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-indigo-600 dark:hover:text-white"
-                                        :aria-label="`Ir a la página ${link.label}`">
-                                        <template v-if="link.label.includes('Next')">
-                                            <font-awesome-icon :icon="faArrowRight" class="w-4 h-4" />
-                                        </template>
-                                        <template v-else>
-                                            <span v-html="link.label"></span>
-                                        </template>
-                                    </Link>
-                                </li>
+                                 <li v-if="!link.active && link.url === null">
+                                     <button type="button"
+                                             class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                             disabled>
+                                         <template v-if="link.label.includes('Next')">
+                                            ‹
+                                         </template>
+                                         <template v-else>
+                                             <span v-html="link.label"></span>
+                                         </template>
+                                     </button>
+                                 </li>
+                                 <li v-else-if="link.active">
+                                     <button type="button"
+                                             class="flex items-center justify-center w-9 h-9 rounded-full bg-[#4466F2] text-white text-sm font-bold shadow-lg shadow-blue-200 dark:shadow-none"
+                                             aria-current="page">
+                                         {{ link.label }}
+                                     </button>
+                                 </li>
+                                 <li v-else>
+                                     <Link :href="link.url"
+                                         class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                         :aria-label="`Ir a la página ${link.label}`">
+                                         <template v-if="link.label.includes('Next')">
+                                            ›
+                                         </template>
+                                         <template v-else>
+                                             <span v-html="link.label"></span>
+                                         </template>
+                                     </Link>
+                                 </li>
                             </template>
                         </template>
                         <li>
-                            <Link v-if="data.current_page < data.last_page" :href="data.last_page_url"
-                                class="flex justify-center items-center px-3 py-2 font-bold rounded-lg transition-all duration-300 bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700"
-                                aria-label="Ir a la última página">
-                                <font-awesome-icon :icon="faStepForward" class="w-4 h-4" />
-                            </Link>
-                            <button v-else type="button"
-                                    class="flex justify-center items-center px-3 py-2 font-bold rounded-lg bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400"
-                                    disabled
-                                    aria-label="Última página no disponible">
-                                <font-awesome-icon :icon="faStepForward" class="w-4 h-4" />
-                            </button>
+                             <Link v-if="data.current_page < data.last_page" :href="data.last_page_url"
+                                 class="flex items-center justify-center w-9 h-9 rounded-full bg-[#E8EBF3] text-[#4A5E8D] text-sm font-medium transition-colors hover:bg-blue-600 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-blue-600"
+                                 aria-label="Ir a la última página">
+                                 »
+                             </Link>
+                             <button v-else type="button"
+                                     class="flex items-center justify-center w-9 h-9 rounded-full bg-[#F3F5F9] text-[#BDC5D8] text-sm cursor-not-allowed dark:bg-gray-800/50 dark:text-gray-600"
+                                     disabled
+                                     aria-label="Última página no disponible">
+                                 »
+                             </button>
                         </li>
                     </ul>
                 </div>

@@ -2,6 +2,7 @@
 
 namespace Modules\Security\Http\Controllers;
 
+use App\Models\Modulo;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -10,6 +11,9 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use DataTables;
+use Illuminate\Support\Facades\DB;
+use Nwidart\Modules\Module;
+use PhpParser\Node\Expr\AssignOp\Mod;
 
 class PermissionController extends Controller
 {
@@ -35,9 +39,14 @@ class PermissionController extends Controller
     public function create()
     {
         $roles = Role::all();
+        $modulos = Modulo::where('status', true)->get();
+
         return Inertia::render(
             'Security::Permissions/Create',
-            ['roles' => $roles]
+            [
+                'roles' => $roles,
+                'modulos' => $modulos
+            ]
         );
     }
 
@@ -61,8 +70,16 @@ class PermissionController extends Controller
             $permission->assignRole($request->get('roles'));
         }
 
-        return redirect()->route('permissions.index')
-            ->with('message', 'Permiso creado con éxito.');
+        if (!empty($request->get('modulos'))) {
+            foreach ($request->get('modulos') as $moduleId) {
+                DB::table('model_has_permissions')->insert([
+                    'permission_id' => $permission->id,
+                    'model_type' => Modulo::class,
+                    'model_id' => $moduleId,
+                ]);
+            }
+        }
+
     }
 
 
@@ -74,13 +91,24 @@ class PermissionController extends Controller
     public function edit(Permission $permission)
     {
         $roles = Role::all();
+        $modulos = Modulo::where('status', true)->get();
         $roleHasPermissions = array_column(json_decode($permission->roles, true), 'name');
+
+        // Get modules associated with the permission
+        $moduleIds = DB::table('model_has_permissions')
+            ->where('permission_id', $permission->id)
+            ->where('model_type', Modulo::class)
+            ->pluck('model_id')
+            ->toArray();
+
         return Inertia::render(
             'Security::Permissions/Edit',
             [
                 'roles' => $roles,
+                'modulos' => $modulos,
                 'permission' => $permission,
                 'roleHasPermissions' => $roleHasPermissions,
+                'moduleIds' => $moduleIds,
             ]
         );
     }
@@ -100,11 +128,28 @@ class PermissionController extends Controller
         $permission->update([
             'name' => $request->get('name'),
         ]);
+
         $roles = $request->get('permissions') ?? [];
         $permission->assignRole($request->get('roles'));
 
+        // Handle modules
+        DB::table('model_has_permissions')
+            ->where('permission_id', $permission->id)
+            ->where('model_type', Modulo::class)
+            ->delete();
+
+        if (!empty($request->get('modules'))) {
+            foreach ($request->get('modules') as $moduleId) {
+                DB::table('model_has_permissions')->insert([
+                    'permission_id' => $permission->id,
+                    'model_type' => Modulo::class,
+                    'model_id' => $moduleId,
+                ]);
+            }
+        }
+
         return redirect()->route('permissions.edit', $permission->id)
-            ->with('message', 'Role updated successfully.');
+            ->with('message', 'Permiso actualizado correctamente.');
     }
 
     /**

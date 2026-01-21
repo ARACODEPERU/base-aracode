@@ -446,23 +446,39 @@ class AccountsReceivableController extends Controller
                             default:
                                 $dateEnd = null;
                         }
+                            //dd($student->id);
 
+                        $subscription_id = (int) $suscription['id'];
 
-                        AcaStudentSubscription::updateOrCreate([
-                            'student_id' => $student->id,
-                            'subscription_id' => $suscription['id']
-                        ],
-                        [
-                            'date_start' => $dateStart->format('Y-m-d'),
-                            'date_end' => $request->get('date_end') ?? $dateEnd->format('Y-m-d'),
-                            'status' => true,
-                            'notes' => null,
-                            'renewals' => 0,
+                        // Buscamos si ya existe el registro con la llave compuesta
+                        $subscriptionRecord = AcaStudentSubscription::where('student_id', $student->id)
+                            ->where('subscription_id', $subscription_id)
+                            ->first();
+
+                        $data = [
+                            'date_start'           => $dateStart->format('Y-m-d'),
+                            'date_end'             => $request->get('date_end') ?? ($dateEnd ? $dateEnd->format('Y-m-d') : null),
+                            'status'               => true,
+                            'notes'                => null,
+                            'renewals'             => 0,
                             'registration_user_id' => $user->id,
-                            'onli_sale_id' => null,
-                            'amount_paid' => round($suscription['price'], 2),
-                            'xsale_note_id' => $sale_note->id
-                        ]);
+                            'onli_sale_id'         => null,
+                            'amount_paid'          => round($suscription['price'], 2),
+                            'xsale_note_id'        => $sale_note->id
+                        ];
+
+                        if ($subscriptionRecord) {
+                            // Si existe, actualizamos usando los mismos WHERES para evitar el error de ID
+                            AcaStudentSubscription::where('student_id', $student->id)
+                                ->where('subscription_id', $subscription_id)
+                                ->update($data);
+                        } else {
+                            // Si no existe, creamos con todos los datos incluyendo la llave compuesta
+                            AcaStudentSubscription::create(array_merge([
+                                'student_id'      => $student->id,
+                                'subscription_id' => $subscription_id
+                            ], $data));
+                        }
 
                     }
                 }

@@ -9,6 +9,7 @@ class PositionTableService
 {
     public function updateTablePositions($editionId)
     {
+        //dd($editionId);
         // 1. Obtener equipos ÚNICOS de esta edición para evitar duplicados en el array de memoria
         $editionTeams = EventEditionTeam::where('edition_id', $editionId)->get();
 
@@ -91,6 +92,34 @@ class PositionTableService
         }
 
         $this->updateRank($editionId);
+    }
+
+    public function getStandings($editionId)
+    {
+        $rankedTeams = EventEditionTeam::with('equipo')->where('edition_id', $editionId)
+            ->orderBy('points', 'desc')
+            ->orderBy('goal_difference', 'desc')
+            ->orderBy('goals_for', 'desc')
+            ->get();
+
+        $standings = [];
+        foreach ($rankedTeams as $index => $team) {
+            $standings[] = [
+                'team_id' => $team->team_id,
+                'team_name' => $team->equipo->name,
+                'position' => $index + 1,
+                'points' => $team->points,
+                'matches_played' => $team->matches_played,
+                'matches_won' => $team->matches_won,
+                'matches_drawn' => $team->matches_drawn,
+                'matches_lost' => $team->matches_lost,
+                'goals_for' => $team->goals_for,
+                'goals_against' => $team->goals_against,
+                'goal_difference' => $team->goal_difference,
+            ];
+        }
+
+        return $standings;
     }
 
     private function updateRank($editionId)

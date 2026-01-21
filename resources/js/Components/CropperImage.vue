@@ -1,13 +1,38 @@
 <template>
-    <div>
-        <div v-if="isLoading">Cargando imagen...</div>
+    <div class="space-y-4">
+        <div v-if="isLoading" class="flex items-center justify-center p-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="ml-2 text-gray-600 dark:text-gray-400">Cargando imagen...</span>
+        </div>
         <div v-else>
-            <figure class="max-w-lg">
-                <img v-if="imageSrc" :src="imageSrc" ref="image" alt="Image" class="h-auto max-w-full rounded-lg">
-                <img v-else :src="imgDefault" class="h-auto max-w-full rounded-lg" >
-                <figcaption class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">Captura de imagen</figcaption>
-            </figure>
-            <input type="file" ref="input" @change="onChange" class="form-input file:py-2 file:px-4 file:border-0 file:font-semibold p-0 file:bg-success/90 ltr:file:mr-5 rtl:file:ml-5 file:text-white file:hover:bg-success">
+            <div v-if="imageSrc" class="relative">
+                <img :src="imageSrc" ref="image" alt="Imagen para recortar" class="max-w-full h-auto rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                <div class="mt-4 flex justify-center">
+                    <span @click="resetCropper" class="text-blue-600 hover:text-blue-800 cursor-pointer text-sm transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Cambiar imagen
+                    </span>
+                </div>
+            </div>
+            <div v-else>
+                <div class="relative">
+                    <input type="file" ref="input" @change="onChange" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 transition-colors bg-gray-50 dark:bg-gray-800">
+                        <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
+                            <span class="font-medium">Haz clic para seleccionar</span> o arrastra y suelta
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PNG, JPG, GIF hasta 10MB</p>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+                    Selecciona una imagen para recortar. Asegúrate de que sea clara y de buena calidad.
+                </p>
+            </div>
         </div>
     </div>
 </template>

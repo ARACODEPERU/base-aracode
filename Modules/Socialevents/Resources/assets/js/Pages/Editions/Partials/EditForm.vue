@@ -77,7 +77,7 @@
         max_players_per_team: props.edicion.max_players_per_team,
         prize_details: props.edicion.prize_details,
         details: props.edicion.details,
-        status: props.edicion.status == 1 ? true : false,
+        status: props.edicion.status,
         name_database_file: props.edicion.name_database_file,
         path_database_file: props.edicion.path_database_file,
         file: null,
@@ -232,8 +232,8 @@
                                 >
                                     {{
                                         fforma == 'round_robin' ? 'Todos contra todos' :
-                                        fforma == 'group_stage_and_playoffs' ? 'Fase de grupos' :
-                                        fforma == 'round_robin_playoff' ? 'Liga con Eliminatorias' :
+                                        fforma == 'group_stage_and_playoffs' ? 'Fase de grupos y Eliminatorias' :
+                                        fforma == 'round_robin_playoff' ? 'Todos contra todos y Eliminatorias' :
                                         fforma == 'single_elimination' ? 'Eliminación simple' :
                                         'relampago'
                                     }}
@@ -398,10 +398,42 @@
                         </div>
 
                         <div class="sm:col-span-3">
-                            <label class="inline-flex">
-                                <input v-model="form.status" type="checkbox" class="form-checkbox" />
-                                <span>Activo</span>
-                            </label>
+                            <InputLabel value="Estado" />
+                            <div class="flex flex-wrap justify-start gap-1.5 sm:gap-2">
+                                <button @click="form.status = 'pending'"
+                                    type="button"
+                                    :class="[
+                                        'py-1.5 px-2.5 inline-flex items-center gap-x-1.5 text-sm rounded-lg transition-colors border',
+                                        form.status === 'pending'
+                                            ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800'
+                                            : 'bg-gray-100 text-gray-800 border-transparent hover:text-cyan-700 dark:bg-neutral-700 dark:text-neutral-200'
+                                    ]">
+                                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="currentColor" d="M160 64C142.3 64 128 78.3 128 96C128 113.7 142.3 128 160 128L160 139C160 181.4 176.9 222.1 206.9 252.1L274.8 320L206.9 387.9C176.9 417.9 160 458.6 160 501L160 512C142.3 512 128 526.3 128 544C128 561.7 142.3 576 160 576L480 576C497.7 576 512 561.7 512 544C512 526.3 497.7 512 480 512L480 501C480 458.6 463.1 417.9 433.1 387.9L365.2 320L433.1 252.1C463.1 222.1 480 181.4 480 139L480 128C497.7 128 512 113.7 512 96C512 78.3 497.7 64 480 64L160 64zM224 139L224 128L416 128L416 139C416 164.5 405.9 188.9 387.9 206.9L320 274.8L252.1 206.9C234.1 188.9 224 164.4 224 139z"/></svg>
+                                    Pendiente
+                                </button>
+                                <button @click="form.status = 'in_progress'"
+                                    type="button"
+                                    :class="[
+                                        'py-1.5 px-2.5 inline-flex items-center gap-x-1.5 text-sm rounded-lg transition-colors border',
+                                        form.status === 'in_progress'
+                                            ? 'bg-success-100 text-success-700 border-success-200 dark:bg-success-900/30 dark:text-success-400 dark:border-success-800'
+                                            : 'bg-gray-100 text-gray-800 border-transparent hover:text-cyan-700 dark:bg-neutral-700 dark:text-neutral-200'
+                                    ]">
+                                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="currentColor" d="M352.5 32C383.4 32 408.5 57.1 408.5 88C408.5 118.9 383.4 144 352.5 144C321.6 144 296.5 118.9 296.5 88C296.5 57.1 321.6 32 352.5 32zM219.6 240C216.3 240 213.4 242 212.2 245L190.2 299.9C183.6 316.3 165 324.3 148.6 317.7C132.2 311.1 124.2 292.5 130.8 276.1L152.7 221.2C163.7 193.9 190.1 176 219.6 176L316.9 176C345.4 176 371.7 191.1 386 215.7L418.8 272L480.4 272C498.1 272 512.4 286.3 512.4 304C512.4 321.7 498.1 336 480.4 336L418.8 336C396 336 375 323.9 363.5 304.2L353.5 287.1L332.8 357.5L408.2 380.1C435.9 388.4 450 419.1 438.3 445.6L381.7 573C374.5 589.2 355.6 596.4 339.5 589.2C323.4 582 316.1 563.1 323.3 547L372.5 436.2L276.6 407.4C243.9 397.6 224.6 363.7 232.9 330.6L255.6 240L219.7 240zM211.6 421C224.9 435.9 242.3 447.3 262.8 453.4L267.5 454.8L260.6 474.1C254.8 490.4 244.6 504.9 231.3 515.9L148.9 583.8C135.3 595 115.1 593.1 103.9 579.5C92.7 565.9 94.6 545.7 108.2 534.5L190.6 466.6C195.1 462.9 198.4 458.1 200.4 452.7L211.6 421z"/></svg>
+                                    En curso
+                                </button>
+                                <button @click="form.status = 'finished'"
+                                    type="button"
+                                    :class="[
+                                        'py-1.5 px-2.5 inline-flex items-center gap-x-1.5 text-sm rounded-lg transition-colors border',
+                                        form.status === 'finished'
+                                            ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800'
+                                            : 'bg-gray-100 text-gray-800 border-transparent hover:text-cyan-700 dark:bg-neutral-700 dark:text-neutral-200'
+                                    ]">
+                                    <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="currentColor" d="M128 64C145.7 64 160 78.3 160 96L160 112L229 94.8C267.1 85.3 307.3 89.7 342.5 107.3C388.8 130.5 443.3 130.5 489.6 107.3L499.2 102.5C519.8 92.1 544 107.1 544 130.1L544 409.8C544 423.1 535.7 435.1 523.2 439.8L488.5 452.8C442.3 470.1 390.9 467.4 346.8 445.4C308.9 426.4 265.4 421.7 224.3 432L160 448L160 544C160 561.7 145.7 576 128 576C110.3 576 96 561.7 96 544L96 96C96 78.3 110.3 64 128 64zM160 251.1L224 237.2L224 302.7L160 316.6L160 382.1L208.8 369.9C213.9 368.6 218.9 367.5 224 366.6L224 302.7L262.9 294.3C271.2 292.5 279.6 291.8 288 292.2L288 228.2C301.6 228.6 315.2 230.8 328.4 234.6L352 241.5L352 308.2L310.3 295.9C303 293.8 295.5 292.5 288 292.1L288 363.5C309.8 365.4 331.3 370.2 352 377.9L352 308.1L374.7 314.8C388.2 318.8 402 321.2 416 322.2L416 258C408.2 257.2 400.4 255.7 392.8 253.5L352 241.5L352 179.5C339 175.7 326.2 170.7 313.8 164.5C305.6 160.4 296.9 157.5 288 155.7L288 228.1C275 227.7 262 228.9 249.3 231.7L224 237.2L224 162L160 178L160 251.1zM416 399.7C432.8 401.2 449.9 399 466 392.9L480 387.7L480 316L472.1 317.8C453.7 322.1 434.8 323.5 416 322.3L416 399.7zM480 250.3L480 179.5C459.1 185.6 437.6 188.6 416 188.6L416 258C429.9 259.4 444 258.5 457.7 255.4L480 250.2z"/></svg>
+                                    Finalizado
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

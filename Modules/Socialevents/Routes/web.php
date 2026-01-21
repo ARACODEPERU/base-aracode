@@ -63,6 +63,7 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->post('editions/store', [EventEditionController::class, 'store'])->name('even_ediciones_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->get('editions/{id}/edit', [EventEditionController::class, 'edit'])->name('even_ediciones_editar');
     Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->post('editions/update', [EventEditionController::class, 'update'])->name('even_ediciones_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_editar'])->put('editions/{id}/status', [EventEditionController::class, 'updateStatus'])->name('even_ediciones_update_status');
     Route::middleware(['middleware' => 'permission:even_ediciones_eliminar'])->delete('editions/{id}/destroy', [EventEditionController::class, 'destroy'])->name('even_ediciones_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->get('editions/{id}/teams', [EventEditionTeamController::class, 'index'])->name('even_ediciones_equipos');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipos'])->post('editions/{id}/teams/add', [EventEditionTeamController::class, 'store'])->name('even_ediciones_equipos_agregar');
@@ -70,6 +71,7 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->get('editions/{eId}/teams/{tId}/payers', [EventEditionTeamPlayerController::class, 'teamPlayersCreate'])->name('even_ediciones_equipo_jugadores');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->post('editions/teams/player/store', [EventEditionTeamPlayerController::class, 'teamPlayersStore'])->name('even_team_player_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->post('editions/teams/player/update', [EventEditionTeamPlayerController::class, 'teamPlayersUpdate'])->name('even_team_player_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->post('editions/teams/player/image/update', [EventEditionTeamPlayerController::class, 'teamPlayerImageUpdate'])->name('even_team_player_image_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_equipo_jugadores'])->delete('editions/{eId}/teams/{tId}/player/{pId}/destroy', [EventEditionTeamPlayerController::class, 'teamPlayersDestroy'])->name('even_ediciones_equipos_player_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->get('editions/{id}/fixtures', [EventEditionMatchController::class, 'editionFixtures'])->name('even_ediciones_fixtures');
     Route::middleware(['middleware' => 'permission:even_ediciones_fixtures'])->put('editions/{id}/fixtures/generate', [EventEditionMatchController::class, 'editionFixturesGenerate'])->name('even_ediciones_fixtures_generate');

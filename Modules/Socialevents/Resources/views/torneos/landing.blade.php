@@ -270,7 +270,7 @@
                                     <span class="absolute -bottom-1 -right-1 w-5 h-5 {{ $index === 0 ? 'bg-green-600' : 'bg-gray-600' }} rounded-full flex items-center justify-center text-[10px] font-black">{{ $index + 1 }}</span>
                                 </div>
                                 <div>
-                                    <div class="font-black tracking-tight leading-none uppercase">{{ $gk['player']->name }}</div>
+                                    <div class="font-black tracking-tight leading-none uppercase">{{ $gk['player']['person']->full_name }}</div>
                                     <div class="text-[10px] {{ $index === 0 ? 'text-green-400' : 'text-gray-400' }} font-bold uppercase tracking-widest mt-1">
                                         {{ $gk['stats']['saves'] }} Atajadas, {{ $gk['stats']['clean_sheet'] }} Valla Invicta, {{ $gk['stats']['mvp'] }} MVP
                                     </div>

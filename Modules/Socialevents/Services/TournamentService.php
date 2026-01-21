@@ -85,22 +85,70 @@ class TournamentService
         }
     }
 
-    // --- FORMATO 3: RELÁMPAGO / SINGLE ELIMINATION ---
     private function generateKnockout($teams, $editionId)
     {
         $count = count($teams);
-        if ($count < 2) throw new \Exception("Mínimo 2 equipos");
+        if ($count < 2) throw new \Exception("Mínimo 2 equipos para generar eliminación directa");
+
+        // 1. Barajar equipos para el "sorteo" inicial
+        shuffle($teams);
+
+        // 2. Determinar la potencia de 2 superior (2, 4, 8, 16, 32...) para el cuadro
+        $power = 1;
+        while ($power < $count) {
+            $power *= 2;
+        }
 
         $roundNumber = 1;
-        while (count($teams) >= 2) {
-            EventEditionMatch::create([
-                'edition_id'   => $editionId,
-                'team_h_id'    => array_shift($teams), // Corregido
-                'team_a_id'    => array_shift($teams), // Corregido
-                'phase'        => 'knockout',
-                'round_number' => $roundNumber,
-                'status'       => 'pending'
-            ]);
+        $currentTeams = $teams;
+
+        // 3. Crear la Primera Ronda (con manejo de BYES si no son potencia de 2)
+        // Los equipos que no tienen pareja pasan automáticamente (BYE)
+        $matchesInRound = $power / 2;
+        $nextRoundPlaceholders = [];
+
+        for ($i = 0; $i < $matchesInRound; $i++) {
+            $teamH = array_shift($currentTeams);
+            $teamA = array_shift($currentTeams);
+
+            // Si hay ambos equipos, se crea partido normal
+            if ($teamH && $teamA) {
+                EventEditionMatch::create([
+                    'edition_id'   => $editionId,
+                    'team_h_id'    => $teamH,
+                    'team_a_id'    => $teamA,
+                    'phase'        => 'knockout',
+                    'round_number' => $roundNumber,
+                    'match_order'  => $i + 1, // Para saber qué ganador va contra quién
+                    'status'       => 'pending'
+                ]);
+            }
+            // Si solo hay uno (es un BYE/Pasa directo por sorteo)
+            elseif ($teamH) {
+                // Este equipo pasa directo a la siguiente ronda sin jugar
+                $nextRoundPlaceholders[] = $teamH;
+            }
+        }
+
+        // 4. Generar los "huecos" (Placeholders) para las rondas siguientes hasta la Final
+        // Esto permite que el frontend visualice el camino al título aunque no haya equipos definidos
+        $roundNumber++;
+        $remainingMatches = $matchesInRound / 2;
+
+        while ($remainingMatches >= 1) {
+            for ($j = 0; $j < $remainingMatches; $j++) {
+                EventEditionMatch::create([
+                    'edition_id'   => $editionId,
+                    'team_h_id'    => array_shift($nextRoundPlaceholders) ?? null, // NULL significa "Esperando Ganador"
+                    'team_a_id'    => array_shift($nextRoundPlaceholders) ?? null,
+                    'phase'        => 'knockout',
+                    'round_number' => $roundNumber,
+                    'match_order'  => $j + 1,
+                    'status'       => 'pending'
+                ]);
+            }
+            $remainingMatches /= 2;
+            $roundNumber++;
         }
     }
 
