@@ -14,6 +14,14 @@
         roleHasPermissions: {
             type: Object,
             default: () => ({}),
+        },
+        modulos: {
+            type: Object,
+            default: () => ({}),
+        },
+        moduleIds: {
+            type: Array,
+            default: () => ([]),
         }
     });
 </script>
@@ -26,15 +34,17 @@
             </h2>
         </template>
 
-        <div>
-            <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-                <EditForm 
-                    :roles="roles"
-                    :permission="permission"
-                    :roleHasPermissions="roleHasPermissions"
-                >
-                </EditForm>
-            </div>
+        <div class="mt-6">
+
+            <EditForm
+                :roles="roles"
+                :permission="permission"
+                :roleHasPermissions="roleHasPermissions"
+                :modulos="modulos"
+                :moduleIds="moduleIds"
+            >
+            </EditForm>
+
         </div>
     </AppLayout>
 </template>

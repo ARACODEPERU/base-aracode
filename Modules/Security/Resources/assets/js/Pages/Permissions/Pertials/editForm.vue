@@ -6,10 +6,14 @@
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import TextInput from '@/Components/TextInput.vue';
     import Keypad from '@/Components/Keypad.vue';
-    import swal from 'sweetalert';
+    import Swal2 from 'sweetalert2';
 
     const props = defineProps({
         roles: {
+            type: Object,
+            default: () => ({}),
+        },
+        modulos: {
             type: Object,
             default: () => ({}),
         },
@@ -20,11 +24,16 @@
         roleHasPermissions: {
             type: Object,
             default: () => ({}),
+        },
+        moduleIds: {
+            type: Array,
+            default: () => [],
         }
     });
 
     const form = useForm({
         name: props.permission.name,
+        modulos: props.moduleIds,
         roles: props.roleHasPermissions
     });
 
@@ -33,7 +42,13 @@
             errorBag: 'updateRol',
             preserveScroll: true,
             onSuccess: () => {
-                swal('Permiso actualizado con éxito.');
+                Swal2.fire({
+                    title: '¡Enhorabuena!',
+                    text: 'Permiso actualizado con éxito.',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
             },
         });
     };
@@ -48,6 +63,18 @@
             form.roles = [];
         }
     }
+
+    const selectAllModules = (event) => {
+        if(event.target.checked){
+            const allModules = props.modulos;
+            for (let i = 0; i < allModules.length; i++) {
+                form.modulos[i] = allModules[i].identifier;
+            }
+        }else{
+            form.modulos = [];
+        }
+    }
+
 </script>
 
 <template>
@@ -73,20 +100,47 @@
                 />
                 <InputError :message="form.errors.name" class="mt-2" />
             </div>
-            <div class="col-span-6 sm:col-span-6">
-                <div class="flex items-center mb-6">
-                    <input @change="selectAllCheckbox($event)" id="checkboxAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="checkboxAll" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-                        Todos
-                    </label>
-                </div>
-                <template v-for="(row, index) in roles">
-                    <div class="flex items-center">
-                        <input v-model="form.roles" :value="row.name" :id="'checkbox'+index" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                        <label :for="'checkbox'+index" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">{{ row.name }}</label>
-                    </div>
-                </template>
-            </div>
+             <div class="col-span-6 sm:col-span-6">
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Módulos Asociados</label>
+                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                     <div class="flex items-center mb-4">
+                         <input @change="selectAllModules($event)" id="checkboxAllModules" type="checkbox" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                         <label for="checkboxAllModules" class="ml-2 mb-0 text-sm font-medium text-gray-900 dark:text-gray-300">
+                             Todos los módulos
+                         </label>
+                     </div>
+                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                         <template v-for="(module, index) in modulos">
+                             <div class="flex items-center p-2 bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                 <input v-model="form.modulos" :value="module.identifier" :id="'module'+index" type="checkbox" class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                 <label :for="'module'+index" class="ml-3 mb-0 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
+                                     <div class="font-semibold">{{ module.identifier }}</div>
+                                     <div class="text-xs text-gray-600 dark:text-gray-400">{{ module.description }}</div>
+                                 </label>
+                             </div>
+                         </template>
+                     </div>
+                 </div>
+             </div>
+             <div class="col-span-6 sm:col-span-6">
+                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Roles Asociados</label>
+                 <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                     <div class="flex items-center mb-4">
+                         <input @change="selectAllCheckbox($event)" id="checkboxAll" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                         <label for="checkboxAll" class="ml-2 mb-0 text-sm font-medium text-gray-900 dark:text-gray-300">
+                             Todos los roles
+                         </label>
+                     </div>
+                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                         <template v-for="(row, index) in roles">
+                             <div class="flex items-center p-2 bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                                 <input v-model="form.roles" :value="row.name" :id="'checkbox'+index" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                 <label :for="'checkbox'+index" class="ml-2 mb-0 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">{{ row.name }}</label>
+                             </div>
+                         </template>
+                     </div>
+                 </div>
+             </div>
         </template>
 
         <template #actions>

@@ -193,7 +193,8 @@ class OnliSaleController extends Controller
 
         return Inertia::render('Onlineshop::Sales/MercadopagoForm', [
             'preference_id' => $preference_id,
-            'personInvoice' => $personInvoice
+            'personInvoice' => $personInvoice,
+            'MERCADOPAGO_KEY' => config('services.mercadopago.key')
         ]);
     }
 

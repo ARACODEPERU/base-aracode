@@ -33,4 +33,9 @@ class EventTeam extends Model
     {
         return $this->hasMany(EventEditionTeamPlayer::class, 'team_id', 'id');
     }
+
+    public function editions(): HasMany
+    {
+        return $this->hasMany(EventEditionTeam::class, 'team_id', 'id');
+    }
 }

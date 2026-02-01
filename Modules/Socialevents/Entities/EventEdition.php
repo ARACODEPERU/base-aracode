@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EventEdition extends Model
 {
@@ -44,20 +45,6 @@ class EventEdition extends Model
         return $this->belongsTo(EvenEvent::class, 'event_id', 'id');
     }
 
-    protected function prizeDetails(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) =>
-                $value !== null
-                    ? html_entity_decode($value, ENT_QUOTES, 'UTF-8')
-                    : null,
-
-            set: fn ($value) =>
-                $value !== null
-                    ? htmlentities($value, ENT_QUOTES, 'UTF-8')
-                    : null
-        );
-    }
 
     protected function details(): Attribute
     {
@@ -74,4 +61,23 @@ class EventEdition extends Model
         );
     }
 
+    protected function prizeDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) =>
+                $value !== null
+                    ? json_decode($value, true)
+                    : null,
+
+            set: fn ($value) =>
+                $value !== null
+                    ? json_encode($value)
+                    : null
+        );
+    }
+
+    public function equipos(): HasMany
+    {
+        return $this->hasMany(EventEditionTeam::class, 'edition_id', 'id');
+    }
 }

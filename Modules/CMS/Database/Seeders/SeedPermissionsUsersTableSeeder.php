@@ -51,6 +51,7 @@ class SeedPermissionsUsersTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'cms_publicidad']));
         array_push($permissions, Permission::create(['name' => 'cms_landings']));
         array_push($permissions, Permission::create(['name' => 'cms_landing_curso_gratis']));
+        array_push($permissions, Permission::create(['name' => 'cms_suscriptores_exportar_excel']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

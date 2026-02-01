@@ -259,7 +259,7 @@
                                     </template>
                                     <template v-else>
                                         <tr>
-                                            <td colspan="6" ><Empty :description="'Sin equipos'" /></td>
+                                            <td colspan="12" ><Empty :description="'Sin equipos'" /></td>
                                         </tr>
                                     </template>
                                 </tbody>

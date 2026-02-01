@@ -31,6 +31,10 @@ class EventEditionMatch extends Model
         'original_score'
     ];
 
+    protected $casts = [
+        'match_date' => 'datetime',
+    ];
+
     public function equipolocal(): BelongsTo
     {
         return $this->belongsTo(EventTeam::class, 'team_h_id', 'id');

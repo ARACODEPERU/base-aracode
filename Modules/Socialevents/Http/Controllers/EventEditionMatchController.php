@@ -55,6 +55,15 @@ class EventEditionMatchController extends Controller
         // 3. Creamos la variable final que irá al frontend
         $finalFixture = [];
 
+        // Orden de fases
+        $phaseOrder = [
+            'league' => 1,
+            'quarterfinals' => 2,
+            'semifinals' => 3,
+            'final' => 4,
+            'third_place' => 5,
+        ];
+
         foreach ($grouped as $phase => $rounds) {
             foreach ($rounds as $roundNumber => $matchList) {
                 foreach ($matchList as $match) {
@@ -107,6 +116,11 @@ class EventEditionMatchController extends Controller
             }
         }
 
+        // Ordenar fases
+        uksort($finalFixture, function ($a, $b) use ($phaseOrder) {
+            return ($phaseOrder[$a] ?? 999) <=> ($phaseOrder[$b] ?? 999);
+        });
+
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
@@ -116,7 +130,7 @@ class EventEditionMatchController extends Controller
             ->get();
 
         $documentTypes = DB::table('identity_document_type')->whereNotIn('id',['6'])->get();
-
+        //dd($finalFixture);
         return Inertia::render('Socialevents::Editions/Fixtures', [
             'teams' => $teams,
             'edition' => $edition,
@@ -225,16 +239,40 @@ class EventEditionMatchController extends Controller
             //'group_name' => 'required|string',
             'match_date' => 'required|string',
             //'location' => 'required|string',
+            'equipo_h_id' => 'nullable|exists:event_teams,id|different:equipo_a_id',
+            'equipo_a_id' => 'nullable|exists:event_teams,id|different:equipo_h_id',
         ]);
 
-        EventEditionMatch::find($id)
-            ->update([
+        // Validación adicional: si ambos equipos están seleccionados, no pueden ser el mismo
+        if ($request->equipo_h_id && $request->equipo_a_id && $request->equipo_h_id == $request->equipo_a_id) {
+            return back()->withErrors(['equipo_h_id' => 'El equipo local y visitante no pueden ser el mismo.']);
+        }
+
+        $match = EventEditionMatch::find($id);
+        $match->update([
                 'round_number' => $request->get('round_number'),
                 'group_name' => $request->get('group_name') ?? null,
                 'match_date' => $request->get('match_date'),
                 'location' => $request->get('location') ?? null,
-                'status' => $request->get('status') ?? 'pending'
+                'status' => $request->get('status') ?? 'pending',
+                'team_h_id' => $request->get('equipo_h_id') ?? null,
+                'team_a_id' => $request->get('equipo_a_id') ?? null,
+                'placeholder_h' => null,
+                'placeholder_a' => null,
             ]);
+
+        $score_h = $request->get('score_h') ?? 0;
+        $score_a = $request->get('score_a') ?? 0;
+
+        if($request->has('score_h') && $request->has('score_a')) {
+            $match->update([
+                'score_h' => $score_h,
+                'score_a' => $score_a,
+                'status' => 'closed',
+            ]);
+            $this->positionService->updateTablePositions($request->get('edition_id'));
+        }
+
     }
 
     public function editionMatchScoreStore(Request $request){
@@ -269,7 +307,7 @@ class EventEditionMatchController extends Controller
 
             // Al final de la transacción, recalculamos la tabla
             // se suman al crear el acta
-            $this->positionService->updateTablePositions($match->edition_id);
+            $this->positionService->updateTablePositions($edition_id);
         });
     }
 

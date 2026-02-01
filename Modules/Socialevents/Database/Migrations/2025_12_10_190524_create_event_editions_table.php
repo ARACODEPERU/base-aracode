@@ -28,7 +28,7 @@ return new class extends Migration
             $table->decimal('inscription_fee', 8, 2)->default(0)->comment('Costo de inscripción por equipo.');
             $table->unsignedSmallInteger('min_players_per_team')->default(5)->comment('Mínimo de jugadores por equipo (para validación).');
             $table->unsignedSmallInteger('max_players_per_team')->default(15)->comment('Máximo de jugadores por equipo (para validación).');
-            $table->binary('prize_details')->nullable()->comment('Detalle de los premios: 1er lugar, 2do lugar, goleador, etc.');
+            $table->json('prize_details')->nullable()->comment('Detalle de los premios: 1er lugar, 2do lugar, goleador, etc.');
             // ---------------------------------------------
             $table->string('path_database_file', 300)->nullable('ruta del archivo de las bases');
             $table->string('name_database_file', 255)->nullable('nombre del archivo de las bases');

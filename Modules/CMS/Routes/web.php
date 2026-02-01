@@ -64,6 +64,14 @@ Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
 
     Route::get('blog-subscriber', 'CmsSubscriberController@list_subscribers')->name('blog_subscriber');
 
+    Route::middleware(['permission:cms_suscriptores_exportar_excel'])
+        ->post('export/subscribers-excel', [CmsSubscriberController::class, 'exportSubscribersExcel'])
+        ->name('cms_export_subscribers_excel');
+
+    Route::middleware(['permission:cms_suscriptores_exportar_excel'])
+        ->get('export/subscribers-excel/status/{jobId}', [CmsSubscriberController::class, 'exportSubscribersExcelStatus'])
+        ->name('cms_export_subscribers_excel_status');
+
     Route::middleware(['permission:cms_testimonios'])->get('testimonies', [CmsTestimonyController::class, 'index'])->name('cms_testimonies_list');
     Route::middleware(['permission:cms_testimonios_nuevo'])->get('testimonies/create', [CmsTestimonyController::class, 'create'])->name('cms_testimonies_create');
     Route::middleware(['permission:cms_testimonios_nuevo'])->post('testimonies/store', [CmsTestimonyController::class, 'store'])->name('cms_testimonies_store');

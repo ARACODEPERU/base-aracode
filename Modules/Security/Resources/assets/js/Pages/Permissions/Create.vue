@@ -6,6 +6,10 @@ const props = defineProps({
     roles: {
         type: Object,
         default: () => ({}),
+    },
+    modulos: {
+        type: Object,
+        default: () => ({}),
     }
 });
 </script>
@@ -18,10 +22,10 @@ const props = defineProps({
             </h2>
         </template>
 
-        <div>
-            <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-                <CreateForm :roles="roles"></CreateForm>
-            </div>
+        <div class="mt-6">
+
+            <CreateForm :roles="roles" :modulos="modulos"></CreateForm>
+
         </div>
     </AppLayout>
 </template>
