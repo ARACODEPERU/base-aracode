@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaStudentHistory;
+use Modules\Academic\Entities\AcaSubscriptionPayment;
 
 class AcaStudentController extends Controller
 {
@@ -814,12 +815,48 @@ class AcaStudentController extends Controller
             ->get();
 
 
-        $subscriptions = AcaStudentSubscription::with(['subscription','salenote'])
+        // 1. Obtener suscripciones principales pendientes de pago
+        $subscriptionsMain = AcaStudentSubscription::with(['subscription'])
             ->where('student_id', $id)
             ->whereNull('onli_sale_id')
-            ->whereNull('xdocument_id') ///si esta lleno es porque lo compro en linea
+            ->whereNull('xdocument_id')
             ->whereNull('xsale_note_id')
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->is_main_table = true; // Flag para identificar procedencia
+                return $item;
+            });
+
+        // 2. Obtener reactivaciones pendientes de pago
+        $subscriptionsReactivated = AcaSubscriptionPayment::with(['subscription'])
+            ->where('student_id', $id)
+            ->whereNull('document_id')
+            ->get()
+            ->map(function ($item) {
+                $item->is_main_table = false; // Flag para identificar procedencia
+                return $item;
+            });
+
+        // 3. Unir y filtrar según la regla de negocio
+        $finalSubscriptions = $subscriptionsMain->concat($subscriptionsReactivated)
+            ->groupBy('subscription_id') // Agrupamos por el ID de la suscripción
+            ->flatMap(function ($group) {
+                // Buscamos si en este grupo la suscripción principal tiene renewals en true
+                $mainRecord = $group->firstWhere('is_main_table', true);
+
+                if ($mainRecord) {
+                    if ($mainRecord->renewals) {
+                        // SI RENEWALS ES TRUE: Solo mostramos las reactivaciones (quitar la principal)
+                        return $group->where('is_main_table', false);
+                    } else {
+                        // SI RENEWALS ES FALSE: Solo mostramos la principal
+                        return $group->where('is_main_table', true);
+                    }
+                }
+
+                return $group; // Si no hay registro principal, devolver lo que haya
+            });
+
 
         $standardIdentityDocument = DB::table('identity_document_type')->get();
 
@@ -845,10 +882,11 @@ class AcaStudentController extends Controller
                 'icbper' => $this->icbper
             ),
             'registrationCourses' => $registrationCourses,
-            'subscriptions' => $subscriptions,
+            'subscriptions' => $finalSubscriptions,
             'standardIdentityDocument' => $standardIdentityDocument,
             'departments'       => $ubigeo,
-            'installments'  => $installments
+            'installments'  => $installments,
+            'subscriptionsReactivated' => $subscriptionsReactivated
         ]);
     }
 

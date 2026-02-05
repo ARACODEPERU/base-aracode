@@ -48,29 +48,20 @@ class AcaReportsController extends Controller
      */
     public function studentPaymentBankTable(Request $request)
     {
-        // Validar y sanear los inputs para evitar errores de fecha o tipos incorrectos
+        // 1. Validación de entradas
         $this->validate($request, [
             'search'           => 'nullable|string|max:255',
             'issue_date'       => [
                 'required',
                 'string',
-                // Cambiamos la expresión regular para aceptar un solo YYYY-MM-DD O el rango
                 'regex:/^\d{4}-\d{2}-\d{2}( a \d{4}-\d{2}-\d{2})?$/'
             ],
             'paymentMethod_id' => 'nullable|integer',
         ]);
 
-        // Extraer los parámetros de forma segura
-        $searchTerm        = $request->get('search') ?? null;
-        $issueDateRange    = $request->get('issue_date') ?? null;
-        $paymentMethodId   = $request->get('paymentMethod_id') ?? null;
-
-        // 1. Iniciar la consulta base
-        // Se incluyen los campos directamente necesarios o los que se van a transformar.
-        // Es una buena práctica usar 'id' en el select incluso si no se muestra,
-        // ya que Eloquent a menudo lo necesita internamente.
+        // 2. Construcción de la consulta
         $query = Sale::query()->select([
-            'id', // Siempre incluir el ID para Eloquent
+            'id',
             'user_id',
             'client_id',
             'local_id',
@@ -81,81 +72,63 @@ class AcaReportsController extends Controller
             'sale_date',
         ]);
 
-        // Cargar las relaciones necesarias para evitar el problema N+1
-        // `saleProduct` se cargará con cada venta.
-        $query->with('saleProduct');
-        $query->with('document');
-        $query->with('client');
-        // 2. Filtro por Tipo de Medio de Pago (desde JSON 'payments')
-        // Si paymentMethodId es un solo ID numérico
-        if ($paymentMethodId !== null) { // Usar !== null para manejar 0 si fuera un ID válido
-            $query->whereJsonContains('payments',['type'=> $paymentMethodId]);
-            // Nota: Si 'payments' puede ser un array de objetos JSON (e.g., [{"type": 4}, {"type": 5}]),
-            // `whereJsonContains('payments', ['type' => $paymentMethodId])` es la forma correcta.
-            // Si cada 'payment' es un objeto individual y 'type' está directamente en la raíz del JSON,
-            // (e.g., {"type": 4, "amount": "670.00"}), la forma `whereJsonContains('payments', ['type' => $paymentMethodId])` sigue siendo la mejor opción.
+        // Carga de relaciones
+        $query->with(['saleProduct', 'document', 'client']);
+
+        // 3. Aplicación de Filtros
+
+        // Filtro por método de pago en JSON
+        if ($request->filled('paymentMethod_id')) {
+            $methodId = (int) $request->paymentMethod_id;
+            $query->whereJsonContains('payments', [['type' => $methodId]]);
         }
 
-        // 3. Filtro por Rango/Fecha Única de Venta ('sale_date')
-        if ($issueDateRange) {
-            // Intentar dividir la cadena. Si es un solo día, explode devolverá un array con un solo elemento.
-            $dates = explode(' a ', $issueDateRange);
-
+        // Filtro por rango de fechas
+        if ($request->filled('issue_date')) {
+            $dates = explode(' a ', $request->issue_date);
             try {
-                if (count($dates) === 2) {
-                    // Es un rango de fechas
-                    $startDate = Carbon::parse($dates[0])->startOfDay();
-                    $endDate = Carbon::parse($dates[1])->endOfDay();
-                } else {
-                    // Es una sola fecha
-                    $startDate = Carbon::parse($dates[0])->startOfDay();
-                    $endDate = Carbon::parse($dates[0])->endOfDay(); // El final del mismo día
-                }
+                $startDate = Carbon::parse($dates[0])->startOfDay();
+                $endDate = count($dates) === 2
+                    ? Carbon::parse($dates[1])->endOfDay()
+                    : Carbon::parse($dates[0])->endOfDay();
 
                 $query->whereBetween('sale_date', [$startDate, $endDate]);
-
             } catch (\Exception $e) {
-                // Loguear el error para depuración
-                Log::error("Error al parsear fecha en issue_date: {$issueDateRange} - " . $e->getMessage());
-                return response()->json(['error' => 'Formato de fecha no válido en el filtro de fecha.'], 400);
+                return response()->json(['error' => 'Formato de fecha inválido.'], 400);
             }
         }
-        // 4. Filtro por Nombre o DNI del Cliente ('full_name' o 'number' en tabla 'people')
-        // Asumiendo la relación `client` en el modelo Sale
-        if ($searchTerm) {
-            $query->whereHas('client', function (Builder $q) use ($searchTerm) {
-                // Buscamos 'full_name' que contenga el término O 'number' que sea EXACTAMENTE el término
-                // Es importante si 'number' es DNI y se espera una coincidencia exacta.
+
+        // Filtro por Nombre o DNI del Cliente
+        if ($request->filled('search')) {
+            $searchTerm = $request->search;
+            $query->whereHas('client', function ($q) use ($searchTerm) {
                 $q->where('full_name', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('number', $searchTerm); // Coincidencia exacta para DNI/RUC
+                ->orWhere('number', 'like', '%' . $searchTerm . '%');
             });
         }
 
-        // 5. Obtener los resultados
-        // Considera paginación si la tabla es grande. Usar `paginate()` en lugar de `get()`.
-        // Para una tabla, generalmente quieres paginación.
-        // Ejemplo con paginación (ajusta según tus necesidades):
-        // $perPage = $request->input('per_page', 15);
-        // $items = $query->paginate($perPage);
-        // $query->ddRawSql();
-        // Si solo quieres todos los resultados sin paginación (como en tu original):
-        $items = $query->get();
+        // 4. Ejecución y Transformación de Datos
+        $items = $query->get()->map(function ($sale) {
+            $rawPayments = $sale->payments;
 
-        // 6. Transformar los datos si es necesario (parsear 'payments' de JSON a array PHP)
-        // Esto solo es necesario si `payments` no está casteado a 'json' en el modelo.
-        // Si ya tienes `protected $casts = ['payments' => 'json'];` en tu modelo `Sale`,
-        // Laravel lo hará automáticamente y esta transformación no sería estrictamente necesaria,
-        // pero no hace daño si quieres asegurarte.
-        $items->transform(function ($sale) {
-            // Laravel ya debería haber casteado 'payments' a un array/objeto si tienes `protected $casts = ['payments' => 'json'];`
-            // Si `payments` sigue siendo una cadena JSON aquí, la línea de abajo es necesaria.
-            if (is_string($sale->payments)) {
-                $sale->payments = json_decode($sale->payments, true);
+            // Limpieza de JSON: Maneja strings, nulls y doble serialización
+            if (is_string($rawPayments)) {
+                $decoded = json_decode($rawPayments, true);
+
+                // Si después de decodificar sigue siendo un string, decodificamos de nuevo (doble escape)
+                if (is_string($decoded)) {
+                    $decoded = json_decode($decoded, true);
+                }
+
+                $sale->payments = is_array($decoded) ? $decoded : [];
+            } elseif (is_null($rawPayments)) {
+                $sale->payments = [];
             }
+
             return $sale;
         });
 
-        // Retornar la respuesta JSON
+        // 5. Respuesta
         return response()->json(['items' => $items]);
     }
 

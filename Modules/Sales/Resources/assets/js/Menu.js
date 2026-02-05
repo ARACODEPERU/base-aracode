@@ -12,7 +12,8 @@ import {
     faFileArrowDown,
     faFileFragment,
     faFileCircleQuestion,
-    faCircleDollarToSlot
+    faCircleDollarToSlot,
+    faHandHoldingDollar
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSales = [
@@ -155,7 +156,7 @@ const menuSales = [
     {
         status: true,
         text: 'Cuentas por cobrar',
-        icom: faBolt,
+        icom: faHandHoldingDollar,
         route: 'module',
         permissions: 'acco_dashboard',
         items: [

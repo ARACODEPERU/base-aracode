@@ -6,7 +6,7 @@
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import TextInput from '@/Components/TextInput.vue';
     import Keypad from '@/Components/Keypad.vue';
-    import Swal from 'sweetalert2';
+    import Swal2 from 'sweetalert2';
 
     const props = defineProps({
         roles: {

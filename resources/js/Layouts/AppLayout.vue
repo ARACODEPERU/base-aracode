@@ -19,7 +19,7 @@ defineProps({
 
 <template>
     <!-- <Preloader id="page-preloader" /> -->
-    <BannerMessage /> 
+    <BannerMessage />
     <Head :title="title" />
     <div class="flex h-screen overflow-hidden">
         <Sidebar :sidebarToggle="sidebarToggle" @activateCakeButton="eventSidebarToggle"></Sidebar>

@@ -105,7 +105,6 @@
 
     // Rellenar formulario con el item seleccionado
     const fillForm = (person, ubigeo) => {
-        console.log(ubigeo)
         form.id = person.id;
         form.document_type = person.document_type_id;
         form.number = person.number;
@@ -114,7 +113,11 @@
         form.email = person.email;
         form.address = person.address;
         form.ubigeo_description = person.ubigeo_description;
-        form.ubigeo = ubigeo;
+        //form.ubigeo = ubigeo;
+        form.ubigeo = {
+            district_id: person.ubigeo,
+            city_name: person.ubigeo_description
+        };
         persona.value = person;
         disabledBtnSelect.value = false;
         searchResults.value = []; // cerrar dropdown

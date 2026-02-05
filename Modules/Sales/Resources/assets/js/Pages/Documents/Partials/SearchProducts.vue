@@ -1,11 +1,12 @@
 <script setup>
     import ModalLargeX from '@/Components/ModalLargeX.vue';
-    import DangerButton from '@/Components/DangerButton.vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
     import SecondaryButton from '@/Components/SecondaryButton.vue';
     import { ref, nextTick } from 'vue';
     import { useForm } from '@inertiajs/vue3';
     import Swal from 'sweetalert2';
     import NumberInput from '@/Components/NumberInput.vue';
+import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
         iconSearch: {
@@ -37,7 +38,10 @@
     });
 
     const displayResultSearch = ref(false);
+    const displayLoaderSearch = ref(false);
+
     const searchProducts = async () => {
+        displayLoaderSearch.value = true;
         if(formScaner.scaner){
             axios.post(route('search_scaner_product'), form ).then((response) => {
                 if(response.data.success){
@@ -65,7 +69,9 @@
                     });
                 }
 
-            });
+            }).finally(() => {
+                displayLoaderSearch.value = false;
+            });;
         }else{
             axios.post(route('search_product'), form ).then((response) => {
                 if(response.data.success){
@@ -81,6 +87,8 @@
                     });
                 }
 
+            }).finally(() => {
+                displayLoaderSearch.value = false;
             });
         }
     };
@@ -227,7 +235,8 @@
                             <div class="relative">
                                 <input v-model="form.search" @keydown.enter.prevent="searchProducts()" id="searchInput" autocomplete="off" type="text" placeholder="Buscar... " class="form-input shadow-[0_0_4px_2px_rgb(31_45_61_/_10%)] bg-white rounded-full h-11 placeholder:tracking-wider" autofocus />
                                 <button type="submit" class="btn btn-primary absolute ltr:right-1 rtl:left-1 inset-y-0 m-auto rounded-full w-9 h-9 p-0 flex items-center justify-center">
-                                    <font-awesome-icon :icon="iconSearch" />
+                                    <IconLoader v-if="displayLoaderSearch" class="w-5 h-5" />
+                                    <font-awesome-icon v-else :icon="iconSearch" />
                                 </button>
                             </div>
                         </form>
@@ -236,16 +245,21 @@
                         <li v-for="(product, index) in form.products" class="w-full p-4">
                             <div @click="openModalSelectProduct(product), close()" style="cursor: pointer;" class="flex items-center justify-between space-x-4">
                                 <div class="flex-shrink-0">
-                                    <img v-if="product.image=='img/imagen-no-disponible.jpg'"
-                                    :src="astUrl+product.image"
-                                    class="w-8 h-8 rounded-full"
-                                    :alt="product.interne"
+                                    <img v-if="product.image && product.image=='img/imagen-no-disponible.jpg'"
+                                        :src="astUrl+product.image"
+                                        class="w-8 h-8 rounded-full"
+                                        :alt="product.interne"
                                     />
 
+                                    <img v-else-if="product.image"
+                                        :src="astUrl+'storage/'+product.image"
+                                        class="w-8 h-8 rounded-full"
+                                        :alt="product.interne"
+                                    />
                                     <img v-else
-                                    :src="astUrl+'storage/'+product.image"
-                                    class="w-8 h-8 rounded-full"
-                                    :alt="product.interne"
+                                        :src="'img/imagen-no-disponible.jpg'"
+                                        class="w-8 h-8 rounded-full"
+                                        :alt="product.interne"
                                     />
                                 </div>
                                 <div class="text-left flex-1 min-w-0 ml-2">
@@ -293,18 +307,25 @@
             <div class="grid grid-cols-3 gap-4">
                 <div class="col-span-1">
                     <div class="flex flex-wrap justify-center">
-                        <img v-if="form.product.image=='img/imagen-no-disponible.jpg'"
-                        :src="astUrl+form.product.image"
-                        class="p-1 bg-white border rounded max-w-sm"
-                        :alt="form.product.description"
-                        style="width: 100%;"
+
+                        <img v-if="form.product.image && form.product.image=='img/imagen-no-disponible.jpg'"
+                            :src="'/img/imagen-no-disponible.jpg'"
+                            class="p-1 bg-white border rounded max-w-sm"
+                            :alt="form.product.description"
+                            style="width: 100%;"
                         />
 
+                        <img v-else-if="form.product.image"
+                            :src="astUrl+'storage/'+form.product.image"
+                            class="p-1 bg-white border rounded max-w-sm"
+                            :alt="form.product.description"
+                            style="width: 100%;"
+                        />
                         <img v-else
-                        :src="astUrl+'storage/'+form.product.image"
-                        class="p-1 bg-white border rounded max-w-sm"
-                        :alt="form.product.description"
-                        style="width: 100%;"
+                            :src="'/img/imagen-no-disponible.jpg'"
+                            class="p-1 bg-white border rounded max-w-sm"
+                            :alt="form.product.description"
+                            style="width: 100%;"
                         />
                     </div>
                     <p class="my-4 text-center">Stock Actual : {{ form.data.stock  }}</p>
@@ -406,12 +427,12 @@
             </div>
         </template>
         <template #buttons>
-            <DangerButton
+            <PrimaryButton
                 class="mr-3"
                 @click="addProduct(form.product.presentations)"
             >
                 Agregar
-            </DangerButton>
+            </PrimaryButton>
         </template>
     </ModalLargeX>
 </template>

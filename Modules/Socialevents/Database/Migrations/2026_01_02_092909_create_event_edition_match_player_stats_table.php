@@ -34,7 +34,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Creamos un índice único para que un jugador no tenga dos filas de stats en el mismo partido
-            $table->unique(['match_id', 'person_id'], 'match_person_unique');
+            $table->unique(['match_id', 'player_id'], 'match_person_unique');
         });
     }
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
     import { ref, onMounted } from 'vue';
-    import Sidebar from '@/Components/vristo/layout/Sidebar.vue';
+    //import Sidebar from '@/Components/vristo/layout/Sidebar.vue';
     import Header from '@/Components/vristo/layout/Header.vue';
     import Footer from '@/Components/vristo/layout/Footer.vue';
     import Setting from '@/Components/vristo/ThemeCustomizer.vue';
     import appSetting from '@/app-setting';
     import { Head } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
-
+    import Sidebar from '@/Components/vristo/layout/Sidebar-New.vue';
     import ChatBox from 'Modules/CRM/Resources/assets/js/Components/ChatBox.vue';
 
     const store = useAppStore();
@@ -28,6 +28,7 @@
         eleanimation.addEventListener('animationend', function () {
             appSetting.changeAnimation('remove');
         });
+        
         store.toggleMainLoader();
     });
 
@@ -124,7 +125,7 @@
                 </div>
             </div>
         </div>
-        <ChatBox /> 
+        <ChatBox />
     </div>
 </template>
 

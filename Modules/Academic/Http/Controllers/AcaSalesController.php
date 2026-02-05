@@ -31,6 +31,7 @@ use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use DataTables;
+use Modules\Academic\Entities\AcaSubscriptionPayment;
 use Modules\Sales\Entities\SaleDocumentQuota;
 
 class AcaSalesController extends Controller
@@ -101,7 +102,7 @@ class AcaSalesController extends Controller
 
         try {
             $res = DB::transaction(function () use ($request) {
-
+                //dd($request->all());
                 ///si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
                 ///se crea una caja para poder hacer la venta
                 $student_id = $request->get('student_id');
@@ -132,7 +133,7 @@ class AcaSalesController extends Controller
                 $forma_pago = $request->get('forma_pago');
 
                 if ($forma_pago && $forma_pago === 'Contado') {
-                    $sale->payments = json_encode($request->get('payments'));
+                    $sale->payments = $request->get('payments');
                     $sale->save();
                 }
 
@@ -292,6 +293,12 @@ class AcaSalesController extends Controller
                             ->update([
                                 'xdocument_id' => $document->id
                             ]);
+
+                            if($originId){
+                                AcaSubscriptionPayment::where('id', $originId)->update([
+                                    'document_id' => $document->id
+                                ]);
+                            }
                     }
 
                     //se inserta los datos al detalle del documento
@@ -642,7 +649,7 @@ class AcaSalesController extends Controller
                 $forma_pago = $request->get('forma_pago');
 
                 if ($forma_pago && $forma_pago === 'Contado') {
-                    $sale->payments = json_encode($request->get('payments'));
+                    $sale->payments = $request->get('payments');
                     $sale->save();
                 }
 

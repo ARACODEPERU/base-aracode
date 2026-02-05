@@ -40,53 +40,108 @@
                 <span>{{ course.course.description }}</span>
             </li>
         </ul>
-        <div class="pt-5 space-y-5 relative">
-            <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 relative">
-                <div class="max-w-xl mx-auto text-center">
-                    <div class="inline-flex px-4 py-1.5 mx-auto rounded-full  ">
-                        <p class="text-4xl font-semibold tracking-widest text-g uppercase">MODULOS DEL CURSO</p>
+        <div class="pt-5 space-y-8 relative">
+            <!-- Header Moderno del Curso -->
+            <div class="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl p-6 text-center shadow-xl border border-gray-100 dark:border-gray-700">
+                <div class="max-w-4xl mx-auto">
+                    <div class="inline-flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-lg mb-4">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                        </svg>
+                        <span class="font-bold text-lg tracking-wide">MÓDULOS DEL CURSO</span>
                     </div>
-                    <p class="mt-4 text-base leading-relaxed text-gray-600 group-hover:text-white">{{ course.course.description }}</p>
-                </div>
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-3 mt-6">
-                    <template v-for="(module, index) in course.modules">
-                        <Link :href="route('aca_mycourses_lesson_themes', module.id)" class="panel rounded-xl rounded-tl-none transition-all  duration-1000 hover:bg-blue-50  hover:shadow-xl m-2 p-4 relative z-40 group  dark:bg-gray-800">
-                            <div class="absolute  bg-blue-500/50 top-0 left-0 w-24 h-1 z-30  transition-all duration-200   group-hover:bg-blue-800 group-hover:w-1/2 dark:group-hover:bg-gray-300 "></div>
-                            <div class="py-2 px-9 relative">
-                                <svg class="w-10 h-10 fill-gray-400 group-hover:fill-blue-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M88.7 223.8L0 375.8 0 96C0 60.7 28.7 32 64 32l117.5 0c17 0 33.3 6.7 45.3 18.7l26.5 26.5c12 12 28.3 18.7 45.3 18.7L416 96c35.3 0 64 28.7 64 64l0 32-336 0c-22.8 0-43.8 12.1-55.3 31.8zm27.6 16.1C122.1 230 132.6 224 144 224l400 0c11.5 0 22 6.1 27.7 16.1s5.7 22.2-.1 32.1l-112 192C453.9 474 443.4 480 432 480L32 480c-11.5 0-22-6.1-27.7-16.1s-5.7-22.2 .1-32.1l112-192z"/></svg>
-                                <p class="mt-4 text-base text-gray-600 group-hover:text-blue-800  ">{{ module.description }}</p>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                        {{ course.course.description }}
+                    </h1>
+                    <p class="text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-4">
+                        Explora los módulos disponibles para avanzar en tu aprendizaje
+                    </p>
+
+                    <!-- Estadísticas del Curso -->
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
+                            <div class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ course.modules?.length || 0 }}</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Módulos</div>
+                        </div>
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
+                            <div class="text-xl font-bold text-green-600 dark:text-green-400">
+                                {{ course.modules?.reduce((sum, m) => sum + (m.total_themes || 0), 0) || 0 }}
                             </div>
-                            <div
-                                class="
-                                    relative
-                                    flex
-                                    justify-between
-                                    mt-6
-                                    pt-4
-                                    before:w-[250px] before:h-[1px] before:bg-[#e0e6ed] before:inset-x-0 before:top-0 before:absolute before:mx-auto
-                                    dark:before:bg-[#1b2e4b]
-                                "
-                                >
-                                <div class="flex items-center font-semibold">
-                                    <div class="w-9 h-9 rounded-full overflow-hidden inline-block ltr:mr-2 rtl:ml-2.5">
-                                        <span class="flex w-full h-full items-center justify-center bg-[#515365] text-[#e0e6ed]">{{ module.total_themes }}</span>
-                                    </div>
-                                    <div class="text-[#515365] dark:text-white-dark">Clases</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Clases</div>
+                        </div>
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
+                            <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
+                                {{ course.modules?.reduce((sum, m) => sum + (m.total_videos || 0), 0) || 0 }}
+                            </div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Videos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de Módulos Moderno -->
+            <div class="mx-auto max-w-7xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                    <template v-for="(module, index) in course.modules" :key="module.id">
+                        <Link :href="route('aca_mycourses_lesson_themes', module.id)"
+                              class="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] overflow-hidden">
+
+                            <!-- Icono del Módulo -->
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-3 rounded-xl shadow-md group-hover:scale-110 transition-transform duration-300">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                                    </svg>
                                 </div>
-                                <div class="flex font-semibold">
-                                    <div class="text-gray-600 flex items-center ltr:mr-3 rtl:ml-3 ">
-                                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                            <path fill="currentColor" d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 288c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zm384 64l-128 0L256 0 384 128z"/>
-                                        </svg>
-                                        {{ module.total_files }}
-                                    </div>
-                                    <div class="flex items-center text-gray-600">
-                                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                                            <path fill="currentColor" d="M256 0L576 0c35.3 0 64 28.7 64 64l0 224c0 35.3-28.7 64-64 64l-320 0c-35.3 0-64-28.7-64-64l0-224c0-35.3 28.7-64 64-64zM476 106.7C471.5 100 464 96 456 96s-15.5 4-20 10.7l-56 84L362.7 169c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.8 7.2-6.9 17.1-2.9 25.4s12.4 13.6 21.6 13.6l80 0 48 0 144 0c8.9 0 17-4.9 21.2-12.7s3.7-17.3-1.2-24.6l-96-144zM336 96a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zM64 128l96 0 0 256 0 32c0 17.7 14.3 32 32 32l128 0c17.7 0 32-14.3 32-32l0-32 160 0 0 64c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 192c0-35.3 28.7-64 64-64zm8 64c-8.8 0-16 7.2-16 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0zm0 104c-8.8 0-16 7.2-16 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0zm0 104c-8.8 0-16 7.2-16 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0zm336 16l0 16c0 8.8 7.2 16 16 16l16 0c8.8 0 16-7.2 16-16l0-16c0-8.8-7.2-16-16-16l-16 0c-8.8 0-16 7.2-16 16z"/>
-                                        </svg>
-                                        {{ module.total_videos }}
-                                    </div>
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Módulo {{ index + 1 }}
                                 </div>
+                            </div>
+
+                            <!-- Título del Módulo -->
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                                {{ module.description }}
+                            </h3>
+
+                            <!-- Separador Visual -->
+                            <div class="relative my-6">
+                                <div class="absolute inset-0 flex items-center">
+                                    <div class="w-full border-t border-gray-200 dark:border-gray-600"></div>
+                                </div>
+                                <div class="relative flex justify-center">
+                                    <span class="bg-white dark:bg-gray-800 px-4 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Contenido</span>
+                                </div>
+                            </div>
+
+                            <!-- Estadísticas del Módulo -->
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                                    <div class="bg-blue-500 text-white text-lg font-bold w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center shadow-md">
+                                        {{ module.total_themes || 0 }}
+                                    </div>
+                                    <div class="text-xs font-medium text-blue-700 dark:text-blue-300">Clases</div>
+                                </div>
+
+                                <div class="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-100 dark:border-green-800/30">
+                                    <div class="bg-green-500 text-white text-lg font-bold w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center shadow-md">
+                                        {{ module.total_files || 0 }}
+                                    </div>
+                                    <div class="text-xs font-medium text-green-700 dark:text-green-300">Archivos</div>
+                                </div>
+
+                                <div class="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800/30">
+                                    <div class="bg-purple-500 text-white text-lg font-bold w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center shadow-md">
+                                        {{ module.total_videos || 0 }}
+                                    </div>
+                                    <div class="text-xs font-medium text-purple-700 dark:text-purple-300">Videos</div>
+                                </div>
+                            </div>
+
+                            <!-- Indicador de Acceso -->
+                            <div class="mt-6 flex items-center justify-center">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                                    Click para explorar →
+                                </span>
                             </div>
                         </Link>
                     </template>

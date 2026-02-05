@@ -27,8 +27,8 @@ const props = defineProps({
 const form = useForm({
     title: props.subscription.title,
     description: props.subscription.description,
-    details: JSON.parse(props.subscription.details),
-    prices: JSON.parse(props.subscription.prices),
+    details: props.subscription.details,
+    prices: props.subscription.prices,
     status: props.subscription.status == 1 ? true : false,
     period: props.subscription.period,
     order_number: props.subscription.order_number ?? 1

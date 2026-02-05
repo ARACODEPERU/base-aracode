@@ -10,6 +10,7 @@
     --color-blue-800:oklch(.424 .199 265.638);
     --color-blue-900:oklch(.379 .146 265.522);
     --color-blue-950:oklch(.282 .091 267.935);
+    --color-blue-1000:oklch(24.465% 0.08252 267.304);
     --color-red-50:oklch(.971 .013 17.38);
     --color-red-100:oklch(.936 .032 17.717);
     --color-red-200:oklch(.885 .062 18.334);
@@ -240,13 +241,13 @@
     background-color: var(--color-gray-50);
 }
 .bg-blue-100 {
-    background-color: var(--color-blue-100) !important;
+    background-color: var(--color-blue-100);
 }
 .bg-blue-600 {
-    background-color: var(--color-blue-600) !important;
+    background-color: var(--color-blue-600);
 }
-.bg-blue-900 {
-    background-color: var(--color-blue-900) !important;
+.bg-blue-1000 {
+    background-color: var(--color-blue-1000) !important;
 }
 .bg-teal-600 {
     background-color: var(--color-teal-600) !important;
@@ -255,16 +256,16 @@
     background-color: var(--color-neutral-700) !important;
 }
 .bg-red-100 {
-    background-color: var(--color-red-100) !important;
+    background-color: var(--color-red-100);
 }
 .bg-red-200 {
-    background-color: var(--color-red-200) !important;
+    background-color: var(--color-red-200);
 }
 .bg-info-100 {
-    background-color: var(--color-info-200) !important;
+    background-color: var(--color-info-200);
 }
 .dark .dark-bg-gray-800 {
-    background-color: var(--color-gray-800) !important;
+    background-color: var(--color-gray-800);
 }
 .dark .ant-badge-status-text{
     color: #b5c4fa !important;
@@ -272,6 +273,8 @@
 .dark .dark-bg-red-900{
     background-color: var(--color-red-900) !important;
 }
+
+
 
 @keyframes bounce-ball {
   0%, 100% {

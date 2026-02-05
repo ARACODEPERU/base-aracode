@@ -58,6 +58,10 @@
             type: Object,
             default: () => ({}),
         },
+        subscriptionsReactivated: {
+            type: Object,
+            default: () => ({}),
+        }
     });
 
 
@@ -156,9 +160,15 @@
             description = data.course.description;
             xItemId = data.course.id
             unitType = 'ZZ';
-        }else{
+        }else if(ttp == 4){
             document.getElementById('subs_checkbox-' + data.id).disabled = true;
-            price = data.amount_paid;
+            price = data.amount_paid ?? data.amount;
+            description = data.subscription.description;
+            xItemId = data.subscription.id
+            unitType = 'ZZ';
+        }else if(ttp == 5){
+            document.getElementById('subsRe_checkbox-' + data.id).disabled = true;
+            price = data.amount;
             description = data.subscription.description;
             xItemId = data.subscription.id
             unitType = 'ZZ';
@@ -924,9 +934,9 @@
                             <div class="text-xl px-4">Cobros pendientes </div>
                         </div>
                     </div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
+                    <div class="relative max-h-[300px] overflow-y-auto custom-scroll border border-gray-200 dark:border-gray-800 shadow-sm">
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead class="sticky top-0 z-20 bg-gray-50/95 dark:bg-[#1a2234]/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
                                 <tr>
                                     <th class="w-1 bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]"></th>
                                     <th class="bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]">Item</th>
@@ -935,7 +945,7 @@
                                     <th class="bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]">Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                 <template v-for="(regCou, ix) in registrationCourses" :key="ix">
                                     <tr class="align-top">
                                         <td class="text-danger border border-l-0 border-r-0 border-t-0 border-[#d82f24]">
@@ -1048,7 +1058,7 @@
                 </div>
             </div>
             <div class="xl:w-96 w-full xl:mt-0 mt-6">
-                <div class="panel mb-5">
+                <div v-if="services.length > 0" class="panel mb-5">
                     <h4 class="font-bold mb-4">SERVICIOS</h4>
                     <div v-if="services.length > 20" class="flex items-center max-w-lg mx-auto my-4">
                         <label for="services-search" class="sr-only">Search</label>
@@ -1211,3 +1221,29 @@
         </ModalLarge>
     </AppLayout>
 </template>
+<style lang="css">
+    /* Estilo para navegadores basados en Webkit (Chrome, Safari, Edge) */
+    .custom-scroll::-webkit-scrollbar {
+        width: 6px; /* Scrollbar más delgado */
+        height: 6px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+        background: transparent; /* Fondo invisible para que no se vea el "camino" gris */
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5); /* Color gris suave con transparencia */
+        border-radius: 20px; /* Bordes redondeados */
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(107, 114, 128, 0.8); /* Se oscurece al pasar el mouse */
+    }
+
+    /* Firefox */
+    .custom-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    }
+</style>

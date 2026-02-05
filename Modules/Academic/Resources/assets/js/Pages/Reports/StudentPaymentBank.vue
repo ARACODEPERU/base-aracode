@@ -60,10 +60,23 @@
     });
 
     const findObjectById = (idToFind) => {
-        return props.paymentMethods.find(item => item.id === idToFind);
+        if (!idToFind) return { description: 'no se realizaron pagos' };
+
+        return props.paymentMethods.find(item => item.id === idToFind)
+            ?? { description: 'Desconocido' };
     };
 
-
+    const parsePayments = (payments) => {
+        if (!payments) return [];
+        if (typeof payments === 'string') {
+            try {
+                return JSON.parse(payments);
+            } catch (e) {
+                return [];
+            }
+        }
+        return payments;
+    };
 </script>
 <template>
     <AppLayout title="Reportes">
@@ -123,6 +136,7 @@
                                 <th>CURSOS</th>
                                 <th>CELULAR</th>
                                 <th>ALUMNO</th>
+                                <th>DOCUMENTO</th>
                                 <th>FORMA DE PAGO</th>
                                 <th>IMPORTE DE COBRANZA</th>
                                 <th>NRO. DE OPERACIÓN</th>
@@ -158,6 +172,9 @@
                                         {{ item.client.full_name }}
                                     </td>
                                     <td>
+                                        {{ item.document.invoice_serie }}-{{ item.document.invoice_correlative }}
+                                    </td>
+                                    <td>
                                         <span v-if="item.document && item.document.forma_pago == 'Credito'" class="relative inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white z-10">
                                             Al crédito
                                         </span>
@@ -166,16 +183,44 @@
                                     <td>
                                         {{ item.total}}
                                     </td>
-                                    <td>
-                                        <div class="ps relative mb-4 max-h-[290px] ltr:pr-3 rtl:pl-3 ltr:-mr-3 rtl:-ml-3 ps--active-y">
-                                            <div class="text-sm cursor-pointer">
-                                                <div v-for="pay in item.payments" class="flex items-center py-1.5 relative group">
-                                                    <div class="bg-success w-1.5 h-1.5 rounded-full ltr:mr-1 rtl:ml-1.5"></div>
-                                                    <div class="flex-1">
-                                                        {{ findObjectById(pay.type).description }}
+                                    <td class="p-3 align-center min-w-[200px]">
+
+                                        <div class="ps relative mb-2 max-h-[200px] ltr:pr-2 rtl:pl-2 overflow-y-auto">
+                                            <div class="text-sm">
+                                                <template v-if="item.payments && item.payments.length > 0">
+                                                    <div v-for="(pay, index) in parsePayments(item.payments)" :key="index"
+                                                        class="flex flex-col mb-3 pb-2 border-b border-gray-100 dark:border-gray-700 last:border-0 last:mb-0 group">
+
+                                                        <div class="flex items-center justify-between w-full">
+                                                            <div class="flex items-center overflow-hidden">
+                                                                <div class="bg-success w-2 h-2 rounded-full shrink-0 ltr:mr-2 rtl:ml-2 shadow-[0_0_5px_rgba(16,196,105,0.5)]"></div>
+
+                                                                <span class="font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                                    {{ findObjectById(pay.type)?.description }}
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="ltr:ml-2 rtl:mr-2 font-bold text-indigo-600 dark:text-indigo-400">
+                                                                {{ pay.amount }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="flex items-center mt-1 ltr:pl-4 rtl:pr-4">
+                                                            <span v-if="pay.reference"
+                                                                class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 border border-gray-200 dark:border-gray-600">
+                                                                Ref: {{ pay.reference }}
+                                                            </span>
+                                                            </div>
                                                     </div>
-                                                    <div class="ltr:ml-auto rtl:mr-auto text-xs text-white-dark dark:text-gray-500">{{ pay.amount }}</div>
-                                                    <span v-if="pay.reference" class="badge badge-outline-success absolute ltr:right-0 rtl:left-0 text-xs bg-success-light dark:bg-[#0e1726] opacity-0 group-hover:opacity-100">CÓDIGO: {{ pay.reference }}</span>
+                                                </template>
+
+                                                <div v-else class="flex items-center justify-center py-2 px-3 border border-dashed border-gray-200 dark:border-gray-700 rounded-md bg-gray-50/50 dark:bg-transparent">
+                                                    <svg class="w-4 h-4 text-gray-400 ltr:mr-2 rtl:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                    </svg>
+                                                    <span class="text-[13px] text-gray-400 italic leading-none">
+                                                        {{ findObjectById(null).description }}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -184,7 +229,7 @@
                             </template>
                             <template v-else>
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="9" class="text-center">
                                         <div class="flex justify-center">
                                             <Empty :description="'Tabla vacía'" :image="'/img/empty-box.png'" />
                                         </div>

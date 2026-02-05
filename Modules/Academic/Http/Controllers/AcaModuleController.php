@@ -23,7 +23,7 @@ class AcaModuleController extends Controller
             ->with('modules.themes.contents.exam.questions.answers')
             ->first();
 
-        return Inertia::render('Academic::Courses/Modules', [
+        return Inertia::render('Academic::Courses/Modules-Redesigned', [
             'course' => $course
         ]);
     }

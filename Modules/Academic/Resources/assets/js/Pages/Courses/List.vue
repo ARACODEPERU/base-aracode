@@ -3,12 +3,12 @@
     import Pagination from '@/Components/Pagination.vue';
     import Swal2 from "sweetalert2";
     import { Link, router, useForm } from '@inertiajs/vue3';
-    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm } from "@fortawesome/free-solid-svg-icons";
+    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter } from "@fortawesome/free-solid-svg-icons";
     import ModalLarge from '@/Components/ModalLarge.vue';
-    import { ref } from 'vue';
+    import { ref, computed } from 'vue';
     import DangerButton from '@/Components/DangerButton.vue';
     import InputError from '@/Components/InputError.vue';
-    import { ConfigProvider, Dropdown,Menu,MenuItem,Button } from 'ant-design-vue';
+    import { ConfigProvider, Dropdown,Menu,MenuItem,Button,Card,Tag,Space } from 'ant-design-vue';
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
 
@@ -25,11 +25,33 @@
             type: Object,
             default: () => ({}),
         },
+        categories: {
+            type: Object,
+            default: () => ({}),
+        },
+        modalities: {
+            type: Object,
+            default: () => ({}),
+        },
+        types: {
+            type: Array,
+            default: () => ([]),
+        },
+        coursesActive: {
+            type: Number,
+            default: 0,
+        }
     });
 
     const form = useForm({
         search: props.filters.search,
+        category: props.filters.category,
+        modality: props.filters.modality,
+        status: props.filters.status ?? 9,
+        sort_order: null,
+        sort_by: null
     });
+
 
     const destroyCourse = (id) => {
         Swal2.fire({
@@ -168,16 +190,34 @@
         });
     }
 
-const dataModule = ref({});
+    const baseUrl = assetUrl;
 
+    const getImage = (path) => {
+        return baseUrl + 'storage/'+ path;
+    }
 
-const baseUrl = assetUrl;
+    // Fallback image when course has no image
+    const fallbackImage = '/img/course-placeholder.jpg';
 
-const getImage = (path) => {
-    return baseUrl + 'storage/'+ path;
-}
+    // Filter states
+    const showFilters = ref(false);
+    // Toggle filters panel
+    const toggleFilters = () => {
+        showFilters.value = !showFilters.value;
+    };
 
-const dataModalContent = ref(null);
+    const clearSearch = () => {
+        form.reset();
+
+        router.visit(route('aca_courses_list'), {
+            method: 'get',
+            data: {},
+            replace: false,
+            preserveState: false,
+            preserveScroll: false,
+            only: ['courses', 'filters'],
+        })
+    }
 
 </script>
 
@@ -193,123 +233,255 @@ const dataModalContent = ref(null);
         </ul>
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
-                <h2 class="text-xl">Cursos</h2>
-                <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
-                    <div class="flex gap-3">
-                        <div>
-                            <Link :href="route('aca_courses_create')" type="button" class="btn btn-primary">
-                                <icon-plus class="ltr:mr-2 rtl:ml-2" />
-                                Nuevo
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <input
-                            type="text"
-                            placeholder="Buscar"
-                            class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
-                            v-model="form.search"
-                            @keyup.enter="form.get(route('aca_courses_list'))"
-                        />
-                        <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
-                            <icon-search class="mx-auto" />
-                        </div>
+                <div class="relative">
+                    <input
+                        type="text"
+                        placeholder="Buscar"
+                        class="form-input pl-8"
+                        v-model="form.search"
+                        @keyup.enter="form.get(route('aca_courses_list'))"
+                    />
+                    <div class="absolute left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
+                        <icon-search class="w-4 h-4" />
                     </div>
                 </div>
+
+                <div class="flex gap-3">
+                    <button
+                        @click="toggleFilters"
+                        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        <font-awesome-icon :icon="faFilter" class="w-4 h-4" />
+                        <span>Filtros</span>
+                        <span v-if="form.category || form.status !== '' || form.modality" class="ml-1 px-2 py-0.5 bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 rounded-full text-xs">Activo</span>
+                    </button>
+                    <Link :href="route('aca_courses_create')" type="button" class="btn btn-primary">
+                        <icon-plus class="ltr:mr-2 rtl:ml-2" />
+                        Nuevo
+                    </Link>
+               </div>
             </div>
-            <div class="mt-5 panel p-0 border-0 overflow-hidden">
-                <div class="table-responsive">
-                    <ConfigProvider>
-                        <table class="table-striped table-hover">
-                            <thead>
-                                <tr class="!text-center">
-                                    <th>
-                                        Acciones
-                                    </th>
-                                    <th>
-                                        Nombre
-                                    </th>
-                                    <th>
-                                        Categoría
-                                    </th>
-                                    <th>
-                                        Sector
-                                    </th>
-                                    <th>
-                                        Tipo
-                                    </th>
-                                    <th>
-                                        Modalidad
-                                    </th>
-                                    <th>
-                                        Estado
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template v-for="(course, index) in courses.data" :key="course.id">
-                                    <tr>
-                                        <td class="text-center">
-                                            <Dropdown :placement="'bottomLeft'">
-                                                <button class="border py-1.5 px-2 dropdown-button inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm" type="button">
-                                                    <font-awesome-icon :icon="faGears" />
-                                                </button>
-                                                <template #overlay>
-                                                <Menu>
-                                                    <MenuItem>
-                                                        <Link :href="route('aca_courses_edit',course.id)" >Editar</Link>
-                                                    </MenuItem>
-                                                    <MenuItem>
-                                                        <Link :href="route('aca_enrolledstudents_list',course.id)" >Alumnos</Link>
-                                                    </MenuItem>
-                                                    <MenuItem>
-                                                        <Link :href="route('aca_courses_information',course.id)" >Información</Link>
-                                                    </MenuItem>
-                                                    <MenuItem>
-                                                        <a @click="openModalAgreements(course)" href="#" >Convenios</a>
-                                                    </MenuItem>
-                                                    <MenuItem>
-                                                        <Link :href="route('aca_courses_module_panel',course.id)" >Módulos</Link>
-                                                    </MenuItem>
-                                                    <MenuItem>
-                                                        <a @click="destroyCourse(course.id)" href="#" >Eliminar</a>
-                                                    </MenuItem>
-                                                </Menu>
-                                                </template>
-                                            </Dropdown>
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ course.description }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ course.category.description }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ course.sector_description }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            {{ course.type_description }}
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            <template v-if="course.modality">
-                                                {{ course.modality.description }}
-                                            </template>
-                                        </td>
-                                        <td class="whitespace-nowrap">
-                                            <span v-if="course.status" class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Activo</span>
-                                            <span v-else class="bg-red-100 text-red-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-red-400 border border-red-400">Inactivo</span>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                        <Pagination :data="courses" />
-                    </ConfigProvider>
+            <!-- Enhanced Search and Filters Section -->
+            <div class="mt-5 space-y-4">
+                <!-- Filters Panel -->
+                <div v-if="showFilters" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-top-2 duration-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <!-- Category Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Categoría</label>
+                            <select @change="form.get(route('aca_courses_list'))" v-model="form.category" class="form-input w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                <option :value="null">Todas las categorías</option>
+                                <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.description }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado</label>
+                            <select v-model="form.status" @change="form.get(route('aca_courses_list'))" class="form-input w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                <option :value="9">Todos los estados</option>
+                                <option :value="1">Activos</option>
+                                <option :value="0">Inactivos</option>
+                            </select>
+                        </div>
+
+                        <!-- Modality Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Modalidad</label>
+                            <select v-model="form.modality" @change="form.get(route('aca_courses_list'))" class="form-input w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                <option :value="null">Todas las modalidades</option>
+                                <option v-for="modality in modalities" :key="modality.id" :value="modality.id">{{ modality.description }}</option>
+                            </select>
+                        </div>
+
+                        <!-- <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ordenar por</label>
+                            <select v-model="form.sort_by" class="form-input w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                <option value="description">Nombre</option>
+                                <option value="category_id">Categoría</option>
+                                <option value="modality_id">Modalidad</option>
+                                <option value="status">Estado</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orden</label>
+                            <select v-model="form.sort_order" class="form-input w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                <option value="asc">Ascendente</option>
+                                <option value="desc">Descendente</option>
+                            </select>
+                        </div> -->
+                    </div>
+
+                    <!-- Clear Filters -->
+                    <div class="mt-4 flex justify-end">
+                        <button
+                            @click="clearSearch"
+                            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                        >
+                            Limpiar filtros
+                        </button>
+                    </div>
                 </div>
 
+            </div>
+
+            <!-- Visual Gallery View (Image-focused design) -->
+            <div class="mt-6">
+                <!-- Active Courses Gallery -->
+                <div>
+                    <div class="grid sm:grid-cols-2 gap-6 w-full mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Cursos Activos</h3>
+                                <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm font-medium">
+                                    {{ coursesActive }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end">
+                            <div class="flex items-center gap-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    Mostrando <span class="font-medium text-gray-900 dark:text-white">{{ courses.total }}</span> cursos
+                                </p>
+                                <div v-if="form.category || form.status !== '' || form.modality" class="flex items-center gap-2">
+                                    <span class="text-xs bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
+                                        Con filtros aplicados
+                                    </span>
+                                    <button
+                                        @click="form.reset()"
+                                        class="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+                                    >
+                                        Limpiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div v-for="course in courses.data" :key="course.id"
+                             class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] flex flex-col h-full">
+                            <!-- Course Image -->
+                            <div class="relative h-48 overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600">
+                                <img :src="course.image ? getImage(course.image) : fallbackImage"
+                                     :alt="course.description"
+                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                     @error="$event.target.src = fallbackImage" />
+
+                                <!-- Overlay with Quick Actions -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <div class="absolute bottom-4 left-4 right-4 flex gap-2">
+                                        <Link :href="route('aca_courses_edit', course.id)"
+                                              class="flex-1 bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-2 rounded-lg text-sm font-medium hover:bg-white transition-colors flex items-center justify-center gap-1">
+                                            <font-awesome-icon :icon="faEdit" class="text-xs" />
+                                            Editar
+                                        </Link>
+                                        <Link v-can="'aca_cursos_listado_estudiantes'" :href="route('aca_enrolledstudents_list', course.id)"
+                                              class="flex-1 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-1">
+                                            <font-awesome-icon :icon="faUsers" class="text-xs" />
+                                            Alumnos
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                <!-- Status Badge -->
+                                <div class="absolute top-4 right-4">
+                                    <span v-if="course.status" class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                                        <span class="w-2 h-2 bg-white rounded-full"></span>
+                                        Activo
+                                    </span>
+                                    <span v-else class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                                        <span class="w-2 h-2 bg-white rounded-full"></span>
+                                        Inactivo
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Course Info -->
+                            <div class="p-4 flex flex-col flex-grow">
+                                <h4 class="font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    {{ course.description }}
+                                </h4>
+
+                                <div class="flex flex-wrap gap-1.5 mb-3">
+                                    <span v-if="course.category" class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
+                                        {{ course.category.description }}
+                                    </span>
+                                    <span v-if="course.modality" class="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 px-2 py-1 rounded-full">
+                                        {{ course.modality.description }}
+                                    </span>
+                                </div>
+
+                                <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1 mb-4">
+                                    <div class="flex items-center gap-1">
+                                        <font-awesome-icon :icon="faBook" class="text-gray-400" />
+                                        {{ course.sector_description || 'N/A' }}
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <font-awesome-icon :icon="faFile" class="text-gray-400" />
+                                        {{ course.type_description || 'N/A' }}
+                                    </div>
+                                </div>
+
+                                <!-- Spacer to push action bar to bottom -->
+                                <div class="flex-grow"></div>
+
+                                <!-- Action Bar -->
+                                <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                    <div class="flex gap-1">
+                                        <button @click="openModalAgreements(course)"
+                                            class="p-2 text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900 rounded-lg transition-colors"
+                                            title="Convenios"
+                                            v-tippy="{content: 'Convenios', placement: 'top'}"
+                                        >
+                                            <font-awesome-icon :icon="faHandshake" class="text-sm" />
+                                        </button>
+                                        <Link :href="route('aca_courses_information', course.id)"
+                                            class="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900 rounded-lg transition-colors"
+                                            title="Información"
+                                            v-tippy="{content: 'Información', placement: 'top'}"
+                                        >
+                                            <font-awesome-icon :icon="faEye" class="text-sm" />
+                                        </Link>
+                                        <Link :href="route('aca_courses_module_panel', course.id)"
+                                            class="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900 rounded-lg transition-colors"
+                                            title="Módulos"
+                                            v-tippy="{content: 'Módulos', placement: 'top'}"
+                                        >
+                                            <font-awesome-icon :icon="faLayerGroup" class="text-sm" />
+                                        </Link>
+                                    </div>
+                                    <button
+                                        @click="destroyCourse(course.id)"
+                                        class="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 rounded-lg transition-colors"
+                                        v-tippy="{content: 'Eliminar', placement: 'top'}"
+                                    >
+                                        <font-awesome-icon :icon="faTrashAlt" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- No Results Message -->
+            <div v-if="courses.length === 0" class="text-center py-12">
+                <div class="text-gray-400 dark:text-gray-500 mb-4">
+                    <font-awesome-icon :icon="faBook" class="text-6xl" />
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No se encontraron cursos</h3>
+                <p class="text-gray-600 dark:text-gray-400">Intenta ajustar los filtros o buscar con otros términos.</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-8">
+                <Pagination :data="courses" />
             </div>
         </div>
+
 
         <ModalLarge
             :onClose = "closeModalAgreements"

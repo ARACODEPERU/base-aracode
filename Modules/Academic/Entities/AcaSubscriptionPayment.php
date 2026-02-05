@@ -2,34 +2,23 @@
 
 namespace Modules\Academic\Entities;
 
-use App\Models\Sale;
+use App\Models\SaleDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Academic\Database\factories\AcaStudentSubscriptionFactory;
+use Modules\Academic\Database\factories\AcaSubscriptionPaymentFactory;
 
-class AcaStudentSubscription extends Model
+class AcaSubscriptionPayment extends Model
 {
     use HasFactory;
-    public $incrementing = false; // Deshabilitar incremento automático
-    protected $primaryKey = ['student_id', 'subscription_id'];
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'student_id',
         'subscription_id',
+        'document_id',
         'date_start',
         'date_end',
-        'status',
-        'notes',
-        'renewals',
-        'registration_user_id',
-        'onli_sale_id',
-        'xdocument_id',
-        'amount_paid',
-        'xsale_note_id'
+        'amount'
     ];
 
     public function subscription(): BelongsTo
@@ -41,8 +30,8 @@ class AcaStudentSubscription extends Model
     {
         return $this->belongsTo(AcaStudent::class, 'student_id', 'id');
     }
-    public function salenote(): BelongsTo
+    public function document(): BelongsTo
     {
-        return $this->belongsTo(Sale::class, 'xsale_note_id');
+        return $this->belongsTo(SaleDocument::class, 'document_id');
     }
 }

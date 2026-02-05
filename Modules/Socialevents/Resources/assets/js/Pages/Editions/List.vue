@@ -179,7 +179,7 @@ const getPositionLabel = (position) => {
                                 id="search"
                                 v-model="form.search"
                                 type="text"
-                                class="form-input"
+                                class="form-input pl-10"
                                 placeholder="Buscar por nombre o evento..."
                             />
                         </div>

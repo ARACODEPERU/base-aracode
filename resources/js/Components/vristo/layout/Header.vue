@@ -41,6 +41,7 @@
 
 
     const userData = usePage().props.auth.user;
+    const store = useAppStore();
 
     const hasAnyRole = (rolesToCheck) => {
         return userData.roles.some(role => rolesToCheck.includes(role.name))
@@ -48,9 +49,10 @@
 
     const logout = () => {
         router.post(route('logout'));
+        store.clearSidebar()
     }
 
-    const store = useAppStore();
+
 
     const search = ref(false);
 
@@ -237,7 +239,7 @@
 
                                 <font-awesome-icon :icon="faChartPie" class="w-5" />
                                 <span class="flex absolute size-3 ltr:right-0 rtl:left-0 top-0">
-                                    <span class="animate-ping absolute ltr:-left-[0px] rtl:-right-[0px] -top-[0px] inline-flex size-full rounded-full bg-red-400 opacity-75 dark:bg-red-600"></span>
+                                    <span class="animate-ping absolute ltr:-left-[0px] rtl:-right-[0px] -top-[0px] inline-flex size-full rounded-full bg-red-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full size-3 bg-red-500"></span>
                                 </span>
                             </Link>
@@ -466,7 +468,7 @@
                 </div>
             </div>
 
-            <!-- horizontal menu -->
+                            <!-- horizontal menu -->
             <ul class="horizontal-menu hidden flex flex-wrap gap-x-4 gap-y-0 py-1.5 font-semibold px-6 bg-white border-t border-[#ebedf2] dark:border-[#191e3a] dark:bg-[#0e1726] text-black dark:text-white-dark">
                 <template v-for="(item, index) in menuData" :key="index">
                     <template v-if="item.route == null">

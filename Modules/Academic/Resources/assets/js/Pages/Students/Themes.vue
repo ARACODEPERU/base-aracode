@@ -233,97 +233,238 @@
                 <span>{{ module.description }}</span>
             </li>
         </ul>
-        <div class="pt-5 space-y-5 relative">
-            <div class="max-w-[85rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 mx-auto">
-                <!-- Title -->
-                <div class="max-w-2xl mx-auto text-center mb-6 lg:mb-8">
-                    <h2 class="text-2xl font-bold md:text-2xl md:leading-tight dark:text-white">{{ course.description }}</h2>
-                    <p class="mt-1 text-gray-600 dark:text-neutral-400">{{ module.description }}</p>
-                </div>
-                <!-- Profile -->
-                <div class="flex justify-center">
-                    <template v-if="module.teacher_id">
-                        <div class="flex items-center gap-x-3 max-w-xl">
-                            <div class="shrink-0">
-                                <img v-if="module.teacher.person.image" class="shrink-0 size-16 rounded-full" :src="getImage(module.teacher.person.image)" alt="Avatar">
-                                <img v-else :src="`https://ui-avatars.com/api/?name=${module.teacher.person.names}&size=150&rounded=true`" class="shrink-0 size-16 rounded-full" alt="avatar"/>
-                            </div>
-
-                            <div class="grow">
-                                <h1 class="text-lg font-medium text-gray-800 dark:text-neutral-200">
-                                    {{ module.teacher.person.full_name }}
-                                </h1>
-                                <p class="text-sm text-gray-600 dark:text-neutral-400">
-                                    {{ module.teacher.person.presentacion }}
-                                </p>
-                            </div>
-                        </div>
-                    </template>
-                    <template v-else>
-                        <div v-if="course.teacher" class="flex items-center gap-x-3 max-w-xl">
-                            <div class="shrink-0">
-                                <img v-if="course.teacher.person.image" class="shrink-0 size-16 rounded-full" :src="getImage(course.teacher.person.image)" alt="Avatar">
-                                <img v-else :src="`https://ui-avatars.com/api/?name=${course.teacher.person.names}&size=150&rounded=true`" class="shrink-0 size-16 rounded-full" alt="avatar"/>
-                            </div>
-
-                            <div class="grow">
-                                <h1 class="text-lg font-medium text-gray-800 dark:text-neutral-200">
-                                    {{ course.teacher.person.full_name }}
-                                </h1>
-                                <p class="text-sm text-gray-600 dark:text-neutral-400">
-                                    {{ course.teacher.person.presentacion }}
-                                </p>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                <!-- End Profile -->
-            </div>
-
-            <div class="grid grid-cols-6 gap-4">
-                <div class="panel col-span-6 sm:col-span-2">
-                    <div class="flex justify-between items-center">
-                        <h1 class="font-extrabold tracking-wider">Temas</h1>
+        <div class="pt-5 space-y-8 relative">
+            <!-- Header Premium del Módulo -->
+            <div class="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl p-6 text-center shadow-xl border border-gray-100 dark:border-gray-700">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Badge y Título -->
+                    <div class="inline-flex items-center gap-3 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full shadow-lg mb-4">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                        </svg>
+                        <span class="font-bold text-lg tracking-wide">TEMAS DEL MÓDULO</span>
                     </div>
-                    <div class="flex flex-col mt-5 gap-4 text-sm">
-                        <template v-for="(theme, index) in module.themes">
-                            <div @click="selectTheme(theme)" class="cursor-pointer flex justify-between items-center p-3 rounded-sm shadow-sm hover:bg-white-dark/10 dark:hover:bg-[#181F32] font-medium ltr:hover:pl-3 rtl:hover:pr-3 duration-300 dark:bg-gray-700 dark:text-white"
-                                :class="selectedTab === theme.id ? 'ltr:pl-3 rtl:pr-3 bg-gray-100 dark:bg-[#181F32] text-primary' : 'bg-yellow-50 text-success'">
-                                <div class="flex items-center">
-                                    <icon-square-rotated class=" fill-success shrink-0" />
-                                    <div class="text-left ltr:ml-3 rtl:mr-3">
-                                        {{ theme.description }}
-                                    </div>
+
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                        {{ course.description }}
+                    </h1>
+                    <p class="text-xl font-semibold text-blue-600 dark:text-blue-400 mb-4">
+                        {{ module.description }}
+                    </p>
+
+
+                    <!-- Perfil del Instructor -->
+                    <div class="flex justify-center w-full">
+                        <template v-if="module.teacher_id">
+                            <div class="flex items-center gap-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl py-2.5 px-4 shadow-md border border-gray-200 dark:border-gray-600">
+                                <div class="shrink-0">
+                                    <img v-if="module.teacher.person.image"
+                                        class="w-12 h-12 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+                                        :src="getImage(module.teacher.person.image)"
+                                        alt="Avatar">
+                                    <img v-else
+                                        :src="`https://ui-avatars.com/api/?name=${module.teacher.person.names}&size=150&rounded=true`"
+                                        class="w-12 h-12 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+                                        alt="avatar"/>
                                 </div>
-                                <span class="font-bold text-yellow-500">{{ theme.contents.length }}</span>
+                                <div class="text-left">
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                        {{ module.teacher.person.full_name }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                                        {{ module.teacher.person.presentacion }}
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div v-if="course.teacher" class="flex items-center gap-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl py-2 px-4 shadow-md border border-gray-200 dark:border-gray-600">
+                                <div class="shrink-0">
+                                    <img v-if="course.teacher.person.image"
+                                        class="w-12 h-12 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+                                        :src="getImage(course.teacher.person.image)"
+                                        alt="Avatar">
+                                    <img v-else
+                                        :src="`https://ui-avatars.com/api/?name=${course.teacher.person.names}&size=150&rounded=true`"
+                                        class="w-12 h-12 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+                                        alt="avatar"/>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                        {{ course.teacher.person.full_name }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                                        {{ course.teacher.person.presentacion }}
+                                    </p>
+                                </div>
                             </div>
                         </template>
                     </div>
+
+                    <!-- Estadísticas del Módulo -->
+                    <div class="flex flex-wrap justify-center gap-4 mt-4">
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
+                            <div class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ module.themes?.length || 0 }}</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Temas</div>
+                        </div>
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
+                            <div class="text-xl font-bold text-green-600 dark:text-green-400">
+                                {{ module.themes?.reduce((sum, t) => sum + (t.contents?.length || 0), 0) || 0 }}
+                            </div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Contenidos</div>
+                        </div>
+                        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-3 text-center min-w-[100px] shadow-md border border-gray-200 dark:border-gray-600">
+                            <div class="text-xl font-bold text-purple-600 dark:text-purple-400">
+                                {{ module.themes?.reduce((sum, t) => sum + (t.contents?.filter(c => c.is_file == 0 || c.is_file == 3).length || 0), 0) || 0 }}
+                            </div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium">Videos</div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="panel col-span-6 sm:col-span-4">
-                    <div class="flow-root">
-                        <div class="space-y-6">
-                            <template v-for="(content, key) in contentsData">
-                                <template v-if="content.is_file == 1">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="ltr:mr-3 rtl:ml-3">
-                                            <icon-file class="w-9 h-9 object-cover" />
-                                        </span>
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-4">
-                                                <h6 class="flex-1 text-base font-semibold">
-                                                    <strong class="ltr:mr-1 rtl:ml-1">Link de archivo: </strong>
-                                                    {{ content.description }}
-                                                </h6>
+            </div>
+
+            <div class="grid grid-cols-6 gap-6">
+                <!-- Sidebar de Temas Moderno -->
+                <div class="col-span-6 sm:col-span-2">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <!-- Header del Sidebar -->
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-500 p-4 text-white">
+                            <h2 class="text-lg font-bold tracking-wide flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                                </svg>
+                                Temas del Módulo
+                            </h2>
+                        </div>
+
+                        <!-- Lista de Temas -->
+                        <div class="p-4 space-y-3 max-h-[600px] overflow-y-auto">
+                            <template v-for="(theme, index) in module.themes" :key="theme.id">
+                                <div @click="selectTheme(theme)"
+                                     class="group cursor-pointer bg-gray-50 dark:bg-gray-700 rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:scale-[1.02] border border-transparent hover:border-blue-300 dark:hover:border-blue-500"
+                                     :class="selectedTab === theme.id
+                                         ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-600 dark:to-blue-900 border-blue-500 dark:border-blue-400 shadow-lg scale-[1.02]'
+                                         : 'hover:bg-gray-100 dark:hover:bg-gray-600'">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                                            <!-- Icono del Tema -->
+                                            <div :class="selectedTab === theme.id
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-300'"
+                                                class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                </svg>
+                                            </div>
+                                            <!-- Nombre del Tema -->
+                                            <div class="flex-1 min-w-0">
+                                                <h3 :class="selectedTab === theme.id
+                                                    ? 'text-blue-700 dark:text-blue-300 font-bold'
+                                                    : 'text-gray-700 dark:text-gray-300 font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400'"
+                                                    class="text-sm truncate">
+                                                    {{ theme.description }}
+                                                </h3>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    Tema {{ index + 1 }} del módulo
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <!-- Badge de Contenidos -->
+                                        <div class="flex flex-col items-end gap-1">
+                                            <div :class="selectedTab === theme.id
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'"
+                                                class="px-2 py-1 rounded-full text-xs font-bold min-w-[20px] text-center">
+                                                {{ theme.contents?.length || 0 }}
+                                            </div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                contenidos
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Barra de Progreso Visual (si hay contenidos) -->
+                                    <div v-if="theme.contents && theme.contents.length > 0" class="mt-3">
+                                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 h-1.5 rounded-full transition-all duration-500"
+                                                 style="width: 30%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Estado Vacío -->
+                            <div v-if="!module.themes || module.themes.length === 0" class="text-center py-12">
+                                <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-8 h-8 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No hay temas disponibles</h3>
+                                <p class="text-gray-500 dark:text-gray-400">Este módulo aún no tiene temas asignados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Panel de Contenidos Moderno -->
+                <div class="col-span-6 sm:col-span-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <!-- Header del Panel -->
+                        <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-4 text-white">
+                            <h2 class="text-lg font-bold flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                                </svg>
+                                Contenido del Tema
+                            </h2>
+                            <p class="text-sm text-indigo-100 mt-1">
+                                {{ selectedTab ? `Tema seleccionado` : 'Selecciona un tema para ver su contenido' }}
+                            </p>
+                        </div>
+
+                        <!-- Lista de Contenidos -->
+                        <div class="p-6 space-y-4 max-h-[600px] overflow-y-auto">
+                            <template v-if="contentsData && contentsData.length > 0">
+                                <template v-for="(content, key) in contentsData" :key="content.id">
+
+                                    <!-- Link de Archivo -->
+                                    <template v-if="content.is_file == 1">
+                                        <div class="group bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-5 border border-blue-200 dark:border-blue-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Icono -->
+                                                <div class="bg-blue-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Información -->
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            LINK DE ARCHIVO
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Contenido externo</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        Accede a este recurso externo haciendo clic en el botón
+                                                    </p>
+                                                </div>
+
+                                                <!-- Botón de Acción -->
                                                 <div>
                                                     <a
                                                         :href="content.content"
                                                         @click="saveStudentHistory(content)"
                                                         target="_blank"
-                                                        type="button"
-                                                        class="btn btn-success btn-sm flex uppercase inline-block"
+                                                        class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
                                                     >
-                                                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
                                                             <path fill="currentColor" d="M156.6 384.9L125.7 354c-8.5-8.5-11.5-20.8-7.7-32.2c3-8.9 7-20.5 11.8-33.8L24 288c-8.6 0-16.6-4.6-20.9-12.1s-4.2-16.7 .2-24.1l52.5-88.5c13-21.9 36.5-35.3 61.9-35.3l82.3 0c2.4-4 4.8-7.7 7.2-11.3C289.1-4.1 411.1-8.1 483.9 5.3c11.6 2.1 20.6 11.2 22.8 22.8c13.4 72.9 9.3 194.8-111.4 276.7c-3.5 2.4-7.3 4.8-11.3 7.2l0 82.3c0 25.4-13.4 49-35.3 61.9l-88.5 52.5c-7.4 4.4-16.6 4.5-24.1 .2s-12.1-12.2-12.1-20.9l0-107.2c-14.1 4.9-26.4 8.9-35.7 11.9c-11.2 3.6-23.4 .5-31.8-7.8zM384 168a40 40 0 1 0 0-80 40 40 0 1 0 0 80z"/>
                                                         </svg>
                                                         Ir al sitio
@@ -331,131 +472,213 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <template v-else-if="content.is_file == 0">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="ltr:mr-3 rtl:ml-3">
-                                            <icon-video class="w-9 h-9 object-cover" />
-                                        </span>
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-4">
-                                                <div class="flex-1">
-                                                    <h6 class="text-base font-semibold">
-                                                        <strong class="ltr:mr-1 rtl:ml-1">Video: </strong>
-                                                        {{ content.description }}
-                                                    </h6>
+                                    </template>
+                                    <!-- Video Embebido -->
+                                    <template v-else-if="content.is_file == 0">
+                                        <div class="group bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-5 border border-green-200 dark:border-green-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Icono -->
+                                                <div class="bg-green-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                                                    </svg>
                                                 </div>
+
+                                                <!-- Información -->
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            VIDEO
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Contenido multimedia</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        Reproduce este video directamente en el reproductor
+                                                    </p>
+                                                </div>
+
+                                                <!-- Botón de Reproducción -->
                                                 <div>
                                                     <button @click="openSelectedVideo(content)"
                                                         type="button"
-                                                        class="btn btn-success btn-sm flex uppercase inline-block"
+                                                        class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
                                                     >
-                                                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-                                                            <path fill="currentColor" d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/>
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
                                                         </svg>
                                                         Reproducir
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <template v-else-if="content.is_file == 2">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="ltr:mr-3 rtl:ml-3">
-                                            <icon-file-pdf class="w-9 h-9 object-cover" />
-                                        </span>
-                                        <div class="flex-1 font-semibold">
-                                            <div class="flex items-center space-x-4">
-                                                <h6 class="flex-1 text-base">
-                                                    <strong class="ltr:mr-1 rtl:ml-1">Link de archivo: </strong>
-                                                    {{ content.description }}
-                                                </h6>
+                                    </template>
+                                    <!-- Archivo Descargable -->
+                                    <template v-else-if="content.is_file == 2">
+                                        <div class="group bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-5 border border-yellow-200 dark:border-yellow-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Icono -->
+                                                <div class="bg-yellow-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Información -->
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            ARCHIVO
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Documento descargable</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        Descarga este archivo para acceder al contenido completo
+                                                    </p>
+                                                </div>
+
+                                                <!-- Botón de Descarga -->
                                                 <div>
                                                     <a
                                                         :href="getPath(content.content)"
                                                         @click="saveStudentHistory(content)"
                                                         target="_blank"
                                                         type="button"
-                                                        class="btn btn-success btn-sm flex uppercase inline-block"
+                                                        class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-yellow-600 hover:to-orange-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
                                                     >
-                                                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                                            <path fill="currentColor" d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 242.7-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7 288 32zM64 352c-35.3 0-64 28.7-64 64l0 32c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-32c0-35.3-28.7-64-64-64l-101.5 0-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352 64 352zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/>
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
                                                         </svg>
                                                         Descargar
                                                     </a>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <template v-else-if="content.is_file == 3">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="ltr:mr-3 rtl:ml-3">
-                                            <svg class="w-9 h-9 object-cover" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                                <path d="M352 256c0 22.2-1.2 43.6-3.3 64l-185.3 0c-2.2-20.4-3.3-41.8-3.3-64s1.2-43.6 3.3-64l185.3 0c2.2 20.4 3.3 41.8 3.3 64zm28.8-64l123.1 0c5.3 20.5 8.1 41.9 8.1 64s-2.8 43.5-8.1 64l-123.1 0c2.1-20.6 3.2-42 3.2-64s-1.1-43.4-3.2-64zm112.6-32l-116.7 0c-10-63.9-29.8-117.4-55.3-151.6c78.3 20.7 142 77.5 171.9 151.6zm-149.1 0l-176.6 0c6.1-36.4 15.5-68.6 27-94.7c10.5-23.6 22.2-40.7 33.5-51.5C239.4 3.2 248.7 0 256 0s16.6 3.2 27.8 13.8c11.3 10.8 23 27.9 33.5 51.5c11.6 26 20.9 58.2 27 94.7zm-209 0L18.6 160C48.6 85.9 112.2 29.1 190.6 8.4C165.1 42.6 145.3 96.1 135.3 160zM8.1 192l123.1 0c-2.1 20.6-3.2 42-3.2 64s1.1 43.4 3.2 64L8.1 320C2.8 299.5 0 278.1 0 256s2.8-43.5 8.1-64zM194.7 446.6c-11.6-26-20.9-58.2-27-94.6l176.6 0c-6.1 36.4-15.5 68.6-27 94.6c-10.5 23.6-22.2 40.7-33.5 51.5C272.6 508.8 263.3 512 256 512s-16.6-3.2-27.8-13.8c-11.3-10.8-23-27.9-33.5-51.5zM135.3 352c10 63.9 29.8 117.4 55.3 151.6C112.2 482.9 48.6 426.1 18.6 352l116.7 0zm358.1 0c-30 74.1-93.6 130.9-171.9 151.6c25.5-34.2 45.2-87.7 55.3-151.6l116.7 0z"/>
-                                            </svg>
-                                        </span>
-                                        <div class="flex-1 font-semibold">
-                                            <div class="flex items-center space-x-4">
-                                                <h6 class="flex-1 text-base">
-                                                    <strong class="ltr:mr-1 rtl:ml-1">Videoconferencia: </strong>
-                                                    {{ content.description }}
-                                                </h6>
+                                    </template>
+                                <!-- Videoconferencia -->
+                                    <template v-else-if="content.is_file == 3">
+                                        <div class="group bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-5 border border-purple-200 dark:border-purple-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Icono -->
+                                                <div class="bg-purple-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Información -->
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            VIDEOCONFERENCIA
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Sesión en vivo</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        Únete a la videoconferencia en el horario programado
+                                                    </p>
+                                                </div>
+
+                                                <!-- Botón de Unirse -->
                                                 <div>
                                                     <a
                                                         :href="content.content"
                                                         @click="saveStudentHistory(content)"
                                                         target="_blank"
                                                         type="button"
-                                                        class="btn btn-success btn-sm flex uppercase inline-block"
+                                                        class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
                                                     >
-                                                        <svg class="w-4 h-4 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                                                            <path d="M0 128C0 92.7 28.7 64 64 64l256 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64L64 448c-35.3 0-64-28.7-64-64L0 128zM559.1 99.8c10.4 5.6 16.9 16.4 16.9 28.2l0 256c0 11.8-6.5 22.6-16.9 28.2s-23 5-32.9-1.6l-96-64L416 337.1l0-17.1 0-128 0-17.1 14.2-9.5 96-64c9.8-6.5 22.4-7.2 32.9-1.6z"/>
-                                                        </svg> Unirse
-
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                        </svg>
+                                                        Unirse
                                                     </a>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <template v-else-if="content.is_file == 4">
-                                    <div class="flex items-center p-3.5 rounded text-primary bg-primary-light dark:bg-primary-dark-light">
-                                        <span class="ltr:mr-3 rtl:ml-3">
-                                            <svg class="w-9 h-9 object-cover" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                                                <path d="M0 64C0 28.7 28.7 0 64 0L224 0l0 128c0 17.7 14.3 32 32 32l128 0 0 38.6C310.1 219.5 256 287.4 256 368c0 59.1 29.1 111.3 73.7 143.3c-3.2 .5-6.4 .7-9.7 .7L64 512c-35.3 0-64-28.7-64-64L0 64zm384 64l-128 0L256 0 384 128zm48 96a144 144 0 1 1 0 288 144 144 0 1 1 0-288zm0 240a24 24 0 1 0 0-48 24 24 0 1 0 0 48zM368 321.6l0 6.4c0 8.8 7.2 16 16 16s16-7.2 16-16l0-6.4c0-5.3 4.3-9.6 9.6-9.6l40.5 0c7.7 0 13.9 6.2 13.9 13.9c0 5.2-2.9 9.9-7.4 12.3l-32 16.8c-5.3 2.8-8.6 8.2-8.6 14.2l0 14.8c0 8.8 7.2 16 16 16s16-7.2 16-16l0-5.1 23.5-12.3c15.1-7.9 24.5-23.6 24.5-40.6c0-25.4-20.6-45.9-45.9-45.9l-40.5 0c-23 0-41.6 18.6-41.6 41.6z"/>
-                                            </svg>
-                                        </span>
-                                        <div class="flex-1 font-semibold">
-                                            <div class="flex items-center space-x-4">
-                                                <h6 class="flex-1 text-base">
-                                                    <strong class="ltr:mr-1 rtl:ml-1">Examen: </strong>
-                                                    {{ content.description }}
-                                                </h6>
+                                    </template>
+                                    <!-- Examen -->
+                                    <template v-else-if="content.is_file == 4">
+                                        <div class="group bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 rounded-xl p-5 border border-red-200 dark:border-red-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Icono -->
+                                                <div class="bg-red-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Información -->
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            EXAMEN
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Evaluación</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        Resuelve esta evaluación para poner a prueba tus conocimientos
+                                                    </p>
+                                                </div>
+
+                                                <!-- Botón de Resolver -->
                                                 <div>
                                                     <button
                                                         @click="openExamSolve(content)"
                                                         type="button"
-                                                        class="btn btn-success btn-sm flex uppercase inline-block"
+                                                        class="bg-gradient-to-r from-red-500 to-rose-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-red-600 hover:to-rose-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
                                                     >
-                                                        <svg class="w-4 h-4 mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                                                            <path d="M453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-52.1 52.1s0 0 0 0l-1-1s0 0 0 0l-16-16-96-96-17-17 52.1-52.1c25-25 65.5-25 90.5 0zM241 114.9c-9.4-9.4-24.6-9.4-33.9 0L105 217c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9L173.1 81c28.1-28.1 73.7-28.1 101.8 0L288 94.1l17 17 96 96 16 16 1 1-17 17L229.5 412.5c-48 48-109.2 80.8-175.8 94.1l-25 5c-7.9 1.6-16-.9-21.7-6.6s-8.1-13.8-6.6-21.7l5-25c13.3-66.6 46.1-127.8 94.1-175.8L254.1 128 241 114.9z"/>
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
                                                         </svg>
                                                         Resolver
-
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </template>
                                 </template>
                             </template>
-                            <div>
-                                <h5 class="pb-3 text-gray-900 border-b border-gray-400/50 dark:text-gray-50 dark:border-zinc-700">
-                                    COMENTARIOS
-                                </h5>
+                            <!-- Estado Vacío -->
+                            <div v-if="!contentsData || contentsData.length === 0" class="text-center py-16">
+                                <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <svg class="w-10 h-10 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">No hay contenidos disponibles</h3>
+                                <p class="text-gray-500 dark:text-gray-400">Este tema aún no tiene contenidos asignados</p>
+                            </div>
+                        </div>
+
+                        <!-- Sección de Comentarios Moderna -->
+                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-t border-gray-200 dark:border-gray-600">
+                            <div class="p-6">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-2 rounded-lg">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">COMENTARIOS</h3>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Discute sobre el contenido del tema</p>
+                                    </div>
+                                </div>
                                 <template v-if="commentsLoading">
                                     <div class="flex items-center mt-4">
                                         <svg class="w-10 h-10 me-3 text-gray-200 dark:text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">

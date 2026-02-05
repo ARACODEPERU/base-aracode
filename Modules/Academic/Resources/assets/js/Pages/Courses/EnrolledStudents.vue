@@ -22,10 +22,14 @@
         students:{
             type: Object,
             default: () => ({}),
-        }
+        },
+        filters: {
+            type: Object,
+            default: () => ({}),
+        },
     });
 
-    const studentsData = ref([]);
+
     const appCodeUnique = import.meta.env.VITE_APP_CODE ?? 'ARACODE';
     const channelListenOnli = "aca-import-status-" + appCodeUnique + '-' + usePage().props.auth.user.id;
     const channelListenInvoice = "aca-invoice-send-" + appCodeUnique + '-' + usePage().props.auth.user.id;
@@ -38,7 +42,12 @@
     const scrollContainerInvoice = ref(null);
 
     onMounted(() => {
-        studentsData.value = props.students.data;
+        // Initialize checkboxes for students
+        props.students.data.forEach(student => {
+            student.checkbox = false;
+        });
+
+
 
         window.socketIo.on(channelListenOnli, (status) => {
             importStatus.value.push(status);
@@ -61,10 +70,17 @@
         });
     });
 
+// Watch for changes in props.students to initialize checkboxes when navigating between pages
+watch(() => props.students.data, (newData) => {
+    newData.forEach(student => {
+        student.checkbox = student.checkbox || false;
+    });
+}, { deep: true });
+
     const chxtodos = ref(false);
 
     const toggleAllStudent = () => {
-        studentsData.value.forEach(student => {
+        props.students.data.forEach(student => {
             student.checkbox = chxtodos.value;
         });
     };
@@ -73,7 +89,7 @@
 
 
     const form = useForm({
-        search: null
+        search: props.filters.search,
     });
 
     const baseUrl = assetUrl;
@@ -106,7 +122,7 @@
 
     const createCertificates = () => {
         // Verifica si al menos un estudiante tiene el checkbox en true
-        const algunoMarcado = studentsData.value.some(student => student.checkbox === true);
+        const algunoMarcado = props.students.data.some(student => student.checkbox === true);
 
         if (!algunoMarcado) {
             Swal.fire({
@@ -124,7 +140,7 @@
         axios({
             method: 'put',
             url: route('aca_certificate_massive_store', props.course.id),
-            data: { students: studentsData.value }
+            data: { students: props.students.data }
         }).then(() => {
             reloadPage();
         }).finally(() => {
@@ -232,9 +248,9 @@
 
     const createDocuments = () => {
         // Verifica si al menos un estudiante tiene el checkbox en true
-        const algunoMarcado = studentsData.value.some(student => student.checkbox === true);
+        const algunoMarcado = props.students.data.some(student => student.checkbox === true);
 
-        const registrations = studentsData.value.filter(student => student.checkbox === true);
+        const registrations = props.students.data.filter(student => student.checkbox === true);
         const marcados = registrations.length;
         if (!algunoMarcado) {
             Swal.fire({
@@ -282,6 +298,8 @@
         reloadPage();
     }
 
+
+
 </script>
 
 <template>
@@ -319,10 +337,10 @@
                             placeholder="Buscar"
                             class="form-input py-2 ltr:pr-11 rtl:pl-11 peer"
                             v-model="form.search"
-                            @keyup.enter="form.get(route('aca_courses_list'))"
+                            @keyup.enter="form.get(route('aca_enrolledstudents_list', course.id))"
                         />
                         <div class="absolute ltr:right-[11px] rtl:left-[11px] top-1/2 -translate-y-1/2 peer-focus:text-primary">
-                            <icon-search class="mx-auto" />
+                            <icon-search @click="form.get(route('aca_enrolledstudents_list', course.id))" class="mx-auto w-4 h-4" />
                         </div>
                     </div>
                 </div>
@@ -385,7 +403,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="(row, index) in studentsData">
+                                        <tr v-for="(row, index) in props.students.data">
                                             <td>
                                                 <label class="inline-flex">
                                                     <input v-model="row.checkbox" :id="'chxStudent'+index" type="checkbox" class="form-checkbox" />
@@ -393,9 +411,14 @@
                                             </td>
                                             <td>{{ row.student.person.full_name }}</td>
                                             <td>
-                                                <span v-if="row.document_id" class="badge badge-outline-primary">
-                                                    {{ row.document.invoice_serie }}-{{ row.document.invoice_correlative }}
-                                                </span>
+                                                <template v-if="row.document_id">
+                                                    <span v-if="row.document" class="badge badge-outline-primary">
+                                                        {{ row.document?.invoice_serie }}-{{ row.document?.invoice_correlative }}
+                                                    </span>
+                                                    <span v-else class="badge badge-outline-danger">
+                                                        Incorrecto
+                                                    </span>
+                                                </template>
                                                 <span v-else class="badge badge-outline-info">Pendiente</span>
                                             </td>
                                             <td>

@@ -1079,12 +1079,16 @@ class AccountsReceivableController extends Controller
                 }
 
                 // Actualización
-                $studentSubscription->advancement = $adv;
-                $studentSubscription->date_end = $dateEnd;
-                $studentSubscription->status = true;
-                $studentSubscription->xdocument_id = $document->id;
 
-                $studentSubscription->save();
+                $studentSubscription = AcaStudentSubscription::where('student_id', $student_id)
+                    ->where('subscription_id', $product->product_id)
+                    ->update([
+                        'advancement' => $adv,
+                        'date_end' => $dateEnd,
+                        'status' => true,
+                        'xdocument_id' => $document->id
+                    ]);
+
             }
 
         } // END FOREACH
