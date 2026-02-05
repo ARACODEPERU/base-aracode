@@ -970,8 +970,8 @@
                                             <!-- <textarea class="form-textarea mt-4" placeholder="Enter Description" v-model="item.description"></textarea> -->
                                         </td>
                                         <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">1</td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">{{ subs.amount_paid }}</td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">S/. {{ (subs.amount_paid * 1).toFixed(2) }}</td>
+                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">{{ subs.amount_paid ?? subs.amount }}</td>
+                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">S/. {{ ((subs.amount_paid ?? subs.amount) * 1).toFixed(2) }}</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -1090,12 +1090,12 @@
                 <div class="panel mb-5">
                     <h4 class="font-bold mb-4">Cursos</h4>
                     <div v-if="courses.length > 20" class="flex items-center max-w-lg mx-auto my-4">
-                        <label for="voice-search" class="sr-only">Search</label>
+                        <label for="voice-search-course" class="sr-only">Search</label>
                         <div class="relative w-full">
                             <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                                 <font-awesome-icon :icon="faMagnifyingGlass" />
                             </div>
-                            <input v-model="servicesInput" @input="searchCourses" @keyup.enter="searchCourses"  type="text" id="voice-search" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar..." required />
+                            <input v-model="coursesInput" @input="searchCourses" @keyup.enter="searchCourses"  type="text" id="voice-search-course" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar..." required />
                         </div>
                     </div>
                     <perfect-scrollbar

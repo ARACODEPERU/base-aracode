@@ -13,7 +13,7 @@ import {
     faFileFragment,
     faFileCircleQuestion,
     faCircleDollarToSlot,
-    faHandHoldingDollar
+    faHandHoldingDollar,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSales = [

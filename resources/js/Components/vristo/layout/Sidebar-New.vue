@@ -5,6 +5,7 @@
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js';
+    import { Tooltip } from 'ant-design-vue'
 
     const store = useAppStore();
     const xasset = assetUrl;
@@ -138,6 +139,9 @@
         return xasset + 'storage/'+ path;
     }
 
+    const colorTooltip = 'purple';
+    const fontTitleTooltip = 'font-bold text-gray-200';
+
 </script>
 
 <template>
@@ -151,7 +155,7 @@
                 <div
                     class="flex flex-col w-[70px] min-w-[70px] items-center border-r border-slate-200/50 dark:border-slate-700/50 pt-4 pb-2.5 h-full z-10 bg-gradient-to-b from-white/80 to-slate-100/50 dark:from-slate-800/80 dark:to-slate-900/50"
                 >
-                    <div class="mb-8 flex h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 text-white shadow-sm dark:from-blue-800 dark:to-indigo-800 "
+                    <div class="mb-6 flex h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 text-white shadow-sm dark:from-blue-800 dark:to-indigo-800 "
                     >
                         <Link :href="route('dashboard')" class="text-center">
                             <template v-if="store.theme === 'light' || store.theme === 'system'">
@@ -177,61 +181,65 @@
                                 <div class="w-full flex flex-col gap-3 items-center py-3">
                                     <template v-for="menu in menuData">
                                         <template v-if="menu.route == null">
-                                            <button
-                                                v-can="menu.permissions"
-                                                v-tippy="{
-                                                    content: menu.text,
-                                                    placement: 'right',
-                                                    theme: 'custom-tooltip'
-                                                }"
-                                                @click="handleModuleClick(menu)"
-                                                class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                                                :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
-                                            >
-                                                <font-awesome-icon
-                                                    :icon="menu.icom"
-                                                    :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
-                                                />
-                                                <!-- Badge indicador activo -->
-                                                <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
-                                            </button>
+                                            <Tooltip :color="colorTooltip" placement="right">
+                                                <template #title>
+                                                    <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
+                                                </template>
+                                                <button
+                                                    v-can="menu.permissions"
+                                                    @click="handleModuleClick(menu)"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
+                                                    :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                                                >
+                                                    <font-awesome-icon
+                                                        :icon="menu.icom"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                    />
+                                                    <!-- Badge indicador activo -->
+                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
+                                                </button>
+                                            </Tooltip>
                                         </template>
                                          <template v-else-if="menu.route == 'module'">
-                                            <button
-                                                v-can="menu.permissions"
-                                                v-tippy="{
-                                                    content: menu.text,
-                                                    placement: 'right',
-                                                    theme: 'custom-tooltip'
-                                                }"
-                                                @click="handleModuleClick(menu)"
-                                                class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                                                :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
-                                            >
-                                                <font-awesome-icon
-                                                    :icon="menu.icom"
-                                                    :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
-                                                />
-                                                <!-- Badge indicador activo -->
-                                                <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
-                                            </button>
+                                            <Tooltip :color="colorTooltip" placement="right">
+                                                <template #title>
+                                                    <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
+                                                </template>
+                                                <button
+                                                    v-can="menu.permissions"
+                                                    @click="handleModuleClick(menu)"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
+                                                    :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                                                >
+                                                    <font-awesome-icon
+                                                        :icon="menu.icom"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                    />
+                                                    <!-- Badge indicador activo -->
+                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
+                                                </button>
+                                            </Tooltip>
                                         </template>
                                         <template v-else>
-                                            <Link
-                                                v-can="menu.permissions"
-                                                :href="menu.route"
-                                                v-tippy="{content: menu.text, placement: 'right'}"
-                                                @click="handleModuleClick(menu)"
-                                                class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                                                :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
-                                            >
-                                                <font-awesome-icon
-                                                    :icon="menu.icom"
-                                                    :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
-                                                />
-                                                <!-- Badge indicador activo -->
-                                                <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
-                                            </Link>
+                                            <Tooltip :color="colorTooltip" placement="right">
+                                                <template #title>
+                                                    <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
+                                                </template>
+                                                <Link
+                                                    v-can="menu.permissions"
+                                                    :href="menu.route"
+                                                    @click="handleModuleClick(menu)"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
+                                                    :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                                                >
+                                                    <font-awesome-icon
+                                                        :icon="menu.icom"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                    />
+                                                    <!-- Badge indicador activo -->
+                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
+                                                </Link>
+                                            </Tooltip>
                                         </template>
                                     </template>
                                 </div>
@@ -409,30 +417,4 @@
     background: rgba(71, 85, 105, 0.5);
 }
 
-/* Estilos personalizados para tooltips */
-:deep(.tippy-box[data-theme~='custom-tooltip']) {
-    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-    color: white;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 500;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-:deep(.tippy-box[data-theme~='custom-tooltip'] .tippy-arrow::before) {
-    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-:deep(.tippy-box[data-theme~='custom-tooltip'][data-placement^='top'] > .tippy-arrow::before) {
-    border-top-color: #3b82f6;
-    border-width: 8px 8px 0;
-}
-
-:deep(.tippy-box[data-theme~='custom-tooltip'][data-placement^='bottom'] > .tippy-arrow::before) {
-    border-bottom-color: #6366f1;
-    border-width: 0 8px 8px;
-}
 </style>

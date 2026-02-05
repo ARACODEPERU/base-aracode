@@ -1319,7 +1319,7 @@ class AcaStudentController extends Controller
         // Vence en 6 días (específico para tu ejemplo, puedes ajustar el rango)
         // Esto sería entre el inicio del día +2 y el final del día +6
         $dayTwoStart = Carbon::now()->addDays(2)->startOfDay();
-        $daySixEnd = Carbon::now()->addDays(6)->endOfDay();
+        $daySixEnd = Carbon::now()->addDays(15)->endOfDay();
         $expiringInSixDays = AcaStudentSubscription::with('student.person')
             ->whereBetween('date_end', [$dayTwoStart, $daySixEnd])
             ->where('status', true)
@@ -1330,6 +1330,7 @@ class AcaStudentController extends Controller
                 $subscription->number_days = $daysRemaining;
                 $subscription->expiration_message = "Termina en {$daysRemaining} días";
             });
+
         $allSubscriptions = $allSubscriptions->concat($expiringInSixDays);
 
 

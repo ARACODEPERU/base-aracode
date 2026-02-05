@@ -5,13 +5,14 @@ import {
     faEnvelopesBulk ,
     faBuildingUser,
     faPersonCircleQuestion,
-    faBookBookmark
+    faBookBookmark,
+    faHeadset
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuCRM = {
     status: false,
     text: "Gestión de Clientes y Comunicación",
-    icom: faGear,
+    icom: faHeadset,
     route: 'module',
     permissions: "crm_dashboard",
     items: [

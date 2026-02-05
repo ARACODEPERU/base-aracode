@@ -1,13 +1,13 @@
 import {
     faCube,
     faGlobe,
-    faCircleDollarToSlot
+    faBagShopping
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuOnlineshop = {
     status: false,
     text: 'Comercio Online',
-    icom: faGlobe,
+    icom: faBagShopping,
     route: 'module',
     permissions: 'onli_dashboard',
     items: [

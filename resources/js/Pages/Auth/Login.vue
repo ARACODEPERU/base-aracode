@@ -42,7 +42,10 @@
 
     const submit = () => {
         form.post(route('login'), {
-            onFinish: () => form.reset('password'),
+            onFinish: () => {
+                form.reset('password');
+                store.clearSidebar();
+            },
         });
     }
 </script>

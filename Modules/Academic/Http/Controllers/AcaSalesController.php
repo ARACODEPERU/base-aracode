@@ -284,20 +284,30 @@ class AcaSalesController extends Controller
                         $classEntity = AcaCourse::class;
                         AcaCapRegistration::where('id', $originId)->update([
                             'sale_note_id' => $sale->id,
-                            'document_id' => $document->id
+                            'document_id' => $document->id,
+                            'advancement' => round($unit_price * $produc['quantity'], 2)
                         ]);
                     } else if ($produc['mode'] == 4) {
                         $classEntity = AcaSubscriptionType::class;
+
                         AcaStudentSubscription::where('student_id', $student_id)
                             ->where('subscription_id', $product_id)
                             ->update([
-                                'xdocument_id' => $document->id
+                                'xdocument_id' => $document->id,
+                                'advancement' => round($unit_price * $produc['quantity'], 2)
                             ]);
 
                             if($originId){
                                 AcaSubscriptionPayment::where('id', $originId)->update([
                                     'document_id' => $document->id
                                 ]);
+                            }else{
+                                AcaSubscriptionPayment::where('student_id', $student_id)
+                                    ->where('subscription_id', $product_id)
+                                    ->whereNull('document_id')
+                                    ->update([
+                                        'document_id' => $document->id
+                                    ]);
                             }
                     }
 

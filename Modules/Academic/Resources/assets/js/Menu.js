@@ -8,13 +8,14 @@ import {
     faCertificate,
     faPlay,
     faMugHot,
-    faChartLine
+    faChartLine,
+    faGraduationCap
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
     status: false,
     text: "Académico",
-    icom: faBook,
+    icom: faGraduationCap,
     route: 'module',
     permissions: "aca_dashboard",
     items: [
