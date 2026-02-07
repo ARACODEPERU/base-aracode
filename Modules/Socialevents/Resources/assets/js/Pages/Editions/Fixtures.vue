@@ -41,17 +41,21 @@
 </script>
 <template>
     <AppLayout title="Ediciones">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('even_ediciones_listado')" class="text-primary hover:underline">Ediciones</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>{{ edition.name }}</span>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Control de Partidos</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {
+                    route: route('even_ediciones_listado'), title: 'Ediciones',
+                    children: [
+                        { route: route('even_ediciones_equipos', edition.id), title: 'Equipos', permissions: 'even_ediciones_equipos'},
+                        { route: route('even_ediciones_fixtures', edition.id), title: 'Partidos', permissions: 'even_ediciones_fixtures'},
+                        { route: route('even_ediciones_pago_sanciones', edition.id), title: 'Sanciones', permissions: 'even_ediciones_sanciones'},
+                        { route: route('even_ediciones_actas_listado', edition.id), title: 'Actas', permissions: 'even_ediciones_actas'},
+                    ]
+                },
+                {route: route('even_ediciones_editar', edition.id), title: edition.name},
+                {title: 'Control de Partidos'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="w-full">

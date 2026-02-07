@@ -27,11 +27,11 @@
 
 <template>
     <AppLayout title="Certificados">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Certificados</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Certificados'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Certificados</h2>
@@ -106,7 +106,7 @@
                         <Pagination :data="certificates" />
                     </ConfigProvider>
                 </div>
-                    
+
             </div>
         </div>
     </AppLayout>

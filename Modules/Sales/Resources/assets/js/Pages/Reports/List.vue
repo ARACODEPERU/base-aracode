@@ -4,7 +4,7 @@ import { Link } from '@inertiajs/vue3';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
 const reportsData = [
- 
+
     {
         title: 'Ventas',
         items: [
@@ -27,18 +27,18 @@ const reportsData = [
     //         { url: route('sales_report_dates'), label: 'Exportar registro  de ventas por periodo y formato'}
     //     ]
     // }
-  
+
 ];
 
 </script>
 
 <template>
     <AppLayout title="Reportes">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reportes</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {title: 'Reportes'},
+            ]"
+        />
         <div class="mt-5">
                 <div class="grid sm:grid-cols-3 justify-items-center gap-6" >
                     <template v-for="(row, key) in reportsData">

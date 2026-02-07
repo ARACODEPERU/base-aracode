@@ -70,11 +70,11 @@
 </script>
 <template>
     <AppLayout title="Equipos">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Equipos</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {route: title: 'Equipos'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="grid grid-cols-3 w-full">

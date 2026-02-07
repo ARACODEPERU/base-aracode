@@ -390,11 +390,11 @@
 
 <template>
     <AppLayout title="Documentos">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Facturación Electrónica'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Lista de Documentos </span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Facturación Electrónica'"
+            :data="[
+                {title: 'Lista de Documentos'}
+            ]"
+        />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Lista de Documentos </h2>

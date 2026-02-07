@@ -26,14 +26,14 @@
 
 <template>
     <AppLayout title="Ediciones">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('even_ediciones_listado')" class="text-primary hover:underline">Ediciones</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Nuevo</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {
+                    route: route('even_ediciones_listado'), title: 'Ediciones'
+                },
+                {title: 'Nuevo'}
+            ]"
+        />
         <div class="mt-6 w-full">
             <CreateForm
                 :eventos="eventos"

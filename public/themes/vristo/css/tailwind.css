@@ -136,9 +136,9 @@
     .sidebar .nav-item button div:first-child svg {
         @apply h-5 w-5 text-black/50 dark:text-white/50;
     }
-
+    /* sidebar aca */
     .main-container .main-content {
-        @apply transition-all duration-300 lg:ltr:ml-[260px] lg:rtl:mr-[260px];
+        @apply transition-all duration-300 lg:ltr:ml-[300px] lg:rtl:mr-[300px];
     }
 
     /* Horizontal layouts */
@@ -151,11 +151,12 @@
     .horizontal .main-container .main-content {
         @apply ltr:ml-0 rtl:mr-0;
     }
+    /* sidebar aca */
     .horizontal .sidebar {
-        @apply ltr:-left-[260px] rtl:-right-[260px];
+        @apply ltr:-left-[300px] rtl:-right-[300px];
     }
     .horizontal.toggle-sidebar .sidebar {
-        @apply ltr:left-0 rtl:right-0 lg:ltr:-left-[260px] lg:rtl:-right-[260px];
+        @apply ltr:left-0 rtl:right-0 lg:ltr:-left-[300px] lg:rtl:-right-[300px];
     }
 
     .horizontal .nav-item a div:first-child svg {

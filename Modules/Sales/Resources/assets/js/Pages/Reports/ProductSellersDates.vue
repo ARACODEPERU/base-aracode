@@ -82,14 +82,12 @@ const showMessage = (msg = '', type = 'success') => {
 </script>
 <template>
     <AppLayout title="Reportes">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('reports')" class="text-primary hover:underline">Reportes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reporte de productos por vendedores y fechas</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {route: route('reports'), title: 'Reportes'},
+                {title: 'Reporte de productos por vendedores y fechas'}
+            ]"
+        />
         <div class="mt-5">
             <div class="panel p-0">
                 <div class="w-full p-5">
@@ -114,11 +112,11 @@ const showMessage = (msg = '', type = 'success') => {
                             </SuccessButton>
                         </div>
                         <div class="col-span-6 sm:col-span-2 text-right">
-                            
+
                             <Keypad>
                                 <template #botones>
                                     <Link :href="route('reports')" class="btn btn-info text-xs uppercase">Ir al Listado</Link>
-                                    
+
                                 </template>
                             </Keypad>
                         </div>

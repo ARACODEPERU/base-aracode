@@ -3,11 +3,7 @@
     import { ref } from 'vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import { Link, useForm, router } from '@inertiajs/vue3';
-    import { faFolderOpen, faNoteSticky, faLink, faVideo, faThumbsUp, faThumbsDown } from "@fortawesome/free-solid-svg-icons";
-    import IconSend from '@/Components/vristo/icon/icon-send.vue';
-
-    import iconFile from "@/Components/vristo/icon/icon-file.vue";
-    import iconVideo from "@/Components/vristo/icon/icon-video.vue";
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
 
     const props = defineProps({
@@ -29,17 +25,12 @@
 
 <template>
     <AppLayout :title="course.course.description">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_mycourses')" class="text-primary hover:underline">Cursos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>{{ course.course.description }}</span>
-            </li>
-        </ul>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('course.course.description'), title: 'Cursos'},
+                {title: course.course.description}
+            ]"
+        />
         <div class="pt-5 space-y-8 relative">
             <!-- Header Moderno del Curso -->
             <div class="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl p-6 text-center shadow-xl border border-gray-100 dark:border-gray-700">

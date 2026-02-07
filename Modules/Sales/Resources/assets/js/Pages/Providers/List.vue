@@ -30,11 +30,11 @@
 
 <template>
     <AppLayout title="Proveedores">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Proveedores</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('purchases_dashboard')" :titleModule="'Compras'"
+            :data="[
+                {title: 'Proveedores'}
+            ]"
+        />
         <div class="mt-5">
             <div class="panel p-0">
                 <div class="w-full p-4">
@@ -132,7 +132,7 @@
                         </tbody>
                     </table>
                     <Pagination :data="providers" />
-                    
+
                 </div>
             </div>
         </div>

@@ -33,7 +33,7 @@ const getTotals = () => {
     if (form.start && form.end && form.start > form.end) {
         showMessage('La fecha de inicio no puede ser mayor a la fecha de término');
     } else {
-        
+
         axios.post(route('data_payment_method_totals'), form ).then((res) => {
             if(Object.entries(res).length > 0){
                 formData.payments   = res.data.payments;
@@ -63,20 +63,17 @@ const showMessage = (msg = '', type = 'success') => {
 </script>
 <template>
     <AppLayout title="Reporte">
-
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('reports')" class="text-primary hover:underline">Reportes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reporte Totales de método de pago</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {route: route('reports'), title: 'Reportes'},
+                {title: 'Reporte Totales de método de pago'}
+            ]"
+        />
         <div class="mt-5">
             <div class="grid grid-cols-6 items-center gap-4">
                 <div class="col-span-6 sm:col-span-2">
                     <select @change="getTotals()" v-model="form.local_id" id="stablishment" class="form-select">
-                        <option value="0">Seleccionar Tienda</option> 
+                        <option value="0">Seleccionar Tienda</option>
                         <template v-for="(establishment, index) in props.locals" :key="index">
                             <option :value="establishment.id">{{ establishment.description }}</option>
                         </template>
@@ -106,7 +103,7 @@ const showMessage = (msg = '', type = 'success') => {
                     </Keypad>
                 </div>
             </div>
-            
+
             <div class="mt-5">
                 <div class="grid grid-cols-3 gap-4">
                     <div v-for="item in formData.payments" class="panel h-full">
@@ -124,7 +121,7 @@ const showMessage = (msg = '', type = 'success') => {
                     </div>
                 </div>
             </div>
-            
+
         </div>
     </AppLayout>
 </template>

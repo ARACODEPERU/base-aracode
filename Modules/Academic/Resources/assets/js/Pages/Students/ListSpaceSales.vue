@@ -2,17 +2,9 @@
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     import { useForm } from '@inertiajs/vue3';
     import { faGears } from "@fortawesome/free-solid-svg-icons";
-    import Pagination from '@/Components/Pagination.vue';
-    import Keypad from '@/Components/Keypad.vue';
-    import GreenButton from '@/Components/GreenButton.vue';
-    import PrimaryButton from '@/Components/PrimaryButton.vue';
     import { ref, onMounted } from 'vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import ModalLargeXX from '@/Components/ModalLargeXX.vue';
-    import InputLabel from '@/Components/InputLabel.vue';
-    import TextInput from '@/Components/TextInput.vue';
-    import InputError from '@/Components/InputError.vue';
-    import DangerButton from '@/Components/DangerButton.vue';
     import Swal from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
 
@@ -407,17 +399,13 @@
 
 <template>
     <AppLayout title="Documentos">
-        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_students_list')" class="text-primary hover:underline">Estudiantes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_students_edit', student.id)"  class="text-primary hover:underline">{{ student.person.full_name }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Cuotas pendientes especiales</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_students_list'), title: 'Estudiantes'},
+                {route: route('aca_students_edit', student.id), title: student.person.full_name},
+                {title: 'Cuotas pendientes especiales'}
+            ]"
+        />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Cuotas pendientes especiales</h2>

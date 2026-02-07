@@ -35,7 +35,7 @@ use Modules\Academic\Jobs\ExportStudentsExcel;
 
 Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('academic')->group(function () {
     Route::middleware(['middleware' => 'permission:aca_dashboard'])
-        ->get('dashboard', 'AcademicController@index')
+        ->get('dashboard', [AcademicController::class, 'index'])
         ->name('aca_dashboard');
 
     Route::middleware(['middleware' => 'permission:aca_institucion_listado'])

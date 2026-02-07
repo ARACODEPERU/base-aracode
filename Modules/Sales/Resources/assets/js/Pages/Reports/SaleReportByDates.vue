@@ -61,16 +61,16 @@ function calculateTotals() {
         totalPrice.value += parseFloat(
             JSON.parse(sale.sale_product).price || JSON.parse(sale.sale_product).unit_price || 0
         );
-        
+
         totalQuantity.value   = totalQuantity.value + parseFloat(JSON.parse(sale.sale_product).quantity);
         totalDiscount.value   = totalDiscount.value + parseFloat(JSON.parse(sale.sale_product).discount);
         //totalFinal.value      = totalFinal.value + (parseFloat(JSON.parse(sale.sale_product).price)*parseFloat(JSON.parse(sale.sale_product).quantity))-parseFloat(JSON.parse(sale.sale_product).discount);
         totalFinal.value += (parseFloat(JSON.parse(sale.sale_product).price || JSON.parse(sale.sale_product).unit_price || 0) *
-            parseFloat(JSON.parse(sale.sale_product).quantity || 1)) - 
+            parseFloat(JSON.parse(sale.sale_product).quantity || 1)) -
             parseFloat(JSON.parse(sale.sale_product).discount || 0);
-    
+
     });
-    
+
 }
 
 
@@ -172,14 +172,12 @@ const urlBaseI = assetUrl;
 
 <template>
     <AppLayout title="Reportes de Ventas">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('reports')" class="text-primary hover:underline">Reportes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reporte de ventas entre fechas(por locales)</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {route: route('reports'), title: 'Reportes'},
+                {title: 'Reporte de ventas entre fechas(por locales)'}
+            ]"
+        />
         <div class="mt-5">
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">
@@ -257,7 +255,7 @@ const urlBaseI = assetUrl;
                                     <th >
                                         Descuento
                                     </th>
-                                    
+
                                     <th >
                                         Total
                                     </th>
@@ -272,7 +270,7 @@ const urlBaseI = assetUrl;
                                         {{ sale.local_description }}
                                     </td>
                                     <td>
-                                        <div class="flex"> 
+                                        <div class="flex">
                                             <img v-if="sale.image=='img/imagen-no-disponible.jpg'"
                                                 :src="urlBaseI+sale.image"
                                                 class="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover"
@@ -290,10 +288,10 @@ const urlBaseI = assetUrl;
                                                 <span class="text-primary block text-xs">PT: {{ JSON.parse(sale.sale_product).size }}</span>
                                             </p>
                                         </div>
-                                        
+
                                     </td>
                                     <td >
-                                        <div v-for="pay in JSON.parse(sale.payments)"> 
+                                        <div v-for="pay in JSON.parse(sale.payments)">
                                             <ul class="">
                                                 <li>
                                                     <span v-for="mto in form.payments">
@@ -316,7 +314,7 @@ const urlBaseI = assetUrl;
                                     <td >
                                         {{ JSON.parse(sale.sale_product).discount }}
                                     </td>
-                                    
+
                                     <td >
                                         {{ sale.product_total }}
                                     </td>

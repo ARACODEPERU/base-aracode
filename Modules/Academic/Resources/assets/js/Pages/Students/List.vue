@@ -287,11 +287,11 @@
 
 <template>
     <AppLayout title="Estudiantes">
-        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Estudiantes</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Estudiantes'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Estudiantes</h2>

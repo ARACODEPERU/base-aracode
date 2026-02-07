@@ -39,17 +39,13 @@ const props = defineProps({
 
 <template>
     <AppLayout title="Crear Estudiante">
-        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_students_list')" class="text-primary hover:underline">Estudiantes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>{{ student.full_name }}</span>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Editar</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_students_list'), title: 'Estudiantes'},
+                {route: route('aca_students_edit', student.id), title: student.full_name},
+                {title: 'Nuevo'}
+            ]"
+        />
         <div class="pt-5">
             <EditForm
                 :student="student"

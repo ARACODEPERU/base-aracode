@@ -8,17 +8,15 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
 <template>
     <AppLayout title="Crear Marca">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('sale_brands_product_list')">Marcas</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Nuevo</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {route:route('sale_brands_product_list'), title: 'Marcas'},
+                {title: 'Nuevo'}
+            ]"
+        />
         <div class="mt-5">
 
-            <CreateForm /> 
+            <CreateForm />
         </div>
     </AppLayout>
 </template>

@@ -7,12 +7,12 @@
     import Swal2 from "sweetalert2";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
-    import { 
+    import {
       ConfigProvider, Image,
       Tooltip
     } from 'ant-design-vue';
     import esES from 'ant-design-vue/es/locale/es_ES';
-    
+
     const props = defineProps({
         categories: {
             type: Object,
@@ -59,11 +59,11 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('sale_category_product_list'), { 
+                router.visit(route('sale_category_product_list'), {
                   replace: false,
                   preserveState: true,
                   preserveScroll: true,
-                  method: 'get' 
+                  method: 'get'
                 });
             }
         });
@@ -74,14 +74,14 @@
 <template>
     <AppLayout title="Categorías">
         <ConfigProvider :locale="esES">
-            <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                    <span>Categorías</span>
-                </li>
-            </Navigation>
+            <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+                :data="[
+                    {title: 'Categorías'}
+                ]"
+            />
             <div class="mt-5">
-                
-                
+
+
                 <!-- ====== Table Section Start -->
                 <div class="flex flex-col gap-10">
                     <!-- ====== Table One Start -->
@@ -136,7 +136,7 @@
                                                     <Link v-can="'sale_categorias_editar'" :href="route('sale_category_product_edit',item.id)" class="btn btn-sm btn-outline-primary">
                                                         <font-awesome-icon :icon="faPencilAlt" />
                                                     </Link>
-                                                                    
+
                                                     <button v-can="'sale_categorias_eliminar'" @click="destroyCategory(item.id)" type="button" class="btn btn-sm btn-outline-danger">
                                                         <font-awesome-icon :icon="faTrashAlt" />
                                                     </button>
@@ -147,7 +147,7 @@
                                             </td>
                                             <td >
                                                 <span v-if="item.category && item.category.category">{{ item.category.category.description  }} / </span><span v-if="item.category">{{ item.category.description  }} / </span><span>{{ item.description }}</span>
-                                                
+
                                             </td>
                                             <td class="text-center">
                                                 <span v-if="item.status" class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-blue-400 border border-blue-400">Activo</span>

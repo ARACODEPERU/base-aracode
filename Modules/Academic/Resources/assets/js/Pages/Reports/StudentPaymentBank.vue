@@ -80,14 +80,12 @@
 </script>
 <template>
     <AppLayout title="Reportes">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Academic'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('aca_reports_dashboard')" class="text-primary hover:underline">Reportes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reporte de pagos de alumnos por banco</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_reports_dashboard'), title: 'Reportes'},
+                {title: 'Reporte de pagos de alumnos por banco'}
+            ]"
+        />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Filtros de Búsqueda</h2>

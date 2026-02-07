@@ -185,11 +185,11 @@
 </script>
 <template>
     <AppLayout title="Resumen">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Facturación Electrónica'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Comunicacion de Baja </span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Facturación Electrónica'"
+            :data="[
+                {title: 'Comunicacion de Baja'}
+            ]"
+        />
         <div class="mt-5 space-y-8">
             <div class="relative flex items-center border p-3.5 rounded text-success bg-success-light border-success ltr:border-l-[64px] rtl:border-r-[64px] dark:bg-success-dark-light">
                 <span class="absolute ltr:-left-11 rtl:-right-11 inset-y-0 text-white w-6 h-6 m-auto">

@@ -22,11 +22,10 @@
 
     // Estado para manejar la URL actual y restaurar estados
     const currentPath = ref('');
-    const pageKey = ref('');
 
     // Estado para controlar qué módulo está activo
     const activeModule = ref('Dashboard'); // Por defecto el módulo edit está activo
-
+    const optionsDefault = menuData.value[0] ?? [];
     // Estado para almacenar las opciones del módulo activo
     const moduleSelected = ref([]);
 
@@ -95,7 +94,6 @@
             try {
                 expandedSections.value = JSON.parse(savedExpandedSections);
             } catch (e) {
-                console.warn('Error parsing expandedSections:', e);
                 expandedSections.value = {};
             }
         } else {
@@ -109,6 +107,8 @@
             } catch (e) {
                 //console.warn('Error parsing moduleSelected from localStorage:', e);
             }
+        } else {
+            moduleSelected.value = optionsDefault;
         }
 
         // Restaurar opciones activas desde localStorage PRIMERO
@@ -129,7 +129,6 @@
     watch(() => page.props.auth, (newAuth, oldAuth) => {
         // Si el usuario cambió o se desautenticó
         if (!newAuth?.user || newAuth?.user !== oldAuth?.user) {
-            console.log('🚪 Usuario desautenticado, limpiando estado del sidebar');
             clearSidebarState();
         }
     }, { deep: true });
@@ -145,17 +144,17 @@
 </script>
 
 <template>
-    <div :class="{ 'dark text-white-dark': store.semidark }">
+    <div :class="{ 'dark': store.semidark || store.theme === 'dark' }">
         <nav
-            class="sidebar fixed min-h-screen h-full top-0 bottom-0 shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] z-50 transition-all duration-300"
-            :class="isCollapsed ? 'w-[70px]' : 'w-[260px]'"
+            class="sidebar fixed min-h-screen h-full top-0 bottom-0 shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] dark:shadow-[5px_0_25px_0_rgba(0,0,0,0.3)] z-50 transition-all duration-300"
+            :class="isCollapsed ? 'w-[70px]' : 'w-[300px]'"
         >
-            <div id="divSiempreVisible" class="bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 h-full flex overflow-hidden">
+            <div id="divSiempreVisible" class="bg-white dark:bg-slate-800 h-full flex overflow-hidden">
                 <!-- BOTONES MODULOS -->
                 <div
-                    class="flex flex-col w-[70px] min-w-[70px] items-center border-r border-slate-200/50 dark:border-slate-700/50 pt-4 pb-2.5 h-full z-10 bg-gradient-to-b from-white/80 to-slate-100/50 dark:from-slate-800/80 dark:to-slate-900/50"
+                    class="flex flex-col w-[70px] min-w-[70px] items-center bg-blue-50 dark:bg-slate-700 border-r border-slate-200/50 dark:border-slate-600/50 pt-4 pb-2.5 h-full z-10"
                 >
-                    <div class="mb-6 flex h-10 w-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 text-white shadow-sm dark:from-blue-800 dark:to-indigo-800 "
+                    <div class="mb-6 flex h-10 w-10 flex items-center justify-center rounded-xl bg-blue-50 text-white shadow-sm dark:bg-blue-700 ">
                     >
                         <Link :href="route('dashboard')" class="text-center">
                             <template v-if="store.theme === 'light' || store.theme === 'system'">
@@ -170,7 +169,7 @@
                     </div>
 
                     <div class="flex-1 overflow-hidden flex flex-col">
-                        <div class="flex-1 overflow-y-auto pb-3 min-w-[70px]">
+                        <div class="flex-1 overflow-y-auto pb-3 min-w-[70px] ">
                             <perfect-scrollbar
                                 :options="{
                                     swipeEasing: true,
@@ -188,15 +187,15 @@
                                                 <button
                                                     v-can="menu.permissions"
                                                     @click="handleModuleClick(menu)"
-                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                                                    :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
+                                                    :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                                                 >
                                                     <font-awesome-icon
                                                         :icon="menu.icom"
-                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
                                                     />
                                                     <!-- Badge indicador activo -->
-                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
+                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
                                                 </button>
                                             </Tooltip>
                                         </template>
@@ -208,15 +207,15 @@
                                                 <button
                                                     v-can="menu.permissions"
                                                     @click="handleModuleClick(menu)"
-                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                                                    :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
+                                                    :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                                                 >
                                                     <font-awesome-icon
                                                         :icon="menu.icom"
-                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
                                                     />
                                                     <!-- Badge indicador activo -->
-                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
+                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
                                                 </button>
                                             </Tooltip>
                                         </template>
@@ -229,15 +228,15 @@
                                                     v-can="menu.permissions"
                                                     :href="menu.route"
                                                     @click="handleModuleClick(menu)"
-                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                                                    :class="activeModule === menu.text ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                                                    class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
+                                                    :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                                                 >
                                                     <font-awesome-icon
                                                         :icon="menu.icom"
-                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
+                                                        :class="activeModule === menu.text ? 'text-white' : 'ri-layout-grid-line text-xl text-slate-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"
                                                     />
                                                     <!-- Badge indicador activo -->
-                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
+                                                    <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
                                                 </Link>
                                             </Tooltip>
                                         </template>
@@ -251,8 +250,8 @@
                         <!-- Settings -->
                         <!-- <button
                             @click="handleModuleClick({text: 'settings', icon: 'ri-settings-3-line'})"
-                            class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                            :class="activeModule === 'settings' ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white hover:from-blue-500 hover:to-indigo-600 hover:shadow-blue-300/50' : ''"
+                            class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
+                            :class="activeModule === 'settings' ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-md' : ''"
                         >
                             <i :class="activeModule === 'settings' ? 'text-white' : 'ri-settings-3-line text-xl text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'"></i>
                             <div v-if="activeModule === 'settings'" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white"></div>
@@ -262,9 +261,9 @@
                         <Link
                             :href="route('profile.edit')"
                             class="group relative w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30"
-                            :class="activeModule === 'profile' ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white hover:from-blue-600 hover:to-indigo-700 hover:shadow-blue-300/50' : ''"
+                            :class="activeModule === 'profile' ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                         >
-                            <div class="h-10 w-10 rounded-full ring-2 ring-blue-200/50 dark:ring-blue-800/50 overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 p-0.5">
+                            <div class="h-10 w-10 rounded-full ring-2 ring-blue-200/50 dark:ring-blue-700/50 overflow-hidden bg-blue-100 dark:bg-blue-800 p-0.5">
                                 <img v-if="$page.props.auth.user.avatar" class="rounded-full" :src="getImage($page.props.auth.user.avatar)" alt="" />
                                 <img v-else :src="`https://ui-avatars.com/api/?name=${$page.props.auth.user.name}&size=150&rounded=true`" class="rounded-full" :alt="$page.props.auth.user.name"/>
                             </div>
@@ -298,19 +297,19 @@
                                 <template v-if="option.items && option.items.length> 0">
                                     <button
                                         @click="handleOptionClick(option.text)"
-                                        class="w-full text-left py-2 px-2 rounded-lg transition-all duration-200 hover:bg-white/10 rounded-lg hover:bg-orange-100"
+                                        class="w-full text-left py-2 px-2 rounded-lg transition-all duration-200 rounded-lg rounded-r-none hover:bg-orange-100 dark:hover:bg-orange-800/40"
                                         :class="{
-                                            'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 text-blue-800 dark:text-blue-200 shadow-md shadow-blue-200/50 dark:shadow-blue-800/30': activeOption === option.text,
-                                            'bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 text-orange-800 dark:text-orange-200 shadow-md shadow-orange-200/50 dark:shadow-orange-800/30': expandedSections[option.text] && activeOption !== option.text
+                                            'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 shadow-md shadow-blue-200/50 dark:shadow-blue-900/40': activeOption === option.text,
+                                            'bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-100 shadow-md shadow-orange-200/50 dark:shadow-orange-900/40': expandedSections[option.text] && activeOption !== option.text
                                         }"
                                     >
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center space-x-3">
-                                                <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 flex items-center justify-center flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-lg bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
                                                     <font-awesome-icon
                                                         v-if="option.icom"
                                                         :icon="option.icom"
-                                                        class="ri-input-method-line text-orange-600 dark:text-orange-400 text-sm"
+                                                        class="ri-input-method-line text-orange-600 dark:text-orange-300 text-sm"
                                                     />
                                                 </div>
                                                 <div class="flex flex-col">
@@ -319,7 +318,7 @@
                                             </div>
                                             <i v-if="option.items && option.items.length > 0"
                                                class="ri-arrow-down-s-line text-slate-500 dark:text-slate-400 text-sm transition-transform flex-shrink-0 mt-1"
-                                               :class="{ 'rotate-180': expandedSections[option.text] }"
+                                               :class="{ 'rotate-180': activeOption === option.text }"
                                             ></i>
                                         </div>
                                     </button>
@@ -328,20 +327,20 @@
                                     <Link
                                         :href="option.route"
                                         @click="handleOptionClick(option.text)"
-                                        class="w-full text-left py-2 px-2 rounded-lg transition-all duration-200 hover:bg-white/10 rounded-lg block hover:bg-orange-100"
+                                        class="w-full text-left py-2 px-2 rounded-lg transition-all duration-200 rounded-lg rounded-r-none block hover:bg-orange-100"
                                         :class="{
-                                            'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 text-blue-800 dark:text-blue-200 shadow-md shadow-blue-200/50 dark:shadow-blue-800/30': activeOption === option.text,
-                                            'bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 text-orange-800 dark:text-orange-200 shadow-md shadow-orange-200/50 dark:shadow-orange-800/30': expandedSections[option.text] && activeOption !== option.text
+                                            'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 shadow-md shadow-blue-200/50 dark:shadow-blue-900/40': activeOption === option.text,
+                                            'bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-100 shadow-md shadow-orange-200/50 dark:shadow-orange-900/40': expandedSections[option.text] && activeOption !== option.text
                                         }"
                                     >
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center space-x-3">
-                                                <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 flex items-center justify-center flex-shrink-0">
+                                                <div class="w-6 h-6 rounded-lg bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
 
                                                     <font-awesome-icon
                                                         v-if="option.icom"
                                                         :icon="option.icom"
-                                                        class="ri-input-method-line text-orange-600 dark:text-orange-400 text-sm"
+                                                        class="ri-input-method-line text-orange-600 dark:text-orange-300 text-sm"
                                                     />
                                                 </div>
                                                 <div class="flex flex-col">
@@ -357,13 +356,13 @@
                                         <template v-for="(subOption, subIndex) in option.items" :key="subIndex">
                                         <Link :href="subOption.route"
                                                 @click="handleSubOptionClick(option.text, subOption.text)"
-                                                class="py-2 px-3 text-sm text-slate-600 dark:text-slate-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-lg transition-all duration-200 cursor-pointer block"
+                                                class="py-2 px-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-800/40 rounded-lg rounded-r-none transition-all duration-200 cursor-pointer block"
                                                 :class="{
-                                                    'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/50 dark:to-indigo-900/50 text-blue-700 dark:text-blue-300 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/30': activeSubOption === subOption.text
+                                                    'bg-blue-50 dark:bg-blue-800 text-blue-700 dark:text-blue-100 shadow-sm shadow-blue-100/50 dark:shadow-blue-900/40': activeSubOption === subOption.text
                                                 }">
                                             <div class="flex items-center space-x-3">
-                                                <div class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 flex-shrink-0 "></div>
-                                                <span class="text-slate-700 dark:text-slate-300 leading-tight break-words">{{ subOption.text }}</span>
+                                                <div class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-600 flex-shrink-0 "></div>
+                                                <span class="text-slate-700 dark:text-slate-200 leading-tight break-words">{{ subOption.text }}</span>
                                             </div>
                                         </Link>
                                         </template>
@@ -382,7 +381,7 @@
                         </perfect-scrollbar>
                     </div>
 
-                    <div class="border-t max-w-[90%] border-slate-200/50 dark:border-slate-700/50 pt-4 mb-4">
+                    <div class="border-t max-w-[90%] border-slate-200/50 dark:border-slate-700/50 pt-4 pl-4 mb-4">
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
                                 <p class="text-xs font-bold text-slate-700 dark:text-slate-300 leading-none">{{ $page.props.auth.user.name }}</p>

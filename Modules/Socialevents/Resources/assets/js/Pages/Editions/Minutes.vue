@@ -11,7 +11,7 @@
     import PdfContainer from '@/Components/PdfContainer.vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue'
-import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
+    import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
 
 
     const props = defineProps({
@@ -261,17 +261,21 @@ import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
 </script>
 <template>
     <AppLayout title="Ediciones">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('even_ediciones_listado')" class="text-primary hover:underline">Ediciones</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('even_ediciones_editar', edicion.id)" class="text-primary hover:underline">{{ edicion.name }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Libro de Actas y Acuerdos</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {
+                    route: route('even_ediciones_listado'), title: 'Ediciones',
+                    children: [
+                        { route: route('even_ediciones_equipos', edicion.id), title: 'Equipos', permissions: 'even_ediciones_equipos'},
+                        { route: route('even_ediciones_fixtures', edicion.id), title: 'Partidos', permissions: 'even_ediciones_fixtures'},
+                        { route: route('even_ediciones_pago_sanciones', edicion.id), title: 'Sanciones', permissions: 'even_ediciones_sanciones'},
+                        { route: route('even_ediciones_actas_listado', edicion.id), title: 'Actas', permissions: 'even_ediciones_actas'}
+                    ]
+                },
+                {route: route('even_ediciones_editar', edicion.id), title: edicion.name},
+                {title: 'Libro de Actas y Acuerdos'}
+            ]"
+        />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl font-semibold text-gray-800">Libro de Actas y Acuerdos</h2>

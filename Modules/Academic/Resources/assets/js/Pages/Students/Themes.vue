@@ -3,7 +3,7 @@
     import { ref } from 'vue';
     import { Link, useForm, router } from '@inertiajs/vue3';
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
-    import IconSquareRotated from '@/Components/vristo/icon/icon-square-rotated.vue';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
     import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
     import IconFilePdf from '@/Components/vristo/icon/icon-file-pdf.vue';
@@ -219,20 +219,13 @@
 </script>
 <template>
     <AppLayout :title="course.description">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_mycourses')" class="text-primary hover:underline">Cursos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_mycourses_lessons',course.id)" class="text-primary hover:underline">{{ course.description }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>{{ module.description }}</span>
-            </li>
-        </ul>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_mycourses'), title: 'Cursos'},
+                {route: route('aca_mycourses_lessons',course.id), title: course.description},
+                {title: module.description}
+            ]"
+        />
         <div class="pt-5 space-y-8 relative">
             <!-- Header Premium del Módulo -->
             <div class="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl p-6 text-center shadow-xl border border-gray-100 dark:border-gray-700">

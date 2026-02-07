@@ -38,14 +38,12 @@ const props = defineProps({
 
 <template>
     <AppLayout title="Eventos">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('even_eventos_list')" class="text-primary hover:underline">Eventos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Editar</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {route: route('even_eventos_list'), title: 'Eventos'},
+                {title: 'Editar'}
+            ]"
+        />
         <div class="max-w-screen-2xl  mx-auto p-4 md:p-6 2xl:p-10">
             <EditForm
                 :tiny_api_key="tiny_api_key"

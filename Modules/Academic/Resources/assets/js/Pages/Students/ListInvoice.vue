@@ -452,17 +452,13 @@
 
 <template>
     <AppLayout title="Documentos">
-        <Navigation :routeModule="route('crm_dashboard')" :titleModule="'Academico'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_students_list')" class="text-primary hover:underline">Estudiantes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_students_edit', student.id)"  class="text-primary hover:underline">{{ student.person.full_name }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Lista de Comprobantes</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_students_list'), title: 'Estudiantes'},
+                {route: route('aca_students_edit', student.id), title: student.person.full_name},
+                {title: 'Lista de Comprobantes'}
+            ]"
+        />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Lista de Comprobantes</h2>

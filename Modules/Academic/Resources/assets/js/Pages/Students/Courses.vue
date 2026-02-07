@@ -6,7 +6,7 @@
     import { useAppStore } from '@/stores/index';
     import Swal from "sweetalert2";
     import shortVideos from "../../Components/shortVideos.vue";
-    import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
     const page = usePage();
     const store = useAppStore();
@@ -159,14 +159,11 @@
 
 <template>
     <AppLayout title="Mis Cursos">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Cursos Disponibles</span>
-            </li>
-        </ul>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Cursos Disponibles'}
+            ]"
+        />
         <div class="pt-5">
             <div class="grid gap-6"
                 :class="P000019 == true ? 'grid-cols-6' : ''"

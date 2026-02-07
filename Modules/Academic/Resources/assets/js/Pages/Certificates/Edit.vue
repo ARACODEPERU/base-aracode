@@ -20,17 +20,15 @@
 
 <template>
     <AppLayout title="Certificados">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_certificate_list')" class="text-primary hover:underline">Certificados</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>{{ certificate.name_certificate }}</span>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Editar</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {
+                    route: route('aca_certificate_list'),
+                    title: 'Certificados',
+                },
+                {title: 'Editar'}
+            ]"
+        />
         <div class="pt-5">
             <EditForm :certificate="certificate" />
         </div>

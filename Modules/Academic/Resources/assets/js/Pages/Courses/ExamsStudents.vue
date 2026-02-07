@@ -183,11 +183,11 @@
 </script>
 <template>
     <AppLayout title="Examenes">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Lista de Alumnos </span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Lista de Alumnos'}
+            ]"
+        />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl" style="width: 30%;">Lista de Alumnos </h2>

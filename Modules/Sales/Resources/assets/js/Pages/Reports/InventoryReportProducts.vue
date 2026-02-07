@@ -36,14 +36,12 @@ onMounted(() => {
 
 <template>
     <AppLayout title="Reportes">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('reports')" class="text-primary hover:underline">Reportes</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reporte de todos los productos(todos los locales)</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {route: route('reports'), title: 'Reportes'},
+                {title: 'Reporte de todos los productos(todos los locales)'}
+            ]"
+        />
         <div class="mt-5">
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">
@@ -88,7 +86,7 @@ onMounted(() => {
                                 <template v-for="(product, index) in productsData">
                                     <tr>
                                         <td class="max-w-[300px]">
-                                            <div class="flex"> 
+                                            <div class="flex">
                                                 <img
                                                     :src="product.image"
                                                     class="w-8 h-8 rounded-md ltr:mr-3 rtl:ml-3 object-cover"
@@ -111,7 +109,7 @@ onMounted(() => {
                                         <td class="text-right">
                                             {{ product.total_sold ? parseInt(product.total_sold) : 0 }}
                                             <div class="w-full h-4 bg-[#ebedf2] dark:bg-dark/40 rounded-full">
-                                                <div :style="`width: ${(product.total_sold / product.stock) * 100}%`" 
+                                                <div :style="`width: ${(product.total_sold / product.stock) * 100}%`"
                                                     class="h-4 rounded-full text-center text-white text-xs"
                                                     :class="((product.total_sold / product.stock) * 100).toFixed(2) < 60 ? 'bg-primary' : 'bg-danger'"
                                                 >

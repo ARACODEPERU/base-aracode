@@ -27,7 +27,7 @@
     const form = useForm({
         search: props.filters.search,
     });
-    
+
     const printTicket = (id) => {
         //window.location.href = "../pdf/sales/ticket/" + id;
         let url = route('ticketpdf_sales',id)
@@ -46,7 +46,7 @@
     });
 
     const openPrintSaleDay = async () => {
-        
+
         var fecha = new Date(); //Fecha actual
         var mes = fecha.getMonth()+1; //obteniendo mes
         var dia = fecha.getDate(); //obteniendo dia
@@ -90,18 +90,18 @@
                 }).catch(function (error) {
                     console.log(error)
                 });
-            } 
+            }
         });
     }
 </script>
 
 <template>
     <AppLayout title="Ventas">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Punto de Ventas</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {title: 'Punto de Ventas'}
+            ]"
+        />
         <div class="mt-5">
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">
@@ -144,7 +144,7 @@
                                         Acciones
                                     </th>
                                     <th >
-                                        Documento 
+                                        Documento
                                     </th>
                                     <th >
                                         Nmr. Ticket
@@ -197,7 +197,7 @@
                                         </Dropdown>
                                     </td>
                                     <td >
-                                        {{ sale.name_document }}  
+                                        {{ sale.name_document }}
                                     </td>
                                     <td >
                                         {{ sale.serie }}-{{ sale.number }}
@@ -226,7 +226,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        
+
                         </ConfigProvider>
                     </div>
                     <Pagination :data="sales" />
@@ -249,7 +249,7 @@
                <PrimaryButton
                     @click="printSales()"
                     class="mr-2"
-               >Imprimir</PrimaryButton> 
+               >Imprimir</PrimaryButton>
             </template>
         </ModalSmall>
     </AppLayout>

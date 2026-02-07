@@ -194,11 +194,11 @@ const showMessage = (msg = '', type = 'success') => {
 
 <template>
     <AppLayout title="Cajas Chicas">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Caja Chica</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {title: 'Caja Chica'}
+            ]"
+        />
         <div class="mt-5">
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">

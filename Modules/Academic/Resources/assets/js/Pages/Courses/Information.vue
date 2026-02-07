@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import InformationForm from './Partials/InformationForm.vue';
-import { Link } from '@inertiajs/vue3';
+import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import { faCheck, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 
 const props = defineProps({
@@ -31,30 +31,23 @@ const props = defineProps({
 
 <template>
     <AppLayout title="Información">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <Link :href="route('aca_dashboard')" class="text-primary hover:underline">Académico</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_courses_edit',course.id)" class="text-primary hover:underline">{{ course.description }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Información</span>
-            </li>
-        </ul>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_courses_list'), title: 'Cursos'},
+                {route: route('aca_courses_edit',course.id), title: course.description},
+                {title: 'Información'}
+            ]"
+        />
         <div class="pt-5">
-            <InformationForm 
-                :course_teachers="course_teachers" 
-                :teachers="teachers" 
-                :course="course" 
-                :tiny_api_key="tiny_api_key" 
-                :brochure="brochure" 
+            <InformationForm
+                :course_teachers="course_teachers"
+                :teachers="teachers"
+                :course="course"
+                :tiny_api_key="tiny_api_key"
+                :brochure="brochure"
                 :faCheck="faCheck"
-                :faTrashAlt="faTrashAlt" 
-            /> 
+                :faTrashAlt="faTrashAlt"
+            />
         </div>
     </AppLayout>
 </template>

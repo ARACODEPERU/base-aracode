@@ -28,7 +28,7 @@ class EventEditionTeamController extends Controller
             ->orderBy('goals_for', 'desc')        // 3° Más goles marcados
             ->orderBy('matches_won', 'desc')      // 4° Más partidos ganados
             ->get();
-        //dd($currentEquipment);
+
         $edicion = EventEdition::find($id);
 
         return Inertia::render('Socialevents::Editions/Teams', [

@@ -17,11 +17,11 @@ const reportsData = [
 
 <template>
     <AppLayout title="Reportes">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Academic'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Reportes</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Reportes'}
+            ]"
+        />
         <div class="mt-5">
                 <div class="grid sm:grid-cols-3 justify-items-center gap-6" >
                     <template v-for="(row, key) in reportsData">

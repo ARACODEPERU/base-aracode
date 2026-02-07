@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-    import { ref, onMounted } from 'vue';
-    
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
+
     import Swal2 from 'sweetalert2';
     import { faPencil, faTrash } from "@fortawesome/free-solid-svg-icons";
     import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
@@ -92,16 +92,13 @@
 
 <template>
     <AppLayout title="Institución">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Institución</span>
-            </li>
-        </ul>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Institución'}
+            ]"
+        />
         <div class="pt-5">
-            
+
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Institución</h2>
                 <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
@@ -184,10 +181,10 @@
                                         <div class="" >
                                             <template v-if="contact.status">
                                                 <span class="badge bg-success">Activo</span>
-                                            </template> 
+                                            </template>
                                             <template v-else>
                                                 <span class="badge bg-danger">Inactivo</span>
-                                            </template> 
+                                            </template>
                                         </div>
                                     </td>
                                 </tr>
@@ -195,9 +192,9 @@
                         </tbody>
                     </table>
                 </div>
-            
+
             </div>
-        
+
         </div>
     </AppLayout>
 </template>

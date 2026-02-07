@@ -598,7 +598,7 @@
         question_id: null,
         description: null,
         correct: 0,
-        score: 1,
+        score: 0,
         type_answers: null
     });
 
@@ -611,6 +611,7 @@
     const questions = ref([]);
 
     const opemModalConfigExam = (conte) => {
+
         formExam.content_id = conte.id;
         formExam.id = conte.exam ? conte.exam.id : null;
         formExam.status = conte.exam ? conte.exam.status : true;
@@ -650,6 +651,7 @@
             console.log(error);
         }).finally(() => {
             formExam.processing = false;
+            refreshDatos();
         });
     }
     const saveQuestion = () => {
@@ -684,9 +686,10 @@
                 formQuestion.type= 'Escribir';
 
             }).catch(function (error) {
-                console.log(error);
+                //console.log(error);
             }).finally(() => {
                 formQuestion.processing = false;
+                refreshDatos();
             });
         }else{
             showMessage('No existe examen para continuar')
@@ -783,8 +786,6 @@
                         xanswer.correct = result.data.answer.correct;
                     }
                 }else{
-                    console.log(result.data);
-                    console.log('ygg',answersData.value);
                     answersData.value.push(result.data.answer);
                 }
 
@@ -794,12 +795,13 @@
                 formAnswer.correct = 0;
 
             }).catch(function (error) {
-                console.log(error);
+                //console.log(error);
             }).finally(() => {
                 formAnswer.processing = false;
+                refreshDatos();
             });
         }else{
-            showMessage('No existe examen para continuar')
+            showMessage('No existe examen para continuar', 'error')
         }
     }
 
@@ -856,21 +858,50 @@
         formAnswer.score = 1;
         formAnswer.correct = 0;
     }
+
+    const showMessage = (msg = '', type = 'success') => {
+        const toast = Swal2.mixin({
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            timer: 3000,
+            customClass: { container: 'toast' },
+        });
+        toast.fire({
+            icon: type,
+            title: msg,
+            padding: '10px 20px',
+        });
+    };
+
+    const refreshDatos = () => {
+        router.visit(route('aca_courses_module_panel', props.course.id), {
+            method: 'get',
+            replace: true,
+            preserveState: true,
+            preserveScroll: true,
+            only: ['course'],
+        });
+    }
 </script>
 
 <template>
     <AppLayout title="Gestión de Módulos">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_courses_edit', course.id)" class="text-primary hover:underline">{{ course.description }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Modulos</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {
+                    route: route('aca_courses_list'),
+                    title: 'Cursos',
+                    children: [
+                        {route: route('aca_enrolledstudents_list', course.id), title: 'Alumnos', permissions: 'aca_cursos_listado_estudiantes'},
+                        {route: route('aca_courses_information', course.id), title: 'Información'},
+                        {route: route('aca_courses_edit', course.id), title: 'Editar'}
+                    ],
+                },
+                {route: route('aca_courses_edit', course.id), title: course.description},
+                {title: 'Modulos'}
+            ]"
+        />
         <!-- Header Moderno del Curso -->
         <div class="mt-6 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-gray-800 dark:to-gray-700 rounded-lg text-blue-900 dark:text-blue-100 shadow-md">
             <div class="container mx-auto px-6 py-8">

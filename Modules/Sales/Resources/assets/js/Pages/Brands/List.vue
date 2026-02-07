@@ -7,12 +7,12 @@
     import Swal2 from "sweetalert2";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
-    import { 
+    import {
       ConfigProvider, Image,
       Tooltip
     } from 'ant-design-vue';
     import esES from 'ant-design-vue/es/locale/es_ES';
-    
+
     const props = defineProps({
         brands: {
             type: Object,
@@ -60,11 +60,11 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('sale_brands_product_list'), { 
+                router.visit(route('sale_brands_product_list'), {
                   replace: false,
                   preserveState: true,
                   preserveScroll: true,
-                  method: 'get' 
+                  method: 'get'
                 });
             }
         });
@@ -75,11 +75,11 @@
 <template>
     <AppLayout title="Marcas">
         <ConfigProvider :locale="esES">
-            <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                    <span>Marcas</span>
-                </li>
-            </Navigation>
+            <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+                :data="[
+                    {title: 'Marcas'}
+                ]"
+            />
             <div class="mt-5">
                 <!-- ====== Table Section Start -->
                 <div class="flex flex-col gap-10">
@@ -132,11 +132,11 @@
                                         <tr>
                                             <td>
                                                 <div class="flex gap-4 items-center justify-center">
-                                                
+
                                                     <Link v-can="'sale_marcas_editar'" :href="route('sale_brands_product_edit',item.id)" class="btn btn-sm btn-outline-primary">
                                                         <font-awesome-icon :icon="faPencilAlt" />
                                                     </Link>
-                                                                    
+
                                                     <button v-can="'sale_marcas_eliminar'" @click="destroyBrand(item.id)" type="button" class="btn btn-sm btn-outline-danger">
                                                         <font-awesome-icon :icon="faTrashAlt" />
                                                     </button>

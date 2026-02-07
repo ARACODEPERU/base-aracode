@@ -479,11 +479,11 @@
 
 <template>
     <AppLayout title="Resumen">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Cuentas por cobrar'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Gestión Ventas en Cuotas</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Cuentas por cobrar'"
+            :data="[
+                {title: 'Gestión Ventas en Cuotas'}
+            ]"
+        />
         <div class="mt-5">
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">

@@ -188,6 +188,11 @@
                 <span>Eventos</span>
             </li>
         </Navigation>
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {title: 'Eventos'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="grid grid-cols-3 w-full">

@@ -48,14 +48,12 @@
 
 <template>
     <AppLayout title="Crear Curso">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Cuentas por cobrar'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('acco_sales_special_rates')" class="text-primary hover:underline">Gestión Ventas en Cuotas</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Nuevo</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Cuentas por cobrar'"
+            :data="[
+                {route: route('acco_sales_special_rates'), title: 'Gestión Ventas en Cuotas'},
+                {title: 'Nuevo'}
+            ]"
+        />
         <div class="pt-5">
             <div class="panel">
                 <CreateForm

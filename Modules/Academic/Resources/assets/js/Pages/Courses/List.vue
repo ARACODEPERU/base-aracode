@@ -8,7 +8,7 @@
     import { ref, computed } from 'vue';
     import DangerButton from '@/Components/DangerButton.vue';
     import InputError from '@/Components/InputError.vue';
-    import { ConfigProvider, Dropdown,Menu,MenuItem,Button,Card,Tag,Space } from 'ant-design-vue';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
 
@@ -223,14 +223,11 @@
 
 <template>
     <AppLayout title="Cursos">
-        <ul class="flex space-x-2 rtl:space-x-reverse">
-            <li>
-                <a href="javascript:;" class="text-primary hover:underline">Académico</a>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Cursos</span>
-            </li>
-        </ul>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {title: 'Cursos'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="relative">

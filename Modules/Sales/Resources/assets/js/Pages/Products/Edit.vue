@@ -26,15 +26,12 @@
 
 <template>
     <AppLayout title="Editar Producto">
-
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('products.index')" class="text-primary hover:underline">Productos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Editar</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {route: route('products.index'), title: 'Productos'},
+                {title: 'Editar'}
+            ]"
+        />
         <div class="mt-5">
             <EditProductForm
                 :product="product"

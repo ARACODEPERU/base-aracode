@@ -8,6 +8,7 @@
     import { Head } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
     import Sidebar from '@/Components/vristo/layout/Sidebar-New.vue';
+    //import Sidebar from '@/Components/vristo/layout/Sidebar-Old.vue';
     import ChatBox from 'Modules/CRM/Resources/assets/js/Components/ChatBox.vue';
 
     const store = useAppStore();
@@ -28,7 +29,7 @@
         eleanimation.addEventListener('animationend', function () {
             appSetting.changeAnimation('remove');
         });
-        
+
         store.toggleMainLoader();
     });
 

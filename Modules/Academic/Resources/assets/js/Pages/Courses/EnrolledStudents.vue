@@ -304,17 +304,13 @@ watch(() => props.students.data, (newData) => {
 
 <template>
     <AppLayout title="Cursos">
-        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_courses_list')" class="text-primary hover:underline">Cursos</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <Link :href="route('aca_courses_edit', course.id)" class="text-primary hover:underline">{{ course.description }}</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Alumnos</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
+            :data="[
+                {route: route('aca_courses_list'), title: 'Cursos'},
+                {route: route('aca_courses_edit', course.id), title: course.description},
+                {title: 'Alumnos'}
+            ]"
+        />
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Alumnos</h2>

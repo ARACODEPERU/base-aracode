@@ -64,12 +64,12 @@
 
 <template>
     <AppLayout title="Locales">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Locales</span>
-            </li>
-        </Navigation>
-        <div class="pt-5">
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {title: 'Locales'}
+            ]"
+        />
+        <div class="mt-6 w-full">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <div class="grid grid-cols-3 w-full">
                     <div class="col-span-3 sm:col-span-1">

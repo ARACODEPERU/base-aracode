@@ -157,12 +157,11 @@ const getPositionLabel = (position) => {
 </script>
 <template>
     <AppLayout title="Ediciones de Torneos">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Ediciones</span>
-            </li>
-        </Navigation>
-
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+            :data="[
+                {title: 'Ediciones'}
+            ]"
+        />
         <div class="mt-6">
             <!-- Header con búsqueda y botón -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">

@@ -19,7 +19,7 @@
     import '@websitebeaver/vue-magnifier/styles.css'
     import Swal2 from 'sweetalert2';
     import esES from 'ant-design-vue/es/locale/es_ES';
-    import { 
+    import {
       ConfigProvider, Dropdown, Menu, MenuItem, Button, Select, Image
     } from 'ant-design-vue';
     import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
@@ -40,12 +40,12 @@
         },
     })
 
-    
+
     const form = useForm({
         search: props.filters.search,
         displayProduct: props.filters.displayProduct == 'false' ? false : true,
     });
-    
+
     const formDetails = useForm({
         usine: '',
         interne: '',
@@ -142,11 +142,11 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('products.index'), { 
+                router.visit(route('products.index'), {
                   replace: false,
                   preserveState: true,
                   preserveScroll: true,
-                  method: 'get' 
+                  method: 'get'
                 });
             }
         });
@@ -169,7 +169,7 @@
       openModalEntrada.value = true;
     }
 
-    
+
 
     const dataProducts= useForm({
       products: [],
@@ -303,7 +303,7 @@
         }else{
           formReLocate.stock = product.stock;
         }
-        
+
         openModalTraslado.value = true;
     }
 
@@ -356,7 +356,7 @@
         });
 
         displayModalImport.value = false;
-        
+
         try {
           const response = await axios.post(route('import_product_data'), formImport, {
             headers: {
@@ -364,8 +364,8 @@
             },
           });
           formImport.reset()
-          Swal2.fire({ 
-            html: `total de registros: ${response.data.total}` 
+          Swal2.fire({
+            html: `total de registros: ${response.data.total}`
           }).then((result) => {
             if (result.isConfirmed) {
               window.location.href = route('product.index');
@@ -373,7 +373,7 @@
           })
         } catch (error) {
             console.log(error)
-        } 
+        }
       }else{
         formImport.errors.file = 'Seleccionar Archivo';
       }
@@ -397,11 +397,11 @@
 <template>
     <AppLayout title="Productos">
       <ConfigProvider :locale="esES">
-        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Productos</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                {title: 'Productos'}
+            ]"
+        />
         <div class="mt-5">
           <!-- Breadcrumb End -->
 
@@ -457,7 +457,7 @@
                   <tbody>
                     <tr v-for="(product, index) in products.data" :key="product.id" >
                         <td class="text-center">
-                          
+
                             <Dropdown :placement="'bottomLeft'" arrow>
                                 <button class="btn btn-outline-info dropdown-toggle inline-flex px-2 py-2" type="button" @click="toggle">
                                     <font-awesome-icon :icon="faGears" />
@@ -497,7 +497,7 @@
                                 </Menu>
                               </template>
                             </Dropdown>
-                          
+
                         </td>
                         <td v-if="form.displayProduct" class="text-center">
                           <Image
@@ -514,7 +514,7 @@
                     </tr>
                   </tbody>
                 </table>
-                
+
               </div>
               <Pagination :data="products" />
             </div>
@@ -687,7 +687,7 @@
                         id="description"
                         v-model="formInput.description"
                         type="text"
-                       
+
                     />
                     <InputError :message="formInput.errors.description" class="mt-2" />
                   </div>
@@ -820,7 +820,7 @@
                                         v-model="item.size"
                                         type="text"
                                         class="bg-gray-200 block w-full mt-1"
-                                        
+
                                     />
 
                                   </td>
@@ -832,7 +832,7 @@
                                       v-model="item.quantity"
                                       type="number"
                                       class="bg-gray-200 block w-full mt-1"
-                                        
+
                                     />
                                   </td>
                                   <td style="padding-left: 4px;" valign="bottom">
@@ -848,7 +848,7 @@
                           </table>
                       </div>
                   </div>
-                  
+
                   <div v-else class="col-span-3">
                     <table style="width: 100%;">
                       <tr>
@@ -966,7 +966,7 @@
           </template>
           <template #content>
             <div class="flex flex-col">
-              
+
               <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="file_input">Upload file</label>
               <input @input="formImport.file = $event.target.files[0]" accept=".xls, .xlsx"  class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" aria-describedby="file_input_help" id="file_input" type="file">
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">.xlsx.</p>
