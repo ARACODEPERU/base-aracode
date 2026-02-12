@@ -11,7 +11,7 @@
                     <div class="col-md-12 text-center">
                         <div class="subtitle">Somos Aracode Smart Solutions</div>
                         <h1 class="fs-120 text-uppercase fs-sm-12vw mb-4 lh-1">
-                            SOLUCIONES WEBS A MEDIDA CON IA
+                            SOLUCIONES WEB A MEDIDA CON IA
                         </h1>
 
                         <div class="d-block d-md-flex justify-content-center">
