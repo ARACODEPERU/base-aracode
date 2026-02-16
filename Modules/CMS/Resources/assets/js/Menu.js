@@ -62,7 +62,7 @@ const menuCMS = {
         {
             route: route("blog_subscriber"),
             status: false,
-            text: "Suscriptores",
+            text: "Descargas de Brochures",
             permissions: "cms_subscribers_list",
             icom: faPeopleGroup
         },
