@@ -44,7 +44,7 @@ const hasAnyRole = (rolesToCheck) => {
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!--modulo seguridad -->
-                <div v-if="hasAnyRole(['admin', 'webAdmin', 'Administrador'])" class="space-y-6">
+                <div v-if="hasAnyRole(['admin', 'webAdmin', 'Administrador', 'Ventas'])" class="space-y-6">
                     <BirthDays />
                     <StorageIndicator />
                 </div>
@@ -66,7 +66,7 @@ const hasAnyRole = (rolesToCheck) => {
                     </div>
                 </template>
                 <!--modulo academico -->
-                <div v-if="hasAnyRole(['admin', 'webAdmin', 'Administrador'])" class="col-span-3 sm:col-span-2 space-y-6">
+                <div v-if="hasAnyRole(['admin', 'webAdmin', 'Administrador', 'Ventas'])" class="col-span-3 sm:col-span-2 space-y-6">
                     <template v-if="P000009 == 1">
                         <NumberSubscriptionsExpire />
                         <StudentsEnrolledMonth />
