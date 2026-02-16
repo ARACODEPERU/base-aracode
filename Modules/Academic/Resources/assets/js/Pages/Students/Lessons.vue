@@ -27,7 +27,7 @@
     <AppLayout :title="course.course.description">
         <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
             :data="[
-                {route: route('course.course.description'), title: 'Cursos'},
+                {route: route('aca_mycourses'), title: 'Cursos'},
                 {title: course.course.description}
             ]"
         />

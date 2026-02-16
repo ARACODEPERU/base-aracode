@@ -5,14 +5,15 @@
     import Footer from '@/Components/vristo/layout/Footer.vue';
     import Setting from '@/Components/vristo/ThemeCustomizer.vue';
     import appSetting from '@/app-setting';
-    import { Head } from '@inertiajs/vue3';
+    import { Head, usePage } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
-    import Sidebar from '@/Components/vristo/layout/Sidebar-New.vue';
+    import SidebarAdmin from '@/Components/vristo/layout/Sidebar-Admin.vue';
     //import Sidebar from '@/Components/vristo/layout/Sidebar-Old.vue';
+    import SidebarStudent from '@/Components/vristo/layout/Sidebar-Student.vue';
     import ChatBox from 'Modules/CRM/Resources/assets/js/Components/ChatBox.vue';
 
     const store = useAppStore();
-
+    const userData = usePage().props.auth.user;
     const showTopButton = ref(false);
 
 
@@ -43,6 +44,10 @@
     });
 
     const baseURL = assetUrl;
+
+    const hasAnyRole = (rolesToCheck) => {
+        return userData.roles.some(role => rolesToCheck.includes(role.name))
+    }
 </script>
 
 <template>
@@ -106,7 +111,13 @@
 
             <div class="main-container text-black dark:text-white-dark min-h-screen" :class="[store.navbar]">
                 <!--  BEGIN SIDEBAR  -->
-                <Sidebar />
+                <template v-if="hasAnyRole(['Alumno'])">
+                    <SidebarStudent />
+                </template>
+                <template v-else>
+                    <SidebarAdmin />
+                </template>
+
                 <!--  END SIDEBAR  -->
 
                 <div class="main-content flex flex-col min-h-screen">

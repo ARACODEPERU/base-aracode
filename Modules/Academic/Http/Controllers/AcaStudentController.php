@@ -533,10 +533,14 @@ class AcaStudentController extends Controller
             ->map(function ($registration) {
                 $course = $registration->course;
                 $course->can_view = true;
+                $course->total_activity = AcaStudentHistory::where('person_id', Auth::user()->person_id)
+                    ->where('course_id', $registration->course->id)
+                    ->count('content_id');
+
                 return $course;
             });
 
-        //dd($coursesRegistered);
+        ///dd($coursesRegistered);
         return Inertia::render('Academic::Students/Courses', [
             'mycourses' => $mycourses,
             'courses' => $courses,
@@ -748,6 +752,7 @@ class AcaStudentController extends Controller
     {
 
         $module = AcaModule::with('teacher.person')
+            ->with('exam')
             ->with(['themes' => function ($query) {
                 $query->orderBy('position')
                     ->with('contents')

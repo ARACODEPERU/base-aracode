@@ -158,7 +158,6 @@ class AcaExamController extends Controller
     }
 
     public function storeStudent(Request $request){
-        //dd($request->all());
         $examId = $request->input('exam_id');
         $questions = $request->input('questions');
         $student = AcaStudent::where('person_id',Auth::user()->person_id)->first();
@@ -281,5 +280,192 @@ class AcaExamController extends Controller
 
             return "{$days} días {$hours}:{$minutes}:{$seconds}";
         })->toJson();
+    }
+
+    public function questionAnswerPanelModule($cId, $mId, $eId){
+        $exam = AcaExam::with([
+            'course',
+            'module',
+            'questions.answers'
+        ])->where('id', $eId)
+        ->where('course_id', $cId)
+        ->where('module_id', $mId)
+        ->first();
+
+        return Inertia::render('Academic::Courses/ModuleExam',[
+            'exam' => $exam
+        ]);
+    }
+
+
+    public function moduleExamSolve($id){
+        $exam = AcaExam::with([
+            'questions.answers',
+            'module.course'
+        ])->findOrFail($id);
+
+        // Verificar si la fecha actual está dentro del rango permitido
+        $now = now();
+        $dateStart = $exam->date_start;
+        $dateEnd = $exam->date_end;
+
+        $isAvailable = $now->between($dateStart, $dateEnd);
+
+        // Barajar preguntas y respuestas
+        $shuffledQuestions = $exam->questions->map(function ($question) {
+            $answers = $question->answers->shuffle()->values()->toArray();
+
+            // Contar cuántas respuestas son correctas
+            $maxCorrectAnswers = $question->type_answers === 'Varias respuestas'
+                ? collect($question->answers)->where('correct', true)->count()
+                : null;
+
+            return [
+                'id' => $question->id,
+                'description' => $question->description,
+                'answers' => $answers,
+                'type_answers' => $question->type_answers,
+                'score' => $question->score,
+                'max_correct_answers' => $maxCorrectAnswers
+            ];
+        })->shuffle()
+        ->values()
+        ->toArray();
+
+        // Preparar el examen como array
+        $exam = $exam->toArray();
+        $exam['questions'] = $shuffledQuestions;
+
+        $student = AcaStudent::where('person_id',Auth::user()->person_id)->first();
+        $examStudent = AcaStudentExam::where('exam_id', $exam['id'])
+            ->where('student_id',$student->id)
+            ->first();
+
+        if(is_null($examStudent)){
+            $examStudent = AcaStudentExam::create([
+                'exam_id' => $exam['id'],
+                'student_id' => $student->id,
+                'date_start' => Carbon::now(),
+                'status' => 'pendiente',
+                'punctuation' => 0
+            ]);
+        }
+
+        // true si aún está dentro del rango, false si ya expiró
+        return Inertia::render('Academic::Students/ModuleExamSolve', [
+            'exam' => $exam,
+            'isSuccess' => $isAvailable,
+            'examStudent' => $examStudent
+        ]);
+    }
+
+    public function moduleStoreAnswer(Request $request) {
+        // 1. Obtener datos directamente del request
+        $examId = $request->input('exam_id');
+        $questionId = $request->input('question_id');
+        $type = $request->input('question_type');
+        $studentExamId = $request->input('student_exam_id');
+
+        // 2. Localizar registros
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+        $examStudent = AcaStudentExam::findOrFail($studentExamId);
+
+        // 3. Preparar el manejo de detalles (JSON) - CORREGIDO PARA EVITAR EL ERROR DE TIPO
+        $currentDetails = $examStudent->details;
+
+        if (is_string($currentDetails)) {
+            // Si es un string, lo decodificamos
+            $currentDetails = json_decode($currentDetails, true) ?? [];
+        } elseif (is_object($currentDetails) || is_array($currentDetails)) {
+            // Si ya es un objeto o array (por el cast de Laravel), lo convertimos a array puro
+            $currentDetails = (array) json_decode(json_encode($currentDetails), true);
+        } else {
+            // Si es nulo o cualquier otra cosa, empezamos vacío
+            $currentDetails = [];
+        }
+
+        $individualScore = 0;
+        $answerToStore = null;
+
+        // 4. Lógica según tipo de pregunta
+        if ($type === 'Subir Archivo' && $request->hasFile("file_answer")) {
+            $file = $request->file("file_answer");
+            $file_name = time() . rand(100, 999) . '.' . $file->getClientOriginalExtension();
+            $destination = 'uploads/students/'.$student->id;
+
+            // Guardar archivo
+            $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+
+            $answerToStore = $path;
+            $individualScore = 0; // Calificación manual posterior
+        }
+        elseif ($type === 'Alternativas') {
+            $answerId = $request->input('answers');
+            $answerOption = AcaExamAnswer::where('id', $answerId)
+                ->where('correct', true)
+                ->first();
+
+            if ($answerOption) {
+                $individualScore = $answerOption->score;
+            }
+            $answerToStore = $answerId;
+        }
+        elseif ($type === 'Varias respuestas') {
+            // Laravel recibe answers[] automáticamente como un array
+            $selectedIds = $request->input('answers', []);
+            if(!is_array($selectedIds)) $selectedIds = [$selectedIds];
+
+            foreach ($selectedIds as $idAnswer) {
+                $answerOption = AcaExamAnswer::where('id', $idAnswer)
+                    ->where('correct', true)
+                    ->first();
+                if ($answerOption) {
+                    $individualScore += $answerOption->score;
+                }
+            }
+            $answerToStore = $selectedIds;
+        }
+        elseif ($type === 'Escribir') {
+            $answerToStore = $request->input('answers');
+            $individualScore = 0; // Calificación manual
+        }
+
+        // 5. Actualizar el set de respuestas (Evitar duplicados)
+        $newQuestionEntry = [
+            "id" => (int) $questionId,
+            "type" => $type,
+            "answers" => $answerToStore,
+            "punctuation" => (float) $individualScore,
+            "updated_at" => now()->toDateTimeString()
+        ];
+
+        // Filtrar para eliminar respuesta previa de la misma pregunta si existe
+        $filteredDetails = collect($currentDetails)->filter(function ($item) use ($questionId) {
+            // Forzamos la comparación de enteros para evitar fallos de tipos
+            return (int)$item['id'] !== (int)$questionId;
+        })->values();
+
+        // Añadir la nueva respuesta a la colección
+        $filteredDetails->push($newQuestionEntry);
+
+        // 6. Recalcular puntuación total y Guardar
+        $totalPunctuation = $filteredDetails->sum('punctuation');
+
+        // Guardamos asegurando que se convierta a JSON si el modelo no lo hace solo
+        $examStudent->details = json_encode($filteredDetails->toArray());
+        $examStudent->punctuation = $totalPunctuation;
+        $examStudent->date_end = now();
+        $examStudent->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Respuesta guardada correctamente',
+            'current_punctuation' => $totalPunctuation,
+            'total_answered' => $filteredDetails->count()
+        ]);
+    }
+
+    public function moduleStoreFinish(Request $request){
+
     }
 }

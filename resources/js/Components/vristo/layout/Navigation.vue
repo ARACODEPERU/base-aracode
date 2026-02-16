@@ -7,7 +7,7 @@ const props = defineProps({
     routeModule: { type: String, default: null },
     titleModule: { type: String, default: null },
     data: { type: Array, default: () => [] },
-    maxChars: { type: Number, default: 80 }
+    maxChars: { type: Number, default: 40 }
 });
 
 const truncate = (text) => {
@@ -20,7 +20,7 @@ const fontTitleTooltip = 'text-xs text-white';
 </script>
 
 <template>
-    <nav class="flex mb-5 overflow-x-auto no-scrollbar" aria-label="Breadcrumb">
+    <nav class="flex overflow-x-auto no-scrollbar" aria-label="Breadcrumb">
         <ol class="inline-flex items-center p-1 space-x-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-xl whitespace-nowrap shadow-sm border border-slate-200/50 dark:border-slate-700/50">
             <li class="inline-flex items-center">
                 <Link :href="route('dashboard')"

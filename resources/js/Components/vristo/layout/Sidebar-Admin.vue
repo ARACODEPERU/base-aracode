@@ -129,7 +129,7 @@
     watch(() => page.props.auth, (newAuth, oldAuth) => {
         // Si el usuario cambió o se desautenticó
         if (!newAuth?.user || newAuth?.user !== oldAuth?.user) {
-            clearSidebarState();
+            //clearSidebarState();
         }
     }, { deep: true });
 
