@@ -452,6 +452,33 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_suscripcion_estudiante_editar'])
         ->post('reports/student/subscription/update',[AcaCapRegistrationController::class, 'updateSubscriptionStudent'])
         ->name('aca_subscriptions_update_student');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
+        ->post('courses/modules/exmen/updateorcreate',[AcaModuleController::class, 'updateOrCreateExam'])
+        ->name('aca_course_module_exam_update_create');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
+        ->get('courses/{cId}/modules/{mId}/exmen/{eId}/panel',[AcaExamController::class, 'questionAnswerPanelModule'])
+        ->name('aca_course_module_exam_view_details');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->post('course/exam/question/form/store', [AcaExamQuestionController::class, 'storeQuestion'])
+        ->name('aca_course_exam_question_form_store');
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->post('course/exam/answer/form/store', [AcaExamAnswerController::class, 'storeAnswer'])
+        ->name('aca_course_exam_answer_form_store');
+
+     Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
+        ->get('student/module/exam/{id}/solve', [AcaExamController::class, 'moduleExamSolve'])
+        ->name('aca_student_module_exam_solve');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
+        ->post('student/module/exam/solve/store', [AcaExamController::class, 'moduleStoreAnswer'])
+        ->name('aca_student_module_exam_answer_save');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
+        ->post('student/module/exam/solve/finish', [AcaExamController::class, 'moduleStoreFinish'])
+        ->name('aca_student_exam_module_finish');
 });
 
 Route::middleware(['auth', 'verified'])

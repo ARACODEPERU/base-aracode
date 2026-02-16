@@ -26,6 +26,9 @@
     import ModalLargeXX from "@/Components/ModalLargeXX.vue";
     import ModalLargeX from "@/Components/ModalLargeX.vue";
     import ModalLarge from "@/Components/ModalLarge.vue";
+    import InputLabel from "@/Components/InputLabel.vue";
+    import TextInput from "@/Components/TextInput.vue";
+
 
 
     // Props y variables existentes
@@ -44,6 +47,7 @@
     const displayThemeModal = ref(false);
     const displayModuleModal = ref(false);
     const viewTaskModal = ref(false);
+    const displayModuleExamModal = ref(false);
 
     // Variables computadas para estadísticas
     const selectedModule = computed(() => {
@@ -103,6 +107,21 @@
         id: null,
         position: null,
         description: null,
+    });
+
+    const moduleExamForm = useForm({
+        id: null,
+        course_id: null,
+        module_id: null,
+        module_description: null,
+        description: null,
+        date_start: null,
+        date_end: null,
+        duration_minutes: null,
+        answer_key_pdf: null,
+        status: 1,
+        attempts: 1,
+        file_resolved_name: null
     });
 
     const baseUrl = assetUrl;
@@ -178,6 +197,81 @@
     const closeModalModule = () => {
         displayModuleModal.value = false;
         moduleForm.reset();
+    };
+
+    // Funciones para gestión de exámenes por módulo
+    const openModalModuleExam = (module = null) => {
+
+        if (!module) {
+            Swal2.fire({
+                icon: 'warning',
+                title: 'Advertencia',
+                text: 'Debes seleccionar un módulo primero'
+            });
+            return;
+        }
+
+        moduleExamForm.reset();
+        moduleExamForm.course_id = props.course.id;
+        moduleExamForm.module_id = module.id;
+        moduleExamForm.module_description = module.description;
+
+        // Si ya existe un examen para este módulo, cargar los datos
+
+        if (module.exam) {
+            moduleExamForm.id = module.exam.id;
+            moduleExamForm.description = module.exam.description;
+            moduleExamForm.date_start = module.exam.date_start;
+            moduleExamForm.date_end = module.exam.date_end;
+            moduleExamForm.duration_minutes = module.exam.duration_minutes;
+            moduleExamForm.answer_key_pdf = module.exam.answer_key_pdf;
+            moduleExamForm.status = module.exam.status;
+            moduleExamForm.attempts = module.exam.attempts;
+            moduleExamForm.file_resolved_name = module.exam.file_resolved_name;
+        } else {
+            // Resetear los controles de duración cuando es nuevo
+            durationHours.value = 0;
+            durationMinutes.value = 0;
+        }
+
+        displayModuleExamModal.value = true;
+    };
+
+    const closeModalModuleExam = () => {
+        displayModuleExamModal.value = false;
+        moduleExamForm.reset();
+    };
+
+    const saveModuleExam = () => {
+        // Asegurar que la duración esté en minutos enteros antes de enviar
+        updateDurationMinutes();
+
+        // Si no hay duración, mostrar advertencia
+        if (!moduleExamForm.duration_minutes || moduleExamForm.duration_minutes <= 0) {
+            Swal2.fire({
+                title: 'Advertencia',
+                text: 'Por favor, establece una duración válida para el examen',
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        moduleExamForm.post(route('aca_course_module_exam_update_create'), {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                closeModalModuleExam();
+                Swal2.fire({
+                    title: '¡Enhorabuena!',
+                    text: 'Se registro correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+        })
     };
 
     const replaceModuleById = (id, newItem = null) => {
@@ -874,6 +968,43 @@
         });
     };
 
+    // Variables para el control de duración
+    const durationHours = ref(0);
+    const durationMinutes = ref(0);
+
+    // Actualizar duración en minutos basado en horas y minutos seleccionados
+    const updateDurationMinutes = () => {
+        const totalMinutes = (durationHours.value * 60) + durationMinutes.value;
+        moduleExamForm.duration_minutes = totalMinutes > 0 ? totalMinutes : null;
+    };
+
+    // Formatear minutos a formato legible
+    const formatDuration = (minutes) => {
+        if (!minutes) return '0 min';
+
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+
+        if (hours === 0) {
+            return `${mins} min`;
+        } else if (mins === 0) {
+            return `${hours} hora${hours > 1 ? 's' : ''}`;
+        } else {
+            return `${hours} hora${hours > 1 ? 's' : ''} ${mins} min`;
+        }
+    };
+
+    // Observar cambios en duration_minutes para actualizar los selects
+    watch(() => moduleExamForm.duration_minutes, (newValue) => {
+        if (newValue) {
+            durationHours.value = Math.floor(newValue / 60);
+            durationMinutes.value = newValue % 60;
+        } else {
+            durationHours.value = 0;
+            durationMinutes.value = 0;
+        }
+    });
+
     const refreshDatos = () => {
         router.visit(route('aca_courses_module_panel', props.course.id), {
             method: 'get',
@@ -883,6 +1014,11 @@
             only: ['course'],
         });
     }
+
+    const totalContentsInModule = (themes) => {
+        if (!themes || !Array.isArray(themes)) return 0;
+        return themes.reduce((acc, theme) => acc + (theme.contents?.length || 0), 0);
+    };
 </script>
 
 <template>
@@ -902,281 +1038,311 @@
                 {title: 'Modulos'}
             ]"
         />
-        <!-- Header Moderno del Curso -->
-        <div class="mt-6 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-gray-800 dark:to-gray-700 rounded-lg text-blue-900 dark:text-blue-100 shadow-md">
-            <div class="container mx-auto px-6 py-8">
-                <!-- Información Principal del Curso -->
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-3xl font-bold mb-2 dark:text-white">{{ course.description }}</h1>
-                        <p class="text-blue-600 dark:text-blue-300 text-lg">Organiza y gestiona el contenido educativo del curso</p>
-                    </div>
+        <div class="pt-5 space-y-8 relative">
+            <!-- Header Moderno del Curso -->
+            <div class="bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 rounded-lg text-blue-900 dark:text-blue-100 shadow-md">
+                <div class="container mx-auto px-6 py-8">
+                    <!-- Información Principal del Curso -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold mb-2 dark:text-white">{{ course.description }}</h1>
+                            <p class="text-blue-600 dark:text-blue-300 text-lg">Organiza y gestiona el contenido educativo del curso</p>
+                        </div>
 
-                    <!-- Estadísticas del Curso -->
-                    <div class="flex gap-4">
-                        <div class="bg-white/20 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 text-center border dark:border-gray-600">
-                            <div class="text-2xl font-bold dark:text-white">{{ dataModules.length }}</div>
-                            <div class="text-sm text-blue-600 dark:text-blue-300">Módulos</div>
-                        </div>
-                        <div class="bg-white/20 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 text-center border dark:border-gray-600">
-                            <div class="text-2xl font-bold dark:text-white">{{ totalThemes }}</div>
-                            <div class="text-sm text-blue-600 dark:text-blue-300">Temas</div>
-                        </div>
-                        <div class="bg-white/20 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 text-center border dark:border-gray-600">
-                            <div class="text-2xl font-bold dark:text-white">{{ totalContents }}</div>
-                            <div class="text-sm text-blue-600 dark:text-blue-300">Contenidos</div>
+                        <!-- Estadísticas del Curso -->
+                        <div class="flex gap-4">
+                            <div class="bg-white/20 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 text-center border dark:border-gray-600">
+                                <div class="text-2xl font-bold dark:text-white">{{ dataModules.length }}</div>
+                                <div class="text-sm text-blue-600 dark:text-blue-300">Módulos</div>
+                            </div>
+                            <div class="bg-white/20 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 text-center border dark:border-gray-600">
+                                <div class="text-2xl font-bold dark:text-white">{{ totalThemes }}</div>
+                                <div class="text-sm text-blue-600 dark:text-blue-300">Temas</div>
+                            </div>
+                            <div class="bg-white/20 dark:bg-gray-900/30 backdrop-blur-sm rounded-xl p-4 text-center border dark:border-gray-600">
+                                <div class="text-2xl font-bold dark:text-white">{{ totalContents }}</div>
+                                <div class="text-sm text-blue-600 dark:text-blue-300">Contenidos</div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Contenido Principal -->
-        <div class="mt-6 min-h-screen">
+            <!-- Contenido Principal -->
+            <div class="mt-6 min-h-screen">
 
-            <div class="grid grid-cols-6 gap-8">
+                <div class="grid grid-cols-6 gap-8">
 
-                <!-- Sidebar Izquierdo - Lista de Módulos -->
-                <div class="col-span-2">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-full flex flex-col">
-                        <!-- Header del Sidebar -->
-                        <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-100 to-blue-100 dark:from-gray-700 dark:to-blue-900 rounded-t-xl">
-                            <div class="flex items-center justify-between">
-                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
-                                    </svg>
-                                    Módulos
-                                </h2>
-                                <button
-                                    @click="openModalModule()"
-                                    class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors shadow-sm"
-                                    title="Crear nuevo módulo"
-                                >
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Lista de Módulos con estilos Tailwind -->
-                        <div class="p-4 max-h-[480px] overflow-y-auto space-y-3">
-                            <div
-                                v-for="(module, index) in dataModules"
-                                :key="module.id"
-                                class="bg-white border border-gray-200 dark:bg-gray-700 dark:border-gray-600 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-blue-900"
-                                :class="{ 'border-blue-500 dark:border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-blue-900 shadow-md': selectedTab === module.id }"
-                                @click="themesChanged(module, index)"
-                            >
-                                <!-- Icono y Título -->
-                                <div class="flex items-start justify-between">
-                                    <div class="flex items-start gap-3 flex-1 min-w-0">
-                                        <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-2 rounded-lg flex-shrink-0">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
-                                            </svg>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <h3 class="font-semibold text-gray-900 dark:text-white mb-1 truncate text-sm">{{ module.description }}</h3>
-                                            <div class="flex items-center gap-2 text-xs">
-                                                <span class="bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-600 px-2 py-1 rounded-full font-medium">
-                                                    {{ module.position || 0 }} Posición
-                                                </span>
-                                            </div>
-
-                                        </div>
-                                    </div>
-
-                                    <!-- Menú de Acciones -->
-                                    <div class="flex flex-col gap-1">
-                                        <button
-                                            @click.stop="openModalModule(module)"
-                                            class="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-800/70 group"
-                                            v-tippy="{ content: 'Editar módulo' , placement: 'bottom' }"
-                                        >
-                                            <svg class="w-3 h-3 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
-                                            </svg>
-                                        </button>
-                                        <button
-                                            @click.stop="deleteModule(module)"
-                                            class="p-1.5 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors hover:bg-red-200 dark:hover:bg-red-800/70 group"
-                                            v-tippy="{ content: 'Eliminar módulo' , placement: 'bottom' }"
-                                        >
-                                            <svg class="w-3 h-3 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Contenido Central - Gestión de Temas y Contenidos -->
-                <div class="col-span-4">
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <!-- Header del Contenido Central -->
-                        <div class="p-6 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1">
-                                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-1">
-                                        {{ selectedModule?.description || 'Selecciona un módulo' }}
+                    <!-- Sidebar Izquierdo - Lista de Módulos -->
+                    <div class="col-span-2">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 h-full flex flex-col">
+                            <!-- Header del Sidebar -->
+                            <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-100 to-blue-100 dark:from-gray-700 dark:to-blue-900 rounded-t-xl">
+                                <div class="flex items-center justify-between">
+                                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
+                                        </svg>
+                                        Módulos
                                     </h2>
-                                    <p class="text-gray-500 dark:text-gray-400">
-                                        {{ dataThemes.length }} temas • {{ totalContents }} contenidos
-                                    </p>
-                                </div>
-                                <div class="flex items-center gap-3">
                                     <button
-                                        v-if="selectedModule"
-                                        @click="showModalDocents(selectedModule)"
-                                        class="btn btn-success text-xs uppercase"
+                                        @click="openModalModule()"
+                                        class="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors shadow-sm"
+                                        title="Crear nuevo módulo"
                                     >
-                                        <IconUserPlus class="w-4 h-4 mr-2"/>
-                                        Docentes
-                                    </button>
-                                    <button
-                                        v-if="selectedModule"
-                                        @click="openModalTheme"
-                                        class="btn btn-primary text-xs uppercase"
-                                    >
-                                        <IconPlus class="w-4 h-4 mr-2"/>
-                                        Nuevo Tema
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Lista de Temas -->
-                        <div class="p-6">
-                            <div v-if="dataThemes.length > 0" class="space-y-4">
+                            <!-- Lista de Módulos con estilos Tailwind -->
+                            <div class="p-4 max-h-[480px] overflow-y-auto space-y-3">
                                 <div
-                                    v-for="(theme, key) in dataThemes"
-                                    :key="theme.id"
-                                    class="bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-400 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-purple-900 group"
-
+                                    v-for="(module, index) in dataModules"
+                                    :key="module.id"
+                                    class="bg-white border border-gray-200 dark:bg-gray-700 dark:border-gray-600 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-blue-900"
+                                    :class="{ 'border-blue-500 dark:border-blue-400 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-blue-900 shadow-lg transform scale-102': selectedTab === module.id }"
+                                    @click="themesChanged(module, index)"
                                 >
-                                    <!-- Cabecera del Tema -->
-                                    <div class="flex items-start justify-between mb-3">
-                                        <div class="flex items-start gap-3 flex-1">
-                                            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-2 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
-                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                    <!-- Header del Módulo -->
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex items-start gap-3 flex-1 min-w-0">
+                                            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-2.5 rounded-xl flex-shrink-0 shadow-sm">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385V4.804zM10.5 4c1.255 0 2.443.29 3.5.804v10A7.968 7.968 0 0014.5 14c-1.255 0-2.443-.29-3.5-.804V4.804z"/>
                                                 </svg>
                                             </div>
-                                            <div class="flex-1">
-                                                <h3 class="font-semibold text-gray-900 dark:text-white mb-2 text-base group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">{{ theme.description }}</h3>
-                                                <div class="flex items-center gap-4 text-sm">
-                                                    <span class="flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-medium">
-                                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                                                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012-2v5a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                        {{ theme.contents?.length || 0 }} contenidos
+                                            <div class="flex-1 min-w-0">
+                                                <h3 class="font-bold text-gray-900 dark:text-white mb-2 text-sm leading-tight">{{ module.description }}</h3>
+                                                <div class="flex flex-col items-start gap-2">
+                                                    <span class="bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-600 px-2.5 py-1 rounded-full text-xs font-medium">
+                                                        Posición {{ module.position || 0 }}
                                                     </span>
-                                                    <span class="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2.5 py-1 rounded-full font-medium">
-                                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                                    <!-- Indicador de Examen -->
+                                                    <Link
+                                                        v-if="module.exam"
+                                                        v-tippy="{ content: 'Panel preguntas y respuesta' , placement: 'bottom' }"
+                                                        :href="route('aca_course_module_exam_view_details', [props.course.id, module.id, module.exam.id])"
+                                                        class="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800/70 transition-colors cursor-pointer"
+                                                    >
+                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                                         </svg>
-                                                        Posición {{ theme.position }}
+                                                        Examen Activo
+                                                    </Link>
+                                                    <span v-else class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2.5 py-1 rounded-full text-xs font-medium">
+                                                        Sin Examen
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Estado del Tema -->
-                                        <div class="flex flex-col gap-2">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <span
-                                                    class="px-3 py-1 rounded-full text-xs font-medium transition-all duration-300"
-                                                    :class="theme.contents?.length > 0
-                                                        ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
-                                                        : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800'"
-                                                >
-                                                    {{ theme.contents?.length > 0 ? '✓ Contenido agregado' : '⚠ Sin contenido' }}
-                                                </span>
-                                            </div>
-                                            <div class="flex flex-rows items-center justify-end gap-2">
-                                                <button @click="openModalTheme(theme)"
-                                                    type="button"
-                                                    v-tippy="{content: 'Editar', placement: 'bottom'}"
-                                                    class="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-800/70 group">
-                                                    <icon-pencil-paper class="w-4 h-4" />
-                                                </button>
-                                                <button @click="viewContents(theme, key)"
-                                                    type="button"
-                                                    v-tippy="{content: 'Contenido', placement: 'bottom'}"
-                                                    class="p-1.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-300 rounded-lg transition-colors hover:bg-yellow-200 dark:hover:bg-yellow-800/70 group">
-                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                        <path fill="currentColor" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/>
-                                                    </svg>
-                                                </button>
-                                                <button @click="deleteTheme(theme.id)"
-                                                    v-tippy="{content: 'Eliminar', placement: 'bottom'}"
-                                                    type="button"
-                                                    class="p-1.5 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors hover:bg-red-200 dark:hover:bg-red-800/70 group">
-                                                    <icon-trash-lines class="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Preview de Contenidos -->
-                                    <div v-if="theme.contents?.length > 0" class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                        <div class="flex gap-2 flex-wrap items-center">
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 w-full">Tipos de contenido:</span>
-                                            <div
-                                                v-for="content in theme.contents.slice(0, 5)"
-                                                :key="content.id"
-                                                class="w-8 h-8 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                                                v-tippy="{ content: content.description , placement: 'bottom' }"
+                                        <!-- Menú de Acciones Principales -->
+                                        <div class="flex flex-col gap-1.5">
+                                            <button
+                                                @click.stop="openModalModule(module)"
+                                                class="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-lg transition-all hover:bg-blue-200 dark:hover:bg-blue-800/70 group"
+                                                v-tippy="{ content: 'Editar módulo' , placement: 'right' }"
                                             >
-                                                <svg v-if="content.is_file == '1'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                    <path d="M451.5 160C434.9 160 418.8 164.5 404.7 172.7C388.9 156.7 370.5 143.3 350.2 133.2C378.4 109.2 414.3 96 451.5 96C537.9 96 608 166 608 252.5C608 294 591.5 333.8 562.2 363.1L491.1 434.2C461.8 463.5 422 480 380.5 480C294.1 480 224 410 224 323.5C224 322 224 320.5 224.1 319C224.6 301.3 239.3 287.4 257 287.9C274.7 288.4 288.6 303.1 288.1 320.8C288.1 321.7 288.1 322.6 288.1 323.4C288.1 374.5 329.5 415.9 380.6 415.9C405.1 415.9 428.6 406.2 446 388.8L517.1 317.7C534.4 300.4 544.2 276.8 544.2 252.3C544.2 201.2 502.8 159.8 451.7 159.8zM307.2 237.3C305.3 236.5 303.4 235.4 301.7 234.2C289.1 227.7 274.7 224 259.6 224C235.1 224 211.6 233.7 194.2 251.1L123.1 322.2C105.8 339.5 96 363.1 96 387.6C96 438.7 137.4 480.1 188.5 480.1C205 480.1 221.1 475.7 235.2 467.5C251 483.5 269.4 496.9 289.8 507C261.6 530.9 225.8 544.2 188.5 544.2C102.1 544.2 32 474.2 32 387.7C32 346.2 48.5 306.4 77.8 277.1L148.9 206C178.2 176.7 218 160.2 259.5 160.2C346.1 160.2 416 230.8 416 317.1C416 318.4 416 319.7 416 321C415.6 338.7 400.9 352.6 383.2 352.2C365.5 351.8 351.6 337.1 352 319.4C352 318.6 352 317.9 352 317.1C352 283.4 334 253.8 307.2 237.5z"/>
-                                                </svg>
-                                                <svg v-else-if="content.is_file == '0'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                    <path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/>
-                                                </svg>
-                                                <svg v-else-if="content.is_file == '3'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                    <path d="M320 128C241 128 175.3 185.3 162.3 260.7C171.6 257.7 181.6 256 192 256L208 256C234.5 256 256 277.5 256 304L256 400C256 426.5 234.5 448 208 448L192 448C139 448 96 405 96 352L96 288C96 164.3 196.3 64 320 64C443.7 64 544 164.3 544 288L544 456.1C544 522.4 490.2 576.1 423.9 576.1L336 576L304 576C277.5 576 256 554.5 256 528C256 501.5 277.5 480 304 480L336 480C362.5 480 384 501.5 384 528L384 528L424 528C463.8 528 496 495.8 496 456L496 435.1C481.9 443.3 465.5 447.9 448 447.9L432 447.9C405.5 447.9 384 426.4 384 399.9L384 303.9C384 277.4 405.5 255.9 432 255.9L448 255.9C458.4 255.9 468.3 257.5 477.7 260.6C464.7 185.3 399.1 127.9 320 127.9z"/>
-                                                </svg>
-                                                <svg v-else-if="content.is_file == '2'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                    <path d="M128 128C128 92.7 156.7 64 192 64L341.5 64C358.5 64 374.8 70.7 386.8 82.7L493.3 189.3C505.3 201.3 512 217.6 512 234.6L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 128zM336 122.5L336 216C336 229.3 346.7 240 360 240L453.5 240L336 122.5zM303 505C312.4 514.4 327.6 514.4 336.9 505L400.9 441C410.3 431.6 410.3 416.4 400.9 407.1C391.5 397.8 376.3 397.7 367 407.1L344 430.1L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 430.1L273 407.1C263.6 397.7 248.4 397.7 239.1 407.1C229.8 416.5 229.7 431.7 239.1 441L303.1 505z"/>
-                                                </svg>
-                                                <svg v-else class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                <icon-pencil-paper class="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                            </button>
+                                            <button
+                                                @click.stop="openModalModuleExam(module)"
+                                                class="p-1.5 rounded-lg transition-all duration-300"
+                                                 :class="module.exam
+                                                ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-purple-200 dark:shadow-purple-900/30'
+                                                : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-green-200 dark:shadow-green-900/30'"
+                                                v-tippy="{
+                                                    content: module.exam ? 'Configurar examen existente' : 'Crear nuevo examen para este módulo',
+                                                    placement: 'right'
+                                                }"
+                                            >
+                                                <svg v-if="module.exam" class="w-4 h-4 opacity-75" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
                                                     <path d="M128.1 64C92.8 64 64.1 92.7 64.1 128L64.1 512C64.1 547.3 92.8 576 128.1 576L274.3 576L285.2 521.5C289.5 499.8 300.2 479.9 315.8 464.3L448 332.1L448 234.6C448 217.6 441.3 201.3 429.3 189.3L322.8 82.7C310.8 70.7 294.5 64 277.6 64L128.1 64zM389.6 240L296.1 240C282.8 240 272.1 229.3 272.1 216L272.1 122.5L389.6 240zM332.3 530.9L320.4 590.5C320.2 591.4 320.1 592.4 320.1 593.4C320.1 601.4 326.6 608 334.7 608C335.7 608 336.6 607.9 337.6 607.7L397.2 595.8C409.6 593.3 421 587.2 429.9 578.3L548.8 459.4L468.8 379.4L349.9 498.3C341 507.2 334.9 518.6 332.4 531zM600.1 407.9C622.2 385.8 622.2 350 600.1 327.9C578 305.8 542.2 305.8 520.1 327.9L491.3 356.7L571.3 436.7L600.1 407.9z"/>
                                                 </svg>
-                                            </div>
-                                            <div
-                                                v-if="theme.contents.length > 5"
-                                                class="w-8 h-8 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg border border-gray-300 dark:border-gray-500 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300"
+                                                <svg v-else class="w-4 h-4 opacity-75" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                    <path d="M128 64C92.7 64 64 92.7 64 128L64 512C64 547.3 92.7 576 128 576L308 576C285.3 544.5 272 505.8 272 464C272 363.4 349.4 280.8 448 272.7L448 234.6C448 217.6 441.3 201.3 429.3 189.3L322.7 82.7C310.7 70.7 294.5 64 277.5 64L128 64zM389.5 240L296 240C282.7 240 272 229.3 272 216L272 122.5L389.5 240zM464 608C543.5 608 608 543.5 608 464C608 384.5 543.5 320 464 320C384.5 320 320 384.5 320 464C320 543.5 384.5 608 464 608zM464 508C475 508 484 517 484 528C484 539 475 548 464 548C453 548 444 539 444 528C444 517 453 508 464 508zM464 408C452.4 408 442.7 416.2 440.5 427.2C438.7 435.9 430.3 441.5 421.6 439.7C412.9 437.9 407.3 429.5 409.1 420.8C414.3 395.2 436.9 376 464 376C494.9 376 520 401.1 520 432C520 451.8 508.3 469.8 490.2 477.9L479.8 482.5C478.6 490.2 472 496 464 496C455.2 496 448 488.8 448 480C448 468.8 454.6 458.7 464.8 454.1L477.2 448.6C483.8 445.7 488 439.2 488 432C488 418.7 477.3 408 464 408z"/>
+                                                </svg>
+                                            </button>
+                                            <button
+                                                @click.stop="deleteModule(module)"
+                                                class="p-1.5 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-all hover:bg-red-200 dark:hover:bg-red-800/70 group"
+                                                v-tippy="{ content: 'Eliminar módulo' , placement: 'right' }"
                                             >
-                                                +{{ theme.contents.length - 5 }}
-                                            </div>
+                                                <icon-trash-lines class="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div v-else class="empty-state">
-                                <div class="text-center py-16 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl">
-                                    <div class="w-20 h-20 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <svg class="w-10 h-10 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012-2v5a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
-                                        </svg>
+                    <!-- Contenido Central - Gestión de Temas y Contenidos -->
+                    <div class="col-span-4">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                            <!-- Header del Contenido Central -->
+                            <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                                            {{ selectedModule?.description || 'Selecciona un módulo' }}
+                                        </h2>
+                                        <p class="text-gray-500 dark:text-gray-400">
+                                            {{ dataThemes.length }} temas • {{ totalContentsInModule(dataThemes) }} contenidos
+                                        </p>
                                     </div>
-                                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">No hay temas disponibles</h3>
-                                    <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Comienza agregando tu primer tema para organizar el contenido del módulo de manera estructurada.</p>
-                                    <button v-if="selectedModule" @click="openModalTheme()" class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 inline-flex items-center gap-2">
-                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                                        </svg>
-                                        Crear Primer Tema
-                                    </button>
+                                    <div class="flex items-center gap-3">
+                                        <button
+                                            v-if="selectedModule"
+                                            @click="showModalDocents(selectedModule)"
+                                            class="btn btn-success text-xs uppercase"
+                                        >
+                                            <IconUserPlus class="w-4 h-4 mr-2"/>
+                                            Docentes
+                                        </button>
+                                        <button
+                                            v-if="selectedModule"
+                                            @click="openModalTheme"
+                                            class="btn btn-primary text-xs uppercase"
+                                        >
+                                            <IconPlus class="w-4 h-4 mr-2"/>
+                                            Nuevo Tema
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Lista de Temas -->
+                            <div class="p-6">
+                                <div v-if="dataThemes.length > 0" class="space-y-4">
+                                    <div
+                                        v-for="(theme, key) in dataThemes"
+                                        :key="theme.id"
+                                        class="bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-400 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-purple-900 group"
+
+                                    >
+                                        <!-- Cabecera del Tema -->
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex items-start gap-3 flex-1">
+                                                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-2 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2 text-base group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors">{{ theme.description }}</h3>
+                                                    <div class="flex items-center gap-4 text-sm">
+                                                        <span class="flex items-center gap-1.5 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2.5 py-1 rounded-full font-medium">
+                                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            Posición {{ theme.position }}
+                                                        </span>
+                                                        <span class="flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-medium">
+                                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012-2v5a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            {{ theme.contents?.length || 0 }} contenidos
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Estado del Tema -->
+                                            <div class="flex flex-col gap-2">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <span
+                                                        class="px-3 py-1 rounded-full text-xs font-medium transition-all duration-300"
+                                                        :class="theme.contents?.length > 0
+                                                            ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                                                            : 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800'"
+                                                    >
+                                                        {{ theme.contents?.length > 0 ? '✓ Contenido agregado' : '⚠ Sin contenido' }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex flex-rows items-center justify-end gap-2">
+                                                    <button @click="openModalTheme(theme)"
+                                                        type="button"
+                                                        v-tippy="{content: 'Editar', placement: 'bottom'}"
+                                                        class="p-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 rounded-lg transition-colors hover:bg-blue-200 dark:hover:bg-blue-800/70 group">
+                                                        <icon-pencil-paper class="w-4 h-4" />
+                                                    </button>
+                                                    <button @click="viewContents(theme, key)"
+                                                        type="button"
+                                                        v-tippy="{content: 'Contenido', placement: 'bottom'}"
+                                                        class="p-1.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-300 rounded-lg transition-colors hover:bg-yellow-200 dark:hover:bg-yellow-800/70 group">
+                                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                            <path fill="currentColor" d="M320 205.3L320 514.6L320.5 514.4C375.1 491.7 433.7 480 492.8 480L512 480L512 160L492.8 160C450.6 160 408.7 168.4 369.7 184.6C352.9 191.6 336.3 198.5 320 205.3zM294.9 125.5L320 136L345.1 125.5C391.9 106 442.1 96 492.8 96L528 96C554.5 96 576 117.5 576 144L576 496C576 522.5 554.5 544 528 544L492.8 544C442.1 544 391.9 554 345.1 573.5L332.3 578.8C324.4 582.1 315.6 582.1 307.7 578.8L294.9 573.5C248.1 554 197.9 544 147.2 544L112 544C85.5 544 64 522.5 64 496L64 144C64 117.5 85.5 96 112 96L147.2 96C197.9 96 248.1 106 294.9 125.5z"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button @click="deleteTheme(theme.id)"
+                                                        v-tippy="{content: 'Eliminar', placement: 'bottom'}"
+                                                        type="button"
+                                                        class="p-1.5 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 rounded-lg transition-colors hover:bg-red-200 dark:hover:bg-red-800/70 group">
+                                                        <icon-trash-lines class="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Preview de Contenidos -->
+                                        <div v-if="theme.contents?.length > 0" class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                            <div class="flex gap-2 flex-wrap items-center">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 w-full">Tipos de contenido:</span>
+                                                <div
+                                                    v-for="content in theme.contents.slice(0, 5)"
+                                                    :key="content.id"
+                                                    class="w-8 h-8 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                                                    v-tippy="{ content: content.description , placement: 'bottom' }"
+                                                >
+                                                    <svg v-if="content.is_file == '1'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                        <path d="M451.5 160C434.9 160 418.8 164.5 404.7 172.7C388.9 156.7 370.5 143.3 350.2 133.2C378.4 109.2 414.3 96 451.5 96C537.9 96 608 166 608 252.5C608 294 591.5 333.8 562.2 363.1L491.1 434.2C461.8 463.5 422 480 380.5 480C294.1 480 224 410 224 323.5C224 322 224 320.5 224.1 319C224.6 301.3 239.3 287.4 257 287.9C274.7 288.4 288.6 303.1 288.1 320.8C288.1 321.7 288.1 322.6 288.1 323.4C288.1 374.5 329.5 415.9 380.6 415.9C405.1 415.9 428.6 406.2 446 388.8L517.1 317.7C534.4 300.4 544.2 276.8 544.2 252.3C544.2 201.2 502.8 159.8 451.7 159.8zM307.2 237.3C305.3 236.5 303.4 235.4 301.7 234.2C289.1 227.7 274.7 224 259.6 224C235.1 224 211.6 233.7 194.2 251.1L123.1 322.2C105.8 339.5 96 363.1 96 387.6C96 438.7 137.4 480.1 188.5 480.1C205 480.1 221.1 475.7 235.2 467.5C251 483.5 269.4 496.9 289.8 507C261.6 530.9 225.8 544.2 188.5 544.2C102.1 544.2 32 474.2 32 387.7C32 346.2 48.5 306.4 77.8 277.1L148.9 206C178.2 176.7 218 160.2 259.5 160.2C346.1 160.2 416 230.8 416 317.1C416 318.4 416 319.7 416 321C415.6 338.7 400.9 352.6 383.2 352.2C365.5 351.8 351.6 337.1 352 319.4C352 318.6 352 317.9 352 317.1C352 283.4 334 253.8 307.2 237.5z"/>
+                                                    </svg>
+                                                    <svg v-else-if="content.is_file == '0'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                        <path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/>
+                                                    </svg>
+                                                    <svg v-else-if="content.is_file == '3'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                        <path d="M320 128C241 128 175.3 185.3 162.3 260.7C171.6 257.7 181.6 256 192 256L208 256C234.5 256 256 277.5 256 304L256 400C256 426.5 234.5 448 208 448L192 448C139 448 96 405 96 352L96 288C96 164.3 196.3 64 320 64C443.7 64 544 164.3 544 288L544 456.1C544 522.4 490.2 576.1 423.9 576.1L336 576L304 576C277.5 576 256 554.5 256 528C256 501.5 277.5 480 304 480L336 480C362.5 480 384 501.5 384 528L384 528L424 528C463.8 528 496 495.8 496 456L496 435.1C481.9 443.3 465.5 447.9 448 447.9L432 447.9C405.5 447.9 384 426.4 384 399.9L384 303.9C384 277.4 405.5 255.9 432 255.9L448 255.9C458.4 255.9 468.3 257.5 477.7 260.6C464.7 185.3 399.1 127.9 320 127.9z"/>
+                                                    </svg>
+                                                    <svg v-else-if="content.is_file == '2'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                        <path d="M128 128C128 92.7 156.7 64 192 64L341.5 64C358.5 64 374.8 70.7 386.8 82.7L493.3 189.3C505.3 201.3 512 217.6 512 234.6L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 128zM336 122.5L336 216C336 229.3 346.7 240 360 240L453.5 240L336 122.5zM303 505C312.4 514.4 327.6 514.4 336.9 505L400.9 441C410.3 431.6 410.3 416.4 400.9 407.1C391.5 397.8 376.3 397.7 367 407.1L344 430.1L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 430.1L273 407.1C263.6 397.7 248.4 397.7 239.1 407.1C229.8 416.5 229.7 431.7 239.1 441L303.1 505z"/>
+                                                    </svg>
+                                                    <svg v-else class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                                        <path d="M128.1 64C92.8 64 64.1 92.7 64.1 128L64.1 512C64.1 547.3 92.8 576 128.1 576L274.3 576L285.2 521.5C289.5 499.8 300.2 479.9 315.8 464.3L448 332.1L448 234.6C448 217.6 441.3 201.3 429.3 189.3L322.8 82.7C310.8 70.7 294.5 64 277.6 64L128.1 64zM389.6 240L296.1 240C282.8 240 272.1 229.3 272.1 216L272.1 122.5L389.6 240zM332.3 530.9L320.4 590.5C320.2 591.4 320.1 592.4 320.1 593.4C320.1 601.4 326.6 608 334.7 608C335.7 608 336.6 607.9 337.6 607.7L397.2 595.8C409.6 593.3 421 587.2 429.9 578.3L548.8 459.4L468.8 379.4L349.9 498.3C341 507.2 334.9 518.6 332.4 531zM600.1 407.9C622.2 385.8 622.2 350 600.1 327.9C578 305.8 542.2 305.8 520.1 327.9L491.3 356.7L571.3 436.7L600.1 407.9z"/>
+                                                    </svg>
+                                                </div>
+                                                <div
+                                                    v-if="theme.contents.length > 5"
+                                                    class="w-8 h-8 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg border border-gray-300 dark:border-gray-500 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300"
+                                                >
+                                                    +{{ theme.contents.length - 5 }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-else class="empty-state">
+                                    <div class="text-center py-16 border-2 border-dashed border-gray-200 dark:border-gray-600 rounded-xl">
+                                        <div class="w-20 h-20 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <svg class="w-10 h-10 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012-2v5a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">No hay temas disponibles</h3>
+                                        <p class="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">Comienza agregando tu primer tema para organizar el contenido del módulo de manera estructurada.</p>
+                                        <button v-if="selectedModule" @click="openModalTheme()" class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105 inline-flex items-center gap-2">
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Crear Primer Tema
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1184,7 +1350,6 @@
                 </div>
             </div>
         </div>
-
 <!-- Todos los modales existentes (sin cambios) -->
 <!-- Modal para Temas -->
         <ModalLarge :show="displayThemeModal" :onClose="closeModalTheme" :icon="'/img/temas-importantes.png'">
@@ -1637,5 +1802,211 @@
                 </div>
             </template>
         </ModalLargeXX>
+
+        <!-- Modal de Crear/Editar Examen por Módulo -->
+        <ModalLarge
+            :show="displayModuleExamModal"
+            :onClose="closeModalModuleExam"
+            :icon="'/img/examen.png'"
+        >
+            <template #title>
+                {{ moduleExamForm.module_description }}
+            </template>
+            <template #message>
+                {{ moduleExamForm.id ? 'Configurar Examen' : 'Crear Examen' }} del Módulo
+            </template>
+            <template #content>
+                <div class="space-y-6">
+                    <!-- Información del Módulo -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900 dark:text-blue-100">Curso: {{ props.course.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario del Examen -->
+                    <div class="space-y-5">
+                        <!-- Descripción del Examen -->
+                        <div>
+                            <InputLabel value="Descripción del Examen" />
+                            <textarea
+                                v-model="moduleExamForm.description"
+                                class="form-textarea"
+                                rows="3"
+                                placeholder="Ej: Examen final del módulo de introducción..."
+                                required
+                            ></textarea>
+                        </div>
+
+                        <!-- Duración Máxima y Archivo PDF -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Duración Máxima del Examen -->
+                            <div>
+                                <InputLabel value="Duración Máxima" />
+                                <div class="space-y-3">
+                                    <!-- Selector de Horas y Minutos -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1">
+                                            <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Horas</label>
+                                            <select
+                                                v-model.number="durationHours"
+                                                @change="updateDurationMinutes"
+                                                class="form-select"
+                                            >
+                                                <option value="0">0 horas</option>
+                                                <option v-for="h in 5" :key="h" :value="h">{{ h }} hora{{ h > 1 ? 's' : '' }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Minutos</label>
+                                            <select
+                                                v-model.number="durationMinutes"
+                                                @change="updateDurationMinutes"
+                                                class="form-select"
+                                            >
+                                                <option value="0">0 min</option>
+                                                <option v-for="m in 59" :key="m" :value="m">{{ m }} min</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <!-- Visualización del Total -->
+                                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Tiempo total:</span>
+                                            <span class="text-sm font-bold text-blue-700 dark:text-blue-300">
+                                                {{ formatDuration(moduleExamForm.duration_minutes) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Archivo PDF del Examen Resuelto -->
+                            <div>
+                                <InputLabel value="Examen Resuelto (PDF)" />
+
+                                <!-- Ayuda -->
+                                <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">
+                                    Solo se permiten archivos PDF. Máximo 10MB.
+                                </div>
+                                <div class="space-y-3">
+                                    <!-- Input de Archivo -->
+                                    <div class="relative">
+                                        <input
+                                            type="file"
+                                            @input="moduleExamForm.answer_key_pdf = $event.target.files[0]"
+                                            accept=".pdf"
+                                            class="w-full text-sm text-gray-500 dark:text-gray-400
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-lg file:border-0
+                                                file:text-sm file:font-medium
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100
+                                                file:cursor-pointer file:transition-colors
+                                                dark:file:bg-blue-900/50 dark:file:text-blue-300
+                                                dark:hover:file:bg-blue-800/70
+                                                border border-gray-200 dark:border-gray-600
+                                                rounded-lg cursor-pointer
+                                                hover:border-blue-300 dark:hover:border-blue-500"
+                                            :class="{ 'border-red-300 dark:border-red-600': moduleExamForm.errors.answer_key_pdf }"
+                                        >
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                            <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 2H4z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Información del Archivo Actual/Seleccionado -->
+                                    <div v-if="moduleExamForm.answer_key_pdf || (moduleExamForm.id && moduleExamForm.file_resolved_name)"
+                                         class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 2H4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
+                                                {{ typeof moduleExamForm.answer_key_pdf === 'string' ? moduleExamForm.answer_key_pdf.split('/').pop() :
+                                                    moduleExamForm.answer_key_pdf?.name || (moduleExamForm.file_resolved_name ?? 'Archivo PDF')
+                                                }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fechas y Estado -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Fecha de Inicio -->
+                            <div>
+                                <InputLabel value="Fecha de Inicio" />
+                                <TextInput
+                                    type="datetime-local"
+                                    v-model="moduleExamForm.date_start"
+                                    required
+                                />
+                            </div>
+
+                            <!-- Fecha de Fin -->
+                            <div>
+                                <InputLabel value="Fecha de Fin" />
+                                <TextInput
+                                    type="datetime-local"
+                                    v-model="moduleExamForm.date_end"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Intentos y Estado -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Número de Intentos -->
+                            <div>
+                                <InputLabel value="Número de Intentos" />
+                                <TextInput
+                                    type="number"
+                                    v-model="moduleExamForm.attempts"
+                                    min="1"
+                                    max="10"
+                                    placeholder="1"
+                                    required
+                                />
+                            </div>
+
+                            <!-- Estado -->
+                            <div>
+                                <InputLabel value="Estado" />
+                                <select v-model="moduleExamForm.status" class="form-select">
+                                    <option :value="1">Activo</option>
+                                    <option :value="0">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template #buttons>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        @click="saveModuleExam"
+                        class="btn btn-primary"
+                        :disabled="moduleExamForm.processing"
+                    >
+                        <div v-if="moduleExamForm.processing" class="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        <svg v-else class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z"/>
+                        </svg>
+                        {{ moduleExamForm.processing ? 'Guardando...' : (moduleExamForm.id ? 'Actualizar Examen' : 'Crear Examen') }}
+                    </button>
+                </div>
+            </template>
+        </ModalLarge>
     </AppLayout>
 </template>

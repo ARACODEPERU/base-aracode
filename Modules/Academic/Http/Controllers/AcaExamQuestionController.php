@@ -32,6 +32,7 @@ class AcaExamQuestionController extends Controller
      */
     public function store(Request $request)
     {
+
         $id = $request->get('id');
         $exam_id = $request->get('exam_id');
         $description = $request->get('description');
@@ -65,12 +66,38 @@ class AcaExamQuestionController extends Controller
         ]);
     }
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    public function storeQuestion(Request $request)
     {
-        return view('academic::show');
+
+        $this->validate($request, [
+            'exam_id' => 'required',
+            'description' => 'required|string|max:300',
+            'score' => 'required',
+            'type_answers' => 'required',
+        ]);
+
+        $id = $request->get('id');
+        $exam_id = $request->get('exam_id');
+        $description = $request->get('description');
+        $scord = $request->get('score');
+        $type = $request->get('type_answers');
+        $question = [];
+
+        if ($id) {
+            $question = AcaExamQuestion::find($id);
+            $question->update([
+                'description' => $description,
+                'score' => $scord,
+                'type_answers' => $type
+            ]);
+        } else {
+            $question = AcaExamQuestion::create([
+                'exam_id' => $exam_id,
+                'description' => $description,
+                'score' => $scord,
+                'type_answers' => $type
+            ]);
+        }
     }
 
     /**

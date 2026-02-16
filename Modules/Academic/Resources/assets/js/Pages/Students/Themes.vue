@@ -34,6 +34,20 @@
     const contentsData = ref(null);
     const commentsData = ref(null);
 
+    // Datos estáticos del examen (por ahora)
+    const moduleExam = ref(null);
+    const examResult = ref(null); // Nota estática para pruebas
+
+    // Función para verificar si puede descargar solucionario
+    const canDownloadSolution = () => {
+        if (!examResult.value) return false;
+        return examResult.value >= 11;
+    };
+
+    if(props.module.exam){
+        moduleExam.value = props.module.exam;
+    }
+
     if(props.module.themes.length > 0){
         default_theme_id.value = props.module.themes[0].id;
         contentsData.value = props.module.themes[0].contents;
@@ -317,9 +331,9 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-6 gap-6">
+            <div class="grid grid-cols-6 gap-6 ">
                 <!-- Sidebar de Temas Moderno -->
-                <div class="col-span-6 sm:col-span-2">
+                <div class="col-span-6 sm:col-span-2 space-y-6">
                     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                         <!-- Header del Sidebar -->
                         <div class="bg-gradient-to-r from-blue-500 to-indigo-500 p-4 text-white">
@@ -397,6 +411,106 @@
                                 </div>
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No hay temas disponibles</h3>
                                 <p class="text-gray-500 dark:text-gray-400">Este módulo aún no tiene temas asignados</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <!--Aca los examenes-->
+                        <div class="p-4">
+                            <div v-if="moduleExam" class="space-y-3">
+                                <!-- Header del Examen -->
+                                <div class="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-red-500 text-white p-2 rounded-lg">
+                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">EXAMEN DEL MÓDULO</h3>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Evaluación de conocimientos</p>
+                                        </div>
+                                    </div>
+                                    <span v-if="moduleExam.status === 1" class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">Activo</span>
+                                    <span v-else class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full font-medium">Inactivo</span>
+                                </div>
+
+                                <!-- Información del Examen -->
+                                <div class="grid grid-cols-2 gap-3 py-2">
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Fecha de inicio</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ moduleExam.date_start }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Fecha de fin</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ moduleExam.date_end }}</p>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Duración</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ moduleExam.duration_minutes }} minutos</p>
+                                    </div>
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Intentos permitidos</p>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ moduleExam.attempts }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Descripción</p>
+                                    <p class="text-sm text-gray-900 dark:text-white">{{ moduleExam.description }}</p>
+                                </div>
+
+                                <!-- Resultado (si existe) -->
+                                <div v-if="examResult" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">Tu nota</p>
+                                            <p class="text-2xl font-bold" :class="examResult >= 11 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                                {{ examResult }}
+                                            </p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs" :class="examResult >= 11 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                                {{ examResult >= 11 ? 'Aprobado' : 'Desaprobado' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botones de Acción -->
+                                <div class="flex gap-2 pt-2">
+                                    <Link
+                                        :href="route('aca_student_module_exam_solve', moduleExam.id)"
+                                        class="flex-1 bg-red-500 hover:bg-red-600 text-white text-center py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        {{ examResult ? 'Repetir Examen' : 'Resolver Examen' }}
+                                    </Link>
+
+                                    <!-- Botón de Descargar Solucionario -->
+                                    <button
+                                        v-if="canDownloadSolution() && moduleExam.file_resolved_name"
+                                        class="bg-gray-700 hover:bg-gray-800 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                    >
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Solucionario
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sin Examen -->
+                            <div v-else class="text-center py-8">
+                                <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No hay examen disponible</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">El módulo aún no tiene un examen asignado</p>
                             </div>
                         </div>
                     </div>
