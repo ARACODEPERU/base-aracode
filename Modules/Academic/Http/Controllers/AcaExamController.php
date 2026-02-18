@@ -3,12 +3,14 @@
 namespace Modules\Academic\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaExam;
+use Modules\Academic\Entities\AcaExamQuestion;
 use Inertia\Inertia;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaExamAnswer;
 use DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AcaExamController extends Controller
 {
@@ -298,24 +301,23 @@ class AcaExamController extends Controller
     }
 
 
-    public function moduleExamSolve($id){
+    public function moduleExamSolve($id) {
+        // 1. Cargar el examen con sus relaciones
         $exam = AcaExam::with([
             'questions.answers',
             'module.course'
         ])->findOrFail($id);
 
-        // Verificar si la fecha actual está dentro del rango permitido
+        // 2. Verificar disponibilidad de fechas
         $now = now();
-        $dateStart = $exam->date_start;
-        $dateEnd = $exam->date_end;
+        $isAvailable = $now->between($exam->date_start, $exam->date_end);
 
-        $isAvailable = $now->between($dateStart, $dateEnd);
-
-        // Barajar preguntas y respuestas
+        // 3. Preparar preguntas (Shuffle y mapeo de datos necesarios para el Front)
         $shuffledQuestions = $exam->questions->map(function ($question) {
+            // Barajamos las respuestas
             $answers = $question->answers->shuffle()->values()->toArray();
 
-            // Contar cuántas respuestas son correctas
+            // Calculamos el límite de respuestas correctas para "Varias respuestas"
             $maxCorrectAnswers = $question->type_answers === 'Varias respuestas'
                 ? collect($question->answers)->where('correct', true)->count()
                 : null;
@@ -328,40 +330,60 @@ class AcaExamController extends Controller
                 'score' => $question->score,
                 'max_correct_answers' => $maxCorrectAnswers
             ];
-        })->shuffle()
-        ->values()
-        ->toArray();
+        })->shuffle()->values()->toArray();
 
-        // Preparar el examen como array
-        $exam = $exam->toArray();
-        $exam['questions'] = $shuffledQuestions;
+        $examArray = $exam->toArray();
+        $examArray['questions'] = $shuffledQuestions;
 
-        $student = AcaStudent::where('person_id',Auth::user()->person_id)->first();
-        $examStudent = AcaStudentExam::where('exam_id', $exam['id'])
-            ->where('student_id',$student->id)
-            ->first();
+        // 4. Buscar o crear el intento del estudiante
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
 
-        if(is_null($examStudent)){
-            $examStudent = AcaStudentExam::create([
-                'exam_id' => $exam['id'],
+        $examStudent = AcaStudentExam::firstOrCreate(
+            [
+                'exam_id' => $exam->id,
                 'student_id' => $student->id,
-                'date_start' => Carbon::now(),
+            ],
+            [
+                'date_start' => now(),
+                'started_at' => now(), // Hora clave para el cronómetro
                 'status' => 'pendiente',
-                'punctuation' => 0
-            ]);
+                'punctuation' => 0,
+                'details' => [] // Inicializar JSON vacío
+            ]
+        );
+
+        // Asegurar que started_at existe (por si es un registro viejo que no lo tenía)
+        if (!$examStudent->started_at) {
+            $examStudent->started_at = $examStudent->created_at;
         }
 
-        // true si aún está dentro del rango, false si ya expiró
+        // 5. Reestructurar "details" para que Vue lo maneje fácilmente
+        // Gracias al $casts en el modelo, $examStudent->details ya es un array
+        $rawDetails = $examStudent->details ?? [];
+        $detailsByQuestion = [];
+
+        foreach ($rawDetails as $detail) {
+            if (isset($detail['id'])) {
+                // Indexamos por ID de pregunta para acceso instantáneo en JS: details[id]
+                $detailsByQuestion[$detail['id']] = $detail;
+            }
+        }
+
+        // 6. Preparar objeto de respuesta para Inertia
+        // Convertimos a array para evitar que el Accessor del modelo interfiera
+        $examStudentData = $examStudent->toArray();
+        $examStudentData['details'] = $detailsByQuestion;
+        $examStudentData['started_at'] = Carbon::parse($examStudent->started_at)->toDateTimeString();
+        //dd($examStudentData);
         return Inertia::render('Academic::Students/ModuleExamSolve', [
-            'exam' => $exam,
+            'exam' => $examArray,
             'isSuccess' => $isAvailable,
-            'examStudent' => $examStudent
+            'examStudent' => $examStudentData
         ]);
     }
 
     public function moduleStoreAnswer(Request $request) {
         // 1. Obtener datos directamente del request
-        $examId = $request->input('exam_id');
         $questionId = $request->input('question_id');
         $type = $request->input('question_type');
         $studentExamId = $request->input('student_exam_id');
@@ -370,19 +392,9 @@ class AcaExamController extends Controller
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
         $examStudent = AcaStudentExam::findOrFail($studentExamId);
 
-        // 3. Preparar el manejo de detalles (JSON) - CORREGIDO PARA EVITAR EL ERROR DE TIPO
-        $currentDetails = $examStudent->details;
-
-        if (is_string($currentDetails)) {
-            // Si es un string, lo decodificamos
-            $currentDetails = json_decode($currentDetails, true) ?? [];
-        } elseif (is_object($currentDetails) || is_array($currentDetails)) {
-            // Si ya es un objeto o array (por el cast de Laravel), lo convertimos a array puro
-            $currentDetails = (array) json_decode(json_encode($currentDetails), true);
-        } else {
-            // Si es nulo o cualquier otra cosa, empezamos vacío
-            $currentDetails = [];
-        }
+        // 3. Preparar el manejo de detalles
+        // Gracias al $casts en el modelo, esto ya es un array de PHP
+        $currentDetails = $examStudent->details ?? [];
 
         $individualScore = 0;
         $answerToStore = null;
@@ -393,11 +405,9 @@ class AcaExamController extends Controller
             $file_name = time() . rand(100, 999) . '.' . $file->getClientOriginalExtension();
             $destination = 'uploads/students/'.$student->id;
 
-            // Guardar archivo
             $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-
             $answerToStore = $path;
-            $individualScore = 0; // Calificación manual posterior
+            $individualScore = 0;
         }
         elseif ($type === 'Alternativas') {
             $answerId = $request->input('answers');
@@ -411,7 +421,6 @@ class AcaExamController extends Controller
             $answerToStore = $answerId;
         }
         elseif ($type === 'Varias respuestas') {
-            // Laravel recibe answers[] automáticamente como un array
             $selectedIds = $request->input('answers', []);
             if(!is_array($selectedIds)) $selectedIds = [$selectedIds];
 
@@ -427,10 +436,10 @@ class AcaExamController extends Controller
         }
         elseif ($type === 'Escribir') {
             $answerToStore = $request->input('answers');
-            $individualScore = 0; // Calificación manual
+            $individualScore = 0;
         }
 
-        // 5. Actualizar el set de respuestas (Evitar duplicados)
+        // 5. Actualizar el set de respuestas
         $newQuestionEntry = [
             "id" => (int) $questionId,
             "type" => $type,
@@ -439,33 +448,117 @@ class AcaExamController extends Controller
             "updated_at" => now()->toDateTimeString()
         ];
 
-        // Filtrar para eliminar respuesta previa de la misma pregunta si existe
-        $filteredDetails = collect($currentDetails)->filter(function ($item) use ($questionId) {
-            // Forzamos la comparación de enteros para evitar fallos de tipos
-            return (int)$item['id'] !== (int)$questionId;
-        })->values();
+        // Usamos colecciones para filtrar duplicados y agregar la nueva
+        $filteredDetails = collect($currentDetails)
+            ->filter(fn($item) => (int)$item['id'] !== (int)$questionId)
+            ->values();
 
-        // Añadir la nueva respuesta a la colección
         $filteredDetails->push($newQuestionEntry);
 
-        // 6. Recalcular puntuación total y Guardar
-        $totalPunctuation = $filteredDetails->sum('punctuation');
-
-        // Guardamos asegurando que se convierta a JSON si el modelo no lo hace solo
-        $examStudent->details = json_encode($filteredDetails->toArray());
-        $examStudent->punctuation = $totalPunctuation;
+        // 6. Guardar cambios
+        // Al asignar un array, Laravel hace el json_encode automáticamente por el Cast
+        $examStudent->details = $filteredDetails->toArray();
+        $examStudent->punctuation = $filteredDetails->sum('punctuation');
         $examStudent->date_end = now();
         $examStudent->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Respuesta guardada correctamente',
-            'current_punctuation' => $totalPunctuation,
+            'current_punctuation' => $examStudent->punctuation,
             'total_answered' => $filteredDetails->count()
         ]);
     }
 
-    public function moduleStoreFinish(Request $request){
+    public function moduleStoreFinish(Request $request) {
+        $id = $request->get('student_exam_id');
+        $examStudent = AcaStudentExam::findOrFail($id);
+        $exam = AcaExam::with('questions')->findOrFail($examStudent->exam_id);
 
+        if ($examStudent->status === 'terminado' || $examStudent->status === 'revision_pendiente') {
+
+            return to_route('aca_student_module_exam_solve', $exam->id);
+        }
+
+        // 1. Calcular tiempos
+        $startedAt = Carbon::parse($examStudent->started_at);
+        $timeSpent = $startedAt->diffInSeconds(now());
+        $maxSeconds = $exam->duration_minutes * 60;
+
+        // 2. Verificar calificación manual
+        $details = $examStudent->details ?? [];
+        $hasManualGrading = collect($details)->contains(function ($item) {
+            return in_array($item['type'], ['Escribir', 'Subir Archivo']);
+        });
+        //dd($timeSpent);
+        // 3. Actualizar estado
+        $examStudent->status = $hasManualGrading ? 'revision_pendiente' : 'terminado';
+        $examStudent->finished_at = now();
+        $examStudent->time_spent_seconds = $timeSpent;
+        $examStudent->is_timed_out = $timeSpent > ($maxSeconds + 30);
+        $examStudent->save();
+
+        //return to_route('aca_student_module_exam_solve', $exam->id);
+    }
+
+    public function downloadPdf($id){
+
+        // Cargar el examen del estudiante con todas las relaciones necesarias
+        $examStudent = AcaStudentExam::with([
+            'student.person',
+            'exam.course',
+            'exam.module',
+            'exam.questions.answers'
+        ])->findOrFail($id);
+        //dd($examStudent);
+        $company = Company::first();
+
+        // Logo de la empresa
+        $logo = '';
+        if ($company->logo_document == '/img/logo176x32.png') {
+            $logo = public_path($company->logo_document);
+        } else {
+            $logo = public_path('storage' . DIRECTORY_SEPARATOR . $company->logo_document);
+        }
+
+        // Marca de agua opcional (puedes crear este archivo o cambiar la ruta)
+        $watermark = public_path('img/watermark.png');
+        $hasWatermark = file_exists($watermark);
+
+        // Detalles del examen (respuestas del estudiante)
+        $details = $examStudent->details ?? [];
+
+        // Crear un mapa de respuestas por question_id para fácil acceso
+        $answersMap = [];
+        foreach ($details as $detail) {
+            $answersMap[$detail['id']] = $detail;
+        }
+
+        // Variable para mostrar/ocultar respuestas correctas
+        $showCorrectAnswers = true; // Cambiar a false si no quieres mostrar las correctas
+
+        // Preparar datos para la vista
+        $data = [
+            'company' => $company,
+            'logo' => $logo,
+            'watermark' => $hasWatermark ? $watermark : null,
+            'examStudent' => $examStudent,
+            'exam' => $examStudent->exam,
+            'student' => $examStudent->student,
+            'details' => $details,
+            'answersMap' => $answersMap,
+            'showCorrectAnswers' => $showCorrectAnswers,
+            'generatedAt' => now()->format('d/m/Y H:i:s'),
+        ];
+
+        // Generar PDF
+        $pdf = Pdf::loadView('academic::exams.student_exam_pdf', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        // Nombre del archivo
+        $fileName = 'examen_' . $examStudent->student->person->full_name . '_' . $examStudent->id . '.pdf';
+        $fileName = str_replace(' ', '_', $fileName);
+
+        return $pdf->download($fileName);
     }
 }

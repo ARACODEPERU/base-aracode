@@ -284,6 +284,10 @@
         return colors[type] || 'bg-gray-500 text-white';
     };
 
+    const totalPoints = computed(() => {
+        return props.exam.questions.reduce((total, question) => total + (question.score || 0), 0);
+    });
+
 </script>
 
 <template>
@@ -304,6 +308,7 @@
                 {title: exam.module.description},
                 {title: exam.description},
             ]"
+            :maxChars="25"
         />
 
         <div class="pt-5 space-y-8 relative">
@@ -322,12 +327,15 @@
             </div>
 
             <!-- Panel Principal -->
-            <div class="grid grid-cols-12 gap-3">
+            <div class="grid grid-cols-12 gap-6">
                 <!-- Lista de Preguntas -->
                 <div class="col-span-4">
-                    <div class="panel border-0 rounded-lg">
-                        <div class="py-2 px-3 border-b border-gray-200 dark:border-gray-700">
+                    <div class="panel p-0">
+                        <div class="py-4 px-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Preguntas ({{ exam.questions.length }})</h3>
+                            <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded-full font-medium">
+                                Total: {{ totalPoints }} pts
+                            </span>
                         </div>
                         <div>
                             <div v-if="exam.questions.length === 0" class="p-3 text-center text-gray-500 text-xs">
@@ -371,8 +379,8 @@
                 <div class="col-span-8">
                     <div v-if="selectedQuestion" class="space-y-3">
                         <!-- Pregunta Seleccionada -->
-                        <div class="panel border-0 rounded-lg">
-                            <div class="py-2 px-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div class="panel p-0">
+                            <div class="py-4 px-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <span :class="getTypeColor(selectedQuestion.type_answers)" class="text-[10px] px-1.5 py-0.5 rounded font-medium">
                                         {{ selectedQuestion.type_answers }}
@@ -394,8 +402,8 @@
                         </div>
 
                         <!-- Lista de Respuestas -->
-                        <div class="panel border-0 rounded-lg">
-                            <div class="py-2 px-3 border-b border-gray-200 dark:border-gray-700">
+                        <div class="panel p-0">
+                            <div class="py-4 px-3 border-b border-gray-200 dark:border-gray-700">
                                 <h3 class="text-xs font-semibold text-gray-900 dark:text-white">
                                     Respuestas ({{ selectedQuestion.answers?.length || 0 }})
                                 </h3>
@@ -437,11 +445,11 @@
                         </div>
 
                         <!-- Previsualización -->
-                        <div class="panel border-0 rounded-lg">
-                            <div class="py-2 px-3 border-b border-gray-200 dark:border-gray-700">
+                        <div class="panel p-0">
+                            <div class="py-4 px-3 border-b border-gray-200 dark:border-gray-700">
                                 <h3 class="text-xs font-semibold text-gray-900 dark:text-white">Previsualización</h3>
                             </div>
-                            <div class="p-3">
+                            <div class="p-4">
                                 <div v-if="selectedQuestion.type_answers === 'Escribir'">
                                     <template v-for="(answer, idx) in selectedQuestion.answers">
                                         <p class="text-xs font-medium text-gray-900 dark:text-white mb-2">{{ answer.description }}</p>
@@ -493,7 +501,7 @@
                         </div>
                     </div>
 
-                    <div v-else class="panel border-0 rounded-lg p-6 text-center">
+                    <div v-else class="panel p-6 text-center">
                         <svg class="w-8 h-8 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -544,6 +552,11 @@
             </template>
             <template #content>
                 <div class="space-y-3">
+                    <div>
+                        <InputLabel for="answer_description" value="Puntos" />
+                        <TextInput v-model="answerForm.score" class="form-input mt-1 block w-full" :placeholder="answerForm.score" />
+                        <InputError :message="answerForm.errors.score" class="mt-2" />
+                    </div>
                     <div>
                         <InputLabel for="answer_description" value="Descripción de la Respuesta" />
                         <textarea v-model="answerForm.description" rows="2" class="form-textarea mt-1 block w-full" placeholder="Escribe la respuesta..."></textarea>

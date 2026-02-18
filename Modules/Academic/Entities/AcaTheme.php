@@ -35,4 +35,9 @@ class AcaTheme extends Model
     {
         return $this->hasMany(AcaThemeComment::class, 'theme_id');
     }
+
+    public function student_history(): HasMany
+    {
+        return $this->hasMany(AcaStudentHistory::class, 'theme_id');
+    }
 }

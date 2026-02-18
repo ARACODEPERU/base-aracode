@@ -1,6 +1,6 @@
 <script  setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
-    import { ref } from 'vue';
+    import { ref, onMounted, onUnmounted, computed } from 'vue';
     import { Link, useForm, router } from '@inertiajs/vue3';
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
@@ -22,6 +22,10 @@
         module: {
             type: Object,
             default: () => ({}),
+        },
+        studentModulesExams: {
+            type: Object,
+            default: () => ({}),
         }
     });
 
@@ -34,19 +38,172 @@
     const contentsData = ref(null);
     const commentsData = ref(null);
 
-    // Datos estáticos del examen (por ahora)
+    // Datos del examen del módulo
     const moduleExam = ref(null);
-    const examResult = ref(null); // Nota estática para pruebas
+    const studentExam = ref(null);
+
+    // Tiempo transcurrido en tiempo real (para exámenes en progreso)
+    const elapsedTime = ref(0);
+    const elapsedTimeInterval = ref(null);
+
+    // Cargar datos del examen
+    const loadExamData = () => {
+        if (props.module.exam) {
+            moduleExam.value = props.module.exam;
+            // Cargar el examen del estudiante si existe
+            if (props.module.exam.student_exams && props.module.exam.student_exams.length > 0) {
+                studentExam.value = props.module.exam.student_exams[0];
+            }
+        }
+    };
 
     // Función para verificar si puede descargar solucionario
     const canDownloadSolution = () => {
-        if (!examResult.value) return false;
-        return examResult.value >= 11;
+        if (!studentExam.value) return false;
+        // Solo puede descargar si ya terminó, tiene nota >= 11 y existe el archivo
+        const passed = studentExam.value.punctuation >= 11;
+        const hasFile = moduleExam.value && moduleExam.value.file_resolved_path;
+        const finished = studentExam.value.status === 'completado' || studentExam.value.status === 'revision_pendiente';
+        return passed && hasFile && finished;
     };
 
-    if(props.module.exam){
-        moduleExam.value = props.module.exam;
-    }
+    // Verificar si puede repetir el examen
+    const canRetakeExam = () => {
+        if (!studentExam.value || !moduleExam.value) return false;
+        // Puede repetir si tiene intentos disponibles
+        const hasAttempts = moduleExam.value.attempts > 1;
+        // Y si ya terminó o hay un error
+        const isFinished = studentExam.value.status === 'completado' ||
+                          studentExam.value.status === 'revision_pendiente' ||
+                          studentExam.value.status === 'timeout';
+        return hasAttempts && isFinished;
+    };
+
+    // Formatear tiempo
+    const formatTime = (seconds) => {
+        if (!seconds) return '0 seg';
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        if (mins > 0) {
+            return `${mins} min ${secs} seg`;
+        }
+        return `${secs} seg`;
+    };
+
+    // Calcular tiempo transcurrido desde started_at
+    const calculateElapsedTime = () => {
+        if (!studentExam.value?.started_at) return 0;
+        
+        const startTime = new Date(studentExam.value.started_at).getTime();
+        const now = new Date().getTime();
+        
+        return Math.floor((now - startTime) / 1000);
+    };
+
+    // Iniciar timer de tiempo transcurrido
+    const startElapsedTimer = () => {
+        if (studentExam.value?.finished_at) return;
+        
+        elapsedTime.value = calculateElapsedTime();
+        
+        elapsedTimeInterval.value = setInterval(() => {
+            elapsedTime.value = calculateElapsedTime();
+        }, 1000);
+    };
+
+    // Detener timer
+    const stopElapsedTimer = () => {
+        if (elapsedTimeInterval.value) {
+            clearInterval(elapsedTimeInterval.value);
+            elapsedTimeInterval.value = null;
+        }
+    };
+
+    // Computed para mostrar el tiempo correcto
+    const displayTimeSpent = computed(() => {
+        if (studentExam.value?.finished_at && studentExam.value.time_spent_seconds) {
+            return studentExam.value.time_spent_seconds;
+        }
+        return elapsedTime.value;
+    });
+
+    // Obtener estado del examen
+    const getExamStatus = () => {
+        if (!studentExam.value) return null;
+
+        const status = studentExam.value.status;
+        const punctuation = studentExam.value.punctuation;
+
+        if (status === 'revision_pendiente') {
+            return {
+                label: 'Revisión Pendiente',
+                class: 'bg-yellow-500 text-white',
+                icon: '⏳'
+            };
+        }
+
+        if (status === 'completado') {
+            if (punctuation >= 11) {
+                return {
+                    label: 'Aprobado',
+                    class: 'bg-green-500 text-white',
+                    icon: '✅'
+                };
+            } else {
+                return {
+                    label: 'Desaprobado',
+                    class: 'bg-red-500 text-white',
+                    icon: '❌'
+                };
+            }
+        }
+
+        if (status === 'timeout') {
+            return {
+                label: 'Tiempo Agotado',
+                class: 'bg-gray-500 text-white',
+                icon: '⏰'
+            };
+        }
+
+        return {
+            label: 'Pendiente',
+            class: 'bg-blue-500 text-white',
+            icon: '📝'
+        };
+    };
+
+    // Descargar solucionario del examen
+    const downloadSolution = () => {
+        if (!moduleExam.value?.file_resolved_path) return;
+        const link = document.createElement('a');
+        link.href = '/storage/' + moduleExam.value.file_resolved_path;
+        link.download = moduleExam.value.file_resolved_name || 'solucionario.pdf';
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Descargar examen resuelto del alumno
+    const downloadStudentExam = () => {
+        if (!studentExam.value) return;
+        window.open(route('aca_student_exam_download_pdf', studentExam.value.id), '_blank');
+    };
+
+    // Inicializar datos
+    loadExamData();
+
+    // Iniciar timer de tiempo transcurrido si hay examen en progreso
+    onMounted(() => {
+        if (studentExam.value && !studentExam.value.finished_at && studentExam.value.started_at) {
+            startElapsedTimer();
+        }
+    });
+
+    onUnmounted(() => {
+        stopElapsedTimer();
+    });
 
     if(props.module.themes.length > 0){
         default_theme_id.value = props.module.themes[0].id;
@@ -205,7 +362,10 @@
             type_content: content.is_file
         }
 
-        axios.post(route('aca_students_history_store'), history);
+        axios.post(route('aca_students_history_store'), history).then(() => {
+            // Recargar módulo para actualizar barra de progreso
+            router.reload({ only: ['module'] });
+        });
     }
 
     const openExamSolve = (content,title = 'Exam', w = 800, h = 600) => {
@@ -393,9 +553,18 @@
 
                                     <!-- Barra de Progreso Visual (si hay contenidos) -->
                                     <div v-if="theme.contents && theme.contents.length > 0" class="mt-3">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Progreso</span>
+                                            <span class="text-xs font-medium" :class="(theme.progress || 0) >= 100 ? 'text-green-500' : 'text-blue-500'">
+                                                {{ theme.progress || 0 }}%
+                                            </span>
+                                        </div>
                                         <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                                            <div class="bg-gradient-to-r from-blue-400 to-indigo-500 h-1.5 rounded-full transition-all duration-500"
-                                                 style="width: 30%"></div>
+                                            <div 
+                                                class="h-1.5 rounded-full transition-all duration-500"
+                                                :class="(theme.progress || 0) >= 100 ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-blue-400 to-indigo-500'"
+                                                :style="{ width: (theme.progress || 0) + '%' }"
+                                            ></div>
                                         </div>
                                     </div>
                                 </div>
@@ -462,42 +631,110 @@
                                     <p class="text-sm text-gray-900 dark:text-white">{{ moduleExam.description }}</p>
                                 </div>
 
-                                <!-- Resultado (si existe) -->
-                                <div v-if="examResult" class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">Tu nota</p>
-                                            <p class="text-2xl font-bold" :class="examResult >= 11 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                                {{ examResult }}
-                                            </p>
+                                <!-- Resultado del Examen (si existe) -->
+                                <div v-if="studentExam" class="space-y-3">
+                                    <!-- Estado y Nota -->
+                                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border"
+                                         :class="getExamStatus()?.class.includes('green') ? 'border-green-500' :
+                                                getExamStatus()?.class.includes('red') ? 'border-red-500' :
+                                                getExamStatus()?.class.includes('yellow') ? 'border-yellow-500' : 'border-gray-500'">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-medium px-2 py-1 rounded" :class="getExamStatus()?.class">
+                                                {{ getExamStatus()?.icon }} {{ getExamStatus()?.label }}
+                                            </span>
+                                            <span v-if="studentExam.is_timed_out" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">
+                                                ⏰ Tiempo Agotado
+                                            </span>
                                         </div>
-                                        <div class="text-right">
-                                            <p class="text-xs" :class="examResult >= 11 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                                                {{ examResult >= 11 ? 'Aprobado' : 'Desaprobado' }}
-                                            </p>
+
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">Tu nota</p>
+                                                <p class="text-3xl font-bold" :class="studentExam.punctuation >= 11 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+                                                    {{ studentExam.punctuation }}
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ studentExam.finished_at ? 'Tiempo utilizado' : 'Tiempo transcurrido' }}
+                                                </p>
+                                                <p class="text-sm font-medium" :class="studentExam.finished_at ? 'text-gray-900 dark:text-white' : 'text-orange-500 dark:text-orange-400'">
+                                                    {{ formatTime(displayTimeSpent) }}
+                                                </p>
+                                                <span v-if="!studentExam.finished_at && studentExam.started_at" class="text-[10px] text-orange-500 animate-pulse">
+                                                    ⏱️ En progreso
+                                                </span>
+                                            </div>
                                         </div>
+                                    </div>
+
+                                    <!-- Información adicional -->
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div class="bg-gray-50 dark:bg-gray-700 rounded p-2">
+                                            <p class="text-gray-500">Fecha de inicio</p>
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ studentExam.date_start }}</p>
+                                        </div>
+                                        <div class="bg-gray-50 dark:bg-gray-700 rounded p-2">
+                                            <p class="text-gray-500">Fecha de fin</p>
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ studentExam.date_end }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mensaje de revisión pendiente -->
+                                    <div v-if="studentExam.status === 'revision_pendiente'" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                                        <p class="text-xs text-yellow-700 dark:text-yellow-300">
+                                            ⚠️ Tu examen está siendo revisado. Algunas preguntas requieren corrección manual por parte del docente. Tu nota puede aumentar una vez completada la revisión.
+                                        </p>
                                     </div>
                                 </div>
 
                                 <!-- Botones de Acción -->
-                                <div class="flex gap-2 pt-2">
+                                <div class="flex flex-col gap-2 pt-2">
+                                    <!-- Botón Principal: Resolver / Repetir / Ver Resultado -->
                                     <Link
+                                        v-if="!studentExam || studentExam.status === 'pendiente'"
                                         :href="route('aca_student_module_exam_solve', moduleExam.id)"
-                                        class="flex-1 bg-red-500 hover:bg-red-600 text-white text-center py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                                        class="w-full bg-red-500 hover:bg-red-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
                                     >
-                                        {{ examResult ? 'Repetir Examen' : 'Resolver Examen' }}
+                                        Resolver Examen
                                     </Link>
-
-                                    <!-- Botón de Descargar Solucionario -->
-                                    <button
-                                        v-if="canDownloadSolution() && moduleExam.file_resolved_name"
-                                        class="bg-gray-700 hover:bg-gray-800 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                    <Link
+                                        v-else-if="canRetakeExam()"
+                                        :href="route('aca_student_module_exam_solve', moduleExam.id)"
+                                        class="w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
                                     >
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                        </svg>
-                                        Solucionario
-                                    </button>
+                                        Repetir Examen ({{ moduleExam.attempts }} intentos)
+                                    </Link>
+                                    <div v-else class="w-full bg-gray-400 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium">
+                                        Examen Completado
+                                    </div>
+
+                                    <!-- Botones secundarios -->
+                                    <div class="flex gap-2">
+                                        <!-- Descargar Solucionario -->
+                                        <button
+                                            v-if="canDownloadSolution()"
+                                            @click="downloadSolution()"
+                                            class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Solucionario
+                                        </button>
+
+                                        <!-- Descargar Examen Resuelto -->
+                                        <button
+                                            v-if="studentExam && (studentExam.status === 'completado' || studentExam.status === 'revision_pendiente')"
+                                            @click="downloadStudentExam()"
+                                            class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                        >
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Mi Examen
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

@@ -29,6 +29,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentHistory;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
 
@@ -750,24 +751,42 @@ class AcaStudentController extends Controller
 
     public function courseLessonThemes($id)
     {
+        // Verificar si el estudiante está matriculado
+        $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+        $personId = Auth::user()->person_id;
 
-        $module = AcaModule::with('teacher.person')
-            ->with('exam')
-            ->with(['themes' => function ($query) {
+        $module = AcaModule::with([
+            'teacher.person',
+            'exam.student_exams' => function ($query) use ($studentId) {
+                // Filtramos para que dentro del examen solo cargue los del alumno logueado
+                $query->where('student_id', $studentId);
+            },
+            'themes' => function ($query) use ($personId) {
                 $query->orderBy('position')
-                    ->with('contents')
-                    ->with('comments.user'); // Cargar los contenidos de cada theme
-            }])
-            ->where('id', $id)
-            ->first();
+                    ->with(['contents', 'comments.user'])
+                    // Cargar historial del estudiante filtrado por person_id
+                    ->with(['student_history' => function ($q) use ($personId) {
+                        $q->where('person_id', $personId);
+                    }]);
+            }
+        ])
+        ->findOrFail($id);
 
+        // Calcular progreso por tema
+        $module->themes->each(function ($theme) {
+            $totalContents = $theme->contents->count();
+            // Contar contenidos únicos vistos (por content_id)
+            $viewedContents = $theme->student_history->unique('content_id')->count();
+            $theme->progress = $totalContents > 0 ? round(($viewedContents / $totalContents) * 100) : 0;
+        });
+
+        //dd($module);
         $course = AcaCourse::with('teacher.person')->where('id', $module->course_id)
             ->first();
 
-            $isEnrolled = false;
+        $isEnrolled = false;
 
-        // Verificar si el estudiante está matriculado
-        $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+
 
         $user = Auth::user();
         if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
@@ -776,6 +795,7 @@ class AcaStudentController extends Controller
 
         if($studentId){
             $isEnrolled = $this->checkCourseAccess($studentId, $course->id);
+
         }
 
         // Denegar acceso si no está matriculado y el curso no es gratis

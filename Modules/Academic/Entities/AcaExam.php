@@ -43,4 +43,9 @@ class AcaExam extends Model
     {
         return $this->belongsTo(AcaModule::class, 'module_id');
     }
+
+    public function student_exams(): HasMany
+    {
+        return $this->hasMany(AcaStudentExam::class, 'exam_id');
+    }
 }
