@@ -1389,9 +1389,11 @@ class AcaStudentController extends Controller
         $allSubscriptions = $allSubscriptions->concat($expiredTwoDaysAgo);
 
         // Si quieres capturar todas las demás que están simplemente "vencidas" (antes de 2 días)
+        $twoMonthsAgo = Carbon::now()->subMonths(2)->startOfDay();
         $moreThanTwoDaysAgo = Carbon::now()->subDays(2)->startOfDay();
         $expiredBeforeTwoDaysAgo = AcaStudentSubscription::with('student.person')
             ->where('date_end', '<', $moreThanTwoDaysAgo)
+            ->where('date_end', '>=', $twoMonthsAgo)  // Solo las que NO tengan más de 2 meses
             ->where('status', false)
             ->get()
             ->each(function ($subscription) {
