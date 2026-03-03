@@ -17,6 +17,7 @@ class AcaModule extends Model
         'position',
         'description',
         'teacher_id',
+        'allow_certificate_download',
     ];
 
     public function course(): BelongsTo
@@ -37,4 +38,5 @@ class AcaModule extends Model
     {
         return $this->hasOne(AcaExam::class, 'module_id');
     }
+
 }

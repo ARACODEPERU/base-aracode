@@ -19,6 +19,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Jobs\ExportSalesExcel;
+use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaCourse;
 
 class AcaReportsController extends Controller
 {
@@ -202,5 +204,42 @@ class AcaReportsController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function studentPerformanceReport()
+    {
+        $courses = AcaCourse::where('status', 1)->orderBy('description')->get();
+        
+        return Inertia::render('Academic::Reports/StudentPerformanceReport', [
+            'courses' => $courses
+        ]);
+    }
+
+    public function studentPerformanceTable(Request $request)
+    {
+        $this->validate($request, [
+            'course_id' => 'nullable|integer',
+            'year' => 'nullable|integer',
+            'month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $query = AcaCapRegistration::with(['student', 'course'])
+            ->select('aca_cap_registrations.*');
+
+        if ($request->filled('course_id')) {
+            $query->where('course_id', $request->course_id);
+        }
+
+        if ($request->filled('year')) {
+            $query->whereYear('created_at', $request->year);
+        }
+
+        if ($request->filled('month')) {
+            $query->whereMonth('created_at', $request->month);
+        }
+
+        $items = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json(['items' => $items]);
     }
 }

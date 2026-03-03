@@ -29,6 +29,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentHistory;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
@@ -780,13 +781,10 @@ class AcaStudentController extends Controller
             $theme->progress = $totalContents > 0 ? round(($viewedContents / $totalContents) * 100) : 0;
         });
 
-        //dd($module);
         $course = AcaCourse::with('teacher.person')->where('id', $module->course_id)
             ->first();
 
         $isEnrolled = false;
-
-
 
         $user = Auth::user();
         if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
@@ -805,7 +803,8 @@ class AcaStudentController extends Controller
 
         return Inertia::render('Academic::Students/Themes', [
             'course' => $course,
-            'module' => $module
+            'module' => $module,
+            'certificate' => $certificate
         ]);
     }
 

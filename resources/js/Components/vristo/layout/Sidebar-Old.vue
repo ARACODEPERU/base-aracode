@@ -116,7 +116,7 @@
             }
 
         } catch (error) {
-            console.error("Error cargando docentes:", error);
+            //console.error("Error cargando docentes:", error);
         }
     }
 

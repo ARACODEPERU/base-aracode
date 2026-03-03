@@ -124,9 +124,9 @@
                     />
                 </div>
             </div>
-            <div class="panel mt-6 pt-0 px-0">
+            <div class="panel mt-6">
                 <div class="table-responsive">
-                    <table class="rounded-t-xl">
+                    <table class="rounded-t-2xl">
                         <thead>
                             <tr>
                                 <th>FECHA</th>
@@ -227,9 +227,12 @@
                             </template>
                             <template v-else>
                                 <tr>
-                                    <td colspan="9" class="text-center">
-                                        <div class="flex justify-center">
-                                            <Empty :description="'Tabla vacía'" :image="'/img/empty-box.png'" />
+                                    <td colspan="9" class="text-center py-8">
+                                        <div class="flex justify-center items-center flex-col">
+                                            <svg class="w-12 h-12 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
+                                            <p class="text-gray-500">Seleccione los filtros y haga clic en Buscar</p>
                                         </div>
                                     </td>
                                 </tr>

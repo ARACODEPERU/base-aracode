@@ -1,7 +1,6 @@
 <script setup>
-    import { ref, onMounted, watch, nextTick, computed } from 'vue';
+    import { ref, onMounted } from 'vue';
     import { useAppStore } from '@/stores/index';
-    import VueCollapsible from 'vue-height-collapsible/vue3';
     import { Link, usePage } from '@inertiajs/vue3';
     import IconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
     const xasset = assetUrl;
@@ -25,6 +24,8 @@
     // Estados para navegación
     const activeSection = ref('courses');
     const expandedSections = ref({});
+    const isChatExpanded = ref(false);
+    const teachers = ref([]);
 
     // Menú de navegación del estudiante
     const studentMenu = ref([
@@ -41,23 +42,23 @@
             id: 'exams',
             title: 'Mis Examenes',
             icon: 'ri-file-list-3-line',
-            route: route('dashboard'),
+            route: route('aca_student_exam_search'),
             badge: null,
             color: 'secondary'
         },
-        {
-            id: 'grades',
-            title: 'Notas',
-            icon: 'ri-bar-chart-line',
-            route: route('dashboard'),
-            badge: null,
-            color: 'accent'
-        },
+        // {
+        //     id: 'grades',
+        //     title: 'Notas',
+        //     icon: 'ri-bar-chart-line',
+        //     route: route('dashboard'),
+        //     badge: null,
+        //     color: 'accent'
+        // },
         {
             id: 'certificates',
             title: 'Mis Certificados',
             icon: 'ri-award-line',
-            route: route('dashboard'),
+            route: route('aca_student_certificates_all'),
             badge: null,
             color: 'success'
         },
@@ -65,7 +66,7 @@
             id: 'chat',
             title: 'Chatbot de Asistencia',
             icon: 'ri-message-3-line',
-            route:route('crm_dasboard_chatbot'),
+            expandable: true,
             badge: 'new',
             color: 'warning',
             permissions: 'crm_chatbot'
@@ -230,12 +231,45 @@
                 expandedSections.value = {};
             }
         }
+
+        const savedChatExpanded = localStorage.getItem('studentChatExpanded');
+        if (savedChatExpanded === 'true') {
+            isChatExpanded.value = true;
+        }
+
+        loadTeachers();
     });
 
-    // Watch para cambios de tema
-    watch(() => store.theme, () => {
-        // Re-renderizar cuando cambie el tema
-    });
+    async function loadTeachers() {
+        try {
+            const response = await axios.post(route('crm_contacts_docents_chat'), {
+                timeout: 0,
+            });
+
+            const data = response.data;
+
+            teachers.value = data.docents.map(docente => ({
+                id: docente.person.id,
+                name: docente.person.full_name,
+                image: docente.person.image
+            }));
+
+        } catch (error) {
+            // console.error("Error cargando docentes:", error);
+        }
+    }
+
+    const getTeacherImage = (image) => {
+        if (!image) return `${xasset}img/default-avatar.png`;
+        if (image.startsWith('/img/')) return `${xasset}${image}`;
+        return `${xasset}storage/${image}`;
+    };
+
+    const toggleChat = () => {
+        isChatExpanded.value = !isChatExpanded.value;
+        localStorage.setItem('studentChatExpanded', isChatExpanded.value);
+    };
+
 
 
 </script>
@@ -283,7 +317,7 @@
                             </div>
                         </div>
                         <template v-for="menuItem in studentMenu" :key="menuItem.id">
-                            <li class="menu nav-item">
+                            <li v-if="!menuItem.expandable" class="menu nav-item">
                                 <Link
                                     :href="menuItem.route"
                                     @click="handleMenuClick(menuItem)"
@@ -317,56 +351,68 @@
                                     </div>
                                 </Link>
                             </li>
+
+                            <li v-else class="menu nav-item">
+                                <button
+                                    @click="toggleChat"
+                                    class="nav-link group w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    :class="{ 'bg-amber-50 dark:bg-amber-900/20': isChatExpanded }"
+                                >
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-3">
+                                            <i :class="[menuItem.icon, 'text-xl text-amber-600 dark:text-amber-400']"></i>
+                                            <span class="font-medium">{{ menuItem.title }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span v-if="menuItem.badge" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                                {{ menuItem.badge }}
+                                            </span>
+                                            <svg
+                                                class="w-4 h-4 transition-transform duration-200"
+                                                :class="{ 'rotate-180': isChatExpanded }"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <transition
+                                    enter-active-class="transition-all duration-200 ease-out"
+                                    enter-from-class="opacity-0 max-h-0"
+                                    enter-to-class="opacity-100 max-h-96"
+                                    leave-active-class="transition-all duration-200 ease-in"
+                                    leave-from-class="opacity-100 max-h-96"
+                                    leave-to-class="opacity-0 max-h-0"
+                                >
+                                    <div v-if="isChatExpanded && teachers.length > 0" class="overflow-hidden">
+                                        <div class="mt-2 ml-4 space-y-1">
+                                            <Link
+                                                v-for="teacher in teachers"
+                                                :key="teacher.id"
+                                                :href="route('crm_application_ai_prompt', { cont: teacher.id })"
+                                                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 bg-gradient-to-r from-gray-50 to-transparent dark:from-gray-800 dark:to-transparent hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30 text-gray-700 dark:text-gray-300 hover:text-indigo-700 dark:hover:text-indigo-300"
+                                            >
+                                                <div class="relative">
+                                                    <img
+                                                        :src="getTeacherImage(teacher.image)"
+                                                        :alt="teacher.name"
+                                                        class="w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-gray-700"
+                                                    />
+                                                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></span>
+                                                </div>
+                                                <span class="font-medium truncate">{{ teacher.name }}</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </transition>
+                            </li>
                         </template>
                     </ul>
-                    <!-- Contenido principal del sidebar para estudiantes -->
-                    <div  v-show="store.menu != 'collapsible-vertical'" class="px-4 py-6 space-y-2">
-                        <div class="mt-8 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Tu Progreso</h4>
-                            <div class="space-y-3">
-                                <div>
-                                    <div class="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-1">
-                                        <span>Cursos Completados</span>
-                                        <span>75%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                        <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-1">
-                                        <span>Examenes Aprobados</span>
-                                        <span>60%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Sección de acceso rápido -->
-                        <div v-show="store.menu != 'collapsible-vertical'" class="mt-8">
-                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3 px-4">Acceso Rápido</h4>
-                            <div class="space-y-2">
-                                <Link
-                                    :href="route('dashboard')"
-                                    class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                >
-                                    <i class="ri-play-circle-line mr-2"></i>
-                                    Continuar último curso
-                                </Link>
-                                <Link
-                                    :href="route('dashboard')"
-                                    class="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                >
-                                    <i class="ri-calendar-check-line mr-2"></i>
-                                    Próximo examen
-                                </Link>
-                            </div>
-                        </div>
-
-                    </div>
                 </perfect-scrollbar>
 
                 <!-- Footer fijo del sidebar - fuera del perfect-scrollbar -->

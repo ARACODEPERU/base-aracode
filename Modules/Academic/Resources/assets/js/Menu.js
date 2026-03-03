@@ -9,7 +9,8 @@ import {
     faPlay,
     faMugHot,
     faChartLine,
-    faGraduationCap
+    faGraduationCap,
+    faClock
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -136,6 +137,14 @@ const menuAcademic = {
             icom: faMugHot,
             permissions: "aca_cursos_revisar_examenes",
             id: 'btnReviewExams'
+        },
+        {
+            route: route("aca_attendance_administration"),
+            status: false,
+            text: "Revisar Asistencia de alumnos",
+            icom: faClock,
+            permissions: "aca_asistencia_administrador",
+            id: 'btnAsistencia'
         },
         {
             route: route('aca_reports_dashboard'),

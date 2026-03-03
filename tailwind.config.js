@@ -36,7 +36,11 @@ module.exports = {
         'leading-6',
         'h-9',
         'leading-9',
-        'shadow-lg'
+        'shadow-lg',
+        {
+            pattern: /(bg|text|from|via|to|border|ring)-(blue|red|green|orange|purple|indigo|purple|violet|emerald|teal|rose|pink|amber|yellow)-(50|100|400|500|600|700|800|900)/,
+            variants: ['dark', 'hover', 'focus', 'dark:from', 'dark:to'],
+        },
     ],
     theme: {
         container: {

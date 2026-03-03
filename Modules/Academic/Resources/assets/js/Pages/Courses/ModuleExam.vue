@@ -84,7 +84,7 @@
                 questionForm.reset();
                 Swal2.fire({
                     title: '¡Éxito!',
-                    text: isEditing ? 'Pregunta actualizada' : 'Pregunta creada',
+                    text: isEditing ? 'Pregunta actualizada correctamente' : 'Pregunta creada correctamente',
                     icon: 'success',
                     padding: '2em',
                 });
@@ -305,7 +305,7 @@
                 },
                 {route: route('aca_courses_edit', exam.course.id), title: exam.course.description},
                 {title: 'Módulos'},
-                {title: exam.module.description},
+                {route: route('aca_courses_module_panel', exam.course.id), title: exam.module.description},
                 {title: exam.description},
             ]"
             :maxChars="25"

@@ -5,6 +5,7 @@
     import { Link, useForm, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { ref, onMounted, computed, watch } from 'vue';
+    import axios from 'axios';
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     import flatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
@@ -107,6 +108,7 @@
         id: null,
         position: null,
         description: null,
+        allow_certificate_download: false,
     });
 
     const moduleExamForm = useForm({
@@ -184,6 +186,7 @@
             moduleForm.id = module.id;
             moduleForm.description = module.description;
             moduleForm.position = module.position;
+            moduleForm.allow_certificate_download = module.allow_certificate_download ? true : false;
         }
 
         moduleForm.course_name = props.course.description;
@@ -1019,6 +1022,143 @@
         if (!themes || !Array.isArray(themes)) return 0;
         return themes.reduce((acc, theme) => acc + (theme.contents?.length || 0), 0);
     };
+
+    // ============ MODALES DE VISUALIZACIÓN DE CONTENIDO ============
+
+    const displayVideoPreviewModal = ref(false);
+    const displayVideoconferenceModal = ref(false);
+    const selectedContent = ref(null);
+
+    const openContentPreview = (content) => {
+        selectedContent.value = content;
+
+        if (content.is_file == '0') {
+            displayVideoPreviewModal.value = true;
+        } else if (content.is_file == '3') {
+            generateAttendanceLink();
+            displayVideoconferenceModal.value = true;
+        }
+    };
+
+    const closeVideoPreviewModal = () => {
+        displayVideoPreviewModal.value = false;
+        selectedContent.value = null;
+    };
+
+    const closeVideoconferenceModal = () => {
+        displayVideoconferenceModal.value = false;
+        selectedContent.value = null;
+    };
+
+    // ============ VIDEOCONFERENCIA - ENLACE DE ASISTENCIA ============
+
+    const videoconferenceForm = useForm({
+        content_id: null,
+        course_id: null,
+        link_code: null,
+        verification_code: null,
+        validity_minutes: 30,
+    });
+
+    const linkExpiresAt = ref(null);
+    const isGeneratingLink = ref(false);
+    const linkCopied = ref(false);
+
+    const validityOptions = [
+        { value: 30, label: '30 minutos' },
+        { value: 60, label: '1 hora' },
+        { value: 90, label: '1 hora y media' },
+        { value: 120, label: '2 horas' },
+        { value: 180, label: '3 horas' },
+        { value: 240, label: '4 horas' },
+        { value: 300, label: '5 horas' }
+    ];
+
+    const generateAttendanceLink = async () => {
+        isGeneratingLink.value = true;
+        const randomCode = Math.floor(Math.random() * 900000000) + 100000000;
+
+        videoconferenceForm.content_id = selectedContent.value?.id;
+        videoconferenceForm.course_id = props.course?.id;
+        videoconferenceForm.link_code = randomCode;
+        videoconferenceForm.verification_code = videoconferenceForm.verification_code || null;
+
+        try {
+            await axios.post(route('aca_attendance_link_store'), {
+                content_id: videoconferenceForm.content_id,
+                course_id: videoconferenceForm.course_id,
+                link_code: videoconferenceForm.link_code,
+                verification_code: videoconferenceForm.verification_code,
+                validity_minutes: videoconferenceForm.validity_minutes,
+            });
+
+            linkExpiresAt.value = Date.now() + (videoconferenceForm.validity_minutes * 60 * 1000);
+            linkCopied.value = false;
+        } catch (error) {
+            console.error('Error al generar enlace:', error);
+        } finally {
+            isGeneratingLink.value = false;
+        }
+    };
+
+    const getAttendanceUrl = () => {
+        if (!videoconferenceForm.link_code) return '';
+        return `${baseUrl}asistencia/registrar/clase?code=${videoconferenceForm.link_code}`;
+    };
+
+    const copyToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(getAttendanceUrl());
+            linkCopied.value = true;
+            setTimeout(() => {
+                linkCopied.value = false;
+            }, 2000);
+        } catch (err) {
+            console.error('Error al copiar:', err);
+        }
+    };
+
+    const getRemainingTime = () => {
+        if (!linkExpiresAt.value) return null;
+        const remaining = linkExpiresAt.value - Date.now();
+        if (remaining <= 0) return 'expirado';
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        return `${minutes} min ${seconds} seg`;
+    };
+
+    const isLinkExpired = () => {
+        if (!linkExpiresAt.value) return true;
+        return linkExpiresAt.value - Date.now() <= 0;
+    };
+
+    // ============ HELPERS DE DISEÑO PARA CONTENIDOS ============
+
+    const getContentTypeName = (type) => {
+        const types = {
+            '0': 'Video',
+            '1': 'Link',
+            '2': 'PDF',
+            '3': 'Videollamada',
+            '4': 'Examen'
+        };
+        return types[type] || 'Archivo';
+    };
+
+    const getContentTypeClasses = (type) => {
+        const classes = {
+            '0': { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-700', badge: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' },
+            '1': { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-700', badge: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' },
+            '2': { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-700', badge: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300' },
+            '3': { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400', border: 'border-orange-200 dark:border-orange-700', badge: 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300' },
+            '4': { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-700', badge: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' }
+        };
+        return classes[type] || classes['0'];
+    };
+
+    const isContentClickable = (type) => {
+        return type == '0' || type == '3';
+    };
 </script>
 
 <template>
@@ -1125,9 +1265,9 @@
                                                         v-if="module.exam"
                                                         v-tippy="{ content: 'Panel preguntas y respuesta' , placement: 'bottom' }"
                                                         :href="route('aca_course_module_exam_view_details', [props.course.id, module.id, module.exam.id])"
-                                                        class="bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-800/70 transition-colors cursor-pointer"
+                                                        class="btn btn-success btn-sm rounded-xl shadow-lg transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]"
                                                     >
-                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                        <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                                         </svg>
                                                         Examen Activo
@@ -1290,36 +1430,65 @@
                                         </div>
 
                                         <!-- Preview de Contenidos -->
-                                        <div v-if="theme.contents?.length > 0" class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                            <div class="flex gap-2 flex-wrap items-center">
-                                                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1 w-full">Tipos de contenido:</span>
+                                        <div v-if="theme.contents?.length > 0" class="mt-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                    Contenidos ({{ theme.contents.length }})
+                                                </span>
+                                                <button
+                                                    v-if="theme.contents.length > 5"
+                                                    @click="viewContents(theme, key)"
+                                                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium flex items-center gap-1"
+                                                >
+                                                    Ver todos
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="space-y-2">
                                                 <div
                                                     v-for="content in theme.contents.slice(0, 5)"
                                                     :key="content.id"
-                                                    class="w-8 h-8 bg-white dark:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-500 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                                                    v-tippy="{ content: content.description , placement: 'bottom' }"
+                                                    @click="isContentClickable(content.is_file) ? openContentPreview(content) : null"
+                                                    class="flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-200"
+                                                    :class="[
+                                                        getContentTypeClasses(content.is_file).bg,
+                                                        getContentTypeClasses(content.is_file).border,
+                                                        isContentClickable(content.is_file)
+                                                            ? 'cursor-pointer hover:shadow-md hover:scale-[1.01]'
+                                                            : 'cursor-default opacity-90'
+                                                    ]"
                                                 >
-                                                    <svg v-if="content.is_file == '1'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                        <path d="M451.5 160C434.9 160 418.8 164.5 404.7 172.7C388.9 156.7 370.5 143.3 350.2 133.2C378.4 109.2 414.3 96 451.5 96C537.9 96 608 166 608 252.5C608 294 591.5 333.8 562.2 363.1L491.1 434.2C461.8 463.5 422 480 380.5 480C294.1 480 224 410 224 323.5C224 322 224 320.5 224.1 319C224.6 301.3 239.3 287.4 257 287.9C274.7 288.4 288.6 303.1 288.1 320.8C288.1 321.7 288.1 322.6 288.1 323.4C288.1 374.5 329.5 415.9 380.6 415.9C405.1 415.9 428.6 406.2 446 388.8L517.1 317.7C534.4 300.4 544.2 276.8 544.2 252.3C544.2 201.2 502.8 159.8 451.7 159.8zM307.2 237.3C305.3 236.5 303.4 235.4 301.7 234.2C289.1 227.7 274.7 224 259.6 224C235.1 224 211.6 233.7 194.2 251.1L123.1 322.2C105.8 339.5 96 363.1 96 387.6C96 438.7 137.4 480.1 188.5 480.1C205 480.1 221.1 475.7 235.2 467.5C251 483.5 269.4 496.9 289.8 507C261.6 530.9 225.8 544.2 188.5 544.2C102.1 544.2 32 474.2 32 387.7C32 346.2 48.5 306.4 77.8 277.1L148.9 206C178.2 176.7 218 160.2 259.5 160.2C346.1 160.2 416 230.8 416 317.1C416 318.4 416 319.7 416 321C415.6 338.7 400.9 352.6 383.2 352.2C365.5 351.8 351.6 337.1 352 319.4C352 318.6 352 317.9 352 317.1C352 283.4 334 253.8 307.2 237.5z"/>
+                                                    <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" :class="getContentTypeClasses(content.is_file).badge">
+                                                        <svg v-if="content.is_file == '0'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                                                        </svg>
+                                                        <svg v-else-if="content.is_file == '1'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <svg v-else-if="content.is_file == '2'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <svg v-else-if="content.is_file == '3'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                        </svg>
+                                                        <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                            {{ content.description }}
+                                                        </p>
+                                                    </div>
+                                                    <span class="flex-shrink-0 text-xs px-2 py-1 rounded-full font-medium" :class="getContentTypeClasses(content.is_file).badge">
+                                                        {{ getContentTypeName(content.is_file) }}
+                                                    </span>
+                                                    <svg v-if="isContentClickable(content.is_file)" class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                     </svg>
-                                                    <svg v-else-if="content.is_file == '0'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                        <path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/>
-                                                    </svg>
-                                                    <svg v-else-if="content.is_file == '3'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                        <path d="M320 128C241 128 175.3 185.3 162.3 260.7C171.6 257.7 181.6 256 192 256L208 256C234.5 256 256 277.5 256 304L256 400C256 426.5 234.5 448 208 448L192 448C139 448 96 405 96 352L96 288C96 164.3 196.3 64 320 64C443.7 64 544 164.3 544 288L544 456.1C544 522.4 490.2 576.1 423.9 576.1L336 576L304 576C277.5 576 256 554.5 256 528C256 501.5 277.5 480 304 480L336 480C362.5 480 384 501.5 384 528L384 528L424 528C463.8 528 496 495.8 496 456L496 435.1C481.9 443.3 465.5 447.9 448 447.9L432 447.9C405.5 447.9 384 426.4 384 399.9L384 303.9C384 277.4 405.5 255.9 432 255.9L448 255.9C458.4 255.9 468.3 257.5 477.7 260.6C464.7 185.3 399.1 127.9 320 127.9z"/>
-                                                    </svg>
-                                                    <svg v-else-if="content.is_file == '2'" class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                        <path d="M128 128C128 92.7 156.7 64 192 64L341.5 64C358.5 64 374.8 70.7 386.8 82.7L493.3 189.3C505.3 201.3 512 217.6 512 234.6L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 128zM336 122.5L336 216C336 229.3 346.7 240 360 240L453.5 240L336 122.5zM303 505C312.4 514.4 327.6 514.4 336.9 505L400.9 441C410.3 431.6 410.3 416.4 400.9 407.1C391.5 397.8 376.3 397.7 367 407.1L344 430.1L344 344C344 330.7 333.3 320 320 320C306.7 320 296 330.7 296 344L296 430.1L273 407.1C263.6 397.7 248.4 397.7 239.1 407.1C229.8 416.5 229.7 431.7 239.1 441L303.1 505z"/>
-                                                    </svg>
-                                                    <svg v-else class="w-4 h-4" :class="getContentTypeColor(content.is_file)" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
-                                                        <path d="M128.1 64C92.8 64 64.1 92.7 64.1 128L64.1 512C64.1 547.3 92.8 576 128.1 576L274.3 576L285.2 521.5C289.5 499.8 300.2 479.9 315.8 464.3L448 332.1L448 234.6C448 217.6 441.3 201.3 429.3 189.3L322.8 82.7C310.8 70.7 294.5 64 277.6 64L128.1 64zM389.6 240L296.1 240C282.8 240 272.1 229.3 272.1 216L272.1 122.5L389.6 240zM332.3 530.9L320.4 590.5C320.2 591.4 320.1 592.4 320.1 593.4C320.1 601.4 326.6 608 334.7 608C335.7 608 336.6 607.9 337.6 607.7L397.2 595.8C409.6 593.3 421 587.2 429.9 578.3L548.8 459.4L468.8 379.4L349.9 498.3C341 507.2 334.9 518.6 332.4 531zM600.1 407.9C622.2 385.8 622.2 350 600.1 327.9C578 305.8 542.2 305.8 520.1 327.9L491.3 356.7L571.3 436.7L600.1 407.9z"/>
-                                                    </svg>
-                                                </div>
-                                                <div
-                                                    v-if="theme.contents.length > 5"
-                                                    class="w-8 h-8 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg border border-gray-300 dark:border-gray-500 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-300"
-                                                >
-                                                    +{{ theme.contents.length - 5 }}
                                                 </div>
                                             </div>
                                         </div>
@@ -1500,6 +1669,17 @@
                             <label>Descripción</label>
                             <textarea v-model="moduleForm.description" id="moddescription" type="text" class="form-input" placeholder="Descripción" rows="4" ></textarea>
                             <InputError :message="moduleForm.errors.description" class="mt-2" />
+                        </div>
+                        <div class="flex items-center gap-3 mt-4">
+                            <input
+                                type="checkbox"
+                                id="allow_certificate_download"
+                                v-model="moduleForm.allow_certificate_download"
+                                class="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded border-gray-300 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400"
+                            />
+                            <label for="allow_certificate_download" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Permitir descarga de certificado para este módulo
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -1841,6 +2021,7 @@
                                 placeholder="Ej: Examen final del módulo de introducción..."
                                 required
                             ></textarea>
+                            <InputError :message="moduleExamForm.errors.description" class="mt-2" />
                         </div>
 
                         <!-- Duración Máxima y Archivo PDF -->
@@ -1861,6 +2042,7 @@
                                                 <option value="0">0 horas</option>
                                                 <option v-for="h in 5" :key="h" :value="h">{{ h }} hora{{ h > 1 ? 's' : '' }}</option>
                                             </select>
+                                            <InputError :message="moduleExamForm.errors.duration_minutes" class="mt-2" />
                                         </div>
                                         <div class="flex-1">
                                             <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Minutos</label>
@@ -1872,6 +2054,7 @@
                                                 <option value="0">0 min</option>
                                                 <option v-for="m in 59" :key="m" :value="m">{{ m }} min</option>
                                             </select>
+                                            <InputError :message="moduleExamForm.errors.description" class="mt-2" />
                                         </div>
                                     </div>
                                     <!-- Visualización del Total -->
@@ -1950,6 +2133,7 @@
                                     v-model="moduleExamForm.date_start"
                                     required
                                 />
+                                <InputError :message="moduleExamForm.errors.date_start" class="mt-2" />
                             </div>
 
                             <!-- Fecha de Fin -->
@@ -1960,6 +2144,7 @@
                                     v-model="moduleExamForm.date_end"
                                     required
                                 />
+                                <InputError :message="moduleExamForm.errors.date_end" class="mt-2" />
                             </div>
                         </div>
 
@@ -1976,6 +2161,7 @@
                                     placeholder="1"
                                     required
                                 />
+                                <InputError :message="moduleExamForm.errors.attempts" class="mt-2" />
                             </div>
 
                             <!-- Estado -->
@@ -1985,6 +2171,7 @@
                                     <option :value="1">Activo</option>
                                     <option :value="0">Inactivo</option>
                                 </select>
+                                <InputError :message="moduleExamForm.errors.status" class="mt-2" />
                             </div>
                         </div>
                     </div>
@@ -2005,6 +2192,157 @@
                         </svg>
                         {{ moduleExamForm.processing ? 'Guardando...' : (moduleExamForm.id ? 'Actualizar Examen' : 'Crear Examen') }}
                     </button>
+                </div>
+            </template>
+        </ModalLarge>
+
+        <!-- Modal de Visualización de Video -->
+        <ModalLarge :show="displayVideoPreviewModal" :onClose="closeVideoPreviewModal">
+            <template #title>
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                    </svg>
+                    Video
+                </div>
+            </template>
+            <template #message>{{ selectedContent?.description }}</template>
+            <template #content>
+                <div class="p-4">
+                    <div v-if="selectedContent" class="bg-gray-900 rounded-lg overflow-hidden">
+                        <div v-html="modifiedContent(selectedContent.content)" class="w-full"></div>
+                    </div>
+                </div>
+            </template>
+        </ModalLarge>
+
+        <!-- Modal de Videoconferencia -->
+        <ModalLarge :show="displayVideoconferenceModal" :onClose="closeVideoconferenceModal" :icon="'/img/enlace.png'">
+            <template #title>
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                    </svg>
+                    Videollamada
+                </div>
+            </template>
+            <template #message>{{ selectedContent?.description }}</template>
+            <template #content>
+                <div class="p-5 space-y-6">
+                    <!-- Enlace de asistencia -->
+                    <div>
+                        <InputLabel value="Enlace de Asistencia" />
+                        <div class="flex gap-2 mt-1">
+                            <div class="relative flex-1">
+                                <input
+                                    type="text"
+                                    :value="getAttendanceUrl()"
+                                    readonly
+                                    class="form-input w-full pr-10 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+                                    placeholder="Genere un enlace de asistencia"
+                                />
+                                <button
+                                    @click="copyToClipboard"
+                                    :disabled="!videoconferenceForm.link_code"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                    :class="{ 'text-green-500': linkCopied, 'text-gray-400 dark:text-gray-500': !linkCopied }"
+                                    :title="linkCopied ? 'Copiado' : 'Copiar enlace'"
+                                >
+                                    <svg v-if="linkCopied" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Código de verificación y Tiempo de validez -->
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <InputLabel value="Código de verificación (Opcional)" />
+                            <TextInput
+                                v-model="videoconferenceForm.verification_code"
+                                class="form-input w-full mt-1"
+                                placeholder="Ej: ABC123"
+                                maxlength="20"
+                            />
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                El alumno deberá ingresar este código para validar su asistencia
+                            </p>
+                        </div>
+                        <div>
+                            <InputLabel value="Tiempo de Validez del Enlace" />
+                            <select v-model="videoconferenceForm.validity_minutes" class="form-select w-full mt-1">
+                                <option v-for="option in validityOptions" :key="option.value" :value="option.value">
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Botón generar enlace -->
+                    <div class="flex justify-center">
+                        <button
+                            @click="generateAttendanceLink"
+                            type="button"
+                            class="btn btn-primary flex items-center gap-2 px-6"
+                            :disabled="isGeneratingLink"
+                        >
+                            <svg v-if="isGeneratingLink" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                            </svg>
+                            {{ isGeneratingLink ? 'Generando...' : 'Generar Enlace de Asistencia' }}
+                        </button>
+                    </div>
+
+                    <!-- Estado del enlace -->
+                    <div v-if="videoconferenceForm.link_code" class="rounded-lg p-4" :class="isLinkExpired() ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'">
+                        <div class="flex items-center gap-3">
+                            <div v-if="isLinkExpired()" class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div v-else class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-medium" :class="isLinkExpired() ? 'text-red-800 dark:text-red-200' : 'text-green-800 dark:text-green-200'">
+                                    {{ isLinkExpired() ? 'Enlace Expirado' : 'Enlace Activo' }}
+                                </p>
+                                <p class="text-sm" :class="isLinkExpired() ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'">
+                                    {{ isLinkExpired() ? 'Genere un nuevo enlace para continuar' : `Válido por: ${getRemainingTime()}` }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Instrucciones</p>
+                                <ul class="text-xs text-blue-700 dark:text-blue-300 mt-1 space-y-1 list-disc list-inside">
+                                    <li>Genere el enlace y compártalo con sus alumnos</li>
+                                    <li>Los alumnos deberán ingresar su DNI para registrar asistencia</li>
+                                    <li>Si configuró un código de verificación, los alumnos también deberán ingresarlo</li>
+                                    <li>Una vez expirado, deberá generar un nuevo enlace</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </template>
         </ModalLarge>

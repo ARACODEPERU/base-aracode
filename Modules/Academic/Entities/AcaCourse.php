@@ -89,4 +89,14 @@ class AcaCourse extends Model
     {
         return $this->hasOne(OnliItem::class, 'id', 'item_id');
     }
+
+    public function exams(): HasOne
+    {
+        return $this->hasOne(AcaExam::class, 'course_id');
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(AcaCertificate::class, 'course_id');
+    }
 }

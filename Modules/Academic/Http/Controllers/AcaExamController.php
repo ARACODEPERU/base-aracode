@@ -33,7 +33,7 @@ class AcaExamController extends Controller
         $dateStart = $request->get('date_start');
         $dateEnd = $request->get('date_end');
         $status = $request->get('status');
-
+        $attempts = $request->get('attempts');
 
         $this->validate(
             $request,
@@ -48,6 +48,7 @@ class AcaExamController extends Controller
         $origin = AcaContent::with('theme.module.course')
             ->where('id', $request->get('content_id'))
             ->first();
+
         $idExam =  null;
 
         $msg = null;
@@ -65,6 +66,7 @@ class AcaExamController extends Controller
                         'date_start' => $dateStart,
                         'date_end' => $dateEnd,
                         'status' => $status ? true : false,
+                        'attempts' => $attempts
                     ]);
 
                 $msg = 'Se actualizo correctamente';
@@ -83,6 +85,7 @@ class AcaExamController extends Controller
                 'date_start' => $dateStart,
                 'date_end' => $dateEnd,
                 'status' => $status ? true : false,
+                'attempts' => $attempts
             ]);
             $idExam = $exam->id;
             $msg = 'Se registro correctamente';
@@ -407,7 +410,7 @@ class AcaExamController extends Controller
 
             $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
             $answerToStore = $path;
-            $individualScore = 0;
+            $individualScore = 'X';
         }
         elseif ($type === 'Alternativas') {
             $answerId = $request->input('answers');
@@ -419,6 +422,7 @@ class AcaExamController extends Controller
                 $individualScore = $answerOption->score;
             }
             $answerToStore = $answerId;
+            $individualScore = (float) $individualScore;
         }
         elseif ($type === 'Varias respuestas') {
             $selectedIds = $request->input('answers', []);
@@ -433,10 +437,11 @@ class AcaExamController extends Controller
                 }
             }
             $answerToStore = $selectedIds;
+            $individualScore = (float) $individualScore;
         }
         elseif ($type === 'Escribir') {
             $answerToStore = $request->input('answers');
-            $individualScore = 0;
+            $individualScore = 'X';
         }
 
         // 5. Actualizar el set de respuestas
@@ -444,7 +449,7 @@ class AcaExamController extends Controller
             "id" => (int) $questionId,
             "type" => $type,
             "answers" => $answerToStore,
-            "punctuation" => (float) $individualScore,
+            "punctuation" => $individualScore,
             "updated_at" => now()->toDateTimeString()
         ];
 
@@ -492,7 +497,12 @@ class AcaExamController extends Controller
         });
         //dd($timeSpent);
         // 3. Actualizar estado
-        $examStudent->status = $hasManualGrading ? 'revision_pendiente' : 'terminado';
+        // 3. Actualizar estado según el tipo de preguntas
+        // Si NO tiene manuales (todo es autocalculable), el estado es 'calificado'
+        // Si TIENE manuales, queda en 'revision_pendiente'
+        $examStudent->status = $hasManualGrading ? 'revision_pendiente' : 'calificado';
+
+
         $examStudent->finished_at = now();
         $examStudent->time_spent_seconds = $timeSpent;
         $examStudent->is_timed_out = $timeSpent > ($maxSeconds + 30);
@@ -560,5 +570,58 @@ class AcaExamController extends Controller
         $fileName = str_replace(' ', '_', $fileName);
 
         return $pdf->download($fileName);
+    }
+
+    public function studentExams(){
+        // Obtener estudiante autenticado
+        $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
+
+        // Filtros
+        $courseId = request()->get('course_id');
+        $search = request()->get('search');
+        $perPage = request()->get('per_page', 10);
+
+
+        // Consulta base - solo exámenes iniciados o terminados
+        $query = AcaStudentExam::with([
+                'exam.course',
+                'exam.module',
+                'exam.questions'
+            ])
+            ->where('student_id', $studentId);
+
+        // Filtro por curso
+        if ($courseId) {
+            $query->whereHas('exam', function ($q) use ($courseId) {
+                $q->where('course_id', $courseId);
+            });
+        }
+
+        // Búsqueda por nombre de examen o módulo
+        if ($search) {
+            $query->whereHas('exam', function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhereHas('module', function ($mq) use ($search) {
+                      $mq->where('description', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Ordenar por más reciente
+        $query->orderBy('created_at', 'desc');
+
+        // Paginación con cantidad dinámica
+        $exams = $query->paginate($perPage)->withQueryString();
+
+        // Obtener cursos para el filtro (cursos donde el alumno tiene exámenes)
+        $courses = AcaCourse::whereHas('exams.student_exams', function ($q) use ($studentId) {
+            $q->where('student_id', $studentId);
+        })->get(['id', 'description']);
+
+        return Inertia::render('Academic::Students/ExamsSearch', [
+            'exams' => $exams,
+            'courses' => $courses,
+            'filters' => request()->only(['course_id', 'search', 'per_page'])
+        ]);
     }
 }

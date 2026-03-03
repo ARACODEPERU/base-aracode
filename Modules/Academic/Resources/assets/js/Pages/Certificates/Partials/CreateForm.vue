@@ -20,8 +20,19 @@
 
     const form = useForm({
         course_id: null,
+        for_module: false,
         certificate_img: null,
         certificate_img_preview: null,
+        has_back: false,
+        has_reverse: false,
+        back_certificate_img: null,
+        back_certificate_img_preview: null,
+        back_description: '',
+        back_content_show_manual: true,
+        back_content_show_course: false,
+        back_content_show_module: false,
+        back_content_type: 'list',
+        back_content_type_module: 'list',
         fontfamily_date: null,
         font_align_date: null,
         font_vertical_align_date: null,
@@ -57,6 +68,30 @@
         interspace_description: null,
         name_certificate: null,
         state: null
+    });
+
+    const loadModules = () => {
+        if (form.course_id && form.certificate_type === 'module') {
+            loadingModules.value = true;
+            axios.get(route('aca_course_modules', form.course_id))
+                .then(response => {
+                    modules.value = response.data;
+                })
+                .finally(() => {
+                    loadingModules.value = false;
+                });
+        } else {
+            modules.value = [];
+            form.module_id = null;
+        }
+    };
+
+    watch(() => form.certificate_type, () => {
+        loadModules();
+    });
+
+    watch(() => form.course_id, () => {
+        loadModules();
     });
 
     const createCertificate = () => {
@@ -99,7 +134,6 @@
                 form.certificate_img_preview = new Image();
                 form.certificate_img_preview.src = e.target.result;
                 form.certificate_img_preview.onload = () => {
-                    // Ajustar el tamaño del canvas al tamaño de la imagen
                     canvas.value.width = form.certificate_img_preview.width;
                     canvas.value.height = form.certificate_img_preview.height;
                     drawCanvas();
@@ -107,6 +141,24 @@
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    // Manejar la subida de la imagen del reverso
+    const handleBackImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            form.back_certificate_img = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                form.back_certificate_img_preview = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeBackImage = () => {
+        form.back_certificate_img = null;
+        form.back_certificate_img_preview = null;
     };
 
     // Dibujar en el canvas
@@ -155,6 +207,8 @@
                         />
                         <InputError :message="form.errors.name_certificate" class="mt-1" />
                     </div>
+
+                    <!-- Curso -->
                     <div class="col-span-2">
                         <InputLabel for="course_id">Curso (Opcional)</InputLabel>
                         <multiselect
@@ -172,21 +226,145 @@
                             @update:modelValue="modifyPreview"
                         ></multiselect>
                     </div>
+
+                    <!-- Certificado para Módulos -->
                     <div class="col-span-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                v-model="form.for_module" 
+                                class="form-checkbox text-primary"
+                            />
+                            <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Certificado para módulos</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mt-1">Al descargar desde un módulo, mostrará el nombre del módulo</p>
+                    </div>
+
+                    <!-- Imagen Anverso -->
+                    <div class="col-span-2">
+                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                            Imagen Anverso
+                        </label>
                         <div class="flex items-center justify-center w-full">
-                            <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                            <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
                                     </svg>
                                     <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Haga clic para cargar</span> imagen</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 2245x1587px)</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF</p>
                                 </div>
                                 <input @change="handleImageUpload" id="dropzone-file" type="file" class="hidden" />
                             </label>
                         </div>
                         <InputError :message="form.errors.certificate_img" class="mt-1" />
                     </div>
+
+                    <!-- Toggle Reverso -->
+                    <div class="col-span-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                v-model="form.has_back" 
+                                class="form-checkbox text-primary"
+                            />
+                            <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Habilitar certificado con reverso</span>
+                        </label>
+                    </div>
+
+                    <!-- Toggle Incluir Reverso en Descarga -->
+                    <div class="col-span-2" v-if="form.has_back">
+                        <label class="flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                v-model="form.has_reverse" 
+                                class="form-checkbox text-primary"
+                            />
+                            <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Incluir reverso al descargar (ZIP)</span>
+                        </label>
+                    </div>
+
+                    <!-- Campos del Reverso (si está habilitado) -->
+                    <template v-if="form.has_back">
+                        <!-- Imagen Reverso -->
+                        <div class="col-span-2">
+                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                                Imagen Reverso
+                            </label>
+                            <div class="flex items-center justify-center w-full">
+                                <label for="dropzone-back-file" class="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                        </svg>
+                                        <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Haga clic para cargar</span> imagen</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF</p>
+                                    </div>
+                                    <input @change="handleBackImageUpload" id="dropzone-back-file" type="file" class="hidden" />
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Preview imagen reverso -->
+                        <div class="col-span-2" v-if="form.back_certificate_img_preview">
+                            <div class="relative inline-block">
+                                <img :src="form.back_certificate_img_preview" class="h-20 rounded border" />
+                                <button 
+                                    type="button" 
+                                    @click="removeBackImage"
+                                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contenido a mostrar en el reverso -->
+                        <div class="col-span-2">
+                            <InputLabel class="mb-2">Contenido del Reverso</InputLabel>
+                            <div class="space-y-2">
+                                <label class="flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        v-model="form.back_content_show_manual" 
+                                        class="form-checkbox text-primary"
+                                    />
+                                    <span class="ltr:ml-2 rtl:mr-2 text-sm">Descripción manual</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        v-model="form.back_content_show_course" 
+                                        class="form-checkbox text-primary"
+                                    />
+                                    <span class="ltr:ml-2 rtl:mr-2 text-sm">Contenido del curso</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer" v-if="form.for_module">
+                                    <input 
+                                        type="checkbox" 
+                                        v-model="form.back_content_show_module" 
+                                        class="form-checkbox text-primary"
+                                    />
+                                    <span class="ltr:ml-2 rtl:mr-2 text-sm">Contenido del módulo</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Descripción manual (si está habilitado) -->
+                        <div class="col-span-2" v-if="form.back_content_show_manual">
+                            <InputLabel for="back_description">Descripción del Reverso</InputLabel>
+                            <textarea
+                                id="back_description"
+                                v-model="form.back_description"
+                                class="form-textarea"
+                                rows="4"
+                                placeholder="Escriba el contenido que desea mostrar en el reverso..."
+                            ></textarea>
+                        </div>
+                    </template>
+
                     <div class="col-span-2 flex justify-end">
                         <button @click="createCertificate" class="btn btn-primary sm:w-full" type="button">
                             <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">

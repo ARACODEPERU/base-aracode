@@ -14,6 +14,7 @@ class AcaCertificate extends Model
         'student_id',
         'registration_id',
         'course_id',
+        'module_id',
         'image',
         'content'
     ];
@@ -26,5 +27,10 @@ class AcaCertificate extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(AcaCourse::class, 'course_id');
+    }
+
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(AcaModule::class, 'module_id');
     }
 }

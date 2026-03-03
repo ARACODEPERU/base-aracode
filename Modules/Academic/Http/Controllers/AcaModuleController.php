@@ -45,7 +45,8 @@ class AcaModuleController extends Controller
         $module = AcaModule::create([
             'course_id'     => $request->get('course_id'),
             'position'      => $request->get('position'),
-            'description'   => $request->get('description')
+            'description'   => $request->get('description'),
+            'allow_certificate_download' => $request->get('allow_certificate_download') ? true : false,
         ]);
 
         return response()->json([
@@ -68,7 +69,8 @@ class AcaModuleController extends Controller
 
         $module->update([
             'position'      => $request->get('position'),
-            'description'   => $request->get('description')
+            'description'   => $request->get('description'),
+            'allow_certificate_download' => $request->get('allow_certificate_download') ? true : false,
         ]);
 
         return response()->json([
@@ -150,7 +152,6 @@ class AcaModuleController extends Controller
             'date_end'         => $request->get('date_end'),
             'duration_minutes' => $request->get('duration_minutes'),
             'attempts'         => $request->get('attempts'),
-            'status'           => $request->get('status'),
             'status'           => $request->get('status'),
         ];
 

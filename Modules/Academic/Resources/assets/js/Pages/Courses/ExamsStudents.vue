@@ -176,6 +176,7 @@
         return answer && !isNaN(answer.punctuation);
     }
 
+
     const getAnswerPunctuation = (questionId) => {
         const answer = examForm.answers.find(ans => ans.id == questionId);
         return answer.punctuation;
@@ -388,7 +389,7 @@
                                         </template>
                                     </div>
                                 </template>
-                                <template v-else-if="hasValidPunctuation(question.id)">
+                                <template v-else-if="hasValidPunctuation(question.id, question.type_answers)">
                                     <!-- ✅ Totalmente correcto -->
                                     <div class="inline-flex flex-wrap gap-2 ps-5 mt-4">
                                         <div>
@@ -406,7 +407,7 @@
                                         </div>
                                     </div>
                                 </template>
-                                <template v-if="!hasValidPunctuation(question.id)">
+                                <template v-if="!hasValidPunctuation(question.id, question.type_answers)">
                                     <div class="mt-6 ps-5" style="width: 40%;">
                                         <label for="addonsRightoutline">Calificar</label>
                                         <div class="flex">

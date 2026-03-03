@@ -23,10 +23,6 @@
             type: Object,
             default: () => ({}),
         },
-        studentModulesExams: {
-            type: Object,
-            default: () => ({}),
-        }
     });
 
     const treeview1 = ref([]);
@@ -63,7 +59,7 @@
         // Solo puede descargar si ya terminó, tiene nota >= 11 y existe el archivo
         const passed = studentExam.value.punctuation >= 11;
         const hasFile = moduleExam.value && moduleExam.value.file_resolved_path;
-        const finished = studentExam.value.status === 'completado' || studentExam.value.status === 'revision_pendiente';
+        const finished = studentExam.value.status === 'completado' || studentExam.value.status === 'revision_pendiente' || studentExam.value.status === 'calificado';
         return passed && hasFile && finished;
     };
 
@@ -93,19 +89,19 @@
     // Calcular tiempo transcurrido desde started_at
     const calculateElapsedTime = () => {
         if (!studentExam.value?.started_at) return 0;
-        
+
         const startTime = new Date(studentExam.value.started_at).getTime();
         const now = new Date().getTime();
-        
+
         return Math.floor((now - startTime) / 1000);
     };
 
     // Iniciar timer de tiempo transcurrido
     const startElapsedTimer = () => {
         if (studentExam.value?.finished_at) return;
-        
+
         elapsedTime.value = calculateElapsedTime();
-        
+
         elapsedTimeInterval.value = setInterval(() => {
             elapsedTime.value = calculateElapsedTime();
         }, 1000);
@@ -142,7 +138,7 @@
             };
         }
 
-        if (status === 'completado') {
+        if (status === 'completado' || status === 'calificado') {
             if (punctuation >= 11) {
                 return {
                     label: 'Aprobado',
@@ -189,6 +185,19 @@
     const downloadStudentExam = () => {
         if (!studentExam.value) return;
         window.open(route('aca_student_exam_download_pdf', studentExam.value.id), '_blank');
+    };
+
+    // Verificar si puede descargar certificado del módulo
+    const canDownloadCertificate = () => {
+        return (props.module.allow_certificate_download === true || props.module.allow_certificate_download == 1) &&
+               studentExam.value &&
+               studentExam.value.punctuation >= 11 &&
+               (studentExam.value.status === 'completado' || studentExam.value.status === 'revision_pendiente' || studentExam.value.status === 'calificado');
+    };
+
+    // Descargar certificado del módulo
+    const downloadModuleCertificate = () => {
+        window.open(route('aca_module_certificate_download', props.module.id), '_blank');
     };
 
     // Inicializar datos
@@ -560,7 +569,7 @@
                                             </span>
                                         </div>
                                         <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
-                                            <div 
+                                            <div
                                                 class="h-1.5 rounded-full transition-all duration-500"
                                                 :class="(theme.progress || 0) >= 100 ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-blue-400 to-indigo-500'"
                                                 :style="{ width: (theme.progress || 0) + '%' }"
@@ -715,9 +724,9 @@
                                         <button
                                             v-if="canDownloadSolution()"
                                             @click="downloadSolution()"
-                                            class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                            class="btn btn-success w-full"
                                         >
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
                                             </svg>
                                             Solucionario
@@ -725,14 +734,27 @@
 
                                         <!-- Descargar Examen Resuelto -->
                                         <button
-                                            v-if="studentExam && (studentExam.status === 'completado' || studentExam.status === 'revision_pendiente')"
+                                            v-if="studentExam && (studentExam.status === 'completado' || studentExam.status === 'revision_pendiente' || studentExam.status === 'calificado')"
                                             @click="downloadStudentExam()"
-                                            class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                            class="btn btn-success justify-center w-full"
                                         >
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
                                             </svg>
                                             Mi Examen
+                                        </button>
+                                    </div>
+
+                                    <!-- Botón Descargar Certificado del Módulo -->
+                                    <div v-if="canDownloadCertificate()" class="mt-2">
+                                        <button
+                                            @click="downloadModuleCertificate()"
+                                            class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Descargar Certificado
                                         </button>
                                     </div>
                                 </div>

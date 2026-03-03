@@ -18,7 +18,7 @@ return new class extends Migration
             $table->datetime('date_start')->nullable();
             $table->datetime('date_end')->nullable();
             $table->string('punctuation',2)->nullable();
-            $table->string('status',10)->default('terminado')->comment('terminado,pendiente,calificado');
+            $table->string('status',10)->default('terminado')->comment('terminado,pendiente,calificado,completado');
             $table->json('details')->nullable();
             $table->timestamps();
             $table->foreign('exam_id')->references('id')->on('aca_exams')->onDelete('cascade');

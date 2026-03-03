@@ -23,7 +23,7 @@
     <TransitionRoot appear :show="show" as="template">
         <Dialog as="div" class="relative z-50">
             <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0" enter-to="opacity-100" leave="duration-200 ease-in" leave-from="opacity-100" leave-to="opacity-0">
-                <DialogOverlay class="fixed inset-0 bg-[black]/60" />
+                <DialogOverlay class="fixed inset-0 bg-black/60 backdrop-blur-sm" />
             </TransitionChild>
 
             <div class="fixed inset-0 overflow-y-auto">
