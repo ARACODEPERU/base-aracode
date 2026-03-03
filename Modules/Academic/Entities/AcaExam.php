@@ -24,6 +24,7 @@ class AcaExam extends Model
         'date_start',
         'date_end',
         'status',
+        'attempts',
         'duration_minutes',
         'file_resolved_name',
         'file_resolved_path'

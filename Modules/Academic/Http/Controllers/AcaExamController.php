@@ -303,6 +303,26 @@ class AcaExamController extends Controller
         ]);
     }
 
+    /**
+     * Panel de preguntas y respuestas para examen final del curso
+     * 
+     * @param int $courseId ID del curso
+     * @param int $examId ID del examen
+     * @return \Inertia\Response
+     */
+    public function questionAnswerPanelCourse($courseId, $examId){
+        $exam = AcaExam::with([
+            'course',
+            'questions.answers'
+        ])->where('id', $examId)
+        ->where('course_id', $courseId)
+        ->first();
+
+        return Inertia::render('Academic::Courses/CourseExam',[
+            'exam' => $exam
+        ]);
+    }
+
 
     public function moduleExamSolve($id) {
         // 1. Cargar el examen con sus relaciones

@@ -470,6 +470,15 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->get('courses/{cId}/modules/{mId}/exmen/{eId}/panel',[AcaExamController::class, 'questionAnswerPanelModule'])
         ->name('aca_course_module_exam_view_details');
 
+    // Examen final del curso
+    Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
+        ->post('courses/exam/updateorcreate', [AcaCourseController::class, 'updateOrCreateCourseExam'])
+        ->name('aca_course_exam_update_create');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
+        ->get('courses/{courseId}/exam/{examId}/panel', [AcaExamController::class, 'questionAnswerPanelCourse'])
+        ->name('aca_course_exam_view_details');
+
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
         ->post('course/exam/question/form/store', [AcaExamQuestionController::class, 'storeQuestion'])
         ->name('aca_course_exam_question_form_store');

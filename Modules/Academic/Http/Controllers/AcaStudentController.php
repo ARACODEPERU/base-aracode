@@ -803,8 +803,7 @@ class AcaStudentController extends Controller
 
         return Inertia::render('Academic::Students/Themes', [
             'course' => $course,
-            'module' => $module,
-            'certificate' => $certificate
+            'module' => $module
         ]);
     }
 

@@ -21,6 +21,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaExam;
 
 class AcaCourseController extends Controller
 {
@@ -62,8 +63,13 @@ class AcaCourseController extends Controller
             }
         }
         $courses->orderBy('id', 'DESC');
-        $courses->with('category');
-        $courses->with('modality');
+        $courses->with([
+            'category',
+            'modality',
+            'exam' => function ($query){
+                $query->whereNull('module_id');
+            }
+        ]);
         $courses = $courses->paginate($this->RPTABLE)->onEachSide(2);
 
         $categories = AcaCategoryCourse::get();
@@ -372,5 +378,67 @@ class AcaCourseController extends Controller
             'students' => $students,
             'filters' => request()->all()
         ]);
+    }
+
+    /**
+     * Crear o actualizar examen final del curso
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateOrCreateCourseExam(Request $request)
+    {
+        // 1. Validación de los campos recibidos
+        $this->validate($request, [
+            'course_id'        => 'required',
+            'description'      => 'required|string|max:255',
+            'date_start'       => 'required|date',
+            'date_end'         => 'required|date|after_or_equal:date_start',
+            'duration_minutes' => 'required|numeric|min:1',
+            'attempts'         => 'required|numeric|min:1',
+            'status'           => 'required',
+            'answer_key_pdf'   => 'nullable|file|mimes:pdf|max:10240',
+        ]);
+
+        // 2. Preparar los datos básicos para la persistencia
+        $data = [
+            'course_id'        => $request->get('course_id'),
+            'description'      => $request->get('description'),
+            'date_start'       => $request->get('date_start'),
+            'date_end'         => $request->get('date_end'),
+            'duration_minutes' => (int) $request->get('duration_minutes'),
+            'attempts'         => (int) $request->get('attempts'),
+            'status'           => $request->get('status'),
+        ];
+
+        // 3. Lógica de subida de archivo personalizada
+        if ($request->hasFile('answer_key_pdf')) {
+            $file = $request->file('answer_key_pdf');
+
+            // Procesar nombre original
+            $original_name = strtolower(trim($file->getClientOriginalName()));
+            $original_name = str_replace(" ", "_", $original_name);
+
+            $extension = $file->getClientOriginalExtension();
+            $file_name = time() . rand(100, 999) . '.' . $extension;
+
+            $destination = 'uploads/courses/exams';
+
+            // Guardar el archivo con el nombre generado
+            $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
+
+            // Asignar a los campos correspondientes
+            $data['file_resolved_name'] = $original_name;
+            $data['file_resolved_path'] = $path;
+        }
+
+        // 4. Update or Create basado solo en course_id (para examen de curso)
+        AcaExam::updateOrCreate(
+            [
+                'id' => $request->id,
+            ],
+            $data
+        );
+
     }
 }

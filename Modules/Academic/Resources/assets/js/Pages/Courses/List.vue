@@ -3,14 +3,15 @@
     import Pagination from '@/Components/Pagination.vue';
     import Swal2 from "sweetalert2";
     import { Link, router, useForm } from '@inertiajs/vue3';
-    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter } from "@fortawesome/free-solid-svg-icons";
+    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter, faClipboardCheck } from "@fortawesome/free-solid-svg-icons";
     import ModalLarge from '@/Components/ModalLarge.vue';
-    import { ref, computed } from 'vue';
+    import { ref, computed, watch } from 'vue';
     import DangerButton from '@/Components/DangerButton.vue';
     import InputError from '@/Components/InputError.vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconSearch from '@/Components/vristo/icon/icon-search.vue';
+    import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
         courses: {
@@ -50,6 +51,111 @@
         status: props.filters.status ?? 9,
         sort_order: null,
         sort_by: null
+    });
+
+    // Examen de curso
+    const displayCourseExamModal = ref(false);
+    const durationHours = ref(0);
+    const durationMinutes = ref(0);
+
+    const courseExamForm = useForm({
+        id: null,
+        course_id: null,
+        course_description: null,
+        description: null,
+        date_start: null,
+        date_end: null,
+        duration_minutes: null,
+        answer_key_pdf: null,
+        status: 1,
+        attempts: 1,
+        file_resolved_name: null
+    });
+
+    const openCourseExamModal = (course) => {
+        courseExamForm.reset();
+        courseExamForm.course_id = course.id;
+        courseExamForm.course_description = course.description;
+
+        if (course.exam) {
+            courseExamForm.id = course.exam.id;
+            courseExamForm.description = course.exam.description;
+            courseExamForm.date_start = course.exam.date_start;
+            courseExamForm.date_end = course.exam.date_end;
+            courseExamForm.duration_minutes = course.exam.duration_minutes;
+            courseExamForm.answer_key_pdf = course.exam.answer_key_pdf;
+            courseExamForm.status = course.exam.status;
+            courseExamForm.attempts = course.exam.attempts;
+            courseExamForm.file_resolved_name = course.exam.file_resolved_name;
+
+            // Convertir minutos a horas y minutos
+            if (course.exam.duration_minutes) {
+                durationHours.value = Math.floor(course.exam.duration_minutes / 60);
+                durationMinutes.value = course.exam.duration_minutes % 60;
+            }
+        } else {
+            durationHours.value = 0;
+            durationMinutes.value = 0;
+        }
+
+        displayCourseExamModal.value = true;
+    };
+
+    const closeCourseExamModal = () => {
+        displayCourseExamModal.value = false;
+        courseExamForm.reset();
+    };
+
+    const updateCourseExamDuration = () => {
+        courseExamForm.duration_minutes = (durationHours.value * 60) + durationMinutes.value;
+    };
+
+    const saveCourseExam = () => {
+        updateCourseExamDuration();
+
+        if (!courseExamForm.duration_minutes || courseExamForm.duration_minutes <= 0) {
+            Swal2.fire({
+                title: 'Advertencia',
+                text: 'Por favor, establece una duración válida para el examen',
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        courseExamForm.post(route('aca_course_exam_update_create'), {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                closeCourseExamModal();
+                Swal2.fire({
+                    title: '¡Enhorabuena!',
+                    text: 'Se registro correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+        });
+    };
+
+    const formatDuration = (minutes) => {
+        if (!minutes) return '0 min';
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${h}h ${m}m`;
+    };
+
+    // Watch to update hours and minutes when loading existing exam
+    watch(() => courseExamForm.duration_minutes, (newValue) => {
+        if (newValue) {
+            durationHours.value = Math.floor(newValue / 60);
+            durationMinutes.value = newValue % 60;
+        } else {
+            durationHours.value = 0;
+            durationMinutes.value = 0;
+        }
     });
 
 
@@ -421,6 +527,15 @@
                                     </div>
                                 </div>
 
+                                <!-- Indicador de examen configurado -->
+                                <div v-if="course.exam" class="mb-3">
+                                    <Link :href="route('aca_course_exam_view_details', [course.id, course.exam.id])"
+                                        class="inline-flex items-center gap-1 text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded-full hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer">
+                                        <font-awesome-icon :icon="faClipboardCheck" class="w-3 h-3" />
+                                        Ver preguntas del examen
+                                    </Link>
+                                </div>
+
                                 <!-- Spacer to push action bar to bottom -->
                                 <div class="flex-grow"></div>
 
@@ -448,6 +563,25 @@
                                         >
                                             <font-awesome-icon :icon="faLayerGroup" class="text-sm" />
                                         </Link>
+                                        <!-- Botón Examen Final del Curso -->
+                                        <template v-if="course.exam">
+                                            <button @click="openCourseExamModal(course)"
+                                                class="p-2 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900 rounded-lg transition-colors"
+                                                title="Editar Examen Final"
+                                                v-tippy="{content: 'Editar Examen Final', placement: 'top'}"
+                                            >
+                                                <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
+                                            </button>
+                                        </template>
+                                        <template v-else>
+                                            <button @click="openCourseExamModal(course)"
+                                                class="p-2 text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                title="Crear Examen Final"
+                                                v-tippy="{content: 'Crear Examen Final', placement: 'top'}"
+                                            >
+                                                <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
+                                            </button>
+                                        </template>
                                     </div>
                                     <button
                                         @click="destroyCourse(course.id)"
@@ -534,6 +668,179 @@
                 >
                 Guardar
             </DangerButton>
+            </template>
+        </ModalLarge>
+
+        <!-- Modal Examen Final del Curso -->
+        <ModalLarge
+            :onClose="closeCourseExamModal"
+            :show="displayCourseExamModal"
+            :icon="'/img/examen.png'"
+        >
+            <template #title>
+                {{ courseExamForm.id ? 'Editar Examen' : 'Crear Examen' }} Final del Curso
+            </template>
+            <template #message>{{ courseExamForm.course_description }}</template>
+            <template #content>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Descripción -->
+                        <div class="col-span-2">
+                            <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Descripción del examen
+                            </label>
+                            <input v-model="courseExamForm.description" type="text" id="description"
+                                class="form-input"
+                                placeholder="Examen Final" required>
+                            <InputError :message="courseExamForm.errors.description" class="mt-2" />
+                        </div>
+
+                        <!-- Duración con Selects -->
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Duración Máxima
+                            </label>
+                            <div class="space-y-3">
+                                <!-- Selector de Horas y Minutos -->
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1">
+                                        <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Horas</label>
+                                        <select
+                                            v-model.number="durationHours"
+                                            @change="updateCourseExamDuration"
+                                            class="form-select"
+                                        >
+                                            <option value="0">0 horas</option>
+                                            <option v-for="h in 5" :key="h" :value="h">{{ h }} hora{{ h > 1 ? 's' : '' }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Minutos</label>
+                                        <select
+                                            v-model.number="durationMinutes"
+                                            @change="updateCourseExamDuration"
+                                            class="form-select"
+                                        >
+                                            <option value="0">0 min</option>
+                                            <option v-for="m in 59" :key="m" :value="m">{{ m }} min</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- Visualización del Total -->
+                                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-medium text-blue-900 dark:text-blue-100">Tiempo total:</span>
+                                        <span class="text-sm font-bold text-blue-700 dark:text-blue-300">
+                                            {{ formatDuration(courseExamForm.duration_minutes) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <InputError :message="courseExamForm.errors.duration_minutes" class="mt-2" />
+                        </div>
+                        <!-- Archivo PDF del Examen Resuelto -->
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Examen Resuelto (PDF)
+                            </label>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">
+                                Solo se permiten archivos PDF. Máximo 10MB.
+                            </div>
+                            <div class="space-y-3">
+                                <!-- Input de Archivo -->
+                                <div class="relative">
+                                    <input
+                                        type="file"
+                                        @input="courseExamForm.answer_key_pdf = $event.target.files[0]"
+                                        accept=".pdf"
+                                        class="w-full text-sm text-gray-500 dark:text-gray-400
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-lg file:border-0
+                                            file:text-sm file:font-medium
+                                            file:bg-blue-50 file:text-blue-700
+                                            hover:file:bg-blue-100
+                                            file:cursor-pointer file:transition-colors
+                                            dark:file:bg-blue-900/50 dark:file:text-blue-300
+                                            dark:hover:file:bg-blue-800/70
+                                            border border-gray-200 dark:border-gray-600
+                                            rounded-lg cursor-pointer
+                                            hover:border-blue-300 dark:hover:border-blue-500"
+                                    >
+                                </div>
+                                <!-- Información del Archivo Actual/Seleccionado -->
+                                <div v-if="courseExamForm.answer_key_pdf || (courseExamForm.id && courseExamForm.file_resolved_name)"
+                                     class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 2H4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
+                                            {{ typeof courseExamForm.answer_key_pdf === 'string' ? courseExamForm.answer_key_pdf.split('/').pop() :
+                                                courseExamForm.answer_key_pdf?.name || (courseExamForm.file_resolved_name ?? 'Archivo PDF')
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fecha inicio -->
+                        <div>
+                            <label for="date_start" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Fecha de Inicio
+                            </label>
+                            <input v-model="courseExamForm.date_start" type="datetime-local" id="date_start"
+                                class="form-input"
+                                required>
+                            <InputError :message="courseExamForm.errors.date_start" class="mt-2" />
+                        </div>
+
+                        <!-- Fecha fin -->
+                        <div>
+                            <label for="date_end" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Fecha de Fin
+                            </label>
+                            <input v-model="courseExamForm.date_end" type="datetime-local" id="date_end"
+                                class="form-input"
+                                required>
+                            <InputError :message="courseExamForm.errors.date_end" class="mt-2" />
+                        </div>
+
+                        <!-- Intentos -->
+                        <div>
+                            <label for="attempts" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Número de Intentos
+                            </label>
+                            <input v-model.number="courseExamForm.attempts" type="number" id="attempts" min="1" max="10"
+                                class="form-input"
+                                placeholder="1" required>
+                            <InputError :message="courseExamForm.errors.attempts" class="mt-2" />
+                        </div>
+
+                        <!-- Estado -->
+                        <div>
+                            <label for="status" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Estado
+                            </label>
+                            <select v-model="courseExamForm.status" id="status"
+                                class="form-select">
+                                <option :value="1">Activo</option>
+                                <option :value="0">Inactivo</option>
+                            </select>
+                            <InputError :message="courseExamForm.errors.status" class="mt-2" />
+                        </div>
+                    </div>
+            </template>
+            <template #buttons>
+                <button
+                    @click="saveCourseExam" type="button"
+                    :disabled="courseExamForm.processing"
+                    class="btn btn-primary uppercase text-xs">
+                    <span v-if="courseExamForm.processing">
+                        <IconLoader class="w-4 h-4 mr-2" />
+                        Guardando...
+                    </span>
+                    <span v-else>{{ courseExamForm.id ? 'Actualizar' : 'Crear' }} Examen</span>
+                </button>
             </template>
         </ModalLarge>
     </AppLayout>

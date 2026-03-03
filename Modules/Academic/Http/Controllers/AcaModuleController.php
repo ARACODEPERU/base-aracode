@@ -150,8 +150,8 @@ class AcaModuleController extends Controller
             'description'      => $request->get('description'),
             'date_start'       => $request->get('date_start'),
             'date_end'         => $request->get('date_end'),
-            'duration_minutes' => $request->get('duration_minutes'),
-            'attempts'         => $request->get('attempts'),
+            'duration_minutes' => (int) $request->get('duration_minutes'),
+            'attempts'         => (int) $request->get('attempts'),
             'status'           => $request->get('status'),
         ];
 
