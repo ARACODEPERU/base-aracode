@@ -47,7 +47,7 @@ import { bottom } from "@popperjs/core";
 
         if (c.length > 0 || s.length > 0) {
 
-            let message = `<p class="mb-6">Estimado alumno, algunos de sus servicios están próximos a vencer:</p>`;
+            let message = `<p class="mb-6">¡Hola! Te recordamos que algunos de tus servicios están por vencer. No te preocupes: tus cursos de especialidad, talleres y webinars seguirán disponibles para ti en tu cuenta. ¡Queremos que sigas aprendiendo a tu ritmo!</p>`;
 
             message += `<div class="text-justify">`;
             if (c.length > 0) {
