@@ -15,7 +15,7 @@
     import { Link, router, useForm, Head, usePage } from '@inertiajs/vue3';
     import Checkbox from '@/Components/vristo/inputs/Checkbox.vue';
     import InputError from '@/Components/InputError.vue';
-    import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+    import SpinnerLoading from '@/Components/SpinnerLoading.vue';
 
     const store = useAppStore();
     const company = usePage().props.company;
@@ -138,7 +138,7 @@
                                     :disabled="form.processing"
                                 >
                                     <span v-if="form.processing" class="inline-flex items-center">
-                                        <IconLoader class="w-4 h-4 mr-3" />
+                                        <SpinnerLoading class="w-4 h-4 mr-3" />
                                         Iniciando...
                                     </span>
                                     <span v-else>Iniciar Sesión</span>

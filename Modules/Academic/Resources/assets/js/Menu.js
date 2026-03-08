@@ -10,7 +10,8 @@ import {
     faMugHot,
     faChartLine,
     faGraduationCap,
-    faClock
+    faClock,
+    faGavel
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -145,6 +146,14 @@ const menuAcademic = {
             icom: faClock,
             permissions: "aca_asistencia_administrador",
             id: 'btnAsistencia'
+        },
+        {
+            route: route("aca_grade_management_panel"),
+            status: false,
+            text: "Gestión de Calificaciones",
+            icom: faGavel,
+            permissions: "aca_gestion_de_calificaciones",
+            id: 'btnCalificaciones'
         },
         {
             route: route('aca_reports_dashboard'),

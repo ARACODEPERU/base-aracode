@@ -5,6 +5,7 @@
     import { ref, onMounted, computed, watch } from 'vue';
     import axios from 'axios';
     import Swal2 from 'sweetalert2';
+    import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
     import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
     import IconPencilPaper from '@/Components/vristo/icon/icon-pencil-paper.vue';
     import IconTrashLines from '@/Components/vristo/icon/icon-trash-lines.vue';
@@ -312,10 +313,17 @@
                         <h2 class="text-base font-semibold text-gray-900 dark:text-white">{{ exam.description }}</h2>
                         <p class="text-xs text-gray-500 dark:text-gray-400">{{ exam.course.description }} | Examen Final del Curso</p>
                     </div>
-                    <button @click="openModalQuestion()" class="btn btn-primary text-xs uppercase">
-                        <IconPlus class="w-3.5 h-3.5 mr-1" />
-                        Nueva Pregunta
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <Link :href="route('aca_courses_list')" 
+                            class="btn btn-secondary text-xs uppercase">
+                            <font-awesome-icon :icon="faArrowLeft" class="w-3.5 h-3.5 mr-1" />
+                            Ir al listado
+                        </Link>
+                        <button @click="openModalQuestion()" class="btn btn-primary text-xs uppercase">
+                            <IconPlus class="w-3.5 h-3.5 mr-1" />
+                            Nueva Pregunta
+                        </button>
+                    </div>
                 </div>
             </div>
 

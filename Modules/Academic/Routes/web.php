@@ -24,6 +24,7 @@ use Modules\Academic\Http\Controllers\AcademicController;
 use Modules\Academic\Http\Controllers\AcaExamAnswerController;
 use Modules\Academic\Http\Controllers\AcaExamController;
 use Modules\Academic\Http\Controllers\AcaExamQuestionController;
+use Modules\Academic\Http\Controllers\AcaGradeManagementController;
 use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaReportsController;
@@ -31,6 +32,7 @@ use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
 use Modules\Academic\Http\Controllers\AcaShortVideoController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
+use Modules\Academic\Http\Controllers\AcaThemeCommentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
 
@@ -210,6 +212,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_miscursos'])
         ->delete('course/comments/theme/destroy/{id}', 'AcaThemeCommentController@destroy')
         ->name('aca_lesson_comments_destroy');
+
+    // Ruta para obtener comentarios de un estudiante en un tema
+    Route::post('course/comments/by-student',[AcaThemeCommentController::class, 'commentsByStudent'])
+        ->name('aca_theme_comments_by_student');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_cobrar'])
         ->get('student/invoice/create/{id}/{installments?}', [AcaStudentController::class, 'invoice'])
@@ -458,6 +464,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->post('reports/student/performance/table', [AcaReportsController::class, 'studentPerformanceTable'])
         ->name('aca_student_performance_report_table');
 
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->post('reports/student/performance/export', [AcaReportsController::class, 'exportStudentPerformance'])
+        ->name('aca_student_performance_export');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->get('reports/student/performance/export/status/{jobId}', [AcaReportsController::class, 'exportStudentPerformanceStatus'])
+        ->name('aca_student_performance_export_status');
+
     Route::middleware(['middleware' => 'permission:aca_suscripcion_estudiante_editar'])
         ->post('reports/student/subscription/update',[AcaCapRegistrationController::class, 'updateSubscriptionStudent'])
         ->name('aca_subscriptions_update_student');
@@ -478,6 +492,19 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
         ->get('courses/{courseId}/exam/{examId}/panel', [AcaExamController::class, 'questionAnswerPanelCourse'])
         ->name('aca_course_exam_view_details');
+
+    // Participaciones de estudiantes
+    Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
+        ->get('courses/{courseId}/participations', [AcaCourseController::class, 'participations'])
+        ->name('aca_course_participations');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
+        ->put('courses/participations/search/{courseId}', [AcaCourseController::class, 'searchParticipations'])
+        ->name('aca_course_participation_search');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
+        ->post('courses/participations/store', [AcaCourseController::class, 'storeParticipation'])
+        ->name('aca_course_participation_store');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
         ->post('course/exam/question/form/store', [AcaExamQuestionController::class, 'storeQuestion'])
@@ -547,6 +574,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_asistencia_administrador'])
         ->get('attendance/export/status/{jobId}', [AcaAttendanceController::class, 'exportAttendanceStatus'])
         ->name('aca_attendance_export_status');
+
+    Route::middleware(['middleware' => 'permission:aca_gestion_de_calificaciones'])
+        ->get('grade/management', [AcaGradeManagementController::class, 'index'])
+        ->name('aca_grade_management_panel');
+
+    Route::middleware(['middleware' => 'permission:aca_gestion_de_calificaciones'])
+        ->post('grade/management/search', [AcaGradeManagementController::class, 'search'])
+        ->name('aca_grade_management_search');
+
+    Route::middleware(['middleware' => 'permission:aca_gestion_de_calificaciones'])
+        ->post('grade/management/store', [AcaGradeManagementController::class, 'store'])
+        ->name('aca_grade_management_store');
 });
 
 ////asistencia

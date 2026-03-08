@@ -49,7 +49,7 @@
             return students.value;
         }
         const query = searchQuery.value.toLowerCase().trim();
-        return students.value.filter(student => 
+        return students.value.filter(student =>
             student.name.toLowerCase().includes(query)
         );
     });

@@ -1,0 +1,507 @@
+/**
+ * Estilos personalizados para tablas
+ * Este archivo define estilos modernos y mantenibles para todas las tablas del sistema
+ */
+
+/* ============================================
+   VARIABLES CSS - Puedes modificar estos colores
+   ============================================ */
+
+:root {
+    /* Fondo general de la página/tabla */
+    --table-bg-page: #F9FAFB;
+    
+    /* Header de tabla */
+    --table-header-bg: #F3F4F6;
+    --table-header-text: #6B7280;
+    --table-header-border: #E5E7EB;
+    
+    /* Filas */
+    --table-row-bg: #FFFFFF;
+    --table-row-hover: #F9FAFB;
+    
+    /* Bordes / separadores */
+    --table-border: #E5E7EB;
+    
+    /* Texto */
+    --table-text-primary: #111827;
+    --table-text-secondary: #6B7280;
+    
+    /* Estados */
+    --table-status-paid-bg: #D1FAE5;
+    --table-status-paid-text: #065F46;
+    --table-status-pending-bg: #FEF3C7;
+    --table-status-pending-text: #92400E;
+    --table-status-failed-bg: #FEE2E2;
+    --table-status-failed-text: #991B1B;
+    
+    /* Dark mode */
+    --table-dark-header-bg: #1F2937;
+    --table-dark-header-text: #9CA3AF;
+    --table-dark-row-bg: #111827;
+    --table-dark-row-hover: #1F2937;
+    --table-dark-border: #374151;
+    --table-dark-text-primary: #F9FAFB;
+    --table-dark-text-secondary: #9CA3AF;
+}
+
+/* ============================================
+   ESTILOS BASE PARA TABLAS
+   ============================================ */
+
+/* Contenedor de tabla con scroll horizontal */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background-color: var(--table-bg-page);
+    padding: 1px;
+}
+
+/* Estilos base para todas las tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-collapse: collapse !important;
+    background-color: var(--table-row-bg);
+}
+
+/* Headers y Footers */
+table thead tr,
+table tfoot tr {
+    background-color: var(--table-header-bg) !important;
+    border-bottom: 0;
+}
+
+table thead tr th,
+table tfoot tr th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--table-header-text) !important;
+    background-color: var(--table-header-bg) !important;
+    border-bottom: 2px solid var(--table-header-border);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+/* Datatable - estilos específicos para el componente Vue */
+.datatable .bh-table-responsive table thead tr th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+/* Celdas del cuerpo */
+table tbody tr td {
+    padding: 12px 16px;
+    color: var(--table-text-primary);
+    border-bottom: 1px solid var(--table-border);
+    background-color: var(--table-row-bg);
+}
+
+/* Filas del cuerpo */
+table tbody tr {
+    border-bottom: 1px solid var(--table-border);
+    background-color: var(--table-row-bg);
+    transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+    background-color: var(--table-row-hover);
+}
+
+/* ============================================
+   TABLAS CON BORDES
+   ============================================ */
+
+table.table-bordered th,
+table.table-bordered td {
+    border: 1px solid var(--table-border);
+}
+
+table.table-bordered thead tr th {
+    border-bottom: 2px solid var(--table-header-border);
+}
+
+/* ============================================
+   TABLAS CON RAYAS (STRIPED)
+   ============================================ */
+
+table.table-striped tbody tr:nth-child(odd) {
+    background-color: #F3F4F6;
+}
+
+table.table-striped tbody tr:nth-child(odd):hover {
+    background-color: var(--table-row-hover);
+}
+
+table.table-striped tbody tr:nth-child(even):hover {
+    background-color: var(--table-row-hover);
+}
+
+/* ============================================
+   TABLAS CON HOVER
+   ============================================ */
+
+table.table-hover tbody tr:hover {
+    background-color: var(--table-row-hover);
+}
+
+/* ============================================
+   TABLAS EN MODO OSCURO
+   ============================================ */
+
+/* Dark mode - headers y footers */
+.dark table thead tr,
+.dark table tfoot tr {
+    background-color: var(--table-dark-header-bg) !important;
+}
+
+.dark table thead tr th,
+.dark table tfoot tr th {
+    color: var(--table-dark-header-text) !important;
+    background-color: var(--table-dark-header-bg) !important;
+    border-bottom: 2px solid var(--table-dark-border);
+}
+
+.dark table tbody tr td {
+    color: var(--table-dark-text-primary);
+    border-bottom: 1px solid var(--table-dark-border);
+}
+
+.dark table tbody tr {
+    border-bottom: 1px solid var(--table-dark-border);
+    background-color: var(--table-dark-row-bg);
+}
+
+.dark table tbody tr:hover {
+    background-color: var(--table-dark-row-hover);
+}
+
+/* Dark mode - striped */
+.dark table.table-striped tbody tr:nth-child(odd) {
+    background-color: var(--table-dark-row-hover);
+}
+
+.dark table.table-striped tbody tr:nth-child(odd):hover {
+    background-color: var(--table-dark-row-hover);
+}
+
+/* ============================================
+   COLUMNAS STICKY (FIJAS)
+   ============================================ */
+
+table th.sticky,
+table td.sticky {
+    position: sticky;
+    z-index: 1;
+}
+
+/* Sticky left */
+table th.sticky-left,
+table td.sticky-left {
+    left: 0;
+    z-index: 2;
+}
+
+/* Sticky right */
+table th.sticky-right,
+table td.sticky-right {
+    right: 0;
+    z-index: 2;
+}
+
+/* Header sticky */
+table thead tr th.sticky-top {
+    top: 0;
+    z-index: 3;
+}
+
+/* ============================================
+   CLASES PARA ESTADOS Y CALIFICACIONES
+   ============================================ */
+
+/* Estado PAGADO / APROBADO - Azul */
+.status-paid,
+.status-paid td,
+table td.status-paid,
+.grade-approved,
+.grade-approved td,
+table td.grade-approved {
+    background-color: #DBEAFE !important; /* blue-100 */
+    color: #1E40AF !important; /* blue-800 */
+    font-weight: 600;
+}
+
+.dark .status-paid,
+.dark .status-paid td,
+.dark table td.status-paid,
+.dark .grade-approved,
+.dark .grade-approved td,
+.dark table td.grade-approved {
+    background-color: #1E3A8A !important; /* blue-900 */
+    color: #DBEAFE !important; /* blue-200 */
+}
+
+/* Estado PENDIENTE - Amarillo */
+.status-pending,
+.status-pending td,
+table td.status-pending,
+.grade-pending,
+.grade-pending td,
+table td.grade-pending {
+    background-color: var(--table-status-pending-bg) !important;
+    color: var(--table-status-pending-text) !important;
+    font-weight: 600;
+}
+
+.dark .status-pending,
+.dark .status-pending td,
+.dark table td.status-pending,
+.dark .grade-pending,
+.dark .grade-pending td,
+.dark table td.grade-pending {
+    background-color: #78350F !important;
+    color: #FDE68A !important;
+}
+
+/* Estado DESAPROBADO / FALLIDO - Rojo */
+.status-failed,
+.status-failed td,
+table td.status-failed,
+.grade-disapproved,
+.grade-disapproved td,
+table td.grade-disapproved {
+    background-color: var(--table-status-failed-bg) !important;
+    color: var(--table-status-failed-text) !important;
+    font-weight: 600;
+}
+
+.dark .status-failed,
+.dark .status-failed td,
+.dark table td.status-failed,
+.dark .grade-disapproved,
+.dark .grade-disapproved td,
+.dark table td.grade-disapproved {
+    background-color: #7F1D1D !important;
+    color: #FECACA !important;
+}
+
+/* Estado ACTIVO */
+.status-active,
+.status-active td,
+table td.status-active {
+    background-color: #D1FAE5 !important;
+    color: #065F46 !important;
+    font-weight: 600;
+}
+
+.dark .status-active,
+.dark .status-active td,
+.dark table td.status-active {
+    background-color: #064E3B !important;
+    color: #A7F3D0 !important;
+}
+
+/* Estado INACTIVO */
+.status-inactive,
+.status-inactive td,
+table td.status-inactive {
+    background-color: #E5E7EB !important;
+    color: #6B7280 !important;
+    font-weight: 600;
+}
+
+.dark .status-inactive,
+.dark .status-inactive td,
+.dark table td.status-inactive {
+    background-color: #374151 !important;
+    color: #9CA3AF !important;
+}
+
+/* ============================================
+   INPUTS DENTRO DE CELDAS
+   ============================================ */
+
+table td input[type="text"],
+table td input[type="number"],
+table td input[type="email"],
+table td input[type="password"],
+table td input[type="date"],
+table td input[type="datetime-local"],
+table td input[type="time"],
+table td select,
+table td textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--table-text-primary);
+    background-color: var(--table-row-bg);
+    border: 1px solid var(--table-border);
+    border-radius: 6px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+table td input:focus,
+table td select:focus,
+table td textarea:focus {
+    outline: none;
+    border-color: #3b82f6; /* blue-500 */
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Dark mode - inputs */
+.dark table td input[type="text"],
+.dark table td input[type="number"],
+.dark table td input[type="email"],
+.dark table td input[type="password"],
+.dark table td input[type="date"],
+.dark table td input[type="datetime-local"],
+.dark table td input[type="time"],
+.dark table td select,
+.dark table td textarea {
+    color: #f1f5f9;
+    background-color: #334155;
+    border-color: #475569;
+}
+
+.dark table td input:focus,
+.dark table td select:focus,
+.dark table td textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ============================================
+   BOTONES DENTRO DE CELDAS
+   ============================================ */
+
+table td .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* ============================================
+   TABLAS COMPACTAS
+   ============================================ */
+
+table.table-compact thead tr th,
+table.table-compact tbody tr td {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+table.table-compact tbody tr td {
+    padding: 6px 10px;
+}
+
+/* ============================================
+   TABLAS GRANDES
+   ============================================ */
+
+table.table-lg thead tr th,
+table.table-lg tbody tr td {
+    padding: 16px 20px;
+    font-size: 15px;
+}
+
+/* ============================================
+   ESTILOS ADICIONALES
+   ============================================ */
+
+/* Columna de acciones */
+.table-actions {
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Checkbox en tablas */
+table td input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Badge en tablas */
+.table-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 9999px;
+}
+
+/* Indicador de estado */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.status-indicator.active {
+    background-color: #22c55e; /* green-500 */
+}
+
+.status-indicator.inactive {
+    background-color: #94a3b8; /* slate-400 */
+}
+
+.status-indicator.pending {
+    background-color: #f59e0b; /* amber-500 */
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    table thead tr th,
+    table tbody tr td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    table th.sticky-left,
+    table td.sticky-left {
+        box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
+    }
+    
+    table th.sticky-right,
+    table td.sticky-right {
+        box-shadow: -2px 0 5px -2px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* ============================================
+   DATATABLE
+   ============================================ */
+
+table.dataTable-table tbody tr th,
+table.dataTable-table tbody tr td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    color: #475569;
+}
+
+.dark table.dataTable-table tbody tr th,
+.dark table.dataTable-table tbody tr td {
+    border-bottom: 1px solid #475569;
+    color: #cbd5e1;
+}
+
+table.dataTable-table tbody tr:last-child td {
+    border-bottom: 0;
+}

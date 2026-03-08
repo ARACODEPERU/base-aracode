@@ -22,6 +22,11 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaExam;
+use Modules\Academic\Entities\AcaModule;
+use Modules\Academic\Entities\AcaTheme;
+use Modules\Academic\Entities\AcaContent;
+use Modules\Academic\Entities\AcaThemeComment;
+use Modules\Academic\Entities\AcaStudentParticipation;
 
 class AcaCourseController extends Controller
 {
@@ -440,5 +445,158 @@ class AcaCourseController extends Controller
             $data
         );
 
+    }
+
+    /**
+     * Vista de participaciones de estudiantes
+     *
+     * @param int $courseId ID del curso
+     * @return \Inertia\Response
+     */
+    public function participations($courseId)
+    {
+        $course = AcaCourse::with(['modules.themes.contents'])->findOrFail($courseId);
+
+        $registrations = AcaCapRegistration::with(['student.person'])
+            ->where('course_id', $courseId)
+            ->where('status', true)
+            ->get();
+
+        $participations = AcaStudentParticipation::where('course_id', $courseId)->get();
+
+        return Inertia::render('Academic::Courses/StudentParticipations', [
+            'course' => $course,
+            'registrations' => $registrations,
+            'participations' => $participations,
+        ]);
+    }
+
+    /**
+     * Buscar estudiantes con filtros para participaciones
+     *
+     * @param Request $request
+     * @param int $courseId ID del curso
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function searchParticipations(Request $request, $courseId)
+    {
+        $request->validate([
+            'module_id' => 'nullable|exists:aca_modules,id',
+            'theme_id' => 'nullable|exists:aca_themes,id',
+            'content_id' => 'nullable|exists:aca_contents,id',
+        ]);
+
+        // Obtener estudiantes del curso
+        $registrations = AcaCapRegistration::with(['student.person'])
+            ->where('course_id', $courseId)
+            ->where('status', true)
+            ->get();
+
+        // Obtener participaciones existentes según filtros
+        $participationsQuery = AcaStudentParticipation::where('course_id', $courseId);
+
+        if ($request->module_id) {
+            $participationsQuery->where('module_id', $request->module_id);
+        }
+
+        if ($request->theme_id) {
+            $participationsQuery->where('theme_id', $request->theme_id);
+        }
+
+        if ($request->content_id) {
+            $participationsQuery->where('content_id', $request->content_id);
+        }
+
+        $participations = $participationsQuery->get();
+        //dd($registrations);
+        // Combinar estudiantes con sus participaciones
+        $students = $registrations->map(function ($reg) use ($participations, $request) {
+            $participation = $participations->first(function ($p) use ($reg, $request) {
+                return $p->student_id === $reg->student->id;
+            });
+
+            return [
+                'id' => $reg->student->id,
+                'name' => $reg->student->person ? $reg->student->person->full_name : 'Sin nombre',
+                'number' => $reg->student->person ? $reg->student->person->number : 'Sin número',
+                'email' => $reg->student->person ? $reg->student->person->email : '',
+                'participation' => $participation ? [
+                    'id' => $participation->id,
+                    'participation_score' => $participation->participation_score,
+                    'teacher_comment' => $participation->teacher_comment,
+                ] : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'students' => $students,
+        ]);
+    }
+
+    /**
+     * Guardar o actualizar participación de estudiante
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function storeParticipation(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:aca_students,id',
+            'course_id' => 'nullable|exists:aca_courses,id',
+            'module_id' => 'nullable|exists:aca_modules,id',
+            'theme_id' => 'nullable|exists:aca_themes,id',
+            'content_id' => 'nullable|exists:aca_contents,id',
+            'participation_score' => 'nullable|numeric|min:0|max:20',
+            'teacher_comment' => 'nullable|string',
+        ]);
+
+        $existingParticipation = AcaStudentParticipation::where('student_id', $request->student_id)
+            ->where('course_id', $request->course_id)
+            ->where('module_id', $request->module_id)
+            ->where('theme_id', $request->theme_id)
+            ->where('content_id', $request->content_id)
+            ->first();
+
+        $userId = Auth::user()->id;
+
+        if ($existingParticipation) {
+            $existingParticipation->participation_score = $request->participation_score;
+            $existingParticipation->teacher_comment = $request->teacher_comment;
+
+            $history = $existingParticipation->edited_by ?? [];
+            $history[] = [
+                'user_id' => $userId,
+                'updated_at' => now()->toISOString(),
+            ];
+            $existingParticipation->edited_by = $history;
+
+            $existingParticipation->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Participación actualizada correctamente',
+                'participation' => $existingParticipation
+            ]);
+        }
+
+        $participation = AcaStudentParticipation::create([
+            'student_id' => $request->student_id,
+            'course_id' => $request->course_id,
+            'module_id' => $request->module_id,
+            'theme_id' => $request->theme_id,
+            'content_id' => $request->content_id,
+            'participation_score' => $request->participation_score,
+            'teacher_comment' => $request->teacher_comment,
+            'created_by' => $userId,
+            'edited_by' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Participación guardada correctamente',
+            'participation' => $participation
+        ]);
     }
 }

@@ -386,7 +386,8 @@ class AccountsReceivableController extends Controller
                             'date_start'        => Carbon::now()->format('Y-m-d'),
                             'date_end'          => $request->get('date_end') ?? null,
                             'payment_installments' => $request->get('aplasos') ? true : false,
-                            'amount_paid' => $course['price']
+                            'amount_paid' => $course['price'],
+                            'date_start'        => Carbon::now()->format('Y-m-d'),
                         ]);
                     }
                 }

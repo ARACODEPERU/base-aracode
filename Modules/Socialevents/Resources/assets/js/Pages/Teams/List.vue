@@ -72,7 +72,7 @@
     <AppLayout title="Equipos">
         <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
             :data="[
-                {route: title: 'Equipos'}
+                {title: 'Equipos'}
             ]"
         />
         <div class="pt-5">

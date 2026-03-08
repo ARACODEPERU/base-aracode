@@ -19,8 +19,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Jobs\ExportSalesExcel;
+use Modules\Academic\Jobs\ExportStudentPerformanceExcel;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaStudentGrade;
+use Modules\Academic\Entities\AcaStudentGradeDetail;
+use Modules\Academic\Entities\AcaStudentExam;
+use Modules\Academic\Entities\AcaStudentAttendance;
+use Modules\Academic\Entities\AcaStudentParticipation;
 
 class AcaReportsController extends Controller
 {
@@ -209,7 +216,7 @@ class AcaReportsController extends Controller
     public function studentPerformanceReport()
     {
         $courses = AcaCourse::where('status', 1)->orderBy('description')->get();
-        
+
         return Inertia::render('Academic::Reports/StudentPerformanceReport', [
             'courses' => $courses
         ]);
@@ -218,17 +225,26 @@ class AcaReportsController extends Controller
     public function studentPerformanceTable(Request $request)
     {
         $this->validate($request, [
-            'course_id' => 'nullable|integer',
+            'course_id' => 'required|integer',  // Cambiado a required
             'year' => 'nullable|integer',
             'month' => 'nullable|integer|min:1|max:12',
         ]);
 
-        $query = AcaCapRegistration::with(['student', 'course'])
-            ->select('aca_cap_registrations.*');
+        $courseId = $request->input('course_id');
 
-        if ($request->filled('course_id')) {
-            $query->where('course_id', $request->course_id);
-        }
+        // Obtener el curso (siempre debe haber un courseId seleccionado)
+        $course = AcaCourse::with(['modules'])->findOrFail($courseId);
+        $modules = $course->modules->map(function ($module) {
+            return [
+                'id' => $module->id,
+                'description' => $module->description,
+            ];
+        });
+
+        $query = AcaCapRegistration::with(['student.person', 'course'])
+            ->select('aca_cap_registrations.*')
+            ->where('status', true)
+            ->where('course_id', $courseId);
 
         if ($request->filled('year')) {
             $query->whereYear('created_at', $request->year);
@@ -238,8 +254,168 @@ class AcaReportsController extends Controller
             $query->whereMonth('created_at', $request->month);
         }
 
-        $items = $query->orderBy('created_at', 'desc')->get();
+        $registrations = $query->orderBy('created_at', 'desc')->get();
 
-        return response()->json(['items' => $items]);
+        // Obtener certificados del curso
+        $certificates = AcaCertificate::where('course_id', $courseId)->get();
+
+        // Preparar datos de estudiantes con estructura para notas
+        $students = $registrations->map(function ($reg) use ($certificates, $modules, $courseId) {
+            $hasCertificate = $certificates->contains('student_id', $reg->student->id);
+
+            // Verificar si existen calificaciones guardadas para este estudiante
+            $savedGrade = AcaStudentGrade::where('registration_id', $reg->id)->first();
+
+            // Estructura de módulos con notas
+            if ($savedGrade) {
+                // Si existen calificaciones guardadas, cargarlas
+                $savedDetails = AcaStudentGradeDetail::where('grade_id', $savedGrade->id)->get();
+
+                $studentModules = $modules->map(function ($module) use ($savedDetails) {
+                    $detail = $savedDetails->firstWhere('module_id', $module['id']);
+
+                    return [
+                        'module_id' => $module['id'],
+                        'module_name' => $module['description'],
+                        'participation_score' => $detail ? $detail->participation_score : null,
+                        'attendance_score' => $detail ? $detail->attendance_score : null,
+                        'exam_score' => $detail ? $detail->exam_score : null,
+                        'average' => $detail ? $detail->average : null,
+                    ];
+                })->toArray();
+
+                $finalAverage = $savedGrade->final_average;
+            } else {
+                // Si no existen calificaciones guardadas, calcular desde las tablas originales
+                $studentModules = $modules->map(function ($module) use ($courseId, $reg) {
+                    // Exámenes
+                    $studentExams = AcaStudentExam::whereHas('exam', function($query) use ($courseId, $module) {
+                        $query->where('course_id', $courseId);
+                        if ($module) {
+                            $query->where('module_id', $module['id']);
+                        }
+                    })->where('student_id', $reg->student->id)->get();
+
+                    $exam = $studentExams->first();
+                    $examScore = $exam ? (float) $exam->punctuation : null;
+
+                    // Asistencias
+                    $attendances = AcaStudentAttendance::where('course_id', $courseId)
+                        ->where('student_id', $reg->student->id)
+                        ->where('module_id', $module['id'] ?? null)
+                        ->get();
+                    $attendanceCount = $attendances->count();
+                    $totalContents = AcaStudentAttendance::where('course_id', $courseId)
+                        ->whereNotNull('module_id')
+                        ->select('module_id')
+                        ->selectRaw('COUNT(DISTINCT content_id) as total_contents')
+                        ->groupBy('module_id')
+                        ->get()
+                        ->keyBy('module_id')
+                        ->get($module['id'])?->total_contents ?? 0;
+                    $attendanceScore = $totalContents > 0 ? round(($attendanceCount / $totalContents) * 12, 2) : null;
+
+                    // Participaciones
+                    $participations = AcaStudentParticipation::where('course_id', $courseId)
+                        ->where('student_id', $reg->student->id)
+                        ->where('module_id', $module['id'] ?? null)
+                        ->get();
+                    $participationCount = $participations->count();
+                    $participationScore = $participationCount > 0
+                        ? round($participations->sum('participation_score') / $participationCount, 2)
+                        : null;
+
+                    // Calcular promedio del módulo
+                    $examVal = $examScore ?? 0;
+                    $attendanceVal = $attendanceScore ?? 0;
+                    $participationVal = $participationScore ?? 0;
+                    $average = round(($examVal * 0.6) + ($attendanceVal * 0.2) + ($participationVal * 0.2), 2);
+
+                    return [
+                        'module_id' => $module['id'],
+                        'module_name' => $module['description'],
+                        'participation_score' => $participationScore,
+                        'attendance_score' => $attendanceScore,
+                        'exam_score' => $examScore,
+                        'average' => $average,
+                    ];
+                })->toArray();
+
+                // Calcular promedio final
+                $finalAverage = collect($studentModules)->avg('average');
+                $finalAverage = $finalAverage !== null ? round($finalAverage, 2) : null;
+            }
+
+            return [
+                'id' => $reg->student->id,
+                'registration_id' => $reg->id,
+                'student' => [
+                    'full_name' => $reg->student->person ? $reg->student->person->full_name : 'Sin nombre',
+                    'dni' => $reg->student->person ? $reg->student->person->number : '',
+                ],
+                'course' => [
+                    'description' => $reg->course->description ?? '',
+                ],
+                'created_at' => $reg->created_at->format('Y-m-d'),
+                'status' => $reg->status,
+                'has_certificate' => $hasCertificate,
+                'final_average' => $finalAverage,
+                'modules' => $studentModules,
+            ];
+        });
+
+        return response()->json([
+            'items' => $students,
+            'modules' => $modules,
+        ]);
+    }
+
+    public function exportStudentPerformance(Request $request)
+    {
+        $this->validate($request, [
+            'course_id' => 'nullable|integer',
+            'year' => 'nullable|integer',
+            'month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $userId = Auth::id();
+
+        $filters = $request->only(['course_id', 'year', 'month']);
+
+        $excelExportJob = ExcelExportJob::create([
+            'user_id' => $userId,
+            'job' => 'ExportStudentPerformanceExcel',
+            'report_type' => 'student_performance',
+            'status' => 'pending',
+            'progress' => 0,
+            'filters' => $filters,
+        ]);
+
+        ExportStudentPerformanceExcel::dispatch($userId, $excelExportJob->id, $filters);
+
+        return response()->json([
+            'job_id' => $excelExportJob->id,
+            'message' => 'Exportación iniciada',
+        ]);
+    }
+
+    public function exportStudentPerformanceStatus(Request $request, $jobId)
+    {
+        $job = ExcelExportJob::find($jobId);
+
+        if (!$job) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'Trabajo no encontrado',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => $job->status,
+            'progress' => $job->progress,
+            'file_name' => $job->file_name,
+            'download_url' => $job->download_url,
+            'error_message' => $job->error_message,
+        ]);
     }
 }

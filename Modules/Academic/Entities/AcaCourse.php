@@ -31,11 +31,6 @@ class AcaCourse extends Model
         'discount_applies'
     ];
 
-    protected static function newFactory()
-    {
-        return \Modules\Academic\Database\factories\AcaCourseFactory::new();
-    }
-
     public function category(): BelongsTo
     {
         return $this->belongsTo(AcaCategoryCourse::class, 'category_id');

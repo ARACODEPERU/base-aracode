@@ -147,10 +147,17 @@ class AcaAttendanceController extends Controller
 
         $deviceInfo = $this->parseUserAgent($request->userAgent());
 
+        // Obtener module_id a través del content -> theme -> module
+        $moduleId = null;
+        if ($link->content && $link->content->theme) {
+            $moduleId = $link->content->theme->module_id;
+        }
+
         AcaStudentAttendance::create([
             'attendance_link_id' => $link->id,
             'student_id' => $student->id,
             'course_id' => $link->course_id,
+            'module_id' => $moduleId,
             'content_id' => $link->content_id,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),

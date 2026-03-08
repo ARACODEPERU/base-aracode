@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Illuminate\Support\Facades\DB;
+use Modules\Academic\Entities\AcaStudentCoursesInterest;
 use Spatie\Permission\Models\Role;
 
 class WebPageController extends Controller
@@ -49,27 +50,27 @@ class WebPageController extends Controller
     {
         return view('pages.home');
     }
-    
+
     public function about()
     {
         return view('pages.about');
     }
-    
+
     public function cms()
     {
         return view('pages.cms');
     }
-    
+
     public function storeonline()
     {
         return view('pages.store-online');
     }
-    
+
     public function lms()
     {
         return view('pages.lms');
     }
-    
+
     public function billing()
     {
         return view('pages.billing');
@@ -848,7 +849,7 @@ class WebPageController extends Controller
             'unlimited' => true
         ]);
     }
-	
+
 	    public function storeCourseFree(Request $request)
     {
         // 🔹 VALIDACIÓN
@@ -930,7 +931,8 @@ class WebPageController extends Controller
                 'status' => true,
                 'certificate_date' => Carbon::now(),
                 'arrival_source_id' => 1,
-                'arrival_source_information' => '01'
+                'arrival_source_information' => '01',
+                'date_start'        => Carbon::now()->format('Y-m-d'),
             ]);
 
             AcaStudentCoursesInterest::create([

@@ -295,7 +295,8 @@ class OnliSaleController extends Controller
             AcaCapRegistration::create([
                 'student_id'        => $student->id,
                 'course_id'         => $item->item_id,
-                'status'            => false
+                'status'            => false,
+                'date_start'        => Carbon::now()->format('Y-m-d'),
             ]);
         }
 

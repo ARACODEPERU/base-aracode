@@ -3,7 +3,7 @@
     import Pagination from '@/Components/Pagination.vue';
     import Swal2 from "sweetalert2";
     import { Link, router, useForm } from '@inertiajs/vue3';
-    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter, faClipboardCheck } from "@fortawesome/free-solid-svg-icons";
+    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter, faClipboardCheck, faComments } from "@fortawesome/free-solid-svg-icons";
     import ModalLarge from '@/Components/ModalLarge.vue';
     import { ref, computed, watch } from 'vue';
     import DangerButton from '@/Components/DangerButton.vue';
@@ -462,7 +462,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                         <div v-for="course in courses.data" :key="course.id"
                              class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] flex flex-col h-full">
                             <!-- Course Image -->
@@ -582,6 +582,14 @@
                                                 <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
                                             </button>
                                         </template>
+                                        <!-- Botón Participaciones -->
+                                        <Link :href="route('aca_course_participations', course.id)"
+                                            class="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900 rounded-lg transition-colors"
+                                            title="Participaciones"
+                                            v-tippy="{content: 'Participaciones', placement: 'top'}"
+                                        >
+                                            <font-awesome-icon :icon="faComments" class="text-sm" />
+                                        </Link>
                                     </div>
                                     <button
                                         @click="destroyCourse(course.id)"

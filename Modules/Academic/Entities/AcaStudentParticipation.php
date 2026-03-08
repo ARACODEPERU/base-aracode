@@ -5,35 +5,28 @@ namespace Modules\Academic\Entities;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\User;
 
-class AcaStudentAttendance extends Model
+class AcaStudentParticipation extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'attendance_link_id',
         'student_id',
         'course_id',
         'module_id',
+        'theme_id',
         'content_id',
-        'ip_address',
-        'user_agent',
-        'device_type',
-        'browser',
-        'platform',
-        'registered_at',
-        'user_edit_id',
-        'observation'
+        'participation_score',
+        'teacher_comment',
+        'created_by',
+        'edited_by',
     ];
 
     protected $casts = [
-        'registered_at' => 'datetime',
+        'participation_score' => 'decimal:2',
+        'edited_by' => 'array',
     ];
-
-    public function attendanceLink(): BelongsTo
-    {
-        return $this->belongsTo(AcaAttendanceLink::class, 'attendance_link_id');
-    }
 
     public function student(): BelongsTo
     {
@@ -50,13 +43,28 @@ class AcaStudentAttendance extends Model
         return $this->belongsTo(AcaModule::class, 'module_id');
     }
 
+    public function theme(): BelongsTo
+    {
+        return $this->belongsTo(AcaTheme::class, 'theme_id');
+    }
+
     public function content(): BelongsTo
     {
         return $this->belongsTo(AcaContent::class, 'content_id');
     }
 
-    public function userEdit(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_edit_id');
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function addEditHistory(int $userId): void
+    {
+        $history = $this->edited_by ?? [];
+        $history[] = [
+            'user_id' => $userId,
+            'updated_at' => now()->toISOString(),
+        ];
+        $this->edited_by = $history;
     }
 }

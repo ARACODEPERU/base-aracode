@@ -3,6 +3,7 @@
 namespace Modules\Academic\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaModule;
+use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaTheme;
 
 class AcaThemeCommentController extends Controller
@@ -141,6 +143,40 @@ class AcaThemeCommentController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message
+        ]);
+    }
+
+    /**
+     * Obtener comentarios de un estudiante en un tema o módulo específico
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function commentsByStudent(Request $request)
+    {
+        //dd($request->all());
+        $request->validate([
+            'student_id' => 'required',
+        ]);
+
+        $personId = AcaStudent::find($request->student_id)->person_id;
+        $userId = User::where('person_id', $personId)->value('id');
+
+        $query = AcaThemeComment::with('user')
+            ->where('user_id', $userId);
+
+        if ($request->theme_id) {
+            $query->where('theme_id', $request->theme_id);
+        }
+
+        if ($request->module_id) {
+            $query->where('module_id', $request->module_id);
+        }
+
+        $comments = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'comments' => $comments
         ]);
     }
 }
