@@ -7,16 +7,16 @@
         <x-show-scroll />
 
         <!-- page preloader begin -->
-        {{-- <div id="de-loader"></div> --}}
+        <div id="de-loader"></div>
         <!-- page preloader close -->
 
         <x-header />
 
         <x-home-welcome />
 
-        <x-about />
+        <x-home-about />
 
-        <x-tape />
+        <x-home-tape />
 
         <x-value-proposition />
 
@@ -622,12 +622,12 @@
             </div>
         </section> --}}
 
-        <x-products />
+        <x-home-products />
 
-        <x-location />
+        <x-home-location />
         
 
-        <x-customers />
+        <x-home-customers />
 
         {{-- <section id="section-faq" class="bg-dark section-dark text-light">
             <div class="container">

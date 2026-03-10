@@ -4,7 +4,6 @@
 
     <div id="wrapper">
 
-        
         <x-show-scroll />
 
         <!-- page preloader begin -->
