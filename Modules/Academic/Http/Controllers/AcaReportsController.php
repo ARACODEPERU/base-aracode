@@ -7,6 +7,7 @@ use App\Models\ExcelExportJob;
 use App\Models\PaymentMethod;
 use App\Models\Sale;
 use App\Models\SaleDocument;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Jobs\ExportSalesExcel;
 use Modules\Academic\Jobs\ExportStudentPerformanceExcel;
+use Modules\Academic\Jobs\ExportEnrollmentDocumentsExcel;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCertificate;
@@ -400,6 +402,127 @@ class AcaReportsController extends Controller
     }
 
     public function exportStudentPerformanceStatus(Request $request, $jobId)
+    {
+        $job = ExcelExportJob::find($jobId);
+
+        if (!$job) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'Trabajo no encontrado',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => $job->status,
+            'progress' => $job->progress,
+            'file_name' => $job->file_name,
+            'download_url' => $job->download_url,
+            'error_message' => $job->error_message,
+        ]);
+    }
+
+    public function enrollmentDocumentsReport()
+    {
+        // Obtener usuarios que tienen registros en aca_cap_registrations
+        $userIds = \Modules\Academic\Entities\AcaCapRegistration::whereNotNull('user_id_registers')
+            ->distinct()
+            ->pluck('user_id_registers');
+
+        $users = \App\Models\User::whereIn('id', $userIds)->get(['id', 'name']);
+
+        return Inertia::render('Academic::Reports/EnrollmentDocumentsReport', [
+            'users' => $users
+        ]);
+    }
+
+    public function enrollmentDocumentsTable(Request $request)
+    {
+        $this->validate($request, [
+            'user_id' => 'nullable',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date',
+        ]);
+
+        $userId = $request->input('user_id');
+        $dateStart = $request->input('date_start');
+        $dateEnd = $request->input('date_end');
+
+        $query = AcaCapRegistration::with([
+            'student.person',
+            'course',
+            'document'
+        ])->where('status', true);
+
+        // Filtrar por usuario responsable
+        if ($userId === 'sin') {
+            $query->whereNull('user_id_registers');
+        } elseif ($userId === 'con') {
+            $query->whereNotNull('user_id_registers');
+        } elseif ($userId) {
+            $query->where('user_id_registers', $userId);
+        }
+
+        // Filtrar por rango de fechas
+        if ($dateStart) {
+            $query->whereDate('created_at', '>=', $dateStart);
+        }
+        if ($dateEnd) {
+            $query->whereDate('created_at', '<=', $dateEnd);
+        }
+
+        $registrations = $query->orderBy('created_at', 'desc')->get();
+
+        // Transformar datos
+        $items = $registrations->map(function ($reg) {
+            return [
+                'id' => $reg->id,
+                'student_name' => $reg->student?->person?->full_name ?? 'Sin nombre',
+                'registration_date' => $reg->created_at->format('Y-m-d H:i:s'),
+                'course_name' => $reg->course?->description ?? 'Sin curso',
+                'comprobante' => $reg->saleDocument
+                    ? $reg->saleDocument->invoice_serie . '-' . $reg->saleDocument->invoice_correlative
+                    : '-',
+                'responsible' => $reg->user_id_registers
+                    ? (User::find($reg->user_id_registers)?->name ?? 'Usuario no encontrado')
+                    : 'Sin responsable',
+            ];
+        });
+
+        return response()->json([
+            'items' => $items,
+        ]);
+    }
+
+    public function exportEnrollmentDocuments(Request $request)
+    {
+        $this->validate($request, [
+            'user_id' => 'nullable',
+            'date_start' => 'nullable|date',
+            'date_end' => 'nullable|date',
+        ]);
+
+        $userId = Auth::id();
+
+        $filters = $request->only(['user_id', 'date_start', 'date_end']);
+
+        $excelExportJob = ExcelExportJob::create([
+            'user_id' => $userId,
+            'job' => 'ExportEnrollmentDocumentsExcel',
+            'report_type' => 'enrollment_documents',
+            'status' => 'pending',
+            'progress' => 0,
+            'filters' => $filters,
+        ]);
+
+        ExportEnrollmentDocumentsExcel::dispatch($userId, $excelExportJob->id, $filters);
+
+        return response()->json([
+            'job_id' => $excelExportJob->id,
+            'message' => 'Exportación iniciada',
+        ]);
+    }
+
+    public function exportEnrollmentDocumentsStatus(Request $request, $jobId)
     {
         $job = ExcelExportJob::find($jobId);
 

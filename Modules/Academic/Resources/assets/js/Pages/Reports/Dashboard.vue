@@ -8,6 +8,7 @@ const reportsData = [
         title: 'Ventas',
         items: [
             { url: route('aca_student_payment_report_bank'), label: 'Reporte de pagos de alumnos por banco'},
+            { url: route('aca_enrollment_documents_report'), label: 'Reporte Detallado de Documentos de Ventas - Cursos Matriculados'},
         ]
     },
     {

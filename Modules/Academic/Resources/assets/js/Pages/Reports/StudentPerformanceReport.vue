@@ -6,7 +6,7 @@
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import ModalStatus from '@/Components/ModalStatus.vue';
     import { ref } from 'vue';
-import IconExcel from '@/Components/vristo/icon/icon-excel.vue';
+    import IconExcel from '@/Components/vristo/icon/icon-excel.vue';
 
     const props = defineProps({
         courses: {

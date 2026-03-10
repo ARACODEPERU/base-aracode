@@ -2,6 +2,7 @@
     import AuthLayout from '@/Layouts/Vristo/AuthLayout.vue';
     import { useForm } from '@inertiajs/vue3';
     import { ref, computed, onMounted, onUnmounted } from 'vue';
+    import InputError from '@/Components/InputError.vue';
 
     const props = defineProps({
         error: {
@@ -281,6 +282,9 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
                                 Ingresa tu DNI de 8 dígitos
                             </p>
+                            <div class="w-full text-center">
+                                <InputError :message="form.errors.dni" class="mt-2" />
+                            </div>
                         </div>
 
                         <!-- Campo Código de Verificación -->

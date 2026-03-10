@@ -547,7 +547,7 @@
                             @endif
                         </div>
 
-                        @if($showCorrectAnswers && !$isCorrect)
+                        @if($showCorrectAnswers && $isApproved)
                             @php
                             $correctAnswer = $question->answers->where('correct', 1)->first();
                             @endphp

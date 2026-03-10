@@ -472,6 +472,22 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->get('reports/student/performance/export/status/{jobId}', [AcaReportsController::class, 'exportStudentPerformanceStatus'])
         ->name('aca_student_performance_export_status');
 
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->get('reports/student/enrollment/documents', [AcaReportsController::class, 'enrollmentDocumentsReport'])
+        ->name('aca_enrollment_documents_report');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->post('reports/student/enrollment/documents/table', [AcaReportsController::class, 'enrollmentDocumentsTable'])
+        ->name('aca_enrollment_documents_report_table');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->post('reports/student/enrollment/documents/export', [AcaReportsController::class, 'exportEnrollmentDocuments'])
+        ->name('aca_enrollment_documents_export');
+
+    Route::middleware(['middleware' => 'permission:aca_reportes'])
+        ->get('reports/student/enrollment/documents/export/status/{jobId}', [AcaReportsController::class, 'exportEnrollmentDocumentsStatus'])
+        ->name('aca_enrollment_documents_export_status');
+
     Route::middleware(['middleware' => 'permission:aca_suscripcion_estudiante_editar'])
         ->post('reports/student/subscription/update',[AcaCapRegistrationController::class, 'updateSubscriptionStudent'])
         ->name('aca_subscriptions_update_student');

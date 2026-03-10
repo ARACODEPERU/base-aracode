@@ -4,9 +4,11 @@ namespace Modules\Academic\Entities;
 
 use App\Models\Sale;
 use App\Models\SaleDocument;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class AcaCapRegistration extends Model
 {
@@ -28,13 +30,9 @@ class AcaCapRegistration extends Model
         'arrival_source_information',
         'payment_installments',
         'advancement',
-        'amount_paid'
+        'amount_paid',
+        'user_id_registers'
     ];
-
-    protected static function newFactory()
-    {
-        return \Modules\Academic\Database\factories\AcaCapRegistrationFactory::new();
-    }
 
     public function course(): BelongsTo
     {
@@ -52,5 +50,19 @@ class AcaCapRegistration extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(SaleDocument::class, 'document_id');
+    }
+    public function registrador()
+    {
+        return $this->belongsTo(User::class, 'user_id_registers', 'id');
+    }
+
+
+    protected static function booted()
+    {
+        static::creating(function ($registration) {
+            if (Auth::check()) {
+                $registration->user_id_registers = Auth::id();
+            }
+        });
     }
 }
