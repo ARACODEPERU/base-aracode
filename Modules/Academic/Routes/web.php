@@ -510,9 +510,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->name('aca_course_exam_view_details');
 
     // Participaciones de estudiantes
-    Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
-        ->get('courses/{courseId}/participations', [AcaCourseController::class, 'participations'])
-        ->name('aca_course_participations');
+    Route::middleware(['middleware' => 'permission:aca_gestion_de_participaciones'])
+        ->get('courses/participations/students', [AcaCourseController::class, 'participations'])
+        ->name('aca_students_course_participations');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
         ->put('courses/participations/search/{courseId}', [AcaCourseController::class, 'searchParticipations'])
@@ -521,6 +521,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
         ->post('courses/participations/store', [AcaCourseController::class, 'storeParticipation'])
         ->name('aca_course_participation_store');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
+        ->post('courses/participations/store/all', [AcaCourseController::class, 'storeAllParticipations'])
+        ->name('aca_course_participation_store_all');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
         ->post('course/exam/question/form/store', [AcaExamQuestionController::class, 'storeQuestion'])
@@ -603,10 +607,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
         ->post('grade/management/store', [AcaGradeManagementController::class, 'store'])
         ->name('aca_grade_management_store');
 });
-
-////asistencia
-Route::get('student/certificates/all', [AcaCertificateController::class, 'studentCertificates'])
-        ->name('aca_student_certificates_all');
 
 Route::get('asistencia/registrar/clase',[AcaAttendanceController::class, 'registerAttendance']);
 Route::post('asistencia/registrar/clase/store',[AcaAttendanceController::class, 'storeAttendance'])->name('aca_asistencia_store');

@@ -7,7 +7,7 @@
     import Swal2 from 'sweetalert2';
     import { faSearch, faFilter, faSave, faCheck } from "@fortawesome/free-solid-svg-icons";
     import SpinnerLoading from '@/Components/SpinnerLoading.vue';
-import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
+    import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
     import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 
     const props = defineProps({
@@ -37,6 +37,7 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                 text: 'Por favor seleccione un curso',
                 icon: 'warning',
                 padding: '2em',
+                customClass: 'sweet-alerts',
             });
             return;
         }
@@ -68,6 +69,7 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                     text: 'No se encontraron estudiantes registrados en este curso',
                     icon: 'info',
                     padding: '2em',
+                    customClass: 'sweet-alerts',
                 });
             }
         } catch (error) {
@@ -77,6 +79,7 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                 text: 'Ocurrió un error al buscar estudiantes',
                 icon: 'error',
                 padding: '2em',
+                customClass: 'sweet-alerts',
             });
         } finally {
             loading.value = false;
@@ -90,7 +93,9 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
         const participation = module.participation_score !== null && module.participation_score !== '' ? Number(module.participation_score) : 0;
 
         // Fórmula: (examen * 60%) + (asistencia * 20%) + (participación * 20%)
-        const average = (exam * 0.6) + (attendance * 0.2) + (participation * 0.2);
+        // const average = (exam * 0.6) + (attendance * 0.2) + (participation * 0.2);
+        // Fórmula: (examen * 60%) + (participación * 40%)
+        const average = (exam * 0.6) + (participation * 0.4);
         return average > 0 ? Number(average.toFixed(2)) : null;
     };
 
@@ -129,11 +134,26 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
             text: 'Notas guardadas correctamente',
             icon: 'success',
             padding: '2em',
+            customClass: 'sweet-alerts',
         });
     };
 
     // Guardar todas las notas de un estudiante
     const saveStudentGrades = async (student) => {
+        // Mostrar alerta de confirmación
+        const result = await Swal2.fire({
+            title: '¿Guardar calificaciones?',
+            text: 'Una vez guardado, este estudiante no podrá ser modificado desde Calificación de participaciones. ¿Está seguro de guardar los cambios?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+
+        if (!result.isConfirmed) return;
+
         saving.value[student.id] = true;
 
         const gradeData = {
@@ -161,6 +181,7 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                 text: response.data.message || 'Notas guardadas correctamente',
                 icon: 'success',
                 padding: '2em',
+                customClass: 'sweet-alerts',
             });
         } catch (error) {
             console.error('Error saving grades:', error);
@@ -169,6 +190,7 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                 text: error.response?.data?.message || 'Ocurrió un error al guardar las notas',
                 icon: 'error',
                 padding: '2em',
+                customClass: 'sweet-alerts',
             });
         } finally {
             saving.value[student.id] = false;
@@ -177,6 +199,20 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
 
     // Guardar todas las notas de todos los estudiantes
     const saveAllGrades = async () => {
+        // Mostrar alerta de confirmación
+        const result = await Swal2.fire({
+            title: '¿Guardar todas las calificaciones?',
+            text: 'Una vez guardado, estos estudiantes no podrán ser modificados desde Calificación de participaciones . ¿Está seguro de guardar los cambios?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar todo',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+
+        if (!result.isConfirmed) return;
+
         savingAll.value = true;
 
         const gradesData = studentsData.value.map(student => ({
@@ -204,14 +240,15 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                 text: response.data.message || 'Todas las notas guardadas correctamente',
                 icon: 'success',
                 padding: '2em',
+                customClass: 'sweet-alerts',
             });
         } catch (error) {
-            console.error('Error saving all grades:', error);
             Swal2.fire({
                 title: 'Error',
                 text: error.response?.data?.message || 'Ocurrió un error al guardar las notas',
                 icon: 'error',
                 padding: '2em',
+                customClass: 'sweet-alerts',
             });
         } finally {
             savingAll.value = false;
@@ -313,16 +350,30 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                         </div>
                         <button
                             @click="saveAllGrades"
-                            class="btn btn-success"
-                            :class="{ 'opacity-25': savingAll }"
-                            :disabled="savingAll"
-                        >
+                                class="btn btn-success"
+                                :class="{ 'opacity-25': savingAll }"
+                                :disabled="savingAll"
+                            >
                             <IconLoader v-if="savingAll" class="animate-spin w-4 h-4 mr-2" />
                             <font-awesome-icon v-else :icon="faSave" class="w-4 h-4 mr-2" />
                             {{ savingAll ? 'Guardando...' : 'Guardar Todos' }}
                         </button>
                     </div>
-
+                    <!-- Mensaje explicativo -->
+                    <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 mt-4">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                            <strong>Participación y Asistencia (40%):</strong> Es el promedio de todas las participaciones y notas registradas en el módulo desde la vista "Calificar Participaciones".
+                        </p>
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
+                            <strong>Evaluación (60%):</strong> Es la nota del examen final por módulo que dio el alumno.
+                        </p>
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
+                            <strong>Nota importante:</strong> Una vez registradas las calificaciones desde esta vista, no podrán ser modificadas desde su origen correspondiente (Calificar Participaciones o Exámenes). Solo podrán ser editadas desde esta vista por un usuario con los permisos adecuados.
+                        </p>
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
+                            <strong>Certificados:</strong> Los alumnos que aprueben con promedio final mayor o igual a 11 podrán descargar su certificado.
+                        </p>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full mb-6">
                             <thead>
@@ -331,7 +382,7 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                                     <th class="pl-4 pr-2 py-3 sticky left-0 z-20 min-w-[150px] border-r" rowspan="2">
                                         Nombre del Estudiante
                                     </th>
-                                    <th v-for="module in modulesData" :key="module.id" :colspan="4"
+                                    <th v-for="module in modulesData" :key="module.id" :colspan="3"
                                         class="px-1 py-3 text-center border-r">
                                         {{ module.description }}
                                     </th>
@@ -342,9 +393,8 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                                 <!-- Fila de headers: E, A, P, Prom -->
                                 <tr>
                                     <template v-for="module in modulesData" :key="'h-'+module.id">
+                                        <th class="px-1 py-1 text-center text-[10px] border-l">A y P (40%)</th>
                                         <th class="px-1 py-1 text-center text-[10px] border-l">E (60%)</th>
-                                        <th class="px-1 py-1 text-center text-[10px] border-l">A (20%)</th>
-                                        <th class="px-1 py-1 text-center text-[10px] border-l">P (20%)</th>
                                         <th class="px-1 py-1 text-center text-[10px] font-bold border-l">Prom</th>
                                     </template>
                                 </tr>
@@ -366,32 +416,6 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
 
                                     <!-- Notas por módulo (horizontal) -->
                                     <template v-for="(module, index) in student.modules" :key="module.module_id">
-                                        <!-- Examen -->
-                                        <td class="px-1 py-2 border-l text-center">
-                                            <input
-                                                v-model="module.exam_score"
-                                                type="number"
-                                                min="0"
-                                                max="20"
-                                                step="0.5"
-                                                class="form-input text-center"
-                                                :class="getScoreClass(module.exam_score)"
-                                                placeholder="-"
-                                            />
-                                        </td>
-                                        <!-- Asistencia -->
-                                        <td class="px-1 py-2 text-center">
-                                            <input
-                                                v-model="module.attendance_score"
-                                                type="number"
-                                                min="0"
-                                                max="20"
-                                                step="0.5"
-                                                class="form-input text-center"
-                                                :class="getScoreClass(module.attendance_score)"
-                                                placeholder="-"
-                                            />
-                                        </td>
                                         <!-- Participación -->
                                         <td class="px-1 py-2 text-center">
                                             <input
@@ -402,6 +426,19 @@ import IconChecks from "@/Components/vristo/icon/icon-checks.vue";
                                                 step="0.5"
                                                 class="form-input text-center"
                                                 :class="getScoreClass(module.participation_score)"
+                                                placeholder="-"
+                                            />
+                                        </td>
+                                        <!-- Examen -->
+                                        <td class="px-1 py-2 border-l text-center">
+                                            <input
+                                                v-model="module.exam_score"
+                                                type="number"
+                                                min="0"
+                                                max="20"
+                                                step="0.5"
+                                                class="form-input text-center"
+                                                :class="getScoreClass(module.exam_score)"
                                                 placeholder="-"
                                             />
                                         </td>

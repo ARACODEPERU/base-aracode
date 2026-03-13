@@ -25,7 +25,6 @@
         },
     });
 
-    const treeview1 = ref([]);
     const themeSelected = ref([]);
     const displayModalVideo = ref(false);
     const videoSelected = ref(null);
@@ -71,6 +70,7 @@
         // Y si ya terminó o hay un error
         const isFinished = studentExam.value.status === 'completado' ||
                           studentExam.value.status === 'revision_pendiente' ||
+                        studentExam.value.status === 'calificado' ||
                           studentExam.value.status === 'timeout';
         return hasAttempts && isFinished;
     };

@@ -5,18 +5,22 @@
     import { ref, computed, watch } from 'vue';
     import axios from 'axios';
     import Swal2 from 'sweetalert2';
-    import { faSearch, faComments, faCheck, faUserGraduate, faFilter } from "@fortawesome/free-solid-svg-icons";
+    import { faSearch, faComments, faCheck, faUserGraduate, faFilter, faSave } from "@fortawesome/free-solid-svg-icons";
     import SpinnerLoading from '@/Components/SpinnerLoading.vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
+    import Multiselect from '@suadelabs/vue3-multiselect';
+    import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 
     const props = defineProps({
-        course: {
+        courses: {
             type: Object,
             default: () => ({}),
         },
     });
 
     // Datos reactivos
+    const selectedCourse = ref(null);
     const selectedModule = ref(null);
     const selectedTheme = ref(null);
     const selectedContent = ref(null);
@@ -25,9 +29,9 @@
     const searched = ref(false);
     const studentsList = ref([]);
 
-    // Obtener módulos del curso
+    // Obtener módulos del curso seleccionado
     const modules = computed(() => {
-        return props.course.modules || [];
+        return selectedCourse.value?.modules || [];
     });
 
     // Obtener temas del módulo seleccionado
@@ -82,6 +86,16 @@
 
     // Buscar estudiantes
     const searchStudents = async () => {
+        if (!selectedCourse.value) {
+            Swal2.fire({
+                title: 'Advertencia',
+                text: 'Por favor seleccione un curso',
+                icon: 'warning',
+                padding: '2em',
+            });
+            return;
+        }
+
         if (!selectedModule.value) {
             Swal2.fire({
                 title: 'Advertencia',
@@ -96,7 +110,7 @@
         searched.value = true;
 
         try {
-            const response = await axios.put(route('aca_course_participation_search', props.course.id), {
+            const response = await axios.put(route('aca_course_participation_search', selectedCourse.value.id), {
                 module_id: selectedModule.value,
                 theme_id: selectedTheme.value,
                 content_id: selectedContent.value,
@@ -134,6 +148,16 @@
 
     // Resetear al cambiar filtros
     watch([selectedModule, selectedTheme, selectedContent], () => {
+        searchStudent.value = '';
+        studentsList.value = [];
+        searched.value = false;
+    });
+
+    // Resetear todo cuando cambia el curso
+    watch(selectedCourse, () => {
+        selectedModule.value = null;
+        selectedTheme.value = null;
+        selectedContent.value = null;
         searchStudent.value = '';
         studentsList.value = [];
         searched.value = false;
@@ -187,7 +211,7 @@
     // Formulario de participación
     const participationForm = useForm({
         student_id: null,
-        course_id: props.course.id,
+        course_id: selectedCourse.value?.id,
         module_id: null,
         theme_id: null,
         content_id: null,
@@ -197,15 +221,32 @@
 
     // Estado de carga por estudiante
     const savingIds = ref([]);
+    const savingAll = ref(false);
 
     // Guardar participación
-    const saveParticipation = async (student) => {
+    const saveParticipation = async (student, showConfirm = true) => {
+        // Si showConfirm es true, mostrar alerta de confirmación
+        if (showConfirm) {
+            const result = await Swal2.fire({
+                title: '¿Guardar cambios?',
+                text: 'Estos cambios se verán reflejados en Gestión de Calificaciones. Si ya ha guardado calificaciones en esa sección, ya no se podra modificar.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+
+            if (!result.isConfirmed) return;
+        }
+
         // Agregar a la lista de loading
         savingIds.value.push(student.id);
 
         const formData = {
             student_id: student.id,
-            course_id: props.course.id,
+            course_id: selectedCourse.value.id,
             module_id: selectedModule.value,
             theme_id: selectedTheme.value,
             content_id: selectedContent.value,
@@ -251,18 +292,66 @@
     const isSaving = (studentId) => {
         return savingIds.value.includes(studentId);
     };
+
+    // Guardar todas las participaciones
+    const saveAllParticipations = async () => {
+        const result = await Swal2.fire({
+            title: '¿Guardar todos los cambios?',
+            text: 'Estos cambios se verán reflejados en Gestión de Calificaciones. Si ya ha guardado calificaciones en esa sección, ya no se podra modificar.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar todo',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+
+        if (!result.isConfirmed) return;
+
+        savingAll.value = true;
+
+        try {
+            const participationsData = filteredStudents.value.map(student => ({
+                student_id: student.id,
+                course_id: selectedCourse.value.id,
+                module_id: selectedModule.value,
+                theme_id: selectedTheme.value,
+                content_id: selectedContent.value,
+                participation_score: student.participation?.participation_score ?? null,
+                teacher_comment: student.participation?.teacher_comment ?? '',
+            }));
+
+            const response = await axios.post(route('aca_course_participation_store_all'), {
+                participations: participationsData
+            });
+
+            Swal2.fire({
+                title: '¡Éxito!',
+                text: response.data.message,
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        } catch (error) {
+            console.error('Error saving all participations:', error);
+            Swal2.fire({
+                title: 'Error',
+                text: error.response?.data?.message || 'Ocurrió un error al guardar las participaciones',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        } finally {
+            savingAll.value = false;
+        }
+    };
 </script>
 
 <template>
-    <AppLayout title="Participaciones de Estudiantes">
+    <AppLayout title="Calificación de participacioness">
         <Navigation :routeModule="route('aca_dashboard')" :titleModule="'Académico'"
             :data="[
-                {
-                    route: route('aca_courses_list'),
-                    title: 'Cursos',
-                },
-                {route: route('aca_courses_edit', course.id), title: course.description},
-                {title: 'Participaciones'},
+                {title: 'Calificación de participaciones'},
             ]"
         />
 
@@ -271,15 +360,34 @@
             <div class="panel p-0">
                 <div class="p-5 border-b border-gray-200 dark:border-gray-700">
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                        Participaciones - {{ course.description }}
+                        Participaciones - {{ selectedCourse?.description || 'Seleccione un curso' }}
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 ">
+                        <!-- Curso -->
+                        <div class="md:col-span-2">
+                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                Curso
+                            </label>
+                            <multiselect
+                                v-model="selectedCourse"
+                                :options="courses"
+                                :searchable="true"
+                                placeholder="Buscar curso..."
+                                selected-label="seleccionado"
+                                select-label="Elegir"
+                                deselect-label="Quitar"
+                                label="description"
+                                track-by="id"
+                                class="custom-multiselect"
+                            ></multiselect>
+                        </div>
+
                         <!-- Módulo -->
                         <div>
                             <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
                                 Módulo
                             </label>
-                            <select v-model="selectedModule" class="form-select w-full">
+                            <select v-model="selectedModule" :disabled="!selectedCourse" class="form-select w-full">
                                 <option :value="null">Seleccionar módulo</option>
                                 <option v-for="mod in modules" :key="mod.id" :value="mod.id">
                                     {{ mod.description }}
@@ -334,20 +442,39 @@
                             Lista de Estudiantes ({{ filteredStudents.length }})
                         </h3>
 
-                        <!-- Buscador por nombre -->
-                        <div class="relative">
-                            <input
-                                type="text"
-                                v-model="searchStudent"
-                                placeholder="Buscar por nombre..."
-                                class="form-input pl-10 w-64 text-sm"
-                            />
-                            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                                <font-awesome-icon :icon="faSearch" class="w-4 h-4" />
+                        <!-- Buscador y Botón Guardar Todo -->
+                        <div class="flex items-center gap-2">
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    v-model="searchStudent"
+                                    placeholder="Buscar por nombre..."
+                                    class="form-input pl-10 w-64 text-sm"
+                                />
+                                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                    <font-awesome-icon :icon="faSearch" class="w-4 h-4" />
+                                </div>
                             </div>
+                            <button
+                                @click="saveAllParticipations"
+                                :disabled="savingAll || filteredStudents.length === 0"
+                                class="btn btn-success"
+                                :class="{ 'opacity-50': savingAll || filteredStudents.length === 0 }"
+                            >
+                                <IconLoader v-if="savingAll" class="animate-spin w-4 h-4 mr-2" />
+                                <font-awesome-icon v-else :icon="faSave" class="w-4 h-4 mr-2" />
+                                {{ savingAll ? 'Guardando...' : 'Guardar Todo' }}
+                            </button>
                         </div>
                     </div>
-
+                    <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                            <strong>Nota por asistencia:</strong> Si un estudiante no tiene participación registrada pero sí asistencia, se mostrará una nota de 12 puntos.
+                        </p>
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200 mt-1">
+                            <strong>Importante:</strong> Es necesario guardar los cambios para que se vean reflejados en Gestión de Calificaciones.
+                        </p>
+                    </div>
                     <!-- Tabla de estudiantes -->
                     <div v-if="searched && filteredStudents && filteredStudents.length > 0" class="overflow-x-auto">
                         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -411,7 +538,7 @@
                                             title="Guardar"
                                             :disabled="isSaving(student.id)"
                                         >
-                                            <font-awesome-icon v-if="isSaving(student.id)" icon="spinner" class="w-4 h-4 animate-spin" />
+                                            <IconLoader v-if="isSaving(student.id)" class="w-4 h-4" />
                                             <font-awesome-icon v-else :icon="faCheck" class="w-4 h-4" />
                                         </button>
                                     </td>
@@ -419,13 +546,22 @@
                             </tbody>
                         </table>
                     </div>
-
                     <!-- Sin estudiantes -->
                     <div v-else class="text-center py-8">
                         <font-awesome-icon :icon="faUserGraduate" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                         <p class="text-gray-500 dark:text-gray-400">
                             No se encontraron estudiantes
                         </p>
+                    </div>
+                    <!-- aaca un mensaje relacionado a la vista o una leyenda explicando el interfaz-->
+
+                    <!-- Leyenda explicativa -->
+                    <div class="px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                        <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                            <!-- <p><strong>Nota por asistencia:</strong> Si un estudiante no tiene participación registrada pero sí asistencia, se mostrará una nota de 12 puntos.</p> -->
+                            <p><strong>Guardar:</strong> Haga click en el botón ✓ para guardar la participación de cada estudiante.</p>
+                            <p><strong>Rango:</strong> Las notas van de 0 a 20 puntos.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -439,7 +575,7 @@
                 <div v-if="!searched && !loading" class="text-center py-12">
                     <font-awesome-icon :icon="faFilter" class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <p class="text-gray-500 dark:text-gray-400">
-                        Seleccione un módulo y haga click en "Buscar" para ver los estudiantes
+                        Seleccione un curso y luego un módulo, luego haga click en "Buscar" para ver los estudiantes
                     </p>
                 </div>
             </div>

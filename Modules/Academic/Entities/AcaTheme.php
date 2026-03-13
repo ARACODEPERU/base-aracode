@@ -40,4 +40,5 @@ class AcaTheme extends Model
     {
         return $this->hasMany(AcaStudentHistory::class, 'theme_id');
     }
+
 }

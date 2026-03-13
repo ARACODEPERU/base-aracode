@@ -24,6 +24,13 @@
     const isFinished = ref(false);
     const savingAnswer = ref(false);
     const examFinish = ref(false);
+    const isRetrying = ref(false);
+
+    // Computed
+    const maxAttempts = computed(() => props.exam?.max_attempts || 1);
+    const attemptsUsed = computed(() => props.exam?.attempts_used || 1);
+    const canRetry = computed(() => props.exam?.can_retry || false);
+    const hasAttemptsLeft = computed(() => attemptsUsed.value < maxAttempts.value);
 
     // Computed
     const currentQuestion = computed(() => props.exam.questions[currentQuestionIndex.value]);
@@ -215,6 +222,28 @@
         });
     };
 
+    // Reintentar el examen
+    const retryExam = async () => {
+        const result = await Swal2.fire({
+            title: '¿Reintentar examen?',
+            text: `Esto reiniciará todas tus respuestas. Has usado ${attemptsUsed.value} de ${maxAttempts.value} intentos.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, reintentar',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+        });
+
+        if (!result.isConfirmed) return;
+
+        isRetrying.value = true;
+        
+        // Recargar la página para obtener un nuevo intento desde el backend
+        router.visit(route('aca_student_module_exam_solve', props.exam.id), {
+            method: 'get'
+        });
+    };
+
     const onFileChange = (event, id) => {
         const qId = currentQuestion.value.id;
         const file = event.target.files[0];
@@ -234,15 +263,15 @@
 
                 if (savedItem.type === 'Alternativas') {
                     // Normalizar a número para que la comparación funcione
-                    answers.value[questionId] = { 
-                        answerId: parseInt(savedItem.answers) 
+                    answers.value[questionId] = {
+                        answerId: parseInt(savedItem.answers)
                     };
                 }
                 else if (savedItem.type === 'Varias respuestas') {
                     // Normalizar todos los IDs a números
                     const rawIds = Array.isArray(savedItem.answers) ? savedItem.answers : [savedItem.answers];
-                    answers.value[questionId] = { 
-                        answerIds: rawIds.map(id => parseInt(id)) 
+                    answers.value[questionId] = {
+                        answerIds: rawIds.map(id => parseInt(id))
                     };
                 }
                 else if (savedItem.type === 'Escribir') {
@@ -250,8 +279,8 @@
                 }
                 else if (savedItem.type === 'Subir Archivo') {
                     // Guardar información del archivo ya subido
-                    answers.value[questionId] = { 
-                        file: true, 
+                    answers.value[questionId] = {
+                        file: true,
                         answerId: parseInt(savedItem.answers),
                         fileName: savedItem.answers // Ruta/nombre del archivo
                     };
@@ -310,13 +339,17 @@
 
 
     onMounted(() => {
-
-        console.log('aca 1')
-        if(props.examStudent.finished_at){
+        console.log('aca 1', props.examStudent.finished_at, canRetry.value);
+        
+        // Si el examen está terminado Y hay un nuevo intento disponible, permitir reintentar
+        if (props.examStudent.finished_at && canRetry.value) {
+            // No mostrar examFinish, permitir que inicie el examen de nuevo
+            examFinish.value = false;
+            initExam();
+        } else if(props.examStudent.finished_at){
             examFinish.value = true;
-            console.log('aca 2', props.examStudent.finished_at)
         }else{
-            console.log('aca 3')
+            //console.log('aca 3')
             initExam();
         }
     });
@@ -414,6 +447,31 @@
                                         <span class="font-bold">Nota en espera:</span> Este examen contiene archivos o textos que el docente debe calificar. Tu puntaje actual de <strong>{{ props.examStudent.punctuation }}</strong> se actualizará pronto.
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Información de intentos -->
+                        <div v-if="hasAttemptsLeft && props.examStudent.status !== 'revision_pendiente'" 
+                            class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
+                                        <i class="fas fa-redo mr-2"></i>
+                                        Intentos: {{ attemptsUsed }} / {{ maxAttempts }}
+                                    </p>
+                                    <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                        Te quedan {{ maxAttempts - attemptsUsed }} intento(s) disponible(s)
+                                    </p>
+                                </div>
+                                <button
+                                    @click="retryExam"
+                                    :disabled="isRetrying"
+                                    class="btn btn-warning flex items-center gap-2"
+                                >
+                                    <i v-if="isRetrying" class="fas fa-spinner fa-spin"></i>
+                                    <i v-else class="fas fa-redo"></i>
+                                    {{ isRetrying ? 'Reiniciando...' : 'Reintentar Examen' }}
+                                </button>
                             </div>
                         </div>
 
@@ -526,7 +584,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                     </svg>
                                     <p class="text-sm text-gray-500">{{ answer.description }}</p>
-                                    
+
                                     <!-- Indicador de archivo ya subido -->
                                     <div v-if="getCurrentAnswer?.file && getCurrentAnswer?.fileName" class="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                         <div class="flex items-center justify-center gap-2 text-green-600 dark:text-green-400">
@@ -539,7 +597,7 @@
                                             Si seleccionas otro archivo, se reemplazará
                                         </p>
                                     </div>
-                                    
+
                                     <input @change="onFileChange($event, answer.id)" :id="'file_input'+key" type="file" accept=".pdf" class="mt-2" />
                                 </div>
                             </template>

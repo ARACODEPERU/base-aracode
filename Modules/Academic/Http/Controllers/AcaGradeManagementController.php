@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCapRegistration;
@@ -15,7 +16,6 @@ use Modules\Academic\Entities\AcaStudentAttendance;
 use Modules\Academic\Entities\AcaStudentParticipation;
 use Modules\Academic\Entities\AcaStudentGrade;
 use Modules\Academic\Entities\AcaStudentGradeDetail;
-use Auth;
 
 class AcaGradeManagementController extends Controller
 {
@@ -82,10 +82,10 @@ class AcaGradeManagementController extends Controller
             if ($savedGrade) {
                 // Si existen calificaciones guardadas, cargarlas
                 $savedDetails = AcaStudentGradeDetail::where('grade_id', $savedGrade->id)->get();
-                
+
                 $studentModules = $modules->map(function ($module) use ($savedDetails) {
                     $detail = $savedDetails->firstWhere('module_id', $module['id']);
-                    
+
                     return [
                         'module_id' => $module['id'],
                         'module_name' => $module['description'],
@@ -104,41 +104,16 @@ class AcaGradeManagementController extends Controller
                     $query->where('course_id', $courseId);
                 })->where('student_id', $reg->student->id)->get();
 
-                // Obtener asistencias del estudiante para este curso (agrupadas por módulo)
-                $studentAttendances = AcaStudentAttendance::where('course_id', $courseId)
-                    ->where('student_id', $reg->student->id)
-                    ->get();
-
-                // Obtener conteo de contenidos con control de asistencia por módulo
-                $contentsWithAttendanceControl = AcaStudentAttendance::where('course_id', $courseId)
-                    ->select('module_id')
-                    ->selectRaw('COUNT(DISTINCT content_id) as total_contents')
-                    ->groupBy('module_id')
-                    ->get()
-                    ->keyBy('module_id');
-
                 // Obtener participaciones del estudiante para este curso
                 $studentParticipations = AcaStudentParticipation::where('course_id', $courseId)
                     ->where('student_id', $reg->student->id)
                     ->get();
 
-                $studentModules = $modules->map(function ($module) use ($studentExams, $studentAttendances, $contentsWithAttendanceControl, $studentParticipations) {
+                $studentModules = $modules->map(function ($module) use ($studentExams, $studentParticipations) {
                     // Buscar examen del estudiante para este módulo
                     $exam = $studentExams->first(function ($se) use ($module) {
                         return $se->exam && $se->exam->module_id == $module['id'];
                     });
-
-                    // Buscar asistencia del estudiante para este módulo
-                    $attendances = $studentAttendances->where('module_id', $module['id']);
-                    $attendanceCount = $attendances->count();
-
-                    // Obtener total de contenidos con control de asistencia para este módulo
-                    $totalContents = $contentsWithAttendanceControl->get($module['id'])?->total_contents ?? 0;
-
-                    // Calcular promedio de asistencia: (asistencias / contenidos_controlados) * 12
-                    $attendanceScore = $totalContents > 0
-                        ? round(($attendanceCount / $totalContents) * 12, 2)
-                        : null;
 
                     // Buscar participaciones del estudiante para este módulo
                     $participations = $studentParticipations->where('module_id', $module['id']);
@@ -152,16 +127,15 @@ class AcaGradeManagementController extends Controller
                     // Calcular promedio del módulo
                     // Fórmula: (examen * 60%) + (asistencia * 20%) + (participación * 20%)
                     $examVal = $exam ? (float) $exam->punctuation : 0;
-                    $attendanceVal = $attendanceScore ?? 0;
                     $participationVal = $participationScore ?? 0;
 
-                    $average = round(($examVal * 0.6) + ($attendanceVal * 0.2) + ($participationVal * 0.2), 2);
+                    $average = round(($examVal * 0.6) + ($participationVal * 0.4), 2);
 
                     return [
                         'module_id' => $module['id'],
                         'module_name' => $module['description'],
                         'exam_score' => $exam ? (float) $exam->punctuation : null,
-                        'attendance_score' => $attendanceScore,
+                        'attendance_score' => 0,
                         'participation_score' => $participationScore,
                         'average' => $average,
                     ];
@@ -227,10 +201,10 @@ class AcaGradeManagementController extends Controller
             $averages = array_filter(array_column($modules, 'average'), function($val) {
                 return $val !== null && $val !== '';
             });
-            $calculatedFinalAverage = count($averages) > 0 
-                ? round(array_sum($averages) / count($averages), 2) 
+            $calculatedFinalAverage = count($averages) > 0
+                ? round(array_sum($averages) / count($averages), 2)
                 : null;
-            
+
             $finalAvg = $finalAverage ?? $calculatedFinalAverage;
             $approved = $finalAvg !== null && $finalAvg >= 11;
 

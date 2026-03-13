@@ -81,6 +81,7 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'aca_asistencia_administrador']));
         array_push($permissions, Permission::create(['name' => 'aca_asistencia_crear_link']));
         array_push($permissions, Permission::create(['name' => 'aca_gestion_de_calificaciones']));
+        array_push($permissions, Permission::create(['name' => 'aca_gestion_de_participaciones']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

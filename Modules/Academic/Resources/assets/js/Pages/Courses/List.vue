@@ -582,14 +582,6 @@
                                                 <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
                                             </button>
                                         </template>
-                                        <!-- Botón Participaciones -->
-                                        <Link :href="route('aca_course_participations', course.id)"
-                                            class="p-2 text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900 rounded-lg transition-colors"
-                                            title="Participaciones"
-                                            v-tippy="{content: 'Participaciones', placement: 'top'}"
-                                        >
-                                            <font-awesome-icon :icon="faComments" class="text-sm" />
-                                        </Link>
                                     </div>
                                     <button
                                         @click="destroyCourse(course.id)"

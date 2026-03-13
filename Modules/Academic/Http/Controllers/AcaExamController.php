@@ -361,24 +361,55 @@ class AcaExamController extends Controller
         // 4. Buscar o crear el intento del estudiante
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
 
-        $examStudent = AcaStudentExam::firstOrCreate(
-            [
+        // Primero buscar si existe un intento previo
+        $examStudent = AcaStudentExam::where('exam_id', $exam->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        // Si existe un intento previo, verificar si puede reintentar
+        $canRetry = false;
+        $maxAttempts = $exam->attempts ?? 1;
+        
+        if ($examStudent) {
+            // Verificar si está terminado y tiene intentos disponibles
+            $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
+            $attemptsUsed = $examStudent->attempts_used ?? 1;
+            
+            if ($isFinished && $attemptsUsed < $maxAttempts) {
+                // Resetear el examen para un nuevo intento
+                $examStudent->details = [];
+                $examStudent->started_at = now();
+                $examStudent->status = 'pendiente';
+                $examStudent->punctuation = 0;
+                $examStudent->attempts_used = $attemptsUsed + 1;
+                $examStudent->finished_at = null;
+                $examStudent->save();
+                $canRetry = true;
+            }
+        } else {
+            // Crear nuevo intento
+            $examStudent = AcaStudentExam::create([
                 'exam_id' => $exam->id,
                 'student_id' => $student->id,
-            ],
-            [
                 'date_start' => now(),
-                'started_at' => now(), // Hora clave para el cronómetro
+                'started_at' => now(),
                 'status' => 'pendiente',
                 'punctuation' => 0,
-                'details' => [] // Inicializar JSON vacío
-            ]
-        );
+                'details' => [],
+                'attempts_used' => 1
+            ]);
+            $canRetry = true;
+        }
 
         // Asegurar que started_at existe (por si es un registro viejo que no lo tenía)
         if (!$examStudent->started_at) {
             $examStudent->started_at = $examStudent->created_at;
         }
+
+        // Agregar información de intentos al objeto del examen
+        $examArray['max_attempts'] = $maxAttempts;
+        $examArray['attempts_used'] = $examStudent->attempts_used ?? 1;
+        $examArray['can_retry'] = $canRetry;
 
         // 5. Reestructurar "details" para que Vue lo maneje fácilmente
         // Gracias al $casts en el modelo, $examStudent->details ya es un array

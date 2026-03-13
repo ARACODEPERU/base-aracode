@@ -1159,6 +1159,25 @@
     const isContentClickable = (type) => {
         return type == '0' || type == '3';
     };
+
+        const handleFileChangeContent = (event) => {
+        const file = event.target.files[0];
+        const allowedTypes = [
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel'
+        ];
+
+        if (file && allowedTypes.includes(file.type)) {
+            contentForm.content = file;
+            contentForm.clearErrors();
+        } else {
+            contentForm.setError({
+                content: 'Solo se permiten archivos PDF o Excel.',
+            });
+            event.target.value = null; // Resetea el campo de entrada si el archivo no es válido
+        }
+    }
 </script>
 
 <template>
@@ -1568,7 +1587,7 @@
                                     <option value="0">frame de vídeo</option>
                                     <option value="3">Link videoconferencia</option>
                                     <option value="2">Subir Archivo</option>
-                                    <option value="4">Examen</option>
+                                    <!-- <option value="4">Examen</option> -->
                                 </select>
                                 <div class="text-danger text-sm mt-1" v-if="contentForm.errors.is_file">{{ contentForm.errors.is_file }}</div>
                             </div>

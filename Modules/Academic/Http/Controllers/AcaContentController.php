@@ -39,7 +39,7 @@ class AcaContentController extends Controller
         if ($request->get('is_file') == 2) {
             $file = $request->file('content');
             $allowedExtensions = ['pdf', 'xlsx', 'xls'];
-
+            //dd($file->extension());
             if ($file && in_array($file->extension(), $allowedExtensions)) {
                 $destination = 'uploads/courses/content';
                 $filename = time() . '.' . $file->extension();
