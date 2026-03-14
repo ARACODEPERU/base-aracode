@@ -237,11 +237,35 @@
         if (!result.isConfirmed) return;
 
         isRetrying.value = true;
-        
-        // Recargar la página para obtener un nuevo intento desde el backend
-        router.visit(route('aca_student_module_exam_solve', props.exam.id), {
-            method: 'get'
-        });
+
+        try {
+            // Llamar a la API para reintentar el examen
+            const response = await axios.post(route('aca_student_module_exam_retry', props.examStudent.id));
+            
+            if (response.data.success) {
+                // Recargar la página después de reintentar exitosamente
+                router.visit(route('aca_student_module_exam_solve', props.exam.id), {
+                    method: 'get'
+                });
+            } else {
+                Swal2.fire({
+                    title: 'Error',
+                    text: response.data.message || 'No se pudo reintentar el examen',
+                    icon: 'error',
+                    padding: '2em',
+                });
+            }
+        } catch (error) {
+            console.error('Error al reintentar:', error);
+            Swal2.fire({
+                title: 'Error',
+                text: error.response?.data?.message || 'Ocurrió un error al reintentar el examen',
+                icon: 'error',
+                padding: '2em',
+            });
+        } finally {
+            isRetrying.value = false;
+        }
     };
 
     const onFileChange = (event, id) => {
@@ -339,17 +363,13 @@
 
 
     onMounted(() => {
-        console.log('aca 1', props.examStudent.finished_at, canRetry.value);
+        console.log('aca 1', props.examStudent.finished_at, canRetry.value, props.examStudent.status);
         
-        // Si el examen está terminado Y hay un nuevo intento disponible, permitir reintentar
-        if (props.examStudent.finished_at && canRetry.value) {
-            // No mostrar examFinish, permitir que inicie el examen de nuevo
-            examFinish.value = false;
-            initExam();
-        } else if(props.examStudent.finished_at){
+        // Si el examen está terminado, mostrar la pantalla de resultados
+        if (props.examStudent.finished_at || props.examStudent.status === 'terminado' || props.examStudent.status === 'revision_pendiente' || props.examStudent.status === 'calificado') {
             examFinish.value = true;
-        }else{
-            //console.log('aca 3')
+        } else {
+            // El examen no está terminado, iniciar normalmente
             initExam();
         }
     });

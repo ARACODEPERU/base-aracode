@@ -10,23 +10,23 @@
 :root {
     /* Fondo general de la página/tabla */
     --table-bg-page: #F9FAFB;
-    
+
     /* Header de tabla */
     --table-header-bg: #F3F4F6;
     --table-header-text: #6B7280;
     --table-header-border: #E5E7EB;
-    
+
     /* Filas */
     --table-row-bg: #FFFFFF;
     --table-row-hover: #F9FAFB;
-    
+
     /* Bordes / separadores */
     --table-border: #E5E7EB;
-    
+
     /* Texto */
     --table-text-primary: #111827;
     --table-text-secondary: #6B7280;
-    
+
     /* Estados */
     --table-status-paid-bg: #D1FAE5;
     --table-status-paid-text: #065F46;
@@ -34,7 +34,7 @@
     --table-status-pending-text: #92400E;
     --table-status-failed-bg: #FEE2E2;
     --table-status-failed-text: #991B1B;
-    
+
     /* Dark mode */
     --table-dark-header-bg: #1F2937;
     --table-dark-header-text: #9CA3AF;
@@ -53,8 +53,7 @@
 .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    background-color: var(--table-bg-page);
-    padding: 1px;
+    padding: 0px;
 }
 
 /* Estilos base para todas las tablas */
@@ -115,6 +114,60 @@ table tbody tr:hover {
 }
 
 /* ============================================
+   TABLAS CON BORDER-RADIUS
+   ============================================ */
+
+/* Habilitar border-collapse: separate para permitir border-radius */
+table.rounded-none {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+table.rounded,
+table.rounded-sm,
+table.rounded-md,
+table.rounded-lg,
+table.rounded-xl,
+table.rounded-2xl,
+table.rounded-3xl,
+table.rounded-full {
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+table.rounded { border-radius: 0.25rem; }
+table.rounded-sm { border-radius: 0.125rem; }
+table.rounded-md { border-radius: 0.375rem; }
+table.rounded-lg { border-radius: 0.5rem; }
+table.rounded-xl { border-radius: 0.75rem; }
+table.rounded-2xl { border-radius: 1rem; }
+table.rounded-3xl { border-radius: 1.5rem; }
+table.rounded-full { border-radius: 9999px; }
+
+/* Esquinas superiores */
+table.rounded-2xl thead tr:first-child th:first-child { border-top-left-radius: 1rem; }
+table.rounded-2xl thead tr:first-child th:last-child { border-top-right-radius: 1rem; }
+
+/* Esquinas inferiores */
+table.rounded-2xl tbody tr:last-child td:first-child { border-bottom-left-radius: 1rem; }
+table.rounded-2xl tbody tr:last-child td:last-child { border-bottom-right-radius: 1rem; }
+
+/* rounded-xl */
+table.rounded-xl thead tr:first-child th:first-child { border-top-left-radius: 0.75rem; }
+table.rounded-xl thead tr:first-child th:last-child { border-top-right-radius: 0.75rem; }
+table.rounded-xl tbody tr:last-child td:first-child { border-bottom-left-radius: 0.75rem; }
+table.rounded-xl tbody tr:last-child td:last-child { border-bottom-right-radius: 0.75rem; }
+
+/* rounded-lg */
+table.rounded-lg thead tr:first-child th:first-child { border-top-left-radius: 0.5rem; }
+table.rounded-lg thead tr:first-child th:last-child { border-top-right-radius: 0.5rem; }
+table.rounded-lg tbody tr:last-child td:first-child { border-bottom-left-radius: 0.5rem; }
+table.rounded-lg tbody tr:last-child td:last-child { border-bottom-right-radius: 0.5rem; }
+
+/* ============================================
    TABLAS CON BORDES
    ============================================ */
 
@@ -155,40 +208,84 @@ table.table-hover tbody tr:hover {
    TABLAS EN MODO OSCURO
    ============================================ */
 
-/* Dark mode - headers y footers */
+/* Soporte para .dark y html.dark */
 .dark table thead tr,
-.dark table tfoot tr {
+html.dark table thead tr,
+.dark table tfoot tr,
+html.dark table tfoot tr {
     background-color: var(--table-dark-header-bg) !important;
 }
 
 .dark table thead tr th,
-.dark table tfoot tr th {
+html.dark table thead tr th,
+.dark table tfoot tr th,
+html.dark table tfoot tr th {
     color: var(--table-dark-header-text) !important;
     background-color: var(--table-dark-header-bg) !important;
     border-bottom: 2px solid var(--table-dark-border);
 }
 
-.dark table tbody tr td {
+.dark table tbody tr td,
+html.dark table tbody tr td {
     color: var(--table-dark-text-primary);
-    border-bottom: 1px solid var(--table-dark-border);
-}
-
-.dark table tbody tr {
     border-bottom: 1px solid var(--table-dark-border);
     background-color: var(--table-dark-row-bg);
 }
 
-.dark table tbody tr:hover {
+.dark table tbody tr,
+html.dark table tbody tr {
+    border-bottom: 1px solid var(--table-dark-border);
+    background-color: var(--table-dark-row-bg);
+}
+
+.dark table tbody tr:hover,
+html.dark table tbody tr:hover {
     background-color: var(--table-dark-row-hover);
 }
 
 /* Dark mode - striped */
-.dark table.table-striped tbody tr:nth-child(odd) {
+.dark table.table-striped tbody tr:nth-child(odd),
+html.dark table.table-striped tbody tr:nth-child(odd) {
     background-color: var(--table-dark-row-hover);
 }
 
-.dark table.table-striped tbody tr:nth-child(odd):hover {
+.dark table.table-striped tbody tr:nth-child(odd):hover,
+html.dark table.table-striped tbody tr:nth-child(odd):hover {
     background-color: var(--table-dark-row-hover);
+}
+
+/* Dark mode - estados */
+.dark table td input[type="text"],
+.dark table td input[type="number"],
+.dark table td input[type="email"],
+.dark table td input[type="password"],
+.dark table td input[type="date"],
+.dark table td input[type="datetime-local"],
+.dark table td input[type="time"],
+.dark table td select,
+.dark table td textarea,
+html.dark table td input[type="text"],
+html.dark table td input[type="number"],
+html.dark table td input[type="email"],
+html.dark table td input[type="password"],
+html.dark table td input[type="date"],
+html.dark table td input[type="datetime-local"],
+html.dark table td input[type="time"],
+html.dark table td select,
+html.dark table td textarea {
+    color: #f1f5f9;
+    background-color: #334155;
+    border-color: #475569;
+}
+
+.dark table td input:focus,
+.dark table td select:focus,
+.dark table td textarea:focus,
+html.dark table td input:focus,
+html.dark table td select:focus,
+html.dark table td textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 /* ============================================
@@ -472,12 +569,12 @@ table td input[type="checkbox"] {
         padding: 10px 12px;
         font-size: 13px;
     }
-    
+
     table th.sticky-left,
     table td.sticky-left {
         box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
     }
-    
+
     table th.sticky-right,
     table td.sticky-right {
         box-shadow: -2px 0 5px -2px rgba(0, 0, 0, 0.1);

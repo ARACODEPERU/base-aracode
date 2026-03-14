@@ -288,22 +288,21 @@
             </div>
             <div class="mt-5">
                 <div class="panel p-0">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full rounded-2xl table-hover">
                         <thead>
                             <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
-                                <th class="px-2 py-2.5 text-center">Acciones</th>
+                                <th class="px-2 py-2.5 text-center ">Acciones</th>
                                 <th class="px-2 py-2.5">Código / Título</th>
                                 <th class="px-2 py-2.5">Tipo</th>
                                 <th class="px-2 py-2.5 text-center">Participantes</th>
                                 <th class="px-2 py-2.5">Estado</th>
                                 <th class="px-2 py-2.5">Archivo</th>
-
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody>
                             <template v-if="sortedMinutes.length > 0">
-                                <tr v-for="(item, index) in sortedMinutes" class="hover:bg-gray-50 transition dark:hover:bg-gray-700">
-                                    <td class="px-2 py-2.5 text-right space-x-2">
+                                <tr v-for="(item, index) in sortedMinutes">
+                                    <td class="px-2 py-2.5 text-right space-x-2 ">
                                         <div class="flex items-center gap-2 justify-center">
                                             <Link
                                                 v-can="'even_ediciones_acta_editar'"

@@ -544,6 +544,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
         ->post('student/module/exam/solve/finish', [AcaExamController::class, 'moduleStoreFinish'])
         ->name('aca_student_exam_module_finish');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
+        ->post('student/module/exam/solve/retry/{id}', [AcaExamController::class, 'retryExam'])
+        ->name('aca_student_module_exam_retry');
+
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
         ->get('student/module/exam/{id}/solve/download', [AcaExamController::class, 'downloadPdf'])
         ->name('aca_student_exam_download_pdf');

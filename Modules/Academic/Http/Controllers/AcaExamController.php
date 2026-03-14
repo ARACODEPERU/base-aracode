@@ -305,7 +305,7 @@ class AcaExamController extends Controller
 
     /**
      * Panel de preguntas y respuestas para examen final del curso
-     * 
+     *
      * @param int $courseId ID del curso
      * @param int $examId ID del examen
      * @return \Inertia\Response
@@ -369,22 +369,16 @@ class AcaExamController extends Controller
         // Si existe un intento previo, verificar si puede reintentar
         $canRetry = false;
         $maxAttempts = $exam->attempts ?? 1;
-        
+
         if ($examStudent) {
             // Verificar si está terminado y tiene intentos disponibles
             $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
             $attemptsUsed = $examStudent->attempts_used ?? 1;
-            
+
             if ($isFinished && $attemptsUsed < $maxAttempts) {
-                // Resetear el examen para un nuevo intento
-                $examStudent->details = [];
-                $examStudent->started_at = now();
-                $examStudent->status = 'pendiente';
-                $examStudent->punctuation = 0;
-                $examStudent->attempts_used = $attemptsUsed + 1;
-                $examStudent->finished_at = null;
-                $examStudent->save();
+                // NO resetear automáticamente - el estudiante debe solicitarlo manualmente
                 $canRetry = true;
+                $examStudent->attempts_used = $attemptsUsed;
             }
         } else {
             // Crear nuevo intento
@@ -510,7 +504,7 @@ class AcaExamController extends Controller
             ->values();
 
         $filteredDetails->push($newQuestionEntry);
-
+        //dd($examStudent);
         // 6. Guardar cambios
         // Al asignar un array, Laravel hace el json_encode automáticamente por el Cast
         $examStudent->details = $filteredDetails->toArray();
@@ -527,12 +521,12 @@ class AcaExamController extends Controller
     }
 
     public function moduleStoreFinish(Request $request) {
+        //dd($request->all());
         $id = $request->get('student_exam_id');
         $examStudent = AcaStudentExam::findOrFail($id);
         $exam = AcaExam::with('questions')->findOrFail($examStudent->exam_id);
 
-        if ($examStudent->status === 'terminado' || $examStudent->status === 'revision_pendiente') {
-
+        if ($examStudent->status === 'terminado' || $examStudent->status === 'revision_pendiente' || $examStudent->status === 'calificado') {
             return to_route('aca_student_module_exam_solve', $exam->id);
         }
 
@@ -558,8 +552,53 @@ class AcaExamController extends Controller
         $examStudent->time_spent_seconds = $timeSpent;
         $examStudent->is_timed_out = $timeSpent > ($maxSeconds + 30);
         $examStudent->save();
-
         //return to_route('aca_student_module_exam_solve', $exam->id);
+    }
+
+    /**
+     * Reintentar un examen existente
+     */
+    public function retryExam(Request $request, $id)
+    {
+        $examStudent = AcaStudentExam::findOrFail($id);
+        $exam = AcaExam::findOrFail($examStudent->exam_id);
+        
+        // Verificar que el examen está terminado
+        $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
+        
+        if (!$isFinished) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El examen aún no ha sido terminado'
+            ], 400);
+        }
+
+        // Verificar intentos disponibles
+        $maxAttempts = $exam->attempts ?? 1;
+        $attemptsUsed = $examStudent->attempts_used ?? 1;
+
+        if ($attemptsUsed >= $maxAttempts) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes intentos disponibles'
+            ], 400);
+        }
+
+        // Resetear el examen para un nuevo intento
+        $examStudent->details = [];
+        $examStudent->started_at = now();
+        $examStudent->status = 'pendiente';
+        $examStudent->punctuation = 0;
+        $examStudent->attempts_used = $attemptsUsed + 1;
+        $examStudent->finished_at = null;
+        $examStudent->time_spent_seconds = 0;
+        $examStudent->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Examen reiniciado correctamente',
+            'attempts_used' => $examStudent->attempts_used
+        ]);
     }
 
     public function downloadPdf($id){

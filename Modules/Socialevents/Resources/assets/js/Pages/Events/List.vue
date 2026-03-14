@@ -183,11 +183,6 @@
 
 <template>
     <AppLayout title="Eventos">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'">
-            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
-                <span>Eventos</span>
-            </li>
-        </Navigation>
         <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
             :data="[
                 {title: 'Eventos'}
@@ -218,10 +213,10 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-5 panel p-0 border-0 overflow-hidden">
+            <div class="mt-5 panel p-0 overflow-hidden">
                 <div class="table-responsive">
                     <ConfigProvider :locale="esES">
-                        <table class="table-striped table-hover">
+                        <table class="w-full rounded-t-2xl">
                             <thead>
                                 <tr>
                                     <th>
