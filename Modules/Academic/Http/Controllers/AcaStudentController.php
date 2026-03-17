@@ -33,6 +33,8 @@ use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentHistory;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
+use Modules\Academic\Entities\AcaStudentAttendance;
+use Modules\Academic\Entities\AcaStudentParticipation;
 
 class AcaStudentController extends Controller
 {
@@ -1439,6 +1441,138 @@ class AcaStudentController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message
+        ]);
+    }
+
+    /**
+     * Mostrar vista de Mis Asistencias del estudiante
+     */
+    public function studentAttendances()
+    {
+        // Obtener estudiante autenticado
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+
+        if (!$student) {
+            return redirect()->route('aca_mycourses');
+        }
+
+        // Obtener cursos donde está matriculado el estudiante
+        $registrations = AcaCapRegistration::with(['course'])
+            ->where('student_id', $student->id)
+            ->where('status', true)
+            ->get();
+
+        $courses = $registrations->map(function ($reg) {
+            return [
+                'id' => $reg->course->id,
+                'description' => $reg->course->description,
+            ];
+        });
+
+        return Inertia::render('Academic::Students/StudentAttendances', [
+            'courses' => $courses,
+        ]);
+    }
+
+    /**
+     * Buscar asistencia del estudiante
+     */
+    public function searchStudentAttendances(Request $request)
+    {
+        // Obtener estudiante autenticado
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+
+        if (!$student) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Estudiante no encontrado'
+            ], 404);
+        }
+
+        $courseId = $request->get('course_id');
+        $dateStart = $request->get('date_start');
+        $dateEnd = $request->get('date_end');
+
+        // Consulta base
+        $query = AcaStudentAttendance::with(['module', 'content'])
+            ->where('student_id', $student->id);
+
+        // Filtro por curso
+        if ($courseId) {
+            $query->where('course_id', $courseId);
+        }
+
+        // Filtro por fecha inicio
+        if ($dateStart) {
+            $query->whereDate('registered_at', '>=', $dateStart);
+        }
+
+        // Filtro por fecha fin
+        if ($dateEnd) {
+            $query->whereDate('registered_at', '<=', $dateEnd);
+        }
+
+        // Ordenar por fecha más reciente
+        $attendances = $query->orderBy('registered_at', 'desc')->get();
+
+        // Obtener participaciones del estudiante para este curso
+        $participationsQuery = AcaStudentParticipation::where('student_id', $student->id);
+        if ($courseId) {
+            $participationsQuery->where('course_id', $courseId);
+        }
+        $participations = $participationsQuery->get();
+
+        // Crear mapa de participaciones con clave module_id-content_id
+        $participationsMap = [];
+        foreach ($participations as $p) {
+            $key = $p->module_id . '-' . $p->content_id;
+            $participationsMap[$key] = $p->participation_score;
+        }
+
+        // Transformar datos para la vista
+        $data = $attendances->map(function ($attendance) use ($participationsMap) {
+            // Obtener el tema a través del contenido
+            $themeDescription = null;
+            if ($attendance->content && $attendance->content->theme) {
+                $themeDescription = $attendance->content->theme->description;
+            }
+
+            // Calcular nota de participación
+            $key = ($attendance->module_id ?? '') . '-' . ($attendance->content_id ?? '');
+            $hasParticipation = isset($participationsMap[$key]);
+            $participationScore = null;
+
+            if ($hasParticipation) {
+                // Si tiene participación registrada, usar esa nota
+                $participationScore = $participationsMap[$key];
+            } elseif ($attendance->registered_at) {
+                // Si no tiene participación pero asistió, nota = 12
+                $participationScore = 12;
+            } else {
+                // Si no tiene participación y no asistió, nota = 0
+                $participationScore = 0;
+            }
+
+            return [
+                'id' => $attendance->id,
+                'module' => $attendance->module ? [
+                    'id' => $attendance->module->id,
+                    'description' => $attendance->module->description,
+                ] : null,
+                'theme' => $themeDescription,
+                'content' => $attendance->content ? [
+                    'id' => $attendance->content->id,
+                    'description' => $attendance->content->description,
+                ] : null,
+                'registered_at' => $attendance->registered_at,
+                'has_attendance' => $attendance->registered_at ? true : false,
+                'participation_score' => $participationScore,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'attendances' => $data,
         ]);
     }
 }

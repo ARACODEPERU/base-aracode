@@ -39,6 +39,14 @@
             permissions: "aca_miscursos",
         },
         {
+            id: 'attendance',
+            title: 'Mis Asistencias',
+            icon: 'ri-calendar-check-fill',
+            route: route('aca_student_attendances'),
+            badge: null,
+            color: 'success'
+        },
+        {
             id: 'exams',
             title: 'Mis Examenes',
             icon: 'ri-file-list-3-line',

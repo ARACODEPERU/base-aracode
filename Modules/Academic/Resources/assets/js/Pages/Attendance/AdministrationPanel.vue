@@ -5,6 +5,8 @@
     import { ref, watch, computed, onUnmounted } from 'vue';
     import axios from 'axios';
     import Swal2 from 'sweetalert2';
+    import Multiselect from '@suadelabs/vue3-multiselect';
+    import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 
     const props = defineProps({
         courses: {
@@ -72,7 +74,7 @@
 
             loadingModules.value = true;
             try {
-                const response = await axios.get(route('aca_attendance_modules', newVal));
+                const response = await axios.get(route('aca_attendance_modules', newVal.id));
                 modules.value = response.data;
             } catch (error) {
                 console.error('Error loading modules:', error);
@@ -323,15 +325,21 @@
                         Panel de Administración de Asistencia
                     </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                        <div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Curso</label>
-                            <select v-model="selectedCourse" class="form-select w-full">
-                                <option :value="null">Seleccionar curso</option>
-                                <option v-for="course in courses" :key="course.id" :value="course.id">
-                                    {{ course.description }}
-                                </option>
-                            </select>
+                            <multiselect
+                                v-model="selectedCourse"
+                                :options="courses"
+                                :searchable="true"
+                                placeholder="Buscar curso..."
+                                selected-label="seleccionado"
+                                select-label="Elegir"
+                                deselect-label="Quitar"
+                                label="description"
+                                track-by="id"
+                                class="custom-multiselect"
+                            ></multiselect>
                         </div>
 
                         <div>

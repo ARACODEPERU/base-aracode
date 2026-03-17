@@ -5,7 +5,8 @@ import {
     faBookmark,
     faLockOpen,
     faUser,
-    faDna
+    faDna,
+    faClock
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuConfig = {
@@ -57,6 +58,14 @@ const menuConfig = {
             icom:faDna,
             permissions: "parametros",
         },
+        {
+            route: route("user_activity_logs"),
+            status: false,
+            text: "Historial de Actividades",
+            icom: faClock,
+            permissions: "conf_historial_actividades",
+        },
+
     ],
 };
 export default menuConfig;

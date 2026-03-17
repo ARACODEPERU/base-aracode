@@ -36,7 +36,8 @@ use Modules\Academic\Http\Controllers\AcaThemeCommentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
 
-Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('academic')->group(function () {
+Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activity_log'])->prefix('academic')->group(function () {
+
     Route::middleware(['middleware' => 'permission:aca_dashboard'])
         ->get('dashboard', [AcademicController::class, 'index'])
         ->name('aca_dashboard');
@@ -80,6 +81,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::get('teachers/resume/{id}', 'AcaTeacherController@resume')->name('aca_teachers_resume');
     Route::post('teachers/resume/work_experience/store', 'AcaTeacherController@workExperienceStore')->name('aca_teachers_work_experience_store');
     Route::delete('teachers/resume/work_experience/destroy/{id}', 'AcaTeacherController@workExperienceDestroy')->name('aca_teachers_work_experience_destroy');
+
     Route::middleware(['middleware' => 'permission:aca_estudiante_listado'])
         ->get('students', 'AcaStudentController@index')
         ->name('aca_students_list');
@@ -556,6 +558,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information'])->prefix('
     Route::middleware(['middleware' => 'permission:aca_alumno_examenes'])
         ->get('student/exams/all', [AcaExamController::class, 'studentExams'])
         ->name('aca_student_exam_search');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_eliminar'])
+        ->delete('student/exam/{id}/destroy', [AcaExamController::class, 'destroyStudentExam'])
+        ->name('aca_student_exam_destroy');
+
+    Route::middleware(['middleware' => 'permission:aca_alumno_examenes'])
+        ->get('student/attendances', [AcaStudentController::class, 'studentAttendances'])
+        ->name('aca_student_attendances');
+
+    Route::middleware(['middleware' => 'permission:aca_alumno_examenes'])
+        ->get('student/attendances/search', [AcaStudentController::class, 'searchStudentAttendances'])
+        ->name('aca_student_attendances_search');
 
     Route::get('student/certificates/all', [AcaCertificateController::class, 'studentCertificates'])
         ->name('aca_student_certificates_all');

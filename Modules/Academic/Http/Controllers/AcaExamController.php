@@ -19,8 +19,10 @@ use Modules\Academic\Entities\AcaStudentExam;
 use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaExamAnswer;
+use App\Models\UserActivityLog;
 use DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Hash;
 
 class AcaExamController extends Controller
 {
@@ -712,6 +714,64 @@ class AcaExamController extends Controller
             'exams' => $exams,
             'courses' => $courses,
             'filters' => request()->only(['course_id', 'search', 'per_page'])
+        ]);
+    }
+
+    /**
+     * Eliminar examen de un estudiante
+     */
+    public function destroyStudentExam(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!Hash::check($request->password, Auth::user()->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La contraseña es incorrecta'
+            ]);
+        }
+
+        $examStudent = AcaStudentExam::findOrFail($id);
+
+        $examData = [
+            'id' => $examStudent->id,
+            'exam_id' => $examStudent->exam_id,
+            'student_id' => $examStudent->student_id,
+            'date_start' => $examStudent->date_start,
+            'date_end' => $examStudent->date_end,
+            'punctuation' => $examStudent->punctuation,
+            'status' => $examStudent->status,
+            'details' => $examStudent->details,
+            'started_at' => $examStudent->started_at,
+            'time_spent_seconds' => $examStudent->time_spent_seconds,
+            'is_timed_out' => $examStudent->is_timed_out,
+            'attempts_used' => $examStudent->attempts_used,
+            'created_at' => $examStudent->created_at,
+            'updated_at' => $examStudent->updated_at,
+        ];
+
+        UserActivityLog::create([
+            'user_id' => Auth::user()->id,
+            'method' => 'DELETE',
+            'url' => request()->fullUrl(),
+            'request_payload' => [
+                'exam_id' => $id,
+                'action' => 'delete_student_exam',
+            ],
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'status_code' => 200,
+            'error_message' => null,
+            'details_data' => $examData
+        ]);
+
+        $examStudent->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Examen eliminado correctamente'
         ]);
     }
 }

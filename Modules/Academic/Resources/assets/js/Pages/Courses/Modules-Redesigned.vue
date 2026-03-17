@@ -1380,7 +1380,7 @@
                                     <div
                                         v-for="(theme, key) in dataThemes"
                                         :key="theme.id"
-                                        class="bg-white dark:bg-gray-750 border border-gray-200 dark:border-gray-600 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-400 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-purple-900 group"
+                                        class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-5 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-400 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-gray-700 dark:hover:to-purple-900 group"
 
                                     >
                                         <!-- Cabecera del Tema -->
@@ -1466,49 +1466,58 @@
                                                 </button>
                                             </div>
                                             <div class="space-y-2">
-                                                <div
+                                                <template
                                                     v-for="content in theme.contents.slice(0, 5)"
                                                     :key="content.id"
-                                                    @click="isContentClickable(content.is_file) ? openContentPreview(content) : null"
-                                                    class="flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-200"
-                                                    :class="[
-                                                        getContentTypeClasses(content.is_file).bg,
-                                                        getContentTypeClasses(content.is_file).border,
-                                                        isContentClickable(content.is_file)
-                                                            ? 'cursor-pointer hover:shadow-md hover:scale-[1.01]'
-                                                            : 'cursor-default opacity-90'
-                                                    ]"
                                                 >
-                                                    <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" :class="getContentTypeClasses(content.is_file).badge">
-                                                        <svg v-if="content.is_file == '0'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
-                                                        </svg>
-                                                        <svg v-else-if="content.is_file == '1'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                        <svg v-else-if="content.is_file == '2'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                        <svg v-else-if="content.is_file == '3'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
-                                                        </svg>
-                                                        <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"/>
-                                                        </svg>
+                                                    <div
+                                                        @click="isContentClickable(content.is_file) ? openContentPreview(content) : null"
+                                                        class="p-2.5 rounded-lg border transition-all duration-200"
+                                                        :class="[
+                                                            getContentTypeClasses(content.is_file).bg,
+                                                            getContentTypeClasses(content.is_file).border,
+                                                            isContentClickable(content.is_file)
+                                                                ? 'cursor-pointer hover:shadow-md hover:scale-[1.01]'
+                                                                : 'cursor-default opacity-90'
+                                                        ]"
+
+                                                    >
+                                                        <div class="flex items-center gap-3">
+                                                            <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" :class="getContentTypeClasses(content.is_file).badge">
+                                                                <svg v-if="content.is_file == '0'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                                                                </svg>
+                                                                <svg v-else-if="content.is_file == '1'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/>
+                                                                </svg>
+                                                                <svg v-else-if="content.is_file == '2'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                                </svg>
+                                                                <svg v-else-if="content.is_file == '3'" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                                                                </svg>
+                                                                <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V8z" clip-rule="evenodd"/>
+                                                                </svg>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                                                                    {{ content.description }}
+                                                                </p>
+                                                            </div>
+                                                            <span class="flex-shrink-0 text-xs px-2 py-1 rounded-full font-medium" :class="getContentTypeClasses(content.is_file).badge">
+                                                                {{ getContentTypeName(content.is_file) }}
+                                                            </span>
+                                                            <svg v-if="isContentClickable(content.is_file)" class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                            </svg>
+                                                        </div>
+                                                        <div v-if="content.is_file == 3" class="w-full text-center mt-2">
+                                                            Haga click para ver el enlace de asistencia
+                                                        </div>
                                                     </div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                                                            {{ content.description }}
-                                                        </p>
-                                                    </div>
-                                                    <span class="flex-shrink-0 text-xs px-2 py-1 rounded-full font-medium" :class="getContentTypeClasses(content.is_file).badge">
-                                                        {{ getContentTypeName(content.is_file) }}
-                                                    </span>
-                                                    <svg v-if="isContentClickable(content.is_file)" class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
-                                                </div>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -2248,36 +2257,6 @@
             <template #message>{{ selectedContent?.description }}</template>
             <template #content>
                 <div class="p-5 space-y-6">
-                    <!-- Enlace de asistencia -->
-                    <div>
-                        <InputLabel value="Enlace de Asistencia" />
-                        <div class="flex gap-2 mt-1">
-                            <div class="relative flex-1">
-                                <input
-                                    type="text"
-                                    :value="getAttendanceUrl()"
-                                    readonly
-                                    class="form-input w-full pr-10 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
-                                    placeholder="Genere un enlace de asistencia"
-                                />
-                                <button
-                                    @click="copyToClipboard"
-                                    :disabled="!videoconferenceForm.link_code"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                                    :class="{ 'text-green-500': linkCopied, 'text-gray-400 dark:text-gray-500': !linkCopied }"
-                                    :title="linkCopied ? 'Copiado' : 'Copiar enlace'"
-                                >
-                                    <svg v-if="linkCopied" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Código de verificación y Tiempo de validez -->
                     <div class="grid grid-cols-2 gap-6">
                         <div>
@@ -2341,6 +2320,36 @@
                                 <p class="text-sm" :class="isLinkExpired() ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'">
                                     {{ isLinkExpired() ? 'Genere un nuevo enlace para continuar' : `Válido por: ${getRemainingTime()}` }}
                                 </p>
+                            </div>
+                        </div>
+                    </div>
+
+                                        <!-- Enlace de asistencia -->
+                    <div>
+                        <InputLabel value="Enlace de Asistencia" />
+                        <div class="flex gap-2 mt-1">
+                            <div class="relative flex-1">
+                                <input
+                                    type="text"
+                                    :value="getAttendanceUrl()"
+                                    readonly
+                                    class="form-input w-full pr-10 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+                                    placeholder="Genere un enlace de asistencia"
+                                />
+                                <button
+                                    @click="copyToClipboard"
+                                    :disabled="!videoconferenceForm.link_code"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                    :class="{ 'text-green-500': linkCopied, 'text-gray-400 dark:text-gray-500': !linkCopied }"
+                                    :title="linkCopied ? 'Copiado' : 'Copiar enlace'"
+                                >
+                                    <svg v-if="linkCopied" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </div>

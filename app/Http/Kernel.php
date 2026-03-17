@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'invalid_updated_information' => \App\Http\Middleware\RedirectIfInvalidUserData::class,
+        'user_activity_log' => \App\Http\Middleware\UserActivityLogMiddleware::class,
     ];
 }

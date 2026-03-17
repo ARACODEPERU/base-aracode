@@ -6,8 +6,9 @@ use Inertia\Inertia;
 use Modules\Security\Http\Controllers\PermissionController;
 use Modules\Security\Http\Controllers\RolesController;
 use Modules\Security\Http\Controllers\SecurityController;
+use Modules\Security\Http\Controllers\UserActivityLogsController;
 
-Route::middleware('auth')->prefix('security')->group(function () {
+Route::middleware(['auth','user_activity_log'])->prefix('security')->group(function () {
     Route::get('dashboard', 'SecurityController@index')->name('security_dashboard');
 
     Route::get('profile', 'ProfileController@edit')->name('profile.edit');
@@ -30,4 +31,7 @@ Route::middleware('auth')->prefix('security')->group(function () {
     Route::get('dashboard/storage/indicator', [SecurityController::class, 'storageIndicador'])->name('security_storage_indicator');
 
     Route::get('table/permissions', [PermissionController::class, 'getData'])->name('security_permissions_data');
+
+    Route::get('user/activity/logs', [UserActivityLogsController::class, 'index'])->name('user_activity_logs');
+    Route::get('user/activity/logs/data', [UserActivityLogsController::class, 'getData'])->name('user_activity_logs_data');
 });

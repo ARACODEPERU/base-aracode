@@ -181,6 +181,75 @@
         const answer = examForm.answers.find(ans => ans.id == questionId);
         return answer.punctuation;
     }
+
+    const destroyExam = (id) => {
+        Swal.fire({
+            title: '¿Estás seguro de eliminar el examen?',
+            html: `
+                <p class="text-left text-sm text-gray-600 mb-4">
+                    Al eliminar el examen, el alumno podrá volver a resolverlo si el examen aún está activo.
+                </p>
+                <div class="text-center">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Ingrese su contraseña para confirmar
+                    </label>
+                    <input type="password" id="swal-input-password" class="form-input w-[80%] text-center" placeholder="Contraseña">
+                </div>
+            `,
+            footer: `
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">
+                        ⚠️ Esta acción será registrada en el historial de usuario
+                    </p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            allowOutsideClick: true,
+            backdrop: `
+                rgba(145,32,9,0.4)
+                url("/img/security.gif")
+                left top
+                no-repeat
+            `,
+            preConfirm: () => {
+                const password = document.getElementById('swal-input-password').value;
+                if (!password) {
+                    Swal.showValidationMessage('Debe ingresar su contraseña');
+                    return false;
+                }
+                return axios.delete(route('aca_student_exam_destroy', id), {
+                    data: { password: password }
+                }).then((res) => {
+                    if (!res.data.success) {
+                        Swal.showValidationMessage(res.data.message)
+                    }
+                    return res
+                }).catch((error) => {
+                    const message = error.response?.data?.message || 'Error al eliminar';
+                    Swal.showValidationMessage(message);
+                    return Promise.reject(message);
+                });
+            },
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Eliminado',
+                    text: 'El examen ha sido eliminado correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                });
+                refreshTable();
+            }
+        });
+    }
 </script>
 <template>
     <AppLayout title="Examenes">
@@ -190,10 +259,12 @@
             ]"
         />
         <div class="mt-5">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-                <h2 class="text-xl" style="width: 30%;">Lista de Alumnos </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="sm:col-span-2">
+                    <h2 class="text-xl">Lista de Alumnos </h2>
+                </div>
                 <!-- <button @click="refreshTable" type="button" >Refrescar</button> -->
-                <div class="flex-1">
+                <div class="sm:col-span-2">
                     <div class="w-full">
                         <multiselect
                             id="course_id"
@@ -217,10 +288,15 @@
 
                 <DataTable ref="examStudentTable" :options="options" :columns="columns">
                     <template #action="props">
-                        <div class="flex gap-4 items-center justify-center">
-                            <button @click="opemModalQualify(props.rowData)" type="button" class="btn btn-outline-primary px-2">
+                        <div class="flex gap-2 items-center justify-center">
+                            <button @click="opemModalQualify(props.rowData)" type="button" class="btn btn-outline-primary px-2" title="Calificar">
                                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                                     <path fill="currentColor" d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/>
+                                </svg>
+                            </button>
+                            <button @click="destroyExam(props.rowData.id)" type="button" class="btn btn-outline-danger px-2" title="Eliminar">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                 </svg>
                             </button>
                         </div>
