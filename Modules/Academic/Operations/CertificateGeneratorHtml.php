@@ -69,7 +69,7 @@ class CertificateGeneratorHtml
             // Aplicar configuración condicional
             empty($rutaDeNode)
                 ? null // No hacer nada especial
-                : $browsershot->setNodeBinary($rutaDeNode)->setNpmBinary($rutaDeNode);
+                : $browsershot->setNodeBinary($rutaDeNode."node")->setNpmBinary($rutaDeNode."npm");
 
             $browsershot->save($path);
 
