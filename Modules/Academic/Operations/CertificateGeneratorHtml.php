@@ -59,7 +59,11 @@ class CertificateGeneratorHtml
 
         try {
 
+            $rutaDeNode = env('NODE_BINARY_PATH'); // <--- ¡CAMBIA ESTO POR TU RUTA REAL!
+
             Browsershot::html($html)
+                ->setNodeBinary($rutaDeNode)
+                ->setNpmBinary($rutaDeNode)
                 ->windowSize($width, $height)
                 ->waitUntilNetworkIdle()
                 ->setOption('omitBackground', true)
