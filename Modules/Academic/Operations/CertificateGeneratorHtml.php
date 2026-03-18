@@ -69,7 +69,8 @@ class CertificateGeneratorHtml
             // Aplicar configuración condicional
             empty($rutaDeNode)
                 ? null // No hacer nada especial
-                : $browsershot->setNodeBinary($rutaDeNode."node")->setNpmBinary($rutaDeNode."npm");
+                : $browsershot->setNodeBinary($rutaDeNode."node")->setNpmBinary($rutaDeNode."npm")->noSandbox() // <--- OBLIGATORIO al ejecutar como root o en Docker
+                ->setChromePath(env('RUTA_CHROMIUM')); // Usa el que instalamos con apt si el de npx falla;
 
             $browsershot->save($path);
 
