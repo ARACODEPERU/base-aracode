@@ -569,6 +569,7 @@
                                                 class="p-2 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900 rounded-lg transition-colors"
                                                 title="Editar Examen Final"
                                                 v-tippy="{content: 'Editar Examen Final', placement: 'top'}"
+                                                v-can="'aca_cursos_examen_final_editar'"
                                             >
                                                 <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
                                             </button>
@@ -578,6 +579,7 @@
                                                 class="p-2 text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                                 title="Crear Examen Final"
                                                 v-tippy="{content: 'Crear Examen Final', placement: 'top'}"
+                                                v-can="'aca_cursos_examen_final_crear'"
                                             >
                                                 <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
                                             </button>

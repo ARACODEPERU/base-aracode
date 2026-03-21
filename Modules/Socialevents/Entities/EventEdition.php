@@ -80,4 +80,9 @@ class EventEdition extends Model
     {
         return $this->hasMany(EventEditionTeam::class, 'edition_id', 'id');
     }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(\Modules\Socialevents\Entities\EventEditionMatch::class, 'edition_id', 'id');
+    }
 }

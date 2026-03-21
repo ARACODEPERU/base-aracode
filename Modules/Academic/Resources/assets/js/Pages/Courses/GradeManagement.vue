@@ -56,10 +56,17 @@
             modulesData.value = response.data.modules || [];
             studentsData.value = response.data.students || [];
 
-            // Agregar propiedad editing a cada módulo
+            // Redondear valores al cargar
+            const roundGradeValue = (value) => {
+                return value !== null && value !== '' ? Math.round(Number(value)) : null;
+            };
+
+            // Agregar propiedad editing a cada módulo y redondear valores
             studentsData.value.forEach(student => {
                 student.modules.forEach(module => {
                     module.editing = false;
+                    module.exam_score = roundGradeValue(module.exam_score);
+                    module.participation_score = roundGradeValue(module.participation_score);
                 });
             });
 
@@ -89,14 +96,10 @@
     // Calcular promedio de un módulo (se recalcula cuando cambian las notas)
     const calculateModuleAverage = (module) => {
         const exam = module.exam_score !== null && module.exam_score !== '' ? Number(module.exam_score) : 0;
-        const attendance = module.attendance_score !== null && module.attendance_score !== '' ? Number(module.attendance_score) : 0;
         const participation = module.participation_score !== null && module.participation_score !== '' ? Number(module.participation_score) : 0;
 
-        // Fórmula: (examen * 60%) + (asistencia * 20%) + (participación * 20%)
-        // const average = (exam * 0.6) + (attendance * 0.2) + (participation * 0.2);
-        // Fórmula: (examen * 60%) + (participación * 40%)
         const average = (exam * 0.6) + (participation * 0.4);
-        return average > 0 ? Number(average.toFixed(2)) : null;
+        return average > 0 ? Math.round(average) : null;
     };
 
     // Calcular promedio final del estudiante (se recalcula cuando cambian las notas)
@@ -108,7 +111,7 @@
         if (averages.length === 0) return null;
 
         const sum = averages.reduce((acc, val) => acc + Number(val), 0);
-        return Number((sum / averages.length).toFixed(2));
+        return Math.round(sum / averages.length);
     };
 
     // Obtener clase de color según la nota
@@ -423,7 +426,7 @@
                                                 type="number"
                                                 min="0"
                                                 max="20"
-                                                step="0.5"
+                                                step="1"
                                                 class="form-input text-center"
                                                 :class="getScoreClass(module.participation_score)"
                                                 placeholder="-"
@@ -436,7 +439,7 @@
                                                 type="number"
                                                 min="0"
                                                 max="20"
-                                                step="0.5"
+                                                step="1"
                                                 class="form-input text-center"
                                                 :class="getScoreClass(module.exam_score)"
                                                 placeholder="-"

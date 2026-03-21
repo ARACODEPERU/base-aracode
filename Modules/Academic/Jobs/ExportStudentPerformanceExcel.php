@@ -13,7 +13,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\ExcelExportJob;
@@ -22,9 +21,6 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaStudentGrade;
 use Modules\Academic\Entities\AcaStudentGradeDetail;
-use Modules\Academic\Entities\AcaStudentExam;
-use Modules\Academic\Entities\AcaStudentAttendance;
-use Modules\Academic\Entities\AcaStudentParticipation;
 
 class ExportStudentPerformanceExcel implements ShouldQueue
 {
@@ -81,7 +77,7 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             $registrations = $query->orderBy('created_at', 'desc')->get();
 
             // Preparar datos de estudiantes
-            $students = $registrations->map(function ($reg) use ($modules, $courseId) {
+            $students = $registrations->map(function ($reg) use ($modules) {
                 $savedGrade = AcaStudentGrade::where('registration_id', $reg->id)->first();
 
                 if ($savedGrade) {
@@ -94,7 +90,6 @@ class ExportStudentPerformanceExcel implements ShouldQueue
                             'module_id' => $module['id'],
                             'module_name' => $module['description'],
                             'participation_score' => $detail ? $detail->participation_score : null,
-                            'attendance_score' => $detail ? $detail->attendance_score : null,
                             'exam_score' => $detail ? $detail->exam_score : null,
                             'average' => $detail ? $detail->average : null,
                         ];
@@ -102,58 +97,17 @@ class ExportStudentPerformanceExcel implements ShouldQueue
 
                     $finalAverage = $savedGrade->final_average;
                 } else {
-                    $studentModules = $modules->map(function ($module) use ($courseId, $reg) {
-                        $studentExams = AcaStudentExam::whereHas('exam', function($query) use ($courseId, $module) {
-                            $query->where('course_id', $courseId);
-                            if ($module) {
-                                $query->where('module_id', $module['id']);
-                            }
-                        })->where('student_id', $reg->student->id)->get();
-
-                        $exam = $studentExams->first();
-                        $examScore = $exam ? (float) $exam->punctuation : null;
-
-                        $attendances = AcaStudentAttendance::where('course_id', $courseId)
-                            ->where('student_id', $reg->student->id)
-                            ->where('module_id', $module['id'] ?? null)
-                            ->get();
-                        $attendanceCount = $attendances->count();
-                        $totalContents = AcaStudentAttendance::where('course_id', $courseId)
-                            ->whereNotNull('module_id')
-                            ->select('module_id')
-                            ->selectRaw('COUNT(DISTINCT content_id) as total_contents')
-                            ->groupBy('module_id')
-                            ->get()
-                            ->keyBy('module_id')
-                            ->get($module['id'])?->total_contents ?? 0;
-                        $attendanceScore = $totalContents > 0 ? round(($attendanceCount / $totalContents) * 12, 2) : null;
-
-                        $participations = AcaStudentParticipation::where('course_id', $courseId)
-                            ->where('student_id', $reg->student->id)
-                            ->where('module_id', $module['id'] ?? null)
-                            ->get();
-                        $participationCount = $participations->count();
-                        $participationScore = $participationCount > 0
-                            ? round($participations->sum('participation_score') / $participationCount, 2)
-                            : null;
-
-                        $examVal = $examScore ?? 0;
-                        $attendanceVal = $attendanceScore ?? 0;
-                        $participationVal = $participationScore ?? 0;
-                        $average = round(($examVal * 0.6) + ($attendanceVal * 0.2) + ($participationVal * 0.2), 2);
-
+                    $studentModules = $modules->map(function ($module) {
                         return [
                             'module_id' => $module['id'],
                             'module_name' => $module['description'],
-                            'participation_score' => $participationScore,
-                            'attendance_score' => $attendanceScore,
-                            'exam_score' => $examScore,
-                            'average' => $average,
+                            'participation_score' => null,
+                            'exam_score' => null,
+                            'average' => null,
                         ];
                     })->toArray();
 
-                    $finalAverage = collect($studentModules)->avg('average');
-                    $finalAverage = $finalAverage !== null ? round($finalAverage, 2) : null;
+                    $finalAverage = null;
                 }
 
                 return [
@@ -215,8 +169,8 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             $moduleStartCol = $col;
             foreach ($modules as $module) {
                 $sheet->setCellValue($getCell($col, 1), $module['description']);
-                $sheet->mergeCells($getCell($col, 1) . ':' . $getCell($col + 3, 1));
-                $col += 4;
+                $sheet->mergeCells($getCell($col, 1) . ':' . $getCell($col + 2, 1));
+                $col += 3;
             }
 
             // Promedio Final
@@ -235,9 +189,7 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             $col++;
 
             foreach ($modules as $module) {
-                $sheet->setCellValue($getCell($col, 2), 'P');
-                $col++;
-                $sheet->setCellValue($getCell($col, 2), 'A');
+                $sheet->setCellValue($getCell($col, 2), 'A y P');
                 $col++;
                 $sheet->setCellValue($getCell($col, 2), 'E');
                 $col++;
@@ -272,19 +224,18 @@ class ExportStudentPerformanceExcel implements ShouldQueue
 
                 // Módulos
                 foreach ($student['modules'] as $module) {
-                    // P
-                    $sheet->setCellValue($getCell($col, $row), $module['participation_score'] ?? '-');
-                    $col++;
-                    // A
-                    $sheet->setCellValue($getCell($col, $row), $module['attendance_score'] ?? '-');
+                    // A y P
+                    $aypValue = is_numeric($module['participation_score']) ? round($module['participation_score']) : $module['participation_score'];
+                    $sheet->setCellValue($getCell($col, $row), $aypValue ?? '-');
                     $col++;
                     // E
-                    $sheet->setCellValue($getCell($col, $row), $module['exam_score'] ?? '-');
+                    $eValue = is_numeric($module['exam_score']) ? round($module['exam_score']) : $module['exam_score'];
+                    $sheet->setCellValue($getCell($col, $row), $eValue ?? '-');
                     $col++;
                     // Prom
                     $promCell = $sheet->getCell($getCell($col, $row));
-                    $promValue = $module['average'] ?? '-';
-                    $promCell->setValue($promValue);
+                    $promValue = is_numeric($module['average']) ? round($module['average']) : $module['average'];
+                    $promCell->setValue($promValue ?? '-');
                     if ($promValue !== '-' && $promValue >= 11) {
                         $promCell->getStyle()->applyFromArray($approvedStyle);
                     } elseif ($promValue !== '-') {
@@ -295,8 +246,8 @@ class ExportStudentPerformanceExcel implements ShouldQueue
 
                 // Promedio Final
                 $finalCell = $sheet->getCell($getCell($col, $row));
-                $finalValue = $student['final_average'] ?? '-';
-                $finalCell->setValue($finalValue);
+                $finalValue = is_numeric($student['final_average']) ? round($student['final_average']) : $student['final_average'];
+                $finalCell->setValue($finalValue ?? '-');
                 if ($finalValue !== '-' && $finalValue >= 11) {
                     $finalCell->getStyle()->applyFromArray($approvedStyle);
                 } elseif ($finalValue !== '-') {
@@ -322,7 +273,7 @@ class ExportStudentPerformanceExcel implements ShouldQueue
                 $sheet->getColumnDimension($colLetter)->setWidth(8);
             }
 
-            $lastCol = chr(65 + 2 + $moduleCount * 4);
+            $lastCol = chr(65 + 2 + $moduleCount * 3);
             $sheet->getColumnDimension($lastCol)->setWidth(15);
 
             // Guardar archivo

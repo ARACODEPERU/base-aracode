@@ -4,7 +4,8 @@
     import { ref, onMounted  } from 'vue';
     import { usePage } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
-    import Swal from "sweetalert2";
+    import axios from 'axios';
+    import Swal2 from "sweetalert2";
     import shortVideos from "../../Components/shortVideos.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
@@ -172,7 +173,77 @@
         const total = countContents(course);
         if (total === 0) return 0;
         const percentage = (course.total_activity / total) * 100;
-        return Math.round(percentage); // Retorna el número entero
+        return Math.round(percentage);
+    };
+
+    const showCertificateButton = (course) => {
+        if (course.auto_certificate && course.certificate_exists) {
+            return true;
+        }
+        if (!course.auto_certificate && course.student_grade !== null && course.student_grade >= 11) {
+            return true;
+        }
+        return false;
+    };
+
+    const getCertificateStatusText = (course) => {
+        if (course.auto_certificate) {
+            if (course.certificate_exists) {
+                return 'Certificado listo';
+            }
+            const viewed = course.contents_viewed || course.total_activity || 0;
+            const total = course.contents_total || countContents(course);
+            return `Progreso: ${viewed}/${total} contenidos`;
+        } else {
+            if (course.student_grade !== null) {
+                const status = course.student_grade >= 11 ? 'Aprobado' : 'En curso';
+                return `Nota: ${course.student_grade}/20 - ${status}`;
+            }
+            return 'Sin nota registrada';
+        }
+    };
+
+    const getCertificateStatusClass = (course) => {
+        if (course.auto_certificate) {
+            if (course.certificate_exists) {
+                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+            }
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+        } else {
+            if (course.student_grade !== null) {
+                return course.student_grade >= 11 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+            }
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        }
+    };
+
+    const downloadCourseCertificate = async (course) => {
+        try {
+            const response = await axios.get(route('aca_student_course_certificate_find', course.id));
+            
+            if (response.data.success && response.data.certificate_id) {
+                window.open(route('aca_image_download', response.data.certificate_id), '_blank');
+            } else {
+                Swal2.fire({
+                    title: 'Certificado no disponible',
+                    text: 'No se encontró el certificado para este curso',
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal2.fire({
+                title: 'Error',
+                text: 'No se pudo descargar el certificado',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }
     };
 </script>
 
@@ -261,6 +332,31 @@
                                                     <span class="font-medium">{{ course.total_activity || 0 }}</span> de
                                                     <span class="font-medium">{{ countContents(course) }}</span> lecciones completadas
                                                 </div>
+                                            </div>
+                                            
+                                            <!-- Indicador de estado del certificado -->
+                                            <div class="mt-3 p-3 rounded-lg border" :class="getCertificateStatusClass(course)">
+                                                <div class="flex items-center gap-2">
+                                                    <svg v-if="showCertificateButton(course)" class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    <svg v-else class="w-4 h-4 flex-shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                    <span class="text-xs font-medium">{{ getCertificateStatusText(course) }}</span>
+                                                </div>
+                                                
+                                                <!-- Botón Descargar Certificado -->
+                                                <button 
+                                                    v-if="showCertificateButton(course)"
+                                                    @click.prevent="downloadCourseCertificate(course)"
+                                                    class="w-full mt-2 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg font-medium text-xs flex items-center justify-center gap-2 transition-all"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                    </svg>
+                                                    Descargar Certificado
+                                                </button>
                                             </div>
                                         </div>
                                     </Link>

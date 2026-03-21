@@ -352,7 +352,16 @@
     const columns = [
         {
             data: null,
+            render: '#btnPlus',
+            title: null,
+            className: 'control',
+            orderable: false,
+            searchable: false
+        },
+        {
+            data: null,
             render: '#action',
+            className: 'text-center',
             title: 'Acciones'
         },
         { data: null, render: '#document', title: 'Nmr. Documento' },
@@ -362,7 +371,16 @@
         { data: 'full_name', title: 'Cliente' },
         { data: 'overall_total', title: 'Total' },
         { data: null, render: '#status', title: 'Estado' },
-        { data: null, render: '#forma_pago', title: 'Forma de pago' },
+        {
+            data: null,
+            title: 'Forma de pago',
+            render: function(data, type, row) {
+                if (row.document && row.document.forma_pago == 'Credito') {
+                    return '<span class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white">Al crédito</span>';
+                }
+                return '<span class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-500 text-white">Al contado</span>';
+            }
+        },
     ];
 
     const options = {
@@ -414,11 +432,18 @@
             <div class="panel pb-1.5 mt-6">
 
                 <DataTable ref="documentTable" :options="options" :ajax="route('saledocuments_table_document')" :columns="columns">
+                    <template #btnPlus="props">
+                        <button type="button" class="inline-flex items-center justify-center w-7 h-7 text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </button>
+                    </template>
                     <template #action="props">
                         <div class="flex gap-4 items-center justify-center">
                             <div class="dropdown">
                                 <Popper :placement="'bottom-start'" offsetDistance="0" class="align-middle">
-                                    <button type="button" class="btn btn-outline-primary px-2 py-2 dropdown-toggle">
+                                    <button class="border py-1.5 px-2 dropdown-button inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm" type="button">
                                         <font-awesome-icon :icon="faGears" />
                                     </button>
                                     <template #content="{ close }">
@@ -491,12 +516,6 @@
                             <small>Estado Sunat:</small>
                             {{ props.rowData.invoice_status }}
                         </span>
-                    </template>
-                    <template #forma_pago="props">
-                        <span v-if="props.rowData.document.forma_pago == 'Credito'" class="relative inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-500 text-white z-10">
-                            Al crédito
-                        </span>
-                        <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-500 text-white">Al contado</span>
                     </template>
                 </DataTable>
 
@@ -714,4 +733,12 @@
         </DialogModal>
     </AppLayout>
 </template>
+
+<style scoped>
+/* Ocultar columna de control cuando no hay columnas colapsadas */
+table.dataTable.dtr-inline.collapsed > tbody > tr > td.control,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th.control {
+    display: none !important;
+}
+</style>
 

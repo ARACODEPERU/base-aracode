@@ -574,6 +574,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
     Route::get('student/certificates/all', [AcaCertificateController::class, 'studentCertificates'])
         ->name('aca_student_certificates_all');
 
+    Route::get('student/certificate/course/{courseId}/find', [AcaCertificateController::class, 'findStudentCertificate'])
+        ->name('aca_student_course_certificate_find');
+
     Route::middleware(['middleware' => 'permission:aca_asistencia_crear_link'])
         ->post('attendance/link/store', [AcaAttendanceController::class, 'storeLink'])
         ->name('aca_attendance_link_store');

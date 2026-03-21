@@ -25,7 +25,7 @@ class UserActivityLogMiddleware
                 'user_id' => Auth::id(),
                 'method' => $request->method(),
                 'url' => $request->fullUrl(),
-                'request_payload' => $this->filterPayload($request->all()),
+                'request_payload' => $this->compressPayload($this->filterPayload($request->all())),
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'status_code' => $statusCode,
@@ -53,5 +53,28 @@ class UserActivityLogMiddleware
         }
 
         return $payload;
+    }
+
+    /**
+     * Comprimir payload para guardar eficientemente
+     */
+    private function compressPayload(array $payload): string
+    {
+        if (empty($payload)) {
+            return '';
+        }
+
+        $json = json_encode($payload);
+
+        // Si el JSON es menor a 1KB, no comprimir (ahorra procesamiento)
+        if (strlen($json) < 1024) {
+            return $json;
+        }
+
+        // Comprimir con gzip (nivel 6 = buen balance velocidad/tamaño)
+        $compressed = gzencode($json, 6);
+
+        // Codificar en Base64 y marcar como comprimido
+        return 'gz:' . base64_encode($compressed);
     }
 }

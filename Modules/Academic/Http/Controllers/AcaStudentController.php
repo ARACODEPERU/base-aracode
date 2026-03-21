@@ -35,6 +35,7 @@ use Modules\Academic\Entities\AcaStudentHistory;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
 use Modules\Academic\Entities\AcaStudentAttendance;
 use Modules\Academic\Entities\AcaStudentParticipation;
+use Modules\Academic\Entities\AcaStudentGrade;
 
 class AcaStudentController extends Controller
 {
@@ -534,12 +535,46 @@ class AcaStudentController extends Controller
             ])
             ->orderBy('aca_courses.description')
             ->get()
-            ->map(function ($registration) {
+            ->map(function ($registration) use ($student_id, $user) {
                 $course = $registration->course;
                 $course->can_view = true;
-                $course->total_activity = AcaStudentHistory::where('person_id', Auth::user()->person_id)
+                
+                // Total de actividades/contenidos vistos
+                $course->total_activity = AcaStudentHistory::where('person_id', $user->person_id)
                     ->where('course_id', $registration->course->id)
+                    ->distinct('content_id')
                     ->count('content_id');
+                
+                // Contenido total del curso
+                $course->contents_total = $course->modules->sum(function ($module) {
+                    return $module->themes->sum(function ($theme) {
+                        return $theme->contents->count();
+                    });
+                });
+                
+                // Verificar si el curso tiene auto_certificate
+                $course->auto_certificate = $course->auto_certificate ?? false;
+                
+                // Verificar si existe certificado (para auto_certificate)
+                $course->certificate_exists = false;
+                if ($course->auto_certificate) {
+                    $course->certificate_exists = AcaCertificate::where('student_id', $student_id)
+                        ->where('course_id', $course->id)
+                        ->exists();
+                }
+                
+                // Obtener nota del estudiante (solo si no es auto_certificate)
+                $course->student_grade = null;
+                $course->student_approved = false;
+                if (!$course->auto_certificate) {
+                    $grade = AcaStudentGrade::where('student_id', $student_id)
+                        ->where('course_id', $course->id)
+                        ->first();
+                    if ($grade) {
+                        $course->student_grade = (float) $grade->final_average;
+                        $course->student_approved = $grade->approved ?? ($course->student_grade >= 11);
+                    }
+                }
 
                 return $course;
             });
@@ -1297,15 +1332,53 @@ class AcaStudentController extends Controller
 
     public function historyStore(Request $request)
     {
+        $userId = Auth::id();
+        $courseId = $request->get('course_id');
+        
         AcaStudentHistory::create([
-            'user_id' => Auth::id(),
+            'user_id' => $userId,
             'person_id' => Auth::user()->person_id,
-            'course_id' => $request->get('course_id'),
+            'course_id' => $courseId,
             'module_id' => $request->get('module_id'),
             'theme_id' => $request->get('theme_id'),
             'content_id' => $request->get('content_id'),
             'type_content' => $request->get('type_content')
         ]);
+        
+        $this->checkAndCreateCertificate($userId, $courseId);
+    }
+    
+    private function checkAndCreateCertificate($userId, $courseId)
+    {
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+        
+        if (!$student) return;
+        
+        $course = AcaCourse::find($courseId);
+        if (!$course || !$course->auto_certificate) return;
+        
+        $contentsViewed = AcaStudentHistory::where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->distinct('content_id')
+            ->count('content_id');
+        
+        $totalContents = AcaModule::where('course_id', $courseId)
+            ->with('themes.contents')
+            ->get()
+            ->sum(fn($module) => $module->themes->sum(fn($theme) => $theme->contents->count()));
+        
+        if ($contentsViewed >= $totalContents && $totalContents > 0) {
+            $registration = AcaCapRegistration::where('student_id', $student->id)
+                ->where('course_id', $courseId)
+                ->first();
+            
+            if ($registration) {
+                AcaCertificate::firstOrCreate(
+                    ['registration_id' => $registration->id, 'course_id' => $courseId],
+                    ['student_id' => $student->id, 'image' => null, 'content' => null]
+                );
+            }
+        }
     }
 
     public function getSubscriptionStatuses()

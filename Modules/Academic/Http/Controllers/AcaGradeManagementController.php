@@ -202,7 +202,7 @@ class AcaGradeManagementController extends Controller
                 return $val !== null && $val !== '';
             });
             $calculatedFinalAverage = count($averages) > 0
-                ? round(array_sum($averages) / count($averages), 2)
+                ? intval(round(array_sum($averages) / count($averages)))
                 : null;
 
             $finalAvg = $finalAverage ?? $calculatedFinalAverage;
@@ -240,11 +240,10 @@ class AcaGradeManagementController extends Controller
 
                 // Calcular promedio del módulo
                 $examVal = $examScore !== null && $examScore !== '' ? (float)$examScore : 0;
-                $attendanceVal = $attendanceScore !== null && $attendanceScore !== '' ? (float)$attendanceScore : 0;
                 $participationVal = $participationScore !== null && $participationScore !== '' ? (float)$participationScore : 0;
 
-                $calculatedAverage = ($examVal * 0.6) + ($attendanceVal * 0.2) + ($participationVal * 0.2);
-                $avg = $average ?? $calculatedAverage;
+                $calculatedAverage = ($examVal * 0.6) + ($participationVal * 0.4);
+                $avg = $average ?? round($calculatedAverage);
                 $moduleApproved = $avg !== null && $avg >= 11;
 
                 AcaStudentGradeDetail::updateOrCreate(
@@ -256,7 +255,7 @@ class AcaGradeManagementController extends Controller
                         'exam_score' => $examScore,
                         'attendance_score' => $attendanceScore,
                         'participation_score' => $participationScore,
-                        'average' => round($avg, 2),
+                        'average' => $avg,
                         'module_approved' => $moduleApproved,
                     ]
                 );

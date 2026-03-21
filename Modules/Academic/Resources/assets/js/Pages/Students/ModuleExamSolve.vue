@@ -1,7 +1,7 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { Link, useForm, router } from '@inertiajs/vue3';
+    import { Link, router } from '@inertiajs/vue3';
     import { ref, onMounted, computed, onUnmounted } from 'vue';
     import axios from 'axios';
     import Swal2 from 'sweetalert2';
@@ -21,10 +21,11 @@
     const answers = ref({});
     const timeRemaining = ref(0);
     const timerInterval = ref(null);
-    const isFinished = ref(false);
     const savingAnswer = ref(false);
     const examFinish = ref(false);
     const isRetrying = ref(false);
+    const showReviewScreen = ref(false);
+    const questionFilter = ref('all');
 
     // Computed
     const maxAttempts = computed(() => props.exam?.max_attempts || 1);
@@ -36,7 +37,21 @@
     const currentQuestion = computed(() => props.exam.questions[currentQuestionIndex.value]);
     const totalQuestions = computed(() => props.exam.questions?.length || 0);
     const answeredCount = computed(() => Object.keys(answers.value).length);
-    const progressPercent = computed(() => totalQuestions.value > 0 ? Math.round((answeredCount.value / totalQuestions.value) * 100) : 0);
+    const savedCount = computed(() => Object.values(answers.value).filter(a => a.saved).length);
+    const markedCount = computed(() => Object.values(answers.value).filter(a => a.marked).length);
+    const progressPercent = computed(() => totalQuestions.value > 0 ? Math.round((savedCount.value / totalQuestions.value) * 100) : 0);
+
+    const isCurrentQuestionMarked = computed(() => {
+        if (!currentQuestion.value) return false;
+        return answers.value[currentQuestion.value.id]?.marked || false;
+    });
+
+    const hasUnsavedAnswer = computed(() => {
+        if (!currentQuestion.value) return false;
+        const ans = answers.value[currentQuestion.value.id];
+        if (!ans) return false;
+        return hasCurrentAnswer.value && !ans.saved;
+    });
 
     const formattedTime = computed(() => {
         const hours = Math.floor(timeRemaining.value / 3600);
@@ -90,24 +105,22 @@
         const type = currentQuestion.value.type_answers;
 
         if (type === 'Alternativas') {
-            answers.value[qId] = { answerId: answerId };
+            answers.value[qId] = { answerId: answerId, saved: false, marked: answers.value[qId]?.marked || false };
         }
         else if (type === 'Varias respuestas') {
             if (!answers.value[qId]) {
-                answers.value[qId] = { answerIds: [] };
+                answers.value[qId] = { answerIds: [], saved: false, marked: false };
             }
 
             const currentIds = [...(answers.value[qId].answerIds || [])];
             const index = currentIds.indexOf(answerId);
 
             if (index === -1) {
-                // BUSCAR EL LÍMITE: Contamos cuántas respuestas marcadas como 'correct' tiene la pregunta
                 const maxAllowed = currentQuestion.value.answers.filter(a => a.correct == 1 || a.correct == true).length;
 
                 if (currentIds.length < maxAllowed) {
                     currentIds.push(answerId);
                 } else {
-                    // Opcional: Alerta al usuario
                     Swal2.fire({
                         title: 'Límite alcanzado',
                         text: `Esta pregunta solo permite seleccionar ${maxAllowed} respuestas.`,
@@ -124,6 +137,104 @@
                 currentIds.splice(index, 1);
             }
             answers.value[qId].answerIds = currentIds;
+            answers.value[qId].saved = false;
+        }
+    };
+
+    const updateDescription = (value) => {
+        const qId = currentQuestion.value.id;
+        if (!answers.value[qId]) answers.value[qId] = {};
+        answers.value[qId].description = value;
+        answers.value[qId].saved = false;
+        answers.value[qId].marked = answers.value[qId].marked || false;
+    };
+
+    const onFileChange = (event, id) => {
+        const qId = currentQuestion.value.id;
+        const file = event.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            answers.value[qId] = { answerId: id, file: file, saved: false, marked: answers.value[qId]?.marked || false };
+        }
+    };
+
+    const toggleMarkQuestion = () => {
+        const qId = currentQuestion.value.id;
+        if (!answers.value[qId]) {
+            answers.value[qId] = { marked: true, saved: false };
+        } else {
+            answers.value[qId].marked = !answers.value[qId].marked;
+        }
+    };
+
+    const getQuestionState = (questionId) => {
+        const ans = answers.value[questionId];
+        if (!ans) return 'unanswered';
+
+        const hasAnswer = ans.answerId !== undefined || (ans.answerIds?.length > 0) || ans.description?.trim() || ans.file;
+        if (!hasAnswer) return 'unanswered';
+
+        if (ans.saved) {
+            return ans.marked ? 'marked-saved' : 'saved';
+        } else {
+            return ans.marked ? 'marked-unsaved' : 'unsaved';
+        }
+    };
+
+    const getFilteredQuestions = computed(() => {
+        if (questionFilter.value === 'all') return props.exam.questions;
+        return props.exam.questions.filter((q, index) => {
+            const state = getQuestionState(q.id);
+            switch (questionFilter.value) {
+                case 'answered': return state === 'saved' || state === 'marked-saved';
+                case 'unanswered': return state === 'unanswered';
+                case 'marked': return state.includes('marked');
+                case 'unsaved': return state === 'unsaved' || state === 'marked-unsaved';
+                default: return true;
+            }
+        });
+    });
+
+    const getQuestionBadgeClass = (state) => {
+        switch (state) {
+            case 'saved': case 'marked-saved': return 'bg-green-500 text-white';
+            case 'unsaved': case 'marked-unsaved': return 'bg-red-500 text-white animate-pulse';
+            default: return 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
+        }
+    };
+
+    const goToQuestion = async (index) => {
+        if (hasUnsavedAnswer.value) {
+            const result = await Swal2.fire({
+                title: '¡Atención!',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">Has respondido esta pregunta pero <strong>no la has guardado</strong>.</p>
+                        <p class="text-sm text-gray-600">Si cambias ahora, tu respuesta se perderá y no será tomada en cuenta al calcular tu nota final.</p>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-save mr-1"></i> Guardar respuesta',
+                confirmButtonColor: '#22c55e',
+                cancelButtonText: 'Cambiar de todos modos',
+                cancelButtonColor: '#f97316',
+                denyButtonText: 'Quedarme en la pregunta',
+                denyButtonColor: '#6b7280',
+                showDenyButton: true,
+                padding: '1.5rem',
+                customClass: 'sweet-alerts',
+            });
+
+            if (result.isConfirmed) {
+                await saveAndContinue();
+                currentQuestionIndex.value = index;
+            } else if (result.isDenied) {
+                return;
+            } else {
+                currentQuestionIndex.value = index;
+            }
+        } else {
+            currentQuestionIndex.value = index;
         }
     };
 
@@ -134,12 +245,6 @@
         if (type === 'Alternativas') return ans.answerId === answerId;
         if (type === 'Varias respuestas') return (ans.answerIds || []).includes(answerId);
         return false;
-    };
-
-    const updateDescription = (value) => {
-        const qId = currentQuestion.value.id;
-        if (!answers.value[qId]) answers.value[qId] = {};
-        answers.value[qId].description = value;
     };
 
     const saveAndContinue = async () => {
@@ -165,7 +270,6 @@
         formData.append('question_id', qId);
         formData.append('question_type', type);
 
-        // Lógica de empaquetado según tipo
         if (type === 'Subir Archivo' && answerData?.file) {
             formData.append('file_answer', answerData.file);
             formData.append('answers', answerData.answerId);
@@ -179,24 +283,12 @@
 
         try {
             await axios.post(route('aca_student_module_exam_answer_save'), formData);
+            answers.value[qId].saved = true;
+
             if (currentQuestionIndex.value < totalQuestions.value - 1) {
                 currentQuestionIndex.value++;
             } else {
-                Swal2.fire({
-                    title: '¡Última pregunta!',
-                    text: 'Has respondido todas las preguntas. ¿Deseas terminar el examen?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Terminar Examen',
-                    cancelButtonText: 'Revisar',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                    allowOutsideClick: false, // Evita cerrar al hacer clic fuera
-                    allowEscapeKey: false,    // Evita cerrar con la tecla Esc
-                    allowEnterKey: false,     // Opcional: evita que cierren por accidente con Enter
-                }).then((result) => {
-                    if (result.isConfirmed) finishExam();
-                });
+                showReviewScreen.value = true;
             }
         } catch (error) {
             Swal2.fire({ title: 'Error', text: 'Error al guardar la respuesta', icon: 'error' });
@@ -205,12 +297,39 @@
         }
     };
 
-    const goToQuestion = (index) => { currentQuestionIndex.value = index; };
-    const previousQuestion = () => { if (currentQuestionIndex.value > 0) currentQuestionIndex.value--; };
+    const previousQuestion = () => {
+        if (hasUnsavedAnswer.value) {
+            Swal2.fire({
+                title: '¡Atención!',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">Has respondido esta pregunta pero <strong>no la has guardado</strong>.</p>
+                        <p class="text-sm text-gray-600">Si vas atrás, tu respuesta se perderá.</p>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-save mr-1"></i> Guardar y volver',
+                confirmButtonColor: '#22c55e',
+                cancelButtonText: 'Descartar y volver',
+                cancelButtonColor: '#ef4444',
+                padding: '1.5rem',
+                customClass: 'sweet-alerts',
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await saveAndContinue();
+                    if (currentQuestionIndex.value > 0) currentQuestionIndex.value--;
+                } else if (result.isDismissed) {
+                    if (currentQuestionIndex.value > 0) currentQuestionIndex.value--;
+                }
+            });
+        } else if (currentQuestionIndex.value > 0) {
+            currentQuestionIndex.value--;
+        }
+    };
 
     const finishExam = () => {
         stopTimer();
-        isFinished.value = true;
 
         router.post(route('aca_student_exam_module_finish'), {
             student_exam_id: props.examStudent.id,
@@ -268,17 +387,8 @@
         }
     };
 
-    const onFileChange = (event, id) => {
-        const qId = currentQuestion.value.id;
-        const file = event.target.files[0];
-        if (file && file.type === 'application/pdf') {
-            answers.value[qId] = { answerId: id, file: file };
-        }
-    };
-
     // Cargar respuestas guardadas desde el backend
     const loadSavedAnswers = () => {
-        // props.examStudent.details ya viene como un objeto { id_pregunta: { datos } } desde tu controlador
         if (props.examStudent?.details) {
             const savedDetails = props.examStudent.details;
 
@@ -286,48 +396,78 @@
                 const savedItem = savedDetails[questionId];
 
                 if (savedItem.type === 'Alternativas') {
-                    // Normalizar a número para que la comparación funcione
                     answers.value[questionId] = {
-                        answerId: parseInt(savedItem.answers)
+                        answerId: parseInt(savedItem.answers),
+                        saved: true,
+                        marked: false
                     };
                 }
                 else if (savedItem.type === 'Varias respuestas') {
-                    // Normalizar todos los IDs a números
                     const rawIds = Array.isArray(savedItem.answers) ? savedItem.answers : [savedItem.answers];
                     answers.value[questionId] = {
-                        answerIds: rawIds.map(id => parseInt(id))
+                        answerIds: rawIds.map(id => parseInt(id)),
+                        saved: true,
+                        marked: false
                     };
                 }
                 else if (savedItem.type === 'Escribir') {
-                    answers.value[questionId] = { description: savedItem.answers };
+                    answers.value[questionId] = { description: savedItem.answers, saved: true, marked: false };
                 }
                 else if (savedItem.type === 'Subir Archivo') {
-                    // Guardar información del archivo ya subido
                     answers.value[questionId] = {
                         file: true,
                         answerId: parseInt(savedItem.answers),
-                        fileName: savedItem.answers // Ruta/nombre del archivo
+                        fileName: savedItem.answers,
+                        saved: true,
+                        marked: false
                     };
                 }
             });
 
-            // IMPORTANTE: Manejo del índice con preguntas barajadas
-            // En lugar de ir a la "última", vamos a la primera que NO esté respondida
             const firstUnansweredIndex = props.exam.questions.findIndex(q => !answers.value[q.id]);
 
             if (firstUnansweredIndex !== -1) {
                 currentQuestionIndex.value = firstUnansweredIndex;
             } else {
-                // Si todas están respondidas, ir a la última
                 currentQuestionIndex.value = props.exam.questions.length - 1;
             }
         }
     };
 
+    const getAnswerSummary = (question) => {
+        const ans = answers.value[question.id];
+        if (!ans) return 'Sin responder';
+
+        if (question.type_answers === 'Alternativas') {
+            const selectedAnswer = question.answers.find(a => a.id === ans.answerId);
+            return selectedAnswer ? selectedAnswer.description : 'Sin responder';
+        }
+        else if (question.type_answers === 'Varias respuestas') {
+            if (!ans.answerIds?.length) return 'Sin responder';
+            const selectedAnswers = question.answers.filter(a => ans.answerIds.includes(a.id));
+            return selectedAnswers.map(a => a.description).join(', ') || 'Sin responder';
+        }
+        else if (question.type_answers === 'Escribir') {
+            return ans.description?.trim() || 'Sin responder';
+        }
+        else if (question.type_answers === 'Subir Archivo') {
+            return ans.file ? 'Archivo adjunto' : 'Sin archivo';
+        }
+        return 'Sin responder';
+    };
+
+    const reviewScreenGoToQuestion = (index) => {
+        showReviewScreen.value = false;
+        currentQuestionIndex.value = index;
+    };
+
+    const submitExamFromReview = () => {
+        finishExam();
+    };
+
     // Calcular tiempo restante basado en la hora de inicio
     const calculateTimeRemaining = () => {
         if (!props.examStudent?.started_at) {
-            // Si no hay hora de inicio, usar la duración normal
             return props.exam.duration_minutes * 60;
         }
 
@@ -344,33 +484,49 @@
     const initExam = () => {
         if (!props.isSuccess) return;
 
-        // Cargar respuestas guardadas
         loadSavedAnswers();
-
-        // Calcular tiempo restante
         timeRemaining.value = calculateTimeRemaining();
 
-        // Verificar si el tiempo ya expiró
         if (timeRemaining.value <= 0) {
             finishExam();
             return;
         }
 
-        // Iniciar temporizador
         startTimer();
     };
 
+    const showStartWarningModal = async () => {
+        const result = await Swal2.fire({
+            title: '¡Antes de comenzar!',
+            html: `
+                <div class="text-left">
+                    <div class="mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 rounded">
+                        <p class="font-bold text-amber-800 dark:text-amber-200 mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Importante</p>
+                        <p class="text-sm text-amber-700 dark:text-amber-300">Para que tus respuestas sean guardadas correctamente, debes hacer clic en el botón <strong>"Guardar y Continuar"</strong> después de responder cada pregunta.</p>
+                        <p class="text-sm text-amber-700 dark:text-amber-300 mt-2"><strong>Las respuestas no guardadas no serán tomadas en cuenta al calcular tu nota final.</strong></p>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Si cambias de pregunta sin guardar, tu respuesta se perderá.</p>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: '¡Entendido, comenzar!',
+            confirmButtonColor: '#3b82f6',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            padding: '1.5rem',
+            customClass: 'sweet-alerts',
+        });
 
+        if (result.isConfirmed) {
+            initExam();
+        }
+    };
 
     onMounted(() => {
-        console.log('aca 1', props.examStudent.finished_at, canRetry.value, props.examStudent.status);
-        
-        // Si el examen está terminado, mostrar la pantalla de resultados
         if (props.examStudent.finished_at || props.examStudent.status === 'terminado' || props.examStudent.status === 'revision_pendiente' || props.examStudent.status === 'calificado') {
             examFinish.value = true;
         } else {
-            // El examen no está terminado, iniciar normalmente
-            initExam();
+            showStartWarningModal();
         }
     });
     onUnmounted(() => stopTimer());
@@ -520,213 +676,362 @@
                 </div>
             </div>
             <div v-else class="pt-5 px-4 pb-20">
-                <!-- Cronómetro Flotante -->
-                <div class="fixed top-20 right-4 z-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 min-w-[120px]">
-                    <div class="text-center">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Tiempo restante</p>
-                        <p class="text-2xl font-bold"
-                        :class="{
-                            'text-green-500': !isTimeWarning && !isTimeCritical,
-                            'text-yellow-500': isTimeWarning,
-                            'text-red-500 animate-pulse': isTimeCritical
-                        }">
-                            {{ formattedTime }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Header del Examen -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 mb-4">
-                    <div class="flex items-center justify-between flex-wrap gap-3">
-                        <div>
-                            <h1 class="text-lg font-bold text-gray-900 dark:text-white">{{ exam.description }}</h1>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Módulo: {{ exam.module.description }}</p>
+                <!-- Pantalla de Revisión -->
+                <div v-if="showReviewScreen" class="max-w-4xl mx-auto">
+                    <div class="panel p-0 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white rounded-t-2xl">
+                            <h2 class="text-2xl font-bold flex items-center gap-3">
+                                <i class="fas fa-clipboard-check"></i>
+                                Revisión Final del Examen
+                            </h2>
+                            <p class="text-sm opacity-90 mt-1">Verifica tus respuestas antes de enviar</p>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Respondidas</p>
-                                <p class="text-lg font-bold text-blue-500">{{ answeredCount }}/{{ totalQuestions }}</p>
+
+                        <div class="p-6">
+                            <!-- Resumen de Estadísticas -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center border border-green-200 dark:border-green-800">
+                                    <div class="text-3xl font-bold text-green-600 dark:text-green-400">{{ savedCount }}</div>
+                                    <div class="text-xs text-green-700 dark:text-green-300 font-medium">Guardadas</div>
+                                </div>
+                                <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg text-center border border-red-200 dark:border-red-800">
+                                    <div class="text-3xl font-bold text-red-600 dark:text-red-400">{{ totalQuestions - savedCount }}</div>
+                                    <div class="text-xs text-red-700 dark:text-red-300 font-medium">Sin Guardar</div>
+                                </div>
+                                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center border border-yellow-200 dark:border-yellow-800">
+                                    <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ markedCount }}</div>
+                                    <div class="text-xs text-yellow-700 dark:text-yellow-300 font-medium">Marcadas</div>
+                                </div>
+                                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center border border-blue-200 dark:border-blue-800">
+                                    <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ formattedTime }}</div>
+                                    <div class="text-xs text-blue-700 dark:text-blue-300 font-medium">Tiempo Restante</div>
+                                </div>
                             </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Progreso</p>
-                                <p class="text-lg font-bold text-green-500">{{ progressPercent }}%</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Barra de progreso -->
-                    <div class="mt-3 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                            :style="{ width: progressPercent + '%' }"></div>
-                    </div>
-                </div>
 
-                <!-- Pregunta Actual -->
-                <div v-if="currentQuestion" class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 mb-4">
-                    <!-- Número de pregunta -->
-                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="bg-blue-500 text-white text-sm px-3 py-1 rounded-full font-medium">
-                            Pregunta {{ currentQuestionIndex + 1 }} de {{ totalQuestions }}
-                        </span>
-                        <span :class="{
-                            'bg-blue-500 text-white': currentQuestion.type_answers === 'Escribir',
-                            'bg-green-500 text-white': currentQuestion.type_answers === 'Alternativas',
-                            'bg-purple-500 text-white': currentQuestion.type_answers === 'Varias respuestas',
-                            'bg-orange-500 text-white': currentQuestion.type_answers === 'Subir Archivo',
-                        }" class="text-xs px-2 py-1 rounded font-medium">
-                            {{ currentQuestion.type_answers }}
-                        </span>
-                    </div>
-
-                    <!-- Descripción de la pregunta -->
-                    <div class="mb-4">
-                        <p class="text-base font-medium text-gray-900 dark:text-white">{{ currentQuestion.description }}</p>
-                        <p class="text-xs text-gray-500 mt-1">{{ currentQuestion.score }} puntos</p>
-                    </div>
-
-                    <!-- Respuestas según tipo -->
-                    <div class="space-y-3">
-                        <!-- Tipo: Escribir -->
-                        <div v-if="currentQuestion.type_answers === 'Escribir'">
-                            <textarea
-                                :value="getCurrentAnswer?.description || ''"
-                                @input="updateDescription($event.target.value)"
-                                class="form-textarea w-full"
-                                rows="4"
-                                placeholder="Escribe tu respuesta aquí..."
-                            ></textarea>
-                        </div>
-
-                        <!-- Tipo: Subir Archivo -->
-                        <div v-else-if="currentQuestion.type_answers === 'Subir Archivo'">
-                            <template v-for="(answer, key) in currentQuestion.answers">
-                                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
-                                    <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                    </svg>
-                                    <p class="text-sm text-gray-500">{{ answer.description }}</p>
-
-                                    <!-- Indicador de archivo ya subido -->
-                                    <div v-if="getCurrentAnswer?.file && getCurrentAnswer?.fileName" class="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                        <div class="flex items-center justify-center gap-2 text-green-600 dark:text-green-400">
-                                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                                            </svg>
-                                            <span class="text-sm font-medium">Archivo ya subido</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            Si seleccionas otro archivo, se reemplazará
+                            <!-- Advertencia si hay respuestas sin guardar -->
+                            <div v-if="savedCount < totalQuestions" class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 mb-6 rounded-lg">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-red-800 dark:text-red-200 font-medium">
+                                            <strong>{{ totalQuestions - savedCount }} pregunta(s) sin guardar</strong>
+                                        </p>
+                                        <p class="text-xs text-red-600 dark:text-red-300 mt-1">
+                                            Las respuestas sin guardar NO serán tomadas en cuenta al calcular tu nota.
                                         </p>
                                     </div>
-
-                                    <input @change="onFileChange($event, answer.id)" :id="'file_input'+key" type="file" accept=".pdf" class="mt-2" />
                                 </div>
-                            </template>
+                            </div>
+
+                            <!-- Lista de Preguntas -->
+                            <div class="space-y-3 max-h-[400px] overflow-y-auto">
+                                <div v-for="(question, index) in exam.questions" :key="question.id"
+                                    class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <div class="flex items-start gap-3">
+                                        <button @click="reviewScreenGoToQuestion(index)"
+                                            class="flex-shrink-0 w-10 h-10 rounded-lg text-sm font-medium flex items-center justify-center"
+                                            :class="getQuestionBadgeClass(getQuestionState(question.id))">
+                                            {{ index + 1 }}
+                                            <i v-if="getQuestionState(question.id).includes('marked')" class="fas fa-flag ml-1 text-xs"></i>
+                                        </button>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-xs px-2 py-0.5 rounded font-medium"
+                                                    :class="{
+                                                        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300': question.type_answers === 'Escribir',
+                                                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': question.type_answers === 'Alternativas',
+                                                        'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300': question.type_answers === 'Varias respuestas',
+                                                        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300': question.type_answers === 'Subir Archivo',
+                                                    }">
+                                                    {{ question.type_answers }}
+                                                </span>
+                                                <span :class="getQuestionState(question.id) === 'saved' || getQuestionState(question.id) === 'marked-saved' ? 'text-green-600' : 'text-red-600'" class="text-xs font-medium">
+                                                    <i :class="getQuestionState(question.id) === 'saved' || getQuestionState(question.id) === 'marked-saved' ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                                                    {{ getQuestionState(question.id) === 'saved' || getQuestionState(question.id) === 'marked-saved' ? 'Guardada' : 'Sin guardar' }}
+                                                </span>
+                                            </div>
+                                            <p class="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">{{ question.description }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                                                <strong>Tu respuesta:</strong> {{ getAnswerSummary(question) }}
+                                            </p>
+                                        </div>
+                                        <button @click="reviewScreenGoToQuestion(index)"
+                                            class="flex-shrink-0 btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-pen mr-1"></i> Editar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones de Acción -->
+                            <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <button @click="showReviewScreen = false"
+                                    class="btn btn-outline-secondary flex-1">
+                                    <i class="fas fa-arrow-left mr-2"></i> Volver al Examen
+                                </button>
+                                <button @click="submitExamFromReview"
+                                    class="btn bg-red-500 hover:bg-red-600 text-white flex-1 border-0">
+                                    <i class="fas fa-paper-plane mr-2"></i> Enviar Examen Definitivamente
+                                </button>
+                            </div>
                         </div>
-
-                        <!-- Tipo: Alternativas (Radio) -->
-                        <div v-else-if="currentQuestion.type_answers === 'Alternativas'" class="space-y-2">
-                            <label
-                                v-for="answer in currentQuestion.answers"
-                                :key="answer.id"
-                                class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors"
-                                :class="isAnswerSelected(answer.id)
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                    : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-                            >
-                                <input
-                                    type="radio"
-                                    :name="'question-' + currentQuestion.id"
-                                    :checked="isAnswerSelected(answer.id)"
-                                    @change="selectAnswer(answer.id)"
-                                    class="w-4 h-4 text-blue-500"
-                                >
-                                <span class="text-sm text-gray-900 dark:text-white">{{ answer.description }}</span>
-                            </label>
-                        </div>
-
-                        <!-- Tipo: Varias respuestas (Checkbox) -->
-                        <div v-else-if="currentQuestion.type_answers === 'Varias respuestas'" class="space-y-2">
-                            <p class="text-xs text-gray-500 mb-2">Selecciona todas las respuestas que consideres correctas</p>
-                            <label
-                                v-for="answer in currentQuestion.answers"
-                                :key="answer.id"
-                                class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors"
-                                :class="[
-                                    isAnswerSelected(answer.id) ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700',
-                                    // Clase para mostrar que está bloqueado si no está seleccionado y ya llegó al límite
-                                    (!isAnswerSelected(answer.id) && (getCurrentAnswer?.answerIds?.length >= currentQuestion.answers.filter(a => a.correct).length)) ? 'opacity-50 cursor-not-allowed' : ''
-                                ]"
-
-                            >
-                                <input
-                                    type="checkbox"
-                                    :checked="isAnswerSelected(answer.id)"
-                                    @change="selectAnswer(answer.id)"
-                                    class="w-4 h-4 text-purple-500 rounded"
-                                    :disabled="!isAnswerSelected(answer.id) && (getCurrentAnswer?.answerIds?.length >= currentQuestion.answers.filter(a => a.correct).length)"
-                                >
-                                <span class="text-sm text-gray-900 dark:text-white">{{ answer.description }}</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Botones de navegación -->
-                    <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button
-                            @click="previousQuestion"
-                            :disabled="currentQuestionIndex === 0"
-                            class="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <IconArrowLeft class="w-4 h-4" />
-                            Anterior
-                        </button>
-
-                        <button
-                            @click="saveAndContinue"
-                            :disabled="savingAnswer || !hasCurrentAnswer"
-                            class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium"
-                        >
-                            <span v-if="savingAnswer">Guardando...</span>
-                            <span v-else-if="currentQuestionIndex === totalQuestions - 1">Terminar Examen</span>
-                            <span v-else>Guardar y Continuar</span>
-                            <IconArrowRight v-if="!savingAnswer && currentQuestionIndex < totalQuestions - 1" class="w-4 h-4" />
-                        </button>
                     </div>
                 </div>
 
-                <!-- Paginador de Preguntas -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Navegar entre preguntas:</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="(question, index) in exam.questions"
-                            :key="question.id"
-                            @click="goToQuestion(index)"
-                            class="w-10 h-10 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
+                <!-- Examen Normal -->
+                <template v-else>
+                    <!-- Cronómetro Flotante -->
+                    <div class="fixed top-20 right-4 z-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 min-w-[120px]">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Tiempo restante</p>
+                            <p class="text-2xl font-bold"
                             :class="{
-                                'bg-blue-500 text-white': currentQuestionIndex === index,
-                                'bg-green-500 text-white': answers[question.id] && currentQuestionIndex !== index,
-                                'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600': !answers[question.id] && currentQuestionIndex !== index
-                            }"
-                        >
-                            {{ index + 1 }}
-                        </button>
-                    </div>
-                    <div class="flex items-center gap-4 mt-3 text-xs">
-                        <div class="flex items-center gap-1">
-                            <div class="w-3 h-3 bg-blue-500 rounded"></div>
-                            <span class="text-gray-500">Actual</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <div class="w-3 h-3 bg-green-500 rounded"></div>
-                            <span class="text-gray-500">Respondida</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <div class="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                            <span class="text-gray-500">Sin responder</span>
+                                'text-green-500': !isTimeWarning && !isTimeCritical,
+                                'text-yellow-500': isTimeWarning,
+                                'text-red-500 animate-pulse': isTimeCritical
+                            }">
+                                {{ formattedTime }}
+                            </p>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Header del Examen -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 mb-4">
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                                <h1 class="text-lg font-bold text-gray-900 dark:text-white">{{ exam.description }}</h1>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Módulo: {{ exam.module.description }}</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Guardadas</p>
+                                    <p class="text-lg font-bold text-green-500">{{ savedCount }}/{{ totalQuestions }}</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Marcadas</p>
+                                    <p class="text-lg font-bold text-orange-500">{{ markedCount }}</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Progreso</p>
+                                    <p class="text-lg font-bold text-blue-500">{{ progressPercent }}%</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                :style="{ width: progressPercent + '%' }"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pregunta Actual -->
+                    <div v-if="currentQuestion" class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 mb-4">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-blue-500 text-white text-sm px-3 py-1 rounded-full font-medium">
+                                    Pregunta {{ currentQuestionIndex + 1 }} de {{ totalQuestions }}
+                                </span>
+                                <span :class="{
+                                    'bg-blue-500 text-white': currentQuestion.type_answers === 'Escribir',
+                                    'bg-green-500 text-white': currentQuestion.type_answers === 'Alternativas',
+                                    'bg-purple-500 text-white': currentQuestion.type_answers === 'Varias respuestas',
+                                    'bg-orange-500 text-white': currentQuestion.type_answers === 'Subir Archivo',
+                                }" class="text-xs px-2 py-1 rounded font-medium">
+                                    {{ currentQuestion.type_answers }}
+                                </span>
+                                <span v-if="hasUnsavedAnswer" class="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-xs px-2 py-1 rounded font-medium animate-pulse">
+                                    <i class="fas fa-exclamation-circle mr-1"></i> Sin guardar
+                                </span>
+                            </div>
+                            <button @click="toggleMarkQuestion"
+                                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                                :class="isCurrentQuestionMarked 
+                                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                                    : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'">
+                                <i class="fas fa-flag"></i>
+                                {{ isCurrentQuestionMarked ? 'Marcada' : 'Marcar' }}
+                            </button>
+                        </div>
+
+                        <div class="mb-4">
+                            <p class="text-base font-medium text-gray-900 dark:text-white">{{ currentQuestion.description }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ currentQuestion.score }} puntos</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div v-if="currentQuestion.type_answers === 'Escribir'">
+                                <textarea
+                                    :value="getCurrentAnswer?.description || ''"
+                                    @input="updateDescription($event.target.value)"
+                                    class="form-textarea w-full"
+                                    rows="4"
+                                    placeholder="Escribe tu respuesta aquí..."
+                                ></textarea>
+                            </div>
+
+                            <div v-else-if="currentQuestion.type_answers === 'Subir Archivo'">
+                                <template v-for="(answer, key) in currentQuestion.answers">
+                                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                                        <svg class="w-8 h-8 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                        </svg>
+                                        <p class="text-sm text-gray-500">{{ answer.description }}</p>
+
+                                        <div v-if="getCurrentAnswer?.file && getCurrentAnswer?.fileName" class="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                            <div class="flex items-center justify-center gap-2 text-green-600 dark:text-green-400">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                                                </svg>
+                                                <span class="text-sm font-medium">Archivo ya subido</span>
+                                            </div>
+                                        </div>
+
+                                        <input @change="onFileChange($event, answer.id)" :id="'file_input'+key" type="file" accept=".pdf" class="mt-2" />
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div v-else-if="currentQuestion.type_answers === 'Alternativas'" class="space-y-2">
+                                <label
+                                    v-for="answer in currentQuestion.answers"
+                                    :key="answer.id"
+                                    class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors"
+                                    :class="isAnswerSelected(answer.id)
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                        : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'">
+                                    <input
+                                        type="radio"
+                                        :name="'question-' + currentQuestion.id"
+                                        :checked="isAnswerSelected(answer.id)"
+                                        @change="selectAnswer(answer.id)"
+                                        class="w-4 h-4 text-blue-500">
+                                    <span class="text-sm text-gray-900 dark:text-white">{{ answer.description }}</span>
+                                </label>
+                            </div>
+
+                            <div v-else-if="currentQuestion.type_answers === 'Varias respuestas'" class="space-y-2">
+                                <p class="text-xs text-gray-500 mb-2">Selecciona todas las respuestas que consideres correctas</p>
+                                <label
+                                    v-for="answer in currentQuestion.answers"
+                                    :key="answer.id"
+                                    class="flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors"
+                                    :class="[
+                                        isAnswerSelected(answer.id) ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700',
+                                        (!isAnswerSelected(answer.id) && (getCurrentAnswer?.answerIds?.length >= currentQuestion.answers.filter(a => a.correct).length)) ? 'opacity-50 cursor-not-allowed' : ''
+                                    ]">
+                                    <input
+                                        type="checkbox"
+                                        :checked="isAnswerSelected(answer.id)"
+                                        @change="selectAnswer(answer.id)"
+                                        class="w-4 h-4 text-purple-500 rounded"
+                                        :disabled="!isAnswerSelected(answer.id) && (getCurrentAnswer?.answerIds?.length >= currentQuestion.answers.filter(a => a.correct).length)">
+                                    <span class="text-sm text-gray-900 dark:text-white">{{ answer.description }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button
+                                @click="previousQuestion"
+                                :disabled="currentQuestionIndex === 0"
+                                class="flex items-center gap-1 px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                                <IconArrowLeft class="w-4 h-4" />
+                                Anterior
+                            </button>
+
+                            <button
+                                v-if="currentQuestionIndex === totalQuestions - 1"
+                                @click="saveAndContinue"
+                                :disabled="savingAnswer || !hasCurrentAnswer"
+                                class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <span v-if="savingAnswer">Guardando...</span>
+                                <span v-else><i class="fas fa-clipboard-check mr-1"></i> Revisar antes de enviar</span>
+                            </button>
+                            <button
+                                v-else
+                                @click="saveAndContinue"
+                                :disabled="savingAnswer || !hasCurrentAnswer"
+                                class="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                <span v-if="savingAnswer">Guardando...</span>
+                                <span v-else>Guardar y Continuar</span>
+                                <IconArrowRight v-if="!savingAnswer" class="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Navegador de Preguntas Mejorado -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                <i class="fas fa-th-large mr-2"></i>Navegar entre preguntas:
+                            </p>
+                            <!-- Filtros -->
+                            <div class="flex flex-wrap gap-1">
+                                <button @click="questionFilter = 'all'"
+                                    class="px-2 py-1 text-xs rounded-full font-medium transition-colors"
+                                    :class="questionFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+                                    Todas ({{ totalQuestions }})
+                                </button>
+                                <button @click="questionFilter = 'answered'"
+                                    class="px-2 py-1 text-xs rounded-full font-medium transition-colors"
+                                    :class="questionFilter === 'answered' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+                                    Guardadas ({{ savedCount }})
+                                </button>
+                                <button @click="questionFilter = 'unsaved'"
+                                    class="px-2 py-1 text-xs rounded-full font-medium transition-colors"
+                                    :class="questionFilter === 'unsaved' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+                                    Sin guardar ({{ totalQuestions - savedCount }})
+                                </button>
+                                <button @click="questionFilter = 'marked'"
+                                    class="px-2 py-1 text-xs rounded-full font-medium transition-colors"
+                                    :class="questionFilter === 'marked' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'">
+                                    Marcadas ({{ markedCount }})
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                v-for="(question, index) in getFilteredQuestions"
+                                :key="question.id"
+                                @click="goToQuestion(index)"
+                                class="w-10 h-10 rounded-lg text-sm font-medium transition-colors flex items-center justify-center relative"
+                                :class="getQuestionBadgeClass(getQuestionState(question.id)).replace('text-white', '').trim() + ' ' + (currentQuestionIndex === index ? 'ring-2 ring-offset-2 ring-blue-500' : '')">
+                                <span :class="getQuestionBadgeClass(getQuestionState(question.id)) + ' w-full h-full flex items-center justify-center rounded-lg'">
+                                    {{ index + 1 }}
+                                    <i v-if="getQuestionState(question.id).includes('marked')" class="fas fa-flag ml-1 text-xs"></i>
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Leyenda Actualizada -->
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-xs">
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 bg-blue-500 rounded flex items-center justify-center text-white text-[10px] font-bold">1</div>
+                                <span class="text-gray-600 dark:text-gray-400">Actual</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 bg-green-500 rounded flex items-center justify-center text-white text-[10px] font-bold">2</div>
+                                <span class="text-gray-600 dark:text-gray-400">Guardada</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 bg-red-500 rounded flex items-center justify-center text-white text-[10px] font-bold animate-pulse">3</div>
+                                <span class="text-gray-600 dark:text-gray-400">Sin guardar (⚠️ se perderá)</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center text-gray-600 dark:text-gray-200 text-[10px] font-bold">4</div>
+                                <span class="text-gray-600 dark:text-gray-400">Sin ver</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 bg-orange-500 rounded flex items-center justify-center text-white text-[10px]">
+                                    <i class="fas fa-flag text-[8px]"></i>
+                                </div>
+                                <span class="text-gray-600 dark:text-gray-400">Marcada para revisión</span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </template>
     </AppLayout>

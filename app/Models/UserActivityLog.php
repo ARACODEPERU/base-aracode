@@ -20,9 +20,29 @@ class UserActivityLog extends Model
     ];
 
     protected $casts = [
-        'request_payload' => 'array',
         'details_data' => 'array',
     ];
+
+    /**
+     * Accessor para descomprimir request_payload automáticamente
+     */
+    public function getRequestPayloadAttribute($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        // Si está comprimido (empieza con "gz:")
+        if (str_starts_with($value, 'gz:')) {
+            $compressed = base64_decode(substr($value, 3));
+            $json = gzdecode($compressed);
+            return json_decode($json, true);
+        }
+
+        // Si no está comprimido, intentar decodificar como JSON
+        $decoded = json_decode($value, true);
+        return $decoded ?? $value;
+    }
 
     public function user(): BelongsTo
     {

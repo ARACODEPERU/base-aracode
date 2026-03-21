@@ -44,10 +44,6 @@
         { value: 12, label: 'Diciembre' }
     ];
 
-    const calculateModuleAverage = (module) => {
-        return module.average;
-    };
-
     const calculateFinalAverage = (student) => {
         return student.final_average;
     };
@@ -298,7 +294,7 @@
                                     <th class="px-2 py-3 sticky left-0 z-20 min-w-[250px] border-r" colspan="2">
                                         <div class="text-[10px] uppercase text-center">Estudiantes</div>
                                     </th>
-                                    <th v-for="module in dataModules" :key="module.id" :colspan="4"
+                                    <th v-for="module in dataModules" :key="module.id" :colspan="3"
                                         class="px-1 py-3 text-center border-l text-xs">
                                         {{ module.description }}
                                     </th>
@@ -315,9 +311,8 @@
                                         DNI
                                     </th>
                                     <template v-for="module in dataModules" :key="'h-'+module.id">
-                                        <th class="px-1 py-1 text-center text-[10px] border-l">P</th>
-                                        <th class="px-1 py-1 text-center text-[10px]">A</th>
-                                        <th class="px-1 py-1 text-center text-[10px]">E</th>
+                                        <th class="px-1 py-1 text-center text-[10px] border-l">A y P (40%)</th>
+                                        <th class="px-1 py-1 text-center text-[10px]">E (60%)</th>
                                         <th class="px-1 py-1 text-center text-[10px] font-bold">Prom</th>
                                     </template>
                                 </tr>
@@ -341,25 +336,21 @@
 
                                     <!-- Notas por módulo -->
                                     <template v-for="(module, index) in student.modules" :key="module.module_id">
-                                        <!-- Participación -->
+                                        <!-- A y P -->
                                         <td class="px-1 py-2 border-l text-center text-sm">
-                                            {{ module.participation_score ?? '-' }}
+                                            {{ module.participation_score != null ? Math.round(module.participation_score) : '-' }}
                                         </td>
-                                        <!-- Asistencia -->
+                                        <!-- E -->
                                         <td class="px-1 py-2 text-center text-sm">
-                                            {{ module.attendance_score ?? '-' }}
-                                        </td>
-                                        <!-- Examen -->
-                                        <td class="px-1 py-2 text-center text-sm">
-                                            {{ module.exam_score ?? '-' }}
+                                            {{ module.exam_score != null ? Math.round(module.exam_score) : '-' }}
                                         </td>
                                         <!-- Promedio del módulo -->
                                         <td class="px-1 py-2 text-center">
                                             <div class="text-xs font-bold py-1 px-2 rounded inline-block"
-                                                :class="calculateModuleAverage(module) >= 11 ? 'grade-approved' :
-                                                    calculateModuleAverage(module) !== null ? 'grade-disapproved' :
+                                                :class="module.average >= 11 ? 'grade-approved' :
+                                                    module.average !== null ? 'grade-disapproved' :
                                                     'grade-pending'">
-                                                {{ calculateModuleAverage(module) ?? '-' }}
+                                                {{ module.average != null ? Math.round(module.average) : '-' }}
                                             </div>
                                         </td>
                                     </template>
@@ -367,10 +358,10 @@
                                     <!-- Promedio final -->
                                     <td class="px-2 py-3 text-center sticky right-0 bg-white dark:bg-gray-800 z-10">
                                         <span class="text-sm font-bold px-3 py-2 rounded-lg"
-                                            :class="calculateFinalAverage(student) >= 11 ? 'grade-approved' :
-                                                calculateFinalAverage(student) !== null ? 'grade-disapproved' :
+                                            :class="student.final_average >= 11 ? 'grade-approved' :
+                                                student.final_average !== null ? 'grade-disapproved' :
                                                 'grade-pending'">
-                                            {{ calculateFinalAverage(student) ?? '-' }}
+                                            {{ student.final_average != null ? Math.round(student.final_average) : '-' }}
                                         </span>
                                     </td>
                                 </tr>
@@ -382,9 +373,8 @@
                     <div class="px-5 pb-5 text-xs text-gray-500 dark:text-gray-400">
                         <p class="font-semibold mb-1">Leyenda de notas por módulo:</p>
                         <div class="flex gap-4">
-                            <span><strong>P:</strong> Participación</span>
-                            <span><strong>A:</strong> Asistencia</span>
-                            <span><strong>E:</strong> Examen</span>
+                            <span><strong>A y P (40%):</strong> Asistencia y Participaciones</span>
+                            <span><strong>E (60%):</strong> Evaluaciones (Exámenes)</span>
                             <span><strong>Prom:</strong> Promedio del módulo</span>
                         </div>
                         <p class="mt-2">

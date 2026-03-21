@@ -58,7 +58,8 @@ const form = useForm({
     price: props.course.price,
     certificate_description: props.course.certificate_description,
     discount: props.course.discount,
-    discount_applies: props.course.discount_applies
+    discount_applies: props.course.discount_applies,
+    auto_certificate: props.course.auto_certificate == 1 ? true : false
 });
 
 const updateCourse = () => {
@@ -219,6 +220,26 @@ const handleImageCompressed = (file) => {
                 <div class="flex items-center">
                     <input v-model="form.status" id="link-checkbox" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
                     <label for="link-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Activo</label>
+                </div>
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <input 
+                            v-model="form.auto_certificate" 
+                            id="auto_certificate" 
+                            type="checkbox" 
+                            class="w-5 h-5 mt-0.5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <div class="flex-1">
+                            <label for="auto_certificate" class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
+                                Certificado por Finalización
+                            </label>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Los alumnos podrán descargar el certificado al completar todos los contenidos del curso, sin necesidad de exámenes ni nota aprobatoria.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
