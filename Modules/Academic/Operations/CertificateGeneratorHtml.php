@@ -59,11 +59,25 @@ class CertificateGeneratorHtml
 
         try {
 
-            Browsershot::html($html)
+            $rutaDeNode = env('NODE_BINARY_PATH');
+
+            $browsershot = Browsershot::html($html)
                 ->windowSize($width, $height)
                 ->waitUntilNetworkIdle()
-                ->setOption('omitBackground', true)
-                ->save($path);
+                ->setOption('omitBackground', true);
+
+            // Aplicar configuración condicional
+            empty($rutaDeNode)
+                ? null // No hacer nada especial
+                : $browsershot->setNodeBinary($rutaDeNode."node")->setNpmBinary($rutaDeNode."npm")->noSandbox() // <--- OBLIGATORIO al ejecutar como root o en Docker
+                ->setChromePath(env('RUTA_CHROMIUM')) // Usa el que instalamos con apt si el de npx falla;
+                ->addChromiumArguments([
+                    'disable-setuid-sandbox',
+                    'disable-dev-shm-usage',
+                    'disable-extensions',
+                    'no-zygote'
+                ]);
+            $browsershot->save($path);
 
             return $path;
 
