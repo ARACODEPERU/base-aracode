@@ -36,7 +36,7 @@ use Modules\Academic\Http\Controllers\AcaThemeCommentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
 
-Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activity_log'])->prefix('academic')->group(function () {
+Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_activity_log'])->prefix('academic')->group(function () {
 
     Route::middleware(['middleware' => 'permission:aca_dashboard'])
         ->get('dashboard', [AcademicController::class, 'index'])
@@ -114,7 +114,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
     Route::post('students/registrations_store', 'AcaCapRegistrationController@store')
         ->name('aca_students_registrations_store');
 
-    Route::post('students/subscriptions_store', [AcaCapRegistrationController::class,'subscriptionStore'])
+    Route::post('students/subscriptions_store', [AcaCapRegistrationController::class, 'subscriptionStore'])
         ->name('aca_students_subscriptions_store');
 
     Route::delete('students/subscriptions_destroy/{student_id}/{subscription_id}', [AcaCapRegistrationController::class, 'subscriptionDestroy'])
@@ -178,7 +178,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
     Route::post('courses/modules/themes/content/store', [AcaContentController::class, 'store'])->name('aca_courses_module_themes_content_store');
     Route::delete('courses/modules/themes/content/destroy/{id}', 'AcaContentController@destroy')->name('aca_courses_module_themes_content_destroy');
 
-
     Route::post('agreement/store', 'AcaAgreementController@store')->name('aca_agreements_store');
     Route::post('brochure/store', 'AcaBrochureController@store')->name('aca_brochure_store');
     Route::post('aca-upload-image', 'AcaBrochureController@uploadImage')->name('aca_upload_image_tiny');
@@ -186,7 +185,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
     Route::middleware(['middleware' => 'permission:aca_miscursos'])
         ->get('mycourses/student', 'AcaStudentController@myCourses')
         ->name('aca_mycourses');
-
 
     Route::get('courses_teacher_null', 'AcaCourseController@getCoursesTeacherNull')
         ->name('courses_teacher_null');
@@ -216,7 +214,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->name('aca_lesson_comments_destroy');
 
     // Ruta para obtener comentarios de un estudiante en un tema
-    Route::post('course/comments/by-student',[AcaThemeCommentController::class, 'commentsByStudent'])
+    Route::post('course/comments/by-student', [AcaThemeCommentController::class, 'commentsByStudent'])
         ->name('aca_theme_comments_by_student');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_cobrar'])
@@ -264,7 +262,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->get('student/import/{importKey}/progress', 'AcaStudentController@getProgress')
         ->name('aca_student_import_progress');
 
-
     Route::middleware(['middleware' => 'permission:aca_dashboard'])
         ->get('dashboard/total/registration/student', 'AcademicController@studentsEnrolledMonth')
         ->name('aca_student_registration_total');
@@ -273,7 +270,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->get('dashboard/courses/registration/student/genero', 'AcademicController@getStudentsCourses')
         ->name('aca_student_registration_courses');
 
-    ////subscriptions/////
+    // //subscriptions/////
     Route::middleware(['middleware' => 'permission:aca_suscripciones'])
         ->get('subscriptions/list', 'AcaSubscriptionTypeController@index')
         ->name('aca_subscriptions_list');
@@ -304,7 +301,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
     Route::post('subscriptions/student/expired/expiring', [AcaStudentController::class, 'getSubscriptionStatuses'])
         ->name('aca_subscriptions_expired_expiring');
 
-    //////////////fin de suscripciones
+    // ////////////fin de suscripciones
 
     Route::get('certificate/list', [AcaCertificateController::class, 'index'])
         ->name('aca_certificate_list');
@@ -360,6 +357,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->name('aca_course_exam_store');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->delete('course/module/exam/{id}/destroy', [AcaExamController::class, 'destroy'])
+        ->name('aca_course_exam_destroy');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
+        ->put('course/module/exam/{id}/activate', [AcaExamController::class, 'activate'])
+        ->name('aca_course_exam_activate');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_configuracion'])
         ->post('course/exam/question/store', [AcaExamQuestionController::class, 'store'])
         ->name('aca_course_exam_question_store');
 
@@ -389,51 +394,49 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
 
     Route::get('student/review/exams/table', [AcaExamController::class, 'getAlumnsExam'])->name('aca_student_exam_review_exams_table');
     Route::post('student/grade/exam/response/store', [AcaExamAnswerController::class, 'gradeExamResponse'])->name('aca_student_grade_exam_response_store');
-    ////////////////verificar datos///////////////////////////
+    // //////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
     Route::post('buy/course/items/mercadopago', [MercadopagoController::class, 'createItemsPreference'])->name('academic_create_items_preference_course');
     Route::post('buy/course/processpayment/mercadopago', [MercadopagoController::class, 'processPaymentCourses'])->name('academic_processpayment_courses_mercadopago');
 
-
     Route::middleware(['middleware' => 'permission:aca_estudiante_exportar_excel'])
         ->post('/export/students-excel', function (Request $request) {
 
-        // Crea un registro en la base de datos para el estado del job
-        $excelExportJob = AcaExcelStudentsExportJob::create([
-            'user_id' => auth()->id(),
-            'status' => 'pending',
-        ]);
+            // Crea un registro en la base de datos para el estado del job
+            $excelExportJob = AcaExcelStudentsExportJob::create([
+                'user_id' => auth()->id(),
+                'status' => 'pending',
+            ]);
 
-        // Despacha el Job a la cola, pasándole el ID del registro de estado
-        ExportStudentsExcel::dispatch(auth()->id(), $excelExportJob->id);
+            // Despacha el Job a la cola, pasándole el ID del registro de estado
+            ExportStudentsExcel::dispatch(auth()->id(), $excelExportJob->id);
 
-        return response()->json([
-            'message' => 'La exportación de Excel ha sido iniciada. Por favor, espere un momento.',
-            'job_id' => $excelExportJob->id // Envía el ID del job al frontend
-        ], 202);
+            return response()->json([
+                'message' => 'La exportación de Excel ha sido iniciada. Por favor, espere un momento.',
+                'job_id' => $excelExportJob->id, // Envía el ID del job al frontend
+            ], 202);
 
-    })->name('aca_export_students_excel');
+        })->name('aca_export_students_excel');
 
     Route::middleware(['middleware' => 'permission:aca_estudiante_exportar_excel'])
         ->get('/export/students-excel/status/{jobId}', function ($jobId) {
-        if (!auth()->check()) {
-            return response()->json(['message' => 'No autenticado.'], 401);
-        }
+            if (! auth()->check()) {
+                return response()->json(['message' => 'No autenticado.'], 401);
+            }
 
-        // Busca el job por ID y verifica que pertenezca al usuario
-        $excelExportJob = AcaExcelStudentsExportJob::where('id', $jobId)
-                                        ->where('user_id', auth()->id())
-                                        ->first();
+            // Busca el job por ID y verifica que pertenezca al usuario
+            $excelExportJob = AcaExcelStudentsExportJob::where('id', $jobId)
+                ->where('user_id', auth()->id())
+                ->first();
 
-        if (!$excelExportJob) {
-            return response()->json(['message' => 'Estado de exportación no encontrado o no autorizado.'], 404);
-        }
+            if (! $excelExportJob) {
+                return response()->json(['message' => 'Estado de exportación no encontrado o no autorizado.'], 404);
+            }
 
-        return response()->json($excelExportJob);
-    })->name('aca_export_students_excel_status');
+            return response()->json($excelExportJob);
+        })->name('aca_export_students_excel_status');
 
-
-    ////////reportes Academico/////////////////
+    // //////reportes Academico/////////////////
     Route::middleware(['middleware' => 'permission:aca_reportes'])
         ->get('reports/index', [AcaReportsController::class, 'index'])
         ->name('aca_reports_dashboard');
@@ -450,12 +453,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->name('aca_student_payment_report_bank_export');
 
     Route::middleware(['middleware' => 'permission:aca_reportes'])
-        ->get('reports/student/payment/bank/export/status/{id}',[AcaReportsController::class, 'exportStatus'])
+        ->get('reports/student/payment/bank/export/status/{id}', [AcaReportsController::class, 'exportStatus'])
         ->name('aca_export_status');
 
-
     Route::middleware(['middleware' => 'permission:aca_reportes_estado_susc_estudiantes'])
-        ->get('reports/student/subscriptions/expired',[AcaReportsController::class, 'expiredSubscriptions'])
+        ->get('reports/student/subscriptions/expired', [AcaReportsController::class, 'expiredSubscriptions'])
         ->name('aca_subscriptions_expired_student');
 
     Route::middleware(['middleware' => 'permission:aca_reportes'])
@@ -491,15 +493,15 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->name('aca_enrollment_documents_export_status');
 
     Route::middleware(['middleware' => 'permission:aca_suscripcion_estudiante_editar'])
-        ->post('reports/student/subscription/update',[AcaCapRegistrationController::class, 'updateSubscriptionStudent'])
+        ->post('reports/student/subscription/update', [AcaCapRegistrationController::class, 'updateSubscriptionStudent'])
         ->name('aca_subscriptions_update_student');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
-        ->post('courses/modules/exmen/updateorcreate',[AcaModuleController::class, 'updateOrCreateExam'])
+        ->post('courses/modules/exmen/updateorcreate', [AcaModuleController::class, 'updateOrCreateExam'])
         ->name('aca_course_module_exam_update_create');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_modulos_examen'])
-        ->get('courses/{cId}/modules/{mId}/exmen/{eId}/panel',[AcaExamController::class, 'questionAnswerPanelModule'])
+        ->get('courses/{cId}/modules/{mId}/exmen/{eId}/panel', [AcaExamController::class, 'questionAnswerPanelModule'])
         ->name('aca_course_module_exam_view_details');
 
     // Examen final del curso
@@ -535,7 +537,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->post('course/exam/answer/form/store', [AcaExamAnswerController::class, 'storeAnswer'])
         ->name('aca_course_exam_answer_form_store');
 
-     Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
         ->get('student/module/exam/{id}/solve', [AcaExamController::class, 'moduleExamSolve'])
         ->name('aca_student_module_exam_solve');
 
@@ -630,11 +632,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information','user_activ
         ->name('aca_grade_management_store');
 });
 
-Route::get('asistencia/registrar/clase',[AcaAttendanceController::class, 'registerAttendance']);
-Route::post('asistencia/registrar/clase/store',[AcaAttendanceController::class, 'storeAttendance'])->name('aca_asistencia_store');
-Route::get('asistencia/exitosa',[AcaAttendanceController::class, 'success'])->name('aca_attendance_success');
+Route::get('asistencia/registrar/clase', [AcaAttendanceController::class, 'registerAttendance']);
+Route::post('asistencia/registrar/clase/store', [AcaAttendanceController::class, 'storeAttendance'])->name('aca_asistencia_store');
+Route::get('asistencia/exitosa', [AcaAttendanceController::class, 'success'])->name('aca_attendance_success');
 
-/////////no nesesita aver iniciado session//////////
+// ///////no nesesita aver iniciado session//////////
 Route::get('academic/certificate/image/{id}/download', [AcaCertificateController::class, 'generateCertificateStudent'])->name('aca_image_download');
 Route::get('academic/certificate/module/{module_id}/download', [AcaCertificateController::class, 'downloadModuleCertificate'])->name('aca_module_certificate_download');
 
@@ -653,7 +655,6 @@ Route::middleware(['auth'])->put('create/payment/{id}/pay', [MercadopagoControll
 
 Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoController::class, 'processPayment'])
     ->name('aca_mercadopago_processpayment');
-
 
 Route::middleware(['auth'])->get('thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
 Route::get('/certificado-validar/{dni?}/{course_id?}', [AcaCertificateController::class, 'certificado_validar'])->name('certificado_validar');

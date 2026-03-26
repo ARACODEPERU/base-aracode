@@ -288,6 +288,127 @@
         return props.exam.questions.reduce((total, question) => total + (question.score || 0), 0);
     });
 
+    const isExamActive = computed(() => {
+        return props.exam.status === true || props.exam.status === 1;
+    });
+
+    const verifyAndActivateExam = () => {
+        // Validar puntos mínimos (20 puntos)
+        if (totalPoints.value < 20) {
+            Swal2.fire({
+                title: 'Configuración incompleta',
+                text: `El examen tiene ${totalPoints.value} puntos. Agrega más preguntas hasta alcanzar al menos 20 puntos.`,
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        if (!props.exam.questions || props.exam.questions.length === 0) {
+            Swal2.fire({
+                title: 'Configuración incompleta',
+                text: 'Debes agregar al menos una pregunta con sus respuestas',
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        for (const question of props.exam.questions) {
+            const isWrittenOrFile = question.type_answers === 'Escribir' || question.type_answers === 'Subir Archivo';
+
+            if (isWrittenOrFile) {
+                continue;
+            }
+
+            const answers = question.answers || [];
+            if (answers.length < 2) {
+                Swal2.fire({
+                    title: 'Configuración incompleta',
+                    text: `La pregunta "${question.description.substring(0, 30)}..." necesita mínimo 2 respuestas`,
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                return;
+            }
+            const hasCorrect = answers.some(a => a.correct === 1);
+            if (!hasCorrect) {
+                Swal2.fire({
+                    title: 'Configuración incompleta',
+                    text: `La pregunta "${question.description.substring(0, 30)}..." no tiene respuesta correcta marcada`,
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                return;
+            }
+        }
+
+        Swal2.fire({
+            title: '¡Configuración correcta!',
+            text: '¿Deseas publicar el examen ahora?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, Publicar',
+            cancelButtonText: 'No, Después',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                axios.put(route('aca_course_exam_activate', props.exam.id))
+                    .then((res) => {
+                        Swal2.fire({
+                            title: '¡Éxito!',
+                            text: 'Examen publicado correctamente',
+                            icon: 'success',
+                            padding: '2em',
+                            customClass: 'sweet-alerts',
+                        });
+                        refreshDatos();
+                    });
+            }
+        });
+    };
+
+    const deleteExam = () => {
+        Swal2.fire({
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto! Se eliminarán todas las preguntas y respuestas.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            preConfirm: () => {
+                return axios.delete(route('aca_course_exam_destroy', props.exam.id)).then((res) => {
+                    if (!res.data.success) {
+                        Swal2.showValidationMessage(res.data.message)
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal2.fire({
+                    title: 'Enhorabuena',
+                    text: 'Se eliminó correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                router.visit(route('aca_courses_module_panel', props.exam.course.id));
+            }
+        });
+    };
+
 </script>
 
 <template>
@@ -314,15 +435,50 @@
         <div class="pt-5 space-y-8 relative">
             <!-- Header del Examen -->
             <div class="panel">
-                <div class="flex items-center justify-between py-3 px-4">
+                <div class="grid sm:grid-cols-2 gap-6 py-3 px-4">
                     <div>
                         <h2 class="text-base font-semibold text-gray-900 dark:text-white">{{ exam.description }}</h2>
                         <p class="text-xs text-gray-500 dark:text-gray-400">{{ exam.course.description }} | {{ exam.module.description }}</p>
+
+                        <!-- Estado del Examen -->
+                        <div v-if="!isExamActive" class="mt-2 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-300">
+                                    <strong>Examen Desactivado:</strong> Agrega preguntas con sus respuestas.
+                                    Para preguntas de alternativas, marca al menos una respuesta correcta.
+                                    Luego haz clic en "Verificar Configuración".
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-else class="mt-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-xs text-green-700 dark:text-green-300">
+                                    <strong>Examen Activado</strong> - Los estudiantes pueden resolverlo
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <button @click="openModalQuestion()" class="btn btn-primary text-xs uppercase">
-                        <IconPlus class="w-3.5 h-3.5 mr-1" />
-                        Nueva Pregunta
-                    </button>
+                    <div class="flex flex-row items-center gap-2 self-end">
+                        <button @click="verifyAndActivateExam()" class="btn btn-success text-xs uppercase">
+                            <IconCheck class="w-4 h-4 mr-1" />
+                            Verificar Configuración
+                        </button>
+                        <button @click="openModalQuestion()" class="btn btn-primary text-xs uppercase">
+                            <IconPlus class="w-4 h-4 mr-1" />
+                            Nueva Pregunta
+                        </button>
+                        <button @click="deleteExam" class="btn btn-danger text-xs uppercase">
+                            <IconTrashLines class="w-4 h-4 mr-1" />
+                            Eliminar Examen
+                        </button>
+                    </div>
                 </div>
             </div>
 

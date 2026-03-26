@@ -338,11 +338,11 @@
                                     <template v-for="(module, index) in student.modules" :key="module.module_id">
                                         <!-- A y P -->
                                         <td class="px-1 py-2 border-l text-center text-sm">
-                                            {{ module.participation_score != null ? Math.round(module.participation_score) : '-' }}
+                                            {{ module.participation_score != null ? Number(module.participation_score).toFixed(2) : '-' }}
                                         </td>
                                         <!-- E -->
                                         <td class="px-1 py-2 text-center text-sm">
-                                            {{ module.exam_score != null ? Math.round(module.exam_score) : '-' }}
+                                            {{ module.exam_score != null ? Number(module.exam_score).toFixed(2) : '-' }}
                                         </td>
                                         <!-- Promedio del módulo -->
                                         <td class="px-1 py-2 text-center">
@@ -350,7 +350,7 @@
                                                 :class="module.average >= 11 ? 'grade-approved' :
                                                     module.average !== null ? 'grade-disapproved' :
                                                     'grade-pending'">
-                                                {{ module.average != null ? Math.round(module.average) : '-' }}
+                                                {{ module.average != null ? Number(module.average).toFixed(2) : '-' }}
                                             </div>
                                         </td>
                                     </template>
@@ -361,7 +361,7 @@
                                             :class="student.final_average >= 11 ? 'grade-approved' :
                                                 student.final_average !== null ? 'grade-disapproved' :
                                                 'grade-pending'">
-                                            {{ student.final_average != null ? Math.round(student.final_average) : '-' }}
+                                            {{ student.final_average != null ? Number(student.final_average).toFixed(2) : '-' }}
                                         </span>
                                     </td>
                                 </tr>

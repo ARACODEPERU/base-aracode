@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Modules\Socialevents\Http\Controllers\Api\EventApiController;
 use Modules\Socialevents\Http\Controllers\Api\MatchesApiController;
+use Modules\Socialevents\Http\Controllers\Api\StandingsApiController;
+use Modules\Socialevents\Http\Controllers\Api\PlayerStatsApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +36,26 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 		// Partidos
 		Route::get('edition/{editionId}/matches/upcoming', [MatchesApiController::class, 'getUpcomingMatches'])
 			->name('matches.upcoming');
+
+		Route::get('edition/{editionId}/matches/results', [MatchesApiController::class, 'getRecentResults'])
+			->name('matches.results');
+
+		Route::get('edition/{editionId}/matches/all', [MatchesApiController::class, 'getAllMatches'])
+			->name('matches.all');
+
+		Route::get('edition/{editionId}/matches/{filter}', [MatchesApiController::class, 'getAllMatches'])
+			->name('matches.filter');
+		
+		Route::get('edition/{editionId}/matches', [MatchesApiController::class, 'getAllMatches'])
+			->name('matches.query');
+
+		// Tabla de posiciones
+		Route::get('edition/{editionId}/standings', [StandingsApiController::class, 'getStandings'])
+			->name('standings.index');
+
+		// Estadísticas de jugadores
+		Route::get('edition/{editionId}/stats/players/{filter}', [PlayerStatsApiController::class, 'getAllStats'])
+			->name('stats.players');
 	});
 
 	// Rutas protegidas - requieren autenticación

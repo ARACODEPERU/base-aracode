@@ -12,7 +12,7 @@ class EventApiController extends Controller
 {
     /**
      * Obtiene la lista de eventos activos con sus ediciones
-     * 
+     *
      * @return JsonResponse
      */
     public function getActiveEvents(): JsonResponse
@@ -26,7 +26,7 @@ class EventApiController extends Controller
         }
 
         $eventsData = [];
-        
+
         foreach ($events as $event) {
             $edition = EventEdition::where('event_id', $event->id)
                 ->whereNotIn('status', ['CA'])
@@ -73,7 +73,7 @@ class EventApiController extends Controller
 
     /**
      * Obtiene la información pública del evento y edición actual
-     * 
+     *
      * @return JsonResponse
      */
     public function getCurrentEvent(): JsonResponse
@@ -116,7 +116,7 @@ class EventApiController extends Controller
 
     /**
      * Obtiene la información del evento por ID
-     * 
+     *
      * @param int $id
      * @return JsonResponse
      */
@@ -154,7 +154,7 @@ class EventApiController extends Controller
 
     /**
      * Obtiene solo la edición actual (sin datos del evento)
-     * 
+     *
      * @return JsonResponse
      */
     public function getCurrentEdition(): JsonResponse
@@ -245,12 +245,12 @@ class EventApiController extends Controller
     private function getRankings(EventEdition $edition): array
     {
         $rankings = [];
-        
+
         $equipos = $edition->equipos()
             ->with('equipo')
             ->orderBy('rank', 'asc')
             ->get();
-        
+
         foreach ($equipos as $et) {
             $rankings[] = [
                 'rank' => $et->rank,
@@ -269,7 +269,7 @@ class EventApiController extends Controller
                 'is_champion' => (bool) $et->is_champion,
             ];
         }
-        
+
         return $rankings;
     }
 
@@ -278,27 +278,12 @@ class EventApiController extends Controller
      */
     private function formatImageUrl(?string $path): ?string
     {
-        if (empty($path)) {
-            return null;
+        $img = null;
+        if ($path) {
+            $img = asset('storage/'.$path);
         }
 
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
-        }
-
-        if (str_starts_with($path, 'storage/') || str_starts_with($path, 'public/')) {
-            return asset($path);
-        }
-
-        if (file_exists(public_path($path))) {
-            return asset($path);
-        }
-
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::url($path);
-        }
-
-        return null;
+        return $img;
     }
 
     /**
@@ -306,22 +291,10 @@ class EventApiController extends Controller
      */
     private function formatBasesFile(EventEdition $edition): ?array
     {
-        if (empty($edition->path_database_file)) {
-            return null;
-        }
+        $url =  null;
 
-        $url = null;
-
-        if (str_starts_with($edition->path_database_file, 'http')) {
-            $url = $edition->path_database_file;
-        } elseif (file_exists(public_path($edition->path_database_file))) {
-            $url = asset($edition->path_database_file);
-        } elseif (Storage::disk('public')->exists($edition->path_database_file)) {
-            $url = Storage::url($edition->path_database_file);
-        }
-
-        if (!$url) {
-            return null;
+        if ($edition->path_database_file) {
+            $url = asset('storage/'.$edition->path_database_file);
         }
 
         return [

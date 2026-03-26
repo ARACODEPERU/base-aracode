@@ -4,25 +4,22 @@ namespace Modules\Academic\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Models\UserActivityLog;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Modules\Academic\Entities\AcaContent;
-use Modules\Academic\Entities\AcaExam;
-use Modules\Academic\Entities\AcaExamQuestion;
-use Inertia\Inertia;
+use DataTables;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Modules\Academic\Entities\AcaContent;
+use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaExam;
+use Modules\Academic\Entities\AcaExamAnswer;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentExam;
-use Illuminate\Support\Facades\Storage;
-use Modules\Academic\Entities\AcaCourse;
-use Modules\Academic\Entities\AcaExamAnswer;
-use App\Models\UserActivityLog;
-use DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Hash;
 
 class AcaExamController extends Controller
 {
@@ -42,19 +39,18 @@ class AcaExamController extends Controller
             [
                 'description' => 'required',
                 'date_start' => 'required',
-                'date_end' => 'required'
+                'date_end' => 'required',
             ]
         );
-
 
         $origin = AcaContent::with('theme.module.course')
             ->where('id', $request->get('content_id'))
             ->first();
 
-        $idExam =  null;
+        $idExam = null;
 
         $msg = null;
-        $title  = 'Enhorabuena';
+        $title = 'Enhorabuena';
 
         if ($id) {
             if (AcaExam::where('id', $id)->exists()) {
@@ -68,13 +64,13 @@ class AcaExamController extends Controller
                         'date_start' => $dateStart,
                         'date_end' => $dateEnd,
                         'status' => $status ? true : false,
-                        'attempts' => $attempts
+                        'attempts' => $attempts,
                     ]);
 
                 $msg = 'Se actualizo correctamente';
             } else {
-                $msg = 'No existe el examen con id: ' . $id;
-                $title  = 'Importante';
+                $msg = 'No existe el examen con id: '.$id;
+                $title = 'Importante';
             }
             $idExam = $id;
         } else {
@@ -87,7 +83,7 @@ class AcaExamController extends Controller
                 'date_start' => $dateStart,
                 'date_end' => $dateEnd,
                 'status' => $status ? true : false,
-                'attempts' => $attempts
+                'attempts' => $attempts,
             ]);
             $idExam = $exam->id;
             $msg = 'Se registro correctamente';
@@ -96,10 +92,9 @@ class AcaExamController extends Controller
         return response()->json([
             'message' => $msg,
             'idExam' => $idExam,
-            'title' => $title
+            'title' => $title,
         ]);
     }
-
 
     public function solve($id)
     {
@@ -127,11 +122,11 @@ class AcaExamController extends Controller
                 'answers' => $answers,
                 'type_answers' => $question->type_answers,
                 'score' => $question->score,
-                'max_correct_answers' => $maxCorrectAnswers
+                'max_correct_answers' => $maxCorrectAnswers,
             ];
         })->shuffle()
-        ->values()
-        ->toArray();
+            ->values()
+            ->toArray();
 
         // Preparar el examen como array
         $exam = $content->exam->toArray();
@@ -141,39 +136,38 @@ class AcaExamController extends Controller
         $contentArray = $content->toArray();
         $contentArray['exam'] = $exam;
 
-        $student = AcaStudent::where('person_id',Auth::user()->person_id)->first();
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
         $examStudent = AcaStudentExam::where('exam_id', $content->exam->id)
-            ->where('student_id',$student->id)
+            ->where('student_id', $student->id)
             ->first();
 
-        if(is_null($examStudent)){
+        if (is_null($examStudent)) {
             $examStudent = AcaStudentExam::create([
                 'exam_id' => $content->exam->id,
                 'student_id' => $student->id,
                 'date_start' => Carbon::now(),
                 'status' => 'pendiente',
-                'punctuation' => 0
+                'punctuation' => 0,
             ]);
         }
-
 
         // true si aún está dentro del rango, false si ya expiró
         return Inertia::render('Academic::Students/Exam', [
             'content' => $contentArray,
             'isSuccess' => $isAvailable,
-            'examStudent' => $examStudent
+            'examStudent' => $examStudent,
         ]);
     }
 
-    public function storeStudent(Request $request){
+    public function storeStudent(Request $request)
+    {
         $examId = $request->input('exam_id');
         $questions = $request->input('questions');
-        $student = AcaStudent::where('person_id',Auth::user()->person_id)->first();
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
 
         $examStudent = AcaStudentExam::where('exam_id', $examId)
-            ->where('student_id',$student->id)
+            ->where('student_id', $student->id)
             ->first();
-
 
         $examStudent->date_End = Carbon::now();
         $arrayAnswers = [];
@@ -190,50 +184,50 @@ class AcaExamController extends Controller
                 $path = null;
                 if ($file) {
                     $original_name = strtolower(trim($file->getClientOriginalName()));
-                    $original_name = str_replace(" ", "_", $original_name);
+                    $original_name = str_replace(' ', '_', $original_name);
                     $extension = $file->getClientOriginalExtension();
 
-                    $file_name = time() . rand(100, 999) . '.' . $extension;
+                    $file_name = time().rand(100, 999).'.'.$extension;
                     $destination = 'uploads/students/'.$student->id;
                     $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
                 }
-                array_push($arrayAnswers, array(
-                    "id" => $question['id'],
-                    "type" => $question['type'],
-                    "answers" => $path,
-                    "punctuation" => "X"
-                ));
+                array_push($arrayAnswers, [
+                    'id' => $question['id'],
+                    'type' => $question['type'],
+                    'answers' => $path,
+                    'punctuation' => 'X',
+                ]);
                 $status = 'terminado';
             } else {
-                if($type === 'Alternativas'){
+                if ($type === 'Alternativas') {
                     $answersExam = AcaExamAnswer::where('id', $question['answers'])
-                        ->where('correct',true)
+                        ->where('correct', true)
                         ->first();
                     $individualScore = $answersExam->score;
 
-                    if($answersExam){
+                    if ($answersExam) {
                         $punctuation += $answersExam->score;
                     }
                 }
-                if($type === 'Varias respuestas'){
-                    foreach($question['answers'] as $itemAnswer){
+                if ($type === 'Varias respuestas') {
+                    foreach ($question['answers'] as $itemAnswer) {
                         $answersExam = AcaExamAnswer::where('id', $itemAnswer)
-                            ->where('correct',true)
+                            ->where('correct', true)
                             ->first();
 
-                        if($answersExam){
+                        if ($answersExam) {
                             $individualScore += $answersExam->score;
                             $punctuation += $answersExam->score;
                         }
                     }
                 }
 
-                array_push($arrayAnswers, array(
-                    "id" => $question['id'],
-                    "type" => $question['type'],
-                    "answers" => $question['answers'],
-                    "punctuation" => (int) $individualScore
-                ));
+                array_push($arrayAnswers, [
+                    'id' => $question['id'],
+                    'type' => $question['type'],
+                    'answers' => $question['answers'],
+                    'punctuation' => (int) $individualScore,
+                ]);
             }
         }
 
@@ -245,19 +239,21 @@ class AcaExamController extends Controller
 
         return response()->json([
             'message' => 'Examen guardado correctamente.',
-            'examStudent' => $examStudent
+            'examStudent' => $examStudent,
         ]);
     }
 
-    public function reviewExams(){
-        $courses = AcaCourse::select('id','description')->get();
+    public function reviewExams()
+    {
+        $courses = AcaCourse::select('id', 'description')->get();
 
-        return Inertia::render('Academic::Courses/ExamsStudents',[
-            'courses' => $courses
+        return Inertia::render('Academic::Courses/ExamsStudents', [
+            'courses' => $courses,
         ]);
     }
 
-    public function getAlumnsExam(){
+    public function getAlumnsExam()
+    {
         $studentExams = AcaStudentExam::with(['student.person', 'exam.course', 'exam.questions.answers']);
         $course_id = request()->get('course_id');
         if (request()->has('course_id') && $course_id != '') {
@@ -270,67 +266,69 @@ class AcaExamController extends Controller
         return DataTables::of($studentExams)
         // … tus otras addColumn() para nombre, curso, date_start, date_end …
         // Columna con tiempo transcurrido
-        ->addColumn('elapsed_time', function ($row) {
-            $start = Carbon::parse($row->date_start);
-            // si ya existe date_end, lo tomamos; si no, comparamos con ahora
-            $end = $row->date_end
-                ? Carbon::parse($row->date_end)
-                : Carbon::now();
+            ->addColumn('elapsed_time', function ($row) {
+                $start = Carbon::parse($row->date_start);
+                // si ya existe date_end, lo tomamos; si no, comparamos con ahora
+                $end = $row->date_end
+                    ? Carbon::parse($row->date_end)
+                    : Carbon::now();
 
-            // diferencia como DateInterval
-            $diff = $start->diff($end);
+                // diferencia como DateInterval
+                $diff = $start->diff($end);
 
-            // formatear: X días HH:MM:SS
-            $days    = $diff->d;
-            $hours   = str_pad($diff->h, 2, '0', STR_PAD_LEFT);
-            $minutes = str_pad($diff->i, 2, '0', STR_PAD_LEFT);
-            $seconds = str_pad($diff->s, 2, '0', STR_PAD_LEFT);
+                // formatear: X días HH:MM:SS
+                $days = $diff->d;
+                $hours = str_pad($diff->h, 2, '0', STR_PAD_LEFT);
+                $minutes = str_pad($diff->i, 2, '0', STR_PAD_LEFT);
+                $seconds = str_pad($diff->s, 2, '0', STR_PAD_LEFT);
 
-            return "{$days} días {$hours}:{$minutes}:{$seconds}";
-        })->toJson();
+                return "{$days} días {$hours}:{$minutes}:{$seconds}";
+            })->toJson();
     }
 
-    public function questionAnswerPanelModule($cId, $mId, $eId){
+    public function questionAnswerPanelModule($cId, $mId, $eId)
+    {
         $exam = AcaExam::with([
             'course',
             'module',
-            'questions.answers'
+            'questions.answers',
         ])->where('id', $eId)
-        ->where('course_id', $cId)
-        ->where('module_id', $mId)
-        ->first();
+            ->where('course_id', $cId)
+            ->where('module_id', $mId)
+            ->first();
 
-        return Inertia::render('Academic::Courses/ModuleExam',[
-            'exam' => $exam
+        return Inertia::render('Academic::Courses/ModuleExam', [
+            'exam' => $exam,
         ]);
     }
 
     /**
      * Panel de preguntas y respuestas para examen final del curso
      *
-     * @param int $courseId ID del curso
-     * @param int $examId ID del examen
+     * @param  int  $courseId  ID del curso
+     * @param  int  $examId  ID del examen
      * @return \Inertia\Response
      */
-    public function questionAnswerPanelCourse($courseId, $examId){
+    public function questionAnswerPanelCourse($courseId, $examId)
+    {
         $exam = AcaExam::with([
             'course',
-            'questions.answers'
+            'questions.answers',
         ])->where('id', $examId)
-        ->where('course_id', $courseId)
-        ->first();
+            ->where('course_id', $courseId)
+            ->first();
 
-        return Inertia::render('Academic::Courses/CourseExam',[
-            'exam' => $exam
+        return Inertia::render('Academic::Courses/CourseExam', [
+            'exam' => $exam,
         ]);
     }
 
-
-    public function moduleExamSolve($id) {
+    public function moduleExamSolve($id)
+    {
         // 1. Cargar el examen con sus relaciones
         $exam = AcaExam::with([
             'questions.answers',
-            'module.course'
+            'module.course',
         ])->findOrFail($id);
 
         // 2. Verificar disponibilidad de fechas
@@ -353,7 +351,7 @@ class AcaExamController extends Controller
                 'answers' => $answers,
                 'type_answers' => $question->type_answers,
                 'score' => $question->score,
-                'max_correct_answers' => $maxCorrectAnswers
+                'max_correct_answers' => $maxCorrectAnswers,
             ];
         })->shuffle()->values()->toArray();
 
@@ -392,13 +390,13 @@ class AcaExamController extends Controller
                 'status' => 'pendiente',
                 'punctuation' => 0,
                 'details' => [],
-                'attempts_used' => 1
+                'attempts_used' => 1,
             ]);
             $canRetry = true;
         }
 
         // Asegurar que started_at existe (por si es un registro viejo que no lo tenía)
-        if (!$examStudent->started_at) {
+        if (! $examStudent->started_at) {
             $examStudent->started_at = $examStudent->created_at;
         }
 
@@ -424,15 +422,17 @@ class AcaExamController extends Controller
         $examStudentData = $examStudent->toArray();
         $examStudentData['details'] = $detailsByQuestion;
         $examStudentData['started_at'] = Carbon::parse($examStudent->started_at)->toDateTimeString();
-        //dd($examStudentData);
+
+        // dd($examStudentData);
         return Inertia::render('Academic::Students/ModuleExamSolve', [
             'exam' => $examArray,
             'isSuccess' => $isAvailable,
-            'examStudent' => $examStudentData
+            'examStudent' => $examStudentData,
         ]);
     }
 
-    public function moduleStoreAnswer(Request $request) {
+    public function moduleStoreAnswer(Request $request)
+    {
         // 1. Obtener datos directamente del request
         $questionId = $request->input('question_id');
         $type = $request->input('question_type');
@@ -450,16 +450,15 @@ class AcaExamController extends Controller
         $answerToStore = null;
 
         // 4. Lógica según tipo de pregunta
-        if ($type === 'Subir Archivo' && $request->hasFile("file_answer")) {
-            $file = $request->file("file_answer");
-            $file_name = time() . rand(100, 999) . '.' . $file->getClientOriginalExtension();
+        if ($type === 'Subir Archivo' && $request->hasFile('file_answer')) {
+            $file = $request->file('file_answer');
+            $file_name = time().rand(100, 999).'.'.$file->getClientOriginalExtension();
             $destination = 'uploads/students/'.$student->id;
 
             $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
             $answerToStore = $path;
             $individualScore = 'X';
-        }
-        elseif ($type === 'Alternativas') {
+        } elseif ($type === 'Alternativas') {
             $answerId = $request->input('answers');
             $answerOption = AcaExamAnswer::where('id', $answerId)
                 ->where('correct', true)
@@ -470,10 +469,11 @@ class AcaExamController extends Controller
             }
             $answerToStore = $answerId;
             $individualScore = (float) $individualScore;
-        }
-        elseif ($type === 'Varias respuestas') {
+        } elseif ($type === 'Varias respuestas') {
             $selectedIds = $request->input('answers', []);
-            if(!is_array($selectedIds)) $selectedIds = [$selectedIds];
+            if (! is_array($selectedIds)) {
+                $selectedIds = [$selectedIds];
+            }
 
             foreach ($selectedIds as $idAnswer) {
                 $answerOption = AcaExamAnswer::where('id', $idAnswer)
@@ -485,28 +485,27 @@ class AcaExamController extends Controller
             }
             $answerToStore = $selectedIds;
             $individualScore = (float) $individualScore;
-        }
-        elseif ($type === 'Escribir') {
+        } elseif ($type === 'Escribir') {
             $answerToStore = $request->input('answers');
             $individualScore = 'X';
         }
 
         // 5. Actualizar el set de respuestas
         $newQuestionEntry = [
-            "id" => (int) $questionId,
-            "type" => $type,
-            "answers" => $answerToStore,
-            "punctuation" => $individualScore,
-            "updated_at" => now()->toDateTimeString()
+            'id' => (int) $questionId,
+            'type' => $type,
+            'answers' => $answerToStore,
+            'punctuation' => $individualScore,
+            'updated_at' => now()->toDateTimeString(),
         ];
 
         // Usamos colecciones para filtrar duplicados y agregar la nueva
         $filteredDetails = collect($currentDetails)
-            ->filter(fn($item) => (int)$item['id'] !== (int)$questionId)
+            ->filter(fn ($item) => (int) $item['id'] !== (int) $questionId)
             ->values();
 
         $filteredDetails->push($newQuestionEntry);
-        //dd($examStudent);
+        // dd($examStudent);
         // 6. Guardar cambios
         // Al asignar un array, Laravel hace el json_encode automáticamente por el Cast
         $examStudent->details = $filteredDetails->toArray();
@@ -518,12 +517,13 @@ class AcaExamController extends Controller
             'success' => true,
             'message' => 'Respuesta guardada correctamente',
             'current_punctuation' => $examStudent->punctuation,
-            'total_answered' => $filteredDetails->count()
+            'total_answered' => $filteredDetails->count(),
         ]);
     }
 
-    public function moduleStoreFinish(Request $request) {
-        //dd($request->all());
+    public function moduleStoreFinish(Request $request)
+    {
+        // dd($request->all());
         $id = $request->get('student_exam_id');
         $examStudent = AcaStudentExam::findOrFail($id);
         $exam = AcaExam::with('questions')->findOrFail($examStudent->exam_id);
@@ -542,19 +542,18 @@ class AcaExamController extends Controller
         $hasManualGrading = collect($details)->contains(function ($item) {
             return in_array($item['type'], ['Escribir', 'Subir Archivo']);
         });
-        //dd($timeSpent);
+        // dd($timeSpent);
         // 3. Actualizar estado
         // 3. Actualizar estado según el tipo de preguntas
         // Si NO tiene manuales (todo es autocalculable), el estado es 'calificado'
         // Si TIENE manuales, queda en 'revision_pendiente'
         $examStudent->status = $hasManualGrading ? 'revision_pendiente' : 'calificado';
 
-
         $examStudent->finished_at = now();
         $examStudent->time_spent_seconds = $timeSpent;
         $examStudent->is_timed_out = $timeSpent > ($maxSeconds + 30);
         $examStudent->save();
-        //return to_route('aca_student_module_exam_solve', $exam->id);
+        // return to_route('aca_student_module_exam_solve', $exam->id);
     }
 
     /**
@@ -564,14 +563,14 @@ class AcaExamController extends Controller
     {
         $examStudent = AcaStudentExam::findOrFail($id);
         $exam = AcaExam::findOrFail($examStudent->exam_id);
-        
+
         // Verificar que el examen está terminado
         $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
-        
-        if (!$isFinished) {
+
+        if (! $isFinished) {
             return response()->json([
                 'success' => false,
-                'message' => 'El examen aún no ha sido terminado'
+                'message' => 'El examen aún no ha sido terminado',
             ], 400);
         }
 
@@ -582,7 +581,7 @@ class AcaExamController extends Controller
         if ($attemptsUsed >= $maxAttempts) {
             return response()->json([
                 'success' => false,
-                'message' => 'No tienes intentos disponibles'
+                'message' => 'No tienes intentos disponibles',
             ], 400);
         }
 
@@ -599,20 +598,21 @@ class AcaExamController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Examen reiniciado correctamente',
-            'attempts_used' => $examStudent->attempts_used
+            'attempts_used' => $examStudent->attempts_used,
         ]);
     }
 
-    public function downloadPdf($id){
+    public function downloadPdf($id)
+    {
 
         // Cargar el examen del estudiante con todas las relaciones necesarias
         $examStudent = AcaStudentExam::with([
             'student.person',
             'exam.course',
             'exam.module',
-            'exam.questions.answers'
+            'exam.questions.answers',
         ])->findOrFail($id);
-        //dd($examStudent);
+        // dd($examStudent);
         $company = Company::first();
 
         // Logo de la empresa
@@ -620,7 +620,7 @@ class AcaExamController extends Controller
         if ($company->logo_document == '/img/logo176x32.png') {
             $logo = public_path($company->logo_document);
         } else {
-            $logo = public_path('storage' . DIRECTORY_SEPARATOR . $company->logo_document);
+            $logo = public_path('storage'.DIRECTORY_SEPARATOR.$company->logo_document);
         }
 
         // Marca de agua opcional (puedes crear este archivo o cambiar la ruta)
@@ -658,13 +658,14 @@ class AcaExamController extends Controller
         $pdf->setPaper('A4', 'portrait');
 
         // Nombre del archivo
-        $fileName = 'examen_' . $examStudent->student->person->full_name . '_' . $examStudent->id . '.pdf';
+        $fileName = 'examen_'.$examStudent->student->person->full_name.'_'.$examStudent->id.'.pdf';
         $fileName = str_replace(' ', '_', $fileName);
 
         return $pdf->download($fileName);
     }
 
-    public function studentExams(){
+    public function studentExams()
+    {
         // Obtener estudiante autenticado
         $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
 
@@ -673,13 +674,12 @@ class AcaExamController extends Controller
         $search = request()->get('search');
         $perPage = request()->get('per_page', 10);
 
-
         // Consulta base - solo exámenes iniciados o terminados
         $query = AcaStudentExam::with([
-                'exam.course',
-                'exam.module',
-                'exam.questions'
-            ])
+            'exam.course',
+            'exam.module',
+            'exam.questions',
+        ])
             ->where('student_id', $studentId);
 
         // Filtro por curso
@@ -693,9 +693,9 @@ class AcaExamController extends Controller
         if ($search) {
             $query->whereHas('exam', function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhereHas('module', function ($mq) use ($search) {
-                      $mq->where('description', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('module', function ($mq) use ($search) {
+                        $mq->where('description', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -713,7 +713,7 @@ class AcaExamController extends Controller
         return Inertia::render('Academic::Students/ExamsSearch', [
             'exams' => $exams,
             'courses' => $courses,
-            'filters' => request()->only(['course_id', 'search', 'per_page'])
+            'filters' => request()->only(['course_id', 'search', 'per_page']),
         ]);
     }
 
@@ -726,10 +726,10 @@ class AcaExamController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!Hash::check($request->password, Auth::user()->password)) {
+        if (! Hash::check($request->password, Auth::user()->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'La contraseña es incorrecta'
+                'message' => 'La contraseña es incorrecta',
             ]);
         }
 
@@ -764,14 +764,57 @@ class AcaExamController extends Controller
             'user_agent' => request()->userAgent(),
             'status_code' => 200,
             'error_message' => null,
-            'details_data' => $examData
+            'details_data' => $examData,
         ]);
 
         $examStudent->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Examen eliminado correctamente'
+            'message' => 'Examen eliminado correctamente',
+        ]);
+    }
+
+    /**
+     * Eliminar examen completo (preguntas, respuestas y examen)
+     */
+    public function destroy(Request $request, $id)
+    {
+        $exam = AcaExam::with(['questions.answers', 'student_exams'])->findOrFail($id);
+
+        // Verificar si hay estudiantes que han resuelto el examen
+        if ($exam->student_exams && $exam->student_exams->count() > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede eliminar el examen porque ya tiene '.
+                    $exam->student_exams->count().' estudiante(s) que lo han resuelto.',
+            ]);
+        }
+
+        // Eliminar respuestas, preguntas y examen
+        foreach ($exam->questions as $question) {
+            $question->answers()->delete();
+        }
+        $exam->questions()->delete();
+        $exam->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Examen eliminado correctamente',
+        ]);
+    }
+
+    /**
+     * Activar examen (publicar)
+     */
+    public function activate(Request $request, $id)
+    {
+        $exam = AcaExam::findOrFail($id);
+        $exam->update(['status' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Examen activado correctamente',
         ]);
     }
 }

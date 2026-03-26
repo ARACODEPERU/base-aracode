@@ -56,17 +56,10 @@
             modulesData.value = response.data.modules || [];
             studentsData.value = response.data.students || [];
 
-            // Redondear valores al cargar
-            const roundGradeValue = (value) => {
-                return value !== null && value !== '' ? Math.round(Number(value)) : null;
-            };
-
-            // Agregar propiedad editing a cada módulo y redondear valores
+            // Agregar propiedad editing a cada módulo
             studentsData.value.forEach(student => {
                 student.modules.forEach(module => {
                     module.editing = false;
-                    module.exam_score = roundGradeValue(module.exam_score);
-                    module.participation_score = roundGradeValue(module.participation_score);
                 });
             });
 
@@ -99,7 +92,7 @@
         const participation = module.participation_score !== null && module.participation_score !== '' ? Number(module.participation_score) : 0;
 
         const average = (exam * 0.6) + (participation * 0.4);
-        return average > 0 ? Math.round(average) : null;
+        return average > 0 ? Number(average.toFixed(2)) : null;
     };
 
     // Calcular promedio final del estudiante (se recalcula cuando cambian las notas)
@@ -111,7 +104,7 @@
         if (averages.length === 0) return null;
 
         const sum = averages.reduce((acc, val) => acc + Number(val), 0);
-        return Math.round(sum / averages.length);
+        return Number((sum / averages.length).toFixed(2));
     };
 
     // Obtener clase de color según la nota
@@ -382,11 +375,11 @@
                             <thead>
                                 <!-- Fila de títulos de módulos -->
                                 <tr>
-                                    <th class="pl-4 pr-2 py-3 sticky left-0 z-20 min-w-[150px] border-r" rowspan="2">
+                                    <th class="pl-4 pr-2 py-3 sticky left-0 z-20 min-w-[220px] border-r" rowspan="2">
                                         Nombre del Estudiante
                                     </th>
                                     <th v-for="module in modulesData" :key="module.id" :colspan="3"
-                                        class="px-1 py-3 text-center border-r">
+                                        class="px-1 py-3 text-center border-r min-w-[280px]">
                                         {{ module.description }}
                                     </th>
                                     <th class="pl-2 pr-4 py-3 text-center sticky right-0 z-20 min-w-[100px] border-l" rowspan="2">
@@ -420,33 +413,35 @@
                                     <!-- Notas por módulo (horizontal) -->
                                     <template v-for="(module, index) in student.modules" :key="module.module_id">
                                         <!-- Participación -->
-                                        <td class="px-1 py-2 text-center">
+                                        <td class="px-1 py-2 border-l text-center w-[33%]">
                                             <input
                                                 v-model="module.participation_score"
-                                                type="number"
+                                                type="text"
                                                 min="0"
                                                 max="20"
-                                                step="1"
-                                                class="form-input text-center"
+                                                step="0.01"
+                                                class="form-input text-center text-xs"
                                                 :class="getScoreClass(module.participation_score)"
                                                 placeholder="-"
+                                                v-mask="'##.##'"
                                             />
                                         </td>
                                         <!-- Examen -->
-                                        <td class="px-1 py-2 border-l text-center">
+                                        <td class="px-1 py-2 border-l text-center w-[33%]">
                                             <input
                                                 v-model="module.exam_score"
-                                                type="number"
+                                                type="text"
                                                 min="0"
                                                 max="20"
-                                                step="1"
-                                                class="form-input text-center"
+                                                step="0.01"
+                                                class="form-input text-center text-xs"
                                                 :class="getScoreClass(module.exam_score)"
                                                 placeholder="-"
+                                                v-mask="'##.##'"
                                             />
                                         </td>
                                         <!-- Promedio del módulo -->
-                                        <td class="px-1 py-2 text-center">
+                                        <td class="px-1 py-2 border-l text-center">
                                             <div class="font-bold py-2.5 px-2 rounded"
                                                 :class="calculateModuleAverage(module) >= 11 ? 'grade-approved' :
                                                     calculateModuleAverage(module) !== null ? 'grade-disapproved' :

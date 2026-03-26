@@ -2,32 +2,32 @@
 
 namespace Modules\Academic\Jobs;
 
+use App\Models\ExcelExportJob;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Illuminate\Support\Facades\Log;
-
-use App\Models\ExcelExportJob;
+use Illuminate\Support\Facades\Storage;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourse;
-use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaStudentGrade;
 use Modules\Academic\Entities\AcaStudentGradeDetail;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ExportStudentPerformanceExcel implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $userId;
+
     public $jobId;
+
     public $filters;
 
     public function __construct(int $userId, int $jobId, array $filters = [])
@@ -41,8 +41,9 @@ class ExportStudentPerformanceExcel implements ShouldQueue
     {
         $excelExportJob = ExcelExportJob::find($this->jobId);
 
-        if (!$excelExportJob) {
+        if (! $excelExportJob) {
             Log::error("ExcelExportJob ID {$this->jobId} not found for user {$this->userId}. Aborting export.");
+
             return;
         }
 
@@ -121,13 +122,13 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             });
 
             // Crear Excel
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
             $sheet->setTitle('Desempeño');
 
             // Función helper para convertir columna y fila a referencia de celda
-            $getCell = function($col, $row) {
-                return \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $row;
+            $getCell = function ($col, $row) {
+                return \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col).$row;
             };
 
             // Estilos
@@ -162,14 +163,14 @@ class ExportStudentPerformanceExcel implements ShouldQueue
 
             // Estudiantes (colspan=2)
             $sheet->setCellValue($getCell($col, 1), 'Alumnos');
-            $sheet->mergeCells($getCell($col, 1) . ':' . $getCell($col + 1, 1));
+            $sheet->mergeCells($getCell($col, 1).':'.$getCell($col + 1, 1));
             $col += 2;
 
             // Módulos
             $moduleStartCol = $col;
             foreach ($modules as $module) {
                 $sheet->setCellValue($getCell($col, 1), $module['description']);
-                $sheet->mergeCells($getCell($col, 1) . ':' . $getCell($col + 2, 1));
+                $sheet->mergeCells($getCell($col, 1).':'.$getCell($col + 2, 1));
                 $col += 3;
             }
 
@@ -182,7 +183,7 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             // # - dejar vacío para efecto rowspan=2
             $sheet->setCellValue($getCell($col, 2), '');
             $col++;
-            
+
             $sheet->setCellValue($getCell($col, 2), 'Nombres y Apellidos');
             $col++;
             $sheet->setCellValue($getCell($col, 2), 'DNI');
@@ -202,8 +203,8 @@ class ExportStudentPerformanceExcel implements ShouldQueue
 
             // Aplicar estilos a headers
             $highestColumn = $sheet->getHighestColumn();
-            $sheet->getStyle('A1:' . $highestColumn . '1')->applyFromArray($headerStyle);
-            $sheet->getStyle('A2:' . $highestColumn . '2')->applyFromArray($subHeaderStyle);
+            $sheet->getStyle('A1:'.$highestColumn.'1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A2:'.$highestColumn.'2')->applyFromArray($subHeaderStyle);
 
             // Datos
             $row = 3;
@@ -225,18 +226,18 @@ class ExportStudentPerformanceExcel implements ShouldQueue
                 // Módulos
                 foreach ($student['modules'] as $module) {
                     // A y P
-                    $aypValue = is_numeric($module['participation_score']) ? round($module['participation_score']) : $module['participation_score'];
+                    $aypValue = is_numeric($module['participation_score']) ? number_format($module['participation_score'], 2) : $module['participation_score'];
                     $sheet->setCellValue($getCell($col, $row), $aypValue ?? '-');
                     $col++;
                     // E
-                    $eValue = is_numeric($module['exam_score']) ? round($module['exam_score']) : $module['exam_score'];
+                    $eValue = is_numeric($module['exam_score']) ? number_format($module['exam_score'], 2) : $module['exam_score'];
                     $sheet->setCellValue($getCell($col, $row), $eValue ?? '-');
                     $col++;
                     // Prom
                     $promCell = $sheet->getCell($getCell($col, $row));
-                    $promValue = is_numeric($module['average']) ? round($module['average']) : $module['average'];
+                    $promValue = is_numeric($module['average']) ? number_format($module['average'], 2) : $module['average'];
                     $promCell->setValue($promValue ?? '-');
-                    if ($promValue !== '-' && $promValue >= 11) {
+                    if ($promValue !== '-' && floatval($promValue) >= 11) {
                         $promCell->getStyle()->applyFromArray($approvedStyle);
                     } elseif ($promValue !== '-') {
                         $promCell->getStyle()->applyFromArray($disapprovedStyle);
@@ -246,9 +247,9 @@ class ExportStudentPerformanceExcel implements ShouldQueue
 
                 // Promedio Final
                 $finalCell = $sheet->getCell($getCell($col, $row));
-                $finalValue = is_numeric($student['final_average']) ? round($student['final_average']) : $student['final_average'];
+                $finalValue = is_numeric($student['final_average']) ? number_format($student['final_average'], 2) : $student['final_average'];
                 $finalCell->setValue($finalValue ?? '-');
-                if ($finalValue !== '-' && $finalValue >= 11) {
+                if ($finalValue !== '-' && floatval($finalValue) >= 11) {
                     $finalCell->getStyle()->applyFromArray($approvedStyle);
                 } elseif ($finalValue !== '-') {
                     $finalCell->getStyle()->applyFromArray($disapprovedStyle);
@@ -269,7 +270,7 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             $moduleCount = count($modules);
             $moduleCols = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
             for ($i = 0; $i < $moduleCount && $i < 23; $i++) {
-                $colLetter = $moduleCols[$i] ?? ('D' . $i);
+                $colLetter = $moduleCols[$i] ?? ('D'.$i);
                 $sheet->getColumnDimension($colLetter)->setWidth(8);
             }
 
@@ -277,8 +278,8 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             $sheet->getColumnDimension($lastCol)->setWidth(15);
 
             // Guardar archivo
-            $fileName = 'reporte_desempeno_' . date('Ymd_His') . '.xlsx';
-            $filePath = 'exports/' . $fileName;
+            $fileName = 'reporte_desempeno_'.date('Ymd_His').'.xlsx';
+            $filePath = 'exports/'.$fileName;
 
             $writer = new Xlsx($spreadsheet);
             Storage::disk('public')->put($filePath, '');
@@ -293,7 +294,7 @@ class ExportStudentPerformanceExcel implements ShouldQueue
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Error en ExportStudentPerformanceExcel: " . $e->getMessage());
+            Log::error('Error en ExportStudentPerformanceExcel: '.$e->getMessage());
             $excelExportJob->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),

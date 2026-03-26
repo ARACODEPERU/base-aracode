@@ -526,28 +526,28 @@
             <div class="answer-section">
                 @if($studentAnswer)
                     <!-- Respuesta del estudiante -->
-                    <div class="answer-label">Tu respuesta:</div>
-
                     @if($question->type_answers === 'Alternativas')
                         @php
                         $selectedAnswer = $studentAnswer['answers'] ?? null;
                         $answerObj = $question->answers->where('id', $selectedAnswer)->first();
                         $isCorrect = $answerObj && $answerObj->correct;
                         @endphp
-                        <div class="answer-text {{ $isCorrect ? 'answer-correct' : 'answer-incorrect' }}">
-                            @if($answerObj)
-                                {{ $answerObj->description }}
-                                @if($isCorrect)
-                                    <span class="icon-correct"> [Correcta]</span>
-                                @else
-                                    <span class="icon-incorrect"> [Incorrecta]</span>
-                                @endif
-                            @else
-                                Sin respuesta
-                            @endif
-                        </div>
-
                         @if($showCorrectAnswers && $isApproved)
+                        <div class="answer-label">Tu respuesta:</div>
+                            <div class="answer-text {{ $isCorrect ? 'answer-correct' : 'answer-incorrect' }}">
+                                @if($answerObj)
+                                    {{ $answerObj->description }}
+                                    @if($isCorrect)
+                                        <span class="icon-correct"> [Correcta]</span>
+                                    @else
+                                        <span class="icon-incorrect"> [Incorrecta]</span>
+                                    @endif
+                                @else
+                                    Sin respuesta
+                                @endif
+                            </div>
+
+
                             @php
                             $correctAnswer = $question->answers->where('correct', 1)->first();
                             @endphp
@@ -563,23 +563,25 @@
                         $selectedIds = $studentAnswer['answers'] ?? [];
                         if(!is_array($selectedIds)) $selectedIds = [$selectedIds];
                         @endphp
-                        <div class="answer-text {{ $studentAnswer['punctuation'] > 0 ? 'answer-correct' : 'answer-incorrect' }}">
-                            @foreach($selectedIds as $selId)
-                                @php
-                                $ans = $question->answers->where('id', $selId)->first();
-                                @endphp
-                                @if($ans)
-                                    - {{ $ans->description }}
-                                    @if($ans->correct)
-                                        <span class="icon-correct">[OK]</span>
-                                    @else
-                                        <span class="icon-incorrect">[X]</span>
-                                    @endif<br>
-                                @endif
-                            @endforeach
-                        </div>
-
                         @if($showCorrectAnswers)
+                            <div class="answer-label">Tu respuesta:</div>
+                            <div class="answer-text {{ $studentAnswer['punctuation'] > 0 ? 'answer-correct' : 'answer-incorrect' }}">
+                                @foreach($selectedIds as $selId)
+                                    @php
+                                    $ans = $question->answers->where('id', $selId)->first();
+                                    @endphp
+                                    @if($ans)
+                                        - {{ $ans->description }}
+                                        @if($ans->correct)
+                                            <span class="icon-correct">[Correcta]</span>
+                                        @else
+                                            <span class="icon-incorrect">[Incorrecta]</span>
+                                        @endif<br>
+                                    @endif
+                                @endforeach
+                            </div>
+
+
                             @php
                             $correctAnswers = $question->answers->where('correct', 1);
                             @endphp
@@ -594,12 +596,14 @@
                         @endif
 
                     @elseif($question->type_answers === 'Escribir')
+                        <div class="answer-label">Tu respuesta:</div>
                         <div class="answer-text answer-pending">
                             {{ $studentAnswer['answers'] ?? 'Sin respuesta' }}
                             <span class="icon-pending"> [Pendiente de revisión]</span>
                         </div>
 
                     @elseif($question->type_answers === 'Subir Archivo')
+                        <div class="answer-label">Tu respuesta:</div>
                         <div class="answer-text answer-pending">
                             @if(isset($studentAnswer['answers']) && $studentAnswer['answers'])
                                 Archivo adjunto: {{ $studentAnswer['answers'] }}

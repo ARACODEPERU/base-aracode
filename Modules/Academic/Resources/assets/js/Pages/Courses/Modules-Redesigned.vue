@@ -235,6 +235,7 @@
             // Resetear los controles de duración cuando es nuevo
             durationHours.value = 0;
             durationMinutes.value = 0;
+            moduleExamForm.status = 0;
         }
 
         displayModuleExamModal.value = true;
@@ -316,6 +317,13 @@
             );
             setTimeout(() => {
                 btnModuleLoading.value = false;
+            });
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se registro correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
             });
         }).catch(function (error) {
             if (error.response.status === 422) {
@@ -1257,7 +1265,7 @@
                             </div>
 
                             <!-- Lista de Módulos con estilos Tailwind -->
-                            <div class="p-4 max-h-[480px] overflow-y-auto space-y-3">
+                            <div class="p-4 max-h-[680px] overflow-y-auto space-y-3">
                                 <div
                                     v-for="(module, index) in dataModules"
                                     :key="module.id"
@@ -2193,7 +2201,7 @@
                             </div>
 
                             <!-- Estado -->
-                            <div>
+                            <div v-if="moduleExamForm.id">
                                 <InputLabel value="Estado" />
                                 <select v-model="moduleExamForm.status" class="form-select">
                                     <option :value="1">Activo</option>

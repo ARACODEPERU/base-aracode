@@ -360,7 +360,7 @@
         try {
             // Llamar a la API para reintentar el examen
             const response = await axios.post(route('aca_student_module_exam_retry', props.examStudent.id));
-            
+
             if (response.data.success) {
                 // Recargar la página después de reintentar exitosamente
                 router.visit(route('aca_student_module_exam_solve', props.exam.id), {
@@ -627,7 +627,7 @@
                         </div>
 
                         <!-- Información de intentos -->
-                        <div v-if="hasAttemptsLeft && props.examStudent.status !== 'revision_pendiente'" 
+                        <div v-if="hasAttemptsLeft && props.examStudent.status !== 'revision_pendiente'"
                             class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-6">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -698,10 +698,10 @@
                                     <div class="text-3xl font-bold text-red-600 dark:text-red-400">{{ totalQuestions - savedCount }}</div>
                                     <div class="text-xs text-red-700 dark:text-red-300 font-medium">Sin Guardar</div>
                                 </div>
-                                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center border border-yellow-200 dark:border-yellow-800">
+                                <!-- <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-center border border-yellow-200 dark:border-yellow-800">
                                     <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ markedCount }}</div>
                                     <div class="text-xs text-yellow-700 dark:text-yellow-300 font-medium">Marcadas</div>
-                                </div>
+                                </div> -->
                                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center border border-blue-200 dark:border-blue-800">
                                     <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ formattedTime }}</div>
                                     <div class="text-xs text-blue-700 dark:text-blue-300 font-medium">Tiempo Restante</div>
@@ -846,8 +846,8 @@
                             </div>
                             <button @click="toggleMarkQuestion"
                                 class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                                :class="isCurrentQuestionMarked 
-                                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50' 
+                                :class="isCurrentQuestionMarked
+                                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50'
                                     : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'">
                                 <i class="fas fa-flag"></i>
                                 {{ isCurrentQuestionMarked ? 'Marcada' : 'Marcar' }}

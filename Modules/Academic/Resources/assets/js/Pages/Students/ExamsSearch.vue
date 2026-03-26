@@ -71,6 +71,12 @@
             }
             return { label: 'Desaprobado', class: 'bg-red-500 text-white', icon: '' };
         }
+        if (exam.status === 'calificado') {
+            if (exam.punctuation >= 11) {
+                return { label: 'Aprobado', class: 'bg-green-500 text-white', icon: '' };
+            }
+            return { label: 'Desaprobado', class: 'bg-red-500 text-white', icon: '' };
+        }
         if (exam.status === 'timeout') {
             return { label: 'Tiempo Agotado', class: 'bg-gray-500 text-white', icon: '' };
         }

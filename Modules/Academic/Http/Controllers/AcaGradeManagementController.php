@@ -3,19 +3,16 @@
 namespace Modules\Academic\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudentExam;
-use Modules\Academic\Entities\AcaStudentAttendance;
-use Modules\Academic\Entities\AcaStudentParticipation;
 use Modules\Academic\Entities\AcaStudentGrade;
 use Modules\Academic\Entities\AcaStudentGradeDetail;
+use Modules\Academic\Entities\AcaStudentParticipation;
 
 class AcaGradeManagementController extends Controller
 {
@@ -100,7 +97,7 @@ class AcaGradeManagementController extends Controller
             } else {
                 // Si no existen calificaciones guardadas, calcular desde las tablas originales
                 // Obtener exámenes del estudiante para este curso
-                $studentExams = AcaStudentExam::whereHas('exam', function($query) use ($courseId) {
+                $studentExams = AcaStudentExam::whereHas('exam', function ($query) use ($courseId) {
                     $query->where('course_id', $courseId);
                 })->where('student_id', $reg->student->id)->get();
 
@@ -198,11 +195,11 @@ class AcaGradeManagementController extends Controller
             $observations = $gradeData['observations'] ?? null;
 
             // Calcular promedio final (promedio de todos los promedios de módulos)
-            $averages = array_filter(array_column($modules, 'average'), function($val) {
+            $averages = array_filter(array_column($modules, 'average'), function ($val) {
                 return $val !== null && $val !== '';
             });
             $calculatedFinalAverage = count($averages) > 0
-                ? intval(round(array_sum($averages) / count($averages)))
+                ? round(array_sum($averages) / count($averages), 2)
                 : null;
 
             $finalAvg = $finalAverage ?? $calculatedFinalAverage;
@@ -239,11 +236,11 @@ class AcaGradeManagementController extends Controller
                 $average = $moduleData['average'];
 
                 // Calcular promedio del módulo
-                $examVal = $examScore !== null && $examScore !== '' ? (float)$examScore : 0;
-                $participationVal = $participationScore !== null && $participationScore !== '' ? (float)$participationScore : 0;
+                $examVal = $examScore !== null && $examScore !== '' ? (float) $examScore : 0;
+                $participationVal = $participationScore !== null && $participationScore !== '' ? (float) $participationScore : 0;
 
                 $calculatedAverage = ($examVal * 0.6) + ($participationVal * 0.4);
-                $avg = $average ?? round($calculatedAverage);
+                $avg = $average ?? round($calculatedAverage, 2);
                 $moduleApproved = $avg !== null && $avg >= 11;
 
                 AcaStudentGradeDetail::updateOrCreate(
