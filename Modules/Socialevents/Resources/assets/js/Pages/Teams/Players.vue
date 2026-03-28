@@ -358,7 +358,7 @@
                                             <InlineEditable
                                                 v-model="player.position"
                                                 placeholder="S/R"
-                                                title="Número de camiseta"
+                                                title="Posición"
                                                 element="select"
                                                 :data="[
                                                     'Ariete',

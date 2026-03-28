@@ -32,4 +32,8 @@ class EventEditionTeam extends Model
     {
         return $this->belongsTo(EventTeam::class, 'team_id');
     }
+    public function edition(): BelongsTo
+    {
+        return $this->belongsTo(EventEdition::class, 'edition_id');
+    }
 }
