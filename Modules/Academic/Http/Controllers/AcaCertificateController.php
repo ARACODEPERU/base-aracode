@@ -4,27 +4,28 @@ namespace Modules\Academic\Http\Controllers;
 
 use App\Helpers\Barios;
 use App\Models\Parameter;
-use App\Rules\AcaRegistrationExists;
 use App\Models\Person;
+use App\Rules\AcaRegistrationExists;
 use Carbon\Carbon;
-use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Inertia\Inertia;
-use Modules\Academic\Entities\AcaCourse;
-use Modules\Academic\Entities\AcaStudent;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
+use Intervention\Image\Facades\Image;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCertificate;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Modules\Academic\Entities\AcaCertificateGradeConfig;
 use Modules\Academic\Entities\AcaCertificateParameter;
-use Modules\Academic\Entities\AcaStudentSubscription;
-use Modules\Academic\Entities\AcaModule;
+use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaExam;
+use Modules\Academic\Entities\AcaModule;
+use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentExam;
+use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Operations\CertificateImage;
 
 class AcaCertificateController extends Controller
@@ -32,44 +33,52 @@ class AcaCertificateController extends Controller
     use ValidatesRequests;
 
     public $directory;
+
     public $P000016;
 
     public function __construct()
     {
-        $this->directory = 'academic' . DIRECTORY_SEPARATOR . 'certificates';
+        $this->directory = 'academic'.DIRECTORY_SEPARATOR.'certificates';
         $this->P000016 = Parameter::where('parameter_code', 'P000016')->value('value_default');
     }
 
     public function index()
     {
-        $certificates = AcaCertificateParameter::with(['course'])->paginate(10);
+        $certificates = AcaCertificateParameter::with(['course'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
         // Formatear la fecha antes de devolver los datos
         $certificates->getCollection()->transform(function ($certificate) {
             $certificate->formatted_date = Carbon::parse($certificate->created_at)->format('d/m/Y');
+
             return $certificate;
         });
 
         return Inertia::render('Academic::Certificates/List', [
-            'certificates' => $certificates
+            'certificates' => $certificates,
         ]);
     }
 
     public function create()
     {
         $courses = AcaCourse::where('status', true)->get();
+
         return Inertia::render('Academic::Certificates/Create', [
-            'courses' => $courses
+            'courses' => $courses,
         ]);
     }
 
     public function store(Request $request)
     {
+        $hasReverse = $request->get('has_reverse') ? true : false;
+
         $this->validate(
             $request,
             [
                 'name_certificate' => 'required',
-                'certificate_img' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'certificate_img' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
+                'back_certificate_img' => $hasReverse ? 'required|image|mimes:jpeg,png,jpg,gif|max:5120' : 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             ]
         );
 
@@ -82,42 +91,59 @@ class AcaCertificateController extends Controller
         if ($file) {
             $original_name = date('YmdHis');
             $extension = $file->getClientOriginalExtension();
-            $file_name = $original_name . '.' . $extension;
-            $path = $file->storeAs($destination, $file_name, 'public');
+            $file_name = $original_name.'.'.$extension;
 
-            $dimensions = getimagesize(public_path('storage/' . $path));
-            $imgWidth = $dimensions[0] ?? null;
-            $imgHeight = $dimensions[1] ?? null;
+            $img = Image::make($file);
+            $maxSize = 1550;
+            $img->resize($maxSize, $maxSize, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
+
+            $fullPath = public_path('storage'.DIRECTORY_SEPARATOR.$destination.DIRECTORY_SEPARATOR.$file_name);
+            $img->save($fullPath, 85);
+
+            $path = $destination.'/'.$file_name;
+            $imgWidth = $img->width();
+            $imgHeight = $img->height();
         }
 
-        // Manejar imagen del reverso
         $backPath = null;
         $backImgWidth = null;
         $backImgHeight = null;
         $backFile = $request->file('back_certificate_img');
         if ($backFile) {
-            $original_name = date('YmdHis') . '_back';
+            $original_name = date('YmdHis').'_back';
             $extension = $backFile->getClientOriginalExtension();
-            $file_name = $original_name . '.' . $extension;
-            $backPath = $backFile->storeAs($destination, $file_name, 'public');
+            $file_name = $original_name.'.'.$extension;
 
-            $backDimensions = getimagesize(public_path('storage/' . $backPath));
-            $backImgWidth = $backDimensions[0] ?? null;
-            $backImgHeight = $backDimensions[1] ?? null;
+            $img = Image::make($backFile);
+            $maxSize = 1550;
+            $img->resize($maxSize, $maxSize, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
+
+            $fullPath = public_path('storage'.DIRECTORY_SEPARATOR.$destination.DIRECTORY_SEPARATOR.$file_name);
+            $img->save($fullPath, 85);
+
+            $backPath = $destination.'/'.$file_name;
+            $backImgWidth = $img->width();
+            $backImgHeight = $img->height();
         }
 
         if ($request->get('course_id')) {
             $ce = AcaCertificateParameter::where('course_id', $request->get('course_id'));
             if ($ce) {
                 $ce->update([
-                    'state' => false
+                    'state' => false,
                 ]);
             }
         } else {
             $ce = AcaCertificateParameter::whereNull('course_id');
             if ($ce) {
                 $ce->update([
-                    'state' => false
+                    'state' => false,
                 ]);
             }
         }
@@ -148,8 +174,12 @@ class AcaCertificateController extends Controller
     public function edit($id)
     {
         $certificate = AcaCertificateParameter::find($id);
+
+        $gradeConfig = AcaCertificateGradeConfig::where('certificate_id', $certificate->id)->first();
+
         return Inertia::render('Academic::Certificates/Edit', [
-            'certificate' => $certificate
+            'certificate' => $certificate,
+            'gradeConfig' => $gradeConfig,
         ]);
     }
 
@@ -193,9 +223,9 @@ class AcaCertificateController extends Controller
         $studentSubscribed = AcaStudentSubscription::where('student_id', $student_id)
             ->where('status', true)
             ->first();
-        //dd($studentSubscribed);
+        // dd($studentSubscribed);
         $courses = AcaCourse::with('registrations') // Para validar los cursos registrados
-            ->when(!$studentSubscribed, function ($query) use ($student_id) {
+            ->when(! $studentSubscribed, function ($query) use ($student_id) {
                 // Si no tiene suscripción activa, filtrar cursos gratuitos o en los que está matriculado
                 $query->where(function ($q) use ($student_id) {
                     $q->whereNull('price') // Cursos gratuitos (precio null)
@@ -207,19 +237,16 @@ class AcaCertificateController extends Controller
                 });
             })->get();
 
-
         $certificates = AcaCertificate::with('course')
             ->where('student_id', $id)->get();
 
-
         return Inertia::render('Academic::Certificates/StudentCreate', [
-            'student'   => $student,
-            'courses'   => $courses,
+            'student' => $student,
+            'courses' => $courses,
             'certificates' => $certificates,
-            'P000016' => $this->P000016
+            'P000016' => $this->P000016,
         ]);
     }
-
 
     public function studentStore(Request $request)
     {
@@ -230,17 +257,17 @@ class AcaCertificateController extends Controller
             $this->validate(
                 $request,
                 [
-                    'student_id'  => ['required', new AcaRegistrationExists($course_id)],
-                    'course_id'   => 'required',
+                    'student_id' => ['required', new AcaRegistrationExists($course_id)],
+                    'course_id' => 'required',
                 ]
             );
         } else {
             $this->validate(
                 $request,
                 [
-                    'student_id'  => ['required', new AcaRegistrationExists($course_id)],
-                    'course_id'   => 'required',
-                    'image'       => 'required'
+                    'student_id' => ['required', new AcaRegistrationExists($course_id)],
+                    'course_id' => 'required',
+                    'image' => 'required',
                 ]
             );
         }
@@ -250,33 +277,33 @@ class AcaCertificateController extends Controller
             ->first();
 
         $registration->update([
-            'certificate_date' => Carbon::now()->format('Y-m-d')
+            'certificate_date' => Carbon::now()->format('Y-m-d'),
         ]);
 
         if ($this->P000016 == 1) {
             $certificate = AcaCertificate::firstOrCreate([
-                'student_id'        => $student_id,
-                'registration_id'   => $registration->id,
-                'course_id'         => $course_id,
-                'content'           => null,
-                'image'             => $request->get('image')
+                'student_id' => $student_id,
+                'registration_id' => $registration->id,
+                'course_id' => $course_id,
+                'content' => null,
+                'image' => $request->get('image'),
             ]);
         } else {
             if ($certificate_auto) {
                 $certificate = AcaCertificate::firstOrCreate([
-                    'student_id'        => $student_id,
-                    'registration_id'   => $registration->id,
-                    'course_id'         => $course_id,
-                    'content'           => null,
-                    'image'             => null
+                    'student_id' => $student_id,
+                    'registration_id' => $registration->id,
+                    'course_id' => $course_id,
+                    'content' => null,
+                    'image' => null,
                 ]);
             } else {
 
                 $certificate = AcaCertificate::firstOrCreate([
-                    'student_id'        => $student_id,
-                    'registration_id'   => $registration->id,
-                    'course_id'         => $course_id,
-                    'content'           => null
+                    'student_id' => $student_id,
+                    'registration_id' => $registration->id,
+                    'course_id' => $course_id,
+                    'content' => null,
                 ]);
 
                 $destination = 'uploads/certificate';
@@ -293,16 +320,16 @@ class AcaCertificateController extends Controller
                     file_put_contents($tempFile, $fileData);
                     $mime = mime_content_type($tempFile);
 
-                    $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
+                    $name = uniqid('', true).'.'.str_replace('image/', '', $mime);
                     $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
 
                     if ($file) {
                         // $original_name = strtolower(trim($file->getClientOriginalName()));
                         // $file_name = time() . rand(100, 999) . $original_name;
                         $original_name = strtolower(trim($file->getClientOriginalName()));
-                        $original_name = str_replace(" ", "_", $original_name);
+                        $original_name = str_replace(' ', '_', $original_name);
                         $extension = $file->getClientOriginalExtension();
-                        $file_name = $student_id . 'X' . $course_id . '.' . $extension;
+                        $file_name = $student_id.'X'.$course_id.'.'.$extension;
                         $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
                         $certificate->image = $path;
                         $certificate->save();
@@ -311,11 +338,8 @@ class AcaCertificateController extends Controller
             }
         }
 
-
-
         return redirect()->route('aca_students_certificates_create', $student_id);
     }
-
 
     public function studentDestroy($id)
     {
@@ -327,7 +351,7 @@ class AcaCertificateController extends Controller
 
             // Verificamos si existe.
             $item = AcaCertificate::findOrFail($id);
-            $barios = new Barios();
+            $barios = new Barios;
             $barios->deleteFile($item->image);
             // Si no hay detalles asociados, eliminamos.
             $item->delete();
@@ -335,7 +359,7 @@ class AcaCertificateController extends Controller
             // Si todo ha sido exitoso, confirmamos la transacción.
             DB::commit();
 
-            $message =  'Certificado eliminado correctamente';
+            $message = 'Certificado eliminado correctamente';
             $success = true;
         } catch (\Exception $e) {
             // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.
@@ -346,17 +370,22 @@ class AcaCertificateController extends Controller
 
         return response()->json([
             'success' => $success,
-            'message' => $message
+            'message' => $message,
         ]);
     }
 
     public function updateInfo(Request $request)
     {
-        $certificate = new CertificateImage();
+        $certificate = new CertificateImage;
         $id = $request->get('id');
 
         $acaCertificate = AcaCertificateParameter::find($id);
-        //dd($request->all());
+
+        if (! $acaCertificate) {
+            return response()->json(['error' => 'Certificado no encontrado con ID: '.$id], 404);
+        }
+
+        // dd($request->all());
         switch ($request->get('action_type')) {
             case 1:
                 $acaCertificate->fontfamily_date = $request->get('fontfamily_date');
@@ -409,7 +438,7 @@ class AcaCertificateController extends Controller
                 $acaCertificate->color_description = $request->get('color_description');
                 $acaCertificate->visible_description = $request->get('visible_description');
                 break;
-            // Cases para el reverso
+                // Cases para el reverso
             case 6:
                 // Configuración de fecha del reverso
                 $acaCertificate->back_fontfamily_date = $request->get('back_fontfamily_date');
@@ -492,14 +521,42 @@ class AcaCertificateController extends Controller
                 $acaCertificate->back_visible_module = $request->get('back_visible_module') ? true : false;
                 $acaCertificate->back_content_type_module = $request->get('back_content_type_module');
                 break;
+            case 14:
+                // QR del reverso
+                // dd($request->get('back_size_qr'));
+                $acaCertificate->back_size_qr = $request->get('back_size_qr');
+                $acaCertificate->back_font_align_qr = $request->get('back_font_align_qr');
+                $acaCertificate->back_position_qr_x = $request->get('back_position_qr_x');
+                $acaCertificate->back_position_qr_y = $request->get('back_position_qr_y');
+                $acaCertificate->back_visible_qr = $request->get('back_visible_qr') ? true : false;
+                break;
+            case 15:
+                // Nota Final (PROMEDIO FINAL) - guardar en tabla relacionada
+                $grade_id = $request->get('grade_id');
+                $gradeConfig = AcaCertificateGradeConfig::updateOrCreate(
+                    ['id' => $grade_id],
+                    [
+                        'certificate_id' => $id,
+                        'back_fontfamily_grade' => $request->get('back_fontfamily_grade'),
+                        'back_font_size_grade' => $request->get('back_font_size_grade'),
+                        'back_color_grade' => $request->get('back_color_grade'),
+                        'back_position_grade_x' => $request->get('back_position_grade_x'),
+                        'back_position_grade_y' => $request->get('back_position_grade_y'),
+                        'back_visible_grade' => $request->get('back_visible_grade') ? true : false,
+                        'back_rectangle_width' => $request->get('back_rectangle_width') ?? 100,
+                        'back_rectangle_height' => $request->get('back_rectangle_height') ?? 100,
+                        'back_rectangle_color' => $request->get('back_rectangle_color') ?? '#000000',
+                    ]
+                );
+                break;
             case 98:
                 // Manejo de imagen del reverso
                 if ($request->hasFile('back_certificate_img')) {
                     $destination = $this->directory;
                     $file = $request->file('back_certificate_img');
-                    $original_name = date('YmdHis') . '_back';
+                    $original_name = date('YmdHis').'_back';
                     $extension = $file->getClientOriginalExtension();
-                    $file_name = $original_name . '.' . $extension;
+                    $file_name = $original_name.'.'.$extension;
                     $backPath = $file->storeAs($destination, $file_name, 'public');
                     $acaCertificate->back_certificate_img = $backPath;
                 }
@@ -508,11 +565,11 @@ class AcaCertificateController extends Controller
                 if ($request->get('state')) {
                     if ($acaCertificate->course_id) {
                         AcaCertificateParameter::where('course_id', $request->get('course_id'))->update([
-                            'state' => false
+                            'state' => false,
                         ]);
                     } else {
                         AcaCertificateParameter::whereNull('course_id')->update([
-                            'state' => false
+                            'state' => false,
                         ]);
                     }
                 }
@@ -523,19 +580,20 @@ class AcaCertificateController extends Controller
         }
 
         $acaCertificate->save();
+
         $fullPath = null;
 
-        // Generar imagen para anverso (cases 1-5) y reverso (cases 6-9, 12, 13)
+        // Generar imagen para anverso (cases 1-5) y reverso (cases 6-9, 12, 13, 14, 15)
         $generateForFront = in_array($request->get('action_type'), [1, 2, 3, 4, 5]);
-        $generateForBack = in_array($request->get('action_type'), [6, 7, 8, 9, 12, 13]);
+        $generateForBack = in_array($request->get('action_type'), [6, 7, 8, 9, 12, 13, 14, 15]);
 
         if ($generateForFront) {
             $imagen = $certificate->generate($id, 'front');
 
-            $carpeta = $this->directory . DIRECTORY_SEPARATOR . 'parameters/forward';
-            $barios = new Barios();
+            $carpeta = $this->directory.DIRECTORY_SEPARATOR.'parameters/forward';
+            $barios = new Barios;
             $barios->deleteFilesSubfoldersPath($carpeta);
-            $path = $carpeta .  DIRECTORY_SEPARATOR . date('YmdHis') . '.png';
+            $path = $carpeta.DIRECTORY_SEPARATOR.date('YmdHis').'.png';
             Storage::disk('public')->put($path, $imagen);
 
             $fullPath = Storage::disk('public')->url($path);
@@ -545,9 +603,9 @@ class AcaCertificateController extends Controller
 
             $imagen = $certificate->generate($id, 'back');
 
-            $carpeta = $this->directory . DIRECTORY_SEPARATOR . 'parameters/back';
+            $carpeta = $this->directory.DIRECTORY_SEPARATOR.'parameters/back';
             // NO eliminamos archivos existentes para no borrar la imagen del anverso
-            $path = $carpeta .  DIRECTORY_SEPARATOR . date('YmdHis') . '_back.png';
+            $path = $carpeta.DIRECTORY_SEPARATOR.date('YmdHis').'_back.png';
             Storage::disk('public')->put($path, $imagen);
 
             $fullPath = Storage::disk('public')->url($path);
@@ -557,7 +615,7 @@ class AcaCertificateController extends Controller
 
         return response()->json([
             'success' => true,
-            'image' => $fullPath
+            'image' => $fullPath,
         ]);
     }
 
@@ -576,18 +634,18 @@ class AcaCertificateController extends Controller
 
                 if ($registration) {
                     $registration->update([
-                        'certificate_date' => Carbon::now()->format('Y-m-d')
+                        'certificate_date' => Carbon::now()->format('Y-m-d'),
                     ]);
 
                     AcaCertificate::firstOrCreate(
                         [
-                            'student_id'        => $student_id,
-                            'registration_id'   => $registration->id,
-                            'course_id'         => $id,
+                            'student_id' => $student_id,
+                            'registration_id' => $registration->id,
+                            'course_id' => $id,
                         ],
                         [
-                            'content'           => null,
-                            'image'             => null
+                            'content' => null,
+                            'image' => null,
                         ]
                     );
                 }
@@ -595,7 +653,7 @@ class AcaCertificateController extends Controller
         }
 
         return response()->json([
-            'success' => true
+            'success' => true,
         ]);
     }
 
@@ -608,7 +666,7 @@ class AcaCertificateController extends Controller
         $student_id = $student->id;
         $course_id = $xcer->course_id;
 
-        $autoCertificate = new CertificateImage();
+        $autoCertificate = new CertificateImage;
 
         $certificateParameter = AcaCertificateParameter::where('course_id', $course_id)
             ->where('state', true)
@@ -625,11 +683,11 @@ class AcaCertificateController extends Controller
 
             $certificate_id = $certificateParameter->id;
         }
-        
+
         if ($certificate_id) {
             // Generar certificado ANVERSO (front)
             $imagenFront = $autoCertificate->generate($certificate_id, 'front', $student_id, $course_id);
-            
+
             // Generar certificado REVERSO (back) si has_reverse = true Y existe back_certificate_img
             $imagenBack = null;
             if ($certificateParameter && $certificateParameter->has_reverse && $certificateParameter->back_certificate_img) {
@@ -640,8 +698,8 @@ class AcaCertificateController extends Controller
             if ($imagenFront && $imagenBack) {
                 $zipFileName = "certificado_{$student_id}_{$course_id}.zip";
                 $tempFile = tempnam(sys_get_temp_dir(), 'cert_');
-                
-                $zip = new \ZipArchive();
+
+                $zip = new \ZipArchive;
                 if ($zip->open($tempFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
                     $zip->addFromString('certificado_frente.png', $imagenFront);
                     $zip->addFromString('certificado_reverso.png', $imagenBack);
@@ -667,14 +725,14 @@ class AcaCertificateController extends Controller
     /**
      * Descarga el certificado de un módulo específico
      *
-     * @param int $module_id ID del módulo
+     * @param  int  $module_id  ID del módulo
      * @return response Descarga la imagen del certificado
      */
     public function downloadModuleCertificate($module_id)
     {
         // 1. Obtener estudiante actual
         $user = Auth::user();
-        if (!$user || !$user->person_id) {
+        if (! $user || ! $user->person_id) {
             return back()->with('error', 'No tienes acceso a esta funcionalidad');
         }
 
@@ -683,19 +741,19 @@ class AcaCertificateController extends Controller
         // 2. Obtener el módulo con su curso
         $module = AcaModule::with('course')->find($module_id);
 
-        if (!$module) {
+        if (! $module) {
             return back()->with('error', 'Módulo no encontrado');
         }
 
         // 2.1. Verificar que el módulo permite descarga de certificados
-        if (!$module->allow_certificate_download) {
+        if (! $module->allow_certificate_download) {
             return back()->with('error', 'Este módulo no permite la descarga de certificados');
         }
 
         // 3. Buscar examen del estudiante para este módulo
         $exam = AcaExam::where('module_id', $module_id)->first();
 
-        if (!$exam) {
+        if (! $exam) {
             return back()->with('error', 'No tienes examen para este módulo');
         }
 
@@ -706,14 +764,14 @@ class AcaCertificateController extends Controller
             ->whereIn('status', ['calificado', 'completado', 'revision_pendiente'])
             ->first();
 
-        if (!$studentExam) {
+        if (! $studentExam) {
             return back()->with('error', 'No tienes examen aprobado para descargar el certificado');
         }
 
         // 5. Buscar certificado: primero específico del curso, luego genérico
         $certificate = $this->findModuleCertificate($module->course_id);
 
-        if (!$certificate) {
+        if (! $certificate) {
             return back()->with('error', 'No hay certificado configurado para módulos');
         }
 
@@ -725,7 +783,7 @@ class AcaCertificateController extends Controller
      * Busca el certificado para un módulo específico
      * Primero busca certificado específico del curso, luego genérico
      *
-     * @param int $courseId ID del curso
+     * @param  int  $courseId  ID del curso
      * @return AcaCertificateParameter|null
      */
     private function findModuleCertificate($courseId)
@@ -737,7 +795,7 @@ class AcaCertificateController extends Controller
             ->first();
 
         // Si no existe, buscar genérico
-        if (!$certificate) {
+        if (! $certificate) {
             $certificate = AcaCertificateParameter::where('for_module', true)
                 ->whereNull('course_id')
                 ->where('state', true)
@@ -750,15 +808,15 @@ class AcaCertificateController extends Controller
     /**
      * Genera los certificados (anverso y reverso) para un módulo
      *
-     * @param AcaCertificateParameter $certificate Certificado encontrado
-     * @param mixed $student Datos del estudiante
-     * @param mixed $module Datos del módulo
+     * @param  AcaCertificateParameter  $certificate  Certificado encontrado
+     * @param  mixed  $student  Datos del estudiante
+     * @param  mixed  $module  Datos del módulo
      * @return response Descarga la imagen del certificado
      */
     private function generateModuleCertificates($certificate, $student, $module)
     {
         // Instanciar el generador de certificados
-        $autoCertificate = new CertificateImage();
+        $autoCertificate = new CertificateImage;
 
         // 1. Generar certificado ANVERSO (front)
         $imagenFront = $autoCertificate->generate(
@@ -785,8 +843,8 @@ class AcaCertificateController extends Controller
         if ($imagenFront && $imagenBack) {
             $zipFileName = "certificado_{$student->id}_{$module->id}.zip";
             $tempFile = tempnam(sys_get_temp_dir(), 'cert_');
-            
-            $zip = new \ZipArchive();
+
+            $zip = new \ZipArchive;
             if ($zip->open($tempFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
                 $zip->addFromString('certificado_frente.png', $imagenFront);
                 $zip->addFromString('certificado_reverso.png', $imagenBack);
@@ -810,34 +868,35 @@ class AcaCertificateController extends Controller
         return back()->with('error', 'Error al generar el certificado');
     }
 
-    public function certificado_validar($dni=0, $course_id=0)
+    public function certificado_validar($dni = 0, $course_id = 0)
     {
-        $person="";
-        $certificates="";
-        $course="";
+        $person = '';
+        $certificates = '';
+        $course = '';
         if ($dni != 0) {
             $person = Person::where('number', $dni)->select('full_name', 'image', 'number')->first();
-            if($course_id==0){
+            if ($course_id == 0) {
                 $certificates = DB::table('people')
-                                ->join('aca_students', 'people.id', '=', 'aca_students.person_id')
-                                ->join('aca_certificates', 'aca_students.id', '=', 'aca_certificates.student_id')
-                                ->join('aca_courses', 'aca_certificates.course_id', '=', 'aca_courses.id')
-                                ->where('people.number', $dni)
-                                ->select('aca_certificates.created_at as fecha', 'aca_courses.description', 'aca_courses.id as course_id')
-                                ->get();
-            }else{
-                $course=1;
+                    ->join('aca_students', 'people.id', '=', 'aca_students.person_id')
+                    ->join('aca_certificates', 'aca_students.id', '=', 'aca_certificates.student_id')
+                    ->join('aca_courses', 'aca_certificates.course_id', '=', 'aca_courses.id')
+                    ->where('people.number', $dni)
+                    ->select('aca_certificates.created_at as fecha', 'aca_courses.description', 'aca_courses.id as course_id')
+                    ->get();
+            } else {
+                $course = 1;
                 $certificates = DB::table('people')
-                                ->join('aca_students', 'people.id', '=', 'aca_students.person_id')
-                                ->join('aca_certificates', 'aca_students.id', '=', 'aca_certificates.student_id')
-                                ->join('aca_courses', 'aca_certificates.course_id', '=', 'aca_courses.id')
-                                ->join('aca_brochures', 'aca_brochures.course_id', '=', 'aca_certificates.course_id')
-                                ->where('people.number', $dni)->where('aca_certificates.course_id', $course_id)
-                                ->select('aca_certificates.created_at as fecha', 'aca_courses.description', 'aca_brochures.curriculum_plan', 'aca_courses.id as course_id')
-                                ->get();
+                    ->join('aca_students', 'people.id', '=', 'aca_students.person_id')
+                    ->join('aca_certificates', 'aca_students.id', '=', 'aca_certificates.student_id')
+                    ->join('aca_courses', 'aca_certificates.course_id', '=', 'aca_courses.id')
+                    ->join('aca_brochures', 'aca_brochures.course_id', '=', 'aca_certificates.course_id')
+                    ->where('people.number', $dni)->where('aca_certificates.course_id', $course_id)
+                    ->select('aca_certificates.created_at as fecha', 'aca_courses.description', 'aca_brochures.curriculum_plan', 'aca_courses.id as course_id')
+                    ->get();
             }
 
         }
+
         return view('academic::certificado_validar.certificado_validar', [
             'person' => $person,
             'certificates' => $certificates,
@@ -845,7 +904,8 @@ class AcaCertificateController extends Controller
         ]);
     }
 
-    public function studentCertificates() {
+    public function studentCertificates()
+    {
         $studentId = AcaStudent::where('person_id', Auth::user()->person_id)->value('id');
 
         $courseId = request('course_id');
@@ -861,36 +921,36 @@ class AcaCertificateController extends Controller
             ->withQueryString();
 
         $courses = AcaCourse::whereHas('certificates', function ($query) use ($studentId) {
-                $query->where('student_id', $studentId);
-            })
+            $query->where('student_id', $studentId);
+        })
             ->get(['id', 'description']);
 
         return Inertia::render('Academic::Students/Certificates', [
             'certificates' => $certificates,
             'courses' => $courses,
-            'filters' => request()->only(['course_id', 'per_page'])
+            'filters' => request()->only(['course_id', 'per_page']),
         ]);
     }
 
     public function findStudentCertificate($courseId)
     {
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
-        
-        if (!$student) {
+
+        if (! $student) {
             return response()->json(['success' => false]);
         }
-        
+
         $certificate = AcaCertificate::where('student_id', $student->id)
             ->where('course_id', $courseId)
             ->first();
-        
+
         if ($certificate) {
             return response()->json([
                 'success' => true,
-                'certificate_id' => $certificate->id
+                'certificate_id' => $certificate->id,
             ]);
         }
-        
+
         return response()->json(['success' => false]);
     }
 }

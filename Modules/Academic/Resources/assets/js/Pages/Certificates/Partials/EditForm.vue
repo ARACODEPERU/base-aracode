@@ -22,6 +22,10 @@
             type: Object,
             default: () => ({}),
         },
+        gradeConfig: {
+            type: Object,
+            default: () => null,
+        },
     });
 
     const imagePreviewLoading = ref(false);
@@ -33,6 +37,7 @@
 
     const form = useForm({
         id: props.certificate.id,
+        grade_id: props.gradeConfig?.id ?? null,
         action_type: null,
         course_id: null,
         for_module: props.certificate.for_module == 1 ? true : false,
@@ -157,6 +162,24 @@
         back_max_width_module: props.certificate.back_max_width_module,
         back_color_module: props.certificate.back_color_module ?? '#000000',
         back_visible_module: props.certificate.back_visible_module == 1 ? true : false,
+
+        // QR del reverso
+        back_size_qr: props.certificate.back_size_qr ?? 100,
+        back_font_align_qr: props.certificate.back_font_align_qr ?? 'right',
+        back_position_qr_x: props.certificate.back_position_qr_x ?? 600,
+        back_position_qr_y: props.certificate.back_position_qr_y ?? 100,
+        back_visible_qr: props.certificate.back_visible_qr == 1 ? true : false,
+
+        // Nota Final (PROMEDIO FINAL)
+        back_fontfamily_grade: props.gradeConfig?.back_fontfamily_grade,
+        back_font_size_grade: props.gradeConfig?.back_font_size_grade,
+        back_color_grade: props.gradeConfig?.back_color_grade ?? '#000000',
+        back_position_grade_x: props.gradeConfig?.back_position_grade_x,
+        back_position_grade_y: props.gradeConfig?.back_position_grade_y,
+        back_visible_grade: props.gradeConfig?.back_visible_grade == 1 ? true : false,
+        back_rectangle_width: props.gradeConfig?.back_rectangle_width ?? 100,
+        back_rectangle_height: props.gradeConfig?.back_rectangle_height ?? 100,
+        back_rectangle_color: props.gradeConfig?.back_rectangle_color ?? '#000000',
     });
 
     // Watcher para validar contenido curso/módulo según tipo de certificado
@@ -1306,6 +1329,169 @@
                                             </div>
                                             <div class="flex items-center justify-end mt-4">
                                                 <button @click="updateCertificateData(13)" class="btn btn-success">Guardar cambios y ver resultado</button>
+                                            </div>
+                                        </div>
+                                    </vue-collapsible>
+                                </div>
+                            </div>
+                            <div class="col-span-2 space-y-2 font-semibold mt-6">
+                                <!-- QR del Reverso -->
+                                <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
+                                    <button
+                                        type="button"
+                                        class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b]"
+                                        :class="{ '!text-primary': accordians3 === 27 }"
+                                        @click="accordians3 === 27 ? (accordians3 = null) : (accordians3 = 27)"
+                                    >
+                                        <icon-qrcode class="w-4 h-4 mr-2" />
+                                        Imagen QR (Reverso)
+                                        <div class="ltr:ml-auto rtl:mr-auto" :class="{ 'rotate-180': accordians3 === 27 }">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 9L12 15L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                        </div>
+                                    </button>
+                                    <vue-collapsible :isOpen="accordians3 === 27">
+                                        <div class="p-4 text-white-dark text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
+                                            <div class="grid grid-cols-4 gap-4">
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_size_qr">Tamaño</InputLabel>
+                                                    <TextInput
+                                                        id="back_size_qr"
+                                                        v-model="form.back_size_qr"
+                                                        placeholder="100"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_font_align_qr">Alineación</InputLabel>
+                                                    <select v-model="form.back_font_align_qr" id="back_font_align_qr" class="form-select text-white-dark">
+                                                        <option value="top-left">top-left</option>
+                                                        <option value="top-center">top-center</option>
+                                                        <option value="top-right">top-right</option>
+                                                        <option value="bottom-left">bottom-left</option>
+                                                        <option value="bottom-center">bottom-center</option>
+                                                        <option value="bottom-right">bottom-right</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_position_qr_x">Posición X</InputLabel>
+                                                    <TextInput
+                                                        id="back_position_qr_x"
+                                                        v-model="form.back_position_qr_x"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_position_qr_y">Posición Y</InputLabel>
+                                                    <TextInput
+                                                        id="back_position_qr_y"
+                                                        v-model="form.back_position_qr_y"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div class="col-span-4 flex items-center justify-between">
+                                                    <InputLabel for="back_visible_qr" class="text-lg" value="Visible" />
+                                                    <input type="checkbox" id="back_visible_qr" class="form-checkbox" v-model="form.back_visible_qr" />
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-end mt-4">
+                                                <button @click="updateCertificateData(14)" class="btn btn-success">Guardar cambios y ver resultado</button>
+                                            </div>
+                                        </div>
+                                    </vue-collapsible>
+                                </div>
+
+                                <!-- Nota Final (PROMEDIO FINAL) -->
+                                <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
+                                    <button
+                                        type="button"
+                                        class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b]"
+                                        :class="{ '!text-primary': accordians3 === 28 }"
+                                        @click="accordians3 === 28 ? (accordians3 = null) : (accordians3 = 28)"
+                                    >
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                        </svg>
+                                        Nota Final (Promedio)
+                                        <div class="ltr:ml-auto rtl:mr-auto" :class="{ 'rotate-180': accordians3 === 28 }">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 9L12 15L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                        </div>
+                                    </button>
+                                    <vue-collapsible :isOpen="accordians3 === 28">
+                                        <div class="p-4 text-white-dark text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
+                                            <div class="grid grid-cols-4 gap-4">
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_fontfamily_grade">Fuente</InputLabel>
+                                                    <select v-model="form.back_fontfamily_grade" id="back_fontfamily_grade" class="form-select text-white-dark">
+                                                        <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
+                                                        <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
+                                                        <option value="OLDENGL.TTF">OLDENGL</option>
+                                                        <option value="Poppins-Light.ttf">Poppins-Light</option>
+                                                        <option value="Poppins-Medium.ttf">Poppins-Medium</option>
+                                                        <option value="Poppins-Bold.ttf">Poppins-Bold</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_font_size_grade">Tamaño</InputLabel>
+                                                    <TextInput
+                                                        id="back_font_size_grade"
+                                                        v-model="form.back_font_size_grade"
+                                                        placeholder="20"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_position_grade_x">Posición X</InputLabel>
+                                                    <TextInput
+                                                        id="back_position_grade_x"
+                                                        v-model="form.back_position_grade_x"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_position_grade_y">Posición Y</InputLabel>
+                                                    <TextInput
+                                                        id="back_position_grade_y"
+                                                        v-model="form.back_position_grade_y"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_color_grade">Color texto</InputLabel>
+                                                    <TextInput
+                                                        id="back_color_grade"
+                                                        v-model="form.back_color_grade"
+                                                        type="color"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_rectangle_width">Ancho rectángulo</InputLabel>
+                                                    <TextInput
+                                                        id="back_rectangle_width"
+                                                        v-model="form.back_rectangle_width"
+                                                        placeholder="100"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_rectangle_height">Alto rectángulo</InputLabel>
+                                                    <TextInput
+                                                        id="back_rectangle_height"
+                                                        v-model="form.back_rectangle_height"
+                                                        placeholder="100"
+                                                    />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_rectangle_color">Color rectángulo</InputLabel>
+                                                    <TextInput
+                                                        id="back_rectangle_color"
+                                                        v-model="form.back_rectangle_color"
+                                                        type="color"
+                                                    />
+                                                </div>
+                                                <div class="col-span-4 flex items-center justify-between">
+                                                    <InputLabel for="back_visible_grade" class="text-lg" value="Visible" />
+                                                    <input type="checkbox" id="back_visible_grade" class="form-checkbox" v-model="form.back_visible_grade" />
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-end mt-4">
+                                                <button @click="updateCertificateData(15)" class="btn btn-success">Guardar cambios y ver resultado</button>
                                             </div>
                                         </div>
                                     </vue-collapsible>

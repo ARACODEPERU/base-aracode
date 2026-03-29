@@ -13,7 +13,11 @@
         certificate:{
             type: Object,
             default : () => ({})
-        }
+        },
+        gradeConfig: {
+            type: Object,
+            default: () => null,
+        },
     });
 
 </script>
@@ -30,7 +34,7 @@
             ]"
         />
         <div class="pt-5">
-            <EditForm :certificate="certificate" />
+            <EditForm :certificate="certificate" :gradeConfig="gradeConfig" />
         </div>
     </AppLayout>
 </template>

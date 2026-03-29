@@ -3,8 +3,6 @@
 namespace Modules\Academic\Entities;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Modules\Academic\Database\factories\AcaCertificateParameterFactory;
 
 class AcaCertificateParameter extends Model
 {
@@ -130,6 +128,22 @@ class AcaCertificateParameter extends Model
         'back_max_width_module',
         'back_color_module',
         'back_visible_module',
+        // QR del reverso
+        'back_size_qr',
+        'back_font_align_qr',
+        'back_position_qr_x',
+        'back_position_qr_y',
+        'back_visible_qr',
+        // Nota Final (PROMEDIO FINAL)
+        'back_fontfamily_grade',
+        'back_font_size_grade',
+        'back_color_grade',
+        'back_position_grade_x',
+        'back_position_grade_y',
+        'back_visible_grade',
+        'back_rectangle_width',
+        'back_rectangle_height',
+        'back_rectangle_color',
     ];
 
     public function course()

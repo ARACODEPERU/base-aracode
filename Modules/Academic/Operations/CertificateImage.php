@@ -2,35 +2,39 @@
 
 namespace Modules\Academic\Operations;
 
-use Modules\Academic\Entities\AcaCapRegistration;
-use Modules\Academic\Entities\AcaCertificateParameter;
-use Modules\Academic\Entities\AcaCertificate;
-use Modules\Academic\Entities\AcaCourse;
-use Modules\Academic\Entities\AcaStudent;
-use Modules\Academic\Entities\AcaModule;
-use Intervention\Image\Facades\Image;
-use Illuminate\Support\Facades\Response;
 use App\Helpers\Invoice\QrCodeGenerator;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
+use Intervention\Image\Facades\Image;
+use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaCertificateGradeConfig;
+use Modules\Academic\Entities\AcaCertificateParameter;
+use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaModule;
+use Modules\Academic\Entities\AcaStudent;
 
 class CertificateImage
 {
     public $certificates_param;
+
     public $type = 'front'; // 'front' o 'back'
+
     public $module_id = null; // ID del módulo para datos reales
+
     public $student_id = null; // ID del estudiante para datos reales
+
     public $course_id = null; // ID del curso
 
     /**
      * Genera la imagen del certificado
      *
-     * @param int $certificate_id ID del certificado (aca_certificate_parameters)
-     * @param string $type Tipo de certificado: 'front' (anverso) o 'back' (reverso)
-     * @param int|null $student_id ID del estudiante (para datos reales)
-     * @param int|null $course_id ID del curso (para datos reales)
-     * @param int|null $module_id ID del módulo (para certificados de módulo)
+     * @param  int  $certificate_id  ID del certificado (aca_certificate_parameters)
+     * @param  string  $type  Tipo de certificado: 'front' (anverso) o 'back' (reverso)
+     * @param  int|null  $student_id  ID del estudiante (para datos reales)
+     * @param  int|null  $course_id  ID del curso (para datos reales)
+     * @param  int|null  $module_id  ID del módulo (para certificados de módulo)
      * @return string|null Contenido de la imagen en binario
      */
     public function generate($certificate_id, $type = 'front', $student_id = null, $course_id = null, $module_id = null)
@@ -45,14 +49,14 @@ class CertificateImage
         $this->certificates_param = AcaCertificateParameter::find($certificate_id);
 
         // Texto de ejemplo para vista previa (cuando no hay datos reales)
-        $textDefault = "Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.";
+        $textDefault = 'Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.';
 
         // Seleccionar imagen base según el tipo
         if ($type === 'back') {
-            $img = Image::make(public_path('storage' . DIRECTORY_SEPARATOR . $this->certificates_param->back_certificate_img));
+            $img = Image::make(public_path('storage'.DIRECTORY_SEPARATOR.$this->certificates_param->back_certificate_img));
             $textDefault = $this->certificates_param->back_description;
         } else {
-            $img = Image::make(public_path('storage' . DIRECTORY_SEPARATOR . $this->certificates_param->certificate_img));
+            $img = Image::make(public_path('storage'.DIRECTORY_SEPARATOR.$this->certificates_param->certificate_img));
         }
 
         // Obtener fecha: si hay estudiante, usar fecha real del registro
@@ -60,7 +64,7 @@ class CertificateImage
 
         // Fecha
         $this->addTextToImage($img,
-            "Lima, " . $fecha,
+            'Lima, '.$fecha,
             $this->getField('position_date_x'),
             $this->getField('position_date_y'),
             $this->getField('fontfamily_date'),
@@ -110,7 +114,7 @@ class CertificateImage
             $descriptionText = $this->certificates_param->back_description ?? '';
 
             if ($descriptionText && $this->getField('visible_description')) {
-                $htmlGenerator = new CertificateGeneratorHtml();
+                $htmlGenerator = new CertificateGeneratorHtml;
 
                 // Dimensiones
                 $descContentWidth = (int) ($this->getField('max_width_description') ?? 800);
@@ -147,7 +151,7 @@ class CertificateImage
             $descriptionText = $this->certificates_param->description ?? $textDefault;
 
             if ($descriptionText && $this->getField('visible_description')) {
-                $htmlGenerator = new CertificateGeneratorHtml();
+                $htmlGenerator = new CertificateGeneratorHtml;
 
                 // Dimensiones
                 $descContentWidth = (int) ($this->getField('max_width_description') ?? 800);
@@ -182,7 +186,7 @@ class CertificateImage
         }
 
         // Generador de contenido HTML
-        $htmlGenerator = new CertificateGeneratorHtml();
+        $htmlGenerator = new CertificateGeneratorHtml;
 
         // Solo procesamos contenido para el reverso
         if ($type === 'back') {
@@ -198,7 +202,7 @@ class CertificateImage
             $isForModule = $this->certificates_param->for_module ?? false;
 
             // 1. INSERTAR CONTENIDO DEL CURSO (SI ES VISIBLE Y NO ES PARA MÓDULOS)
-            if ($this->getField('visible_course') && !$isForModule) {
+            if ($this->getField('visible_course') && ! $isForModule) {
 
                 $contentType = $this->getField('content_type') ?? 'list';
                 $viewName = $contentType === 'table' ? 'content-table' : 'content-list';
@@ -305,20 +309,18 @@ class CertificateImage
             }
         }
 
-
-
         // QR solo para anverso
         if ($type === 'front') {
             $certificate = AcaCertificate::where('course_id', $course_id)
                 ->where('student_id', $student_id)
                 ->first();
 
-            $certificate_id = $certificate ? $certificate->id : "1";
+            $certificate_id = $certificate ? $certificate->id : '1';
             $generator = new QrCodeGenerator(300);
-            $dir = public_path() . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'tmp_qr';
+            $dir = public_path().DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'tmp_qr';
             $cadenaqr = route('aca_image_download', ['id' => $certificate_id]);
 
-            $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10) . '.png', 8, 2);
+            $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10).'.png', 8, 2);
             $qr = Image::make($qr_path);
 
             if ($this->getField('size_qr')) {
@@ -328,11 +330,39 @@ class CertificateImage
                 }
             }
 
-            if (File::exists($qr_path)){
+            if (File::exists($qr_path)) {
                 File::delete($qr_path);
             }
 
         }
+
+        // QR del reverso (cuando type es back)
+        if ($this->type === 'back' && $this->getField('back_visible_qr')) {
+            $certificate = null;
+            $certificate_id = $certificate ? $certificate->id : '1';
+            $generator = new QrCodeGenerator(300);
+            $dir = public_path().DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'tmp_qr';
+            $cadenaqr = route('aca_image_download', ['id' => $certificate_id]);
+
+            $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10).'.png', 8, 2);
+            $qr = Image::make($qr_path);
+
+            if ($this->getField('back_size_qr')) {
+                $qr->fit($this->getField('back_size_qr'), $this->getField('back_size_qr'));
+                $img->insert($qr, 'top-left', $this->getField('back_position_qr_x'), $this->getField('back_position_qr_y'));
+            }
+
+            if (File::exists($qr_path)) {
+                File::delete($qr_path);
+            }
+        }
+
+
+        // Nota Final (PROMEDIO FINAL) del reverso
+        if ($this->type === 'back' && $this->getField('back_visible_grade')) {
+            $this->addGradeToImage($img);
+        }
+
         // Redimensionar imagen
         $maxWidth = 1550;
         $maxHeight = 1550;
@@ -351,9 +381,22 @@ class CertificateImage
      */
     private function getField($field)
     {
+        // Campos de Nota Final que están en la tabla relacionada
+        if (in_array($field, ['back_fontfamily_grade', 'back_font_size_grade', 'back_color_grade',
+            'back_position_grade_x', 'back_position_grade_y', 'back_visible_grade',
+            'back_rectangle_width', 'back_rectangle_height', 'back_rectangle_color'])) {
+            $gradeConfig = AcaCertificateGradeConfig::where('certificate_id', $this->certificates_param->id)->first();
+
+            if ($gradeConfig) {
+                return $gradeConfig->{$field} ?? null;
+            }
+
+            return null;
+        }
 
         if ($this->type === 'back') {
-            $backField = 'back_' . $field;
+            $backField = (str_starts_with($field, 'back_')) ? $field : 'back_'.$field;
+
             return $this->certificates_param->{$backField} ?? null;
         }
 
@@ -370,7 +413,7 @@ class CertificateImage
     private function getRealDate()
     {
         // Si no hay estudiante, usar fecha actual
-        if (!$this->student_id || !$this->course_id) {
+        if (! $this->student_id || ! $this->course_id) {
             return date('d-m-Y');
         }
 
@@ -396,8 +439,8 @@ class CertificateImage
     private function getRealStudentName()
     {
         // Si no hay estudiante, usar texto de ejemplo
-        if (!$this->student_id) {
-            return "Nombres del Estudiante o alumnos";
+        if (! $this->student_id) {
+            return 'Nombres del Estudiante o alumnos';
         }
 
         // Buscar el estudiante con su persona
@@ -407,7 +450,79 @@ class CertificateImage
             return $student->person->full_name;
         }
 
-        return "Nombres del Estudiante o alumnos";
+        return 'Nombres del Estudiante o alumnos';
+    }
+
+    /**
+     * Agrega la Nota Final (PROMEDIO FINAL) a la imagen del reverso usando vista HTML
+     */
+    private function addGradeToImage($img)
+    {
+        $visible = $this->getField('back_visible_grade');
+        if (! $visible) {
+            return;
+        }
+
+        $gradeValue = '18';
+        $textColor = $this->getField('back_color_grade') ?? '#000000';
+        $isPreview = true;
+
+        if ($this->student_id && $this->course_id) {
+            $register = AcaCapRegistration::where('student_id', $this->student_id)
+                ->where('course_id', $this->course_id)
+                ->first();
+
+            if ($register) {
+                $studentGrade = \Modules\Academic\Entities\AcaStudentGrade::where('registration_id', $register->id)->first();
+
+                if ($studentGrade && $studentGrade->final_average !== null) {
+                    $gradeValue = number_format($studentGrade->final_average, 2);
+                    $isPreview = false;
+
+                    if ($studentGrade->final_average < 11) {
+                        $textColor = '#FF0000';
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+
+        $rectWidth = (int) ($this->getField('back_rectangle_width') ?? 100);
+        $rectHeight = (int) ($this->getField('back_rectangle_height') ?? 60);
+        $rectColor = $textColor;
+        $fontSize = (int) ($this->getField('back_font_size_grade') ?? 14);
+
+        $posX = (int) ($this->getField('back_position_grade_x') ?? 0);
+        $posY = (int) ($this->getField('back_position_grade_y') ?? 0);
+
+        $tableWidth = 200 + $rectWidth;
+        $tableHeight = max($rectHeight, $fontSize * 4);
+
+        $htmlGenerator = new CertificateGeneratorHtml;
+
+        $viewData = [
+            'canvasWidth' => $tableWidth,
+            'canvasHeight' => $tableHeight,
+            'posX' => 0,
+            'posY' => 0,
+            'fontFamily' => $this->getField('back_fontfamily_grade') ?? 'arial.ttf',
+            'fontSize' => $fontSize,
+            'color' => $rectColor,
+            'rectWidth' => $rectWidth,
+            'rectHeight' => $rectHeight,
+            'gradeValue' => $gradeValue,
+        ];
+
+        $htmlPath = $htmlGenerator->generateFromView('grade-table', $viewData, $tableWidth, $tableHeight);
+
+        if ($htmlPath && File::exists($htmlPath)) {
+            $htmlImage = Image::make($htmlPath);
+            $img->insert($htmlImage, 'top-left', $posX, $posY);
+            File::delete($htmlPath);
+        }
     }
 
     /**
@@ -421,7 +536,7 @@ class CertificateImage
     private function getRealCourseTitle()
     {
         // Texto de ejemplo por defecto
-        $defaultTitle = "Título del Curso 3025 - II";
+        $defaultTitle = 'Título del Curso 3025 - II';
 
         // Si hay módulo específico, mostrar curso + módulo
         if ($this->module_id) {
@@ -455,7 +570,7 @@ class CertificateImage
             if ($visible) {
 
                 $img->text($text, $posX, $posY, function ($font) use ($fontFamily, $fontSize, $color, $align, $valign) {
-                    $font->file(public_path('fonts' . DIRECTORY_SEPARATOR . $fontFamily));
+                    $font->file(public_path('fonts'.DIRECTORY_SEPARATOR.$fontFamily));
                     $font->size($fontSize);
                     $font->color($color);
                     $font->align($align);
@@ -476,7 +591,7 @@ class CertificateImage
             $fontSize = $fontSize ?? 12;
             $interlineado_px = $interspace ?? ($fontSize * 0.2);
             $xColor = $color ?? '#0d0603';
-            $fontPath = public_path('fonts' . DIRECTORY_SEPARATOR . $fontFamily);
+            $fontPath = public_path('fonts'.DIRECTORY_SEPARATOR.$fontFamily);
 
             // Mejoramos la estimación para que el wrap sea más ajustado
             $charWidth = $this->estimateCharWidth($fontSize);
@@ -492,7 +607,7 @@ class CertificateImage
 
                 // Calculamos el ancho real de las palabras juntas para medir la "densidad"
                 $wordsOnlyWidth = 0;
-                foreach($words as $word) {
+                foreach ($words as $word) {
                     $wordsOnlyWidth += strlen($word) * $charWidth;
                 }
 
@@ -502,7 +617,7 @@ class CertificateImage
                 // 1. No es la última línea.
                 // 2. Tiene más de 2 palabras.
                 // 3. El contenido ocupa al menos el 65% del ancho (evita espacios gigantes).
-                if (!$isLastLine && $numWords > 2 && ($wordsOnlyWidth > $maxWidthPx * 0.65)) {
+                if (! $isLastLine && $numWords > 2 && ($wordsOnlyWidth > $maxWidthPx * 0.65)) {
 
                     $totalSpaceToDistribute = $maxWidthPx - $wordsOnlyWidth;
                     $spacing = $totalSpaceToDistribute / ($numWords - 1);
@@ -527,7 +642,7 @@ class CertificateImage
                 } else {
                     // ALINEACIÓN NORMAL PARA ÚLTIMA LÍNEA O LÍNEAS POBRES
                     // Esto soluciona que la última línea se vaya a la izquierda
-                    $img->text($lineText, (int)$posX, (int)$currentY, function ($font) use ($fontPath, $fontSize, $xColor, $align, $valign) {
+                    $img->text($lineText, (int) $posX, (int) $currentY, function ($font) use ($fontPath, $fontSize, $xColor, $align, $valign) {
                         $font->file($fontPath);
                         $font->size($fontSize);
                         $font->color($xColor);
@@ -540,6 +655,7 @@ class CertificateImage
             }
         }
     }
+
     /**
      * Divide el texto en líneas según un ancho máximo en píxeles.
      */
@@ -550,16 +666,16 @@ class CertificateImage
         $currentLine = '';
 
         foreach ($words as $word) {
-            $lineWidth = strlen($currentLine . ' ' . $word) * $charWidth;
+            $lineWidth = strlen($currentLine.' '.$word) * $charWidth;
             if ($lineWidth > $maxWidthPx) {
                 $lines[] = trim($currentLine);
                 $currentLine = $word;
             } else {
-                $currentLine .= ' ' . $word;
+                $currentLine .= ' '.$word;
             }
         }
 
-        if (!empty($currentLine)) {
+        if (! empty($currentLine)) {
             $lines[] = trim($currentLine);
         }
 
@@ -589,7 +705,8 @@ class CertificateImage
         // Centrar horizontalmente las líneas
         $centeredLines = array_map(function ($line) use ($maxLineLength) {
             $spacesToAdd = max(0, ($maxLineLength - strlen($line)) / 2);
-            $centeredLine = str_repeat(' ', $spacesToAdd) . $line;
+            $centeredLine = str_repeat(' ', $spacesToAdd).$line;
+
             return $centeredLine;
         }, $lines);
 
@@ -599,5 +716,4 @@ class CertificateImage
 
         return $centeredText;
     }
-
 }

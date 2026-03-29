@@ -67,8 +67,29 @@
         max_width_description: null,
         interspace_description: null,
         name_certificate: null,
-        state: null
+        state: null,
+
+        // QR del reverso
+        back_size_qr: null,
+        back_font_align_qr: null,
+        back_position_qr_x: null,
+        back_position_qr_y: null,
+        back_visible_qr: false,
+
+        // Nota Final (PROMEDIO FINAL)
+        back_fontfamily_grade: null,
+        back_font_size_grade: null,
+        back_color_grade: '#000000',
+        back_position_grade_x: null,
+        back_position_grade_y: null,
+        back_visible_grade: false,
+        back_rectangle_width: 100,
+        back_rectangle_height: 100,
+        back_rectangle_color: '#000000',
     });
+
+    const modules = ref([]);
+    const loadingModules = ref(false);
 
     const loadModules = () => {
         if (form.course_id && form.certificate_type === 'module') {
@@ -95,6 +116,17 @@
     });
 
     const createCertificate = () => {
+        if (form.has_back && !form.back_certificate_img && !form.back_certificate_img_preview) {
+            Swal2.fire({
+                title: 'Error',
+                text: 'Debe seleccionar una imagen de reverso',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
         form.post(route('aca_certificate_store'), {
             forceFormData: true,
             errorBag: 'createCertificate',
@@ -230,9 +262,9 @@
                     <!-- Certificado para Módulos -->
                     <div class="col-span-2">
                         <label class="flex items-center cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                v-model="form.for_module" 
+                            <input
+                                type="checkbox"
+                                v-model="form.for_module"
                                 class="form-checkbox text-primary"
                             />
                             <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Certificado para módulos</span>
@@ -263,9 +295,9 @@
                     <!-- Toggle Reverso -->
                     <div class="col-span-2">
                         <label class="flex items-center cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                v-model="form.has_back" 
+                            <input
+                                type="checkbox"
+                                v-model="form.has_back"
                                 class="form-checkbox text-primary"
                             />
                             <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Habilitar certificado con reverso</span>
@@ -275,9 +307,9 @@
                     <!-- Toggle Incluir Reverso en Descarga -->
                     <div class="col-span-2" v-if="form.has_back">
                         <label class="flex items-center cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                v-model="form.has_reverse" 
+                            <input
+                                type="checkbox"
+                                v-model="form.has_reverse"
                                 class="form-checkbox text-primary"
                             />
                             <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Incluir reverso al descargar (ZIP)</span>
@@ -309,8 +341,8 @@
                         <div class="col-span-2" v-if="form.back_certificate_img_preview">
                             <div class="relative inline-block">
                                 <img :src="form.back_certificate_img_preview" class="h-20 rounded border" />
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     @click="removeBackImage"
                                     class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                                 >
@@ -326,25 +358,25 @@
                             <InputLabel class="mb-2">Contenido del Reverso</InputLabel>
                             <div class="space-y-2">
                                 <label class="flex items-center cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="form.back_content_show_manual" 
+                                    <input
+                                        type="checkbox"
+                                        v-model="form.back_content_show_manual"
                                         class="form-checkbox text-primary"
                                     />
                                     <span class="ltr:ml-2 rtl:mr-2 text-sm">Descripción manual</span>
                                 </label>
                                 <label class="flex items-center cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="form.back_content_show_course" 
+                                    <input
+                                        type="checkbox"
+                                        v-model="form.back_content_show_course"
                                         class="form-checkbox text-primary"
                                     />
                                     <span class="ltr:ml-2 rtl:mr-2 text-sm">Contenido del curso</span>
                                 </label>
                                 <label class="flex items-center cursor-pointer" v-if="form.for_module">
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="form.back_content_show_module" 
+                                    <input
+                                        type="checkbox"
+                                        v-model="form.back_content_show_module"
                                         class="form-checkbox text-primary"
                                     />
                                     <span class="ltr:ml-2 rtl:mr-2 text-sm">Contenido del módulo</span>
