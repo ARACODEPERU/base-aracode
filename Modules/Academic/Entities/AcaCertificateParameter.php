@@ -134,16 +134,6 @@ class AcaCertificateParameter extends Model
         'back_position_qr_x',
         'back_position_qr_y',
         'back_visible_qr',
-        // Nota Final (PROMEDIO FINAL)
-        'back_fontfamily_grade',
-        'back_font_size_grade',
-        'back_color_grade',
-        'back_position_grade_x',
-        'back_position_grade_y',
-        'back_visible_grade',
-        'back_rectangle_width',
-        'back_rectangle_height',
-        'back_rectangle_color',
     ];
 
     public function course()
