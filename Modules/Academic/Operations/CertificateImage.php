@@ -59,7 +59,6 @@ class CertificateImage
             $img = Image::make(public_path('storage'.DIRECTORY_SEPARATOR.$this->certificates_param->certificate_img));
         }
 
-
         // Obtener fecha: si hay estudiante, usar fecha real del registro
         $fecha = $this->getRealDate();
 
