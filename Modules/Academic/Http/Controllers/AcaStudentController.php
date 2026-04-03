@@ -347,8 +347,11 @@ class AcaStudentController extends Controller
             $request,
             [
                 'document_type_id'  => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $person_id . ',id,document_type_id,' . $request->get('document_type_id'),
+                'number' => [
+                            'required',
+                            'max:12',
+                            "unique:people,number,{$person_id},id,document_type_id," . $request->get('document_type_id')
+                            ],
                 'telephone'         => 'required|max:12',
                 'email'             => 'required|email|max:255',
                 'email'            => 'unique:people,email,' . $person_id . ',id',
