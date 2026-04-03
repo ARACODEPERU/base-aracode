@@ -471,73 +471,64 @@ class PersonController extends Controller
         return $persons;
     }
 
-    public function updateInfoPersonByUser(Request $request){
-
+    public function updateInfoPersonByUser(Request $request)
+    {
         $person_id = $request->get('id');
-        $user = User::find($request->get('user_id'));
-        //dd($request->all());
-        $this->validate(
-            $request,
-            [
-                'document_type'     => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $person_id . ',id,document_type_id,' . $request->get('document_type'),
-                'telephone'         => 'required|max:12',
-                'email'             => 'required|max:255',
-                'email'             => 'unique:people,email,' . $person_id . ',id',
-                'email'             => 'unique:users,email,' . $user->id . ',id',
-                'address'           => 'required|max:255',
-                'ubigeo'            => 'required|max:255',
-                'birthdate'         => 'required',
-                'names'             => 'required|max:255',
-                'father_lastname'   => 'required|max:255',
-                'mother_lastname'   => 'required|max:255',
-                'id' => [
-                    'nullable', // ¡Ahora es opcional! Si no se envía, la regla no verifica unicidad de usuario.
-                    'numeric', // Asegura que si se envía, sea un número válido.
-                    new ValidationPersonUser(), // Tu regla personalizada
-                ],
-            ]
-        );
+        // Usar findOrFail para detener el proceso si el usuario no existe
+        $user = User::findOrFail($request->get('user_id'));
 
-        $person = Person::find($person_id);
+        $this->validate($request, [
+            'document_type'     => 'required',
+            'number'            => [
+                'required', 'max:12',
+                "unique:people,number,{$person_id},id,document_type_id," . $request->get('document_type')
+            ],
+            'email'             => [
+                'required', 'email', 'max:255',
+                "unique:people,email,{$person_id},id",
+                "unique:users,email,{$user->id},id"
+            ],
+            'names'             => 'required|max:255',
+            'father_lastname'   => 'required|max:255',
+            'mother_lastname'   => 'required|max:255',
+            'telephone'         => 'required|max:12',
+            'address'           => 'required|max:255',
+            'ubigeo'            => 'required',
+            'birthdate'         => 'required',
+        ]);
 
-        $user->name = $request->get('names');
-        $user->email = $request->get('email');
+        // Usar una transacción para que se guarde TODO o NADA
+        \DB::transaction(function () use ($request, $person_id, $user) {
 
-        if($person){
-            $person->document_type_id = $request->get('document_type');
-            $person->number = $request->get('number');
-            $person->telephone = $request->get('telephone');
-            $person->email = $request->get('email');
-            $person->address = $request->get('address');
-            $person->ubigeo = $request->get('ubigeo');
-            $person->birthdate = $request->get('birthdate');
-            $person->names = $request->get('names');
-            $person->father_lastname = $request->get('father_lastname');
-            $person->mother_lastname = $request->get('mother_lastname');
-            $person->ubigeo_description = $request->get('document_type');
-            $person->gender = $request->get('gender');
+            $person = Person::find($person_id);
 
-            $person->save();
-        }else{
-            $newPerson = Person::create([
-                'document_type_id' => $request->get('document_type_id'),
-                'number' => $request->get('number'),
-                'telephone' => $request->get('telephone'),
-                'email' => $request->get('email'),
-                'address' => $request->get('address'),
-                'ubigeo' => $request->get('ubigeo'),
-                'birthdate' => $request->get('birthdate'),
-                'names' => $request->get('names'),
-                'father_lastname' => $request->get('father_lastname'),
-                'mother_lastname' => $request->get('mother_lastname'),
-                'ubigeo_description' => $request->get('ubigeo_description'),
-                'gender' => $request->get('gender'),
-            ]);
+            $data = [
+                'document_type_id'   => $request->get('document_type'),
+                'number'             => $request->get('number'),
+                'telephone'          => $request->get('telephone'),
+                'email'              => $request->get('email'),
+                'address'            => $request->get('address'),
+                'ubigeo'             => $request->get('ubigeo'),
+                'ubigeo_description' => $request->get('ubigeo_description'), // CORREGIDO
+                'birthdate'          => $request->get('birthdate'),
+                'names'              => $request->get('names'),
+                'father_lastname'    => $request->get('father_lastname'),
+                'mother_lastname'    => $request->get('mother_lastname'),
+                'gender'             => $request->get('gender') ?? 'M',
+            ];
 
-            $user->person_id = $newPerson->id;
-        }
-        $user->save();
+            if ($person) {
+                $person->update($data);
+            } else {
+                $person = Person::create($data);
+                $user->person_id = $person->id;
+            }
+
+            $user->name = $request->get('names');
+            $user->email = $request->get('email');
+            $user->save();
+        });
+
+        return response()->json(['message' => 'Datos actualizados correctamente']);
     }
 }

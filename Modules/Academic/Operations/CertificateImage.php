@@ -531,9 +531,9 @@ class CertificateImage
      */
     private function getRealDate()
     {
-        // Si no hay estudiante, usar fecha actual
+        // Si no hay estudiante o curso, usar fecha actual
         if (! $this->student_id || ! $this->course_id) {
-            return date('d-m-Y');
+            return Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
         }
 
         // Buscar el registro del estudiante en el curso
@@ -542,10 +542,13 @@ class CertificateImage
             ->first();
 
         if ($register && $register->certificate_date) {
-            return Carbon::parse($register->certificate_date)->format('d-m-Y');
+            return Carbon::parse($register->certificate_date)
+                ->locale('es')
+                ->isoFormat('D [de] MMMM [de] YYYY');
         }
 
-        return date('d-m-Y');
+        // Fallback: fecha actual formateada
+        return Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
     }
 
     /**

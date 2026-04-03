@@ -347,8 +347,11 @@ class AcaStudentController extends Controller
             $request,
             [
                 'document_type_id'  => 'required',
-                'number'            => 'required|max:12',
-                'number'            => 'unique:people,number,' . $person_id . ',id,document_type_id,' . $request->get('document_type_id'),
+                'number' => [
+                            'required',
+                            'max:12',
+                            "unique:people,number,{$person_id},id,document_type_id," . $request->get('document_type_id')
+                            ],
                 'telephone'         => 'required|max:12',
                 'email'             => 'required|email|max:255',
                 'email'            => 'unique:people,email,' . $person_id . ',id',
@@ -538,23 +541,23 @@ class AcaStudentController extends Controller
             ->map(function ($registration) use ($student_id, $user) {
                 $course = $registration->course;
                 $course->can_view = true;
-                
+
                 // Total de actividades/contenidos vistos
                 $course->total_activity = AcaStudentHistory::where('person_id', $user->person_id)
                     ->where('course_id', $registration->course->id)
                     ->distinct('content_id')
                     ->count('content_id');
-                
+
                 // Contenido total del curso
                 $course->contents_total = $course->modules->sum(function ($module) {
                     return $module->themes->sum(function ($theme) {
                         return $theme->contents->count();
                     });
                 });
-                
+
                 // Verificar si el curso tiene auto_certificate
                 $course->auto_certificate = $course->auto_certificate ?? false;
-                
+
                 // Verificar si existe certificado (para auto_certificate)
                 $course->certificate_exists = false;
                 if ($course->auto_certificate) {
@@ -562,7 +565,7 @@ class AcaStudentController extends Controller
                         ->where('course_id', $course->id)
                         ->exists();
                 }
-                
+
                 // Obtener nota del estudiante (solo si no es auto_certificate)
                 $course->student_grade = null;
                 $course->student_approved = false;
@@ -625,7 +628,7 @@ class AcaStudentController extends Controller
         $allCourses = AcaCourse::with('modules.themes.contents')
                 ->with('modality')
                 ->with('teacher.person')
-                ->orderBy('description')
+                ->orderBy('id', 'DESC')
                 ->get();
 
         // 4. Procesar cada curso para determinar 'can_view'
@@ -1334,7 +1337,7 @@ class AcaStudentController extends Controller
     {
         $userId = Auth::id();
         $courseId = $request->get('course_id');
-        
+
         AcaStudentHistory::create([
             'user_id' => $userId,
             'person_id' => Auth::user()->person_id,
@@ -1344,34 +1347,34 @@ class AcaStudentController extends Controller
             'content_id' => $request->get('content_id'),
             'type_content' => $request->get('type_content')
         ]);
-        
+
         $this->checkAndCreateCertificate($userId, $courseId);
     }
-    
+
     private function checkAndCreateCertificate($userId, $courseId)
     {
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
-        
+
         if (!$student) return;
-        
+
         $course = AcaCourse::find($courseId);
         if (!$course || !$course->auto_certificate) return;
-        
+
         $contentsViewed = AcaStudentHistory::where('user_id', $userId)
             ->where('course_id', $courseId)
             ->distinct('content_id')
             ->count('content_id');
-        
+
         $totalContents = AcaModule::where('course_id', $courseId)
             ->with('themes.contents')
             ->get()
             ->sum(fn($module) => $module->themes->sum(fn($theme) => $theme->contents->count()));
-        
+
         if ($contentsViewed >= $totalContents && $totalContents > 0) {
             $registration = AcaCapRegistration::where('student_id', $student->id)
                 ->where('course_id', $courseId)
                 ->first();
-            
+
             if ($registration) {
                 AcaCertificate::firstOrCreate(
                     ['registration_id' => $registration->id, 'course_id' => $courseId],
