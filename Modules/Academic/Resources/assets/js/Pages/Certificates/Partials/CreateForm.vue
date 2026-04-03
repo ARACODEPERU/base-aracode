@@ -86,6 +86,13 @@
         back_rectangle_width: 100,
         back_rectangle_height: 100,
         back_rectangle_color: '#000000',
+
+        // Contenido del curso (exam grade y themes)
+        back_show_exam_grade: false,
+        back_show_themes: true,
+        back_exam_fontfamily: 'arial.ttf',
+        back_exam_font_size: 14,
+        back_exam_color: '#000000',
     });
 
     const modules = ref([]);
@@ -379,7 +386,23 @@
                                         v-model="form.back_content_show_module"
                                         class="form-checkbox text-primary"
                                     />
-                                    <span class="ltr:ml-2 rtl:mr-2 text-sm">Contenido del módulo</span>
+                                    <span class="ltext-sm rtl:mr-2">Contenido del módulo</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer" v-if="form.back_content_show_course">
+                                    <input
+                                        type="checkbox"
+                                        v-model="form.back_show_exam_grade"
+                                        class="form-checkbox text-primary"
+                                    />
+                                    <span class="ltext-sm rtl:mr-2">Mostrar nota de examen por módulo</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer" v-if="form.back_content_show_course">
+                                    <input
+                                        type="checkbox"
+                                        v-model="form.back_show_themes"
+                                        class="form-checkbox text-primary"
+                                    />
+                                    <span class="ltext-sm rtl:mr-2">Mostrar temas del módulo</span>
                                 </label>
                             </div>
                         </div>

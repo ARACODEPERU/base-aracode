@@ -3,77 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            margin: 0;
-            padding: 0;
-            background: transparent !important;
-        }
-
-        body {
-            width: {{ $canvasWidth }}px;
-            height: {{ $canvasHeight }}px;
-            background-color: transparent;
-            overflow: hidden;
-            font-family: {{ $fontFamily }}, sans-serif;
-            color: {{ $color }};
-        }
-
-        .container {
-            position: absolute;
-            left: {{ $posX }}px;
-            top: {{ $posY }}px;
-            width: {{ $maxWidth }}px;
-            padding: 10px;
-            background-color: transparent;
-        }
-
-        .course-title {
-            font-size: {{ $fontSize + 4 }}px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-align: center;
-            border-bottom: 2px solid {{ $color }};
-            padding-bottom: 10px;
-        }
-
-        .module {
-            margin-bottom: 15px;
-        }
-
-        .module-title {
-            font-size: {{ $fontSize }}px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-        }
-
-        .module-number {
-            margin-right: 8px;
-        }
-
-        .themes-list {
-            list-style: none;
-            padding-left: 20px;
-        }
-
-        .theme-item {
-            font-size: {{ $fontSize - 2 }}px;
-            line-height: {{ $lineHeight }}px;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .bullet {
-            margin-right: 8px;
-            flex-shrink: 0;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: transparent !important; }
+        body { width: {{ $canvasWidth }}px; height: {{ $canvasHeight }}px; background: transparent; overflow: hidden; font-family: Arial, sans-serif; color: {{ $color }}; }
+        .container { position: absolute; left: {{ $posX }}px; top: {{ $posY }}px; width: {{ $maxWidth }}px; max-width: {{ $maxWidth }}px; padding: 10px; background: transparent; overflow: hidden; }
+        .course-title { font-size: {{ $fontSize + 4 }}px; font-weight: bold; margin-bottom: 15px; text-align: center; border-bottom: 2px solid {{ $color }}; padding-bottom: 8px; }
+        .module-item { margin-bottom: 15px; overflow: hidden; }
+        .module-name { font-size: {{ $fontSize }}px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; flex-wrap: wrap; }
+        .module-number { margin-right: 8px; }
+        .exam-grade { font-weight: bold; color: {{ $examColor }}; font-size: {{ $examFontSize }}px; margin-left: 15px; }
+        .themes-list { padding-left: 20px; margin-top: 5px; }
+        .theme-item { font-size: {{ $fontSize - 2 }}px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -83,40 +23,38 @@
         @endif
 
         @if($showModuleContent && $moduleName)
-            {{-- Mostrar solo un módulo con sus temas (certificado por módulo) --}}
-            <div class="module">
-                <div class="module-title">
+            <div class="module-item">
+                <div class="module-name">
                     <span class="module-number">1.</span>
                     <span>{{ $moduleName }}</span>
+                    @if($showExamGrade)
+                    <span class="exam-grade"> CALIFICACIÓN OBTENIDA: {{ $examGrade[0] ?? '-' }}</span>
+                    @endif
                 </div>
-                @if(!empty($content) && count($content) > 0)
-                    <ul class="themes-list">
+                @if($showThemes && !empty($content) && count($content) > 0)
+                    <div class="themes-list">
                         @foreach($content[0]['themes'] as $theme)
-                            <li class="theme-item">
-                                <span class="bullet">°</span>
-                                <span>{{ $theme }}</span>
-                            </li>
+                            <div class="theme-item">° {{ $theme }}</div>
                         @endforeach
-                    </ul>
+                    </div>
                 @endif
             </div>
         @elseif($showCourseContent)
-            {{-- Mostrar todos los módulos con sus temas (certificado por curso) --}}
             @foreach($content as $index => $module)
-                <div class="module">
-                    <div class="module-title">
+                <div class="module-item">
+                    <div class="module-name">
                         <span class="module-number">{{ $index + 1 }}.</span>
                         <span>{{ $module['name'] }}</span>
+                        @if($showExamGrade)
+                        <span class="exam-grade"> CALIFICACIÓN OBTENIDA: {{ $examGrade[$index] ?? '-' }}</span>
+                        @endif
                     </div>
-                    @if(!empty($module['themes']))
-                        <ul class="themes-list">
+                    @if($showThemes && !empty($module['themes']))
+                        <div class="themes-list">
                             @foreach($module['themes'] as $theme)
-                                <li class="theme-item">
-                                    <span class="bullet">°</span>
-                                    <span>{{ $theme }}</span>
-                                </li>
+                                <div class="theme-item">° {{ $theme }}</div>
                             @endforeach
-                        </ul>
+                        </div>
                     @endif
                 </div>
             @endforeach

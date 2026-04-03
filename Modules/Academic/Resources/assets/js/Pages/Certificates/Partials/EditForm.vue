@@ -180,6 +180,13 @@
         back_rectangle_width: props.gradeConfig?.back_rectangle_width ?? 100,
         back_rectangle_height: props.gradeConfig?.back_rectangle_height ?? 100,
         back_rectangle_color: props.gradeConfig?.back_rectangle_color ?? '#000000',
+
+        // Contenido del curso
+        back_show_exam_grade: props.gradeConfig?.back_show_exam_grade == 1,
+        back_show_themes: props.gradeConfig?.back_show_themes != 0,
+        back_exam_fontfamily: props.gradeConfig?.back_exam_fontfamily ?? 'arial.ttf',
+        back_exam_font_size: props.gradeConfig?.back_exam_font_size ?? 14,
+        back_exam_color: props.gradeConfig?.back_exam_color ?? '#000000',
     });
 
     // Watcher para validar contenido curso/módulo según tipo de certificado
@@ -1243,6 +1250,14 @@
                                                 <div class="col-span-4 flex items-center justify-between">
                                                     <InputLabel for="back_visible_course" class="text-lg" value="Visible" />
                                                     <input type="checkbox" id="back_visible_course" class="form-checkbox" v-model="form.back_visible_course" :disabled="form.for_module" />
+                                                </div>
+                                                <div class="col-span-4 flex items-center justify-between mt-2">
+                                                    <InputLabel for="back_show_exam_grade" class="text-lg" value="Mostrar nota de examen" />
+                                                    <input type="checkbox" id="back_show_exam_grade" class="form-checkbox" v-model="form.back_show_exam_grade" :disabled="form.for_module" />
+                                                </div>
+                                                <div class="col-span-4 flex items-center justify-between">
+                                                    <InputLabel for="back_show_themes" class="text-lg" value="Mostrar temas" />
+                                                    <input type="checkbox" id="back_show_themes" class="form-checkbox" v-model="form.back_show_themes" :disabled="form.for_module" />
                                                 </div>
                                             </div>
                                             <div class="flex items-center justify-end mt-4">

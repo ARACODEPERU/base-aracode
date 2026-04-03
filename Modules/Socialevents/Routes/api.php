@@ -8,6 +8,7 @@ use Modules\Socialevents\Http\Controllers\Api\StandingsApiController;
 use Modules\Socialevents\Http\Controllers\Api\PlayerStatsApiController;
 use Modules\Socialevents\Http\Controllers\Api\TeamApiController;
 use Modules\Socialevents\Http\Controllers\Api\PlayerApiController;
+use Modules\Socialevents\Http\Controllers\Api\MatchAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,16 +26,16 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 		// Información del evento y edición
 		Route::get('events', [EventApiController::class, 'getActiveEvents'])
 			->name('events.active');
-		
+
 		Route::get('event/current', [EventApiController::class, 'getCurrentEvent'])
 			->name('event.current');
-		
+
 		Route::get('event/{id}', [EventApiController::class, 'getEventById'])
 			->name('event.show');
-		
+
 		Route::get('edition/current', [EventApiController::class, 'getCurrentEdition'])
 			->name('edition.current');
-		
+
 		// Partidos
 		Route::get('edition/{editionId}/matches/upcoming', [MatchesApiController::class, 'getUpcomingMatches'])
 			->name('matches.upcoming');
@@ -47,7 +48,7 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 
 		Route::get('edition/{editionId}/matches/{filter}', [MatchesApiController::class, 'getAllMatches'])
 			->name('matches.filter');
-		
+
 		Route::get('edition/{editionId}/matches', [MatchesApiController::class, 'getAllMatches'])
 			->name('matches.query');
 
@@ -63,42 +64,66 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 	// Rutas protegidas - requieren autenticación
 	Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.')->group(function () {
 		Route::get('socialevents', fn (Request $request) => $request->user())->name('socialevents');
-		
+
 		// Equipo del usuario (delegado)
 		Route::get('team/my-team', [TeamApiController::class, 'getMyTeam'])
 			->name('team.my-team');
-		
+
 		Route::put('team/my-team', [TeamApiController::class, 'updateMyTeam'])
 			->name('team.update');
-		
+
 		Route::post('team/my-team/logo', [TeamApiController::class, 'uploadTeamLogo'])
 			->name('team.upload-logo');
-		
+
 		Route::get('team/check', [TeamApiController::class, 'checkMyTeam'])
 			->name('team.check');
-		
+
 		// Jugadores del equipo
 		Route::get('team/players', [PlayerApiController::class, 'getPlayers'])
 			->name('team.players');
-		
+
 		Route::post('team/players', [PlayerApiController::class, 'createPlayer'])
 			->name('team.players.create');
-		
+
 		Route::put('team/players/{personId}', [PlayerApiController::class, 'updatePlayer'])
 			->name('team.players.update');
-		
+
 		Route::delete('team/players/{personId}', [PlayerApiController::class, 'deletePlayer'])
 			->name('team.players.delete');
-		
+
 		Route::post('team/players/{personId}/photo', [PlayerApiController::class, 'uploadPlayerPhoto'])
 			->name('team.players.photo');
-		
+
 		// Partidos del equipo
 		Route::get('team/matches', [TeamApiController::class, 'getTeamMatches'])
 			->name('team.matches');
-		
+
 		// Sanciones del equipo
 		Route::get('team/sanctions', [TeamApiController::class, 'getTeamSanctions'])
 			->name('team.sanctions');
+
+		// Administración de partidos (solo admins)
+		Route::prefix('admin')->group(function () {
+			Route::put('matches/edition/{editionId}', [MatchAdminController::class, 'index'])
+				->name('admin.matches');
+
+			Route::post('matches', [MatchAdminController::class, 'store'])
+				->name('admin.matches.create');
+
+			Route::put('matches/{match}', [MatchAdminController::class, 'update'])
+				->name('admin.matches.update');
+
+			Route::delete('matches/{match}', [MatchAdminController::class, 'destroy'])
+				->name('admin.matches.delete');
+
+			Route::get('teams/{editionId}', [MatchAdminController::class, 'teams'])
+				->name('admin.teams');
+
+			Route::get('locations', [MatchAdminController::class, 'locations'])
+				->name('admin.locations');
+
+            Route::get('matches/{matchId}/players', [MatchAdminController::class, 'getMatchPlayers']);
+            Route::put('matches/{matchId}/result', [MatchAdminController::class, 'saveMatchResult']);
+		});
 	});
 });

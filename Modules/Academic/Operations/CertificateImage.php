@@ -12,8 +12,10 @@ use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaCertificateGradeConfig;
 use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaCourse;
+use Modules\Academic\Entities\AcaExam;
 use Modules\Academic\Entities\AcaModule;
 use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentExam;
 
 class CertificateImage
 {
@@ -207,17 +209,47 @@ class CertificateImage
                 $contentType = $this->getField('content_type') ?? 'list';
                 $viewName = $contentType === 'table' ? 'content-table' : 'content-list';
 
-                // Datos: si hay module_id, usar datos reales del curso
-                if ($this->module_id) {
+                // Determinar si es preview (sin datos reales)
+                $isPreview = ! $this->student_id && ! $this->course_id;
+
+                // Datos: si es preview sin estudiante, usar datos de ejemplo
+                // Si hay datos reales del curso, obtenerlos pero también incluir datos de ejemplo para las notas
+                if ($isPreview) {
+                    // Modo preview sin datos reales - usar datos de ejemplo completos
+                    $contentData = $htmlGenerator->getExampleData($contentType);
+                } elseif ($this->module_id) {
                     $course = AcaCourse::find($this->course_id);
                     $contentData = $htmlGenerator->prepareCourseContent($course, false);
+                    // Agregar datos de ejemplo para las notas
+                    $contentData['examGrade'] = ['14.3', '16.5', '12.0'];
                 } elseif ($this->certificates_param->course_id) {
-                    // Datos del certificado (configuración)
                     $course = AcaCourse::find($this->certificates_param->course_id);
                     $contentData = $htmlGenerator->prepareCourseContent($course, false);
+                    // Agregar datos de ejemplo para las notas
+                    $contentData['examGrade'] = ['14.3', '16.5', '12.0'];
                 } else {
-                    // Datos de ejemplo para preview
                     $contentData = $htmlGenerator->getExampleData($contentType);
+                }
+
+                // Obtener configuración de exam grades y themes desde grade_config
+                $showExamGrade = $this->getField('back_show_exam_grade') ?? false;
+                $showThemes = $this->getField('back_show_themes') ?? true;
+
+                // Obtener notas reales si hay estudiante
+                $examGradeData = [];
+                if ($this->student_id && $this->course_id) {
+                    $examGradeData = $this->getExamGrades();
+                }
+
+                // Si no hay datos reales (preview), forzar usar datos de ejemplo
+                if (empty($examGradeData) && isset($contentData['examGrade'])) {
+                    $examGradeData = $contentData['examGrade'];
+                }
+
+                // En preview (sin student_id), usar valores de ejemplo solo si el check está activo
+                // Respetar la configuración del usuario cuando existe
+                if ($isPreview && ($showExamGrade !== false)) {
+                    $showExamGrade = true;
                 }
 
                 // Configuración de la vista
@@ -234,6 +266,12 @@ class CertificateImage
                     'showCourseContent' => true,
                     'showModuleContent' => false,
                     'moduleName' => '',
+                    'showExamGrade' => $showExamGrade,
+                    'showThemes' => $showThemes,
+                    'examGrade' => $examGradeData,
+                    'examFontFamily' => $this->getField('back_exam_fontfamily') ?? 'arial.ttf',
+                    'examFontSize' => (int) ($this->getField('back_exam_font_size') ?? 14),
+                    'examColor' => $this->getField('back_exam_color') ?? '#000000',
                 ]);
 
                 $htmlPath = $htmlGenerator->generateFromView($viewName, $viewData, $contentWidth, $contentHeight);
@@ -275,9 +313,38 @@ class CertificateImage
                         $firstModule = $course->modules()->first();
                         $moduleName = $firstModule->description ?? 'Módulo';
                     }
+
+                    // Agregar datos de ejemplo para las notas en preview
+                    $contentData['examGrade'] = ['14.3'];
+                    $contentData['showExamGrade'] = true;
+                    $contentData['showThemes'] = true;
                 } else {
                     // Datos de ejemplo
                     $contentData = $htmlGenerator->getExampleData($contentTypeModule);
+                }
+
+                // Determinar si es preview
+                $isPreview = ! $this->student_id && ! $this->course_id;
+
+                // Obtener configuración de exam grades y themes desde grade_config
+                $showExamGrade = $this->getField('back_show_exam_grade') ?? false;
+                $showThemes = $this->getField('back_show_themes') ?? true;
+
+                // Obtener notas reales si hay estudiante
+                $examGradeData = [];
+                if ($this->student_id && $this->course_id) {
+                    $examGradeData = $this->getExamGrades();
+                }
+
+                // Si no hay datos reales (preview), forzar usar datos de ejemplo
+                if (empty($examGradeData) && isset($contentData['examGrade'])) {
+                    $examGradeData = $contentData['examGrade'];
+                }
+
+                // En preview (sin student_id), usar valores de ejemplo solo si el check está activo
+                // Respetar la configuración del usuario cuando existe
+                if ($isPreview && ($showExamGrade !== false)) {
+                    $showExamGrade = true;
                 }
 
                 // Configuración de la vista
@@ -294,6 +361,12 @@ class CertificateImage
                     'showCourseContent' => false,
                     'showModuleContent' => true,
                     'moduleName' => $moduleName,
+                    'showExamGrade' => $showExamGrade,
+                    'showThemes' => $showThemes,
+                    'examGrade' => $examGradeData,
+                    'examFontFamily' => $this->getField('back_exam_fontfamily') ?? 'arial.ttf',
+                    'examFontSize' => (int) ($this->getField('back_exam_font_size') ?? 14),
+                    'examColor' => $this->getField('back_exam_color') ?? '#000000',
                 ]);
 
                 $htmlPath = $htmlGenerator->generateFromView($viewName, $viewData, $contentWidth, $contentHeight);
@@ -357,7 +430,6 @@ class CertificateImage
             }
         }
 
-
         // Nota Final (PROMEDIO FINAL) del reverso
         if ($this->type === 'back' && $this->getField('back_visible_grade')) {
             $this->addGradeToImage($img);
@@ -381,17 +453,32 @@ class CertificateImage
      */
     private function getField($field)
     {
-        // Campos de Nota Final que están en la tabla relacionada
-        if (in_array($field, ['back_fontfamily_grade', 'back_font_size_grade', 'back_color_grade',
+        // Campos de configuración en tabla relacionada (aca_certificates_grade_config)
+        $gradeConfigFields = [
+            'back_fontfamily_grade', 'back_font_size_grade', 'back_color_grade',
             'back_position_grade_x', 'back_position_grade_y', 'back_visible_grade',
-            'back_rectangle_width', 'back_rectangle_height', 'back_rectangle_color'])) {
+            'back_rectangle_width', 'back_rectangle_height', 'back_rectangle_color',
+            'back_show_exam_grade', 'back_show_themes',
+            'back_exam_fontfamily', 'back_exam_font_size', 'back_exam_color',
+        ];
+
+        if (in_array($field, $gradeConfigFields)) {
             $gradeConfig = AcaCertificateGradeConfig::where('certificate_id', $this->certificates_param->id)->first();
 
-            if ($gradeConfig) {
-                return $gradeConfig->{$field} ?? null;
+            if ($gradeConfig && $gradeConfig->{$field} !== null) {
+                return $gradeConfig->{$field};
             }
 
-            return null;
+            // Valores por defecto cuando no existe configuración
+            $defaults = [
+                'back_show_exam_grade' => false,
+                'back_show_themes' => true,
+                'back_exam_fontfamily' => 'arial.ttf',
+                'back_exam_font_size' => 14,
+                'back_exam_color' => '#000000',
+            ];
+
+            return $defaults[$field] ?? null;
         }
 
         if ($this->type === 'back') {
@@ -401,6 +488,38 @@ class CertificateImage
         }
 
         return $this->certificates_param->{$field} ?? null;
+    }
+
+    /**
+     * Obtiene las notas de examen por módulo para el estudiante
+     *
+     * @return array Array indexado numéricamente por posición del módulo
+     */
+    private function getExamGrades()
+    {
+        $examGrades = [];
+
+        if (! $this->student_id || ! $this->course_id) {
+            return $examGrades;
+        }
+
+        $modules = AcaModule::where('course_id', $this->course_id)->orderBy('position')->get();
+        $index = 0;
+
+        foreach ($modules as $module) {
+            $exam = AcaExam::where('module_id', $module->id)->first();
+            if ($exam) {
+                $studentExam = AcaStudentExam::where('exam_id', $exam->id)
+                    ->where('student_id', $this->student_id)
+                    ->first();
+                if ($studentExam && $studentExam->punctuation !== null) {
+                    $examGrades[$index] = number_format($studentExam->punctuation, 1);
+                }
+            }
+            $index++;
+        }
+
+        return $examGrades;
     }
 
     /**

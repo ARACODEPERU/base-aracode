@@ -20,12 +20,20 @@ class AcaCertificateGradeConfig extends Model
         'back_rectangle_width',
         'back_rectangle_height',
         'back_rectangle_color',
+        'back_show_exam_grade',
+        'back_show_themes',
+        'back_exam_fontfamily',
+        'back_exam_font_size',
+        'back_exam_color',
     ];
 
     protected $casts = [
         'back_visible_grade' => 'boolean',
         'back_rectangle_width' => 'integer',
         'back_rectangle_height' => 'integer',
+        'back_show_exam_grade' => 'boolean',
+        'back_show_themes' => 'boolean',
+        'back_exam_font_size' => 'integer',
     ];
 
     public function certificate(): BelongsTo

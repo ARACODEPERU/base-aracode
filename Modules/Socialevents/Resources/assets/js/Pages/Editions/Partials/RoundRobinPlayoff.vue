@@ -1262,7 +1262,9 @@
                         <div class="table-responsive">
                             <table class="w-full text-sm text-left rtl:text-right text-body">
                                 <thead class="text-sm text-body border-b border-default dark:border-blue-900">
-                                    <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Jugador</th>
+                                    <tr>
+                                        <th class="px-6 py-2 bg-gray-50 font-blod text-sm dark:bg-blue-900 dark:text-white">Jugador</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     <tr>

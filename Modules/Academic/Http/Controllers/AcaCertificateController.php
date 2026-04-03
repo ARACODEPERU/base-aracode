@@ -507,6 +507,20 @@ class AcaCertificateController extends Controller
                 $acaCertificate->back_color_course = $request->get('back_color_course');
                 $acaCertificate->back_visible_course = $request->get('back_visible_course') ? true : false;
                 $acaCertificate->back_content_type = $request->get('back_content_type');
+
+                // Guardar opciones de contenido en grade_config
+                $grade_id = $request->get('grade_id');
+                $gradeConfig = AcaCertificateGradeConfig::updateOrCreate(
+                    ['id' => $grade_id],
+                    [
+                        'certificate_id' => $id,
+                        'back_show_exam_grade' => $request->get('back_show_exam_grade') ? true : false,
+                        'back_show_themes' => $request->get('back_show_themes') ? true : false,
+                        'back_exam_fontfamily' => $request->get('back_exam_fontfamily'),
+                        'back_exam_font_size' => $request->get('back_exam_font_size'),
+                        'back_exam_color' => $request->get('back_exam_color') ?? '#000000',
+                    ]
+                );
                 break;
             case 13:
                 // Contenido del módulo del reverso
@@ -546,6 +560,31 @@ class AcaCertificateController extends Controller
                         'back_rectangle_width' => $request->get('back_rectangle_width') ?? 100,
                         'back_rectangle_height' => $request->get('back_rectangle_height') ?? 100,
                         'back_rectangle_color' => $request->get('back_rectangle_color') ?? '#000000',
+                    ]
+                );
+                break;
+            case 16:
+                // Opciones de contenido del curso (exam grade y themes)
+                $grade_id = $request->get('grade_id');
+                $gradeConfig = AcaCertificateGradeConfig::updateOrCreate(
+                    ['id' => $grade_id],
+                    [
+                        'certificate_id' => $id,
+                        'back_show_exam_grade' => $request->get('back_show_exam_grade') ? true : false,
+                        'back_show_themes' => $request->get('back_show_themes') ? true : false,
+                    ]
+                );
+                break;
+            case 17:
+                // Configuración de fuente para nota de examen
+                $grade_id = $request->get('grade_id');
+                $gradeConfig = AcaCertificateGradeConfig::updateOrCreate(
+                    ['id' => $grade_id],
+                    [
+                        'certificate_id' => $id,
+                        'back_exam_fontfamily' => $request->get('back_exam_fontfamily'),
+                        'back_exam_font_size' => $request->get('back_exam_font_size'),
+                        'back_exam_color' => $request->get('back_exam_color') ?? '#000000',
                     ]
                 );
                 break;
