@@ -131,16 +131,19 @@ class AcaCertificateController extends Controller
             $backImgWidth = $img->width();
             $backImgHeight = $img->height();
         }
-
+        //dd($request->all());
         if ($request->get('course_id')) {
-            $ce = AcaCertificateParameter::where('course_id', $request->get('course_id'));
+            $ce = AcaCertificateParameter::where('course_id', $request->get('course_id'))
+                ->where('for_module', $request->get('for_module') ? true : false);
+
             if ($ce) {
                 $ce->update([
                     'state' => false,
                 ]);
             }
         } else {
-            $ce = AcaCertificateParameter::whereNull('course_id');
+            $ce = AcaCertificateParameter::whereNull('course_id')
+                ->where('for_module', $request->get('for_module') ? true : false);
             if ($ce) {
                 $ce->update([
                     'state' => false,
@@ -708,6 +711,7 @@ class AcaCertificateController extends Controller
         $autoCertificate = new CertificateImage;
 
         $certificateParameter = AcaCertificateParameter::where('course_id', $course_id)
+            ->where('for_module', false)
             ->where('state', true)
             ->first();
 
@@ -717,6 +721,7 @@ class AcaCertificateController extends Controller
             $certificate_id = $certificateParameter->id;
         } else {
             $certificateParameter = AcaCertificateParameter::whereNull('course_id')
+                ->where('for_module', false)
                 ->where('state', true)
                 ->first();
 

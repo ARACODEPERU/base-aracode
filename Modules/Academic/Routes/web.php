@@ -637,8 +637,11 @@ Route::post('asistencia/registrar/clase/store', [AcaAttendanceController::class,
 Route::get('asistencia/exitosa', [AcaAttendanceController::class, 'success'])->name('aca_attendance_success');
 
 // ///////no nesesita aver iniciado session//////////
-Route::get('academic/certificate/image/{id}/download', [AcaCertificateController::class, 'generateCertificateStudent'])->name('aca_image_download');
-Route::get('academic/certificate/module/{module_id}/download', [AcaCertificateController::class, 'downloadModuleCertificate'])->name('aca_module_certificate_download');
+Route::get('academic/certificate/image/{id}/download', [AcaCertificateController::class, 'generateCertificateStudent'])
+    ->name('aca_image_download');
+
+Route::get('academic/certificate/module/{module_id}/download', [AcaCertificateController::class, 'downloadModuleCertificate'])
+    ->name('aca_module_certificate_download');
 
 Route::get('create/payment/{id}/account', [LandingController::class, 'academiCreatePayment'])->name('academic_step_account');
 

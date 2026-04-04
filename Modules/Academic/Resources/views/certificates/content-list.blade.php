@@ -11,7 +11,7 @@
         .module-item { margin-bottom: 15px; overflow: hidden; }
         .module-name { font-size: {{ $fontSize }}px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; flex-wrap: wrap; }
         .module-number { margin-right: 8px; }
-        .exam-grade { font-weight: bold; color: {{ $examColor }}; font-size: {{ $examFontSize }}px; margin-left: 15px; }
+        .exam-grade { font-weight: bold; color: {{ $examColor }}; font-size: {{ $fontSize }}px; margin-left: 15px; }
         .themes-list { padding-left: 20px; margin-top: 5px; }
         .theme-item { font-size: {{ $fontSize - 2 }}px; margin-bottom: 2px; }
     </style>

@@ -1176,9 +1176,89 @@
                                         </div>
                                     </vue-collapsible>
                                 </div>
-
+                                <!-- Contenido del Módulo del Reverso -->
+                                <div v-if="form.for_module" class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
+                                    <button
+                                        type="button"
+                                        class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b]"
+                                        :class="{ '!text-primary': accordians3 === 26 }"
+                                        @click="accordians3 === 26 ? (accordians3 = null) : (accordians3 = 26)"
+                                    >
+                                        <icon-info-circle-two class="w-4 h-4 mr-2" />
+                                        Contenido del Módulo
+                                        <div class="ltr:ml-auto rtl:mr-auto" :class="{ 'rotate-180': accordians3 === 26 }">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 9L12 15L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                        </div>
+                                    </button>
+                                    <vue-collapsible :isOpen="accordians3 === 26">
+                                        <div class="p-4 text-white-dark text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
+                                            <div class="grid grid-cols-4 gap-4">
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_fontfamily_module">Fuente utilizada</InputLabel>
+                                                    <select v-model="form.back_fontfamily_module" id="back_fontfamily_module" class="form-select text-white-dark">
+                                                        <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
+                                                        <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
+                                                        <option value="OLDENGL.TTF">OLDENGL</option>
+                                                        <option value="Poppins-Light.ttf">Poppins-Light.ttf</option>
+                                                        <option value="Intro-Headr.ttf">Intro-Headr.ttf</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_font_size_module">Tamaño de fuente</InputLabel>
+                                                    <TextInput id="back_font_size_module" v-model="form.back_font_size_module" placeholder="22, 23, etc..." />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_font_align_module">A. horizontal</InputLabel>
+                                                    <select v-model="form.back_font_align_module" id="back_font_align_module" class="form-select text-white-dark">
+                                                        <option value="left">left</option>
+                                                        <option value="center">center</option>
+                                                        <option value="right">right</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_font_vertical_align_module">A. vertical</InputLabel>
+                                                    <select v-model="form.back_font_vertical_align_module" id="back_font_vertical_align_module" class="form-select text-white-dark">
+                                                        <option value="top">top</option>
+                                                        <option value="center">center</option>
+                                                        <option value="bottom">bottom</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_position_module_x">Posición X</InputLabel>
+                                                    <TextInput id="back_position_module_x" v-model="form.back_position_module_x" placeholder="1, 2, etc.." />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_position_module_y">Posición Y</InputLabel>
+                                                    <TextInput id="back_position_module_y" v-model="form.back_position_module_y" placeholder="1, 2, etc.." />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_max_width_module">Ancho máximo</InputLabel>
+                                                    <TextInput id="back_max_width_module" v-model="form.back_max_width_module" placeholder="800" />
+                                                </div>
+                                                <div class="col-span-4">
+                                                    <InputLabel for="back_color_module">Color</InputLabel>
+                                                    <TextInput id="back_color_module" v-model="form.back_color_module" type="color" placeholder="#000" />
+                                                </div>
+                                                <div class="col-span-4">
+                                                    <InputLabel for="back_content_type_module">Tipo de contenido</InputLabel>
+                                                    <select v-model="form.back_content_type_module" id="back_content_type_module" class="form-select text-white-dark" :disabled="!form.for_module">
+                                                        <option value="list">Listado</option>
+                                                        <option value="table">Tabla de contenido</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-span-4 flex items-center justify-between">
+                                                    <InputLabel for="back_visible_module" class="text-lg" value="Visible" />
+                                                    <input type="checkbox" id="back_visible_module" class="form-checkbox" v-model="form.back_visible_module" :disabled="!form.for_module" />
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-end mt-4">
+                                                <button @click="updateCertificateData(13)" class="btn btn-success">Guardar cambios y ver resultado</button>
+                                            </div>
+                                        </div>
+                                    </vue-collapsible>
+                                </div>
                                 <!-- Contenido del Curso del Reverso -->
-                                <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
+                                <div v-else class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
                                     <button
                                         type="button"
                                         class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b]"
@@ -1267,87 +1347,7 @@
                                     </vue-collapsible>
                                 </div>
 
-                                <!-- Contenido del Módulo del Reverso -->
-                                <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
-                                    <button
-                                        type="button"
-                                        class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b]"
-                                        :class="{ '!text-primary': accordians3 === 26 }"
-                                        @click="accordians3 === 26 ? (accordians3 = null) : (accordians3 = 26)"
-                                    >
-                                        <icon-info-circle-two class="w-4 h-4 mr-2" />
-                                        Contenido del Módulo
-                                        <div class="ltr:ml-auto rtl:mr-auto" :class="{ 'rotate-180': accordians3 === 26 }">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 9L12 15L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                        </div>
-                                    </button>
-                                    <vue-collapsible :isOpen="accordians3 === 26">
-                                        <div class="p-4 text-white-dark text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]">
-                                            <div class="grid grid-cols-4 gap-4">
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_fontfamily_module">Fuente utilizada</InputLabel>
-                                                    <select v-model="form.back_fontfamily_module" id="back_fontfamily_module" class="form-select text-white-dark">
-                                                        <option value="Pacifico-Regular.ttf">Pacifico-Regular</option>
-                                                        <option value="PlaywriteIN-Regular.ttf">PlaywriteIN-Regular</option>
-                                                        <option value="OLDENGL.TTF">OLDENGL</option>
-                                                        <option value="Poppins-Light.ttf">Poppins-Light.ttf</option>
-                                                        <option value="Intro-Headr.ttf">Intro-Headr.ttf</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_font_size_module">Tamaño de fuente</InputLabel>
-                                                    <TextInput id="back_font_size_module" v-model="form.back_font_size_module" placeholder="22, 23, etc..." />
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_font_align_module">A. horizontal</InputLabel>
-                                                    <select v-model="form.back_font_align_module" id="back_font_align_module" class="form-select text-white-dark">
-                                                        <option value="left">left</option>
-                                                        <option value="center">center</option>
-                                                        <option value="right">right</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_font_vertical_align_module">A. vertical</InputLabel>
-                                                    <select v-model="form.back_font_vertical_align_module" id="back_font_vertical_align_module" class="form-select text-white-dark">
-                                                        <option value="top">top</option>
-                                                        <option value="center">center</option>
-                                                        <option value="bottom">bottom</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_position_module_x">Posición X</InputLabel>
-                                                    <TextInput id="back_position_module_x" v-model="form.back_position_module_x" placeholder="1, 2, etc.." />
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_position_module_y">Posición Y</InputLabel>
-                                                    <TextInput id="back_position_module_y" v-model="form.back_position_module_y" placeholder="1, 2, etc.." />
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <InputLabel for="back_max_width_module">Ancho máximo</InputLabel>
-                                                    <TextInput id="back_max_width_module" v-model="form.back_max_width_module" placeholder="800" />
-                                                </div>
-                                                <div class="col-span-4">
-                                                    <InputLabel for="back_color_module">Color</InputLabel>
-                                                    <TextInput id="back_color_module" v-model="form.back_color_module" type="color" placeholder="#000" />
-                                                </div>
-                                                <div class="col-span-4">
-                                                    <InputLabel for="back_content_type_module">Tipo de contenido</InputLabel>
-                                                    <select v-model="form.back_content_type_module" id="back_content_type_module" class="form-select text-white-dark" :disabled="!form.for_module">
-                                                        <option value="list">Listado</option>
-                                                        <option value="table">Tabla de contenido</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-span-4 flex items-center justify-between">
-                                                    <InputLabel for="back_visible_module" class="text-lg" value="Visible" />
-                                                    <input type="checkbox" id="back_visible_module" class="form-checkbox" v-model="form.back_visible_module" :disabled="!form.for_module" />
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center justify-end mt-4">
-                                                <button @click="updateCertificateData(13)" class="btn btn-success">Guardar cambios y ver resultado</button>
-                                            </div>
-                                        </div>
-                                    </vue-collapsible>
-                                </div>
+
                             </div>
                             <div class="col-span-2 space-y-2 font-semibold mt-6">
                                 <!-- QR del Reverso -->
