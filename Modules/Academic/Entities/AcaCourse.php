@@ -29,7 +29,8 @@ class AcaCourse extends Model
         'certificate_description',
         'discount',
         'discount_applies',
-        'auto_certificate'
+        'auto_certificate',
+        'certificate_title'
     ];
 
     public function category(): BelongsTo
