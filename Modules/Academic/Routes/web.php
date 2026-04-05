@@ -308,6 +308,8 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     ->name('test');
     Route::get('test2', [AcaCertificateController::class, 'test2'])
     ->name('test2');
+    Route::get('test3', [AcaCertificateController::class, 'test3'])
+    ->name('test3');
 
     // ////////////fin de suscripciones
 

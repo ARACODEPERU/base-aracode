@@ -25,6 +25,17 @@ const fontOptions = [
     { name: 'Bookman', value: '"Bookman Old Style", serif' },
 ];
 
+const props = defineProps({
+        certificates:{
+            type: Object,
+            default : () => ({})
+        },
+        course:{
+            type: Object,
+            default : () => ({})
+        },
+    });
+
 // Función para crear configuración de texto estandarizada
 const createTextConfig = (text, y, fontSize, width = 600) => {
     const config = reactive({
@@ -38,9 +49,9 @@ const createTextConfig = (text, y, fontSize, width = 600) => {
 };
 
 // Elementos de Texto
-const title = createTextConfig('DIPLOMA DE RECONOCIMIENTO', 100, 30);
-const student = createTextConfig('NOMBRE DEL ESTUDIANTE', 230, 45);
-const description = createTextConfig('Por haber completado con éxito todas las exigencias académicas del programa.', 320, 18, 500);
+const title = createTextConfig(props.course.certificate_title, 100, 30);
+const student = createTextConfig('José Carlos Alarcón Campos', 230, 45);
+const description = createTextConfig(props.course.certificate_description, 320, 18, 500);
 const dateText = createTextConfig('Fecha: 04 de Abril de 2026', 450, 14, 300);
 
 // Configuración del QR (Imagen con Proporción)
@@ -59,6 +70,7 @@ onMounted(() => {
     image.crossOrigin = "Anonymous";
     image.src = "https://marketplace.canva.com/EAFjGk7DTSQ/3/0/1600w/canva-diploma-curso-manicura-simple-beige-2o56ns73Xlk.jpg";
     image.onload = () => { bgImage.value = image; };
+    console.log("🚀 Datos recibidos en props.certificates:", props.course)
 });
 
 const handleQrUpload = (e) => {
