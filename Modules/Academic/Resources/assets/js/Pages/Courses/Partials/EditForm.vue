@@ -57,6 +57,7 @@ const form = useForm({
     sector_description: props.course.sector_description,
     price: props.course.price,
     certificate_description: props.course.certificate_description,
+    certificate_title: props.course.certificate_title,
     discount: props.course.discount,
     discount_applies: props.course.discount_applies,
     auto_certificate: props.course.auto_certificate == 1 ? true : false
@@ -184,6 +185,17 @@ const handleImageCompressed = (file) => {
                 <InputError :message="form.errors.price" class="mt-2" />
             </div>
             <div v-if="P000018 == 1 || P000018 == true || P000018 == 'true'" class="col-span-6">
+                <InputLabel for="certificate_title" value="Título de los certificados *" />
+                <textarea
+                    id="certificate_title"
+                    v-model="form.certificate_title"
+                    class="form-textarea"
+                    rows="1"
+                >
+                </textarea>
+                <InputError :message="form.errors.certificate_title" class="mt-2" />
+            </div>
+            <div v-if="P000018 == 1 || P000018 == true || P000018 == 'true'" class="col-span-6">
                 <InputLabel for="certificate_description" value="Descripción de los certificados *" />
                 <textarea
                     id="certificate_description"
@@ -225,10 +237,10 @@ const handleImageCompressed = (file) => {
             <div class="col-span-6 sm:col-span-3">
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <div class="flex items-start gap-3">
-                        <input 
-                            v-model="form.auto_certificate" 
-                            id="auto_certificate" 
-                            type="checkbox" 
+                        <input
+                            v-model="form.auto_certificate"
+                            id="auto_certificate"
+                            type="checkbox"
                             class="w-5 h-5 mt-0.5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         >
                         <div class="flex-1">
