@@ -301,6 +301,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::post('subscriptions/student/expired/expiring', [AcaStudentController::class, 'getSubscriptionStatuses'])
         ->name('aca_subscriptions_expired_expiring');
 
+        /////////prueba de imagen en vuejs certificado
+
+
+    Route::get('test', [AcaCertificateController::class, 'test'])
+    ->name('test');
+    Route::get('test2', [AcaCertificateController::class, 'test2'])
+    ->name('test2');
+
     // ////////////fin de suscripciones
 
     Route::get('certificate/list', [AcaCertificateController::class, 'index'])

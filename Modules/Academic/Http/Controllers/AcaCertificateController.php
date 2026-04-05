@@ -42,6 +42,40 @@ class AcaCertificateController extends Controller
         $this->P000016 = Parameter::where('parameter_code', 'P000016')->value('value_default');
     }
 
+    public function test()
+    {
+        $certificates = AcaCertificateParameter::with(['course'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        // Formatear la fecha antes de devolver los datos
+        $certificates->getCollection()->transform(function ($certificate) {
+            $certificate->formatted_date = Carbon::parse($certificate->created_at)->format('d/m/Y');
+
+            return $certificate;
+        });
+
+        return Inertia::render('Academic::Certificates/Test', [
+            'certificates' => $certificates,
+        ]);
+    }
+    public function test2()
+    {
+        $certificates = AcaCertificateParameter::with(['course'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        // Formatear la fecha antes de devolver los datos
+        $certificates->getCollection()->transform(function ($certificate) {
+            $certificate->formatted_date = Carbon::parse($certificate->created_at)->format('d/m/Y');
+
+            return $certificate;
+        });
+
+        return Inertia::render('Academic::Certificates/Test2', [
+            'certificates' => $certificates,
+        ]);
+    }
     public function index()
     {
         $certificates = AcaCertificateParameter::with(['course'])
