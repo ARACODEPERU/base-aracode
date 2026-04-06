@@ -68,6 +68,7 @@
         "pdfmake": "^0.2.18",
         "pinia": "^2.1.7",
         "puppeteer": "^24.37.5",
+        "qrcode": "^1.5.4",
         "socket.io-client": "^4.7.5",
         "sweetalert": "^2.1.2",
         "sweetalert2": "11.5.1",
