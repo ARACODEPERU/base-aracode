@@ -2,8 +2,8 @@
 
 namespace Modules\Academic\Entities;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -30,13 +30,14 @@ class AcaCourse extends Model
         'discount',
         'discount_applies',
         'auto_certificate',
-        'certificate_title'
+        'certificate_title',
     ];
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(AcaCategoryCourse::class, 'category_id');
     }
+
     public function modality(): BelongsTo
     {
         return $this->belongsTo(AcaModality::class, 'modality_id', 'id');
@@ -100,5 +101,15 @@ class AcaCourse extends Model
     public function exam(): HasOne
     {
         return $this->hasOne(AcaExam::class, 'course_id');
+    }
+
+    public function getStudentsCount(): int
+    {
+        return $this->registrations()->count();
+    }
+
+    public function isPopular(int $threshold = 30): bool
+    {
+        return $this->registrations()->count() >= $threshold;
     }
 }

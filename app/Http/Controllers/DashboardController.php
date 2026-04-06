@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Parameter;
 use App\Models\Person;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCapRegistration;
@@ -17,7 +16,6 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaThemeComment;
 use Modules\Blog\Entities\BlogArticle;
 use Modules\Blog\Entities\BlogCategory;
-use Modules\Onlineshop\Entities\OnliItem;
 
 class DashboardController extends Controller
 {
@@ -27,19 +25,21 @@ class DashboardController extends Controller
     {
         $this->P000009 = Parameter::where('parameter_code', 'P000009')->value('value_default');
     }
+
     public function index()
     {
         if (Auth::user()->hasRole('Alumno')) {
             return Inertia::render('Academic::Dashboard/knowledge-base', [
                 'interests' => $this->getDataStudent(),
-                'expiring'  => $this->getExpiringItems()
+                'expiring' => $this->getExpiringItems(),
             ]);
 
         } else {
             $person = Person::where('id', Auth::user()->person_id)->with('district')->first();
+
             return Inertia::render('Dashboard', [
                 'authPerson' => $person,
-                'P000009' => $this->P000009
+                'P000009' => $this->P000009,
             ]);
         }
     }
@@ -60,6 +60,7 @@ class DashboardController extends Controller
             ->map(function ($item) {
                 $end = Carbon::parse($item->date_end);
                 $item->days_left = today()->diffInDays($end, false); // días restantes
+
                 return $item;
             });
 
@@ -67,11 +68,11 @@ class DashboardController extends Controller
         $subscriptionsExpiring = AcaStudentSubscription::where('student_id', $studentId)
             ->where(function ($q) {
                 $q->where('status', false)
-                ->orWhere(function ($q2) {
-                    $q2->whereNotNull('date_end')
-                        ->whereDate('date_end', '>=', today())
-                        ->whereDate('date_end', '<=', today()->addDays(5));
-                });
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('date_end')
+                            ->whereDate('date_end', '>=', today())
+                            ->whereDate('date_end', '<=', today()->addDays(5));
+                    });
             })
             ->get()
             ->map(function ($item) {
@@ -83,6 +84,7 @@ class DashboardController extends Controller
                 } else {
                     $item->days_left = null;
                 }
+
                 return $item;
             });
 
@@ -143,6 +145,8 @@ class DashboardController extends Controller
             $lastCourse->total_contents = 0;
             $lastCourse->total_activity = 0;
             $lastCourse->total_coments = 0;
+            $lastCourse->students_count = 0;
+            $lastCourse->is_popular = false;
 
             // Verificar si el curso existe antes de acceder a sus propiedades
             if ($lastCourse->course && isset($lastCourse->course->id)) {
@@ -162,6 +166,12 @@ class DashboardController extends Controller
                 $lastCourse->total_coments = AcaThemeComment::where('course_id', $courseId)
                     ->where('user_id', Auth::id())
                     ->count();
+
+                // Contar estudiantes inscritos
+                $lastCourse->students_count = AcaCapRegistration::where('course_id', $courseId)->count();
+
+                // Verificar si es popular (más de 30 inscritos)
+                $lastCourse->is_popular = $lastCourse->students_count >= 30;
             }
         }
 
@@ -176,7 +186,7 @@ class DashboardController extends Controller
             'student' => $student,
             'popularArticles' => $articles,
             'lastCourse' => $lastCourse,
-            'isBirthday' => $isBirthday
+            'isBirthday' => $isBirthday,
         ];
     }
 }

@@ -1,5 +1,8 @@
 <script setup>
     import { Link } from '@inertiajs/vue3';
+    import IconStarFiller from '@/Components/vristo/icon/icon-star-filler.vue';
+    import IconUserGraduate from '@/Components/vristo/icon/icon-user-graduate.vue';
+import IconArrowRight from '@/Components/vristo/icon/icon-arrow-right.vue';
 
     defineProps({
         lastCourse: {
@@ -19,69 +22,131 @@
     const getProgress = (regis) => {
         if (!regis.total_contents || regis.total_contents === 0) return 0;
         const percent = (regis.total_activity / regis.total_contents) * 100;
-        return Math.round(percent); // Opcional: redondear el porcentaje
+        return Math.round(percent);
+    };
+
+    const getProgressColor = (percent) => {
+        if (percent >= 75) return 'bg-green-500';
+        if (percent >= 50) return 'bg-yellow-500';
+        return 'bg-primary';
     };
 </script>
+
 <template>
     <div
         v-if="lastCourse"
-        :class="isBirthday ? 'grid grid-cols-6 gap-4': ''"
+        :class="isBirthday ? 'grid grid-cols-1 md:grid-cols-6 gap-6': ''"
     >
-        <div v-if="isBirthday" class="panel col-span-6 sm:col-span-2">
-            <div class="flex items-center justify-center mb-4">
-               <div class="rounded-full bg-gray-100 border p-4">
-                    <img src="/img/24px/pastel-de-cumpleanos.png" >
-               </div>
-            </div>
-            <div>
-                <h5 class="mt-2 mb-2 text-2xl text-center font-bold tracking-tight text-gray-900 dark:text-white">¡Feliz cumpleaños!</h5>
-                <p class="mb-3 text-center font-normal text-gray-700 dark:text-gray-400">Te deseamos un día lleno de alegría y un nuevo año de vida lleno de éxitos. ¡Gracias por ser parte de nuestra comunidad!</p>
-                <button class="w-full inline-flex items-center justify-center font-normal text-[#ec1b2b] bg-[#e6eee4] px-2 py-1">
-                    <img src="/img/24px/globos.png" />
-                    <img src="/img/24px/papel-picado.png" />
-                    <img src="/img/24px/victoria.png" />
-                    <img src="/img/24px/guirnalda.png" />
-                    <img src="/img/24px/champan.png" />
-                    <img src="/img/24px/regalo.png" />
-                </button>
+        <!-- Birthday Panel -->
+        <div v-if="isBirthday" class="col-span-1 md:col-span-2">
+            <div class="panel dark:bg-[#1b2e4b] p-6 rounded-2xl text-center border-2 border-yellow-400 dark:border-yellow-500">
+                <div class="flex justify-center mb-4">
+                    <div class="relative">
+                        <div class="w-20 h-20 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                            <span class="text-4xl">🎂</span>
+                        </div>
+                        <div class="absolute -top-2 -right-2 animate-bounce text-2xl">🎉</div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">¡Feliz Cumpleaños!</h3>
+                <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                    Te desean un día lleno de alegría y un nuevo año de vida lleno de éxitos.
+                </p>
+                <div class="flex justify-center gap-3 text-2xl">
+                    <span>🎈</span>
+                    <span>🎊</span>
+                    <span>🏆</span>
+                    <span>🥳</span>
+                    <span>🎁</span>
+                </div>
             </div>
         </div>
-        <div :class="isBirthday ? 'col-span-6 sm:col-span-4': ''">
-            <div class="panel p-0">
-                <div class="flex items-center justify-between">
-                    <div class="h-full w-[250px] py-10 px-4 dark:text-[#cccccc] rounded-l-lg">
-                        <p class="text-[11px] tracking-widest ">{{ lastCourse.course.modality.description }}</p>
-                        <img :src="`${urlBasek}/storage/${lastCourse.course.image}`" class="mt-6" />
-                        <h4 class="text-[12px] pt-[30px] cursor-pointer">
-                            {{ lastCourse.course.sector_description }}
-                        </h4>
-                    </div>
-                    <div class="p-4 w-full rounded-r-xl">
-                        <div>
-                            <div class="flex justify-between">
-                                <h1 class="text-[#949494] text-[13px] tracking-[.5px]">
-                                    {{ lastCourse.course.type_description }}
-                                </h1>
-                                <div class="relative">
-                                    <div class="h-1.5 w-[200px] bg-slate-200 rounded-xl">
-                                        <div class="h-1.5 bg-[#261a6b] rounded-xl" :style="{ width: getProgress(lastCourse) + '%' }" ></div>
-                                    </div>
-                                    <p
-                                        class="text-[#a8a8a8] text-[12px] tracking-[.5px] absolute right-0"
-                                    >
-                                    {{ lastCourse.total_activity }}/{{ lastCourse.total_contents }} Desafíos
-                                    </p>
-                                </div>
-                            </div>
-                            <h1 class="text-[28px] pt-2 font-[500] tracking-wide break-words whitespace-normal leading-relaxed">
-                                {{ lastCourse.course.description }}
-                            </h1>
+
+        <!-- Course Card -->
+        <div :class="isBirthday ? 'col-span-1 md:col-span-4': 'w-full'">
+            <div class="panel dark:bg-[#1b2e4b] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 dark:border-gray-700">
+                <div class="flex flex-col md:flex-row">
+                    <!-- Course Image Section -->
+                    <div class="relative w-full md:w-56 h-48 md:h-auto flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                        <img
+                            v-if="lastCourse.course.image"
+                            :src="`${urlBasek}/storage/${lastCourse.course.image}`"
+                            :alt="lastCourse.course.description"
+                            class="w-full h-full object-cover"
+                        />
+                        <div v-else class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                            <IconUserGraduate class="w-16 h-16" />
                         </div>
-                        <div class="flex items-center justify-end">
-                            <Link :href="route('aca_mycourses_lessons', lastCourse.course.id)"
-                                class="btn btn-primary w-[120px] rounded-3xl"
+
+                        <!-- Popular Badge -->
+                        <div
+                            v-if="lastCourse.is_popular"
+                            class="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md"
+                        >
+                            <IconStarFiller class="w-3 h-3 text-yellow-200" />
+                            <span>Más Popular</span>
+                        </div>
+
+                        <!-- Modality Badge -->
+                        <div
+                            v-if="lastCourse.course.modality?.description"
+                            class="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm"
+                        >
+                            {{ lastCourse.course.modality.description }}
+                        </div>
+                    </div>
+
+                    <!-- Course Info Section -->
+                    <div class="flex-1 p-5 md:p-6">
+                        <!-- Course Type & Category -->
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {{ lastCourse.course.type_description || 'Curso' }}
+                            </span>
+                            <span class="text-gray-300 dark:text-gray-600">•</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ lastCourse.course.sector_description }}
+                            </span>
+                        </div>
+
+                        <!-- Course Title -->
+                        <h2 class="text-xl md:text-2xl font-semibold text-gray-800 dark:text-white mb-4 line-clamp-2">
+                            {{ lastCourse.course.description }}
+                        </h2>
+
+                        <!-- Progress Section -->
+                        <div class="mb-5">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Progreso</span>
+                                <span
+                                    class="text-sm font-bold"
+                                    :class="getProgress(lastCourse) >= 100 ? 'text-green-500' : 'text-gray-700 dark:text-gray-300'"
+                                >
+                                    {{ getProgress(lastCourse) }}%
+                                </span>
+                            </div>
+                            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div
+                                    class="h-full rounded-full transition-all duration-500 ease-out"
+                                    :class="getProgressColor(getProgress(lastCourse))"
+                                    :style="{ width: getProgress(lastCourse) + '%' }"
+                                ></div>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                {{ lastCourse.total_activity || 0 }} de {{ lastCourse.total_contents || 0 }} actividades completadas
+                            </p>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="flex justify-end">
+                            <Link
+                                :href="route('aca_mycourses_lessons', lastCourse.course.id)"
+                                class="group flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-200 hover:shadow-lg hover:shadow-primary/30"
                             >
-                                Continuar
+                                <span>{{ getProgress(lastCourse) >= 100 ? 'Revisar' : 'Continuar' }}</span>
+                                <span class="group-hover:translate-x-1 transition-transform text-lg">
+                                    <IconArrowRight class="w-4 h-4" />
+                                </span>
                             </Link>
                         </div>
                     </div>
@@ -90,3 +155,12 @@
         </div>
     </div>
 </template>
+
+<style scoped>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>

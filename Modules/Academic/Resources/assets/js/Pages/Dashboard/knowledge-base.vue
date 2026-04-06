@@ -8,7 +8,7 @@
     import { Tour } from 'ant-design-vue';
     import LastRegisteredCourse from "../../Components/LastRegisteredCourse.vue";
     import { Drawer } from 'ant-design-vue';
-import { bottom } from "@popperjs/core";
+    import { bottom } from "@popperjs/core";
 
     const userData = usePage().props.auth.user;
 
