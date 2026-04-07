@@ -442,7 +442,7 @@
                                         </div>
                                     </div>
                                     <div class="mt-6 flex gap-4 absolute bottom-0 w-full ltr:left-0 rtl:right-0 p-6">
-                                        <Link :href="route('aca_students_registrations_create',student.id)" class="btn btn-outline-primary w-1/2">Matriculas</Link>
+                                        <Link v-can="'aca_estudiante_matricular'" :href="route('aca_students_registrations_create',student.id)" class="btn btn-outline-primary w-1/2">Matriculas</Link>
                                         <Link v-can="'aca_estudiante_certificados_crear'" :href="route('aca_students_certificates_create',student.id)" class="btn btn-outline-danger w-1/2">Certificados</Link>
                                     </div>
                                 </div>
