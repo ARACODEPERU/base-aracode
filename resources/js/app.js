@@ -20,7 +20,7 @@ import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar';
 import HeightTransition from '@/Components/vristo/transitions/HeightTransition.vue';
 import Popper from 'vue3-popper';
 import * as Maska from 'maska';
-import VueKonva from 'vue-konva';
+// import VueKonva from 'vue-konva';
 
 const appName =
     window.document.getElementsByTagName("title")[0]?.innerText || "Laravel";
@@ -60,7 +60,7 @@ createInertiaApp({
             .use(TippyPlugin)
             .use(Maska)
             .use(PerfectScrollbarPlugin)
-            .use(VueKonva)
+            // .use(VueKonva)
             .component('Popper', Popper)
             .component('HeightTransition', HeightTransition)
             .component("font-awesome-icon", FontAwesomeIcon);

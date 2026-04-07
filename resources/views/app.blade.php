@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
+@php
+    $company = \App\Models\Company::first();
+@endphp
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
-    <link rel="icon" href="{{ asset('img/isotipo.png') }}">
+    @if($company && $company->isotipo)
+        <link rel="icon" href="{{ asset('storage/' . $company->isotipo) }}">
+    @else
+        <link rel="icon" href="{{ asset('img/isotipo.png') }}">
+    @endif
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

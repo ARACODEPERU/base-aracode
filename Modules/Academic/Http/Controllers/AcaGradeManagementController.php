@@ -121,26 +121,46 @@ class AcaGradeManagementController extends Controller
                         ? round($participations->sum('participation_score') / $participationCount, 2)
                         : null;
 
-                    // Calcular promedio del módulo
-                    // Fórmula: (examen * 60%) + (asistencia * 20%) + (participación * 20%)
-                    $examVal = $exam ? (float) $exam->punctuation : 0;
-                    $participationVal = $participationScore ?? 0;
+                    // Obtener valores de A y P y Examen
+                    $ayP = $participationScore; // Ahora A y P es un solo campo
+                    $examVal = $exam ? (float) $exam->punctuation : null;
 
-                    $average = round(($examVal * 0.6) + ($participationVal * 0.4), 2);
+                    // Verificar si los campos son válidos (no null)
+                    $ayPValid = $ayP !== null;
+                    $examValid = $examVal !== null;
+
+                    // Calcular promedio según la nueva lógica
+                    if ($ayPValid && ! $examValid) {
+                        // Caso 1: Solo A y P tiene valor → 100%
+                        $average = $ayP;
+                    } elseif (! $ayPValid && $examValid) {
+                        // Caso 2: Solo E tiene valor → 100%
+                        $average = $examVal;
+                    } elseif ($ayPValid && $examValid) {
+                        // Caso 3: Ambos tienen valor → A y P 40% + E 60%
+                        $average = round(($ayP * 0.4) + ($examVal * 0.6), 2);
+                    } else {
+                        // Caso 4: Ambos vacíos → null
+                        $average = null;
+                    }
 
                     return [
                         'module_id' => $module['id'],
                         'module_name' => $module['description'],
-                        'exam_score' => $exam ? (float) $exam->punctuation : null,
+                        'exam_score' => $examValid ? $examVal : null,
                         'attendance_score' => 0,
-                        'participation_score' => $participationScore,
+                        'participation_score' => $ayPValid ? $ayP : null,
                         'average' => $average,
                     ];
                 })->toArray();
 
-                // Calcular promedio final del estudiante (promedio de todos los módulos)
-                $finalAverage = collect($studentModules)->avg('average');
-                $finalAverage = $finalAverage !== null ? round($finalAverage, 2) : null;
+                // Calcular promedio final del estudiante (solo módulos con PROM válido)
+                $validAverages = array_filter(array_column($studentModules, 'average'), function ($val) {
+                    return $val !== null;
+                });
+                $finalAverage = count($validAverages) > 0
+                    ? round(array_sum($validAverages) / count($validAverages), 2)
+                    : null;
             }
 
             return [
@@ -235,12 +255,33 @@ class AcaGradeManagementController extends Controller
                 $participationScore = $moduleData['participation_score'];
                 $average = $moduleData['average'];
 
-                // Calcular promedio del módulo
-                $examVal = $examScore !== null && $examScore !== '' ? (float) $examScore : 0;
-                $participationVal = $participationScore !== null && $participationScore !== '' ? (float) $participationScore : 0;
+                // Obtener valores
+                $ayP = ($participationScore !== null && $participationScore !== '' && $participationScore !== '-')
+                    ? (float) $participationScore
+                    : null;
+                $examVal = ($examScore !== null && $examScore !== '' && $examScore !== '-')
+                    ? (float) $examScore
+                    : null;
 
-                $calculatedAverage = ($examVal * 0.6) + ($participationVal * 0.4);
-                $avg = $average ?? round($calculatedAverage, 2);
+                // Verificar si los campos son válidos
+                $ayPValid = $ayP !== null;
+                $examValid = $examVal !== null;
+
+                // Calcular promedio según la nueva lógica
+                if ($ayPValid && ! $examValid) {
+                    // Caso 1: Solo A y P tiene valor → 100%
+                    $avg = $ayP;
+                } elseif (! $ayPValid && $examValid) {
+                    // Caso 2: Solo E tiene valor → 100%
+                    $avg = $examVal;
+                } elseif ($ayPValid && $examValid) {
+                    // Caso 3: Ambos tienen valor → A y P 40% + E 60%
+                    $avg = round(($ayP * 0.4) + ($examVal * 0.6), 2);
+                } else {
+                    // Caso 4: Ambos vacíos → null
+                    $avg = null;
+                }
+
                 $moduleApproved = $avg !== null && $avg >= 11;
 
                 AcaStudentGradeDetail::updateOrCreate(

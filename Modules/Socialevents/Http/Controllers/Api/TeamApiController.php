@@ -548,7 +548,7 @@ class TeamApiController extends Controller
                 $matchIds = $playerSanctions->pluck('match_id')->unique()->toArray();
                 $matches = EventEditionMatch::whereIn('id', $matchIds)->get();
 
-                $sanctionsList = $playerSanctions->map(function ($sanction) use ($matches) {
+                $sanctionsList = $playerSanctions->map(function ($sanction) use ($matches, $team) {
                     $match = $matches->firstWhere('id', $sanction->match_id);
                     $opponentId = $match->team_h_id == $team->id ? $match->team_a_id : $match->team_h_id;
                     $opponent = EventTeam::find($opponentId);

@@ -88,15 +88,36 @@
 
     // Calcular promedio de un módulo (se recalcula cuando cambian las notas)
     const calculateModuleAverage = (module) => {
-        const exam = module.exam_score !== null && module.exam_score !== '' ? Number(module.exam_score) : 0;
-        const participation = module.participation_score !== null && module.participation_score !== '' ? Number(module.participation_score) : 0;
-
-        const average = (exam * 0.6) + (participation * 0.4);
-        return average > 0 ? Number(average.toFixed(2)) : null;
+        const ayP = module.participation_score;
+        const exam = module.exam_score;
+        
+        // Verificar si los campos son válidos (no null, no vacío, no "-")
+        const aypValid = ayP !== null && ayP !== '' && ayP !== '-';
+        const examValid = exam !== null && exam !== '' && exam !== '-';
+        
+        // Caso 1: Solo A y P tiene valor → 100%
+        if (aypValid && !examValid) {
+            return Number(ayP);
+        }
+        
+        // Caso 2: Solo E tiene valor → 100%
+        if (!aypValid && examValid) {
+            return Number(exam);
+        }
+        
+        // Caso 3: Ambos tienen valor → A y P 40% + E 60%
+        if (aypValid && examValid) {
+            const average = (Number(ayP) * 0.4) + (Number(exam) * 0.6);
+            return Number(average.toFixed(2));
+        }
+        
+        // Caso 4: Ambos vacíos → null
+        return null;
     };
 
     // Calcular promedio final del estudiante (se recalcula cuando cambian las notas)
     const calculateFinalAverage = (student) => {
+        // Filtrar solo módulos que tienen PROM válido (no null)
         const averages = student.modules
             .map(m => calculateModuleAverage(m))
             .filter(a => a !== null);

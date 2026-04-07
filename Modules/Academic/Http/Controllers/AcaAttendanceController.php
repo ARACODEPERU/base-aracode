@@ -288,9 +288,17 @@ class AcaAttendanceController extends Controller
         $students = $registrations->map(function ($reg) use ($attendances) {
             $attendance = $attendances->get($reg->student_id);
 
+            $xfull_name = null;
+
+            if($reg->student->person->names && $reg->student->person->father_lastname && $reg->student->person->mother_lastname) {
+                $xfull_name = $reg->student->person->formatted_name;
+            } else {
+                $xfull_name = $reg->student->person->full_name;
+            }
+
             return [
                 'student_id' => $reg->student_id,
-                'name' => $reg->student->person->formatted_name ?? $reg->student->person->full_name,
+                'name' => $xfull_name,
                 'dni' => $reg->student->person->number,
                 'is_present' => $attendance !== null,
                 'registered_at' => $attendance?->registered_at?->format('d/m/Y H:i:s'),

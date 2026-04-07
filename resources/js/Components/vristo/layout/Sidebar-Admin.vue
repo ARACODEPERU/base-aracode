@@ -296,6 +296,7 @@
                             <template v-for="(option, index) in (moduleSelected.items || [])" :key="index">
                                 <template v-if="option.items && option.items.length> 0">
                                     <button
+                                        v-can="option.permissions"
                                         @click="handleOptionClick(option.text)"
                                         class="w-full text-left py-2 px-2 rounded-lg transition-all duration-200 rounded-lg rounded-r-none hover:bg-orange-100 dark:hover:bg-orange-800/40"
                                         :class="{
@@ -325,6 +326,7 @@
                                 </template>
                                 <template v-else>
                                     <Link
+                                        v-can="option.permissions"
                                         :href="option.route"
                                         @click="handleOptionClick(option.text)"
                                         class="w-full text-left py-2 px-2 rounded-lg transition-all duration-200 rounded-lg rounded-r-none block hover:bg-orange-100"

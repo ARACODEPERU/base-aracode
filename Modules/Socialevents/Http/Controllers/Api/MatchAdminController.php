@@ -11,6 +11,7 @@ use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionMatchParticipation;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
+use Modules\Socialevents\Entities\EventEditionMatchReport;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Services\PositionTableService;
@@ -421,6 +422,94 @@ class MatchAdminController extends Controller
                 ['match_id' => $matchId, 'player_id' => $p['person_id']],
                 ['role' => $p['match_role']]
             );
+        }
+    }
+
+    public function closeMatchReport(Request $request, int $matchId): JsonResponse
+    {
+        $request->validate([
+            'observations' => 'nullable|string|max:5000',
+            'local_has_protest' => 'nullable|boolean',
+            'local_protest_details' => 'nullable|string|max:5000',
+            'visitor_has_protest' => 'nullable|boolean',
+            'visitor_protest_details' => 'nullable|string|max:5000',
+        ]);
+
+        $match = EventEditionMatch::with(['equipolocal', 'equipovisitante'])->find($matchId);
+
+        if (!$match) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partido no encontrado',
+            ], 404);
+        }
+
+        if ($match->status !== 'finished') {
+            return response()->json([
+                'success' => false,
+                'message' => 'El partido debe estar en estado finalizado para cerrar el acta',
+            ], 400);
+        }
+
+        $localHasProtest = $request->boolean('local_has_protest', false);
+        $visitorHasProtest = $request->boolean('visitor_has_protest', false);
+        $hasProtest = $localHasProtest || $visitorHasProtest;
+
+        $protestDetails = [
+            'local' => [
+                'has_protest' => $localHasProtest,
+                'details' => $localHasProtest ? $request->input('local_protest_details') : null,
+            ],
+            'visitor' => [
+                'has_protest' => $visitorHasProtest,
+                'details' => $visitorHasProtest ? $request->input('visitor_protest_details') : null,
+            ],
+        ];
+
+        try {
+            DB::transaction(function () use ($match, $request, $hasProtest, $protestDetails) {
+                EventEditionMatchReport::updateOrCreate(
+                    ['match_id' => $match->id],
+                    [
+                        'local_score' => $match->score_h,
+                        'visitor_score' => $match->score_a,
+                        'observations' => $request->input('observations'),
+                        'has_protest' => $hasProtest,
+                        'protest_details' => $protestDetails,
+                        'protest_status' => $hasProtest ? 'pending' : 'none',
+                        'closed_at' => now(),
+                        'closed_by' => auth()->id(),
+                    ]
+                );
+
+                if (!$hasProtest) {
+                    $match->status = 'closed';
+                    $match->save();
+                    $this->positionService->updateTablePositions($match->edition_id);
+                }
+            });
+
+            $match->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => $hasProtest 
+                    ? 'Acta registrada. El partido permanece abierto debido a reclamos.' 
+                    : 'Acta cerrada exitosamente',
+                'match' => [
+                    'id' => $match->id,
+                    'status' => $match->status,
+                    'score_h' => $match->score_h,
+                    'score_a' => $match->score_a,
+                    'team_h_name' => $match->equipolocal?->name,
+                    'team_a_name' => $match->equipovisitante?->name,
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cerrar el acta: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

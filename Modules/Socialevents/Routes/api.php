@@ -124,6 +124,8 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 
             Route::get('matches/{matchId}/players', [MatchAdminController::class, 'getMatchPlayers']);
             Route::put('matches/{matchId}/result', [MatchAdminController::class, 'saveMatchResult']);
+            Route::put('matches/{matchId}/report', [MatchAdminController::class, 'closeMatchReport'])
+                ->name('admin.matches.report');
 		});
 	});
 });
