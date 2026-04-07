@@ -18,8 +18,32 @@
         primaryColor: {
             type: String,
             default: 'blue'
+        },
+        company: {
+            type: Object,
+            default: null
         }
     });
+
+    const baseUrl = assetUrl;
+
+    const companyLogo = computed(() => {
+        if (!props.company) return null;
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDark && props.company.logo_dark) {
+            return props.company.logo_dark === '/img/logo176x32.png' 
+                ? baseUrl + props.company.logo_dark 
+                : baseUrl + 'storage/' + props.company.logo_dark;
+        }
+        if (props.company.logo) {
+            return props.company.logo === '/img/logo176x32.png'
+                ? baseUrl + props.company.logo
+                : baseUrl + 'storage/' + props.company.logo;
+        }
+        return null;
+    });
+
+    const companyName = computed(() => props.company?.name || '');
 
     const headerGradientClasses = computed(() => {
         const gradients = {
@@ -66,7 +90,11 @@
                     <div :class="['bg-gradient-to-r', ...headerGradientClasses, 'p-8', 'text-center', 'relative', 'overflow-hidden']">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                         <div class="relative">
-                            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                            <!-- Logo de la empresa -->
+                            <div v-if="companyLogo" class="mb-4">
+                                <img :src="companyLogo" :alt="companyName" class="h-12 mx-auto object-contain" />
+                            </div>
+                            <div v-else class="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                                 <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>

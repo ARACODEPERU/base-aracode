@@ -2,23 +2,24 @@
 
 namespace Modules\Academic\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\ExcelExportJob;
+use App\Models\Person;
+use Carbon\Carbon;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaAttendanceLink;
-use Modules\Academic\Entities\AcaStudentAttendance;
-use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaModule;
+use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentAttendance;
 use Modules\Academic\Entities\AcaTheme;
-use Modules\Academic\Entities\AcaContent;
-use App\Models\Person;
-use App\Models\ExcelExportJob;
 use Modules\Academic\Jobs\ExportAttendanceExcel;
-use Carbon\Carbon;
 
 class AcaAttendanceController extends Controller
 {
@@ -31,7 +32,7 @@ class AcaAttendanceController extends Controller
             'course_id' => 'nullable|exists:aca_courses,id',
             'link_code' => 'required|integer|unique:aca_attendance_links,link_code',
             'verification_code' => 'nullable|string|max:50',
-            'validity_minutes' => 'required|integer|in:30,60,90,120,180,240,300'
+            'validity_minutes' => 'required|integer|in:30,60,90,120,180,240,300',
         ]);
 
         $validFrom = Carbon::now();
@@ -44,7 +45,7 @@ class AcaAttendanceController extends Controller
             'verification_code' => $request->verification_code,
             'valid_from' => $validFrom,
             'valid_until' => $validUntil,
-            'created_by' => Auth::id()
+            'created_by' => Auth::id(),
         ]);
 
         return response()->json(['success' => true]);
@@ -56,7 +57,7 @@ class AcaAttendanceController extends Controller
 
         $link = AcaAttendanceLink::with(['course', 'content'])->where('link_code', $linkCode)->first();
 
-        if (!$link) {
+        if (! $link) {
             return Inertia::render('Academic::Attendance/RegisterAttendance', [
                 'error' => 'invalid_link',
                 'message' => 'El enlace no es válido. Verifica que el enlace sea correcto.',
@@ -64,7 +65,8 @@ class AcaAttendanceController extends Controller
                 'course' => null,
                 'content' => null,
                 'requiresVerification' => false,
-                'primaryColor' => 'red'
+                'primaryColor' => 'red',
+                'company' => null,
             ]);
         }
 
@@ -76,18 +78,33 @@ class AcaAttendanceController extends Controller
                 'course' => null,
                 'content' => null,
                 'requiresVerification' => false,
-                'primaryColor' => 'red'
+                'primaryColor' => 'red',
+                'company' => null,
             ]);
         }
+
+        $company = Company::first();
 
         return Inertia::render('Academic::Attendance/RegisterAttendance', [
             'error' => null,
             'message' => null,
-            'link' => $link,
+            'link' => [
+                'link_code' => $link->link_code,
+                'verification_code' => $link->verification_code,
+                'valid_from' => $link->valid_from->toIsoString(),
+                'valid_until' => $link->valid_until->toIsoString(),
+            ],
             'course' => $link->course,
             'content' => $link->content,
-            'requiresVerification' => !empty($link->verification_code),
-            'primaryColor' => 'red'
+            'requiresVerification' => ! empty($link->verification_code),
+            'primaryColor' => 'red',
+            'company' => $company ? [
+                'name' => $company->name,
+                'logo' => $company->logo,
+                'logo_dark' => $company->logo_dark,
+                'isotipo' => $company->isotipo,
+                'isotipo_negative' => $company->isotipo_negative,
+            ] : null,
         ]);
     }
 
@@ -96,14 +113,14 @@ class AcaAttendanceController extends Controller
         $this->validate($request, [
             'link_code' => 'required',
             'dni' => 'required|string|size:8',
-            'verification_code' => 'nullable|string|max:50'
+            'verification_code' => 'nullable|string|max:50',
         ]);
 
         $link = AcaAttendanceLink::with(['course', 'content'])
             ->where('link_code', $request->link_code)
             ->first();
 
-        if (!$link) {
+        if (! $link) {
             return back()->withErrors(['dni' => 'El enlace de asistencia no es válido.']);
         }
 
@@ -117,13 +134,13 @@ class AcaAttendanceController extends Controller
 
         $person = Person::where('number', $request->dni)->first();
 
-        if (!$person) {
+        if (! $person) {
             return back()->withErrors(['dni' => 'No se encontró una persona con el DNI ingresado.']);
         }
 
         $student = AcaStudent::where('person_id', $person->id)->first();
 
-        if (!$student) {
+        if (! $student) {
             return back()->withErrors(['dni' => 'No estás registrado como estudiante.']);
         }
 
@@ -132,7 +149,7 @@ class AcaAttendanceController extends Controller
                 ->where('course_id', $link->course_id)
                 ->first();
 
-            if (!$registration) {
+            if (! $registration) {
                 return back()->withErrors(['dni' => 'No estás matriculado en este curso.']);
             }
         }
@@ -164,22 +181,31 @@ class AcaAttendanceController extends Controller
             'device_type' => $deviceInfo['device_type'],
             'browser' => $deviceInfo['browser'],
             'platform' => $deviceInfo['platform'],
-            'registered_at' => Carbon::now()
+            'registered_at' => Carbon::now(),
         ]);
 
         return redirect()->route('aca_attendance_success', [
             'course' => $link->course?->description,
-            'content' => $link->content?->description
+            'content' => $link->content?->description,
         ]);
     }
 
     public function success(Request $request)
     {
+        $company = Company::first();
+
         return Inertia::render('Academic::Attendance/AttendanceSuccess', [
             'course' => $request->query('course'),
             'content' => $request->query('content'),
             'registeredAt' => Carbon::now()->format('d/m/Y H:i:s'),
-            'primaryColor' => 'red'
+            'primaryColor' => 'red',
+            'company' => $company ? [
+                'name' => $company->name,
+                'logo' => $company->logo,
+                'logo_dark' => $company->logo_dark,
+                'isotipo' => $company->isotipo,
+                'isotipo_negative' => $company->isotipo_negative,
+            ] : null,
         ]);
     }
 
@@ -205,11 +231,11 @@ class AcaAttendanceController extends Controller
             $platform = 'iOS';
         }
 
-        if (preg_match('/chrome|crios/i', $userAgent) && !preg_match('/edge|edg/i', $userAgent)) {
+        if (preg_match('/chrome|crios/i', $userAgent) && ! preg_match('/edge|edg/i', $userAgent)) {
             $browser = 'Chrome';
         } elseif (preg_match('/firefox|fxios/i', $userAgent)) {
             $browser = 'Firefox';
-        } elseif (preg_match('/safari/i', $userAgent) && !preg_match('/chrome|crios/i', $userAgent)) {
+        } elseif (preg_match('/safari/i', $userAgent) && ! preg_match('/chrome|crios/i', $userAgent)) {
             $browser = 'Safari';
         } elseif (preg_match('/edge|edg/i', $userAgent)) {
             $browser = 'Edge';
@@ -220,7 +246,7 @@ class AcaAttendanceController extends Controller
         return [
             'device_type' => $deviceType,
             'browser' => $browser,
-            'platform' => $platform
+            'platform' => $platform,
         ];
     }
 
@@ -232,7 +258,7 @@ class AcaAttendanceController extends Controller
             ->get();
 
         return Inertia::render('Academic::Attendance/AdministrationPanel', [
-            'courses' => $courses
+            'courses' => $courses,
         ]);
     }
 
@@ -270,7 +296,7 @@ class AcaAttendanceController extends Controller
     public function getStudentsAttendance(Request $request)
     {
         $request->validate([
-            'content_id' => 'required|exists:aca_contents,id'
+            'content_id' => 'required|exists:aca_contents,id',
         ]);
 
         $content = AcaContent::with('theme.module.course')->find($request->content_id);
@@ -290,7 +316,7 @@ class AcaAttendanceController extends Controller
 
             $xfull_name = null;
 
-            if($reg->student->person->names && $reg->student->person->father_lastname && $reg->student->person->mother_lastname) {
+            if ($reg->student->person->names && $reg->student->person->father_lastname && $reg->student->person->mother_lastname) {
                 $xfull_name = $reg->student->person->formatted_name;
             } else {
                 $xfull_name = $reg->student->person->full_name;
@@ -312,12 +338,12 @@ class AcaAttendanceController extends Controller
             'students' => $students,
             'content' => [
                 'id' => $content->id,
-                'description' => $content->description
+                'description' => $content->description,
             ],
             'course' => [
                 'id' => $courseId,
-                'description' => $content->theme->module->course->description
-            ]
+                'description' => $content->theme->module->course->description,
+            ],
         ]);
     }
 
@@ -328,7 +354,7 @@ class AcaAttendanceController extends Controller
             'content_id' => 'required|exists:aca_contents,id',
             'course_id' => 'required|exists:aca_courses,id',
             'action' => 'required|in:add,remove',
-            'observation' => 'nullable|string|max:500'
+            'observation' => 'nullable|string|max:500',
         ]);
 
         if ($request->action === 'add') {
@@ -339,7 +365,7 @@ class AcaAttendanceController extends Controller
             if ($existing) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'El estudiante ya tiene asistencia registrada.'
+                    'message' => 'El estudiante ya tiene asistencia registrada.',
                 ], 400);
             }
 
@@ -350,12 +376,12 @@ class AcaAttendanceController extends Controller
                 'attendance_link_id' => null,
                 'user_edit_id' => Auth::id(),
                 'observation' => $request->observation,
-                'registered_at' => Carbon::now()
+                'registered_at' => Carbon::now(),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Asistencia registrada correctamente.'
+                'message' => 'Asistencia registrada correctamente.',
             ]);
         }
 
@@ -364,10 +390,10 @@ class AcaAttendanceController extends Controller
                 ->where('student_id', $request->student_id)
                 ->first();
 
-            if (!$attendance) {
+            if (! $attendance) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No existe registro de asistencia para este estudiante.'
+                    'message' => 'No existe registro de asistencia para este estudiante.',
                 ], 400);
             }
 
@@ -375,13 +401,13 @@ class AcaAttendanceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Asistencia eliminada correctamente.'
+                'message' => 'Asistencia eliminada correctamente.',
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'Acción no válida.'
+            'message' => 'Acción no válida.',
         ], 400);
     }
 
@@ -390,35 +416,35 @@ class AcaAttendanceController extends Controller
         $request->validate([
             'student_id' => 'required|exists:aca_students,id',
             'content_id' => 'required|exists:aca_contents,id',
-            'observation' => 'nullable|string|max:500'
+            'observation' => 'nullable|string|max:500',
         ]);
 
         $attendance = AcaStudentAttendance::where('content_id', $request->content_id)
             ->where('student_id', $request->student_id)
             ->first();
 
-        if (!$attendance) {
+        if (! $attendance) {
             return response()->json([
                 'success' => false,
-                'message' => 'No existe registro de asistencia para este estudiante.'
+                'message' => 'No existe registro de asistencia para este estudiante.',
             ], 400);
         }
 
         $attendance->update([
             'observation' => $request->observation,
-            'user_edit_id' => Auth::id()
+            'user_edit_id' => Auth::id(),
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Observación actualizada correctamente.'
+            'message' => 'Observación actualizada correctamente.',
         ]);
     }
 
     public function exportAttendanceExcel(Request $request)
     {
         $request->validate([
-            'content_id' => 'required|exists:aca_contents,id'
+            'content_id' => 'required|exists:aca_contents,id',
         ]);
 
         $content = AcaContent::with('theme.module.course')->find($request->content_id);
@@ -430,15 +456,15 @@ class AcaAttendanceController extends Controller
             'status' => 'pending',
             'filters' => [
                 'content_id' => $request->content_id,
-                'course_id' => $courseId
-            ]
+                'course_id' => $courseId,
+            ],
         ]);
 
         ExportAttendanceExcel::dispatch(Auth::id(), $excelExportJob->id);
 
         return response()->json([
             'message' => 'La exportación de Excel ha sido iniciada. Por favor, espere un momento.',
-            'job_id' => $excelExportJob->id
+            'job_id' => $excelExportJob->id,
         ], 202);
     }
 
@@ -448,9 +474,9 @@ class AcaAttendanceController extends Controller
             ->where('user_id', Auth::id())
             ->first();
 
-        if (!$excelExportJob) {
+        if (! $excelExportJob) {
             return response()->json([
-                'message' => 'Estado de exportación no encontrado o no autorizado.'
+                'message' => 'Estado de exportación no encontrado o no autorizado.',
             ], 404);
         }
 

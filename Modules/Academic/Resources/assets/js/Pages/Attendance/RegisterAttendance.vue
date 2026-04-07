@@ -32,10 +32,33 @@
         primaryColor: {
             type: String,
             default: 'blue'
+        },
+        company: {
+            type: Object,
+            default: null
         }
     });
 
     const baseUrl = assetUrl;
+
+    // ============ LOGO DE LA EMPRESA ============
+    const companyLogo = computed(() => {
+        if (!props.company) return null;
+        const isDark = document.documentElement.classList.contains('dark');
+        if (isDark && props.company.logo_dark) {
+            return props.company.logo_dark === '/img/logo176x32.png' 
+                ? baseUrl + props.company.logo_dark 
+                : baseUrl + 'storage/' + props.company.logo_dark;
+        }
+        if (props.company.logo) {
+            return props.company.logo === '/img/logo176x32.png'
+                ? baseUrl + props.company.logo
+                : baseUrl + 'storage/' + props.company.logo;
+        }
+        return null;
+    });
+
+    const companyName = computed(() => props.company?.name || '');
 
     const form = useForm({
         link_code: props.link?.link_code || '',
@@ -103,13 +126,20 @@
     // ============ CRONÓMETRO REGRESIVO ============
 
     const remainingTime = ref(0);
+    const totalTime = ref(0);
     let countdownInterval = null;
 
-    const calculateRemainingTime = () => {
-        if (!props.link?.valid_until) return 0;
+    const calculateTimes = () => {
+        if (!props.link?.valid_until || !props.link?.valid_from) return { remaining: 0, total: 0 };
+        
         const now = new Date().getTime();
         const validUntil = new Date(props.link.valid_until).getTime();
-        return Math.max(0, Math.floor((validUntil - now) / 1000));
+        const validFrom = new Date(props.link.valid_from).getTime();
+        
+        const remaining = Math.max(0, Math.floor((validUntil - now) / 1000));
+        const total = Math.floor((validUntil - validFrom) / 1000);
+        
+        return { remaining, total };
     };
 
     const formattedTime = computed(() => {
@@ -130,11 +160,36 @@
 
     const isExpired = computed(() => remainingTime.value <= 0);
 
+    // Calcular porcentaje de tiempo restante
+    const progressPercentage = computed(() => {
+        if (totalTime.value === 0) return 0;
+        return Math.min(100, Math.max(0, (remainingTime.value / totalTime.value) * 100));
+    });
+
+    // Color de la barra de progreso según el porcentaje
+    const progressBarColor = computed(() => {
+        const pct = progressPercentage.value;
+        
+        if (pct > 50) {
+            // 100% - 50%: Azul/Índigo
+            return 'bg-gradient-to-r from-blue-500 to-indigo-500';
+        } else if (pct > 20) {
+            // 50% - 20%: Amarillo/Naranja
+            return 'bg-gradient-to-r from-yellow-500 to-orange-500';
+        } else {
+            // 20% - 0%: Rojo
+            return 'bg-red-500';
+        }
+    });
+
     onMounted(() => {
-        remainingTime.value = calculateRemainingTime();
+        const times = calculateTimes();
+        remainingTime.value = times.remaining;
+        totalTime.value = times.total;
 
         countdownInterval = setInterval(() => {
-            remainingTime.value = calculateRemainingTime();
+            const times = calculateTimes();
+            remainingTime.value = times.remaining;
 
             if (remainingTime.value <= 0) {
                 clearInterval(countdownInterval);
@@ -205,7 +260,11 @@
                     >
                         <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                         <div class="relative">
-                            <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                            <!-- Logo de la empresa -->
+                            <div v-if="companyLogo" class="mb-3">
+                                <img :src="companyLogo" :alt="companyName" class="h-10 mx-auto object-contain" />
+                            </div>
+                            <div v-else class="w-16 h-16 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
                                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
@@ -247,8 +306,8 @@
                                     <div class="mt-2 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
                                         <div
                                             class="h-full rounded-full transition-all duration-1000"
-                                            :class="isExpiringSoon ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'"
-                                            :style="{ width: `${Math.min(100, (remainingTime / 18000) * 100)}%` }"
+                                            :class="progressBarColor"
+                                            :style="{ width: `${progressPercentage}%` }"
                                         ></div>
                                     </div>
                                 </div>
