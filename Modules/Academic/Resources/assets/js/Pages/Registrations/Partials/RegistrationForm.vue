@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { useForm, Link, router } from '@inertiajs/vue3';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Select } from 'ant-design-vue';
@@ -7,6 +7,9 @@ import { Select } from 'ant-design-vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
 import Swal2 from 'sweetalert2';
+import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+import axios from 'axios';
+import IconX from '@/Components/vristo/icon/icon-x.vue';
 
 const props = defineProps({
     student:{
@@ -24,6 +27,10 @@ const props = defineProps({
     faTrashAlt:{
         type: Object,
         default : () => ({})
+    },
+    faXmark:{
+        type: Object,
+        default : () => ({})
     }
 });
 
@@ -32,7 +39,7 @@ const dataCourses = ref([]);
 onMounted(() => {
     dataCourses.value = props.courses.map((obj) => ({
         value: obj.id,
-        label: obj.description
+        label: obj.description,
     }));
 });
 
@@ -40,6 +47,9 @@ const form = useForm({
     course_id: null,
     student_id: props.student.id
 })
+
+// Estado de procesamiento para cada registro
+const processingStates = reactive({});
 
 const saveRegistration = () => {
     form.post(route('aca_students_registrations_store'), {
@@ -104,6 +114,47 @@ const getImage = (path) => {
     return baseUrl + 'storage/'+ path;
 }
 
+const updateRegistration = (registration) => {
+    processingStates[registration.id] = true;
+
+    axios.put(route('aca_students_registrations_update', registration.id), {
+        date_start: registration.date_start,
+        date_end: registration.date_end,
+        unlimited: registration.unlimited ? true : false,
+    })
+    .then((response) => {
+        if (response.data.success) {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se actualizó correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        } else {
+            Swal2.fire({
+                title: 'Error',
+                text: response.data.message || 'Error al actualizar',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }
+    })
+    .catch((error) => {
+        Swal2.fire({
+            title: 'Error',
+            text: error.response?.data?.message || 'Error al actualizar',
+            icon: 'error',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    })
+    .finally(() => {
+        processingStates[registration.id] = false;
+    });
+};
+
 </script>
 <template>
     <div class="panel">
@@ -138,21 +189,74 @@ const getImage = (path) => {
     </div>
     <div
         v-for="registration in registrations"
-        class="panel"
+        class="panel relative"
     >
-        <div class="flex items-center gap-4">
+        <div class="flex items-start gap-4">
             <img class="w-20 h-20" :src="getImage(registration.course.image)" alt="">
             <div class="flex-1 font-medium dark:text-primary-200">
-                <div>{{ registration.course.description }}</div>
+                <div class="font-bold mb-2">{{ registration.course.description }}</div>
 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <InputLabel for="date_start" value="Fecha Inicio *" class="text-xs" />
+                        <input
+                            type="date"
+                            v-model="registration.date_start"
+                            class="form-input w-full text-sm"
+                        />
+                    </div>
+                    <div>
+                        <InputLabel for="date_end" value="Fecha Fin" class="text-xs" />
+                        <div class="relative">
+                            <input
+                                type="date"
+                                v-model="registration.date_end"
+                                class="form-input w-full text-sm"
+                                :class="registration.date_end ? 'pr-8' : ''"
+                            />
+                            <button
+                                v-if="registration.date_end"
+                                type="button"
+                                @click="registration.date_end = null; registration.unlimited = false"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                <IconX class="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-6">
+                        <input
+                            type="checkbox"
+                            id="'unlimited-' + registration.id"
+                            v-model="registration.unlimited"
+                            :disabled="!!registration.date_end"
+                            class="form-checkbox rounded text-primary-600"
+                        />
+                        <InputLabel :for="'unlimited-' + registration.id" value="Sin límite" class="text-sm mb-0" />
+                    </div>
+                </div>
+
+                <div class="mt-3 flex justify-end gap-2">
+                    <button
+                        @click="updateRegistration(registration)"
+                        :class="{ 'opacity-25': processingStates[registration.id] }"
+                        :disabled="processingStates[registration.id]"
+                        type="button"
+                        class="btn btn-primary"
+                    >
+                        <IconLoader class="w-4 h-4 mr-2" v-if="processingStates[registration.id]" />
+                        {{ processingStates[registration.id] ? 'Guardando...' : 'Guardar Cambios' }}
+                    </button>
+                    <button
+                        @click="destroyCertificate(registration.id)"
+                        type="button"
+                        class="btn btn-danger"
+                    >
+                        <font-awesome-icon :icon="faTrashAlt" class="w-4 h-4 mr-2" />
+                        Eliminar Matrícula
+                    </button>
+                </div>
             </div>
-            <button
-                @click="destroyCertificate(registration.id)"
-                type="button"
-                class="btn btn-danger absolute top-2 right-2 px-3 py-2"
-            >
-                <font-awesome-icon :icon="faTrashAlt" class="w-4 h-4" />
-            </button>
         </div>
     </div>
 

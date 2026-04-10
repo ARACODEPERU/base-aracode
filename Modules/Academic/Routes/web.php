@@ -123,6 +123,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::delete('students/registrations_destroy/{id}', 'AcaCapRegistrationController@destroy')
         ->name('aca_students_registrations_destroy');
 
+    Route::put('students/registrations_update/{id}', [AcaCapRegistrationController::class, 'update'])
+        ->name('aca_students_registrations_update');
+
     Route::post('students/store', 'AcaStudentController@store')
         ->name('aca_students_store');
 

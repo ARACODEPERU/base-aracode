@@ -383,17 +383,17 @@ class AccountsReceivableController extends Controller
                             'student_id' => $student->id,
                             'course_id' => $course['id'],
                         ],
-                            [
-                                'status' => true,
-                                'sale_note_id' => $sale_note->id,
-                                'modality_id' => 3,
-                                'unlimited' => $request->get('aplasos') ? false : true,
-                                'date_start' => Carbon::now()->format('Y-m-d'),
-                                'date_end' => $request->filled('date_end') ? $request->get('date_end') : Carbon::now()->addMonth()->format('Y-m-d'),
-                                'payment_installments' => $request->get('aplasos') ? true : false,
-                                'amount_paid' => $course['price'],
-                                'date_start' => Carbon::now()->format('Y-m-d'),
-                            ]);
+                        [
+                            'status' => true,
+                            'sale_note_id' => $sale_note->id,
+                            'modality_id' => 3,
+                            'unlimited' => $request->get('aplasos') ? false : true,
+                            'date_start' => Carbon::now()->format('Y-m-d'),
+                            'date_end' => $request->filled('date_end') ? $request->get('date_end') : Carbon::now()->addMonth()->format('Y-m-d'),
+                            'payment_installments' => $request->get('aplasos') ? true : false,
+                            'amount_paid' => $course['price'],
+                            'date_start' => Carbon::now()->format('Y-m-d'),
+                        ]);
                     }
                 }
 
