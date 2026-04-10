@@ -346,15 +346,22 @@ class AcaCourseController extends Controller
         $success = false;
         try {
             // Usamos una transacción para asegurarnos de que la operación se realice de manera segura.
-            DB::beginTransaction();
-
-            // Verificamos si existe.
+           // 1. Buscamos el curso. findOrFail lanzará una excepción si no existe,
+            // lo cual detendrá el flujo y saltará al catch.
             $item = AcaCourse::findOrFail($id);
 
-            // Si no hay detalles asociados, eliminamos.
+            // 2. Eliminamos el curso.
             $item->delete();
 
-            // Si todo ha sido exitoso, confirmamos la transacción.
+            // 3. Buscamos el OnliItem. Usamos un condicional por seguridad
+            // para evitar un error de "delete() on null" si el registro no existe.
+            $onliItem = OnliItem::where('item_id', $id)->first();
+
+            if ($onliItem) {
+                $onliItem->delete();
+            }
+
+            // 4. Si todo salió bien, confirmamos los cambios.
             DB::commit();
 
             $message = 'Curso eliminado correctamente';
