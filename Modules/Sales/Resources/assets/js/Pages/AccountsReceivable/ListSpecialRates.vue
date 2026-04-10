@@ -6,8 +6,9 @@
     import ModalLargeX from '@/Components/ModalLargeX.vue';
     import Swal from "sweetalert2";
     import { useForm, Link, usePage, router } from '@inertiajs/vue3';
-    import { faGears } from "@fortawesome/free-solid-svg-icons";
-    import { ref, watch, onMounted, nextTick, onUnmounted } from "vue";
+    import { faGears, faEdit, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+    import { ref, watch, onMounted, nextTick, onUnmounted, computed } from "vue";
+    import axios from 'axios';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import textWriting from '@/Components/loader/text-writing.vue';
     import iconExcel from '@/Components/vristo/icon/icon-excel.vue';
@@ -17,6 +18,7 @@
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
     import iconMail from '@/Components/vristo/icon/icon-mail.vue';
+    import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
         sales: {
@@ -124,22 +126,15 @@
             return;
         }
 
-        let width = 900;
-        let height = 700;
-
+        // Usamos el total disponible de la pantalla
         let screenWidth = window.screen.availWidth;
         let screenHeight = window.screen.availHeight;
 
-        let left = (screenWidth - width) / 2;
-        let top = (screenHeight - height) / 2;
-
-        // 1. Abrir ventana
+        // Ponemos 0 en top y left para que pegue a la esquina superior izquierda
         const w = window.open(
             "",
             "feeWindow",
-            `width=${width},height=${height},
-            top=${top},left=${left},
-            resizable=yes,scrollbars=yes`
+            `width=${screenWidth},height=${screenHeight},top=0,left=0,resizable=yes,scrollbars=yes`
         );
 
         // 2. Mostrar loader temporal
@@ -287,7 +282,180 @@
         window.open(url, "_blank");
     }
 
-    // Estado de la exportación
+    // ============ EDICIÓN DE CUOTAS ============
+    const displayModalEdit = ref(false);
+    const editSaleData = ref(null);
+    const editSchedules = ref([]);
+    const newQuotaCount = ref(0);
+    const isSaving = ref(false);
+
+    // Computed para calcular el monto pendiente (retorna número)
+    const pendingAmount = computed(() => {
+        if (!editSaleData.value) return 0;
+        const total = parseFloat(editSaleData.value.total) || 0;
+        const advancement = parseFloat(editSaleData.value.advancement) || 0;
+        return total - advancement;
+    });
+
+    // Computed para calcular monto promedio por cuota
+    const amountPerQuota = computed(() => {
+        const pendingSchedules = editSchedules.value.filter(s => !s.is_paid);
+        if (pendingSchedules.length === 0) return 0;
+        const totalPending = pendingSchedules.reduce((sum, s) => sum + (parseFloat(s.amount_to_pay) || 0), 0);
+        return totalPending / pendingSchedules.length;
+    });
+
+    const openModalEdit = (sale) => {
+        editSaleData.value = sale;
+        // Cargar las cuotas de la venta (convertir a número)
+        editSchedules.value = sale.schedules ? sale.schedules.map(s => ({
+            id: s.id,
+            installment_number: s.installment_number,
+            payment_date: s.payment_date,
+            amount_to_pay: parseFloat(s.amount_to_pay) || 0,
+            amount_paid: parseFloat(s.amount_paid) || 0,
+            remaining_amount: parseFloat(s.remaining_amount) || 0,
+            is_paid: parseFloat(s.amount_paid || 0) > 0
+        })) : [];
+        displayModalEdit.value = true;
+    };
+
+    const closeModalEdit = () => {
+        displayModalEdit.value = false;
+        editSaleData.value = null;
+        editSchedules.value = [];
+    };
+
+    const recalculateAmounts = () => {
+        if (newQuotaCount.value <= 0 || !editSaleData.value) {
+            return;
+        }
+
+        // Función helper para verificar si una cuota tiene algún pago
+        const hasAnyPayment = (schedule) => {
+            return parseFloat(schedule.amount_paid || 0) > 0;
+        };
+
+        // 1. Separar cuotas con pagos y sin pagos
+        const schedulesWithPayment = editSchedules.value.filter(s => hasAnyPayment(s));
+        const schedulesToRedistribute = editSchedules.value.filter(s => !hasAnyPayment(s));
+
+        // 2. Mantener las cuotas con pagos (parciales o totales)
+        editSchedules.value = [...schedulesWithPayment];
+
+        // 3. Calcular el monto por cada nueva cuota (división entera)
+        const totalPending = pendingAmount.value;
+        const baseAmount = Math.floor(totalPending / newQuotaCount.value);
+        const remainder = totalPending % newQuotaCount.value;
+
+        // 4. Obtener fecha de la última cuota con pago para calcular las nuevas fechas
+        let baseDate = new Date();
+        if (schedulesWithPayment.length > 0) {
+            const lastPaid = schedulesWithPayment[schedulesWithPayment.length - 1];
+            baseDate = new Date(lastPaid.payment_date);
+        }
+
+        // 5. Crear las nuevas cuotas
+        for (let i = 0; i < newQuotaCount.value; i++) {
+            // Calcular monto (la última cuota obtiene el resto)
+            let amount = baseAmount;
+            if (i === newQuotaCount.value - 1) {
+                amount = baseAmount + remainder;
+            }
+
+            // Calcular fecha (sumar 1 mes por cada cuota)
+            const paymentDate = new Date(baseDate);
+            paymentDate.setMonth(paymentDate.getMonth() + (i + 1));
+
+            editSchedules.value.push({
+                id: null, // Nueva cuota sin ID
+                installment_number: schedulesWithPayment.length + i + 1,
+                payment_date: paymentDate.toISOString().split('T')[0],
+                amount_to_pay: amount,
+                amount_paid: 0,
+                remaining_amount: amount,
+                is_paid: false
+            });
+        }
+    };
+
+    const updateAllDatesFrom = (index) => {
+        const currentSchedule = editSchedules.value[index];
+        if (!currentSchedule || currentSchedule.is_paid) return;
+
+        const newDate = new Date(currentSchedule.payment_date);
+
+        // Actualizar las cuotas siguientes
+        for (let i = index + 1; i < editSchedules.value.length; i++) {
+            const schedule = editSchedules.value[i];
+            if (schedule.is_paid) continue;
+
+            const nextDate = new Date(newDate);
+            nextDate.setMonth(nextDate.getMonth() + (i - index));
+            schedule.payment_date = nextDate.toISOString().split('T')[0];
+        }
+    };
+
+    const addNewQuota = () => {
+        if (!editSaleData.value) return;
+
+        // Obtener la última cuota no pagada
+        const pendingSchedules = editSchedules.value.filter(s => !s.is_paid);
+        const lastPending = pendingSchedules[pendingSchedules.length - 1];
+
+        let lastDate = lastPending ? new Date(lastPending.payment_date) : new Date();
+        lastDate.setMonth(lastDate.getMonth() + 1);
+
+        const newInstallmentNumber = editSchedules.value.length > 0
+            ? Math.max(...editSchedules.value.map(s => s.installment_number)) + 1
+            : 1;
+
+        editSchedules.value.push({
+            id: null, // Nueva cuota sin ID
+            installment_number: newInstallmentNumber,
+            payment_date: lastDate.toISOString().split('T')[0],
+            amount_to_pay: 0,
+            amount_paid: 0,
+            remaining_amount: 0,
+            is_paid: false
+        });
+    };
+
+    const removeQuota = (index) => {
+        const schedule = editSchedules.value[index];
+        if (schedule && !schedule.is_paid && schedule.id === null) {
+            editSchedules.value.splice(index, 1);
+        }
+    };
+
+    const saveEdit = async () => {
+        isSaving.value = true;
+        try {
+            // Filtrar solo las cuotas pendientes para enviar al backend
+            const pendingSchedules = editSchedules.value.filter(s => !s.is_paid);
+
+            const response = await axios.put(route('acco_sales_special_rates_update', editSaleData.value.id), {
+                schedules: pendingSchedules.map(s => ({
+                    id: s.id,
+                    payment_date: s.payment_date,
+                    amount_to_pay: s.amount_to_pay
+                }))
+            });
+
+            if (response.data.success) {
+                showMessage('Cuotas actualizadas correctamente', 'success');
+                closeModalEdit();
+                // Recargar solo la lista usando Inertia router
+                router.reload();
+            }
+        } catch (error) {
+            showMessage(error.response?.data?.message || 'Error al guardar los cambios', 'error');
+        } finally {
+            isSaving.value = false;
+        }
+    };
+
+    // ============ ESTADO DE EXPORTACIÓN ============
     const isExporting = ref(false);
     const downloadUrl = ref(null);
     const fileName = ref('');
@@ -575,6 +743,9 @@
                                                                 <MenuItem>
                                                                     <a @click="openDialogCreateFeeDocument(item)" href="javascript:;" class="text-blue-600 underline hover:text-blue-800 visited:text-purple-700" >Registrar pago</a>
                                                                 </MenuItem>
+                                                                <MenuItem>
+                                                                    <a @click="openModalEdit(item)" href="javascript:;" class="text-yellow-600 hover:text-yellow-800">Editar cuotas y montos</a>
+                                                                </MenuItem>
                                                             </Menu>
                                                         </template>
                                                     </Dropdown>
@@ -849,6 +1020,140 @@
                         </tbody>
                     </table>
                 </div>
+            </template>
+        </ModalLarge>
+        <!-- Modal Editar Cuotas -->
+        <ModalLarge :show="displayModalEdit" :onClose="closeModalEdit">
+            <template v-if="editSaleData" #title>
+                Editar Cuotas y Montos - {{ editSaleData.client.full_name }}
+            </template>
+            <template #message>
+                Configure las cuotas pendientes y sus montos
+            </template>
+            <template #content>
+                <div v-if="editSaleData" class="space-y-6">
+                    <!-- Información de la venta -->
+                    <div class="grid grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div>
+                            <span class="block text-sm text-gray-500 dark:text-gray-400">Total Deuda:</span>
+                            <span class="text-lg font-bold text-gray-900 dark:text-white">S/. {{ editSaleData.total }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-gray-500 dark:text-gray-400">Monto Pagado:</span>
+                            <span class="text-lg font-bold text-green-600">S/. {{ editSaleData.advancement }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-sm text-gray-500 dark:text-gray-400">Saldo Pendiente:</span>
+                            <span class="text-lg font-bold text-red-600">S/. {{ pendingAmount.toFixed(2) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Redistribución de cuotas -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-900 dark:text-white mb-3">Redistribuir Cuotas</h4>
+                        <div class="flex flex-wrap gap-4 items-end">
+                            <div>
+                                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Nuevo número de cuotas:</label>
+                                <input v-model.number="newQuotaCount" type="number" min="1" class="form-input w-32" />
+                            </div>
+                            <button @click="recalculateAmounts" class="btn btn-primary">
+                                Redistribuir
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            Saldo Pendiente: <span class="font-bold">S/. {{ pendingAmount.toFixed(2) }}</span>
+                        </p>
+                    </div>
+
+                    <!-- Lista de cuotas -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
+                                <tr>
+                                    <th class="px-4 py-3">#</th>
+                                    <th class="px-4 py-3">Fecha de Pago</th>
+                                    <th class="px-4 py-3">Monto</th>
+                                    <th class="px-4 py-3">Pagado</th>
+                                    <th class="px-4 py-3">Pendiente</th>
+                                    <th class="px-4 py-3">Estado</th>
+                                    <th class="px-4 py-3">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(schedule, index) in editSchedules" :key="index" class="border-b dark:border-gray-700">
+                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                                        {{ schedule.installment_number }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <input
+                                            v-if="!schedule.is_paid"
+                                            v-model="schedule.payment_date"
+                                            type="date"
+                                            class="form-input w-full"
+                                            @change="updateAllDatesFrom(index)"
+                                        />
+                                        <input
+                                            v-else
+                                            :value="schedule.payment_date"
+                                            type="date"
+                                            class="form-input w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                                            disabled
+                                        />
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <input
+                                            v-if="!schedule.is_paid"
+                                            v-model.number="schedule.amount_to_pay"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            class="form-input w-28 text-right"
+                                        />
+                                        <span v-else class="text-right block w-28 font-medium">S/. {{ schedule.amount_to_pay }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        S/. {{ schedule.amount_paid }}
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        S/. {{ schedule.remaining_amount }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span v-if="schedule.is_paid && schedule.remaining_amount <= 0" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                            ✓ Pagada
+                                        </span>
+                                        <span v-else-if="schedule.is_paid && schedule.remaining_amount > 0" class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                            Amortizada
+                                        </span>
+                                        <span v-else class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                            Pendiente
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <button
+                                            v-if="!schedule.is_paid && schedule.id === null"
+                                            @click="removeQuota(index)"
+                                            class="text-red-600 hover:text-red-800"
+                                        >
+                                            <font-awesome-icon :icon="faTrashAlt" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Agregar nueva cuota -->
+                    <button @click="addNewQuota" class="btn btn-outline-primary">
+                        + Agregar Cuota (Prórroga)
+                    </button>
+
+                </div>
+            </template>
+            <template #buttons>
+                <button @click="saveEdit" :class="{ 'opacity-25': isSaving }" :disabled="isSaving" type="button" class="btn btn-primary">
+                    <IconLoader class="w-4 h-4 mr-2" v-if="isSaving" />
+                    {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
             </template>
         </ModalLarge>
         <ModalStatus :show="displayModalExportStatus" :onClose="closeModalExportStatus">

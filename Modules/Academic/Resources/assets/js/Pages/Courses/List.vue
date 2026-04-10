@@ -3,7 +3,7 @@
     import Pagination from '@/Components/Pagination.vue';
     import Swal2 from "sweetalert2";
     import { Link, router, useForm } from '@inertiajs/vue3';
-    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter, faClipboardCheck, faComments } from "@fortawesome/free-solid-svg-icons";
+    import { faXmark, faGears, faTrashAlt, faCheck, faSpellCheck, faDownload, faPlay, faFile, faFilm, faEye, faEdit, faUsers, faBook, faHandshake, faLayerGroup, faSearch, faFilter, faClipboardCheck, faComments, faLandmark } from "@fortawesome/free-solid-svg-icons";
     import ModalLarge from '@/Components/ModalLarge.vue';
     import { ref, computed, watch } from 'vue';
     import DangerButton from '@/Components/DangerButton.vue';
@@ -539,59 +539,72 @@
                                 <!-- Spacer to push action bar to bottom -->
                                 <div class="flex-grow"></div>
 
-                                <!-- Action Bar -->
-                                <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                    <div class="flex gap-1">
-                                        <button @click="openModalAgreements(course)"
-                                            class="p-2 text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900 rounded-lg transition-colors"
-                                            title="Convenios"
-                                            v-tippy="{content: 'Convenios', placement: 'top'}"
-                                        >
-                                            <font-awesome-icon :icon="faHandshake" class="text-sm" />
-                                        </button>
-                                        <Link :href="route('aca_courses_information', course.id)"
-                                            class="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900 rounded-lg transition-colors"
-                                            title="Información"
-                                            v-tippy="{content: 'Información', placement: 'top'}"
-                                        >
-                                            <font-awesome-icon :icon="faEye" class="text-sm" />
-                                        </Link>
-                                        <Link :href="route('aca_courses_module_panel', course.id)"
-                                            class="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900 rounded-lg transition-colors"
-                                            title="Módulos"
-                                            v-tippy="{content: 'Módulos', placement: 'top'}"
-                                        >
-                                            <font-awesome-icon :icon="faLayerGroup" class="text-sm" />
-                                        </Link>
-                                        <!-- Botón Examen Final del Curso -->
-                                        <template v-if="course.exam">
-                                            <button @click="openCourseExamModal(course)"
-                                                class="p-2 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900 rounded-lg transition-colors"
-                                                title="Editar Examen Final"
-                                                v-tippy="{content: 'Editar Examen Final', placement: 'top'}"
-                                                v-can="'aca_cursos_examen_final_editar'"
+                                <!-- Action Bar mejorada -->
+                            </div>
+                            <div>
+                                <div class="mt-auto border-t border-gray-200 dark:border-gray-700">
+                                    <div class="flex items-top justify-between gap-3 bg-gray-50 dark:bg-gray-700/50 rounded-b-2xl p-3">
+
+                                        <!-- Botones de acciones -->
+                                        <div class="flex gap-2 flex-wrap">
+                                            <!-- Convenios -->
+                                            <button @click="openModalAgreements(course)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/50 rounded-lg transition-all"
+                                                v-tippy="{content: 'Convenios', placement: 'top'}"
                                             >
-                                                <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
+                                                <font-awesome-icon :icon="faHandshake" class="text-lg" />
+                                                <span class="text-[10px] font-medium">Convenios</span>
                                             </button>
-                                        </template>
-                                        <template v-else>
-                                            <button @click="openCourseExamModal(course)"
-                                                class="p-2 text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                                title="Crear Examen Final"
-                                                v-tippy="{content: 'Crear Examen Final', placement: 'top'}"
-                                                v-can="'aca_cursos_examen_final_crear'"
+
+                                            <!-- Información -->
+                                            <Link :href="route('aca_courses_information', course.id)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-all"
+                                                v-tippy="{content: 'Información', placement: 'top'}"
                                             >
-                                                <font-awesome-icon :icon="faClipboardCheck" class="text-sm" />
+                                                <font-awesome-icon :icon="faEye" class="text-lg" />
+                                                <span class="text-[10px] font-medium">Info</span>
+                                            </Link>
+
+                                            <!-- Módulos -->
+                                            <Link :href="route('aca_courses_module_panel', course.id)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 rounded-lg transition-all"
+                                                v-tippy="{content: 'Módulos', placement: 'top'}"
+                                            >
+                                                <font-awesome-icon :icon="faLayerGroup" class="text-lg" />
+                                                <span class="text-[10px] font-medium">Módulos</span>
+                                            </Link>
+
+                                            <!-- Examen (Editar/Crear) -->
+                                            <button @click="openCourseExamModal(course)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] rounded-lg transition-all"
+                                                :class="course.exam ? 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : 'text-gray-500 bg-gray-200 dark:bg-gray-600/30 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600/50'"
+                                                v-tippy="{content: course.exam ? 'Editar Examen Final' : 'Crear Examen Final', placement: 'top'}"
+                                                v-can="course.exam ? 'aca_cursos_examen_final_editar' : 'aca_cursos_examen_final_crear'"
+                                            >
+                                                <font-awesome-icon :icon="faClipboardCheck" class="text-lg" />
+                                                <span class="text-[10px] font-medium">{{ course.exam ? 'Editar' : 'Crear' }}</span>
                                             </button>
-                                        </template>
+                                            <!-- Configuracion de Landing -->
+                                            <Link :href="route('aca_courses_landing', course.id)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] text-cyan-600 bg-cyan-100 dark:bg-cyan-900/30 dark:text-cyan-400 hover:bg-cyan-200 dark:hover:bg-cyan-900/50 rounded-lg transition-all"
+                                                v-tippy="{content: 'Landing', placement: 'top'}"
+                                            >
+                                                <font-awesome-icon :icon="faLandmark" class="text-lg" />
+                                                <span class="text-[10px] font-medium">Landing</span>
+                                            </Link>
+                                        </div>
+
+                                        <div>
+                                            <!-- Botón Eliminar -->
+                                            <button @click="destroyCourse(course.id)"
+                                                class="flex flex-col items-center gap-1 px-3 py-2 min-w-[60px] text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-lg transition-all"
+                                                v-tippy="{content: 'Eliminar', placement: 'top'}"
+                                            >
+                                                <font-awesome-icon :icon="faTrashAlt" class="text-lg" />
+                                                <span class="text-[10px] font-medium">Eliminar</span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <button
-                                        @click="destroyCourse(course.id)"
-                                        class="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900 rounded-lg transition-colors"
-                                        v-tippy="{content: 'Eliminar', placement: 'top'}"
-                                    >
-                                        <font-awesome-icon :icon="faTrashAlt" />
-                                    </button>
                                 </div>
                             </div>
                         </div>

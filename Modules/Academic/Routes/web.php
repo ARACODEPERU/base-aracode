@@ -156,6 +156,13 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('courses/information/{id}', 'AcaCourseController@information')
         ->name('aca_courses_information');
 
+    Route::middleware(['middleware' => 'permission:aca_cursos_editar'])
+        ->get('courses/landing/{id}', [AcaCourseController::class, 'landing'])
+        ->name('aca_courses_landing');
+
+    Route::post('courses/landing/store', [AcaCourseController::class, 'landingStore'])
+        ->name('aca_courses_landing_store');
+
     Route::middleware(['middleware' => 'permission:aca_cursos_listado'])
         ->get('agreement/list/{id}', 'AcaAgreementController@index')
         ->name('aca_agreements_list');
@@ -301,15 +308,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::post('subscriptions/student/expired/expiring', [AcaStudentController::class, 'getSubscriptionStatuses'])
         ->name('aca_subscriptions_expired_expiring');
 
-        /////////prueba de imagen en vuejs certificado
-
+    // ///////prueba de imagen en vuejs certificado
 
     Route::get('test', [AcaCertificateController::class, 'test'])
-    ->name('test');
+        ->name('test');
     Route::get('test2', [AcaCertificateController::class, 'test2'])
-    ->name('test2');
+        ->name('test2');
     Route::get('test3', [AcaCertificateController::class, 'test3'])
-    ->name('test3');
+        ->name('test3');
 
     // ////////////fin de suscripciones
 

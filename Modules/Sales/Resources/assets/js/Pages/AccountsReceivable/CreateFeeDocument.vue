@@ -801,9 +801,9 @@
                                 <tr>
                                     <!-- <th class="w-8 bg-blue-600"></th> -->
                                     <th class="bg-blue-600">Item</th>
-                                    <th class="w-20 bg-blue-600">Cantidad</th>
-                                    <th class="w-20 bg-blue-600">Precio</th>
-                                    <th class="bg-blue-600">Total</th>
+                                    <th class="w-20 bg-blue-600 text-right">Cantidad</th>
+                                    <th class="w-40 bg-blue-600 text-right">Precio</th>
+                                    <th class="bg-blue-600 text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -834,7 +834,7 @@
                                             :class="isEdit ? 'bg-gray-100' : ''"
                                             class="form-input form-input-sm text-right w-20 px-1" type="text" />
                                         </td>
-                                        <td class="text-primary text-right border-b border-blue-400">S/. {{ item.amount * item.quantity }}</td>
+                                        <td class="text-primary text-right border-b border-blue-400 text-sm">S/. {{ item.amount * item.quantity }}</td>
                                     </tr>
                                 </template>
                             </tbody>

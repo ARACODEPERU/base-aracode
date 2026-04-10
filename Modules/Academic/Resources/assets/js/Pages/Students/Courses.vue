@@ -172,7 +172,8 @@
     const calculatePercentage = (course) => {
         const total = countContents(course);
         if (total === 0) return 0;
-        const percentage = (course.total_activity / total) * 100;
+        const activity = course.total_activity ?? 0;
+        const percentage = (activity / total) * 100;
         return Math.round(percentage);
     };
 
@@ -186,6 +187,13 @@
         return false;
     };
 
+    const showCertificateStatus = (course) => {
+        if (course.auto_certificate) {
+            return course.certificate_exists || (course.total_activity ?? 0) > 0;
+        }
+        return course.student_grade !== null && course.student_grade !== undefined;
+    };
+
     const getCertificateStatusText = (course) => {
         if (course.auto_certificate) {
             if (course.certificate_exists) {
@@ -195,11 +203,8 @@
             const total = course.contents_total || countContents(course);
             return `Progreso: ${viewed}/${total} contenidos`;
         } else {
-            if (course.student_grade !== null) {
-                const status = course.student_grade >= 11 ? 'Aprobado' : 'En curso';
-                return `Nota: ${course.student_grade}/20 - ${status}`;
-            }
-            return 'Sin nota registrada';
+            const status = course.student_grade >= 11 ? 'Aprobado' : 'En curso';
+            return `Nota: ${course.student_grade}/20 - ${status}`;
         }
     };
 
@@ -317,25 +322,25 @@
                                                 <div class="flex justify-between items-center text-xs font-medium">
                                                     <span class="text-gray-600 dark:text-gray-400">Progreso del curso</span>
                                                     <span class="text-blue-600 dark:text-blue-400 font-bold">
-                                                        {{ calculatePercentage(course) }}%
+                                                        {{ isNaN(calculatePercentage(course)) ? 0 : calculatePercentage(course) }}%
                                                     </span>
                                                 </div>
 
                                                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
                                                     <div
                                                         class="h-full bg-blue-500 rounded-full transition-all duration-700 ease-out group-hover:bg-blue-600"
-                                                        :style="{ width: calculatePercentage(course) + '%' }"
+                                                        :style="{ width: (isNaN(calculatePercentage(course)) ? 0 : calculatePercentage(course)) + '%' }"
                                                     ></div>
                                                 </div>
 
                                                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                    <span class="font-medium">{{ course.total_activity || 0 }}</span> de
+                                                    <span class="font-medium">{{ course.total_activity ?? 0 }}</span> de
                                                     <span class="font-medium">{{ countContents(course) }}</span> lecciones completadas
                                                 </div>
                                             </div>
                                             
                                             <!-- Indicador de estado del certificado -->
-                                            <div class="mt-3 p-3 rounded-lg border" :class="getCertificateStatusClass(course)">
+                                            <div v-if="showCertificateStatus(course)" class="mt-3 p-3 rounded-lg border" :class="getCertificateStatusClass(course)">
                                                 <div class="flex items-center gap-2">
                                                     <svg v-if="showCertificateButton(course)" class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
