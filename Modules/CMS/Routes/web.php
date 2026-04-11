@@ -23,7 +23,7 @@ use Modules\CMS\Http\Controllers\CmsSubscriberController;
 use Modules\CMS\Http\Controllers\CmsTestimonyController;
 use Modules\CMS\Http\Controllers\OneFreeCourseController;
 
-Route::middleware(['auth', 'verified'])->prefix('cms')->group(function () {
+Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->group(function () {
     Route::get('dashboard', [CMSController::class, 'dashboard'])->name('cms_dashboard');
     Route::get('pages', [CmsPageController::class, 'index'])->name('cms_pages_list');
     Route::get('pages/create', [CmsPageController::class, 'create'])->name('cms_pages_create');

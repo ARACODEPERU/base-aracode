@@ -127,7 +127,7 @@ class SaleDocumentController extends Controller
                 return $q->where('sales.user_id', Auth::id());
             })
             ->with(['document.items','document.note'])
-            ->orderBy('sales.id', 'DESC');
+            ->orderBy('sale_documents.invoice_broadcast_date', 'DESC');
 
         return DataTables::of($sales)->toJson();
     }

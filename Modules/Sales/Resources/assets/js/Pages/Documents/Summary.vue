@@ -4,7 +4,7 @@
     import Pagination from '@/Components/Pagination.vue';
     import Keypad from '@/Components/Keypad.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, computed } from 'vue';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
     import Swal from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
@@ -42,6 +42,17 @@
     const documents = ref([]);
     const searchDate = ref({});
 
+    const allSelected = computed(() => {
+        return documents.value.length > 0 && documents.value.every(doc => doc.selected);
+    });
+
+    const toggleAll = () => {
+        const newValue = !allSelected.value;
+        documents.value.forEach(doc => {
+            doc.selected = newValue;
+        });
+    };
+
     const getCurrentDate = () => {
         const currentDate = new Date();
         const year = currentDate.getFullYear();
@@ -57,14 +68,29 @@
         getCurrentDate();
     });
 
-    const displaySearchLoading = ref(false);
+const displaySearchLoading = ref(false);
     const displaySaveLoading = ref(false);
+    const alreadySentWarning = ref([]);
+    const showAlreadySentWarning = ref(false);
+
     const searchDocumentEarring = () => {
         displaySearchLoading.value = true;
         axios.get(route('salesummaries_search_date', searchDate.value)).then((res) => {
             if (res.data.success) {
-                documents.value = res.data.documents
-            }else{
+                alreadySentWarning.value = [];
+
+                documents.value = res.data.documents.map(doc => {
+                    if (doc.already_sent) {
+                        alreadySentWarning.value.push(doc.invoice_serie + '-' + doc.invoice_correlative + ' (ya enviado ' + doc.summary_count + ' vez' + (doc.summary_count > 1 ? 'es' : '') + ')');
+                        return { ...doc, selected: false };
+                    }
+                    return { ...doc, selected: true };
+                });
+
+                showAlreadySentWarning.value = alreadySentWarning.value.length > 0;
+            } else {
+                documents.value = [];
+                showAlreadySentWarning.value = false;
                 Swal.fire({
                     title: 'Información Importante',
                     text: 'No existen documentos pendientes para la fecha indicada',
@@ -76,10 +102,26 @@
             displaySearchLoading.value = false;
         });
     }
+
     const saveSummary = () => {
         displaySaveLoading.value = true;
+
+        const selectedDocuments = documents.value.filter(doc => doc.selected);
+
+        if (selectedDocuments.length === 0) {
+            Swal.fire({
+                title: 'Advertencia',
+                text: 'Debes seleccionar al menos un documento',
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            displaySaveLoading.value = false;
+            return;
+        }
+
         let data = {
-            documents: documents.value,
+            documents: selectedDocuments,
             generation_date: searchDate.value
         }
         axios.post(route('salesummaries_store_date'),data).then((res) => {
@@ -91,6 +133,9 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
+                documents.value = [];
+                getCurrentDate();
+                displayModalCreateSummary.value = false;
                 router.visit(route('salesummaries_list'), {
                     replace: false,
                     preserveState: true,
@@ -382,12 +427,33 @@
                         </form>
                     </div>
                 </div>
+                <div v-if="showAlreadySentWarning" class="mb-3 p-3 bg-amber-50 border border-amber-300 rounded-lg">
+                    <div class="flex items-center">
+                        <svg class="flex-shrink-0 w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l.818 1.44c.841 1.49.332 3.467-1.165 3.467h1.475c1.497 0 2.45 1.577 1.729 2.851l-.72 1.27c-.565.998-1.563 1.691-2.691 1.691H7.277c-1.128 0-2.126-.693-2.691-1.691l-.72-1.27c-.721-1.274.232-2.851 1.729-2.851h1.475c-1.497 0-2.006-1.977-1.165-3.467l.818-1.44zM9 6a1 1 0 11-2 0 1 1 0 012 0zm-1 5a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm text-amber-800 font-medium">
+                                Algunos documentos ya fueron enviados anteriormente
+                            </p>
+                            <ul class="mt-1 text-xs text-amber-700 list-disc list-inside max-h-24 overflow-y-auto">
+                                <li v-for="(doc, idx) in alreadySentWarning" :key="idx">
+                                    {{ doc }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="w-full">
                         <thead class="uppercase text-sm">
                             <tr>
-                                <th>
-
+                                <th class="text-center w-10">
+                                    <input type="checkbox"
+                                        :checked="allSelected"
+                                        @change="toggleAll"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                    >
                                 </th>
                                 <th scope="col">
                                     Tipo documento
@@ -411,8 +477,11 @@
                         </thead>
                         <tbody>
                             <tr v-for="(item, ko) in documents" class="text-sm">
-                                <th scope="row">
-
+                                <th scope="row" class="text-center">
+                                    <input type="checkbox"
+                                        v-model="item.selected"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                    >
                                 </th>
                                 <td>
                                    {{ item.type_description }}

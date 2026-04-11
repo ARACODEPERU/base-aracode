@@ -33,7 +33,7 @@ use Modules\Sales\Http\Controllers\SaleSummaryController;
 use Modules\Sales\Http\Controllers\SerieController;
 use Modules\Sales\Http\Controllers\ServicesController;
 
-Route::middleware(['auth', 'verified'])->prefix('sales')->group(function () {
+Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->group(function () {
     route::get('dashboard', [SalesController::class, 'index'])->name('sales_dashboard');
     Route::resource('products', ProductController::class);
     Route::resource('pettycash', PettyCashController::class);

@@ -19,11 +19,12 @@ class SaleSummaryController extends Controller
 {
     /**
      * Display a listing of the resource.
+     *
      * @return Renderable
      */
     public function index()
     {
-        $summaries = (new SaleSummary())->newQuery();
+        $summaries = (new SaleSummary)->newQuery();
 
         if (request()->has('search') && request()->get('search')) {
             $summaries->whereDate('summary_date', '=', request()->input('search'));
@@ -52,7 +53,7 @@ class SaleSummaryController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     * @param Request $request
+     *
      * @return Renderable
      */
     public function store(Request $request)
@@ -64,37 +65,37 @@ class SaleSummaryController extends Controller
             $res = DB::transaction(function () use ($documents, $generation_date) {
 
                 $summary = SaleSummary::create([
-                    'generation_date'   => $generation_date . ' ' . Carbon::now()->format('H:i:s'),
-                    'summary_date'      => Carbon::now()->format('Y-m-d H:i:s'),
-                    'status'            => 'registrado',
-                    'user_id'           => Auth::id()
+                    'generation_date' => $generation_date.' '.Carbon::now()->format('H:i:s'),
+                    'summary_date' => Carbon::now()->format('Y-m-d H:i:s'),
+                    'status' => 'registrado',
+                    'user_id' => Auth::id(),
                 ]);
 
                 foreach ($documents as $document) {
                     SaleSummaryDetail::create([
-                        'document_id'               => $document['id'],
-                        'summary_id'                => $summary->id,
-                        'model_name'                => SaleDocument::class,
-                        'invoice_type_doc'          => $document['invoice_type_doc'],
-                        'invoice_serie'             => $document['invoice_serie'],
-                        'invoice_document_name'     => $document['invoice_serie'] . '-' . $document['number'],
-                        'invoice_correlative'       => $document['invoice_correlative'],
-                        'status'                    => $document['status'],
-                        'total'                     => $document['invoice_mto_imp_sale']
+                        'document_id' => $document['id'],
+                        'summary_id' => $summary->id,
+                        'model_name' => SaleDocument::class,
+                        'invoice_type_doc' => $document['invoice_type_doc'],
+                        'invoice_serie' => $document['invoice_serie'],
+                        'invoice_document_name' => $document['invoice_serie'].'-'.$document['number'],
+                        'invoice_correlative' => $document['invoice_correlative'],
+                        'status' => $document['status'],
+                        'total' => $document['invoice_mto_imp_sale'],
                     ]);
 
                     SaleDocument::where('id', $document['id'])
                         ->update(['invoice_status' => 'Enviada']);
                 }
 
-                $factura = new Resumen();
+                $factura = new Resumen;
                 $result = $factura->create($summary, $documents);
 
                 return [
                     'success' => $result['success'],
-                    'code'  => $result['code'],
-                    'message'   => $result['message'],
-                    'notes'   => $result['notes']
+                    'code' => $result['code'],
+                    'message' => $result['message'],
+                    'notes' => $result['notes'],
                 ];
             });
 
@@ -106,7 +107,8 @@ class SaleSummaryController extends Controller
 
     /**
      * Show the specified resource.
-     * @param int $id
+     *
+     * @param  int  $id
      * @return Renderable
      */
     public function searchDocuments($date)
@@ -117,10 +119,35 @@ class SaleSummaryController extends Controller
             DB::raw('(SELECT description FROM sale_document_types WHERE sunat_id=invoice_type_doc) AS type_description')
         )
             ->whereDate('invoice_broadcast_date', $date)
-            //->whereIn('invoice_type_doc', ['03', '07'])
             ->whereIn('invoice_type_doc', ['03'])
             ->where('invoice_status', 'Pendiente')
             ->get();
+
+        // Verificar si cada documento ya tiene un resumen asociado
+        $alreadySent = [];
+        $documentIds = $documents->pluck('id')->toArray();
+
+        if (! empty($documentIds)) {
+            $alreadySentDocs = DB::table('sale_summary_details')
+                ->whereIn('document_id', $documentIds)
+                ->select('document_id', 'invoice_document_name', 'summary_id')
+                ->get()
+                ->groupBy('document_id');
+
+            foreach ($documents as $doc) {
+                if (isset($alreadySentDocs[$doc->id])) {
+                    $doc->already_sent = true;
+                    $doc->summary_ids = $alreadySentDocs[$doc->id]->pluck('summary_id')->toArray();
+                    $doc->summary_count = count($doc->summary_ids);
+                } else {
+                    $doc->already_sent = false;
+                    $doc->summary_ids = [];
+                    $doc->summary_count = 0;
+                }
+            }
+        }
+
+        $hasAlreadySent = $documents->contains('already_sent', true);
 
         if (count($documents) > 0) {
             $success = true;
@@ -129,26 +156,28 @@ class SaleSummaryController extends Controller
         }
 
         return response()->json([
-            'success'   => $success,
-            'documents' => $documents
+            'success' => $success,
+            'documents' => $documents,
+            'has_already_sent' => $hasAlreadySent,
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
-     * @param int $id
+     *
+     * @param  int  $id
      * @return Renderable
      */
     public function checkSummary($id, $ticket)
     {
-        $summary = new Resumen();
+        $summary = new Resumen;
         $result = $summary->checkSummary($id, $ticket);
 
         return response()->json([
             'success' => $result['success'],
-            'code'  => $result['code'],
-            'message'   => $result['message'],
-            'notes'   => $result['notes']
+            'code' => $result['code'],
+            'message' => $result['message'],
+            'notes' => $result['notes'],
         ]);
     }
 
@@ -165,30 +194,33 @@ class SaleSummaryController extends Controller
                     ->update([
                         'invoice_status' => 'Pendiente',
                         'invoice_response_code' => 0,
-                        'invoice_response_description' => null
+                        'invoice_response_description' => null,
                     ]);
             }
 
             $summary->delete();
 
-            return array(
+            return [
                 'success' => true,
-                'message' => 'resumen eliminado'
-            );
+                'message' => 'resumen eliminado',
+            ];
         } catch (Exception $e) {
             var_dump($e);
         }
     }
 
-    public function downloadFile($id,$type){
+    public function downloadFile($id, $type)
+    {
         $sum = SaleSummary::find($id);
-        if ($type == 'XML'){
-            $content_type =  'application/xml';
-            $fileName = $sum->summary_name. '.xml';
+        if ($type == 'XML') {
+            $content_type = 'application/xml';
+            $fileName = $sum->summary_name.'.xml';
+
             return response()->download($sum->xml, $fileName, ['content-type' => $content_type]);
-        }else{
-            $content_type =  'application/zip';
-            $fileName = $sum->summary_name. '.zip';
+        } else {
+            $content_type = 'application/zip';
+            $fileName = $sum->summary_name.'.zip';
+
             return response()->download($sum->cdr, $fileName, ['content-type' => $content_type]);
         }
 
