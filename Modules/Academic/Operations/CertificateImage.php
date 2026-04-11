@@ -669,7 +669,7 @@ class CertificateImage
                 $courseName = $module->course->certificate_title ?? 'Curso';
                 $moduleName = $module->description ?? 'Módulo';
 
-                return "Curso: {$courseName} - Módulo: {$moduleName}";
+                return "{$courseName} - Módulo: {$moduleName}";
             }
         }
 
