@@ -465,7 +465,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-row items-center gap-2 self-end">
+                    <div class="flex flex-row items-end gap-2 self-end">
                         <button @click="verifyAndActivateExam()" class="btn btn-success text-xs uppercase">
                             <IconCheck class="w-4 h-4 mr-1" />
                             Verificar Configuración

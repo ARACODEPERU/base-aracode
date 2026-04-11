@@ -9,6 +9,7 @@
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
     import IconArrowRight from '@/Components/vristo/icon/icon-arrow-right.vue';
+    import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
         exam: { type: Object, default: () => ({}) },
@@ -24,6 +25,7 @@
     const savingAnswer = ref(false);
     const examFinish = ref(false);
     const isRetrying = ref(false);
+    const isSubmitting = ref(false);
     const showReviewScreen = ref(false);
     const questionFilter = ref('all');
 
@@ -329,6 +331,7 @@
     };
 
     const finishExam = () => {
+        isSubmitting.value = true;
         stopTimer();
 
         router.post(route('aca_student_exam_module_finish'), {
@@ -351,6 +354,7 @@
             confirmButtonText: 'Sí, reintentar',
             cancelButtonText: 'Cancelar',
             padding: '2em',
+            customClass: 'sweet-alerts',
         });
 
         if (!result.isConfirmed) return;
@@ -544,13 +548,27 @@
 
         <!-- Mensaje si el examen no está disponible -->
         <div v-if="!isSuccess" class="pt-5">
-            <div class="bg-red-100 text-red-800 p-6 rounded-lg text-center border border-red-200">
-                <svg class="w-12 h-12 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-6 rounded-lg text-center">
+                <svg class="w-12 h-12 mx-auto mb-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                 </svg>
-                <h2 class="text-xl font-bold mb-2">Examen no disponible</h2>
-                <p class="text-sm">El examen está fuera del horario establecido</p>
-                <Link :href="route('aca_mycourses_lessons', exam.module.course.id)" class="inline-block mt-4 bg-white text-red-500 px-4 py-2 rounded-lg font-medium">
+                <h2 class="text-xl font-bold mb-2 text-yellow-800 dark:text-yellow-200">Examen no disponible aún</h2>
+                <div class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                    <p>El examen estará disponible en el siguiente período:</p>
+                    <div class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                        <div class="flex justify-between text-left">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Desde</p>
+                                <p class="font-medium">{{ exam.date_start_formatted }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Hasta</p>
+                                <p class="font-medium">{{ exam.date_end_formatted }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <Link :href="route('aca_mycourses_lessons', exam.module.course.id)" class="inline-block mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium">
                     Volver al curso
                 </Link>
             </div>
@@ -772,8 +790,11 @@
                                     <i class="fas fa-arrow-left mr-2"></i> Volver al Examen
                                 </button>
                                 <button @click="submitExamFromReview"
-                                    class="btn bg-red-500 hover:bg-red-600 text-white flex-1 border-0">
-                                    <i class="fas fa-paper-plane mr-2"></i> Enviar Examen Definitivamente
+                                    :disabled="isSubmitting"
+                                    class="btn bg-red-500 hover:bg-red-600 text-white flex-1 border-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <IconLoader v-if="isSubmitting" class="animate-spin h-4 w-4 mr-2" />
+                                    <i v-else class="fas fa-paper-plane mr-2"></i>
+                                    {{ isSubmitting ? 'Enviando...' : 'Enviar Examen Definitivamente' }}
                                 </button>
                             </div>
                         </div>

@@ -36,6 +36,10 @@
         company: {
             type: Object,
             default: null
+        },
+        identityDocumentTypes: {
+            type: Array,
+            default: () => []
         }
     });
 
@@ -46,8 +50,8 @@
         if (!props.company) return null;
         const isDark = document.documentElement.classList.contains('dark');
         if (isDark && props.company.logo_dark) {
-            return props.company.logo_dark === '/img/logo176x32.png' 
-                ? baseUrl + props.company.logo_dark 
+            return props.company.logo_dark === '/img/logo176x32.png'
+                ? baseUrl + props.company.logo_dark
                 : baseUrl + 'storage/' + props.company.logo_dark;
         }
         if (props.company.logo) {
@@ -60,8 +64,17 @@
 
     const companyName = computed(() => props.company?.name || '');
 
+    // ============ TIPO DE DOCUMENTO ============
+    const maxCharacters = computed(() => {
+        if (!form.identity_document_type_id) return 8;
+        const selected = props.identityDocumentTypes.find(d => d.id == form.identity_document_type_id);
+        if (!selected) return 8;
+        return parseInt(selected.number_characters) || 8;
+    });
+
     const form = useForm({
         link_code: props.link?.link_code || '',
+        identity_document_type_id: null,
         dni: '',
         verification_code: ''
     });
@@ -131,14 +144,14 @@
 
     const calculateTimes = () => {
         if (!props.link?.valid_until || !props.link?.valid_from) return { remaining: 0, total: 0 };
-        
+
         const now = new Date().getTime();
         const validUntil = new Date(props.link.valid_until).getTime();
         const validFrom = new Date(props.link.valid_from).getTime();
-        
+
         const remaining = Math.max(0, Math.floor((validUntil - now) / 1000));
         const total = Math.floor((validUntil - validFrom) / 1000);
-        
+
         return { remaining, total };
     };
 
@@ -169,7 +182,7 @@
     // Color de la barra de progreso según el porcentaje
     const progressBarColor = computed(() => {
         const pct = progressPercentage.value;
-        
+
         if (pct > 50) {
             // 100% - 50%: Azul/Índigo
             return 'bg-gradient-to-r from-blue-500 to-indigo-500';
@@ -318,28 +331,54 @@
                     <form @submit.prevent="submitForm" class="p-6 space-y-5">
                         <input type="hidden" v-model="form.link_code">
 
-                        <!-- Campo DNI -->
+                        <!-- Campo Tipo de Documento -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                 <span class="flex items-center gap-2">
                                     <svg :class="['w-4 h-4', iconColorClasses]" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                     </svg>
-                                    Número de DNI
+                                    Tipo de Documento
+                                </span>
+                            </label>
+                            <select
+                                v-model="form.identity_document_type_id"
+                                class="w-full px-4 py-3 rounded-xl form-select"
+                                required
+                            >
+                                <option value="" disabled>Seleccionar</option>
+                                <option value="1">DNI</option>
+                                <option v-for="docType in props.identityDocumentTypes" :key="docType.id" :value="docType.id">
+                                    {{ docType.description }}
+                                </option>
+                            </select>
+                            <div class="w-full text-center">
+                                <InputError :message="form.errors.identity_document_type_id" class="mt-2" />
+                            </div>
+                        </div>
+
+                        <!-- Campo Número de Documento -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <span class="flex items-center gap-2">
+                                    <svg :class="['w-4 h-4', iconColorClasses]" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Número de Documento
                                 </span>
                             </label>
                             <input
                                 type="text"
                                 v-model="form.dni"
-                                maxlength="8"
-                                pattern="[0-9]{8}"
+                                :maxlength="maxCharacters"
+                                :pattern="'[0-9]{' + maxCharacters + '}'"
                                 inputmode="numeric"
-                                class="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200 text-lg tracking-wider text-center"
-                                placeholder="12345678"
+                                class="w-full px-4 py-3 form-input text-lg text-center"
+                                placeholder="Ingresa tu número de documento"
                                 required
                             >
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-                                Ingresa tu DNI de 8 dígitos
+                                Debes ingresar {{ maxCharacters }} dígitos
                             </p>
                             <div class="w-full text-center">
                                 <InputError :message="form.errors.dni" class="mt-2" />

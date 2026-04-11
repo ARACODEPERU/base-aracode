@@ -52,6 +52,27 @@
         }
     };
 
+    // Verificar si el examen está disponible por fecha
+    const examIsAvailable = computed(() => {
+        if (!moduleExam.value || !moduleExam.value.date_start || !moduleExam.value.date_end) return false;
+
+        const now = new Date();
+        const startDate = new Date(moduleExam.value.date_start);
+        const endDate = new Date(moduleExam.value.date_end);
+
+        return now >= startDate && now <= endDate;
+    });
+
+    // Verificar si el examen aún no ha начаdo
+    const examNotStarted = computed(() => {
+        if (!moduleExam.value || !moduleExam.value.date_start) return false;
+
+        const now = new Date();
+        const startDate = new Date(moduleExam.value.date_start);
+
+        return now < startDate;
+    });
+
     // Función para verificar si puede descargar solucionario
     const canDownloadSolution = () => {
         if (!studentExam.value) return false;
@@ -699,14 +720,27 @@
 
                                 <!-- Botones de Acción -->
                                 <div class="flex flex-col gap-2 pt-2">
-                                    <!-- Botón Principal: Resolver / Repetir / Ver Resultado -->
+                                    <!-- PRIORIDAD 1: Examen no disponible aún (fecha inicio futura) -->
+                                    <div v-if="examNotStarted" class="w-full bg-gray-300 text-gray-600 dark:text-gray-400 text-center py-2.5 px-4 rounded-lg text-sm font-medium dark:bg-gray-700 dark:border-gray-600">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Disponible desde: {{ moduleExam.date_start }}
+                                    </div>
+
+                                    <!-- PRIORIDAD 2: Examen ya terminó (fecha fin pasada) -->
+                                    <div v-else-if="!examIsAvailable" class="w-full bg-gray-400 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium">
+                                        Examen Finalizado
+                                    </div>
+
+                                    <!-- PRIORIDAD 3: Examen disponible - Sin exam Student o estado pendiente -->
                                     <Link
-                                        v-if="!studentExam || studentExam.status === 'pendiente'"
+                                        v-else-if="!studentExam || studentExam.status === 'pendiente'"
                                         :href="route('aca_student_module_exam_solve', moduleExam.id)"
                                         class="w-full bg-red-500 hover:bg-red-600 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium transition-colors"
                                     >
                                         Resolver Examen
                                     </Link>
+
+                                    <!-- PRIORIDAD 4: Examen disponible - Repetir examen -->
                                     <Link
                                         v-else-if="canRetakeExam()"
                                         :href="route('aca_student_module_exam_solve', moduleExam.id)"
@@ -714,6 +748,8 @@
                                     >
                                         Repetir Examen ({{ moduleExam.attempts - studentExam.attempts_used }} intentos)
                                     </Link>
+
+                                    <!-- PRIORIDAD 5: Examen completado sin intentos disponibles -->
                                     <div v-else class="w-full bg-gray-400 text-white text-center py-2.5 px-4 rounded-lg text-sm font-medium">
                                         Examen Completado
                                     </div>

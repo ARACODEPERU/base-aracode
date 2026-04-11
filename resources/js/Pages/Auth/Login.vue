@@ -94,7 +94,7 @@
                                             id="Email"
                                             type="email"
                                             placeholder="tu@email.com"
-                                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                            class="block w-full pl-10 pr-3 py-2 form-input"
                                             tabindex="1"
                                             @input="(e) => form.email = e.target.value.trim()"
                                         />
@@ -117,7 +117,7 @@
                                             id="Password"
                                             type="password"
                                             placeholder="••••••••"
-                                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                            class="block w-full pl-10 pr-3 py-2 form-input"
                                             tabindex="2"
                                             @input="(e) => form.password = e.target.value.trim()"
                                         />

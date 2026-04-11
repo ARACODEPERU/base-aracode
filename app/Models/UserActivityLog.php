@@ -21,6 +21,7 @@ class UserActivityLog extends Model
 
     protected $casts = [
         'details_data' => 'array',
+        'request_payload' => 'array',
     ];
 
     /**

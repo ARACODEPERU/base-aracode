@@ -4,12 +4,15 @@ namespace Modules\Academic\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\ExcelExportJob;
+use App\Models\IdentityDocumentType;
+use App\Models\Parameter;
 use App\Models\Person;
 use Carbon\Carbon;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaAttendanceLink;
 use Modules\Academic\Entities\AcaCapRegistration;
@@ -85,6 +88,14 @@ class AcaAttendanceController extends Controller
 
         $company = Company::first();
 
+        // Cargar tipos de documento de identidad
+        $identityDocumentTypes = IdentityDocumentType::select('id', 'description', 'number_characters')
+            ->where('id', '!=', '1') // Excluir DNI que ya es por defecto
+            ->orderBy('description')
+            ->get();
+
+            //dd($identityDocumentTypes);
+
         return Inertia::render('Academic::Attendance/RegisterAttendance', [
             'error' => null,
             'message' => null,
@@ -105,6 +116,7 @@ class AcaAttendanceController extends Controller
                 'isotipo' => $company->isotipo,
                 'isotipo_negative' => $company->isotipo_negative,
             ] : null,
+            'identityDocumentTypes' => $identityDocumentTypes,
         ]);
     }
 
@@ -112,9 +124,18 @@ class AcaAttendanceController extends Controller
     {
         $this->validate($request, [
             'link_code' => 'required',
-            'dni' => 'required|string|size:8',
+            'identity_document_type_id' => 'required',
+            'dni' => 'required|string',
             'verification_code' => 'nullable|string|max:50',
         ]);
+
+        // Validar número de caracteres según el tipo de documento
+        $docType = IdentityDocumentType::find($request->identity_document_type_id);
+        $requiredLength = $docType ? (int) $docType->number_characters : 8;
+
+        if (strlen($request->dni) !== $requiredLength) {
+            return back()->withErrors(['dni' => 'El número de documento debe tener '.$requiredLength.' dígitos.']);
+        }
 
         $link = AcaAttendanceLink::with(['course', 'content'])
             ->where('link_code', $request->link_code)
@@ -132,7 +153,10 @@ class AcaAttendanceController extends Controller
             return back()->withErrors(['verification_code' => 'El código de verificación es incorrecto.']);
         }
 
-        $person = Person::where('number', $request->dni)->first();
+        // Buscar persona por tipo de documento y número
+        $person = Person::where('document_type_id', $request->identity_document_type_id)
+            ->where('number', $request->dni)
+            ->first();
 
         if (! $person) {
             return back()->withErrors(['dni' => 'No se encontró una persona con el DNI ingresado.']);

@@ -335,7 +335,11 @@ class AcaExamController extends Controller
         $now = now();
         $isAvailable = $now->between($exam->date_start, $exam->date_end);
 
-        // 3. Preparar preguntas (Shuffle y mapeo de datos necesarios para el Front)
+        // 3. Agregar fechas al array del examen para el frontend
+        $examArray['date_start_formatted'] = Carbon::parse($exam->date_start)->format('d/m/Y H:i');
+        $examArray['date_end_formatted'] = Carbon::parse($exam->date_end)->format('d/m/Y H:i');
+
+        // 4. Preparar preguntas (Shuffle y mapeo de datos necesarios para el Front)
         $shuffledQuestions = $exam->questions->map(function ($question) {
             // Barajamos las respuestas
             $answers = $question->answers->shuffle()->values()->toArray();
@@ -358,52 +362,59 @@ class AcaExamController extends Controller
         $examArray = $exam->toArray();
         $examArray['questions'] = $shuffledQuestions;
 
-        // 4. Buscar o crear el intento del estudiante
-        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
-
-        // Primero buscar si existe un intento previo
-        $examStudent = AcaStudentExam::where('exam_id', $exam->id)
-            ->where('student_id', $student->id)
-            ->first();
-
-        // Si existe un intento previo, verificar si puede reintentar
+        // 4. Buscar o crear el intento del estudiante - SOLO si el examen está disponible
         $canRetry = false;
         $maxAttempts = $exam->attempts ?? 1;
 
-        if ($examStudent) {
-            // Verificar si está terminado y tiene intentos disponibles
-            $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
-            $attemptsUsed = $examStudent->attempts_used ?? 1;
+        // Solo procesar intentos si el examen está disponible por fecha
+        if ($isAvailable) {
+            $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
 
-            if ($isFinished && $attemptsUsed < $maxAttempts) {
-                // NO resetear automáticamente - el estudiante debe solicitarlo manualmente
+            // Primero buscar si existe un intento previo
+            $examStudent = AcaStudentExam::where('exam_id', $exam->id)
+                ->where('student_id', $student->id)
+                ->first();
+
+            if ($examStudent) {
+                // Verificar si está terminado y tiene intentos disponibles
+                $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
+                $attemptsUsed = $examStudent->attempts_used ?? 1;
+
+                if ($isFinished && $attemptsUsed < $maxAttempts) {
+                    // NO resetear automáticamente - el estudiante debe solicitarlo manualmente
+                    $canRetry = true;
+                    $examStudent->attempts_used = $attemptsUsed;
+                }
+            } else {
+                // Crear nuevo intento SOLO si está disponible
+                $examStudent = AcaStudentExam::create([
+                    'exam_id' => $exam->id,
+                    'student_id' => $student->id,
+                    'date_start' => now(),
+                    'started_at' => now(),
+                    'status' => 'pendiente',
+                    'punctuation' => 0,
+                    'details' => [],
+                    'attempts_used' => 1,
+                ]);
                 $canRetry = true;
-                $examStudent->attempts_used = $attemptsUsed;
             }
+
+            // Asegurar que started_at existe (por si es un registro viejo que no lo tenía)
+            if (! $examStudent->started_at) {
+                $examStudent->started_at = $examStudent->created_at;
+            }
+
+            // Agregar información de intentos al objeto del examen
+            $examArray['max_attempts'] = $maxAttempts;
+            $examArray['attempts_used'] = $examStudent->attempts_used ?? 1;
+            $examArray['can_retry'] = $canRetry;
         } else {
-            // Crear nuevo intento
-            $examStudent = AcaStudentExam::create([
-                'exam_id' => $exam->id,
-                'student_id' => $student->id,
-                'date_start' => now(),
-                'started_at' => now(),
-                'status' => 'pendiente',
-                'punctuation' => 0,
-                'details' => [],
-                'attempts_used' => 1,
-            ]);
-            $canRetry = true;
+            // Examen no disponible - inicializar valores por defecto
+            $examArray['max_attempts'] = $maxAttempts;
+            $examArray['attempts_used'] = 0;
+            $examArray['can_retry'] = false;
         }
-
-        // Asegurar que started_at existe (por si es un registro viejo que no lo tenía)
-        if (! $examStudent->started_at) {
-            $examStudent->started_at = $examStudent->created_at;
-        }
-
-        // Agregar información de intentos al objeto del examen
-        $examArray['max_attempts'] = $maxAttempts;
-        $examArray['attempts_used'] = $examStudent->attempts_used ?? 1;
-        $examArray['can_retry'] = $canRetry;
 
         // 5. Reestructurar "details" para que Vue lo maneje fácilmente
         // Gracias al $casts en el modelo, $examStudent->details ya es un array
@@ -418,10 +429,26 @@ class AcaExamController extends Controller
         }
 
         // 6. Preparar objeto de respuesta para Inertia
-        // Convertimos a array para evitar que el Accessor del modelo interfiera
-        $examStudentData = $examStudent->toArray();
-        $examStudentData['details'] = $detailsByQuestion;
-        $examStudentData['started_at'] = Carbon::parse($examStudent->started_at)->toDateTimeString();
+        // Si el examen no está disponible, usar un objeto vacío
+        if (! $isAvailable) {
+            $examStudentData = [
+                'id' => null,
+                'exam_id' => $exam->id,
+                'student_id' => $student->id ?? null,
+                'status' => 'no_disponible',
+                'punctuation' => 0,
+                'details' => [],
+                'attempts_used' => 0,
+                'started_at' => null,
+                'finished_at' => null,
+                'time_spent_seconds' => 0,
+            ];
+        } else {
+            // Convertimos a array para evitar que el Accessor del modelo interfiera
+            $examStudentData = $examStudent->toArray();
+            $examStudentData['details'] = $detailsByQuestion;
+            $examStudentData['started_at'] = Carbon::parse($examStudent->started_at)->toDateTimeString();
+        }
 
         // dd($examStudentData);
         return Inertia::render('Academic::Students/ModuleExamSolve', [
