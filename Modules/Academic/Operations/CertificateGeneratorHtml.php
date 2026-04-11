@@ -97,7 +97,7 @@ class CertificateGeneratorHtml
     public function prepareCourseContent($course, $isModule = false, $moduleId = null)
     {
         $content = [];
-        $courseTitle = $course->description ?? 'Curso';
+        $courseTitle = $course->certificate_title ?? 'Curso';
 
         if ($isModule && $moduleId) {
             $module = $course->modules()->where('id', $moduleId)->first();
