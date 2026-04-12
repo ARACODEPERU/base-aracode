@@ -19,6 +19,7 @@ use Intervention\Image\Facades\Image;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaCertificateGradeConfig;
+use Modules\Academic\Entities\AcaCertificateModuleConfig;
 use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaExam;
@@ -218,7 +219,7 @@ class AcaCertificateController extends Controller
 
     public function edit($id)
     {
-        $certificate = AcaCertificateParameter::find($id);
+        $certificate = AcaCertificateParameter::with(['moduleConfig'])->find($id);
 
         $gradeConfig = AcaCertificateGradeConfig::where('certificate_id', $certificate->id)->first();
 
@@ -540,6 +541,26 @@ class AcaCertificateController extends Controller
                 $acaCertificate->back_content_show_module = $request->get('back_content_show_module') ? true : false;
                 $acaCertificate->for_module = $request->get('for_module') ? true : false;
                 break;
+            case 11:
+                // Configuración de descripción del módulo (solo para certificados de módulo - for_module = true)
+                // Guardar en tabla separada: aca_certificates_module_config
+                AcaCertificateModuleConfig::updateOrCreate(
+                    ['certificate_id' => $id],
+                    [
+                        'certificate_id' => $id,
+                        'fontfamily_module_description' => $request->get('fontfamily_module_description'),
+                        'font_align_module_description' => $request->get('font_align_module_description'),
+                        'font_vertical_module_description' => $request->get('font_vertical_module_description'),
+                        'position_module_description_x' => $request->get('position_module_description_x'),
+                        'position_module_description_y' => $request->get('position_module_description_y'),
+                        'font_size_module_description' => $request->get('font_size_module_description'),
+                        'max_width_module_description' => $request->get('max_width_module_description'),
+                        'text_align_module_description' => $request->get('text_align_module_description'),
+                        'color_module_description' => $request->get('color_module_description'),
+                        'visible_module_description' => $request->get('visible_module_description') ? true : false,
+                    ]
+                );
+                break;
             case 12:
                 // Contenido del curso del reverso
                 $acaCertificate->back_fontfamily_course = $request->get('back_fontfamily_course');
@@ -667,8 +688,8 @@ class AcaCertificateController extends Controller
 
         $fullPath = null;
 
-        // Generar imagen para anverso (cases 1-5) y reverso (cases 6-9, 12, 13, 14, 15)
-        $generateForFront = in_array($request->get('action_type'), [1, 2, 3, 4, 5]);
+        // Generar imagen para anverso (cases 1-5, 11) y reverso (cases 6-9, 12, 13, 14, 15)
+        $generateForFront = in_array($request->get('action_type'), [1, 2, 3, 4, 5, 11]);
         $generateForBack = in_array($request->get('action_type'), [6, 7, 8, 9, 12, 13, 14, 15]);
 
         if ($generateForFront) {

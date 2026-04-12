@@ -48,8 +48,8 @@ class CertificateImage
         $this->student_id = $student_id;
         $this->course_id = $course_id;
 
-        // Cargar configuración del certificado
-        $this->certificates_param = AcaCertificateParameter::find($certificate_id);
+        // Cargar configuración del certificado con la relación moduleConfig
+        $this->certificates_param = AcaCertificateParameter::with(['moduleConfig'])->find($certificate_id);
 
         // Texto de ejemplo para vista previa (cuando no hay datos reales)
         $textDefault = 'Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas académicas. Temas tratados: Fundamentos de Laravel, APIs RESTful, integración de Vue.js, autenticación con JWT, optimización de bases de datos, despliegue en la nube y buenas prácticas de desarrollo. Fecha: Del 15 de marzo al 30 de mayo de 2023. Instructor: Juan Pérez.';
@@ -184,6 +184,58 @@ class CertificateImage
                         (int) ($this->getField('position_description_y') ?? 300)
                     );
                     File::delete($htmlPath);
+                }
+            }
+
+            // 3. RENDERIZAR DESCRIPCIÓN DEL MÓDULO (solo si for_module = true)
+            // Obtener configuración de la tabla separada aca_certificates_module_config
+            $moduleConfig = $this->certificates_param->moduleConfig ?? null;
+            
+            // Verificar si debe mostrar la descripción del módulo
+            $isForModule = $this->certificates_param->for_module ?? false;
+            $isModuleDescriptionVisible = $moduleConfig ? ($moduleConfig->visible_module_description ?? false) : true;
+            
+            if ($isForModule && $isModuleDescriptionVisible) {
+                $moduleDescriptionText = null;
+                
+                // Buscar en aca_modules la descripción del módulo específico
+                if ($this->module_id) {
+                    $module = AcaModule::find($this->module_id);
+                    $moduleDescriptionText = $module->certificate_description ?? null;
+                } else {
+                    // Para preview sin module_id, usar texto de ejemplo
+                    $moduleDescriptionText = 'Esta es la descripción personalizada del módulo. Se mostrará cuando el estudiante descargue su certificado desde el módulo específico.';
+                }
+                
+                // Solo renderizar si hay descripción disponible en el módulo
+                if ($moduleDescriptionText) {
+                    $moduleDescContentWidth = (int) ($moduleConfig ? ($moduleConfig->max_width_module_description ?? 800) : 800);
+                    $moduleDescContentHeight = $this->certificates_param->certificate_img_height ?? 1550;
+                    
+                    $moduleDescViewData = [
+                        'text' => $moduleDescriptionText,
+                        'canvasWidth' => $moduleDescContentWidth,
+                        'canvasHeight' => $moduleDescContentHeight,
+                        'posX' => 10,
+                        'posY' => 10,
+                        'maxWidth' => $moduleDescContentWidth,
+                        'fontFamily' => $moduleConfig ? ($moduleConfig->fontfamily_module_description ?? 'Arial') : 'Arial',
+                        'fontSize' => (int) ($moduleConfig ? ($moduleConfig->font_size_module_description ?? 14) : 14),
+                        'color' => $moduleConfig ? ($moduleConfig->color_module_description ?? '#1a1c2d') : '#1a1c2d',
+                        'lineHeight' => (int) ($moduleConfig ? ($moduleConfig->font_size_module_description ?? 14) : 14) + 4,
+                        'textAlign' => $moduleConfig ? ($moduleConfig->text_align_module_description ?? 'left') : 'left',
+                    ];
+                    
+                    $moduleDescHtmlPath = $htmlGenerator->generateFromView('text-description-front', $moduleDescViewData, $moduleDescContentWidth, $moduleDescContentHeight);
+                    
+                    if ($moduleDescHtmlPath && File::exists($moduleDescHtmlPath)) {
+                        $moduleDescHtmlImage = Image::make($moduleDescHtmlPath);
+                        $img->insert($moduleDescHtmlImage, 'top-left',
+                            (int) ($moduleConfig ? ($moduleConfig->position_module_description_x ?? 425) : 425),
+                            (int) ($moduleConfig ? ($moduleConfig->position_module_description_y ?? 350) : 350)
+                        );
+                        File::delete($moduleDescHtmlPath);
+                    }
                 }
             }
         }

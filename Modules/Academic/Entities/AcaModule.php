@@ -18,6 +18,7 @@ class AcaModule extends Model
         'description',
         'teacher_id',
         'allow_certificate_download',
+        'certificate_description',
     ];
 
     public function course(): BelongsTo

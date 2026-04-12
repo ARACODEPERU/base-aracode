@@ -3,6 +3,7 @@
 namespace Modules\Academic\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AcaCertificateParameter extends Model
 {
@@ -139,5 +140,10 @@ class AcaCertificateParameter extends Model
     public function course()
     {
         return $this->belongsTo(AcaCourse::class, 'course_id');
+    }
+
+    public function moduleConfig()
+    {
+        return $this->hasOne(AcaCertificateModuleConfig::class, 'certificate_id');
     }
 }

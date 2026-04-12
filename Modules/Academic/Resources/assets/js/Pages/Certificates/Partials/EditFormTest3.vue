@@ -119,6 +119,7 @@ const previewData = {
     currentDate: new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }),
     courseName: 'Curso de Ejemplo',
     moduleName: 'Módulo de Ejemplo',
+    moduleDescription: 'Esta es la descripción personalizada del módulo que aparece en el certificado...',
     finalGrade: '95',
     certificateNumber: 'CERT-001-2024'
 };
@@ -188,6 +189,20 @@ const frontElements = ref({
         y: 0,
         size: 100,
         align: 'bottom-right',
+        draggable: true,
+        originalX: 0,
+        originalY: 0
+    },
+    moduleDescription: {
+        text: previewData.moduleDescription,
+        visible: false,
+        x: 0,
+        y: 0,
+        fontSize: 14,
+        fontFamily: 'Arial',
+        fontAlign: 'left',
+        verticalAlign: 'top',
+        color: '#000000',
         draggable: true,
         originalX: 0,
         originalY: 0
@@ -358,6 +373,17 @@ const form = useForm({
     visible_image_qr: props.certificate.visible_image_qr == 1 ? true : false,
     visible_description: props.certificate.visible_description == 1 ? true : false,
     color_description: props.certificate.color_description,
+    // Configuración de descripción del módulo (solo para for_module)
+    fontfamily_module_description: normalizeFontName(props.certificate.fontfamily_module_description) || 'Arial',
+    font_align_module_description: props.certificate.font_align_module_description || 'left',
+    font_vertical_module_description: props.certificate.font_vertical_module_description || 'top',
+    position_module_description_x: props.certificate.position_module_description_x || 425,
+    position_module_description_y: props.certificate.position_module_description_y || 350,
+    font_size_module_description: props.certificate.font_size_module_description || 14,
+    max_width_module_description: props.certificate.max_width_module_description || 600,
+    text_align_module_description: props.certificate.text_align_module_description || 'left',
+    color_module_description: props.certificate.color_module_description || '#1a1c2d',
+    visible_module_description: props.certificate.visible_module_description == 1 ? true : false,
     visible_title: props.certificate.visible_title == 1 ? true : false,
     color_title: props.certificate.color_title,
     visible_names: props.certificate.visible_names == 1 ? true : false,
@@ -787,7 +813,7 @@ const updateCertificateData = async (actionType) => {
     try {
         const response = await axios({
             method: 'post',
-            url: route('aca_certificate_update_infoTest3'),
+            url: route('aca_certificate_update_info'),
             data: getPlainFormData(actionType)
         });
 
@@ -877,7 +903,7 @@ const saveAllChanges = async () => {
             allActionTypes.map(actionType =>
                 axios({
                     method: 'post',
-                    url: route('aca_certificate_update_infoTest3'),
+                    url: route('aca_certificate_update_info'),
                     data: getPlainFormData(actionType)
                 })
             )
@@ -954,7 +980,7 @@ const updateCertificateStatus = async () => {
     try {
         await axios({
             method: 'post',
-            url: route('aca_certificate_update_infoTest3'),
+            url: route('aca_certificate_update_info'),
             data: form
         });
 
@@ -1538,6 +1564,61 @@ onMounted(async () => {
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
                                         <button @click="updateCertificateData(5)" class="btn btn-success">Guardar</button>
+                                    </div>
+                                </div>
+                            </vue-collapsible>
+                        </div>
+
+                        <!-- Descripción del Módulo (solo para for_module) -->
+                        <div v-if="form.for_module" class="col-span-2">
+                            <vue-collapsible isOpen="false">
+                                <div
+                                    class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b] border border-[#d3d3d3] dark:border-[#1b2e4b] rounded-t-lg"
+                                    slot="trigger"
+                                >
+                                    <icon-edit class="w-4 h-4 mr-2" />
+                                    Descripción del Módulo
+                                </div>
+                                <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] border-t-0 rounded-b-lg p-4 space-y-3">
+                                    <div class="col-span-4">
+                                        <InputLabel value="Visible" />
+                                        <input type="checkbox" v-model="form.visible_module_description" class="form-checkbox" />
+                                        <p class="text-xs text-gray-400 mt-1">Solo se mostrará si el módulo tiene descripción (certificate_description en aca_modules)</p>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Fuente" />
+                                        <select v-model="form.fontfamily_module_description" class="form-select">
+                                            <option v-for="font in fonts" :key="font" :value="font">{{ font }}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Alineación" />
+                                        <select v-model="form.text_align_module_description" class="form-select">
+                                            <option value="left">Izquierda</option>
+                                            <option value="center">Centrado</option>
+                                            <option value="right">Derecha</option>
+                                            <option value="justify">Justificado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Tamaño" />
+                                        <input type="range" v-model="form.font_size_module_description" min="8" max="36" class="w-full" />
+                                        <span class="text-xs">{{ form.font_size_module_description }}px</span>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Ancho máximo" />
+                                        <input type="range" v-model="form.max_width_module_description" min="200" max="1000" step="50" class="w-full" />
+                                        <span class="text-xs">{{ form.max_width_module_description }}px</span>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Color" />
+                                        <TextInput type="color" v-model="form.color_module_description" />
+                                    </div>
+                                    <div class="col-span-4 flex items-center justify-between">
+                                        <button @click="resetElementPosition('moduleDescription', 'front')" class="btn btn-warning btn-sm w-full">Resetear posición</button>
+                                    </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(11)" class="btn btn-success">Guardar</button>
                                     </div>
                                 </div>
                             </vue-collapsible>

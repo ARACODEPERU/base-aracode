@@ -101,6 +101,19 @@
         back_content_type: props.certificate.back_content_type || 'list',
         back_content_type_module: props.certificate.back_content_type_module || 'list',
 
+        // Configuración del módulo/descripción del módulo (tabla separada)
+        // Obtener moduleConfig de forma segura (soporta camelCase y snake_case)
+        fontfamily_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).fontfamily_module_description || 'Arial',
+        font_align_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).font_align_module_description || 'left',
+        font_vertical_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).font_vertical_module_description || 'top',
+        position_module_description_x: (props.certificate.module_config || props.certificate.moduleConfig || {}).position_module_description_x || 425,
+        position_module_description_y: (props.certificate.module_config || props.certificate.moduleConfig || {}).position_module_description_y || 350,
+        font_size_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).font_size_module_description || 14,
+        max_width_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).max_width_module_description || 600,
+        text_align_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).text_align_module_description || 'left',
+        color_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).color_module_description || '#1a1c2d',
+        visible_module_description: (props.certificate.module_config || props.certificate.moduleConfig || {}).visible_module_description == 1 ? true : false,
+
         // Configuración del reverso
         back_fontfamily_date: props.certificate.back_fontfamily_date,
         back_font_align_date: props.certificate.back_font_align_date,
@@ -796,6 +809,75 @@
                                     </div>
                                     <div class="flex items-center justify-end mt-4">
                                         <button @click="updateCertificateData(5)" class="btn btn-success">Guardar cambios y ver resultado</button>
+                                    </div>
+                                </div>
+                            </vue-collapsible>
+                        </div>
+
+                        <!-- Descripción del Módulo (solo para for_module) -->
+                        <div v-if="form.for_module" class="col-span-2">
+                            <vue-collapsible isOpen="false">
+                                <div
+                                    class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b] border border-[#d3d3d3] dark:border-[#1b2e4b] rounded-t-lg"
+                                    slot="trigger"
+                                >
+                                    <icon-info-circle-two class="w-4 h-4 mr-2" />
+                                    Descripción del Módulo
+                                </div>
+                                <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] border-t-0 rounded-b-lg p-4 space-y-3">
+                                    <div class="col-span-4">
+                                        <InputLabel for="visible_module_description" value="Visible" />
+                                        <input type="checkbox" id="visible_module_description" class="form-checkbox" v-model="form.visible_module_description" />
+                                        <p class="text-xs text-gray-400 mt-1">Solo se mostrará si el módulo tiene descripción (certificate_description en aca_modules)</p>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Fuente" />
+                                        <select v-model="form.fontfamily_module_description" class="form-select">
+                                            <option value="Arial">Arial</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Georgia">Georgia</option>
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Verdana">Verdana</option>
+                                            <option value="Tahoma">Tahoma</option>
+                                            <option value="Trebuchet MS">Trebuchet MS</option>
+                                            <option value="Impact">Impact</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Alineación" />
+                                        <select v-model="form.text_align_module_description" class="form-select">
+                                            <option value="left">Izquierda</option>
+                                            <option value="center">Centrado</option>
+                                            <option value="right">Derecha</option>
+                                            <option value="justify">Justificado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Tamaño de fuente" />
+                                        <input type="number" v-model="form.font_size_module_description" min="8" max="36" class="form-input" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Ancho máximo" />
+                                        <input type="number" v-model="form.max_width_module_description" min="200" max="1000" class="form-input" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Posición X" />
+                                        <input type="number" v-model="form.position_module_description_x" class="form-input" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Posición Y" />
+                                        <input type="number" v-model="form.position_module_description_y" class="form-input" />
+                                    </div>
+                                    <div>
+                                        <InputLabel value="Color" />
+                                        <TextInput
+                                            id="color_module_description"
+                                            v-model="form.color_module_description"
+                                            type="color"
+                                        />
+                                    </div>
+                                    <div class="flex items-center justify-end mt-4">
+                                        <button @click="updateCertificateData(11)" class="btn btn-success">Guardar</button>
                                     </div>
                                 </div>
                             </vue-collapsible>
