@@ -88,9 +88,7 @@
 
     async function loadTeachers() {
         try {
-            const response = await axios.post(route('crm_contacts_docents_chat'),{
-                timeout: 0,
-            });
+            const response = await axios.get(route('crm_contacts_docents_chat'));
 
             const data = response.data;
 

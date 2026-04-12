@@ -446,18 +446,6 @@ class CrmContactsController extends Controller
         //dd(Auth::user()->person_id);
         $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
         $docents = [];
-        //dd($student);
-        // $docents = AcaCapRegistration::with('course.teacher.person')
-        //     ->where('student_id', $student->id)
-        //     ->where('status', true)
-        //     ->get()
-        //     ->map(function ($registration) {
-        //         return $registration->course->teacher ?? null;
-        //     })
-        //     ->filter() // Elimina valores nulos en caso de cursos sin teacher
-        //     ->unique('id') // Agrupa por ID del teacher
-        //     ->values(); // Reindexa el array
-        //dd($docents);
 
         $existeActiva = AcaStudentSubscription::where('student_id', $student->id)
             ->where('status', true)

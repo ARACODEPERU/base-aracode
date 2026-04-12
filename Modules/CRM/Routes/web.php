@@ -27,7 +27,7 @@ use Modules\CRM\Http\Controllers\CrmPersonController;
 |
 */
 
-Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
+Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->group(function () {
     Route::middleware(['middleware' => 'permission:crm_dashboard'])
         ->get('dashboard', [CRMController::class, 'index'])
         ->name('crm_dashboard');
@@ -81,7 +81,7 @@ Route::middleware(['auth', 'verified'])->prefix('crm')->group(function () {
         ->name('crm_upload_message_file');
 
     Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
-        ->post('contacts/docents/chat', [CrmContactsController::class, 'contactsDocentsChat'])
+        ->get('contacts/docents/chat', [CrmContactsController::class, 'contactsDocentsChat'])
         ->name('crm_contacts_docents_chat');
 
     Route::get('download-file/{message_id}', [CrmMessagesController::class, 'downloadMessageFile'])->name('crm_download_message_file');
