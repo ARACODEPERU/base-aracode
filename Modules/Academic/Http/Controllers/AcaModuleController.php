@@ -48,6 +48,7 @@ class AcaModuleController extends Controller
             'description'   => $request->get('description'),
             'allow_certificate_download' => $request->get('allow_certificate_download') ? true : false,
             'certificate_description' => $request->get('certificate_description'),
+            'certificate_title' => $request->get('certificate_title'),
         ]);
 
         return response()->json([
@@ -73,6 +74,7 @@ class AcaModuleController extends Controller
             'description'   => $request->get('description'),
             'allow_certificate_download' => $request->get('allow_certificate_download') ? true : false,
             'certificate_description' => $request->get('certificate_description'),
+            'certificate_title' => $request->get('certificate_title'),
         ]);
 
         return response()->json([
