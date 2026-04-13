@@ -498,7 +498,7 @@ class PersonController extends Controller
         ]);
 
         // Usar una transacción para que se guarde TODO o NADA
-        \DB::transaction(function () use ($request, $person_id, $user) {
+        DB::transaction(function () use ($request, $person_id, $user) {
 
             $person = Person::find($person_id);
 

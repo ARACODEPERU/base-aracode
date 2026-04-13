@@ -3,9 +3,12 @@
 namespace Modules\Sales\Http\Controllers;
 
 use App\Helpers\Invoice\Documents\Boleta;
+use App\Helpers\Invoice\Documents\Factura;
+use App\Helpers\Invoice\Documents\NotaCredito;
+use App\Helpers\Invoice\Documents\NotaDebito;
+use App\Helpers\Invoice\Documents\Resumen;
 use App\Helpers\NumberLetter;
 use App\Models\Company;
-use App\Models\Department;
 use App\Models\District;
 use App\Models\Kardex;
 use App\Models\KardexSize;
@@ -21,32 +24,32 @@ use App\Models\SaleDocumentType;
 use App\Models\SaleProduct;
 use App\Models\Serie;
 use Carbon\Carbon;
+use DataTables;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use App\Helpers\Invoice\Documents\Factura;
-use App\Helpers\Invoice\Documents\NotaCredito;
-use App\Helpers\Invoice\Documents\NotaDebito;
+use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SaleSummary;
 use Modules\Sales\Entities\SaleSummaryDetail;
-use App\Helpers\Invoice\Documents\Resumen;
-use DataTables;
-use Modules\Sales\Entities\SaleDocumentQuota;
 
 class SaleDocumentController extends Controller
 {
     use ValidatesRequests;
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
     private $ubl;
+
     private $igv;
+
     private $top;
+
     private $icbper;
 
     public function __construct()
@@ -62,28 +65,28 @@ class SaleDocumentController extends Controller
 
         $affectations = DB::table('sunat_affectation_igv_types')->get();
         $unitTypes = DB::table('sunat_unit_types')->get();
-        $operationTypes = DB::table('sunat_operation_types')->whereIn('id',['0101','1001'])->get();
+        $operationTypes = DB::table('sunat_operation_types')->whereIn('id', ['0101', '1001'])->get();
         $creditNoteType = DB::table('sunat_note_credit_types')->get();
         $debitNoteType = DB::table('sunat_note_debit_types')->get();
 
         return Inertia::render('Sales::Documents/List', [
-            'affectations'  => $affectations,
-            'unitTypes'     => $unitTypes,
-            'taxes'         => array(
+            'affectations' => $affectations,
+            'unitTypes' => $unitTypes,
+            'taxes' => [
                 'igv' => $this->igv,
-                'icbper' => $this->icbper
-            ),
+                'icbper' => $this->icbper,
+            ],
             'operationTypes' => $operationTypes,
             'creditNoteType' => $creditNoteType,
-            'debitNoteType'  => $debitNoteType
+            'debitNoteType' => $debitNoteType,
         ]);
     }
 
     public function tableDocument()
     {
-        $sales = (new Sale())->newQuery();
+        $sales = (new Sale)->newQuery();
 
-        //$isAdmin = Auth::user()->hasRole('admin');
+        // $isAdmin = Auth::user()->hasRole('admin');
         $hasFullAccess = Auth::user()->hasAnyRole(['admin', 'Contabilidad']);
 
         $sales = $sales->join('people', 'client_id', 'people.id')
@@ -123,10 +126,10 @@ class SaleDocumentController extends Controller
                 'sale_documents.invoice_type_operation'
             )
             ->whereIn('series.document_type_id', [1, 2])
-            ->when(!$hasFullAccess, function ($q) {
+            ->when(! $hasFullAccess, function ($q) {
                 return $q->where('sales.user_id', Auth::id());
             })
-            ->with(['document.items','document.note'])
+            ->with(['document.items', 'document.note'])
             ->orderBy('sale_documents.invoice_broadcast_date', 'DESC');
 
         return DataTables::of($sales)->toJson();
@@ -141,7 +144,6 @@ class SaleDocumentController extends Controller
     {
         $payments = PaymentMethod::all();
         $company = Company::first();
-
 
         $client = Person::find(1);
         $unitTypes = DB::table('sunat_unit_types')->get();
@@ -160,38 +162,35 @@ class SaleDocumentController extends Controller
 
         $company->load('district.province.department');
 
-
-
         // Obtener el nombre de la ciudad usando los datos relacionados
-        $city = $company->district->province->department->name . "-" . $company->district->province->name . "-" . $company->district->name;
+        $city = $company->district->province->department->name.'-'.$company->district->province->name.'-'.$company->district->name;
         $company->city = $city;
 
         return Inertia::render('Sales::Documents/Create', [
-            'payments'          => $payments,
-            'client'            => $client,
-            'documentTypes'     => $documentTypes,
+            'payments' => $payments,
+            'client' => $client,
+            'documentTypes' => $documentTypes,
             'saleDocumentTypes' => $saleDocumentTypes,
-            'company'           => $company,
-            'departments'       => $ubigeo,
-            'unitTypes'         => $unitTypes,
-            'type_operation'    => $this->top,
-            'taxes'             => array(
+            'company' => $company,
+            'departments' => $ubigeo,
+            'unitTypes' => $unitTypes,
+            'type_operation' => $this->top,
+            'taxes' => [
                 'igv' => $this->igv,
-                'icbper' => $this->icbper
-            )
+                'icbper' => $this->icbper,
+            ],
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
-        ///se validan los campos requeridos
-        //// dd($request->all());
+        // /se validan los campos requeridos
+        // // dd($request->all());
         $rules = [
             'serie' => 'required',
             'date_issue' => 'required',
@@ -206,7 +205,7 @@ class SaleDocumentController extends Controller
             'client_id' => 'required',
         ];
 
-        if($request->get('forma_pago') == 'Credito'){
+        if ($request->get('forma_pago') == 'Credito') {
             $rules['quotas.amounts'] = [
                 'sometimes', // Esta regla solo se aplica si el campo 'quotas.amounts' está presente
                 'required_if:forma_pago,Credito', // Requerido SI 'forma_pago' es 'Credito'
@@ -214,7 +213,6 @@ class SaleDocumentController extends Controller
                 'min:1', // Y debe tener al menos un elemento (al menos una cuota)
             ];
         }
-
 
         $messages = [
             'items.*.quantity.required' => 'Ingrese Cantidad',
@@ -238,20 +236,20 @@ class SaleDocumentController extends Controller
         try {
             $res = DB::transaction(function () use ($request) {
 
-                ///si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
-                ///se crea una caja para poder hacer la venta
+                // /si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
+                // /se crea una caja para poder hacer la venta
 
                 $local_id = Auth::user()->local_id;
                 $petty_cash = PettyCash::firstOrCreate([
                     'user_id' => Auth::id(),
                     'state' => 1,
-                    'local_sale_id' => $local_id
+                    'local_sale_id' => $local_id,
                 ], [
                     'date_opening' => Carbon::now()->format('Y-m-d'),
                     'time_opening' => date('H:i:s'),
-                    'income' => 0
+                    'income' => 0,
                 ]);
-                ///se crea la venta
+                // /se crea la venta
                 $sale = Sale::create([
                     'sale_date' => $request->get('date_issue'),
                     'user_id' => Auth::id(),
@@ -261,7 +259,7 @@ class SaleDocumentController extends Controller
                     'advancement' => $request->get('total'),
                     'total_discount' => $request->get('total_discount'),
                     'petty_cash_id' => $petty_cash->id,
-                    'physical' => 2
+                    'physical' => 2,
                 ]);
 
                 $forma_pago = $request->get('forma_pago');
@@ -271,15 +269,15 @@ class SaleDocumentController extends Controller
                     $sale->save();
                 }
 
-                ///obtenemos la serie elejida para hacer la venta
-                ///para traer tambien su numero correlativo
+                // /obtenemos la serie elejida para hacer la venta
+                // /para traer tambien su numero correlativo
 
                 $serie = Serie::find($request->get('serie'));
 
-                ///se convierte el total de la venta a letras
-                $numberletters = new NumberLetter();
+                // /se convierte el total de la venta a letras
+                $numberletters = new NumberLetter;
                 $tido = SaleDocumentType::find($request->get('sale_documenttype_id'));
-                ///creamos el documento de la venta para enviar a sunat
+                // /creamos el documento de la venta para enviar a sunat
 
                 $typeOperation = $request->get('type_operation');
                 if ($request->get('total') > 700) {
@@ -287,41 +285,41 @@ class SaleDocumentController extends Controller
                 }
 
                 $document = SaleDocument::create([
-                    'sale_id'                       => $sale->id,
-                    'serie_id'                      => $request->get('serie'),
-                    'number'                        => str_pad($serie->number, 9, '0', STR_PAD_LEFT),
-                    'status'                        => true,
-                    'client_type_doc'               => $request->get('client_dti'),
-                    'client_number'                 => $request->get('client_number'),
-                    'client_rzn_social'             => $request->get('client_rzn_social'),
-                    'client_address'                => $request->get('client_direction'),
-                    'client_ubigeo_code'            => $request->get('client_ubigeo'),
-                    'client_ubigeo_description'     => $request->get('client_ubigeo_description'),
-                    'client_phone'                  => $request->get('client_phone'),
-                    'client_email'                  => $request->get('client_email'),
-                    'invoice_ubl_version'           => $this->ubl,
-                    'invoice_type_operation'        => $typeOperation,
-                    'invoice_type_doc'              => $tido->sunat_id,
-                    'invoice_serie'                 => $serie->description,
-                    'invoice_correlative'           => $serie->number,
-                    'invoice_type_currency'         => 'PEN',
-                    'invoice_broadcast_date'        => $request->get('date_issue'),
-                    'invoice_due_date'              => $request->get('date_end'),
-                    'invoice_send_date'             => Carbon::now()->format('Y-m-d'),
-                    'invoice_legend_code'           => '1000',
-                    'invoice_legend_description'    => $numberletters->convertToLetter($request->get('total')),
-                    'invoice_status'                => 'registrado',
-                    'user_id'                       => Auth::id(),
-                    'additional_description'        => $request->get('additional_description'),
-                    'overall_total'                 => $request->get('total')
+                    'sale_id' => $sale->id,
+                    'serie_id' => $request->get('serie'),
+                    'number' => str_pad($serie->number, 9, '0', STR_PAD_LEFT),
+                    'status' => true,
+                    'client_type_doc' => $request->get('client_dti'),
+                    'client_number' => $request->get('client_number'),
+                    'client_rzn_social' => $request->get('client_rzn_social'),
+                    'client_address' => $request->get('client_direction'),
+                    'client_ubigeo_code' => $request->get('client_ubigeo'),
+                    'client_ubigeo_description' => $request->get('client_ubigeo_description'),
+                    'client_phone' => $request->get('client_phone'),
+                    'client_email' => $request->get('client_email'),
+                    'invoice_ubl_version' => $this->ubl,
+                    'invoice_type_operation' => $typeOperation,
+                    'invoice_type_doc' => $tido->sunat_id,
+                    'invoice_serie' => $serie->description,
+                    'invoice_correlative' => $serie->number,
+                    'invoice_type_currency' => 'PEN',
+                    'invoice_broadcast_date' => $request->get('date_issue'),
+                    'invoice_due_date' => $request->get('date_end'),
+                    'invoice_send_date' => Carbon::now()->format('Y-m-d'),
+                    'invoice_legend_code' => '1000',
+                    'invoice_legend_description' => $numberletters->convertToLetter($request->get('total')),
+                    'invoice_status' => 'registrado',
+                    'user_id' => Auth::id(),
+                    'additional_description' => $request->get('additional_description'),
+                    'overall_total' => $request->get('total'),
 
                 ]);
 
-                ///obtenemos los productos o servicios para insertar en los
-                ///detalles de la venta y el documento
+                // /obtenemos los productos o servicios para insertar en los
+                // /detalles de la venta y el documento
                 $products = $request->get('items');
 
-                ///totales de la cabecera
+                // /totales de la cabecera
                 $mto_oper_taxed = 0;
                 $mto_igv = 0;
                 $total_icbper = 0;
@@ -330,9 +328,9 @@ class SaleDocumentController extends Controller
                 $total = 0;
 
                 foreach ($products as $produc) {
-                    /// ahora tenemos que saber si es un producto o servicio ya existente
-                    /// o si sera creado para esta venta, verificaremos esto por el id del producto
-                    /// si el id es nulo quiere decir que es un producto nuevo y procedemos a crearlo
+                    // / ahora tenemos que saber si es un producto o servicio ya existente
+                    // / o si sera creado para esta venta, verificaremos esto por el id del producto
+                    // / si el id es nulo quiere decir que es un producto nuevo y procedemos a crearlo
                     $product_id = null;
                     $interne = null;
                     if ($produc['id']) {
@@ -348,38 +346,38 @@ class SaleDocumentController extends Controller
 
                         // creamos el nuevo producto o servicio
                         $new_product = Product::create([
-                            'usine'                         => $randomNumberPadded,
-                            'interne'                       => $randomNumberPadded,
-                            'description'                   => $produc['description'],
-                            'image'                         => $path,
-                            'purchase_prices'               => 0,
-                            'sale_prices'                   => json_encode(array('high' => $produc['unit_price'], 'under' => null, 'medium' => null)),
-                            'stock_min'                     => 1,
-                            'stock'                         => $produc['quantity'],
-                            'presentations'                 => false,
-                            'is_product'                    => $produc['is_product'],
-                            'type_sale_affectation_id'      => '10',
-                            'type_purchase_affectation_id'  => '10',
-                            'type_unit_measure_id'          => $produc['is_product'] ? $produc['unit_type'] : 'ZZ',
-                            'status'                        => true
+                            'usine' => $randomNumberPadded,
+                            'interne' => $randomNumberPadded,
+                            'description' => $produc['description'],
+                            'image' => $path,
+                            'purchase_prices' => 0,
+                            'sale_prices' => json_encode(['high' => $produc['unit_price'], 'under' => null, 'medium' => null]),
+                            'stock_min' => 1,
+                            'stock' => $produc['quantity'],
+                            'presentations' => false,
+                            'is_product' => $produc['is_product'],
+                            'type_sale_affectation_id' => '10',
+                            'type_purchase_affectation_id' => '10',
+                            'type_unit_measure_id' => $produc['is_product'] ? $produc['unit_type'] : 'ZZ',
+                            'status' => true,
                         ]);
                         $product_id = $new_product->id;
                         $interne = $randomNumberPadded;
                         // le creamos un kardex en caso de ser un producto
                         if ($produc['is_product']) {
                             Kardex::create([
-                                'date_of_issue'     => Carbon::now()->format('Y-m-d'),
-                                'motion'            => 'purchase',
-                                'product_id'        => $new_product->id,
-                                'local_id'          => Auth::user()->local_id,
-                                'quantity'          => $produc['quantity'],
-                                'description'       => 'Stock Inicial',
+                                'date_of_issue' => Carbon::now()->format('Y-m-d'),
+                                'motion' => 'purchase',
+                                'product_id' => $new_product->id,
+                                'local_id' => Auth::user()->local_id,
+                                'quantity' => $produc['quantity'],
+                                'description' => 'Stock Inicial',
                             ]);
                         }
                         $item = $new_product;
                     }
 
-                    /// imiciamos las variables para hacer los calculos por item;
+                    // / imiciamos las variables para hacer los calculos por item;
                     $percentage_igv = $this->igv;
                     $mto_base_igv = 0;
 
@@ -397,49 +395,49 @@ class SaleDocumentController extends Controller
                     $array_discounts = [];
 
                     if ($produc['afe_igv'] == '10') {
-                        //valor unitario presio de venta / 1.IGV para quitarle el igv
-                        //se tiene que quitar el igv porque el sistema trabaja con los precios
-                        //incluido el igv
+                        // valor unitario presio de venta / 1.IGV para quitarle el igv
+                        // se tiene que quitar el igv porque el sistema trabaja con los precios
+                        // incluido el igv
                         $value_unit = round($price_sale / $nfactorIGV, 2);
-                        //la base para hacer el descuento
+                        // la base para hacer el descuento
                         $base = round($value_unit * $quantity, 2);
-                        //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
+                        // el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
                         $factor = (($produc['discount'] * 100) / $price_sale) / 100;
-                        //el descuento se aplica por unidad vendida
+                        // el descuento se aplica por unidad vendida
                         $descuento_monto = $factor * $value_unit * $quantity;
-                        //a la base igv le restamos el descuento
+                        // a la base igv le restamos el descuento
                         $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                        //el valor total igv
+                        // una ves restada la vase lo multiplicamos por el 18% vigente para sacar
+                        // el valor total igv
                         $igv = ($mto_base_igv * $ifactorIGV);
-                        //total del item
+                        // total del item
                         $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                        //el valor de la venta
+                        // el valor de la venta
                         $value_sale = ($value_unit * $quantity) - $descuento_monto;
-                        //si tiene descuento creamos el array de descuento
-                        //2023-07-20 el sistema solo trabaja con un descuento
+                        // si tiene descuento creamos el array de descuento
+                        // 2023-07-20 el sistema solo trabaja con un descuento
                         if ($produc['discount'] > 0) {
-                            //el precio unitario se calcula
-                            //(Valor venta + Total Impuestos) / Cantidad
+                            // el precio unitario se calcula
+                            // (Valor venta + Total Impuestos) / Cantidad
                             $unit_price = round(($value_sale + $igv) / $quantity, 2);
-                            $array_discounts[0] = array(
-                                'value'     => $produc['discount'],
-                                'type'      => '00',
-                                'base'      => round($base, 2),
-                                'factor'    => $factor,
-                                'monto'     => round($descuento_monto, 2)
-                            );
+                            $array_discounts[0] = [
+                                'value' => $produc['discount'],
+                                'type' => '00',
+                                'base' => round($base, 2),
+                                'factor' => $factor,
+                                'monto' => round($descuento_monto, 2),
+                            ];
                         } else {
-                            //el precio unitario es el mismo
+                            // el precio unitario es el mismo
                             $unit_price = $price_sale;
                         }
 
                         $mto_discount = round($descuento_monto, 2);
                     }
-                    if ($produc['afe_igv'] == '20') { //Exonerated
+                    if ($produc['afe_igv'] == '20') { // Exonerated
 
                     }
-                    if ($produc['afe_igv'] == '30') { //Unaffected
+                    if ($produc['afe_igv'] == '30') { // Unaffected
 
                     }
 
@@ -452,29 +450,29 @@ class SaleDocumentController extends Controller
                     }
                     $total_tax = $igv + $icbper;
 
-                    //se inserta los datos al detalle del documento
+                    // se inserta los datos al detalle del documento
                     SaleDocumentItem::create([
-                        'document_id'           => $document->id,
-                        'product_id'            => $product_id,
-                        'cod_product'           => $interne,
-                        'decription_product'    => $produc['description'],
-                        'unit_type'             => $produc['unit_type'],
-                        'quantity'              => $produc['quantity'],
-                        'mto_base_igv'          => $mto_base_igv,
-                        'percentage_igv'        => $this->igv,
-                        'igv'                   => $igv,
-                        'total_tax'             => $total_tax,
-                        'type_afe_igv'          => $produc['afe_igv'],
-                        'icbper'                => $icbper,
-                        'factor_icbper'         => $porcentage_item_icbper,
-                        'mto_value_sale'        => $value_sale,
-                        'mto_value_unit'        => $value_unit,
-                        'mto_price_unit'        => $unit_price,
-                        'price_sale'            => $price_sale,
-                        'mto_total'             => round($unit_price * $produc['quantity'], 2),
-                        'mto_discount'          => $mto_discount ?? 0,
-                        'json_discounts'        => json_encode($array_discounts),
-                        'entity_name_product'   => Product::class
+                        'document_id' => $document->id,
+                        'product_id' => $product_id,
+                        'cod_product' => $interne,
+                        'decription_product' => $produc['description'],
+                        'unit_type' => $produc['unit_type'],
+                        'quantity' => $produc['quantity'],
+                        'mto_base_igv' => $mto_base_igv,
+                        'percentage_igv' => $this->igv,
+                        'igv' => $igv,
+                        'total_tax' => $total_tax,
+                        'type_afe_igv' => $produc['afe_igv'],
+                        'icbper' => $icbper,
+                        'factor_icbper' => $porcentage_item_icbper,
+                        'mto_value_sale' => $value_sale,
+                        'mto_value_unit' => $value_unit,
+                        'mto_price_unit' => $unit_price,
+                        'price_sale' => $price_sale,
+                        'mto_total' => round($unit_price * $produc['quantity'], 2),
+                        'mto_discount' => $mto_discount ?? 0,
+                        'json_discounts' => json_encode($array_discounts),
+                        'entity_name_product' => Product::class,
                     ]);
 
                     SaleProduct::create([
@@ -498,7 +496,7 @@ class SaleDocumentController extends Controller
                             'quantity' => $produc['quantity'] * (-1),
                             'document_id' => $document->id,
                             'document_entity' => SaleDocument::class,
-                            'description' => 'Venta'
+                            'description' => 'Venta',
                         ]);
                         $product = Product::find($product_id);
                         if ($product->presentations) {
@@ -506,39 +504,39 @@ class SaleDocumentController extends Controller
                                 'kardex_id' => $k->id,
                                 'product_id' => $product_id,
                                 'local_id' => $local_id,
-                                'size'      => $produc['size'],
-                                'quantity'  => ($produc['quantity'] * (-1))
+                                'size' => $produc['size'],
+                                'quantity' => ($produc['quantity'] * (-1)),
                             ]);
                             $tallas = $product->sizes;
                             $n_tallas = [];
                             foreach (json_decode($tallas, true) as $k => $talla) {
                                 if ($talla['size'] == $produc['size']) {
-                                    $n_tallas[$k] = array(
+                                    $n_tallas[$k] = [
                                         'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] - $produc['quantity'])
-                                    );
+                                        'quantity' => ($talla['quantity'] - $produc['quantity']),
+                                    ];
                                 } else {
-                                    $n_tallas[$k] = array(
+                                    $n_tallas[$k] = [
                                         'size' => $talla['size'],
-                                        'quantity' => $talla['quantity']
-                                    );
+                                        'quantity' => $talla['quantity'],
+                                    ];
                                 }
                             }
                             $product->update([
-                                'sizes' => json_encode($n_tallas)
+                                'sizes' => json_encode($n_tallas),
                             ]);
                         }
 
                         Product::find($product_id)->decrement('stock', $produc['quantity']);
                     }
-                    //fin parte de codigo actualiza el kardex
+                    // fin parte de codigo actualiza el kardex
 
-                    $mto_igv = $mto_igv + $igv; //total del igv
-                    $total_icbper = $total_icbper + $icbper; //total del impuesto a la bolsa plastica
+                    $mto_igv = $mto_igv + $igv; // total del igv
+                    $total_icbper = $total_icbper + $icbper; // total del impuesto a la bolsa plastica
                     $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
                     $total = $total + $total_item; // total de la venta general
                 }
-                //totales de la cabesera del documento
+                // totales de la cabesera del documento
                 $total_taxes = $mto_igv + $total_icbper;
                 $subtotal = $total_taxes + $mto_oper_taxed;
                 $ttotal = round($total, 1);
@@ -550,9 +548,9 @@ class SaleDocumentController extends Controller
                 if ($forma_pago && $forma_pago === 'Credito') {
                     $quotasData = $request->input('quotas.amounts');
                     $due_date = null;
-                    if (!empty($quotasData)) {
+                    if (! empty($quotasData)) {
                         foreach ($quotasData as $index => $quota) {
-                            $saleDocumentQuota = new SaleDocumentQuota();
+                            $saleDocumentQuota = new SaleDocumentQuota;
                             $saleDocumentQuota->sale_document_id = $document->id; // Vincular con el documento recién creado
                             $saleDocumentQuota->quota_number = $index + 1; // El índice + 1 es el número de cuota
                             $saleDocumentQuota->amount = $quota['amount'];
@@ -571,18 +569,18 @@ class SaleDocumentController extends Controller
                     $status_pay = false;
                 }
 
-                $document->invoice_mto_oper_taxed    = $mto_oper_taxed;
-                $document->invoice_mto_igv           = $mto_igv;
-                $document->invoice_icbper            = $total_icbper;
-                $document->invoice_total_taxes       = $total_taxes;
-                $document->invoice_value_sale        = $mto_oper_taxed;
-                $document->invoice_subtotal          = $subtotal;
-                $document->invoice_rounding          = $rounding;
-                $document->invoice_mto_imp_sale      = $ttotal;
-                $document->invoice_sunat_points      = null;
-                $document->invoice_status            = 'Pendiente';
-                $document->forma_pago                = $forma_pago;
-                $document->status_pay                = $status_pay;
+                $document->invoice_mto_oper_taxed = $mto_oper_taxed;
+                $document->invoice_mto_igv = $mto_igv;
+                $document->invoice_icbper = $total_icbper;
+                $document->invoice_total_taxes = $total_taxes;
+                $document->invoice_value_sale = $mto_oper_taxed;
+                $document->invoice_subtotal = $subtotal;
+                $document->invoice_rounding = $rounding;
+                $document->invoice_mto_imp_sale = $ttotal;
+                $document->invoice_sunat_points = null;
+                $document->invoice_status = 'Pendiente';
+                $document->forma_pago = $forma_pago;
+                $document->status_pay = $status_pay;
 
                 $document->save();
 
@@ -595,12 +593,11 @@ class SaleDocumentController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
             // Devuelve una respuesta de error
         }
     }
-
 
     public function getSerieByDocumentType($id)
     {
@@ -615,61 +612,61 @@ class SaleDocumentController extends Controller
         } else {
             $status = false;
         }
+
         return response()->json([
             'status' => $status,
-            'series' => $series
+            'series' => $series,
         ]);
     }
 
     public function sendSunatDocument($id, $type)
     {
-        $result = array();
+        $result = [];
 
         switch ($type) {
             case '01':
-                $factura = new Factura();
+                $factura = new Factura;
                 $result = $factura->create($id);
                 break;
             case '03':
-                $boleta = new Boleta();
-                //dd($boleta);
+                $boleta = new Boleta;
+                // dd($boleta);
                 $result = $boleta->create($id);
                 break;
             case '07':
-                $notaCredito = new NotaCredito();
-                $document =  SaleDocument::find($id);
+                $notaCredito = new NotaCredito;
+                $document = SaleDocument::find($id);
                 $result = $notaCredito->create($document);
                 break;
             case '08':
-                $notaDebito = new NotaDebito();
-                $document =  SaleDocument::find($id);
+                $notaDebito = new NotaDebito;
+                $document = SaleDocument::find($id);
                 $result = $notaDebito->create($document);
                 break;
             case 2:
-                echo "i es igual a 2";
+                echo 'i es igual a 2';
                 break;
         }
 
-
         return response()->json([
             'success' => $result['success'],
-            'code'  => $result['code'],
-            'message'   => $result['message'],
-            'notes'   => $result['notes']
+            'code' => $result['code'],
+            'message' => $result['message'],
+            'notes' => $result['notes'],
         ]);
     }
 
     public function updateDetailsAndHeader(Request $request)
     {
-        //Los ejemplos de calculos para la version ubl 2.1 estan en una carpeta
-        //en el proyecto en la direccion storage\app\public\invoice\manuales_guias_sunat
-        //try {
+        // Los ejemplos de calculos para la version ubl 2.1 estan en una carpeta
+        // en el proyecto en la direccion storage\app\public\invoice\manuales_guias_sunat
+        // try {
         $res = DB::transaction(function () use ($request) {
             $document = SaleDocument::find($request->get('id'));
 
             $items = $request->get('items');
-            //dd($items);
-            ///totales de la cabecera
+            // dd($items);
+            // /totales de la cabecera
             $mto_oper_taxed = 0;
             $mto_igv = 0;
             $total_icbper = 0;
@@ -678,7 +675,7 @@ class SaleDocumentController extends Controller
             $total = 0;
 
             foreach ($items as $t => $item) {
-                /// imiciamos las variables para hacer los calculos por item;
+                // / imiciamos las variables para hacer los calculos por item;
                 $percentage_igv = $this->igv;
                 $mto_base_igv = 0;
                 $price_sale = $item['price_sale'];
@@ -695,52 +692,51 @@ class SaleDocumentController extends Controller
                 $array_discounts = [];
 
                 if ($item['type_afe_igv'] == '10') {
-                    //valor unitario presio de venta / 1.IGV para quitarle el igv
-                    //se tiene que quitar el igv porque el sistema trabaja con los precios
-                    //incluido el igv
+                    // valor unitario presio de venta / 1.IGV para quitarle el igv
+                    // se tiene que quitar el igv porque el sistema trabaja con los precios
+                    // incluido el igv
                     $value_unit = round($price_sale / $nfactorIGV, 2);
-                    //la base para hacer el descuento
+                    // la base para hacer el descuento
                     $base = round($value_unit * $quantity, 2);
-                    //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
+                    // el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
                     $factor = (($item['mto_discount'] * 100) / $price_sale) / 100;
-                    //el descuento se aplica por unidad vendida
+                    // el descuento se aplica por unidad vendida
                     $descuento_monto = $factor * $value_unit * $quantity;
-                    //a la base igv le restamos el descuento
+                    // a la base igv le restamos el descuento
                     $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                    //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                    //el valor total igv
+                    // una ves restada la vase lo multiplicamos por el 18% vigente para sacar
+                    // el valor total igv
                     $igv = ($mto_base_igv * $ifactorIGV);
-                    //total del item
+                    // total del item
                     $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                    //el valor de la venta
+                    // el valor de la venta
                     $value_sale = ($value_unit * $quantity) - $descuento_monto;
-                    //si tiene descuento creamos el array de descuento
-                    //2023-07-20 el sistema solo trabaja con un descuento
+                    // si tiene descuento creamos el array de descuento
+                    // 2023-07-20 el sistema solo trabaja con un descuento
                     if ($item['mto_discount'] > 0) {
-                        //el precio unitario se calcula
-                        //(Valor venta + Total Impuestos) / Cantidad
+                        // el precio unitario se calcula
+                        // (Valor venta + Total Impuestos) / Cantidad
                         $unit_price = round(($value_sale + $igv) / $quantity, 2);
-                        $array_discounts[0] = array(
-                            'value'     => $item['mto_discount'],
-                            'type'      => '00',
-                            'base'      => round($base, 2),
-                            'factor'    => $factor,
-                            'monto'     => round($descuento_monto, 2)
-                        );
+                        $array_discounts[0] = [
+                            'value' => $item['mto_discount'],
+                            'type' => '00',
+                            'base' => round($base, 2),
+                            'factor' => $factor,
+                            'monto' => round($descuento_monto, 2),
+                        ];
                     } else {
-                        //el precio unitario es el mismo
+                        // el precio unitario es el mismo
                         $unit_price = $price_sale;
                     }
 
-
-                    //$mto_base_igv = $mto_base_igv - $item['mto_discount'];
+                    // $mto_base_igv = $mto_base_igv - $item['mto_discount'];
                     $mto_discount = round($descuento_monto, 2);
                 }
 
-                if ($item['type_afe_igv'] == '20') { //Exonerated
+                if ($item['type_afe_igv'] == '20') { // Exonerated
 
                 }
-                if ($item['type_afe_igv'] == '30') { //Unaffected
+                if ($item['type_afe_igv'] == '30') { // Unaffected
 
                 }
                 if ($item['icbper'] == 1) {
@@ -752,27 +748,27 @@ class SaleDocumentController extends Controller
                 }
                 $total_tax = $igv + $icbper;
 
-                //se inserta los datos al detalle del documento
+                // se inserta los datos al detalle del documento
                 SaleDocumentItem::where('id', $item['id'])->update([
-                    'decription_product'    => $item['decription_product'] ?? 'No Especificado',
-                    'unit_type'             => $item['unit_type'],
-                    'quantity'              => $quantity,
-                    'mto_base_igv'          => $mto_base_igv,
-                    'percentage_igv'        => $this->igv,
-                    'igv'                   => $igv,
-                    'total_tax'             => $total_tax,
-                    'type_afe_igv'          => $item['type_afe_igv'],
-                    'icbper'                => $icbper,
-                    'factor_icbper'         => $porcentage_item_icbper,
-                    'mto_value_sale'        => $value_sale,
-                    'mto_value_unit'        => $value_unit,
-                    'mto_price_unit'        => $unit_price,
-                    'price_sale'            => $price_sale,
-                    'mto_total'             => round($total_item, 2),
-                    'mto_discount'          => $mto_discount ?? 0,
-                    'json_discounts'        => json_encode($array_discounts)
+                    'decription_product' => $item['decription_product'] ?? 'No Especificado',
+                    'unit_type' => $item['unit_type'],
+                    'quantity' => $quantity,
+                    'mto_base_igv' => $mto_base_igv,
+                    'percentage_igv' => $this->igv,
+                    'igv' => $igv,
+                    'total_tax' => $total_tax,
+                    'type_afe_igv' => $item['type_afe_igv'],
+                    'icbper' => $icbper,
+                    'factor_icbper' => $porcentage_item_icbper,
+                    'mto_value_sale' => $value_sale,
+                    'mto_value_unit' => $value_unit,
+                    'mto_price_unit' => $unit_price,
+                    'price_sale' => $price_sale,
+                    'mto_total' => round($total_item, 2),
+                    'mto_discount' => $mto_discount ?? 0,
+                    'json_discounts' => json_encode($array_discounts),
                 ]);
-                //toda esta parte de codigo actualiza el kardex
+                // toda esta parte de codigo actualiza el kardex
                 $product = Product::find($item['product_id']);
 
                 if ($item['quantity'] > 0) {
@@ -787,71 +783,71 @@ class SaleDocumentController extends Controller
 
                         if ($product->presentations) {
                             KardexSize::where('kardex_id', $k->id)->update([
-                                'quantity'  => $item['quantity'] * (-1)
+                                'quantity' => $item['quantity'] * (-1),
                             ]);
                             $tallas = $product->sizes;
                             $n_tallas = [];
                             foreach (json_decode($tallas, true) as $k => $talla) {
                                 if ($talla['size'] == $product->size) {
-                                    $n_tallas[$k] = array(
+                                    $n_tallas[$k] = [
                                         'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] + $quantity_old)
-                                    );
+                                        'quantity' => ($talla['quantity'] + $quantity_old),
+                                    ];
                                 } else {
-                                    $n_tallas[$k] = array(
+                                    $n_tallas[$k] = [
                                         'size' => $talla['size'],
-                                        'quantity' => $talla['quantity']
-                                    );
+                                        'quantity' => $talla['quantity'],
+                                    ];
                                 }
                             }
                             foreach (json_decode($tallas, true) as $k => $talla) {
                                 if ($talla['size'] == $product->size) {
-                                    $n_tallas[$k] = array(
+                                    $n_tallas[$k] = [
                                         'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] - $item['quantity'])
-                                    );
+                                        'quantity' => ($talla['quantity'] - $item['quantity']),
+                                    ];
                                 } else {
-                                    $n_tallas[$k] = array(
+                                    $n_tallas[$k] = [
                                         'size' => $talla['size'],
-                                        'quantity' => $talla['quantity']
-                                    );
+                                        'quantity' => $talla['quantity'],
+                                    ];
                                 }
                             }
                             $product->update([
-                                'sizes' => json_encode($n_tallas)
+                                'sizes' => json_encode($n_tallas),
                             ]);
                         }
                         $product->decrement('stock', $item['quantity']);
                     }
                 }
-                //fin parte de codigo actualiza el kardex
+                // fin parte de codigo actualiza el kardex
 
-                $mto_igv = $mto_igv + $igv; //total del igv
-                $total_icbper = $total_icbper + $icbper; //total del impuesto a la bolsa plastica
+                $mto_igv = $mto_igv + $igv; // total del igv
+                $total_icbper = $total_icbper + $icbper; // total del impuesto a la bolsa plastica
                 $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
                 $total = $total + $total_item; // total de la venta general
             }
-            //totales de la cabesera del documento
+            // totales de la cabesera del documento
             $total_taxes = $mto_igv + $total_icbper;
             $subtotal = $total_taxes + $mto_oper_taxed;
             $ttotal = round($total, 1);
             $difference = abs($ttotal - $subtotal);
             $rounding = number_format($difference, 2);
 
-            $numberletters = new NumberLetter();
+            $numberletters = new NumberLetter;
 
             $document->update([
-                'invoice_mto_oper_taxed'    => $mto_oper_taxed,
-                'invoice_mto_igv'           => $mto_igv,
-                'invoice_icbper'            => $total_icbper,
-                'invoice_total_taxes'       => $total_taxes,
-                'invoice_value_sale'        => $mto_oper_taxed,
-                'invoice_subtotal'          => $subtotal,
-                'invoice_rounding'          => $rounding,
-                'invoice_mto_imp_sale'      => $ttotal,
-                'invoice_sunat_points'      => null,
-                'invoice_status'            => 'Pendiente',
-                'invoice_legend_description'    => $numberletters->convertToLetter($ttotal)
+                'invoice_mto_oper_taxed' => $mto_oper_taxed,
+                'invoice_mto_igv' => $mto_igv,
+                'invoice_icbper' => $total_icbper,
+                'invoice_total_taxes' => $total_taxes,
+                'invoice_value_sale' => $mto_oper_taxed,
+                'invoice_subtotal' => $subtotal,
+                'invoice_rounding' => $rounding,
+                'invoice_mto_imp_sale' => $ttotal,
+                'invoice_sunat_points' => null,
+                'invoice_status' => 'Pendiente',
+                'invoice_legend_description' => $numberletters->convertToLetter($ttotal),
             ]);
 
             Sale::where('id', $document->sale_id)->update([
@@ -859,6 +855,7 @@ class SaleDocumentController extends Controller
                 'advancement' => $ttotal,
                 'total_discount' => $total_discount,
             ]);
+
             return $document->id;
         });
 
@@ -871,57 +868,58 @@ class SaleDocumentController extends Controller
     public function printDocument($id, $type, $file, $format = 'A4')
     {
 
-        $res = array();
+        $res = [];
         $content_type = null;
         switch ($type) {
             case '01':
-                $factura = new Factura();
+                $factura = new Factura;
                 if ($file == 'PDF') {
                     $res = $factura->getFacturaDomPdf($id, $format);
                     $content_type = 'application/pdf';
-                } else if ($file == 'XML') {
-                    $content_type =  'application/xml';
+                } elseif ($file == 'XML') {
+                    $content_type = 'application/xml';
                     $res = $factura->getFacturaXML($id);
                 } else {
-                    $content_type =  'application/zip';
+                    $content_type = 'application/zip';
                     $res = $factura->getFacturaCDR($id);
                 }
 
                 break;
             case '03':
-                $boleta = new Boleta();
+                $boleta = new Boleta;
                 if ($file == 'PDF') {
                     $content_type = 'application/pdf';
                     $res = $boleta->getBoletatDomPdf($id, $format);
-                } else if ($file == 'XML') {
-                    $content_type =  'application/xml';
+                } elseif ($file == 'XML') {
+                    $content_type = 'application/xml';
                     $res = $boleta->getBoletaXML($id);
                 } else {
-                    $content_type =  'application/zip';
+                    $content_type = 'application/zip';
                     $res = $boleta->getBoletaCDR($id);
                 }
 
                 break;
             case '07':
-                $notaCredito = new NotaCredito();
+                $notaCredito = new NotaCredito;
                 if ($file == 'PDF') {
                     $content_type = 'application/pdf';
 
                     $res = $notaCredito->getNotaCreditoPdf($id, $format);
-                } else if ($file == 'XML') {
-                    $content_type =  'application/xml';
+                } elseif ($file == 'XML') {
+                    $content_type = 'application/xml';
                     $res = $notaCredito->getNotaCreditoXML($id);
                 } else {
-                    $content_type =  'application/zip';
+                    $content_type = 'application/zip';
                     $res = $notaCredito->getNotaCreditoCDR($id);
                 }
 
                 break;
             case 2:
-                echo "i es igual a 2";
+                echo 'i es igual a 2';
                 break;
         }
-        //return response()->file($res['filePath'], ['content-type' => 'application/pdf']);
+
+        // return response()->file($res['filePath'], ['content-type' => 'application/pdf']);
         return response()->download($res['filePath'], $res['fileName'], ['content-type' => $content_type]);
     }
 
@@ -949,57 +947,57 @@ class SaleDocumentController extends Controller
         $company->load('district.province.department');
 
         // Obtener el nombre de la ciudad usando los datos relacionados
-        $city = $company->district->province->department->name . "-" . $company->district->province->name . "-" . $company->district->name;
+        $city = $company->district->province->department->name.'-'.$company->district->province->name.'-'.$company->district->name;
         $company->city = $city;
         if ($client->ubigeo) {
-            $clientCity = $client->district->province->department->name . "-" . $client->district->province->name . "-" . $client->district->name;
+            $clientCity = $client->district->province->department->name.'-'.$client->district->province->name.'-'.$client->district->name;
             $client->city = $clientCity;
         } else {
             $client->city = $city;
         }
 
         return Inertia::render('Sales::Documents/CreateFromTicket', [
-            'payments'          => $payments,
-            'client'            => $client,
-            'documentTypes'     => $documentTypes,
+            'payments' => $payments,
+            'client' => $client,
+            'documentTypes' => $documentTypes,
             'saleDocumentTypes' => $saleDocumentTypes,
-            'company'           => $company,
-            'departments'       => $ubigeo,
-            'unitTypes'         => $unitTypes,
-            'type_operation'    => $this->top,
-            'sale'              => $sale,
-            'taxes'             => array(
+            'company' => $company,
+            'departments' => $ubigeo,
+            'unitTypes' => $unitTypes,
+            'type_operation' => $this->top,
+            'sale' => $sale,
+            'taxes' => [
                 'igv' => $this->igv,
-                'icbper' => $this->icbper
-            )
+                'icbper' => $this->icbper,
+            ],
         ]);
     }
 
     public function updateHead(Request $request)
     {
         $this->validate($request, [
-            'client_number'             => 'required',
-            'client_rzn_social'         => 'required',
-            'client_address'            => 'required',
-            'client_ubigeo_code'        => 'required',
-            'invoice_broadcast_date'    => 'required',
-            'invoice_due_date'          => 'required',
-            'type_operation'            => 'required'
+            'client_number' => 'required',
+            'client_rzn_social' => 'required',
+            'client_address' => 'required',
+            'client_ubigeo_code' => 'required',
+            'invoice_broadcast_date' => 'required',
+            'invoice_due_date' => 'required',
+            'type_operation' => 'required',
         ]);
-        //dd($request->get('invoice_status'));
+        // dd($request->get('invoice_status'));
         SaleDocument::find($request->get('id'))
             ->update([
-                'invoice_type_operation'    => $request->get('type_operation'),
-                'client_number'             => $request->get('client_number'),
-                'client_rzn_social'         => $request->get('client_rzn_social'),
-                'client_address'            => $request->get('client_address'),
-                'client_phone'              => $request->get('client_phone'),
-                'client_email'              => $request->get('client_email'),
-                'client_ubigeo_code'        => $request->get('client_ubigeo_code'),
+                'invoice_type_operation' => $request->get('type_operation'),
+                'client_number' => $request->get('client_number'),
+                'client_rzn_social' => $request->get('client_rzn_social'),
+                'client_address' => $request->get('client_address'),
+                'client_phone' => $request->get('client_phone'),
+                'client_email' => $request->get('client_email'),
+                'client_ubigeo_code' => $request->get('client_ubigeo_code'),
                 'client_ubigeo_description' => $request->get('client_ubigeo_description'),
-                'invoice_broadcast_date'    => $request->get('invoice_broadcast_date'),
-                'invoice_due_date'          => $request->get('invoice_due_date'),
-                'invoice_status'            => $request->get('invoice_status')
+                'invoice_broadcast_date' => $request->get('invoice_broadcast_date'),
+                'invoice_due_date' => $request->get('invoice_due_date'),
+                'invoice_status' => $request->get('invoice_status'),
             ]);
 
         // Person::find($request->get('client_id'))
@@ -1015,7 +1013,7 @@ class SaleDocumentController extends Controller
 
     public function storeFromTicket(Request $request)
     {
-        ///se validan los campos requeridos
+        // /se validan los campos requeridos
         $this->validate(
             $request,
             [
@@ -1045,71 +1043,71 @@ class SaleDocumentController extends Controller
 
                 $sale_id = $request->get('sale_id');
 
-                ///si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
-                ///se crea una caja para poder hacer la venta
+                // /si no existe una caja abierta para el usuario logueado en la tienda donde inicio session
+                // /se crea una caja para poder hacer la venta
 
                 $local_id = Auth::user()->local_id;
                 $petty_cash = PettyCash::firstOrCreate([
                     'user_id' => Auth::id(),
                     'state' => 1,
-                    'local_sale_id' => $local_id
+                    'local_sale_id' => $local_id,
                 ], [
                     'date_opening' => Carbon::now()->format('Y-m-d'),
                     'time_opening' => date('H:i:s'),
-                    'income' => 0
+                    'income' => 0,
                 ]);
-                ///se crea la venta
+                // /se crea la venta
                 $sale = Sale::find($sale_id);
                 $sale->update([
                     'status' => 9,
                 ]);
                 SaleDocument::where('sale_id', $sale_id)->update([
-                    'status' => 9
+                    'status' => 9,
                 ]);
 
-                ///obtenemos la serie elejida para hacer la venta
-                ///para traer tambien su numero correlativo
+                // /obtenemos la serie elejida para hacer la venta
+                // /para traer tambien su numero correlativo
 
                 $serie = Serie::find($request->get('serie'));
 
-                ///se convierte el total de la venta a letras
-                $numberletters = new NumberLetter();
+                // /se convierte el total de la venta a letras
+                $numberletters = new NumberLetter;
                 $tido = SaleDocumentType::find($request->get('sale_documenttype_id'));
-                ///creamos el documento de la venta para enviar a sunat
+                // /creamos el documento de la venta para enviar a sunat
                 $document = SaleDocument::create([
-                    'sale_id'                       => $sale->id,
-                    'serie_id'                      => $request->get('serie'),
-                    'number'                        => str_pad($serie->number, 9, '0', STR_PAD_LEFT),
-                    'status'                        => true,
-                    'client_type_doc'               => $request->get('client_dti'),
-                    'client_number'                 => $request->get('client_number'),
-                    'client_rzn_social'             => $request->get('client_rzn_social'),
-                    'client_address'                => $request->get('client_direction'),
-                    'client_ubigeo_code'            => $request->get('client_ubigeo'),
-                    'client_ubigeo_description'     => $request->get('client_ubigeo_description'),
-                    'client_phone'                  => $request->get('client_phone'),
-                    'client_email'                  => $request->get('client_email'),
-                    'invoice_ubl_version'           => $this->ubl,
-                    'invoice_type_operation'        => $request->get('type_operation'),
-                    'invoice_type_doc'              => $tido->sunat_id,
-                    'invoice_serie'                 => $serie->description,
-                    'invoice_correlative'           => $serie->number,
-                    'invoice_type_currency'         => 'PEN',
-                    'invoice_broadcast_date'        => $request->get('date_issue'),
-                    'invoice_due_date'              => $request->get('date_end'),
-                    'invoice_send_date'             => Carbon::now()->format('Y-m-d'),
-                    'invoice_legend_code'           => '1000',
-                    'invoice_legend_description'    => $numberletters->convertToLetter($request->get('total')),
-                    'invoice_status'                => 'registrado',
-                    'additional_description'        => $request->get('additional_description'),
-                    'overall_total'                 => $request->get('total')
+                    'sale_id' => $sale->id,
+                    'serie_id' => $request->get('serie'),
+                    'number' => str_pad($serie->number, 9, '0', STR_PAD_LEFT),
+                    'status' => true,
+                    'client_type_doc' => $request->get('client_dti'),
+                    'client_number' => $request->get('client_number'),
+                    'client_rzn_social' => $request->get('client_rzn_social'),
+                    'client_address' => $request->get('client_direction'),
+                    'client_ubigeo_code' => $request->get('client_ubigeo'),
+                    'client_ubigeo_description' => $request->get('client_ubigeo_description'),
+                    'client_phone' => $request->get('client_phone'),
+                    'client_email' => $request->get('client_email'),
+                    'invoice_ubl_version' => $this->ubl,
+                    'invoice_type_operation' => $request->get('type_operation'),
+                    'invoice_type_doc' => $tido->sunat_id,
+                    'invoice_serie' => $serie->description,
+                    'invoice_correlative' => $serie->number,
+                    'invoice_type_currency' => 'PEN',
+                    'invoice_broadcast_date' => $request->get('date_issue'),
+                    'invoice_due_date' => $request->get('date_end'),
+                    'invoice_send_date' => Carbon::now()->format('Y-m-d'),
+                    'invoice_legend_code' => '1000',
+                    'invoice_legend_description' => $numberletters->convertToLetter($request->get('total')),
+                    'invoice_status' => 'registrado',
+                    'additional_description' => $request->get('additional_description'),
+                    'overall_total' => $request->get('total'),
                 ]);
 
-                ///obtenemos los productos o servicios para insertar en los
-                ///detalles de la venta y el documento
+                // /obtenemos los productos o servicios para insertar en los
+                // /detalles de la venta y el documento
                 $products = $request->get('items');
 
-                ///totales de la cabecera
+                // /totales de la cabecera
                 $mto_oper_taxed = 0;
                 $mto_igv = 0;
                 $total_icbper = 0;
@@ -1122,7 +1120,7 @@ class SaleDocumentController extends Controller
                     $product_id = $produc['id'];
                     $interne = $produc['interne'];
 
-                    /// imiciamos las variables para hacer los calculos por item;
+                    // / imiciamos las variables para hacer los calculos por item;
                     $percentage_igv = $this->igv;
                     $mto_base_igv = 0;
                     $price_sale = $produc['unit_price'];
@@ -1139,49 +1137,49 @@ class SaleDocumentController extends Controller
                     $array_discounts = [];
 
                     if ($produc['afe_igv'] == '10') {
-                        //valor unitario presio de venta / 1.IGV para quitarle el igv
-                        //se tiene que quitar el igv porque el sistema trabaja con los precios
-                        //incluido el igv
+                        // valor unitario presio de venta / 1.IGV para quitarle el igv
+                        // se tiene que quitar el igv porque el sistema trabaja con los precios
+                        // incluido el igv
                         $value_unit = round($price_sale / $nfactorIGV, 2);
-                        //la base para hacer el descuento
+                        // la base para hacer el descuento
                         $base = round($value_unit * $quantity, 2);
-                        //el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
+                        // el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
                         $factor = (($produc['discount'] * 100) / $price_sale) / 100;
-                        //el descuento se aplica por unidad vendida
+                        // el descuento se aplica por unidad vendida
                         $descuento_monto = $factor * $value_unit * $quantity;
-                        //a la base igv le restamos el descuento
+                        // a la base igv le restamos el descuento
                         $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        //una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                        //el valor total igv
+                        // una ves restada la vase lo multiplicamos por el 18% vigente para sacar
+                        // el valor total igv
                         $igv = ($mto_base_igv * $ifactorIGV);
-                        //total del item
+                        // total del item
                         $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                        //el valor de la venta
+                        // el valor de la venta
                         $value_sale = ($value_unit * $quantity) - $descuento_monto;
-                        //si tiene descuento creamos el array de descuento
-                        //2023-07-20 el sistema solo trabaja con un descuento
+                        // si tiene descuento creamos el array de descuento
+                        // 2023-07-20 el sistema solo trabaja con un descuento
                         if ($produc['discount'] > 0) {
-                            //el precio unitario se calcula
-                            //(Valor venta + Total Impuestos) / Cantidad
+                            // el precio unitario se calcula
+                            // (Valor venta + Total Impuestos) / Cantidad
                             $unit_price = round(($value_sale + $igv) / $quantity, 2);
-                            $array_discounts[0] = array(
-                                'value'     => $produc['discount'],
-                                'type'      => '00',
-                                'base'      => round($base, 2),
-                                'factor'    => $factor,
-                                'monto'     => round($descuento_monto, 2)
-                            );
+                            $array_discounts[0] = [
+                                'value' => $produc['discount'],
+                                'type' => '00',
+                                'base' => round($base, 2),
+                                'factor' => $factor,
+                                'monto' => round($descuento_monto, 2),
+                            ];
                         } else {
-                            //el precio unitario es el mismo
+                            // el precio unitario es el mismo
                             $unit_price = $price_sale;
                         }
 
                         $mto_discount = round($descuento_monto, 2);
                     }
-                    if ($produc['afe_igv'] == '20') { //Exonerated
+                    if ($produc['afe_igv'] == '20') { // Exonerated
 
                     }
-                    if ($produc['afe_igv'] == '30') { //Unaffected
+                    if ($produc['afe_igv'] == '30') { // Unaffected
 
                     }
 
@@ -1194,37 +1192,37 @@ class SaleDocumentController extends Controller
                     }
                     $total_tax = $igv + $icbper;
 
-                    //se inserta los datos al detalle del documento
+                    // se inserta los datos al detalle del documento
                     SaleDocumentItem::create([
-                        'document_id'           => $document->id,
-                        'product_id'            => $product_id,
-                        'cod_product'           => $interne,
-                        'decription_product'    => $produc['description'],
-                        'unit_type'             => $produc['unit_type'],
-                        'quantity'              => $produc['quantity'],
-                        'mto_base_igv'          => $mto_base_igv,
-                        'percentage_igv'        => $this->igv,
-                        'igv'                   => $igv,
-                        'total_tax'             => $total_tax,
-                        'type_afe_igv'          => $produc['afe_igv'],
-                        'icbper'                => $icbper,
-                        'factor_icbper'         => $porcentage_item_icbper,
-                        'mto_value_sale'        => $value_sale,
-                        'mto_value_unit'        => $value_unit,
-                        'mto_price_unit'        => $unit_price,
-                        'price_sale'            => $price_sale,
-                        'mto_total'             => round($total_item, 2),
-                        'mto_discount'          => $mto_discount ?? 0,
-                        'json_discounts'        => json_encode($array_discounts)
+                        'document_id' => $document->id,
+                        'product_id' => $product_id,
+                        'cod_product' => $interne,
+                        'decription_product' => $produc['description'],
+                        'unit_type' => $produc['unit_type'],
+                        'quantity' => $produc['quantity'],
+                        'mto_base_igv' => $mto_base_igv,
+                        'percentage_igv' => $this->igv,
+                        'igv' => $igv,
+                        'total_tax' => $total_tax,
+                        'type_afe_igv' => $produc['afe_igv'],
+                        'icbper' => $icbper,
+                        'factor_icbper' => $porcentage_item_icbper,
+                        'mto_value_sale' => $value_sale,
+                        'mto_value_unit' => $value_unit,
+                        'mto_price_unit' => $unit_price,
+                        'price_sale' => $price_sale,
+                        'mto_total' => round($total_item, 2),
+                        'mto_discount' => $mto_discount ?? 0,
+                        'json_discounts' => json_encode($array_discounts),
 
                     ]);
 
-                    $mto_igv = $mto_igv + $igv; //total del igv
-                    $total_icbper = $total_icbper + $icbper; //total del impuesto a la bolsa plastica
+                    $mto_igv = $mto_igv + $igv; // total del igv
+                    $total_icbper = $total_icbper + $icbper; // total del impuesto a la bolsa plastica
                     $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
                     $total = $total + $total_item; // total de la venta general
                 }
-                //totales de la cabesera del documento
+                // totales de la cabesera del documento
                 $total_taxes = $mto_igv + $total_icbper;
                 $subtotal = $total_taxes + $mto_oper_taxed;
                 $ttotal = round($total, 1);
@@ -1232,19 +1230,17 @@ class SaleDocumentController extends Controller
                 $rounding = number_format($difference, 2);
 
                 $document->update([
-                    'invoice_mto_oper_taxed'    => $mto_oper_taxed,
-                    'invoice_mto_igv'           => $mto_igv,
-                    'invoice_icbper'            => $total_icbper,
-                    'invoice_total_taxes'       => $total_taxes,
-                    'invoice_value_sale'        => $mto_oper_taxed,
-                    'invoice_subtotal'          => $subtotal,
-                    'invoice_rounding'          => $rounding,
-                    'invoice_mto_imp_sale'      => $ttotal,
-                    'invoice_sunat_points'      => null,
-                    'invoice_status'            => 'Pendiente',
+                    'invoice_mto_oper_taxed' => $mto_oper_taxed,
+                    'invoice_mto_igv' => $mto_igv,
+                    'invoice_icbper' => $total_icbper,
+                    'invoice_total_taxes' => $total_taxes,
+                    'invoice_value_sale' => $mto_oper_taxed,
+                    'invoice_subtotal' => $subtotal,
+                    'invoice_rounding' => $rounding,
+                    'invoice_mto_imp_sale' => $ttotal,
+                    'invoice_sunat_points' => null,
+                    'invoice_status' => 'Pendiente',
                 ]);
-
-
 
                 $serie->increment('number', 1);
 
@@ -1272,7 +1268,7 @@ class SaleDocumentController extends Controller
             $document->save();
 
             $res = $this->createSumamry($document);
-            $boleta = new Boleta();
+            $boleta = new Boleta;
             $boleta->updateStockSale($document->id);
         }
 
@@ -1288,33 +1284,33 @@ class SaleDocumentController extends Controller
             $res = DB::transaction(function () use ($document, $generation_date) {
 
                 $summary = SaleSummary::create([
-                    'generation_date'   => $generation_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'),
-                    'summary_date'      => Carbon::now()->format('Y-m-d H:i:s'),
-                    'status'            => 'registrado',
-                    'reason'            => $document->reason_cancellation,
-                    'user_id'           => Auth::id()
+                    'generation_date' => $generation_date.' '.Carbon::parse($document->created_at)->format('H:i:s'),
+                    'summary_date' => Carbon::now()->format('Y-m-d H:i:s'),
+                    'status' => 'registrado',
+                    'reason' => $document->reason_cancellation,
+                    'user_id' => Auth::id(),
                 ]);
 
                 SaleSummaryDetail::create([
-                    'document_id'               => $document->id,
-                    'summary_id'                => $summary->id,
-                    'model_name'                => SaleDocument::class,
-                    'invoice_type_doc'          => $document->invoice_type_doc,
-                    'invoice_serie'             => $document->invoice_serie,
-                    'invoice_document_name'     => $document->invoice_serie . '-' . $document->number,
-                    'invoice_correlative'       => $document->invoice_correlative,
-                    'status'                    => $document->status,
-                    'total'                     => $document->invoice_mto_imp_sale
+                    'document_id' => $document->id,
+                    'summary_id' => $summary->id,
+                    'model_name' => SaleDocument::class,
+                    'invoice_type_doc' => $document->invoice_type_doc,
+                    'invoice_serie' => $document->invoice_serie,
+                    'invoice_document_name' => $document->invoice_serie.'-'.$document->number,
+                    'invoice_correlative' => $document->invoice_correlative,
+                    'status' => $document->status,
+                    'total' => $document->invoice_mto_imp_sale,
                 ]);
 
-                $factura = new Resumen();
+                $factura = new Resumen;
                 $result = $factura->create($summary, [$document]);
 
                 return [
                     'success' => $result['success'],
-                    'code'  => $result['code'],
-                    'message'   => $result['message'],
-                    'notes'   => $result['notes']
+                    'code' => $result['code'],
+                    'message' => $result['message'],
+                    'notes' => $result['notes'],
                 ];
             });
 

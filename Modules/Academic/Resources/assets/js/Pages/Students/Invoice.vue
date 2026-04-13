@@ -156,13 +156,22 @@
             unitType = 'ZZ';
         }else if(ttp == 3){
             document.getElementById('regCou_checkbox-' + data.id).disabled = true;
-            price = data.course.price;
+            if(data.amount_paid){
+                price = data.amount_paid - data.advancement;
+            }else{
+                price = data.course.price;
+            }
+
             description = data.course.description;
             xItemId = data.course.id
             unitType = 'ZZ';
         }else if(ttp == 4){
             document.getElementById('subs_checkbox-' + data.id).disabled = true;
-            price = data.amount_paid ?? data.amount;
+            if(data.amount_paid){
+                price = data.amount_paid - data.advancement;
+            }else{
+                price = data.amount;
+            }
             description = data.subscription.description;
             xItemId = data.subscription.id
             unitType = 'ZZ';
@@ -934,44 +943,52 @@
                             <div class="text-xl px-4">Cobros pendientes </div>
                         </div>
                     </div>
-                    <div class="relative max-h-[300px] overflow-y-auto custom-scroll border border-gray-200 dark:border-gray-800 shadow-sm">
+                    <div class="relative max-h-[300px] overflow-y-auto custom-scroll shadow-sm">
                         <table class="w-full text-sm text-left border-collapse">
-                            <thead class="sticky top-0 z-20 bg-gray-50/95 dark:bg-[#1a2234]/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
+                            <thead class="sticky top-0 z-20 bg-gray-50/95 dark:bg-[#1a2234]/95 backdrop-blur-sm dark:border-gray-700">
                                 <tr>
-                                    <th class="w-1 bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]"></th>
-                                    <th class="bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]">Item</th>
-                                    <th class="w-1 bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]">Cantidad</th>
-                                    <th class="w-1 bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]">Precio</th>
-                                    <th class="bg-[#db8883] border border-l-0 border-r-0 border-[#d82f24] dark:bg-[#a31209]">Total</th>
+                                    <th class="w-1 bg-[#db8883]"></th>
+                                    <th class="bg-[#db8883]">Item</th>
+                                    <th class="w-1 bg-[#db8883]">Cantidad</th>
+                                    <th class="w-1 bg-[#db8883]">Precio</th>
+                                    <th class="w-1 bg-[#db8883]">Precio Acordado</th>
+                                    <th class="w-1 bg-[#db8883]">Monto Pagado</th>
+                                    <th class="bg-[#db8883]">Total</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                                 <template v-for="(regCou, ix) in registrationCourses" :key="ix">
                                     <tr class="align-top">
-                                        <td class="text-danger border border-l-0 border-r-0 border-t-0 border-[#d82f24]">
+                                        <td class="text-danger">
                                             <input :id="`regCou_checkbox-${regCou.id}`" @change="addItem(regCou, 3)" type="checkbox" class="form-checkbox" />
                                         </td>
-                                        <td class="text-danger border border-l-0 border-r-0 border-t-0 border-[#d82f24]">
+                                        <td class="text-danger">
                                             <span>{{ regCou.course.description }}</span>
                                             <!-- <textarea class="form-textarea mt-4" placeholder="Enter Description" v-model="item.description"></textarea> -->
                                         </td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">1</td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">{{ regCou.course.price }}</td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">S/. {{ (regCou.course.price * 1).toFixed(2) }}</td>
+                                        <td class="text-danger text-right">1</td>
+                                        <td class="text-danger text-right">{{ regCou.course.price }}</td>
+                                        <td class="text-danger text-right">{{ regCou.amount_paid > 0 ? regCou.amount_paid : '' }}</td>
+                                        <td class="text-danger text-right">{{ regCou.advancement > 0 ? regCou.advancement : '' }}</td>
+                                        <td v-if="regCou.amount_paid > 0" class="text-danger text-right">S/. {{ (regCou.amount_paid - regCou.advancement).toFixed(2) }}</td>
+                                        <td v-else class="text-danger text-right">S/. {{ (regCou.course.price * 1).toFixed(2) }}</td>
                                     </tr>
                                 </template>
                                 <template v-for="(subs, ix) in subscriptions" :key="ix">
                                     <tr class="align-top">
-                                        <td class="text-danger border border-l-0 border-r-0 border-t-0 border-[#d82f24]">
+                                        <td class="text-danger">
                                             <input :id="`subs_checkbox-${subs.id}`" @change="addItem(subs, 4)" type="checkbox" class="form-checkbox" />
                                         </td>
-                                        <td class="text-danger border border-l-0 border-r-0 border-t-0 border-[#d82f24]">
+                                        <td class="text-danger">
                                             <span>{{ subs.subscription.description }}</span>
                                             <!-- <textarea class="form-textarea mt-4" placeholder="Enter Description" v-model="item.description"></textarea> -->
                                         </td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">1</td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">{{ subs.amount_paid ?? subs.amount }}</td>
-                                        <td class="text-danger text-right border border-l-0 border-r-0 border-t-0 border-[#d82f24]">S/. {{ ((subs.amount_paid ?? subs.amount) * 1).toFixed(2) }}</td>
+                                        <td class="text-danger text-right">1</td>
+                                        <td class="text-danger text-right">{{ subs.amount }}</td>
+                                        <td class="text-danger text-right">{{ subs.amount_paid }}</td>
+                                        <td class="text-danger text-right">{{ subs.advancement }}</td>
+                                        <td v-if="subs.amount_paid" class="text-danger text-right">S/. {{ ((subs.amount_paid - subs.advancement) * 1).toFixed(2) }}</td>
+                                        <td v-else class="text-danger text-right">S/. {{ ((subs.amount_paid ?? subs.amount) * 1).toFixed(2) }}</td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -986,7 +1003,7 @@
                     </div>
                     <div class="table-responsive">
                         <table class="w-full text-sm text-left rtl:text-right">
-                            <thead class="text-xs text-white uppercase bg-blue-600 border-b border-t border-blue-400 dark:text-white">
+                            <thead class="text-xs text-white uppercase dark:text-white">
                                 <tr>
                                     <th class="w-8 bg-blue-600"></th>
                                     <th class="bg-blue-600">Item</th>

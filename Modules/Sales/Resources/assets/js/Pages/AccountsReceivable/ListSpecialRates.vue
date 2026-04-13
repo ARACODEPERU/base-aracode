@@ -18,6 +18,7 @@
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
     import iconMail from '@/Components/vristo/icon/icon-mail.vue';
+    import iconLink from '@/Components/vristo/icon/icon-link.vue';
     import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
@@ -280,6 +281,61 @@
     const downloadDocument = (id,type,file,format = 'A4') => {
         let url = route('saledocuments_download',[id, type,file,format])
         window.open(url, "_blank");
+    }
+
+    const unlinkDocument = (document, sale) => {
+        if (!document.schedule_id) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se encontró la cuota vinculada al documento',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Estás seguro?',
+            html: `¿Desvincular el documento <strong>${document.invoice_serie}-${document.invoice_correlative}</strong>?<br><br>Esta acción no se puede revertir.<br><br>El monto del documento (S/. ${document.overall_total}) será reintegrado a la cuota.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, desvincular',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            showLoaderOnConfirm: true,
+            allowOutsideClick: () => !Swal.isLoading(),
+            preConfirm: () => {
+                return axios.post(route('acco_quota_unlink_document'), {
+                    document_id: document.id
+                }).then((res) => {
+                    if (!res.data.success) {
+                        Swal.showValidationMessage(res.data.message);
+                    }
+                    return res.data;
+                }).catch((error) => {
+                    Swal.showValidationMessage('Error al procesar la solicitud');
+                });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: result.value.message,
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                // Recargar datos de la tabla
+                router.visit(route('acco_sales_special_rates'), {
+                    only: ['sales'], // opcional
+                    replace: true,
+                    preserveScroll: true,
+                    preserveState: true
+                });
+            }
+        });
     }
 
     // ============ EDICIÓN DE CUOTAS ============
@@ -939,7 +995,7 @@
                 </div>
             </template>
         </ModalLargeX>
-        <ModalLarge
+        <ModalLargeX
             :show="displayModalDocuments"
             :onClose="closeModalDocuments"
             :icon="'/img/papel.png'"
@@ -976,19 +1032,25 @@
                     <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-4 py-3">
                                     Acción
                                 </th>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-4 py-3">
                                     serie-número
                                 </th>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-4 py-3">
+                                    Estado
+                                </th>
+                                <th scope="col" class="px-4 py-3">
+                                    Estado SUNAT
+                                </th>
+                                <th scope="col" class="px-4 py-3">
                                     Fecha emisión
                                 </th>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-4 py-3">
                                     Detalle
                                 </th>
-                                <th scope="col" class="px-6 py-3">
+                                <th scope="col" class="px-4 py-3">
                                     total pago
                                 </th>
                             </tr>
@@ -996,24 +1058,56 @@
                         <tbody v-if="saleDocuments.documents.length > 0">
                             <tr v-for="(row, key) in saleDocuments.documents" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                 <td class="text-center">
-                                    <div class="flex items-center ">
-                                        <button @click="sendEmailDocument(row, saleDocuments.client.email)" type="button">
+                                    <div v-if="row.schedule_id" class="flex items-center justify-center gap-2">
+                                        <button @click="sendEmailDocument(row, saleDocuments.client.email)" type="button" title="Enviar por email">
                                             <iconMail class="w-5 h-5" />
                                         </button>
+                                        <button v-if="row.status == 3" @click="unlinkDocument(row, saleDocuments)" type="button" title="Desvincular de la cuota">
+                                            <svg class="w-5 h-5 text-red-600 hover:text-red-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                                               <path fill="currentColor" d="M128 64C92.7 64 64 92.7 64 128L64 512C64 547.3 92.7 576 128 576L308 576C285.3 544.5 272 505.8 272 464C272 363.4 349.4 280.8 448 272.7L448 234.6C448 217.6 441.3 201.3 429.3 189.3L322.7 82.7C310.7 70.7 294.5 64 277.5 64L128 64zM389.5 240L296 240C282.7 240 272 229.3 272 216L272 122.5L389.5 240zM464 608C543.5 608 608 543.5 608 464C608 384.5 543.5 320 464 320C384.5 320 320 384.5 320 464C320 543.5 384.5 608 464 608zM523.3 427.3L486.6 464L523.3 500.7C529.5 506.9 529.5 517.1 523.3 523.3C517.1 529.5 506.9 529.5 500.7 523.3L464 486.6L427.3 523.3C421.1 529.5 410.9 529.5 404.7 523.3C398.5 517.1 398.5 506.9 404.7 500.7L441.4 464L404.7 427.3C398.5 421.1 398.5 410.9 404.7 404.7C410.9 398.5 421.1 398.5 427.3 404.7L464 441.4L500.7 404.7C506.9 398.5 517.1 398.5 523.3 404.7C529.5 410.9 529.5 421.1 523.3 427.3z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div v-else class="flex items-center justify-center gap-2 text-red-800">
+                                        <svg class="w-6 h-6 text-red-800" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                                            <path fill="currentColor" d="M367.2 412.5L99.5 144.8c-22.4 31.4-35.5 69.8-35.5 111.2 0 106 86 192 192 192 41.5 0 79.9-13.1 111.2-35.5zm45.3-45.3c22.4-31.4 35.5-69.8 35.5-111.2 0-106-86-192-192-192-41.5 0-79.9 13.1-111.2 35.5L412.5 367.2zM0 256a256 256 0 1 1 512 0 256 256 0 1 1 -512 0z"/>
+                                        </svg>
                                     </div>
                                 </td>
                                 <td>
                                     <a @click="downloadDocument(row.id,row.invoice_type_doc,'PDF')" href="javascript:;" class="text-blue-600 underline hover:text-blue-800 visited:text-purple-700">{{ row.invoice_serie+'-'+row.invoice_correlative }}</a>
                                 </td>
-                                <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                <td class="px-4 py-4">
+                                    <span v-if="row.status == 1" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-500">
+                                        Normal
+                                    </span>
+                                    <span v-else-if="row.status == 3" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-500">
+                                        Anulado
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-500">
+                                        {{ row.status }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <span v-if="row.invoice_status == 'Enviada Por Anular'" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-500">
+                                        {{ row.invoice_status }}
+                                    </span>
+                                    <span v-else-if="row.invoice_status == 'Pendiente'" class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500">
+                                        {{ row.invoice_status }}
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-500">
+                                        {{ row.invoice_status }}
+                                    </span>
+                                </td>
+                                <td scope="row" class="px-4 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     {{ formatDate(row.invoice_broadcast_date) }}
                                 </td>
-                                <td class="px-6 py-4 text-justify hyphens-auto">
+                                <td class="px-4 py-4 text-justify hyphens-auto">
                                     <template v-if="row.items.length > 0">
                                         {{ row.items[0].decription_product }}
                                     </template>
                                 </td>
-                                <td class="px-6 py-4 text-right">
+                                <td class="px-4 py-4 text-right">
                                     {{ row.overall_total }}
                                 </td>
                             </tr>
@@ -1021,9 +1115,9 @@
                     </table>
                 </div>
             </template>
-        </ModalLarge>
+        </ModalLargeX>
         <!-- Modal Editar Cuotas -->
-        <ModalLarge :show="displayModalEdit" :onClose="closeModalEdit">
+        <ModalLargeX :show="displayModalEdit" :onClose="closeModalEdit">
             <template v-if="editSaleData" #title>
                 Editar Cuotas y Montos - {{ editSaleData.client.full_name }}
             </template>
@@ -1155,7 +1249,7 @@
                     {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
                 </button>
             </template>
-        </ModalLarge>
+        </ModalLargeX>
         <ModalStatus :show="displayModalExportStatus" :onClose="closeModalExportStatus">
             <template #title>Estado de Exportación</template>
             <template #content>

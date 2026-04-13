@@ -244,4 +244,7 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         ->get('accountsreceivable/special/rates/quota/export/{id}/excel', [AccountsReceivableController::class, 'exportStatus'])
         ->name('acco_export_status');
 
+    Route::post('accountsreceivable/quota/unlink-document', [AccountsReceivableController::class, 'unlinkDocumentFromQuota'])
+        ->name('acco_quota_unlink_document');
+
 });

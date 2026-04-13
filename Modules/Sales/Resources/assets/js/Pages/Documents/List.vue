@@ -326,7 +326,6 @@
                 }).then((res) => {
                     if (res.isConfirmed) {
                         showMessage('El documento fue anulado correctamente');
-                        //refreshTable();
                     }
                     refreshTable();
                 });

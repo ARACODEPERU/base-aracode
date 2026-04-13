@@ -2,25 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Parameter;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use PhpParser\Builder\Param;
 
 class ApisnetPeController extends Controller
 {
     //apis.net
-    //protected $token = 'apis-token-11376.43LtemdBY9nZYES8Ky9uZ5oNaYmA0fYe';
+    //protected $token;
     //decolecta.com
-    protected $token = 'sk_5647.ESeEwR43KlU9bhHFlTpMQaYdY1QuI5ZG';
+    protected $token;
     //api.migo.pe
-    protected $tokenMigo = 'wa37Hy4frWgyzlbLCtyzsg9HK2QND0nMl2EqkjTnndBAG7MDF6Se8iddLD8M';
+    protected $tokenMigo;
 
     //apis.net
     //protected $base_url = 'https://api.apis.net.pe/';
     //decolecta.com
-    protected $base_url = 'https://api.decolecta.com/';
+    protected $baseUrl = 'https://api.decolecta.com/';
     //api.migo.pe
-    protected $base_migo = 'https://api.migo.pe/api';
+    protected $baseMigo = 'https://api.migo.pe/api';
+
+    public function __construct()
+    {
+        //$this->token = Parameter::where('parameter_code', 'P000012')->value('value_default');
+        $this->token = Parameter::where('parameter_code', 'P000024')->value('value_default');
+        $this->tokenMigo = Parameter::where('parameter_code', 'P000023')->value('value_default');
+    }
 
     public function consult(Request $request)
     {
@@ -42,7 +51,7 @@ class ApisnetPeController extends Controller
 
         if ($ruc) {
             $client = new Client([
-                'base_uri' => $this->base_url,
+                'base_uri' => $this->baseUrl,
                 'timeout'  => 2.0,
             ]);
 
@@ -103,7 +112,7 @@ class ApisnetPeController extends Controller
 
         if ($dni) {
             $client = new Client([
-                'base_uri' => $this->base_url,
+                'base_uri' => $this->baseUrl,
                 'timeout'  => 2.0,
             ]);
 
@@ -181,7 +190,7 @@ class ApisnetPeController extends Controller
         $client = new Client();
 
         try {
-            $response = $client->post('https://api.migo.pe/api/v1/ruc', [
+            $response = $client->post($this->baseMigo . '/v1/ruc', [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
@@ -232,7 +241,7 @@ class ApisnetPeController extends Controller
         $client = new Client();
 
         try {
-            $response = $client->post('https://api.migo.pe/api/v1/dni', [
+            $response = $client->post($this->baseMigo . '/v1/dni', [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',

@@ -383,17 +383,17 @@ class AccountsReceivableController extends Controller
                             'student_id' => $student->id,
                             'course_id' => $course['id'],
                         ],
-                        [
-                            'status' => true,
-                            'sale_note_id' => $sale_note->id,
-                            'modality_id' => 3,
-                            'unlimited' => $request->get('aplasos') ? false : true,
-                            'date_start' => Carbon::now()->format('Y-m-d'),
-                            'date_end' => $request->filled('date_end') ? $request->get('date_end') : Carbon::now()->addMonth()->format('Y-m-d'),
-                            'payment_installments' => $request->get('aplasos') ? true : false,
-                            'amount_paid' => $course['price'],
-                            'date_start' => Carbon::now()->format('Y-m-d'),
-                        ]);
+                            [
+                                'status' => true,
+                                'sale_note_id' => $sale_note->id,
+                                'modality_id' => 3,
+                                'unlimited' => $request->get('aplasos') ? false : true,
+                                'date_start' => Carbon::now()->format('Y-m-d'),
+                                'date_end' => $request->filled('date_end') ? $request->get('date_end') : Carbon::now()->addMonth()->format('Y-m-d'),
+                                'payment_installments' => $request->get('aplasos') ? true : false,
+                                'amount_paid' => $course['price'],
+                                'date_start' => Carbon::now()->format('Y-m-d'),
+                            ]);
                     }
                 }
 
@@ -527,7 +527,7 @@ class AccountsReceivableController extends Controller
                 $name = Person::where('id', $sale_note->client_id)->first()->short_name;
                 $cronograma = SalePaymentSchedule::where('sale_id', $sale_note->id)->get();
 
-                //Mail::to($request->get('email'))->send(new CuotasMail($sale_note, $name, $cronograma));
+                // Mail::to($request->get('email'))->send(new CuotasMail($sale_note, $name, $cronograma));
 
             });
 
@@ -1255,6 +1255,131 @@ class AccountsReceivableController extends Controller
                 'success' => false,
                 'message' => 'Error al actualizar las cuotas: '.$e->getMessage(),
             ], 422);
+        }
+    }
+
+    public function unlinkDocumentFromQuota(Request $request)
+    {
+        $documentId = $request->input('document_id');
+
+        $document = SaleDocument::find($documentId);
+        $sale = Sale::find($document->sale_id);
+
+        if (! $document) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Documento no encontrado',
+            ]);
+        }
+
+        if ($document->status != 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden desvincular documentos anulados',
+            ]);
+        }
+
+        if (! $document->schedule_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El documento no está vinculado a ninguna cuota',
+            ]);
+        }
+
+        try {
+            DB::transaction(function () use ($document, $sale) {
+                $montoDocumento = $document->overall_total;
+
+                // Paso 1: Actualizar schedule (desvincular)
+                $schedule = SalePaymentSchedule::find($document->schedule_id);
+                if ($schedule) {
+                    $schedule->document_id = null;
+                    $schedule->amount_paid = max(0, $schedule->amount_paid - $montoDocumento);
+                    $schedule->remaining_amount = $schedule->remaining_amount + $montoDocumento;
+                    $schedule->save();
+                }
+
+                // Paso 2: Obtener productos del documento
+                $items = SaleProduct::where('sale_id', $document->sale_id)->get();
+
+                $student = AcaStudent::where('person_id', $sale->client_id)->first();
+                //dd($student);
+                // Paso 3: Distribuir monto entre cursos y suscripciones
+                $montoRestante = $montoDocumento;
+
+                foreach ($items as $product) {
+                    if ($montoRestante <= 0) {
+                        break;
+                    }
+
+                    if($product->entity_name_product == AcaCourse::class) {
+                        // Buscar matricula
+                        $registration = DB::table('aca_cap_registrations')
+                            ->where('student_id', $student->id)
+                            ->where('course_id', $product->product_id)
+                            ->first();
+
+                        if ($registration) {
+                            $currentAdvancement = floatval($registration->advancement);
+                            if ($currentAdvancement >= $montoRestante) {
+                                DB::table('aca_cap_registrations')
+                                    ->where('id', $registration->id)
+                                    ->update(['advancement' => $currentAdvancement - $montoRestante]);
+                                $montoRestante = 0;
+                            } else {
+                                DB::table('aca_cap_registrations')
+                                    ->where('id', $registration->id)
+                                    ->update(['advancement' => 0]);
+                                $montoRestante = $montoRestante - $currentAdvancement;
+                            }
+
+                            continue;
+                        }
+                    }elseif($product->entity_name_product == AcaStudentSubscription::class) {
+                        // Buscar suscripcion
+                        $subscription = DB::table('aca_student_subscriptions')
+                            ->where('student_id', $student->id)
+                            ->where('subscription_id', $product->product_id)
+                            ->first();
+
+                        if ($subscription) {
+                            $currentAdvancement = floatval($subscription->advancement);
+                            if ($currentAdvancement >= $montoRestante) {
+                                DB::table('aca_student_subscriptions')
+                                    ->where('id', $subscription->id)
+                                    ->update(['advancement' => $currentAdvancement - $montoRestante]);
+                                $montoRestante = 0;
+                            } else {
+                                DB::table('aca_student_subscriptions')
+                                    ->where('id', $subscription->id)
+                                    ->update(['advancement' => 0]);
+                                $montoRestante = $montoRestante - $currentAdvancement;
+                            }
+                        }
+                    }
+                }
+                // Paso 4: Actualizar venta principal
+
+                if ($sale) {
+                    $sale->advancement = max(0, $sale->advancement - $montoDocumento);
+                    $sale->save();
+                }
+
+                // Paso 5: Desvincular documento
+                $document->schedule_id = null;
+                $document->save();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Documento desvinculado correctamente',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al desvincular documento: '.$e->getMessage(),
+            ]);
         }
     }
 }
