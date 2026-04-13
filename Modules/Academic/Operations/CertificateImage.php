@@ -209,6 +209,9 @@ class CertificateImage
                 
                 // Solo renderizar si hay descripción disponible en el módulo
                 if ($moduleDescriptionText) {
+                    // Asegurar que htmlGenerator esté disponible
+                    $htmlGenerator = new CertificateGeneratorHtml;
+                    
                     $moduleDescContentWidth = (int) ($moduleConfig ? ($moduleConfig->max_width_module_description ?? 800) : 800);
                     $moduleDescContentHeight = $this->certificates_param->certificate_img_height ?? 1550;
                     
