@@ -309,6 +309,25 @@ class AcaSalesController extends Controller
                                         'document_id' => $document->id
                                     ]);
                             }
+                    } else if ($produc['mode'] == 'manual') {
+                        $classEntity = AcaCourse::class;
+
+                        $genericProduct = Product::firstOrCreate(
+                            ['usine' => '11211'],
+                            [
+                                'interne' => '11211',
+                                'description' => 'Curso en plataforma Virtual',
+                                'purchase_prices' => 0.0,
+                                'sale_prices' => '{"high":"1500","under":500,"medium":1000}',
+                                'stock_min' => 1,
+                                'is_product' => 1,
+                                'type_sale_affectation_id' => 10,
+                                'type_purchase_affectation_id' => 10,
+                                'type_unit_measure_id' => 'ZZ',
+                                'status' => 1,
+                            ]
+                        );
+                        $product_id = $genericProduct->usine;
                     }
 
                     //se inserta los datos al detalle del documento

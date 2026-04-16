@@ -219,13 +219,100 @@
             let cbx = document.getElementById('regCou_checkbox-' + data.originId);
             cbx.disabled = false
             cbx.checked = false;
-        }else{
+        }else if(data.mode == 4){
             let cbx = document.getElementById('subs_checkbox-' + data.originId);
             cbx.disabled = false
             cbx.checked = false;
+        }else if(data.mode == 5){
+            let cbx = document.getElementById('subsRe_checkbox-' + data.originId);
+            cbx.disabled = false
+            cbx.checked = false;
         }
+        // Los items manuales (mode == 'manual') no tienen checkbox que re-habilitar
 
         form.items.splice(index,1);
+    };
+
+    // Tipos de unidad SUNAT para items manuales
+    const unitTypes = [
+        { code: 'NIU', name: 'Unidades' },
+        { code: 'ZZ', name: 'Servicio' },
+        { code: 'BX', name: 'Caja' },
+        { code: 'KGM', name: 'Kilos' },
+        { code: 'LTR', name: 'Litros' },
+        { code: 'MTR', name: 'Metros' },
+        { code: 'HUR', name: 'Hora' },
+        { code: 'GLL', name: 'Galones' },
+        { code: 'GRM', name: 'Gramos' },
+        { code: 'FOT', name: 'Pies' },
+        { code: 'INH', name: 'Pulgadas' },
+        { code: 'YRD', name: 'Yardas' },
+    ];
+
+    // Agregar item manual
+    const newItems = () => {
+        let item = {
+            id: null,
+            mode: 'manual',  // Identificador para items manuales
+            title: '',
+            description: '',
+            rate: 0,
+            quantity: 1,
+            amount: 0,
+            discount: 0,
+            m_igv: 0,
+            total: 0,
+            v_sale: 0,
+            afe_igv: 10,
+            icbper: false,
+            is_product: false,
+            originId: null,
+            unit_type: 'ZZ'
+        };
+        form.items.push(item);
+    };
+
+    // Recalcular todos los totales
+    const recalculateAllTotals = () => {
+        let total = 0;
+        let totalDiscount = 0;
+        let totalTaxed = 0;
+        let totalIgv = 0;
+
+        form.items.forEach((item, index) => {
+            let c = parseFloat(item.quantity) || 0;
+            let p = parseFloat(item.amount) || 0;
+            let d = parseFloat(item.discount) || 0;
+
+            let vu = p / taxes.value.nfactorIGV;
+            let fa = p > 0 ? ((d * 100) / p) / 100 : 0;
+            let md = fa * vu * c;
+            let bi = (vu * c) - md;
+            let mi = bi * taxes.value.rfactorIGV;
+            let st = ((vu * c) - md) + mi;
+            let vs = (vu * c) - md;
+
+            // Verificar NaN
+            if (isNaN(st)) st = 0;
+            if (isNaN(mi)) mi = 0;
+            if (isNaN(vs)) vs = 0;
+            if (isNaN(md)) md = 0;
+
+            form.items[index].m_igv = mi.toFixed(2);
+            form.items[index].total = st.toFixed(2);
+            form.items[index].v_sale = vs.toFixed(2);
+
+            total += parseFloat(st);
+            totalDiscount += parseFloat(md);
+            totalTaxed += parseFloat(vs);
+            totalIgv += parseFloat(mi);
+        });
+
+        form.total = total.toFixed(2);
+        form.total_discount = totalDiscount.toFixed(2);
+        form.total_taxed = totalTaxed.toFixed(2);
+        form.total_igv = totalIgv.toFixed(2);
+        form.payments[0].amount = total.toFixed(2);
     };
     const xasset = assetUrl;
 
@@ -998,48 +1085,75 @@
                 <div class="mt-8">
                     <div class="flex justify-between lg:flex-row flex-col">
                         <div class="w-full ltr:lg:mr-6 rtl:lg:ml-6 mb-6">
-                            <div class="text-xl px-4">Detalles de la compra</div>
+                            <div class="flex items-center justify-between px-4">
+                                <div class="text-xl">Detalles de la compra</div>
+                                <button @click="newItems" class="btn btn-success btn-sm flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    Agregar Item
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="table-responsive">
                         <table class="w-full text-sm text-left rtl:text-right">
                             <thead class="text-xs text-white uppercase dark:text-white">
                                 <tr>
-                                    <th class="w-8 bg-blue-600"></th>
+                                    <th class="w-16 bg-blue-600 px-2"></th>
                                     <th class="bg-blue-600">Item</th>
-                                    <th class="w-20 bg-blue-600">Cantidad</th>
-                                    <th class="w-20 bg-blue-600">Precio</th>
-                                    <th class="bg-blue-600">Total</th>
+                                    <th class="w-32 bg-blue-600 text-center">Tipo</th>
+                                    <th class="w-24 bg-blue-600">Und.</th>
+                                    <th class="w-20 bg-blue-600 text-right">Cantidad</th>
+                                    <th class="w-40 bg-blue-600 text-right">Precio Unit.</th>
+                                    <th class="w-32 bg-blue-600 text-right">Dto.</th>
+                                    <th class="w-28 bg-blue-600 text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <template v-if="form.items.length <= 0">
                                     <tr>
-                                        <td colspan="5" class="!text-center font-semibold text-primary">Ningún artículo disponible</td>
+                                        <td colspan="8" class="!text-center font-semibold text-primary py-4">Ningún artículo disponible</td>
                                     </tr>
                                 </template>
                                 <template v-for="(item, i) in form.items" :key="i">
-                                    <tr class="align-center">
-                                        <td class="border-b border-blue-400">
-                                            <button type="button" @click="removeItem(item, i)" class="text-primary p-0">
-                                                <icon-x class="w-5 h-5" />
-                                            </button>
+                                    <tr class="align-center" :class="{'bg-yellow-50 dark:bg-yellow-900/10': item.mode === 'manual'}">
+                                        <td class="border-b border-blue-400 px-2">
+                                            <div class="flex items-center gap-2">
+                                                <span v-if="item.mode === 'manual'" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                    Manual
+                                                </span>
+                                                <button type="button" @click="removeItem(item, i)" class="text-primary p-0 hover:text-red-500">
+                                                    <icon-x class="w-5 h-5" />
+                                                </button>
+                                            </div>
                                         </td>
                                         <td class="text-primary border-b border-blue-400">
-                                            <!-- <span>{{ item.title }}</span> -->
-                                            <textarea class="form-textarea text-primary" placeholder="Enter Description" v-model="item.description"></textarea>
+                                            <textarea class="form-textarea text-primary" placeholder="Descripción del item" v-model="item.description"></textarea>
                                         </td>
-                                        <td class="text-primary text-right border-b border-blue-400 w-20 px-1">{{ item.quantity }}</td>
-                                        <td class="text-primary text-right border-b border-blue-400">
-
-                                            <input v-model="item.amount"
-                                            @input="calculateTotalsInputs(i)"
-                                            :disabled="isEdit ? true : false"
-                                            :style="isEdit ? 'cursor: not-allowed': ''"
-                                            :class="isEdit ? 'bg-gray-100' : ''"
-                                            class="form-input form-input-sm text-right w-20 px-1" type="text" />
+                                        <td class="border-b border-blue-400 text-center">
+                                            <select v-model="item.is_product" @change="recalculateAllTotals()" class="form-select form-select-sm text-xs w-20">
+                                                <option :value="true">Prod.</option>
+                                                <option :value="false">Serv.</option>
+                                            </select>
                                         </td>
-                                        <td class="text-primary text-right border-b border-blue-400">S/. {{ item.amount * item.quantity }}</td>
+                                        <td class="border-b border-blue-400">
+                                            <select v-model="item.unit_type" @change="recalculateAllTotals()" class="form-select form-select-sm text-xs">
+                                                <option v-for="ut in unitTypes" :key="ut.code" :value="ut.code">{{ ut.code }}</option>
+                                            </select>
+                                        </td>
+                                        <td class="border-b border-blue-400">
+                                            <input v-model="item.quantity" @input="recalculateAllTotals()" type="number" min="1" class="form-input form-input-sm text-right w-16" />
+                                        </td>
+                                        <td class="border-b border-blue-400">
+                                            <input v-model="item.amount" @input="recalculateAllTotals()" type="number" step="0.01" min="0" class="form-input form-input-sm text-right w-32" placeholder="0.00" />
+                                        </td>
+                                        <td class="border-b border-blue-400">
+                                            <input v-model="item.discount" @input="recalculateAllTotals()" type="number" step="0.01" min="0" class="form-input form-input-sm text-right w-24" placeholder="0" />
+                                        </td>
+                                        <td class="text-primary text-right border-b border-blue-400 font-semibold">
+                                            S/. {{ item.total || '0.00' }}
+                                        </td>
                                     </tr>
                                 </template>
                             </tbody>
