@@ -318,7 +318,7 @@ class AcaSalesController extends Controller
                                 'interne' => '11211',
                                 'description' => 'Curso en plataforma Virtual',
                                 'purchase_prices' => 0.0,
-                                'sale_prices' => '{"high":"1500","under":500,"medium":1000}',
+                                'sale_prices' => '{"high":"1000","under":100,"medium":500}',
                                 'stock_min' => 1,
                                 'is_product' => 1,
                                 'type_sale_affectation_id' => 10,
