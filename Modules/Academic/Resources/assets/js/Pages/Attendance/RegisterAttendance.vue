@@ -371,7 +371,7 @@
                                 type="text"
                                 v-model="form.dni"
                                 :maxlength="maxCharacters"
-                                :pattern="'[0-9]{' + maxCharacters + '}'"
+                                @input="form.dni = form.dni.replace(/[^0-9]/g, '')"
                                 inputmode="numeric"
                                 class="w-full px-4 py-3 form-input text-lg text-center"
                                 placeholder="Ingresa tu número de documento"

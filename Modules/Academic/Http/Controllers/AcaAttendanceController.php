@@ -131,10 +131,19 @@ class AcaAttendanceController extends Controller
 
         // Validar número de caracteres según el tipo de documento
         $docType = IdentityDocumentType::find($request->identity_document_type_id);
-        $requiredLength = $docType ? (int) $docType->number_characters : 8;
+        $maxAllowedLength = $docType ? (int) $docType->number_characters : 8;
+        $isOtros = ($docType && $docType->code == 0); // Ajusta 'code' según cómo identifiques el tipo "Otros"
 
-        if (strlen($request->dni) !== $requiredLength) {
-            return back()->withErrors(['dni' => 'El número de documento debe tener '.$requiredLength.' dígitos.']);
+        if ($isOtros) {
+            // Si es "Otros", solo validamos que no pase del máximo
+            if (strlen($request->dni) > $maxAllowedLength) {
+                return back()->withErrors(['dni' => 'El número de documento no debe exceder los ' . $maxAllowedLength . ' dígitos.']);
+            }
+        } else {
+            // Si es otro tipo (ej: DNI), validamos la longitud exacta
+            if (strlen($request->dni) !== $maxAllowedLength) {
+                return back()->withErrors(['dni' => 'El número de documento debe tener exactamente ' . $maxAllowedLength . ' dígitos.']);
+            }
         }
 
         $link = AcaAttendanceLink::with(['course', 'content'])
