@@ -585,7 +585,7 @@
                                                 <span class="text-[10px] font-medium">{{ course.exam ? 'Editar' : 'Crear' }}</span>
                                             </button>
                                             <!-- Configuracion de Landing -->
-                                            <Link :href="route('aca_courses_landing', course.id)"
+                                            <Link :href="route('aca_courses_landing_edit', course.id)"
                                                 class="flex flex-col items-center gap-1 px-3 py-2 min-w-[70px] text-cyan-600 bg-cyan-100 dark:bg-cyan-900/30 dark:text-cyan-400 hover:bg-cyan-200 dark:hover:bg-cyan-900/50 rounded-lg transition-all"
                                                 v-tippy="{content: 'Landing', placement: 'top'}"
                                             >

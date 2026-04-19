@@ -217,33 +217,6 @@ class AcaCourseController extends Controller
         ]);
     }
 
-    public function landing($id)
-    {
-        $course = AcaCourse::find($id);
-
-        return Inertia::render('Academic::Courses/Landing', [
-            'course' => $course,
-        ]);
-    }
-
-    public function landingStore(Request $request)
-    {
-        $this->validate($request, [
-            'course_id' => 'required|exists:aca_courses,id',
-        ]);
-
-        // Aquí se guardará la configuración de la landing
-        // Por ahora retornamos success
-
-        return response()->json(['success' => true, 'message' => 'Configuración guardada correctamente']);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return Renderable
-     */
     public function edit($id)
     {
         $categories = AcaCategoryCourse::all();

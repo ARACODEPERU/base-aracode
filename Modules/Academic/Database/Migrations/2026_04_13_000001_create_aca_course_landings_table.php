@@ -16,8 +16,8 @@ return new class extends Migration
             $table->date('banner_end_date')->nullable();
             $table->integer('banner_duration')->nullable()->comment('Duración en días');
             $table->enum('banner_language', ['es', 'en', 'zh'])->default('es')->comment('es=Español, en=Inglés, zh=Mandarín');
-            $table->json('professional_section')->nullable();
             $table->boolean('is_published')->default(false);
+            $table->json('professional_section')->nullable();
             $table->json('staff_section')->nullable();
             $table->json('results_section')->nullable();
             $table->json('testimonials_section')->nullable();

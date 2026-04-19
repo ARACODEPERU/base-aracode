@@ -5,17 +5,13 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KardexController;
-use App\Http\Controllers\LocalSaleController;
-use App\Http\Controllers\ParametersController;
-use App\Http\Controllers\PersonController;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\LocalSaleController;
 use App\Http\Controllers\MetaController;
 use App\Http\Controllers\ModuloController;
-use App\Http\Controllers\WebController;
+use App\Http\Controllers\ParametersController;
+use App\Http\Controllers\PersonController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebPageController;
 use App\Mail\StudentRegistrationMailable;
 use App\Models\District;
@@ -23,6 +19,8 @@ use App\Models\Person;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 
@@ -44,10 +42,13 @@ Route::get('/computer/store', [LandingController::class, 'computerStore'])->name
 Route::get('/prices/academic', [LandingController::class, 'academicPrices'])->name('academic_prices');
 Route::get('/curso-descripcion/{id}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
 
-//////mensajes de whatsapp///////
+Route::get('/academy/{slug}', [Modules\Academic\Http\Controllers\AcaCourseLandingController::class, 'show'])
+    ->name('academy_landing');
+
+// ////mensajes de whatsapp///////
 Route::get('/ask/product/{id}', [LandingController::class, 'redirectToWhatsApp'])->name('whatsapp_send');
 
-/////cunsulta comprobante electronico ///////////
+// ///cunsulta comprobante electronico ///////////
 Route::get('/find/invoice', [SalesController::class, 'findInvoice'])->name('find_electronic_invoice');
 Route::post('/find/invoice', [SalesController::class, 'clientSearchDocument'])->name('client_search_electronic_invoice');
 
@@ -61,14 +62,11 @@ Route::get('/stories/article/{url}', [BlogController::class, 'storiesArticle'])-
 Route::get('/stories/policies', [BlogController::class, 'storiesPolicies'])->name('blog_stories_policies');
 Route::get('/stories/contact-us', [BlogController::class, 'storiesContactUs'])->name('blog_stories_contact_us');
 
-
 // Route::get('/email', function () {
 //     Mail::to('elrodriguez2423@gmail.com')
 //         ->send(new StudentRegistrationMailable('data'));
 //     return 'mensaje enviado';
 // });
-
-
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -103,7 +101,6 @@ Route::middleware('auth')->group(function () {
         'search/person/apies',
         [PersonController::class, 'searchByNumberTypeApies']
     )->name('search_person_apies');
-
 
     Route::post(
         'save/person/update/create',
@@ -167,7 +164,7 @@ Route::middleware('auth')->group(function () {
     Route::put('parameters/update/{id}', [ParametersController::class, 'update'])->name('parameters_update');
     Route::get('parameters/{id}/{val}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value');
 
-    ////////////////actualizar informacion de personas
+    // //////////////actualizar informacion de personas
     Route::get('person/update_information', function () {
         $person = Person::find(Auth::user()->person_id);
         $identityDocumentTypes = DB::table('identity_document_type')->get();
@@ -186,7 +183,7 @@ Route::middleware('auth')->group(function () {
             return Inertia::render('Person/UpdateInformation', [
                 'person' => $person,
                 'identityDocumentTypes' => $identityDocumentTypes,
-                'ubigeo' => $ubigeo
+                'ubigeo' => $ubigeo,
             ]);
         } else {
             return back();
@@ -205,11 +202,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('calendar/index', [CalendarController::class, 'index'])->name('calendar');
 
-    ///////////////META FACEBOOK WHATSAPP/////////////////
+    // /////////////META FACEBOOK WHATSAPP/////////////////
 
     Route::post('meta/whatsapp/message/send', [MetaController::class, 'sendMessageWhatsapp'])->name('meta_whatsapp_message_send');
 
 });
 
-require __DIR__ . '/auth.php';
-require __DIR__ . '/system.php';
+require __DIR__.'/auth.php';
+require __DIR__.'/system.php';
