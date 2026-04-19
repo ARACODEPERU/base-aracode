@@ -17,14 +17,14 @@ return new class extends Migration
             $table->integer('banner_duration')->nullable()->comment('Duración en días');
             $table->enum('banner_language', ['es', 'en', 'zh'])->default('es')->comment('es=Español, en=Inglés, zh=Mandarín');
             $table->boolean('is_published')->default(false);
-            $table->json('professional_section')->nullable()->after('banner_language');
-            $table->json('staff_section')->nullable()->after('professional_section');
-            $table->json('results_section')->nullable()->after('staff_section');
-            $table->json('testimonials_section')->nullable()->after('results_section');
-            $table->json('study_plan_section')->nullable()->after('testimonials_section');
-            $table->json('problem_section')->nullable()->after('study_plan_section');
-            $table->json('investment_section')->nullable()->after('problem_section');
-            $table->json('faq_section')->nullable()->after('investment_section');
+            $table->json('professional_section')->nullable();
+            $table->json('staff_section')->nullable();
+            $table->json('results_section')->nullable();
+            $table->json('testimonials_section')->nullable();
+            $table->json('study_plan_section')->nullable();
+            $table->json('problem_section')->nullable();
+            $table->json('investment_section')->nullable();
+            $table->json('faq_section')->nullable();
             $table->timestamps();
 
             $table->foreign('course_id')
