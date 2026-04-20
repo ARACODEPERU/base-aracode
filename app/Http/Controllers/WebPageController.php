@@ -21,11 +21,15 @@ use Illuminate\Support\Facades\Validator;
 use App\Mail\StudentRegistrationMailable;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ConfirmPurchaseMail;
+use App\Models\Country;
+use App\Models\Department;
+use App\Models\District;
 use Carbon\Carbon;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudentCoursesInterest;
+use Modules\CMS\Entities\CmsLanding;
 use Spatie\Permission\Models\Role;
 
 class WebPageController extends Controller
@@ -46,39 +50,61 @@ class WebPageController extends Controller
             ->get();
     }
 
-    public function home()
+    public function index()
     {
         return view('pages.home');
     }
 
-    public function about()
+    public function academy()
     {
-        return view('pages.about');
+        return view('pages.academy');
     }
 
-    public function cms()
+    public function landing($slug)
     {
-        return view('pages.cms');
-    }
+        $courses = OnliItem::whereHas('course')->with('course')->latest()->get();
+        //$courses = $courses->shuffle();
+        $categories = AcaCategoryCourse::all();
+        $types = getEnumValues('onli_items', 'additional', 0, 1);
 
-    public function storeonline()
-    {
-        return view('pages.store-online');
-    }
+        //$landingPage = CmsLanding::where('slug', $slug)->first();
+        $landingPage = CmsLanding::where('menu_id', '01')->first();
 
-    public function lms()
-    {
-        return view('pages.lms');
-    }
 
-    public function billing()
-    {
-        return view('pages.billing');
-    }
+        $ids = $landingPage->data_related['items'] ?? [];
 
-    public function contact()
-    {
-        return view('pages.contact');
+        $coursesFree = AcaCourse::whereIn('id', $ids)->get();
+
+        $title = CmsSection::where('component_id', 'cursos_titulo_area_15')  //siempre cambiar el id del componente
+            ->join('cms_section_items', 'section_id', 'cms_sections.id')
+            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+            ->select(
+                'cms_items.content',
+                'cms_section_items.position'
+            )
+            ->orderBy('cms_section_items.position')
+            ->get();
+
+        $countries = Country::orderBy('description')->get();
+        $documentTypes = DB::table('identity_document_type')->get();
+        //$ubigeo = District::with('province.department')->get();
+        $ubigeo = Department::get();
+        //dd($ubigeo);
+
+        $p = 12; //numero de cursos mostrados PAGINACION
+
+        return view('pages.landing', [
+            'courses' => $courses,
+            'categories' => $categories,
+            'title' => $title,
+            'types' => $types,
+            'p' => $p,
+            'landingPage' => $landingPage,
+            'coursesFree' => $coursesFree,
+            'countries' => $countries,
+            'documentTypes' => $documentTypes,
+            'ubigeo' => $ubigeo
+        ]);
     }
 
     public function nosotros()
@@ -121,6 +147,144 @@ class WebPageController extends Controller
             'lider' => $lider
         ]);
     }
+
+    public function teachers()
+    {
+        return view('pages.teachers');
+    }
+
+    public function bookamauta()
+    {
+        return view('pages/book-description');
+    }
+
+    public function subscriptions()
+    {
+        return view('pages/subscriptions');
+    }
+
+    public function privacypolicies()
+    {
+        return view('pages/privacy-policies');
+    }
+
+    public function politicas_devoluciones()
+    {
+        return view('pages/politicas_devoluciones');
+    }
+
+    public function terms()
+    {
+        return view('pages/terms');
+    }
+
+    public function courses()
+    {
+        $courses = OnliItem::whereHas('course') // Filtra para que solo traiga items con curso existente
+                    ->with('course')                  // Carga la relación para evitar el problema de N+1
+                    ->latest()
+                    ->get();
+
+        //$courses = $courses->shuffle();
+        //$categories = AcaCategoryCourse::all();
+        $types = getEnumValues('onli_items', 'additional', 0, 1);
+
+        // $banner = CmsSection::where('component_id', 'cursos_banner_area_14')  //siempre cambiar el id del componente
+        //     ->join('cms_section_items', 'section_id', 'cms_sections.id')
+        //     ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+        //     ->select(
+        //         'cms_items.content',
+        //         'cms_section_items.position'
+        //     )
+        //     ->orderBy('cms_section_items.position')
+        //     ->first();
+
+        $title = CmsSection::where('component_id', 'cursos_titulo_area_15')  //siempre cambiar el id del componente
+            ->join('cms_section_items', 'section_id', 'cms_sections.id')
+            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+            ->select(
+                'cms_items.content',
+                'cms_section_items.position'
+            )
+            ->orderBy('cms_section_items.position')
+            ->get();
+
+        $p = 12; //numero de cursos mostrados PAGINACION
+
+        return view('pages.courses', [
+            'courses' => $courses,
+            //'categories' => $categories,
+            // 'banner' => $banner,
+            'title' => $title,
+            'types' => $types,
+            'p' => $p,
+        ]);
+    }
+
+    public function coursedescription($id)
+    {
+        $item = OnliItem::find($id);
+
+        $course = AcaCourse::with('category')
+            ->with('modality')
+            ->with('modules')
+            ->with('teachers.teacher.person.resumes')
+            ->with('brochure')
+            ->with('agreements')
+            ->where('id', $item->item_id)
+            ->first();
+
+        $latest_courses = OnliItem::with('course')
+            ->orderBy('id', 'desc')
+            ->where('id', '!=', $id)
+            ->take(10)
+            ->get()
+            ->shuffle()
+            ->take(3);
+
+
+        return view('pages.course-description', [
+            'course' => $course,
+            'item' => $item,
+            'latest_courses' => $latest_courses
+        ]);
+    }
+
+    public function cursodescripcion($id)
+    {
+        $item = OnliItem::find($id);
+
+        $course = AcaCourse::with('category')
+            ->with('modality')
+            ->with('modules')
+            ->with('teachers.teacher.person.resumes')
+            ->with('brochure')
+            ->with('agreements')
+            ->where('id', $item->item_id)
+            ->first();
+
+        $latest_courses = OnliItem::with('course')
+            ->orderBy('id', 'desc')
+            ->where('id', '!=', $id)
+            ->take(10)
+            ->get()
+            ->shuffle()
+            ->take(3);
+
+        return view('pages.course-description', [
+            'course' => $course,
+            'item' => $item,
+            'latest_courses' => $latest_courses
+        ]);
+    }
+
+
+
+    public function index2()
+    {
+        return view('pages.home2');
+    }
+
 
 
     public function shopcart()
@@ -375,7 +539,7 @@ class WebPageController extends Controller
 
         try {
             DB::beginTransaction();
-            MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+            MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
             $client = new PreferenceClient();
             $items = [];
             $products = [];
@@ -483,13 +647,16 @@ class WebPageController extends Controller
             'app' => 'required|string|max:255',
             'apm' => 'required|string|max:255',
             'type' => 'required|string|max:255',
-            'dni' => 'required|numeric',
+            'dni' => 'required|numeric|unique:people,number',
             'phone' => 'required|string|max:255',
             'email' => 'required|unique:people,email',
             'password' => 'required|string|min:8',
             'password2' => 'required|string|min:8|same:password',
         ], [
             // Mensajes personalizados
+            'dni.required' => 'El campo DNI es obligatorio.',
+            'dni.numeric' => 'El campo DNI debe ser un número.',
+            'dni.unique' => 'El DNI ingresado ya está registrado.',
             'password.required' => 'El campo contraseña es obligatorio.',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
             'password2.required' => 'El campo repetir contraseña es obligatorio.',
@@ -503,7 +670,7 @@ class WebPageController extends Controller
         }
 
 
-
+        //dd($request->all());
 
         $productids = $request->get('item_id');
 
@@ -515,7 +682,7 @@ class WebPageController extends Controller
 
         try {
             DB::beginTransaction();
-            MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+            MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
             $client = new PreferenceClient();
             $items = [];
             $products = [];
@@ -709,11 +876,11 @@ class WebPageController extends Controller
 
     public function processPayment(Request $request, $id)
     {
-        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
 
         $client = new PaymentClient();
         $sale = OnliSale::find($id);
-        // dd($request->get('transaction_amount'));
+
         if ($sale->response_status == 'approved') {
             return response()->json(['error' => 'el pedido ya fue procesado, ya no puede volver a pagar'], 412);
         } else {
@@ -850,8 +1017,9 @@ class WebPageController extends Controller
         ]);
     }
 
-	    public function storeCourseFree(Request $request)
+    public function storeCourseFree(Request $request)
     {
+
         // 🔹 VALIDACIÓN
         $validator = Validator::make($request->all(), [
             'courseFree' => 'required',
@@ -893,7 +1061,10 @@ class WebPageController extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-
+        $ubigeo = null;
+        if($request->ubigeo != null){
+            $ubigeo = $request->ubigeo."0101";
+        }
         DB::beginTransaction();
         try {
             // 🔹 REGISTRO EN TABLA people
@@ -909,7 +1080,7 @@ class WebPageController extends Controller
                 'email' => $request->email,
                 'country_id' => $request->pais,
                 'status' => true,
-                'ubigeo' => $request->ubigeo ?? null,
+                'ubigeo' => $ubigeo ?? null,
                 'ubigeo_description' => $request->ciudad ?? null,
                 'gender' => $request->genero ?? null,
                 'birthdate' => $request->fecha_nacimiento ?? null
@@ -931,15 +1102,21 @@ class WebPageController extends Controller
                 'status' => true,
                 'certificate_date' => Carbon::now(),
                 'arrival_source_id' => 1,
-                'arrival_source_information' => '01',
-                'date_start'        => Carbon::now()->format('Y-m-d'),
+                'arrival_source_information' => '01'
             ]);
 
-            AcaStudentCoursesInterest::create([
-                'student_id' => $student->id,
-                'course_id' => $request->courseInterest,
-                'status' => 0
-            ]);
+            $coursesInterest = $request->courseInterest ?? [];
+
+            if(count($coursesInterest) > 0){
+                foreach($coursesInterest as $course){
+                    AcaStudentCoursesInterest::create([
+                        'student_id' => $student->id,
+                        'course_id' => $course,
+                        'status' => 0
+                    ]);
+                }
+            }
+
 
             // 🔹 REGISTRO EN TABLA users
             User::create([
@@ -975,7 +1152,7 @@ class WebPageController extends Controller
             // 3. CONFIRMACIÓN (COMMIT)
             DB::commit();
             // 🔹 MENSAJE DE ÉXITO
-            return redirect()->back()->with('success', 'Registro completado exitosamente.');
+            return redirect()->back()->with('success', 'Registro completado exitosamente, Revisa tu correo donde recibirás mas información.');
 
         } catch (\Throwable $th) {
              // 5. REVERSIÓN (ROLLBACK) si algo falla
@@ -985,5 +1162,4 @@ class WebPageController extends Controller
         }
 
     }
-
 }
