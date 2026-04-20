@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import InputError from '@/Components/InputError.vue';
 import IconSave from "@/Components/vristo/icon/icon-save.vue";
+import IconUsers from '@/Components/vristo/icon/icon-users.vue';
 
 const props = defineProps({
     course: {
@@ -55,9 +56,9 @@ const formStaff = useForm({
 
 const availableTeachers = computed(() => {
     return props.teachers.map(teacher => {
-        const isSelected = initialData?.teachers?.some(
+        const selected = formStaff.teachers.some(
             t => t.teacher_id === teacher.id && t.selected
-        ) || false;
+        );
 
         return {
             teacher_id: teacher.id,
@@ -65,27 +66,23 @@ const availableTeachers = computed(() => {
             full_name: teacher.person?.formatted_name || teacher.person?.name || 'Sin nombre',
             photo: teacher.person?.image || null,
             occupation: teacher.person?.ocupacion || 'Instructor',
-            selected: isSelected,
+            selected: selected,
         };
     });
 });
 
 const toggleTeacher = (teacherId) => {
-    const tIndex = availableTeachers.value.findIndex(t => t.teacher_id === teacherId);
-    if (tIndex >= 0) {
-        availableTeachers.value[tIndex].selected = !availableTeachers.value[tIndex].selected;
-        
-        const formIndex = formStaff.teachers.findIndex(t => t.teacher_id === teacherId);
-        if (formIndex >= 0) {
-            formStaff.teachers[formIndex].selected = availableTeachers.value[tIndex].selected;
-        } else {
-            formStaff.teachers.push({ teacher_id: teacherId, selected: true });
-        }
+    const formIndex = formStaff.teachers.findIndex(t => t.teacher_id === teacherId);
+
+    if (formIndex >= 0) {
+        formStaff.teachers[formIndex].selected = !formStaff.teachers[formIndex].selected;
+    } else {
+        formStaff.teachers.push({ teacher_id: teacherId, selected: true });
     }
 };
 
 const isTeacherSelected = (teacherId) => {
-    const teacher = availableTeachers.value.find(t => t.teacher_id === teacherId);
+    const teacher = formStaff.teachers.find(t => t.teacher_id === teacherId);
     return teacher ? teacher.selected : false;
 };
 
@@ -105,20 +102,13 @@ const saveStaffSettings = () => {
     });
 };
 
-watch(() => formStaff.teachers, (newVal) => {
-    if (newVal && newVal.length > 0) {
-        formStaff.teachers = newVal.map(t => ({
-            teacher_id: t.teacher_id,
-            selected: t.selected,
-        }));
-    }
-}, { deep: true });
-
 </script>
 <template>
     <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-            <i class="fa fa-users mr-2 text-blue-600"></i>
+            <svg class="w-5 h-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+                <path fill="currentColor" d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208zM96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144zM0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4-32.9 36.8-52.9 85.4-52.9 138.6l0 16c0 11.4 2.4 22.2 6.7 32L32 480c-17.7 0-32-14.3-32-32l0-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32l0-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128l0 32c0 17.7-14.3 32-32 32l-86.7 0zM472 160a72 72 0 1 1 144 0 72 72 0 1 1 -144 0zM160 432c0-88.4 71.6-160 160-160s160 71.6 160 160l0 16c0 17.7-14.3 32-32 32l-256 0c-17.7 0-32-14.3-32-32l0-16z"/>
+            </svg>
             Sección Nuestro Staff
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">

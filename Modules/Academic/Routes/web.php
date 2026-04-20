@@ -168,7 +168,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::put('courses/{courseId}/landing/results', 'AcaCourseLandingController@updateResults')
         ->name('aca_courses_landing_update_results');
 
-    Route::put('courses/{courseId}/landing/testimonials', 'AcaCourseLandingController@updateTestimonials')
+    Route::post('courses/landing/testimonials/store', [AcaCourseLandingController::class, 'updateTestimonials'])
         ->name('aca_courses_landing_update_testimonials');
 
     Route::post('courses/landing/study_plan/store', [AcaCourseLandingController::class, 'updateStudyPlan'])

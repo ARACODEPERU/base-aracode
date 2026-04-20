@@ -210,8 +210,9 @@ class AcaCourseLandingController extends Controller
         ]);
     }
 
-    public function updateTestimonials(Request $request, $courseId)
+    public function updateTestimonials(Request $request)
     {
+
         $this->validate(
             $request,
             [
@@ -219,26 +220,27 @@ class AcaCourseLandingController extends Controller
                 'title' => 'nullable|string|max:300',
                 'description' => 'nullable|string',
                 'items' => 'nullable|array',
-                'items.*.person_id' => 'required|integer',
+                'items.*.name' => 'required|string|max:255',
+                'items.*.presentation' => 'nullable|string|max:255',
                 'items.*.description' => 'nullable|string',
             ]
         );
 
+        $courseId = $request->course_id;
+
         $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
 
-        // Cargar datos de personas relacionadas
         $items = $request->items ?? [];
+
         foreach ($items as &$item) {
-            if (isset($item['person_id'])) {
-                $person = Person::find($item['person_id']);
-                if ($person) {
-                    $item['person'] = [
-                        'id' => $person->id,
-                        'image' => $person->image,
-                        'formatted_name' => $person->formatted_name,
-                        'ocupacion' => $person->ocupacion,
-                    ];
-                }
+            if (isset($item['image']) && $item['image'] instanceof \Illuminate\Http\UploadedFile) {
+                $destination = 'uploads/landing/testimonials/' . $courseId;
+                $originalName = strtolower(trim($item['image']->getClientOriginalName()));
+                $originalName = str_replace(" ", "_", $originalName);
+                $extension = $item['image']->getClientOriginalExtension();
+                $fileName = $originalName . '.' . $extension;
+                $path = $item['image']->storeAs($destination, $fileName, 'public');
+                $item['image'] = $path;
             }
         }
 

@@ -126,7 +126,9 @@ const saveProblemSettings = () => {
 <template>
     <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-            <i class="fa fa-exclamation-triangle mr-2 text-blue-600"></i>
+            <svg class="w-5 h-5 mr-2 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path fill="currentColor" d="M256 0c14.7 0 28.2 8.1 35.2 21l216 400c6.7 12.4 6.4 27.4-.8 39.5S486.1 480 472 480L40 480c-14.1 0-27.2-7.4-34.4-19.5s-7.5-27.1-.8-39.5l216-400c7-12.9 20.5-21 35.2-21zm0 352a32 32 0 1 0 0 64 32 32 0 1 0 0-64zm0-192c-18.2 0-32.7 15.5-31.4 33.7l7.4 104c.9 12.5 11.4 22.3 23.9 22.3 12.6 0 23-9.7 23.9-22.3l7.4-104c1.3-18.2-13.1-33.7-31.4-33.7z"/>
+            </svg>
             Sección El Problema
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -200,8 +202,8 @@ const saveProblemSettings = () => {
             </h4>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div 
-                    v-for="(item, index) in formProblem.items" 
+                <div
+                    v-for="(item, index) in formProblem.items"
                     :key="index"
                     class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 space-y-4"
                 >

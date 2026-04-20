@@ -107,7 +107,9 @@ const saveInvestmentSettings = () => {
 <template>
     <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-            <i class="fa fa-dollar-sign mr-2 text-blue-600"></i>
+            <svg class="mr-2 w-5 h-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <path fill="currentColor" d="M176 0c-26.5 0-48 21.5-48 48l0 208c0 26.5 21.5 48 48 48l64 0c26.5 0 48-21.5 48-48l0-64 32 0c70.7 0 128 57.3 128 128S390.7 448 320 448L32 448c-17.7 0-32 14.3-32 32s14.3 32 32 32l448 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-16.9 0c30.4-34 48.9-78.8 48.9-128 0-106-86-192-192-192l-32 0 0-80c0-26.5-21.5-48-48-48L176 0zM120 352c-13.3 0-24 10.7-24 24s10.7 24 24 24l176 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-176 0z"/>
+            </svg>
             Sección Inversión
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -174,15 +176,15 @@ const saveInvestmentSettings = () => {
             <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-200 text-green-600 dark:bg-green-900/50 dark:text-green-400 mr-2">
                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                        <path fill="currentColor" d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm75.31 260.69a16 16 0 1 1-22.62 22.62L256 278.63l-52.69 52.68a16 16 0 1 1-22.62-22.62L233.37 256l-52.68-52.69a16 16 0 1 1 22.62-22.62L256 233.37l52.69-52.68a16 16 0 1 1 22.62 22.62L278.63 256z"/>
+                        <path fill="currentColor" d="M64 64C28.7 64 0 92.7 0 128L0 384c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 64zm96 256a32 32 0 1 1 -64 0 32 32 0 1 1 64 0zm-32-96a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm120-56l144 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-144 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 128l144 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-144 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/>
                     </svg>
                 </span>
                 Planes de Precios
             </h4>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div 
-                    v-for="(item, index) in formInvestment.items" 
+                <div
+                    v-for="(item, index) in formInvestment.items"
                     :key="index"
                     class="p-5 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600 space-y-4"
                 >
@@ -251,9 +253,9 @@ const saveInvestmentSettings = () => {
                                     placeholder="Ej: /mensual"
                                 >
                                 <label class="inline-flex items-center cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="item.price_before_visible" 
+                                    <input
+                                        type="checkbox"
+                                        v-model="item.price_before_visible"
                                         class="sr-only peer"
                                     >
                                     <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -303,10 +305,10 @@ const saveInvestmentSettings = () => {
                                 Agregar
                             </button>
                         </div>
-                        
+
                         <div v-if="item.features && item.features.length > 0" class="space-y-2">
-                            <div 
-                                v-for="(feature, fIndex) in item.features" 
+                            <div
+                                v-for="(feature, fIndex) in item.features"
                                 :key="fIndex"
                                 class="flex items-center gap-2"
                             >
@@ -326,7 +328,7 @@ const saveInvestmentSettings = () => {
                                 </button>
                             </div>
                         </div>
-                        
+
                         <p v-else class="text-xs text-gray-400 italic">
                             No hay características. Agrega una arriba.
                         </p>

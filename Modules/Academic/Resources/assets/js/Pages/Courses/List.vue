@@ -303,7 +303,7 @@
     }
 
     // Fallback image when course has no image
-    const fallbackImage = '/img/course-placeholder.jpg';
+    const fallbackImage = '/img/course-placeholder.png';
 
     // Filter states
     const showFilters = ref(false);

@@ -52,7 +52,7 @@ const tabs = [
     { id: 'testimonials', label: 'Testimonios', icon: 'fa-comments' },
     { id: 'study_plan', label: 'Plan de Estudios', icon: 'fa-book-open' },
     { id: 'problem', label: 'El Problema', icon: 'fa-exclamation-triangle' },
-    { id: 'investment', label: 'Inversión', icon: 'fa-dollar-sign' },
+    { id: 'investment', label: 'Inversión', icon: 'fa-microscope' },
     { id: 'faq', label: 'Preguntas Frecuentes', icon: 'fa-question-circle' },
 ];
 
@@ -231,9 +231,9 @@ const formatIconForVue = (iconName) => {
                                 'flex flex-col items-center justify-center p-3 rounded-lg transition-all duration-200 border border-gray-200 dark:border-gray-700'
                             ]"
                         >
-                            <font-awesome-icon 
-                                :icon="formatIconForVue(tab.icon)" 
-                                :class="['text-lg mb-1', activeTab === tab.id ? 'text-white' : 'text-gray-500 dark:text-gray-400']" 
+                            <font-awesome-icon
+                                :icon="formatIconForVue(tab.icon)"
+                                :class="['text-lg mb-1', activeTab === tab.id ? 'text-white' : 'text-gray-500 dark:text-gray-400']"
                             />
                             <span class="text-[10px] font-medium text-center leading-tight line-clamp-2">
                                 {{ tab.label }}

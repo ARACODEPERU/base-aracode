@@ -148,7 +148,9 @@ const saveFaqSettings = () => {
 <template>
     <div class="mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-            <i class="fa fa-question-circle mr-2 text-blue-600"></i>
+            <svg class="mr-2 text-blue-600 w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
+                <path fill="currentColor" d="M64 160c0-53 43-96 96-96s96 43 96 96c0 42.7-27.9 78.9-66.5 91.4-28.4 9.2-61.5 35.3-61.5 76.6l0 24c0 17.7 14.3 32 32 32s32-14.3 32-32l0-24c0-1.7 .6-4.1 3.5-7.3 3-3.3 7.9-6.5 13.7-8.4 64.3-20.7 110.8-81 110.8-152.3 0-88.4-71.6-160-160-160S0 71.6 0 160c0 17.7 14.3 32 32 32s32-14.3 32-32zm96 352c22.1 0 40-17.9 40-40s-17.9-40-40-40-40 17.9-40 40 17.9 40 40 40z"/>
+            </svg>
             Sección Preguntas Frecuentes
         </h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -216,7 +218,7 @@ const saveFaqSettings = () => {
                 <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center">
                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-200 text-green-600 dark:bg-green-900/50 dark:text-green-400 mr-2">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                            <path fill="currentColor" d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm75.31 260.69a16 16 0 1 1-22.62 22.62L256 278.63l-52.69 52.68a16 16 0 1 1-22.62-22.62L233.37 256l-52.68-52.69a16 16 0 1 1 22.62-22.62L256 233.37l52.69-52.68a16 16 0 1 1 22.62 22.62L278.63 256z"/>
+                            <path fill="currentColor" d="M64 64C28.7 64 0 92.7 0 128L0 384c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-256c0-35.3-28.7-64-64-64L64 64zm96 256a32 32 0 1 1 -64 0 32 32 0 1 1 64 0zm-32-96a32 32 0 1 1 0-64 32 32 0 1 1 0 64zm120-56l144 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-144 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm0 128l144 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-144 0c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/>
                         </svg>
                     </span>
                     Preguntas
@@ -265,7 +267,7 @@ const saveFaqSettings = () => {
                                 {{ item.answer ? (item.answer.length > 80 ? item.answer.substring(0, 80) + '...' : item.answer) : '(sin respuesta)' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span 
+                                <span
                                     :class="item.visible ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'"
                                     class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
                                 >
