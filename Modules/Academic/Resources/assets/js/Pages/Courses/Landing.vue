@@ -232,10 +232,11 @@ const formatIconForVue = (iconName) => {
                             ]"
                         >
                             <font-awesome-icon
+                                class="w-8 h-8"
                                 :icon="formatIconForVue(tab.icon)"
                                 :class="['text-lg mb-1', activeTab === tab.id ? 'text-white' : 'text-gray-500 dark:text-gray-400']"
                             />
-                            <span class="text-[10px] font-medium text-center leading-tight line-clamp-2">
+                            <span class="text-[12px] font-medium text-center leading-tight line-clamp-2">
                                 {{ tab.label }}
                             </span>
                         </button>

@@ -491,6 +491,9 @@
                                 <code>
                                     Descripción: {{ props.rowData.invoice_response_description }}
                                 </code>
+                                <code v-if="props.rowData.invoice_notes && props.rowData.invoice_notes != '[]' ">
+                                    Notas: {{ props.rowData.invoice_notes }}
+                                </code>
                             </span>
                         </div>
                         <div v-if="props.rowData.status == 3 && props.rowData.document.note">
