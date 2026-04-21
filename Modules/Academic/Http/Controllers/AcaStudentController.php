@@ -28,6 +28,7 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaStudentExam;
@@ -1650,5 +1651,31 @@ class AcaStudentController extends Controller
             'success' => true,
             'attendances' => $data,
         ]);
+    }
+
+    public function sendAccessMail($personId)
+    {
+        $person = Person::findOrFail($personId);
+
+        if (!$person->email) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La persona no tiene correo electrónico registrado'
+            ], 422);
+        }
+
+        try {
+            \Mail::to($person->email)->send(new \App\Mail\ThankYouAccessMail($person));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Correo de accesos enviado correctamente'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al enviar correo: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
