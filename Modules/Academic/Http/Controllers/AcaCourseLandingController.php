@@ -11,6 +11,7 @@ use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCourseLanding;
 use Modules\Academic\Entities\AcaTeacher;
+use Modules\Onlineshop\Entities\OnliItem;
 
 class AcaCourseLandingController extends Controller
 {
@@ -74,6 +75,7 @@ class AcaCourseLandingController extends Controller
             $request,
             [
                 'url_slug' => 'required|string|max:500|unique:aca_course_landings,url_slug,'.$courseId.',course_id',
+                'whatsapp_link' => 'nullable|string|max:500',
                 'is_published' => 'boolean',
             ]
         );
@@ -89,6 +91,7 @@ class AcaCourseLandingController extends Controller
 
         $landing->update([
             'url_slug' => $slug,
+            'whatsapp_link' => $request->whatsapp_link ?? '',
             'is_published' => $request->is_published ?? false,
         ]);
     }
@@ -365,6 +368,11 @@ class AcaCourseLandingController extends Controller
         );
         //dd($request->all());
         $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
+        //modificando el precio en onliItem para que se pueda cobrar bien en el carrito
+        $onliItem = OnliItem::where('item_id', $courseId)->first();
+        $onliItem->update([
+            'price' => $request->input('items.0.price_now'),
+        ]);
 
         $defaultItems = [
             [
