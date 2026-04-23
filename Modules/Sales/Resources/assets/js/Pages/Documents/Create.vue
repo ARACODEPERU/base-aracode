@@ -761,8 +761,8 @@
                         </div>
                     </div>
                     <div class="max-w-full py-2">
-                        <table class="table-bordered w-full ltr:text-left rtl:text-right text-gray-600">
-                            <thead class="border-b border-t border-gray-400 dark:border-gray-700">
+                        <table class="w-full ltr:text-left rtl:text-right text-gray-600">
+                            <thead class="">
                                 <tr class="bg-gray-100 dark:bg-gray-900 dark:bg-opacity-20">
                                     <th style="width: 60px;" class="text-right py-1">
                                         <div class="flex items-center justify-center gap-2">
@@ -911,7 +911,7 @@
                                 </select>
                             </div>
                         </div>
-                        <table class="table-bordered w-full ltr:text-left rtl:text-right text-gray-600">
+                        <table class="w-full ltr:text-left rtl:text-right text-gray-600">
                             <tbody>
                                 <tr v-for="(row, index) in formDocument.payments" v-bind:key="index">
                                     <td style="width: 70px;" class="text-right">

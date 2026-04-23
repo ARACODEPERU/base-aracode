@@ -58,27 +58,44 @@ class Factura
             $document->invoice_document_name = $invoice->getName();
             $notes = null;
             $status = null;
+            $codeError = null;
 
             if ($res->isSuccess()) {
-                /**@var $res \Greenter\Model\Response\BillResult*/
+                // === CASO ÉXITO O RESPUESTA DE SUNAT ===
                 $cdr = $res->getCdrResponse();
+                $code = (int)$cdr->getCode();
                 $codeError = $cdr->getCode();
-                $messageError = $cdr->getDescription();
                 $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
-                if ($cdr->getCode() == 0) {
+
+                if ($code === 0) {
                     $status = 'Aceptada';
-                } elseif ($cdr->getCode() == 2325) {
-                    $status = 'Pendiente';
+                } elseif ($code === 2325) { // Ejemplo de advertencia común
+                    $status = 'Observada'; // O 'Pendiente'
+                } else {
+                    // Otros códigos que llegan a CDR pero no son 0
+                    $status = 'Rechazada';
                 }
 
                 $document->invoice_cdr = $this->util->writeCdr($invoice, $res->getCdrZip());
-            } else {
-                $error = $res->getError();
-                $codeError = $error->getCode();
-                $messageError = $error->getMessage();
-                $status = 'Rechazada';
-                //return array('success' => $res->isSuccess(), 'details' => $this->util->getErrorResponse($res->getError()));
+                $messageError = $cdr->getDescription();
 
+            } else {
+                // === CASO FALLO DE COMUNICACIÓN O ERROR DE SISTEMA ===
+                $error = $res->getError();
+                $code = (int)$error->getCode();
+                $codeError = $error->getCode();
+                // Lista de códigos de error de conexión o SUNAT caído
+                $connectionErrorCodes = [130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 1033];
+
+                // Si el código es 0130, -1 (timeout), o está en nuestra lista de errores temporales
+                if (in_array($code, $connectionErrorCodes) || $code === -1 || $code === 0) {
+                    $status = 'Error de Conexión';
+                    $messageError = "SUNAT no responde. El comprobante está en espera para reintento automático.";
+                } else {
+                    // Este es un rechazo real (ej: firma inválida, fecha incorrecta, etc)
+                    $status = 'Rechazada';
+                    $messageError = $error->getMessage();
+                }
             }
             $document->invoice_response_code = $codeError;
             $document->invoice_response_description = $messageError;
