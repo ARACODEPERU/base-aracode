@@ -112,4 +112,9 @@ class AcaCourse extends Model
     {
         return $this->registrations()->count() >= $threshold;
     }
+    public function landing()
+    {
+        // 'course_id' es la columna en aca_course_landings que apunta a este curso
+        return $this->hasOne(AcaCourseLanding::class, 'course_id');
+    }
 }
