@@ -36,6 +36,7 @@ use Modules\Academic\Http\Controllers\AcaStudentController;
 use Modules\Academic\Http\Controllers\AcaThemeCommentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
+use App\Http\Controllers\WebPageController;
 
 Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_activity_log'])->prefix('academic')->group(function () {
 
@@ -682,7 +683,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_gestion_de_calificaciones'])
         ->post('grade/management/store', [AcaGradeManagementController::class, 'store'])
         ->name('aca_grade_management_store');
+
 });
+
+Route::middleware(['auth'])
+->get('/landing_preview/{id}', [WebPageController::class, 'course_landing_preview'])
+->name('landing_preview'); // ruta de preview landing
 
 Route::get('asistencia/registrar/clase', [AcaAttendanceController::class, 'registerAttendance']);
 Route::post('asistencia/registrar/clase/store', [AcaAttendanceController::class, 'storeAttendance'])->name('aca_asistencia_store');
