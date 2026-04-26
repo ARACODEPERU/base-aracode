@@ -370,9 +370,12 @@ class AcaCourseLandingController extends Controller
         $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
         //modificando el precio en onliItem para que se pueda cobrar bien en el carrito
         $onliItem = OnliItem::where('item_id', $courseId)->first();
-        $onliItem->update([
-            'price' => $request->input('items.0.price_now'),
-        ]);
+
+        if ($onliItem) {
+            $onliItem->update([
+                'price' => $request->input('items.0.price_now'),
+            ]);
+        }
 
         $defaultItems = [
             [
