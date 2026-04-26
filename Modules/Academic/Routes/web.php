@@ -686,9 +686,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
 
 });
 
-Route::middleware(['auth'])
-->get('/landing_preview/{id}', [WebPageController::class, 'course_landing_preview'])
-->name('landing_preview'); // ruta de preview landing
+Route::middleware(['auth', 'role:Administrador|webAdmin|admin|Docente'])
+    ->get('/landing_preview/{id}', [WebPageController::class, 'course_landing_preview'])
+    ->name('landing_preview');
 
 Route::get('asistencia/registrar/clase', [AcaAttendanceController::class, 'registerAttendance']);
 Route::post('asistencia/registrar/clase/store', [AcaAttendanceController::class, 'storeAttendance'])->name('aca_asistencia_store');

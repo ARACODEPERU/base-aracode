@@ -157,13 +157,23 @@
                                     @php
                                             $startDate = \Carbon\Carbon::parse($landing->banner_start_date);
                                             $endDate = \Carbon\Carbon::parse($landing->banner_end_date);
-                                            $totalDays = $startDate->diffInDays($endDate);
-                                            $totalMonths = $startDate->diffInMonths($endDate);
+                                            $totalDays = $startDate->diffInDays($endDate) + 1; // +1 para incluir el día de inicio
 
                                             if ($totalDays < 30) {
-                                                $duration = $totalDays . ' día(s)';
+                                                $daysRounded = ceil($totalDays);
+                                                $duration = $daysRounded . ' día(s)';
+                                            } elseif ($totalDays < 365) {
+                                                $totalMonths = $startDate->diffInMonths($endDate);
+                                                $monthsRounded = ceil($totalMonths);
+                                                $duration = $monthsRounded . ' mes(es)';
                                             } else {
-                                                $duration = $totalMonths . ' mes(es)';
+                                                $totalYears = floor($totalDays / 365);
+                                                $remainingMonths = floor(($totalDays % 365) / 30);
+                                                if ($remainingMonths > 0) {
+                                                    $duration = $totalYears . ' año(s) ' . $remainingMonths . ' mes(es)';
+                                                } else {
+                                                    $duration = $totalYears . ' año(s)';
+                                                }
                                             }
                                     @endphp
 
