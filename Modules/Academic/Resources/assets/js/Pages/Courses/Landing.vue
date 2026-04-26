@@ -175,7 +175,7 @@ const formatIconForVue = (iconName) => {
                             </label>
                             <div class="flex rounded-md shadow-sm">
                                 <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
-                                    {{ baseUrl }}academy/
+                                    {{ baseUrl }}curso/
                                 </span>
                                 <input
                                     type="text"
