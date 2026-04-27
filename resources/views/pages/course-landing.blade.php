@@ -132,80 +132,13 @@
             <!-- Page Sidebar Ends-->
             <div class="page-body">
 
-                <div class="container-fluid mt-4">
-                    {{-- Hero Section --}}
-                    <div class="card border-0 overflow-hidden shadow mb-4"
-                        style="background: linear-gradient(135deg, #002060 0%, #004080 100%); border-radius: 15px;"
-                        data-aos="fade-in">
-                        <div class="card-body  text-white">
-                            <div class="row align-items-center">
-                                <div class="col-lg-8 p-4 p-lg-5">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <span class="badge bg-warning text-dark me-2">{{ $landing->course->category->description ?? 'Categoría' }}</span>
-                                        <div class="text-warning small">
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star-half-o"></i>
-                                        </div>
-                                    </div>
-                                    <h1 class="display-5 fw-bold mb-3" style="color: #fff;">
-                                        {{ $landing->course->description ?? 'Curso' }}
-                                    </h1>
-
-                                    @php
-                                            $startDate = \Carbon\Carbon::parse($landing->banner_start_date);
-                                            $endDate = \Carbon\Carbon::parse($landing->banner_end_date);
-                                            $totalDays = $startDate->diffInDays($endDate) + 1; // +1 para incluir el día de inicio
-
-                                            if ($totalDays < 30) {
-                                                $daysRounded = ceil($totalDays);
-                                                $duration = $daysRounded . ' día(s)';
-                                            } elseif ($totalDays < 365) {
-                                                $totalMonths = $startDate->diffInMonths($endDate);
-                                                $monthsRounded = ceil($totalMonths);
-                                                $duration = $monthsRounded . ' mes(es)';
-                                            } else {
-                                                $totalYears = floor($totalDays / 365);
-                                                $remainingMonths = floor(($totalDays % 365) / 30);
-                                                if ($remainingMonths > 0) {
-                                                    $duration = $totalYears . ' año(s) ' . $remainingMonths . ' mes(es)';
-                                                } else {
-                                                    $duration = $totalYears . ' año(s)';
-                                                }
-                                            }
-                                    @endphp
-
-                                    <div class="d-flex align-items-center text-white-50">
-                                        <span class="me-3"><i class="fa fa-clock-o me-1"></i>
-                                           Inicio: {{ \Carbon\Carbon::parse($landing->banner_start_date)->isoFormat('D [de] MMMM', 'es') }} | Duración: {{ $duration }} | Modalidad: {{ $landing->course->modality->description ?? 'Modalidad' }}</span>
-                                        <span><i class="fa fa-globe me-1"></i> {{ ['es' => 'Español', 'en' => 'Inglés', 'zh' => 'Mandarín'][$landing->banner_language] ?? $landing->banner_language }}</span>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 text-center d-none d-lg-block position-relative"
-                                    style="height: auto;">
-                                    @if($landing->course->image)
-                                    <img src="{{ asset("storage/".$landing->course->image) }}"
-                                        alt="{{ $landing->course->description ?? 'Curso' }}" class="img-fluid"
-                                        style="height: 100%;">
-                                    @endif
-
-                                    {{-- <img src="{{ asset("themes/webpage/images/cyber.jpg") }}"
-                                        alt="{{ $landing->course->description }}" class="img-fluid"
-                                        style="height: 100%;"> --}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {{-- Hero Section --}}
+                <x-courselanding.hero :landing="$landing" />
 
 
-
+                {{-- Professional Development --}}
                 <div class="container-fluid card aos-animate" data-aos="fade-up">
                     <div class="row">
-
-
                         @if (filled($landing->professional_section ?? null))
                             <div class="col-md-6">
                                 <div class="card-body p-4 p-lg-5">
@@ -231,8 +164,12 @@
                                                         <i class="fa {{ $landing->professional_section['items'][0]['icon']  }} text-warning fs-4"></i>
                                                     </div>
                                                     <div>
-                                                        <h5 class="mb-0 fw-bold" style="color: #002060;">{{ $landing->professional_section['items'][0]['title']  }}</h5>
-                                                        <small class="text-muted">{{ $landing->professional_section['items'][0]['description']  }}</small>
+                                                        <h4 class="mb-0 fw-bold" style="color: #002060; font-size: 18px;">
+                                                            {{ $landing->professional_section['items'][0]['title']  }}
+                                                        </h4>
+                                                        <p  style="font-size: 15px;">
+                                                            {{ $landing->professional_section['items'][0]['description']  }}
+                                                        </p>
                                                     </div>
                                                 </div>
                                         </div>
@@ -246,8 +183,12 @@
                                                     <i class="fa {{ $landing->professional_section['items'][1]['icon']  }} text-info fs-4"></i>
                                                 </div>
                                                 <div>
-                                                    <h5 class="mb-0 fw-bold" style="color: #002060;">{{ $landing->professional_section['items'][1]['title']  }}</h5>
-                                                        <small class="text-muted">{{ $landing->professional_section['items'][1]['description']  }}</small>
+                                                    <h4 class="mb-0 fw-bold" style="color: #002060; font-size: 18px;">
+                                                        {{ $landing->professional_section['items'][1]['title']  }}
+                                                    </h4>
+                                                    <p  style="font-size: 15px;">
+                                                        {{ $landing->professional_section['items'][1]['description']  }}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -256,15 +197,14 @@
                                 </div>
                             </div>
                         @endif
-
-
-
                         <div class="col-md-6">
                             <div class="card-body p-4 p-lg-5">
                                 <div class="mb-4">
-                                    <h2 class="fw-bold" style="color: #002060;">¿Listo para empezar?</h2>
-                                    <p class="text-muted">Completa tus datos para descargar el brochure detallado y recibir
-                                        información sobre promociones exclusivas del programa.</p>
+                                    <h2 class="fw-bold" style="color: #002060; font-size: 20px;">¿Listo para empezar?</h2>
+                                    <p class="text-muted" style="font-size: 15px;">
+                                        Completa tus datos para descargar el brochure detallado y recibir
+                                        información sobre promociones exclusivas del programa.
+                                    </p>
                                 </div>
 
                                 <form id="pageContactForm">
@@ -273,7 +213,7 @@
                                     <input type="hidden" name="message" value="desde Landing - Descargué Brochure">
 
                                     <div class="mb-3">
-                                        <label class="form-label fw-bold" style="color: #002060;">Nombres y Apellidos</label>
+                                        <label class="form-label fw-bold" style="color: #002060; font-size: 15px;">Nombres y Apellidos</label>
                                         <div class="input-group shadow-sm">
                                             <span class="input-group-text bg-white border-end-0">
                                                 <i class="fa fa-user text-muted"></i>
@@ -283,7 +223,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label fw-bold" style="color: #002060;">País</label>
+                                        <label class="form-label fw-bold" style="color: #002060; font-size: 15px;">País</label>
                                         <div class="input-group shadow-sm">
                                             <span class="input-group-text bg-white border-end-0">
                                                 <i class="fa fa-flag text-muted"></i>
@@ -363,7 +303,7 @@
 
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold" style="color: #002060;">WhatsApp</label>
+                                            <label class="form-label fw-bold" style="color: #002060; font-size: 15px;">WhatsApp</label>
                                             <div class="input-group shadow-sm">
                                                 <span class="input-group-text bg-white border-end-0">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" style="width: 16px; height: 16px; fill: #6c757d;">
@@ -375,7 +315,7 @@
                                         </div>
 
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold" style="color: #002060;">Correo Electrónico</label>
+                                            <label class="form-label fw-bold" style="color: #002060; font-size: 15px;">Correo Electrónico</label>
                                             <div class="input-group shadow-sm">
                                                 <span class="input-group-text bg-white border-end-0">
                                                     <i class="fa fa-envelope text-muted"></i>
@@ -393,7 +333,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <div class="container-fluid card aos-animate" data-aos="fade-up">
@@ -517,192 +456,6 @@
                 @endif
 
 
-                {{-- <div>
-                    <section style="padding: 10px 0px;">
-                        <div class="container-fluid">
-                            <div class="page-title">
-                                <div class="row">
-                                    <div class="col-sm-3 pe-0">
-                                    </div>
-                                    <div class="col-sm-6 ps-0">
-                                        <h1 class="ara_title">Aprende de quienes lideran en las firmas más reconocidas</h1>
-                                    </div>
-                                    <div class="col-sm-3 pe-0">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <style>
-                        .teachers-section-opt3 {
-                            padding: 60px 0;
-                            /* background-color: #f4f7f9; */
-                            /* Un fondo ligeramente diferente para la sección */
-                        }
-
-                        .teacher-card-opt3 {
-                            position: relative;
-                            background: #fff;
-                            border-radius: 15px;
-                            padding: 20px;
-                            padding-top: 100px;
-                            /* Espacio para la imagen que sobresale */
-                            text-align: center;
-                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-                            transition: all 0.4s ease;
-                            overflow: visible;
-                            /* Permitir que la imagen se salga */
-                            margin-top: 80px;
-                            /* Margen para la imagen */
-                            cursor: pointer;
-                        }
-
-                        .teacher-card-opt3:hover {
-                            transform: translateY(-10px);
-                            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-                        }
-
-                        .teacher-img-wrapper-opt3 {
-                            position: absolute;
-                            top: -80px;
-                            /* Posicionar la imagen arriba */
-                            left: 50%;
-                            transform: translateX(-50%);
-                            width: 160px;
-                            height: 160px;
-                            border-radius: 50%;
-                            padding: 7px;
-                            /* Espacio para el borde degradado */
-                            background: linear-gradient(45deg, #1f2f3e 0%, #000000 100%);
-                            /* Degradado */
-                            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-                            transition: all 0.4s ease;
-                        }
-
-                        .teacher-card-opt3:hover .teacher-img-wrapper-opt3 {
-                            transform: translateX(-50%) translateY(-20px) scale(1.05);
-                            /* Efecto hover para la imagen */
-                        }
-
-                        .teacher-img-opt3 {
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            border-radius: 50%;
-                            border: 4px solid #fff;
-                            /* Borde blanco interior */
-                        }
-
-                        .teacher-name-opt3 {
-                            font-size: 1.3rem;
-                            font-weight: 700;
-                            color: #2c3e50;
-                            margin-top: 10px;
-                            margin-bottom: 8px;
-                        }
-
-                        .teacher-role-opt3 {
-                            font-size: 0.8rem;
-                            color: #e30613;
-                            /* color: #575656; */
-                            font-weight: 400;
-                            text-transform: uppercase;
-                            letter-spacing: 0.1px;
-                        }
-                    </style>
-
-                    <section class="teachers-section-opt3">
-                        <div class="carousel-viewport">
-                            <div class="carousel-track">
-                                @php
-                                    $teachers_demo = [
-                                        ['name' => 'Dr. Julian Arancibia', 'role' => 'Especialista en IA'],
-                                        ['name' => 'Mag. Carmen Luz', 'role' => 'Auditoría Digital'],
-                                        ['name' => 'Dr. Roberto Mendoza', 'role' => 'Finanzas Tech'],
-                                        ['name' => 'Dra. Elena Ramos', 'role' => 'Estrategia Fiscal'],
-                                        ['name' => 'Mag. Luis Torres', 'role' => 'Data Analytics'],
-                                        ['name' => 'Dr. Julian Arancibia', 'role' => 'Especialista en IA'],
-                                        ['name' => 'Mag. Carmen Luz', 'role' => 'Auditoría Digital'],
-                                    ];
-                                @endphp
-
-                                @foreach(array_merge($teachers_demo, $teachers_demo) as $teacher)
-                                    <div class="teacher-carousel-item">
-                                        <div class="teacher-card-opt3 m-0">
-                                            <div class="teacher-img-wrapper-opt3">
-                                                <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=2070&auto=format&fit=crop"
-                                                    alt="{{ $teacher['name'] }}" class="teacher-img-opt3">
-                                            </div>
-                                            <div class="teacher-content-opt3">
-                                                <h4 class="teacher-name-opt3">{{ $teacher['name'] }}</h4>
-                                                <p class="teacher-role-opt3">{{ $teacher['role'] }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </section>
-
-                </div> --}}
-
-                {{-- Nueva Propuesta: Grilla de Expertos (Opción 4) --}}
-                {{-- <div class="container-fluid card aos-animate mt-5" data-aos="fade-up">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="card-body p-4 p-lg-5">
-                                <!-- Header de Sección -->
-                                <div class="text-center mb-5">
-                                    <span class="badge rounded-pill px-3 py-2 mb-3 shadow-sm border"
-                                        style="background-color: rgba(255, 193, 7, 0.1); color: #002060;">
-                                        <i class="fa fa-graduation-cap me-1"></i> STAFF ACADÉMICO
-                                    </span>
-                                    <h2 class="fw-bold display-6" style="color: #002060;">Expertos que Guiarán tu Aprendizaje</h2>
-                                    <p class="text-muted fs-5 mx-auto" style="max-width: 800px;">
-                                        Nuestra plana docente está conformada por líderes de opinión y especialistas activos en la implementación de IA en las firmas contables más importantes.
-                                    </p>
-                                </div>
-
-                                <div class="row g-4">
-                                    @php
-                                        $teachers_grid = [
-                                            ['name' => 'Dr. Julian Arancibia', 'role' => 'Especialista en IA', 'img' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop'],
-                                            ['name' => 'Mag. Carmen Luz', 'role' => 'Auditoría Digital', 'img' => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop'],
-                                            ['name' => 'Dr. Roberto Mendoza', 'role' => 'Finanzas Tech', 'img' => 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1974&auto=format&fit=crop'],
-                                            ['name' => 'Dra. Elena Ramos', 'role' => 'Estrategia Fiscal', 'img' => 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1976&auto=format&fit=crop'],
-                                        ];
-                                    @endphp
-
-                                    @foreach($teachers_grid as $teacher)
-                                        <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="{{ $loop->index * 100 }}">
-                                            <div class="card border-0 shadow-sm h-100 transition-all rounded-4 overflow-hidden bg-white">
-                                                <div style="height: 280px; overflow: hidden; position: relative;">
-                                                    <img src="{{ $teacher['img'] }}"
-                                                         class="card-img-top h-100 w-100"
-                                                         style="object-fit: cover; transition: transform 0.5s ease;"
-                                                         onmouseover="this.style.transform='scale(1.1)'"
-                                                         onmouseout="this.style.transform='scale(1)'"
-                                                         alt="{{ $teacher['name'] }}">
-                                                    <div class="position-absolute bottom-0 start-0 w-100 p-3"
-                                                         style="background: linear-gradient(transparent, rgba(0,32,96,0.8));">
-                                                        <p class="text-white small mb-0 fw-light">Socio Consultor</p>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body text-center p-4">
-                                                    <h5 class="fw-bold mb-1" style="color: #002060;">{{ $teacher['name'] }}</h5>
-                                                    <p class="text-warning small fw-bold mb-0">{{ $teacher['role'] }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> --}}
-
-
                 {{-- Propuesta de Diseño: Carrusel de Expertos Premium (Opción 5) --}}
 
                 @if (filled($landing->staff_section ?? null))
@@ -724,52 +477,31 @@
 
                                     <div class="carousel-viewport" style="padding: 40px 0;">
                                         <div class="carousel-track" style="animation-duration: 50s;">
-                                            {{-- @php
-                                                $teachers_premium = [
-                                                    ['name' => 'Dr. Julian Arancibia', 'role' => 'Especialista en IA', 'img' => 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=2070&auto=format&fit=crop'],
-                                                    ['name' => 'Mag. Carmen Luz', 'role' => 'Auditoría Digital', 'img' => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop'],
-                                                    ['name' => 'Dr. Roberto Mendoza', 'role' => 'Finanzas Tech', 'img' => 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=1974&auto=format&fit=crop'],
-                                                    ['name' => 'Dra. Elena Ramos', 'role' => 'Estrategia Fiscal', 'img' => 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1976&auto=format&fit=crop'],
-                                                    ['name' => 'Mag. Luis Torres', 'role' => 'Data Analytics', 'img' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1974&auto=format&fit=crop'],
-                                                ];
-                                            @endphp --}}
 
                                             {{-- Se duplica el contenido para el loop infinito --}}
-                                           @if (filled($teachers_premium ?? null))
-                                                @foreach(array_merge($teachers_premium, $teachers_premium) as $teacher)
+                                            @if (filled($teachers_premium ?? null))
+                                                 @foreach(array_merge($teachers_premium, $teachers_premium) as $index => $teacher)
 
-                                                <main style="display:none">
-                                                    <input type="checkbox" id="modal-toggle" />
-                                                    <label for="modal-toggle" class="open-button">
-                                                    Curriculum
-                                                    </label>
-                                                    @foreach ($teacher['resumes'] as $resume)
-                                                        @if ($resume->type =="work experience")
-                                                        {{ dump($resume->description) }}
-                                                        @endif
-                                                    @endforeach
-                                                  </main>
-
-                                                <div class="teacher-carousel-item" style="width: 280px;">
-                                                    <div class="card border-0 shadow-sm h-100 transition-all rounded-4 overflow-hidden bg-white mx-2">
-                                                        <div style="height: 240px; overflow: hidden; position: relative;">
-                                                            <img src="{{ $teacher['img'] }}"
-                                                                class="card-img-top h-100 w-100"
-                                                                style="object-fit: cover;"
-                                                                alt="{{ $teacher['name'] }}">
-                                                            <div class="position-absolute bottom-0 start-0 w-100 p-3"
-                                                                style="background: linear-gradient(transparent, rgba(0,32,96,0.8));">
-                                                                <p class="text-white small mb-0 fw-light">Socio Consultor</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body text-center p-3">
-                                                            <h5 class="fw-bold mb-1" style="color: #002060; font-size: 1.1rem;">{{ $teacher['name'] }}</h5>
-                                                            <p class="text-warning small fw-bold mb-0" style="font-size: 0.8rem;">{{ $teacher['role'] }}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                @endforeach
-                                           @endif
+                                                 <div class="teacher-carousel-item" style="width: 280px;">
+                                                     <div class="card border-0 shadow-sm h-100 transition-all rounded-4 overflow-hidden bg-white mx-2" style="cursor: pointer;" onclick="openTeacherModal({{ $index }})">
+                                                         <div style="height: 240px; overflow: hidden; position: relative;">
+                                                             <img src="{{ $teacher['img'] }}"
+                                                                 class="card-img-top h-100 w-100"
+                                                                 style="object-fit: cover;"
+                                                                 alt="{{ $teacher['name'] }}">
+                                                             <div class="position-absolute bottom-0 start-0 w-100 p-3"
+                                                                 style="background: linear-gradient(transparent, rgba(0,32,96,0.8));">
+                                                                 <p class="text-white small mb-0 fw-light">Socio Consultor</p>
+                                                             </div>
+                                                         </div>
+                                                         <div class="card-body text-center p-3">
+                                                             <h5 class="fw-bold mb-1" style="color: #002060; font-size: 1.1rem;">{{ $teacher['name'] }}</h5>
+                                                             <p class="text-warning small fw-bold mb-0" style="font-size: 0.8rem;">{{ $teacher['role'] }}</p>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                                 @endforeach
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -777,6 +509,132 @@
                         </div>
                     </div>
                 @endif
+
+                @if (filled($landing->staff_section ?? null))
+                    @if (filled($teachers_premium ?? null))
+                        @foreach(array_merge($teachers_premium, $teachers_premium) as $index => $teacher)
+                            <div id="teacher-modal-{{ $index }}" class="teacher-modal" onclick="closeTeacherModal({{ $index }})">
+                                <div class="modal-content" onclick="event.stopPropagation()">
+                                    <button type="button" onclick="closeTeacherModal({{ $index }})" style="position: absolute; top: 15px; right: 15px; border: none; background: none; font-size: 24px; cursor: pointer; z-index: 999999;">&times;</button>
+                                    <h3 style="color: #002060; margin-bottom: 20px;">{{ $teacher['name'] }}</h3>
+
+                                    <div class="image-container">
+                                        <img src="{{ $teacher['img'] }}"
+                                            alt="{{ $teacher['name'] }}">
+                                    </div>
+
+                                    <h5 style="color: #ffc107; margin-bottom: 20px;">{{ $teacher['role'] }}</h5>
+                                    @if (filled($teacher['resumes'] ?? null))
+                                        @foreach ($teacher['resumes'] as $resume)
+                                            @if ($resume->type == 'work experience')
+                                                <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                                                    <p style="color: #666; margin-bottom: 0;">{{ $resume->description }}</p>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    @else
+                                        <p style="color: #666;">No hay información de experiencia disponible.</p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    @endif
+                @endif
+
+
+<script>
+    function openTeacherModal(index) {
+    // Cerrar todos los modales primero
+    document.querySelectorAll('.teacher-modal').forEach(modal => {
+        modal.classList.remove('active');
+    });
+
+    // Abrir el modal específico
+    const modal = document.getElementById(`teacher-modal-${index}`);
+    if (modal) {
+        modal.classList.add('active');
+        // Prevenir scroll del body cuando el modal está abierto
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeTeacherModal(index) {
+    const modal = document.getElementById(`teacher-modal-${index}`);
+    if (modal) {
+        modal.classList.remove('active');
+        // Restaurar scroll del body
+        document.body.style.overflow = '';
+    }
+}
+
+// Cerrar modal con tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const activeModal = document.querySelector('.teacher-modal.active');
+        if (activeModal) {
+            activeModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+});
+
+// Opcional: Cerrar modal al hacer clic fuera (ya lo tienes en el div principal)
+// El onclick del div principal con clase .teacher-modal ya maneja el cierre
+</script>
+                <style>
+
+/* Fondo oscuro del modal - cerrado por defecto */
+.teacher-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999999;
+}
+
+/* Cuando el modal está abierto, lo mostramos */
+.teacher-modal.active {
+    display: block;
+}
+
+/* Contenedor del contenido del modal */
+.teacher-modal .modal-content {
+    background: white;
+    max-width: 1500px;
+    width: 90%;
+    max-height: 90vh;
+    border-radius: 15px;
+    padding: 30px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999999;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow-y: auto;
+}
+
+/* Contenedor de la imagen */
+.teacher-modal .image-container {
+    width: 100%;
+    margin: 20px 0;
+    position: relative;
+}
+
+/* Estilos para la imagen - alto = 1/4 del ancho del modal-content */
+.teacher-modal .modal-content img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 1;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+}
+
+                </style>
 
 
                 @if (filled($landing->results_section ?? null))
@@ -1140,7 +998,7 @@
                     </div>
                 @endif
 
-                <x-courselanding.certificatetemplate />
+                <x-courselanding.certificate-template />
 
             </div>
         </div>
@@ -1203,6 +1061,17 @@
                     window.location.href = "{{ route('web_carrito') }}";
                 }
             });
+        }
+
+        // Funciones para el modal de teachers
+        function openTeacherModal(index) {
+            document.getElementById('teacher-modal-' + index).style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTeacherModal(index) {
+            document.getElementById('teacher-modal-' + index).style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
     </script>
 

@@ -350,13 +350,14 @@ public function course_url_slug($id){
                 $teacherIds = array_column($staffData['teachers'], 'teacher_id');
 
                 $teachers = AcaTeacher::whereIn('id', $teacherIds)
-                    ->with('person')
+                    ->with('person', 'resumes')
                     ->get();
 
                 foreach ($teacherIds as $teacherId) {
                     $teacher = $teachers->firstWhere('id', $teacherId);
                     if ($teacher && $teacher->person) {
                         $person = $teacher->person;
+                        $resumes = $teacher->resumes;
                         $imageUrl = $person->image
                             ? asset('storage/' . $person->image)
                             : 'https://ui-avatars.com/api/?name=' . urlencode($person->formatted_name) . '&rounded=true&size=200';
@@ -364,7 +365,8 @@ public function course_url_slug($id){
                         $teachersPremium[] = [
                             'name' => $person->formatted_name,
                             'role' => $person->ocupacion ?? 'Instructor',
-                            'img' => $imageUrl
+                            'img' => $imageUrl,
+                            'resumes' => $resumes,
                         ];
                     }
                 }
