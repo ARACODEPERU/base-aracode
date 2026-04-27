@@ -737,6 +737,19 @@
                                             {{-- Se duplica el contenido para el loop infinito --}}
                                            @if (filled($teachers_premium ?? null))
                                                 @foreach(array_merge($teachers_premium, $teachers_premium) as $teacher)
+
+                                                <main style="display:none">
+                                                    <input type="checkbox" id="modal-toggle" />
+                                                    <label for="modal-toggle" class="open-button">
+                                                    Curriculum
+                                                    </label>
+                                                    @foreach ($teacher['resumes'] as $resume)
+                                                        @if ($resume->type =="work experience")
+                                                        {{ dump($resume->description) }}
+                                                        @endif
+                                                    @endforeach
+                                                  </main>
+
                                                 <div class="teacher-carousel-item" style="width: 280px;">
                                                     <div class="card border-0 shadow-sm h-100 transition-all rounded-4 overflow-hidden bg-white mx-2">
                                                         <div style="height: 240px; overflow: hidden; position: relative;">
