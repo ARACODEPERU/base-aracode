@@ -278,23 +278,24 @@ public function course_url_slug($id){
                     ->with('person', 'resumes')
                     ->get();
 
-                foreach ($teacherIds as $teacherId) {
-                    $teacher = $teachers->firstWhere('id', $teacherId);
-                    if ($teacher && $teacher->person) {
-                        $person = $teacher->person;
-                        $resumes = $teacher->resumes;
-                        $imageUrl = $person->image
-                            ? asset('storage/' . $person->image)
-                            : 'https://ui-avatars.com/api/?name=' . urlencode($person->formatted_name) . '&rounded=true&size=200';
+                    foreach ($teacherIds as $index => $teacherId) {
+                        $teacher = $teachers->firstWhere('id', $teacherId);
+                        if ($teacher && $teacher->person) {
+                            $person = $teacher->person;
+                            $resumes = $teacher->resumes;
+                            $imageUrl = $person->image
+                                ? asset('storage/' . $person->image)
+                                : 'https://ui-avatars.com/api/?name=' . urlencode($person->formatted_name) . '&rounded=true&size=200';
 
-                        $teachersPremium[] = [
-                            'name' => $person->formatted_name,
-                            'role' => $person->ocupacion ?? 'Instructor',
-                            'img' => $imageUrl,
-                            'resumes' => $resumes,
-                        ];
+                               //dd($landing->staff_section['teachers'][0]['teacher_ocupation']);
+                            $teachersPremium[] = [
+                                'name' => $landing->staff_section['teachers'][$index]['teacher_names'],
+                                'role' => $landing->staff_section['teachers'][$index]['teacher_ocupation'] ?? 'Instructor',
+                                'img' => $imageUrl,
+                                'resumes' => $resumes,
+                            ];
+                        }
                     }
-                }
             }
         }
         $colors = [
@@ -353,7 +354,7 @@ public function course_url_slug($id){
                     ->with('person', 'resumes')
                     ->get();
 
-                foreach ($teacherIds as $teacherId) {
+                foreach ($teacherIds as $index => $teacherId) {
                     $teacher = $teachers->firstWhere('id', $teacherId);
                     if ($teacher && $teacher->person) {
                         $person = $teacher->person;
@@ -362,9 +363,10 @@ public function course_url_slug($id){
                             ? asset('storage/' . $person->image)
                             : 'https://ui-avatars.com/api/?name=' . urlencode($person->formatted_name) . '&rounded=true&size=200';
 
+                           //dd($landing->staff_section['teachers'][0]['teacher_ocupation']);
                         $teachersPremium[] = [
-                            'name' => $person->formatted_name,
-                            'role' => $person->ocupacion ?? 'Instructor',
+                            'name' => $landing->staff_section['teachers'][$index]['teacher_names'],
+                            'role' => $landing->staff_section['teachers'][$index]['teacher_ocupation'] ?? 'Instructor',
                             'img' => $imageUrl,
                             'resumes' => $resumes,
                         ];
