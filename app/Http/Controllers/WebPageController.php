@@ -289,8 +289,8 @@ public function course_url_slug($id){
 
                                //dd($landing->staff_section['teachers'][0]['teacher_ocupation']);
                             $teachersPremium[] = [
-                                'name' => $landing->staff_section['teachers'][$index]['teacher_names'],
-                                'role' => $landing->staff_section['teachers'][$index]['teacher_ocupation'] ?? 'Instructor',
+                                'name' => $landing->staff_section['teachers'][$index]['teacher_names'] ?? $person->formatted_name,
+                                'role' => $landing->staff_section['teachers'][$index]['teacher_ocupation'] ?? $person->ocupacion,
                                 'img' => $imageUrl,
                                 'resumes' => $resumes,
                             ];
@@ -298,6 +298,7 @@ public function course_url_slug($id){
                     }
             }
         }
+
         $colors = [
             '#FF0000', // Rojo puro
             '#00FF00', // Lima
@@ -365,8 +366,8 @@ public function course_url_slug($id){
 
                            //dd($landing->staff_section['teachers'][0]['teacher_ocupation']);
                         $teachersPremium[] = [
-                            'name' => $landing->staff_section['teachers'][$index]['teacher_names'],
-                            'role' => $landing->staff_section['teachers'][$index]['teacher_ocupation'] ?? 'Instructor',
+                            'name' => $landing->staff_section['teachers'][$index]['teacher_names'] ?? $person->formatted_name,
+                            'role' => $landing->staff_section['teachers'][$index]['teacher_ocupation'] ?? $person->ocupacion,
                             'img' => $imageUrl,
                             'resumes' => $resumes,
                         ];
