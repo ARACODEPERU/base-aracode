@@ -13,5 +13,6 @@
     "Socialevents": true,
     "CRM": true,
     "Churchcommunity": true,
-    "Bibliodata": true
+    "Bibliodata": true,
+    "Integrationhub": true
 }

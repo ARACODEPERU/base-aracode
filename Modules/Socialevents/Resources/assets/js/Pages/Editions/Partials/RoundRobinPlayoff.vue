@@ -26,6 +26,8 @@
     import SearchClients from '../../Teams/Partials/SearchClients.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconImages from '@/Components/vristo/icon/icon-images.vue';
+    import IconFutbol from '@/Components/vristo/icon/icon-futbol.vue';
+    import IconHand from '@/Components/vristo/icon/icon-hand.vue';
 
 
     const props = defineProps({
@@ -54,9 +56,6 @@
             default: () => ({}),
         }
     });
-
-    const { fixture } = props;
-
 
     const formTeams = useForm({
         teams: [],
@@ -175,9 +174,19 @@
                 });
                 displayModalEdit.value = false;
                 formMatch.reset();
+                refreshFixture();
             },
         });
     }
+
+    const refreshFixture = () => {
+        router.visit(route('even_ediciones_fixtures', props.edition.id), {
+            preserveState: true,
+            preserveScroll: true,
+            method: 'get',
+            only: ['fixture'],
+        });
+    };
 
     const configFlatPickr = {
         enableTime: true,
@@ -198,7 +207,9 @@
         equipo_a_id: null,
         score_h: null,
         score_a: null,
-        status: null,
+        has_penalties: false,
+        penalty_rounds: 5,
+        penalties: [],
         players_h: [],
         players_a: []
     });
@@ -219,6 +230,12 @@
                 formScore.equipo_a_id = partido.equipovisitante.id;
                 formScore.score_h = partido.score_h ?? 0;
                 formScore.score_a = partido.score_a ?? 0;
+
+                // Cargar datos de penale是否 existen
+                const hasExistingPenalties = partido.penalty_rounds && partido.penalties && partido.penalties.length > 0;
+                formScore.has_penalties = hasExistingPenalties;
+                formScore.penalty_rounds = partido.penalty_rounds ?? 5;
+                formScore.penalties = partido.penalties || [];
 
                 // Función auxiliar para procesar jugadores
                 const mapPlayers = (players) => {
@@ -318,6 +335,70 @@
         displayModalScore.value = false;
     }
 
+    // Funciones para manejar penales
+    const addPenalty = () => {
+        const maxPenalties = formScore.penalty_rounds * 2;
+
+        if (formScore.penalties.length >= maxPenalties) {
+            Swal2.fire({
+                title: 'Límite alcanzado',
+                text: `Has alcanzado el máximo de ${maxPenalties} patadas permitidas para ${formScore.penalty_rounds} rondas.`,
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        // Determinar qué equipo patea en esta patada
+        const currentIndex = formScore.penalties.length;
+        const isLocalTurn = currentIndex % 2 === 0;
+
+        formScore.penalties.push({
+            team: isLocalTurn ? 'local' : 'visitor',
+            round: Math.floor(currentIndex / 2) + 1,
+            kicker: null,
+            result: 'goal',
+            goalkeeper: null,
+            kickOrder: currentIndex + 1
+        });
+    };
+
+    const removePenalty = (index) => {
+        formScore.penalties.splice(index, 1);
+        // Renumerar las patadas
+        formScore.penalties.forEach((penalty, idx) => {
+            penalty.round = Math.floor(idx / 2) + 1;
+            penalty.team = idx % 2 === 0 ? 'local' : 'visitor';
+            penalty.kickOrder = idx + 1;
+        });
+    };
+
+    const canAddMorePenalties = computed(() => {
+        return formScore.penalties.length < (formScore.penalty_rounds * 2);
+    });
+
+    const getPenaltyScore = computed(() => {
+        const penalties = formScore.penalties;
+        const penalty_h = penalties.filter(p => p.team === 'local' && p.result === 'goal').length;
+        const penalty_a = penalties.filter(p => p.team === 'visitor' && p.result === 'goal').length;
+        return { penalty_h, penalty_a };
+    });
+
+    const getPlayersForTeam = (team) => {
+        if (team === 'local') {
+            return playersh.value.map(p => ({
+                value: p.person?.id || p.id,
+                label: `${p.person?.full_name || p.full_name || 'Jugador'} (#${p.jersey_number})`
+            }));
+        } else {
+            return playersa.value.map(p => ({
+                value: p.person?.id || p.id,
+                label: `${p.person?.full_name || p.full_name || 'Jugador'} (#${p.jersey_number})`
+            }));
+        }
+    };
+
     // Función para el equipo Local
     const toggleYellowH = (player) => {
         // Ciclo: 0 -> 1 -> 2 -> 0
@@ -373,6 +454,7 @@
         formScore.players_a = playersa.value;
         formScore.post(route('even_edition_match_score_update'), {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 Swal2.fire({
                     title: 'Enhorabuena',
@@ -383,6 +465,7 @@
                 });
                 displayModalScore.value = false;
                 formScore.reset();
+                refreshFixture();
             }
         });
     };
@@ -419,11 +502,7 @@
                         padding: '2em',
                         customClass: 'sweet-alerts',
                     });
-                    router.visit(route('even_ediciones_fixtures', props.edition.id), {
-                        replace: true,
-                        method: 'get',
-                        only: ['fixture'],
-                    });
+                    refreshFixture();
                 }
             });
         } else {
@@ -443,6 +522,32 @@
         // Si la fase existe en el diccionario, la devuelve.
         // Si no, limpia el texto (quita guiones bajos) por si acaso.
         return translations[phase] || phase.replace('_', ' ');
+    };
+
+    // Funciones para mostrar resultado de penales en la lista de partidos
+    const getPenaltyResult = (match) => {
+        if (!match.penalties || match.penalties.length === 0) {
+            return null;
+        }
+
+        const penalties = match.penalties;
+        const localGoals = penalties.filter(p => p.team === 'local' && p.result === 'goal').length;
+        const visitorGoals = penalties.filter(p => p.team === 'visitor' && p.result === 'goal').length;
+        const totalRounds = match.penalty_rounds || Math.ceil(penalties.length / 2);
+
+        return {
+            hasPenalties: true,
+            localScore: localGoals,
+            visitorScore: visitorGoals,
+            totalRounds: totalRounds,
+            winner: localGoals > visitorGoals ? 'local' : (visitorGoals > localGoals ? 'visitor' : 'draw')
+        };
+    };
+
+    const isPenaltyWinner = (match, team) => {
+        const result = getPenaltyResult(match);
+        if (!result || result.winner === 'draw') return false;
+        return result.winner === team;
     };
 
     const isPhaseCompleted = (phase) => {
@@ -513,6 +618,8 @@
         equipo_a_id: null,
         score_h: null,
         score_a: null,
+        penalty_rounds: null,
+        penalties: [],
         status: 'closed', // finalized, suspended, walk_over
         referees: [],
         observations: '',
@@ -534,6 +641,10 @@
                 formMatchReport.score_h = match.score_h ?? 0;
                 formMatchReport.score_a = match.score_a ?? 0;
                 formMatchReport.match_id = match.id;
+
+                // Cargar datos de penales
+                formMatchReport.penalty_rounds = match.penalty_rounds || null;
+                formMatchReport.penalties = match.penalties || [];
 
                 const mapPlayers = (players) => {
                     if (!players) return [];
@@ -586,8 +697,23 @@
         displayModalMatchReport.value = false;
     }
 
+    // Computed para resumen de penales
+    const hasPenalties = computed(() => {
+        return formMatchReport.penalties && formMatchReport.penalties.length > 0;
+    });
+
+    const getPenaltiesForTeam = (team) => {
+        return formMatchReport.penalties?.filter(p => p.team === team) || [];
+    };
+
+    const calculatePenaltyScore = (team) => {
+        return getPenaltiesForTeam(team).filter(p => p.result === 'goal').length;
+    };
+
     const submitReport = () => {
         formMatchReport.post(route('even_ediciones_partido_acta_store'), {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 Swal2.fire({
                     title: 'Enhorabuena',
@@ -598,6 +724,7 @@
                 });
                 displayModalMatchReport.value = false;
                 formMatchReport.reset();
+                refreshFixture();
             }
         });
     };
@@ -657,15 +784,29 @@
                             </div>
 
                             <div class="p-4 flex flex-col gap-3">
+                                <!-- Equipo Local -->
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border dark:bg-zinc-800 dark:border-zinc-700">
                                             <img v-if="match.equipolocal?.logo_path" :src="xhttp + 'storage/' + match.equipolocal.logo_path" class="w-full h-full object-contain p-1" />
                                             <img v-else src="/img/escudo-deportivo.png" class="w-full h-full object-contain p-1 opacity-50" />
                                         </div>
-                                        <span class="font-bold text-gray-700 dark:text-white truncate max-w-[120px]">
-                                            {{ match.equipolocal?.name || match.placeholder_h || 'TBD' }}
-                                        </span>
+                                        <div>
+                                            <span class="font-bold text-gray-700 dark:text-white truncate max-w-[120px] block">
+                                                {{ match.equipolocal?.name || match.placeholder_h || 'TBD' }}
+                                            </span>
+                                            <!-- Badge de penales -->
+                                            <span v-if="getPenaltyResult(match)" 
+                                                :class="isPenaltyWinner(match, 'local') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
+                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-0.5">
+                                                <template v-if="isPenaltyWinner(match, 'local')">
+                                                    🏆 Winner Penales {{ getPenaltyResult(match).localScore }}/{{ getPenaltyResult(match).totalRounds }}
+                                                </template>
+                                                <template v-else>
+                                                    ⚽ Penales {{ getPenaltyResult(match).localScore }}/{{ getPenaltyResult(match).totalRounds }}
+                                                </template>
+                                            </span>
+                                        </div>
                                     </div>
                                     <span class="text-xl font-black text-red-600">{{ match.score_h ?? '-' }}</span>
                                 </div>
@@ -674,15 +815,29 @@
                                     <span class="text-[10px] font-black text-gray-400 tracking-widest">VS</span>
                                 </div>
 
+                                <!-- Equipo Visitante -->
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border dark:bg-zinc-800 dark:border-zinc-700">
                                             <img v-if="match.equipovisitante?.logo_path" :src="xhttp + 'storage/' + match.equipovisitante.logo_path" class="w-full h-full object-contain p-1" />
                                             <img v-else src="/img/escudo-deportivo.png" class="w-full h-full object-contain p-1 opacity-50" />
                                         </div>
-                                        <span class="font-bold text-gray-700 dark:text-white truncate max-w-[120px]">
-                                            {{ match.equipovisitante?.name || match.placeholder_a || 'TBD' }}
-                                        </span>
+                                        <div>
+                                            <span class="font-bold text-gray-700 dark:text-white truncate max-w-[120px] block">
+                                                {{ match.equipovisitante?.name || match.placeholder_a || 'TBD' }}
+                                            </span>
+                                            <!-- Badge de penales -->
+                                            <span v-if="getPenaltyResult(match)" 
+                                                :class="isPenaltyWinner(match, 'visitor') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
+                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mt-0.5">
+                                                <template v-if="isPenaltyWinner(match, 'visitor')">
+                                                    🏆 Winner Penales {{ getPenaltyResult(match).visitorScore }}/{{ getPenaltyResult(match).totalRounds }}
+                                                </template>
+                                                <template v-else>
+                                                    ⚽ Penales {{ getPenaltyResult(match).visitorScore }}/{{ getPenaltyResult(match).totalRounds }}
+                                                </template>
+                                            </span>
+                                        </div>
                                     </div>
                                     <span class="text-xl font-black text-red-600">{{ match.score_a ?? '-' }}</span>
                                 </div>
@@ -931,6 +1086,135 @@
                     <TextInput v-model="formScore.score_a" class="w-16 border-4" />
                 </div>
             </div>
+
+            <!-- Checkbox para activar tanda de penales -->
+            <div class="mt-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formScore.has_penalties" class="w-5 h-5 text-yellow-600 rounded focus:ring-yellow-500" />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Registrar tanda de penales</span>
+                </label>
+            </div>
+
+            <!-- Sección de Penales -->
+            <div v-if="formScore.has_penalties" class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-yellow-800 dark:text-yellow-200">
+                        Tanda de Penales
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Rondas:</span>
+                        <TextInput v-model="formScore.penalty_rounds" type="number" min="1" max="10" class="w-16" />
+                        <span class="text-xs text-gray-500">({{ formScore.penalty_rounds * 2 }} patadas máximo)</span>
+                    </div>
+                </div>
+
+                <!-- Mostrar resultado de penales -->
+                <div class="flex items-center justify-center gap-4 mb-4">
+                    <div class="text-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Local</span>
+                        <div class="text-3xl font-bold text-green-600">
+                            {{ getPenaltyScore.penalty_h }}
+                        </div>
+                    </div>
+                    <span class="text-lg font-bold text-gray-400">-</span>
+                    <div class="text-center">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Visitante</span>
+                        <div class="text-3xl font-bold text-green-600">
+                            {{ getPenaltyScore.penalty_a }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón agregar penal -->
+                <button
+                    type="button"
+                    @click="addPenalty"
+                    :disabled="!canAddMorePenalties"
+                    :class="{ 'opacity-50 cursor-not-allowed': !canAddMorePenalties }"
+                    class="mb-4 inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md text-sm font-medium"
+                >
+                    <IconPlus class="w-4 h-4 mr-1" />
+                    Agregar Penal
+                </button>
+
+                <!-- Lista de penales -->
+                <div v-if="formScore.penalties.length > 0" class="space-y-2">
+                    <!-- Encabezados -->
+                    <div class="flex items-center gap-2 text-xs font-bold text-gray-500 px-2">
+                        <div class="w-12">#</div>
+                        <div class="flex-1">Equipo que Patea</div>
+                        <div class="flex-1">Pateador</div>
+                        <div class="flex-1">Resultado</div>
+                        <div class="flex-1">Arquero</div>
+                        <div class="w-8"></div>
+                    </div>
+
+                    <div v-for="(penalty, index) in formScore.penalties" :key="index" class="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg border">
+                        <div class="w-12">
+                            <span class="text-xs font-bold text-gray-500">Patada {{ index + 1 }}</span>
+                            <span class="block text-[10px] text-gray-400">(Ronda {{ penalty.round }})</span>
+                        </div>
+                        <div class="flex-1">
+                            <select
+                                v-model="penalty.team"
+                                class="form-select text-sm"
+                                :class="penalty.team === 'local' ? 'bg-blue-50 border-blue-300' : 'bg-red-50 border-red-300'"
+                            >
+                                <option value="local">LOCAL</option>
+                                <option value="visitor">VISITANTE</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <select
+                                v-model="penalty.kicker"
+                                class="form-select text-sm"
+                            >
+                                <option :value="null">Seleccionar...</option>
+                                <option v-for="player in getPlayersForTeam(penalty.team)" :key="player.value" :value="player.value">
+                                    {{ player.label }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <select
+                                v-model="penalty.result"
+                                class="form-select text-sm"
+                                :class="{
+                                    'border-green-500 text-green-600 font-bold': penalty.result === 'goal',
+                                    'border-red-500 text-red-600 font-bold': penalty.result === 'miss',
+                                    'border-orange-500 text-orange-600 font-bold': penalty.result === 'saved'
+                                }"
+                            >
+                                <option value="goal">ANOTADO</option>
+                                <option value="miss">FALLÓ</option>
+                                <option value="saved">TAPÓ</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <select
+                                v-model="penalty.goalkeeper"
+                                class="form-select text-sm"
+                            >
+                                <option :value="null">Sin arquero</option>
+                                <option v-for="player in getPlayersForTeam(penalty.team === 'local' ? 'visitor' : 'local')" :key="player.value" :value="player.value">
+                                    {{ player.label }}
+                                </option>
+                            </select>
+                        </div>
+                        <button
+                            type="button"
+                            @click="removePenalty(index)"
+                            class="p-2 text-red-500 hover:text-red-700"
+                        >
+                            <IconTrashLines class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+                <p v-else class="text-sm text-gray-500 text-center py-2">
+                    No hay penales agregados. Haz clic en "Agregar Penal" para registrar.
+                </p>
+            </div>
+
             <div class="grid sm:grid-cols-4 gap-2 mt-4">
                 <div class="sm:col-span-2">
                     <div class="w-full p-0 border border-default rounded-base shadow-xs dark:border-blue-900">
@@ -1198,6 +1482,50 @@
         <template #title>{{ formMatchReport.equipo_h_name  }} VS {{ formMatchReport.equipo_a_name  }}</template>
         <template #message>Generar Acta y Finalizar Partido</template>
         <template #content>
+            <!-- Resumen de Penales -->
+            <div v-if="hasPenalties" class="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-300">
+                <h3 class="text-lg font-bold text-yellow-800 dark:text-yellow-200 mb-4 text-center">
+                    RESUMEN DE PENALES ({{ formMatchReport.penalty_rounds }} Rondas)
+                </h3>
+
+                <div class="flex items-center justify-center gap-8">
+                    <!-- LOCAL -->
+                    <div class="text-center">
+                        <p class="font-bold text-blue-600 mb-2">{{ formMatchReport.equipo_h_name }} ({{ calculatePenaltyScore('local') }})</p>
+                        <div class="flex gap-2 justify-center">
+                            <div v-for="penalty in getPenaltiesForTeam('local')" :key="penalty.round"
+                                :class="penalty.result === 'goal' ? 'bg-green-500' : 'bg-red-500'"
+                                class="w-10 h-10 rounded-full flex items-center justify-center text-white">
+                                <IconFutbol v-if="penalty.result === 'goal'" class="w-6 h-6" />
+                                <IconX v-else-if="penalty.result === 'miss'" class="w-6 h-6" />
+                                <IconHand v-else-if="penalty.result === 'saved'" class="w-6 h-6" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <span class="text-2xl font-bold text-gray-400">-</span>
+
+                    <!-- VISITANTE -->
+                    <div class="text-center">
+                        <p class="font-bold text-red-600 mb-2">{{ formMatchReport.equipo_a_name }} ({{ calculatePenaltyScore('visitor') }})</p>
+                        <div class="flex gap-2 justify-center">
+                            <div v-for="penalty in getPenaltiesForTeam('visitor')" :key="penalty.round"
+                                :class="penalty.result === 'goal' ? 'bg-green-500' : 'bg-red-500'"
+                                class="w-10 h-10 rounded-full flex items-center justify-center text-white">
+                                <IconFutbol v-if="penalty.result === 'goal'" class="w-6 h-6" />
+                                <IconX v-else-if="penalty.result === 'miss'" class="w-6 h-6" />
+                                <IconHand v-else-if="penalty.result === 'saved'" class="w-6 h-6" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 flex justify-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+                    <span class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-green-500"></div> Anotado</span>
+                    <span class="flex items-center gap-1"><div class="w-3 h-3 rounded-full bg-red-500"></div> Falló/Tapó</span>
+                </div>
+            </div>
+
             <div class="grid sm:grid-cols-5 gap-2">
                 <div class="sm:col-span-2">
                     <div class="flex items-center justify-between mb-6">

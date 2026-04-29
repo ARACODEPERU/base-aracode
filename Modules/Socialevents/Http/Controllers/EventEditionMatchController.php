@@ -288,7 +288,9 @@ class EventEditionMatchController extends Controller
                 'score_h' => $request->get('score_h'),
                 'score_a' => $request->get('score_a'),
                 'status' => 'finished',
-                'original_score' => $request->get('score_h'). '-'.$request->get('score_a')
+                'original_score' => $request->get('score_h'). '-'.$request->get('score_a'),
+                'penalty_rounds' => $request->get('penalty_rounds'),
+                'penalties' => $request->get('penalties'),
             ]);
 
             $playersH = $request->get('players_h');

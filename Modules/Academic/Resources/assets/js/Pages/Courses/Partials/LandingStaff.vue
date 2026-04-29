@@ -43,50 +43,71 @@ const buildTeachersArray = () => {
     }
     return initialData.teachers.map(t => ({
         teacher_id: t.teacher_id,
+        teacher_names: t.teacher_names || null,
+        teacher_ocupation: t.teacher_ocupation || null,
         selected: t.selected || false,
     }));
 };
+
+const tempTeachers = ref([]);
+
+const initializeTempTeachers = () => {
+    const savedTeachers = buildTeachersArray();
+    const result = props.teachers.map(teacher => {
+        const saved = savedTeachers.find(t => t.teacher_id === teacher.id);
+        const isSelected = saved ? saved.selected : false;
+
+        return {
+            teacher_id: teacher.id,
+            person_id: teacher.person_id,
+            photo: teacher.person?.image || null,
+            original_name: teacher.person?.formatted_name || teacher.person?.name || 'Sin nombre',
+            original_occupation: teacher.person?.ocupacion || 'Instructor',
+            teacher_names: saved?.teacher_names || teacher.person?.formatted_name || teacher.person?.name || 'Sin nombre',
+            teacher_ocupation: saved?.teacher_ocupation || teacher.person?.ocupacion || 'Instructor',
+            selected: isSelected,
+        };
+    });
+    tempTeachers.value = result;
+};
+
+initializeTempTeachers();
 
 const formStaff = useForm({
     name: initialData?.name || 'Nuestro Staff',
     title: initialData?.title || '',
     description: initialData?.description || '',
-    teachers: buildTeachersArray(),
+    teachers: [],
 });
 
 const availableTeachers = computed(() => {
-    return props.teachers.map(teacher => {
-        const selected = formStaff.teachers.some(
-            t => t.teacher_id === teacher.id && t.selected
-        );
-
-        return {
-            teacher_id: teacher.id,
-            person_id: teacher.person_id,
-            full_name: teacher.person?.formatted_name || teacher.person?.name || 'Sin nombre',
-            photo: teacher.person?.image || null,
-            occupation: teacher.person?.ocupacion || 'Instructor',
-            selected: selected,
-        };
-    });
+    return tempTeachers.value;
 });
 
 const toggleTeacher = (teacherId) => {
-    const formIndex = formStaff.teachers.findIndex(t => t.teacher_id === teacherId);
+    const index = tempTeachers.value.findIndex(t => t.teacher_id === teacherId);
 
-    if (formIndex >= 0) {
-        formStaff.teachers[formIndex].selected = !formStaff.teachers[formIndex].selected;
-    } else {
-        formStaff.teachers.push({ teacher_id: teacherId, selected: true });
+    if (index >= 0) {
+        tempTeachers.value[index].selected = !tempTeachers.value[index].selected;
     }
 };
 
 const isTeacherSelected = (teacherId) => {
-    const teacher = formStaff.teachers.find(t => t.teacher_id === teacherId);
+    const teacher = tempTeachers.value.find(t => t.teacher_id === teacherId);
     return teacher ? teacher.selected : false;
 };
 
 const saveStaffSettings = () => {
+    // Copiar tempTeachers a formStaff.teachers
+    formStaff.teachers = tempTeachers.value
+        .filter(t => t.selected)
+        .map(t => ({
+            teacher_id: t.teacher_id,
+            teacher_names: t.teacher_names,
+            teacher_ocupation: t.teacher_ocupation,
+            selected: true
+        }));
+
     formStaff.put(route('aca_courses_landing_update_staff', props.course.id),{
         errorBag: 'saveStaffSettings',
         preserveScroll: true,
@@ -214,20 +235,30 @@ const saveStaffSettings = () => {
                                     <img
                                         v-if="teacher.photo"
                                         :src="'/storage/' + teacher.photo"
-                                        :alt="teacher.full_name"
+                                        :alt="teacher.original_name"
                                         class="h-12 w-12 rounded-full object-cover"
                                     >
                                     <div v-else class="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                                         <i class="fa fa-user text-gray-400"></i>
                                     </div>
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                        {{ teacher.full_name }}
-                                    </p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                        {{ teacher.occupation }}
-                                    </p>
+                                <div class="min-w-0 flex-1 space-y-2">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 dark:text-gray-400">Nombre</label>
+                                        <input
+                                            type="text"
+                                            v-model="teacher.teacher_names"
+                                            class="form-input form-input-sm"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 dark:text-gray-400">Ocupación</label>
+                                        <input
+                                            type="text"
+                                            v-model="teacher.teacher_ocupation"
+                                            class="form-input form-input-sm"
+                                        >
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -787,7 +787,9 @@ class AcaCertificateController extends Controller
                 ->where('for_module', false)
                 ->where('state', true)
                 ->first();
-
+            if (!$certificateParameter) {
+                return response()->json(['message' => 'Falta configuración del administrador.'], 404);
+            }
             $certificate_id = $certificateParameter->id;
         }
 

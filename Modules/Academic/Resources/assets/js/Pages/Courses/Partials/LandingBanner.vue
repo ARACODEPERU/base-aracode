@@ -29,6 +29,7 @@ const formBanner = useForm({
     banner_end_date: props.landing.banner_end_date || '',
     banner_duration: props.landing.banner_duration || 0,
     banner_language: props.landing.banner_language || 'es',
+    banner_video_link: props.landing.banner_video_link || '',
 });
 
 const calculatedDuration = computed(() => {
@@ -212,6 +213,20 @@ const saveBannerSettings = () => {
                             </option>
                         </select>
                         <InputError :message="formBanner.errors.banner_language" class="mt-2" />
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Link de Video (YouTube/Iframe)
+                        </label>
+                        <textarea
+                            v-model="formBanner.banner_video_link"
+                            rows="4"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                            placeholder="Pega el enlace de YouTube o el código iframe..."
+                        ></textarea>
+                        <p class="mt-1 text-xs text-gray-500">Ejemplo: https://www.youtube.com/embed/... o &lt;iframe...&lt;/iframe&gt;</p>
+                        <InputError :message="formBanner.errors.banner_video_link" class="mt-2" />
                     </div>
                 </div>
             </div>

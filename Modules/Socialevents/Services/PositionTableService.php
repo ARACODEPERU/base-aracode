@@ -53,7 +53,32 @@ class PositionTableService
                 $table[$aId]['ga'] += (int)$m->score_h;
 
                 // Lógica de Puntos y Resultados
-                if ($m->score_h > $m->score_a) {
+                // Primero verificamos si hay penalesdefinidos
+                $hasPenalties = !empty($m->penalty_rounds) && !empty($m->penalties);
+
+                if ($hasPenalties) {
+                    // Calcular ganador de penales
+                    $penaltyGoalsH = collect($m->penalties)->where('team', 'local')->where('result', 'goal')->count();
+                    $penaltyGoalsA = collect($m->penalties)->where('team', 'visitor')->where('result', 'goal')->count();
+
+                    if ($penaltyGoalsH > $penaltyGoalsA) {
+                        // Local gana por penales
+                        $table[$hId]['won'] += 1;
+                        $table[$hId]['points'] += 3;
+                        $table[$aId]['lost'] += 1;
+                    } elseif ($penaltyGoalsA > $penaltyGoalsH) {
+                        // Visitante gana por penales
+                        $table[$aId]['won'] += 1;
+                        $table[$aId]['points'] += 3;
+                        $table[$hId]['lost'] += 1;
+                    } else {
+                        // Empate incluso en penales (dar 1 punto a cadauno)
+                        $table[$hId]['drawn'] += 1;
+                        $table[$hId]['points'] += 1;
+                        $table[$aId]['drawn'] += 1;
+                        $table[$aId]['points'] += 1;
+                    }
+                } elseif ($m->score_h > $m->score_a) {
                     $table[$hId]['won'] += 1;
                     $table[$hId]['points'] += 3;
                     $table[$aId]['lost'] += 1;

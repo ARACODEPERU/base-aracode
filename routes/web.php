@@ -45,6 +45,10 @@ Route::get('/curso-descripcion/{id}', [WebPageController::class, 'cursodescripci
 Route::get('/academy/{slug}', [Modules\Academic\Http\Controllers\AcaCourseLandingController::class, 'show'])
     ->name('academy_landing');
 
+Route::get('/api-docs', function() {
+    return view('pages.api-docs');
+})->name('api_docs');
+
 // ////mensajes de whatsapp///////
 Route::get('/ask/product/{id}', [LandingController::class, 'redirectToWhatsApp'])->name('whatsapp_send');
 

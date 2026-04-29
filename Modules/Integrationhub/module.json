@@ -1,0 +1,11 @@
+{
+    "name": "Integrationhub",
+    "alias": "integrationhub",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Integrationhub\\Providers\\IntegrationhubServiceProvider"
+    ],
+    "files": []
+}

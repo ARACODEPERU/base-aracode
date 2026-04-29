@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
+use Modules\Academic\Http\Controllers\AcaStudentApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +19,16 @@ use Modules\Academic\Http\Controllers\AcaStudentController;
 
 Route::middleware('auth:api')->get('/academic', function (Request $request) {
     return $request->user();
+});
+
+Route::middleware('auth:api')->group(function () {
+    // API Consultar estudiante por DNI
+    Route::get('student/{dni}', [AcaStudentApiController::class, 'show'])
+        ->name('aca_api_student_show');
+
+    // API Registrar estudiante
+    Route::post('students/register', [AcaStudentApiController::class, 'store'])
+        ->name('aca_api_student_register');
 });
 
 Route::post('tickets/generate/student', [AcaSaleDocumentController::class, 'generateBoleta'])->name('aca_create_students_tickets');

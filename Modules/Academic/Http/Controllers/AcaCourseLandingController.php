@@ -74,6 +74,9 @@ class AcaCourseLandingController extends Controller
             $request,
             [
                 'url_slug' => 'required|string|max:500|unique:aca_course_landings,url_slug,'.$courseId.',course_id',
+                'whatsapp_link' => 'nullable|string|max:500',
+                'payment_facilities_link' => 'nullable|string|max:500',
+                'corporate_contact_link' => 'nullable|string|max:500',
                 'is_published' => 'boolean',
             ]
         );
@@ -89,6 +92,9 @@ class AcaCourseLandingController extends Controller
 
         $landing->update([
             'url_slug' => $slug,
+            'whatsapp_link' => $request->whatsapp_link ?? '',
+            'payment_facilities_link' => $request->payment_facilities_link ?? '',
+            'corporate_contact_link' => $request->corporate_contact_link ?? '',
             'is_published' => $request->is_published ?? false,
         ]);
     }
@@ -101,6 +107,7 @@ class AcaCourseLandingController extends Controller
                 'banner_start_date' => 'required|date',
                 'banner_end_date' => 'required|date|after_or_equal:banner_start_date',
                 'banner_language' => 'required|in:es,en,zh',
+                'banner_video_link' => 'nullable|string',
             ]
         );
 
@@ -115,6 +122,7 @@ class AcaCourseLandingController extends Controller
             'banner_end_date' => $request->banner_end_date,
             'banner_duration' => $duration,
             'banner_language' => $request->banner_language,
+            'banner_video_link' => $request->banner_video_link ?? '',
         ]);
     }
 
@@ -160,6 +168,8 @@ class AcaCourseLandingController extends Controller
                 'description' => 'nullable|string',
                 'teachers' => 'nullable|array',
                 'teachers.*.teacher_id' => 'required|integer',
+                'teachers.*.teacher_names' => 'nullable|string|max:255',
+                'teachers.*.teacher_ocupation' => 'nullable|string|max:255',
                 'teachers.*.selected' => 'nullable|boolean',
             ]
         );

@@ -58,6 +58,9 @@ const tabs = [
 
 const form = useForm({
     url_slug: props.landing.url_slug || '',
+    whatsapp_link: props.landing.whatsapp_link || '',
+    payment_facilities_link: props.landing.payment_facilities_link || '',
+    corporate_contact_link: props.landing.corporate_contact_link || '',
     is_published: props.landing.is_published || false,
 });
 
@@ -142,7 +145,7 @@ const formatIconForVue = (iconName) => {
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <!-- Estado Publicar -->
                         <div class="lg:col-span-1">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0">
                                 <span class="inline-flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -162,8 +165,8 @@ const formatIconForVue = (iconName) => {
                         </div>
 
                         <!-- URL Slug -->
-                        <div class="lg:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0">
                                 <span class="inline-flex items-center gap-1">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
@@ -180,39 +183,89 @@ const formatIconForVue = (iconName) => {
                                     type="text"
                                     v-model="form.url_slug"
                                     placeholder="nombre-del-curso"
-                                    class="flex-1 block w-full rounded-none rounded-r-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+                                    class="flex-1 block w-full rounded-none rounded-r-none border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                                 >
-                            </div>
-                            <InputError :message="form.errors.url_slug" class="mt-2" />
-
-                        </div>
-
-                        <!-- Botón Copiar + Guardar -->
-                        <div class="lg:col-span-1 flex flex-col gap-2">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                &nbsp;
-                            </label>
-                            <div class="flex gap-2">
                                 <button
                                     @click="copyToClipboard"
-                                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 text-sm font-medium"
+                                    class="btn btn-success text-xs uppercase flex items-center justify-center rounded-l-none border-l-0"
                                 >
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                     </svg>
                                     Copiar
                                 </button>
-                                <button
-                                    @click="saveGeneralSettings"
-                                    :disabled="form.processing"
-                                    :class="{ 'opacity-25': form.processing }"
-                                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <IconLoader v-if="form.processing" class="animate-spin -ml-1 mr-1 h-4 w-4" />
-                                    <IconSave v-else class="mr-1" />
-                                    Guardar
-                                </button>
                             </div>
+                            <InputError :message="form.errors.url_slug"  />
+                        </div>
+                        <!-- WhatsApp Link -->
+                        <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0">
+                                <span class="inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    WhatsApp
+                                </span>
+                            </label>
+                            <input
+                                type="text"
+                                v-model="form.whatsapp_link"
+                                placeholder="https://wa.me/..."
+                                class="form-input"
+                            >
+                            <InputError :message="form.errors.whatsapp_link" class="mt-2" />
+                        </div>
+
+                        <!-- Payment Facilities Link -->
+                        <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0">
+                                <span class="inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                    </svg>
+                                    Facilidades de pago
+                                </span>
+                            </label>
+                            <input
+                                type="text"
+                                v-model="form.payment_facilities_link"
+                                placeholder="https://..."
+                                class="form-input"
+                            >
+                            <InputError :message="form.errors.payment_facilities_link" class="mt-2" />
+                        </div>
+
+                        <!-- Corporate Contact Link -->
+                        <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-0">
+                                <span class="inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    Contacto Corporativo
+                                </span>
+                            </label>
+                            <input
+                                type="text"
+                                v-model="form.corporate_contact_link"
+                                placeholder="https://..."
+                                class="form-input"
+                            >
+                            <InputError :message="form.errors.corporate_contact_link" class="mt-2" />
+                        </div>
+
+                        <!-- Botón Copiar + Guardar -->
+                        <div class="lg:col-span-1 flex items-end">
+                            <button
+                                @click="saveGeneralSettings"
+                                :disabled="form.processing"
+                                :class="{ 'opacity-25': form.processing }"
+                                class="btn btn-primary text-xs uppercase flex items-center justify-center w-full"
+                            >
+                                <IconLoader v-if="form.processing" class="animate-spin -ml-1 mr-1 h-4 w-4" />
+                                <IconSave v-else class="mr-1" />
+                                Guardar
+                            </button>
                         </div>
                     </div>
                 </div>

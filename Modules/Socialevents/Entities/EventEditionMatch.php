@@ -28,11 +28,14 @@ class EventEditionMatch extends Model
         'status',
         'placeholder_h',
         'placeholder_a',
-        'original_score'
+        'original_score',
+        'penalty_rounds',
+        'penalties',
     ];
 
     protected $casts = [
         'match_date' => 'datetime',
+        'penalties' => 'array',
     ];
 
     public function equipolocal(): BelongsTo

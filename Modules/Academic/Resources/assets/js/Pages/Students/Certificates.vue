@@ -3,6 +3,8 @@
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { Link, useForm, router } from '@inertiajs/vue3';
     import Pagination from "@/Components/Pagination.vue";
+    import Swal from 'sweetalert2';
+    import { ref } from 'vue';
 
     const props = defineProps({
         certificates: {
@@ -43,8 +45,54 @@
         router.get(route('aca_student_certificates_all'));
     };
 
-    const downloadCertificate = (certificateId) => {
-        window.open(route('aca_image_download', certificateId), '_blank');
+    // const downloadCertificate = (certificateId) => {
+    //     window.open(route('aca_image_download', certificateId), '_blank');
+    // };
+
+    const loadingStates = ref({});
+
+    const downloadCertificate = async (certificateId) => {
+        loadingStates.value[certificateId] = true;
+
+        try {
+            const response = await axios.get(route('aca_image_download', certificateId), {
+                responseType: 'blob',
+            });
+
+            // Intentar obtener el nombre del archivo desde los headers (Content-Disposition)
+            const contentDisposition = response.headers['content-disposition'];
+            let fileName = 'certificado_descarga'; // Nombre por defecto
+
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) fileName = match[1];
+            } else {
+                // Si el backend no envía el nombre, puedes asignar una extensión lógica
+                // según lo que sepas que se está descargando (ej. .zip o .png)
+                fileName = `Certificado_${certificateId}`;
+            }
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+        } catch (error) {
+            const title = error.response?.status === 404 ? 'Certificado no encontrado' : 'Error al descargar';
+            const message = error.response?.data?.message || 'Falta configuración del administrador.';
+            Swal.fire({
+                icon: 'error',
+                title: title,
+                text: message,
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        } finally {
+            loadingStates.value[certificateId] = false;
+        }
     };
 </script>
 
@@ -144,12 +192,22 @@
                                     </div>
                                     <button
                                         @click="downloadCertificate(certificate.id)"
-                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                                        :disabled="loadingStates[certificate.id]"
+                                        :class="[
+                                            'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-all duration-200 shadow-md',
+                                            loadingStates[certificate.id] ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-lg'
+                                        ]"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg v-if="loadingStates[certificate.id]" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+
+                                        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                         </svg>
-                                        Descargar
+
+                                        {{ loadingStates[certificate.id] ? 'Procesando...' : 'Descargar' }}
                                     </button>
                                 </div>
                             </div>
