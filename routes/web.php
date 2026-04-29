@@ -25,8 +25,8 @@ use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 
 // Rutas Webs en Blade
-Route::get('/', [WebPageController::class, 'home'])->name('index_main');
-Route::get('/home', [WebPageController::class, 'home'])->name('index_main');
+Route::get('/', [WebPageController::class, 'index'])->name('index_main');
+Route::get('/home', [WebPageController::class, 'index'])->name('index_main2');
 Route::get('/nosotros', [WebPageController::class, 'about'])->name('web_about');
 Route::get('/sitios-webs', [WebPageController::class, 'cms'])->name('web_cms');
 Route::get('/tienda-online', [WebPageController::class, 'storeonline'])->name('web_store_online');
