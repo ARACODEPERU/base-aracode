@@ -332,6 +332,12 @@ class OnliItemController extends Controller
 
         $OnliItem->save();
 
+        //actualizando landing si existe....
+        AcaCourseLanding::where('course_id', $OnliItem->item_id)
+                ->update([
+                    'investment_section->items->0->price_now' => $OnliItem->price
+                ]);
+
         $specifications = $request->get('specifications');
 
         OnliItemSpecification::where('onli_item_id', $OnliItem->id)->delete();
