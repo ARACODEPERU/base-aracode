@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Person;
+use App\Models\Sale;
+use App\Models\SaleProduct;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -448,6 +450,419 @@ public function course_url_slug($id){
     public function shopcart()
     {
         return view('pages.shop-cart');
+    }
+
+    public function cartPreference(Request $request)
+    {
+        $validated = $request->validate([
+            'item_id' => 'required|array|min:1',
+            'item_id.*' => 'integer|distinct'
+        ]);
+
+        if (!config('services.mercadopago.token') || !config('services.mercadopago.key')) {
+            return response()->json(['error' => 'MercadoPago no esta configurado correctamente.'], 422);
+        }
+
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
+
+        $items = $this->cartItemsFromIds($validated['item_id']);
+        $mercadoItems = [];
+        $products = [];
+        $total = 0;
+
+        foreach ($items as $item) {
+            $price = round((float) $item->price, 2);
+            $mercadoItems[] = [
+                'id' => $item->id,
+                'title' => $item->name,
+                'quantity' => 1,
+                'currency_id' => 'PEN',
+                'unit_price' => $price
+            ];
+
+            $products[] = [
+                'id' => $item->id,
+                'image' => $item->image,
+                'name' => $item->name,
+                'item_id' => $item->item_id,
+                'price' => $price,
+                'quantity' => 1,
+                'total' => $price,
+                'additional' => $item->additional
+            ];
+
+            $total += $price;
+        }
+
+        try {
+            $preference = (new PreferenceClient())->create([
+                'items' => $mercadoItems,
+            ]);
+        } catch (\MercadoPago\Exceptions\MPApiException $e) {
+            $response = $e->getApiResponse();
+            $content = $response ? $response->getContent() : [];
+
+            return response()->json([
+                'error' => 'No se pudo crear la preferencia de MercadoPago: ' . ($content['message'] ?? $e->getMessage())
+            ], 412);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'No se pudo crear la preferencia de MercadoPago.'
+            ], 500);
+        }
+
+        return response()->json([
+            'preference' => $preference->id,
+            'products' => $products,
+            'total' => round($total, 2),
+            'public_key' => config('services.mercadopago.key'),
+        ]);
+    }
+
+    public function cartProcessPayment(Request $request)
+    {
+        $validated = $request->validate([
+            'item_id' => 'required|array|min:1',
+            'item_id.*' => 'integer|distinct',
+            'cardFormData' => 'required|array',
+        ]);
+
+        $cardData = $validated['cardFormData'];
+        $items = $this->cartItemsFromIds($validated['item_id']);
+        $expectedTotal = $this->cartTotal($items);
+        $sentTotal = round((float) ($cardData['transaction_amount'] ?? 0), 2);
+
+        if (abs($expectedTotal - $sentTotal) > 0.01) {
+            return response()->json([
+                'error' => 'El importe enviado no coincide con el precio actual de los productos.'
+            ], 422);
+        }
+
+        if (!config('services.mercadopago.token')) {
+            return response()->json(['error' => 'MercadoPago no esta configurado correctamente.'], 422);
+        }
+
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
+        $payer = $this->normalizeMercadoPagoPayer($cardData['payer'] ?? []);
+        if (!$payer) {
+            return response()->json(['error' => 'Ingresa un correo valido en el formulario de MercadoPago.'], 422);
+        }
+
+        try {
+            $payment = (new PaymentClient())->create([
+                'token' => $cardData['token'] ?? null,
+                'issuer_id' => $cardData['issuer_id'] ?? null,
+                'payment_method_id' => $cardData['payment_method_id'] ?? null,
+                'transaction_amount' => $expectedTotal,
+                'installments' => $cardData['installments'] ?? 1,
+                'payer' => $payer,
+            ]);
+        } catch (\MercadoPago\Exceptions\MPApiException $e) {
+            $response = $e->getApiResponse();
+            $content = $response ? $response->getContent() : [];
+            return response()->json([
+                'error' => 'Error al procesar el pago: ' . ($content['message'] ?? $e->getMessage())
+            ], 412);
+        }
+
+        if ($payment->status !== 'approved') {
+            return response()->json([
+                'status' => $payment->status,
+                'message' => $payment->status_detail,
+            ], 422);
+        }
+
+        $identification = $payer['identification'] ?? [];
+
+        DB::beginTransaction();
+        try {
+            $sale = OnliSale::create([
+                'module_name' => 'Onlineshop',
+                'person_id' => null,
+                'clie_full_name' => trim(($payer['first_name'] ?? '') . ' ' . ($payer['last_name'] ?? '')),
+                'phone' => $payer['phone']['number'] ?? null,
+                'email' => $payer['email'] ?? null,
+                'total' => $expectedTotal,
+                'transaction_amount' => $expectedTotal,
+                'installments' => $cardData['installments'] ?? 1,
+                'identification_type' => $identification['type'] ?? null,
+                'identification_number' => $identification['number'] ?? null,
+                'token' => $cardData['token'] ?? null,
+                'response_status' => $payment->status,
+                'response_status_detail' => $payment->status_detail,
+                'response_id' => null,
+                'response_date_approved' => Carbon::now()->format('Y-m-d'),
+                'response_payer' => json_encode($request->all()),
+                'response_payment_method_id' => $cardData['payment_method_id'] ?? null,
+            ]);
+
+            $sale->mercado_payment_id = $payment->id;
+            $sale->mercado_payment = json_encode($payment);
+
+            foreach ($items as $item) {
+                OnliSaleDetail::create([
+                    'sale_id' => $sale->id,
+                    'item_id' => $item->item_id,
+                    'entitie' => $item->entitie,
+                    'price' => $item->price,
+                    'quantity' => 1,
+                    'onli_item_id' => $item->id,
+                ]);
+            }
+
+            $sale->save();
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'No se pudo registrar la venta aprobada.'], 500);
+        }
+
+        return response()->json([
+            'status' => $payment->status,
+            'message' => $payment->status_detail,
+            'sale_id' => $sale->id,
+            'payer' => [
+                'names' => $sale->clie_full_name,
+                'email' => $sale->email,
+                'document_type' => $sale->identification_type,
+                'document_number' => $sale->identification_number,
+            ],
+        ]);
+    }
+
+    public function cartFinalize(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sale_id' => 'required|integer|exists:onli_sales,id',
+            'account_mode' => 'required|in:login,create',
+            'email' => 'required|email',
+            'password' => 'nullable|string|min:6',
+            'names' => 'required_if:account_mode,create|nullable|string|max:255',
+            'dni' => 'required_if:account_mode,create|nullable|string|max:20',
+            'invoice_type' => 'required|in:boleta,factura',
+            'invoice_name' => 'required_if:invoice_type,boleta|nullable|string|max:255',
+            'invoice_dni' => 'required_if:invoice_type,boleta|nullable|string|max:20',
+            'invoice_email' => 'nullable|email',
+            'invoice_ruc' => 'required_if:invoice_type,factura|nullable|string|max:20',
+            'invoice_business_name' => 'required_if:invoice_type,factura|nullable|string|max:255',
+            'invoice_address' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+        $onliSale = OnliSale::with('details.item')->findOrFail($validated['sale_id']);
+
+        if ($onliSale->response_status !== 'approved') {
+            return response()->json(['error' => 'El pago aun no fue aprobado.'], 422);
+        }
+
+        if ($onliSale->nota_sale_id) {
+            return response()->json(['error' => 'Esta venta ya fue finalizada.'], 422);
+        }
+
+        if ($validated['account_mode'] === 'create') {
+            if (User::where('email', $validated['email'])->exists()) {
+                return response()->json(['error' => 'Este email ya tiene una cuenta. Elige iniciar sesion.'], 422);
+            }
+
+            $existingPerson = Person::where('number', $validated['dni'])->first();
+            if ($existingPerson && User::where('person_id', $existingPerson->id)->exists()) {
+                return response()->json(['error' => 'Este DNI ya tiene una cuenta. Elige iniciar sesion.'], 422);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($validated['account_mode'] === 'login') {
+                if (!Auth::attempt(['email' => $validated['email'], 'password' => $validated['password'] ?? ''])) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'El email o la contrasena no son correctos.'], 422);
+                }
+
+                $request->session()->regenerate();
+                $user = Auth::user();
+                $person = Person::findOrFail($user->person_id);
+            } else {
+                $person = Person::firstOrCreate(
+                    ['number' => $validated['dni']],
+                    [
+                        'document_type_id' => 1,
+                        'short_name' => $validated['names'],
+                        'full_name' => $validated['names'],
+                        'number' => $validated['dni'],
+                        'telephone' => null,
+                        'email' => $validated['email'],
+                        'is_provider' => false,
+                        'is_client' => true,
+                        'names' => $validated['names'],
+                        'gender' => 'M',
+                        'status' => true
+                    ]
+                );
+
+                if (!$person->email) {
+                    $person->email = $validated['email'];
+                    $person->save();
+                }
+
+                $user = User::create([
+                    'name' => $person->names ?: $person->full_name,
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password'] ?: $validated['dni']),
+                    'person_id' => $person->id
+                ]);
+
+                Auth::login($user);
+
+                if (!$user->hasRole('Alumno')) {
+                    $role = Role::where('name', 'Alumno')->first();
+                    if ($role) {
+                        $user->assignRole($role);
+                    }
+                }
+            }
+
+            $student = AcaStudent::firstOrCreate(
+                ['person_id' => $person->id],
+                ['student_code' => $person->number ?: $person->id, 'new_student' => true]
+            );
+
+            $saleNote = $this->createCartSaleNote($onliSale, $person, $validated);
+            $onliSale->person_id = $person->id;
+            $onliSale->email = $onliSale->email ?: $person->email;
+            $onliSale->clie_full_name = $onliSale->clie_full_name ?: $person->full_name;
+            $onliSale->nota_sale_id = $saleNote->id;
+            $onliSale->save();
+
+            foreach ($onliSale->details as $detail) {
+                $item = $detail->item ?: OnliItem::find($detail->onli_item_id);
+                if (!$item) {
+                    continue;
+                }
+
+                AcaCapRegistration::firstOrCreate(
+                    ['student_id' => $student->id, 'course_id' => $item->item_id],
+                    [
+                        'status' => true,
+                        'modality_id' => 3,
+                        'unlimited' => true,
+                        'sale_note_id' => $saleNote->id,
+                        'amount_paid' => $detail->price,
+                    ]
+                );
+
+                $course = AcaCourse::find($item->item_id);
+                SaleProduct::create([
+                    'sale_id' => $saleNote->id,
+                    'product_id' => $item->item_id,
+                    'product' => json_encode($course ?: $item),
+                    'saleProduct' => json_encode([
+                        'onli_item_id' => $item->id,
+                        'item_id' => $item->item_id,
+                        'name' => $item->name,
+                        'price' => (float) $detail->price,
+                        'quantity' => (float) $detail->quantity,
+                        'student_id' => $student->id,
+                    ]),
+                    'price' => $detail->price,
+                    'discount' => 0,
+                    'quantity' => $detail->quantity,
+                    'total' => round($detail->price * $detail->quantity, 2),
+                    'entity_name_product' => AcaCourse::class
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'No se pudo finalizar la compra.'], 500);
+        }
+
+        try {
+            Mail::to($onliSale->email ?: $person->email)
+                ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $onliSale->id)->first()));
+        } catch (\Throwable $e) {
+            $onliSale->email_sent = false;
+            $onliSale->save();
+        }
+
+        return response()->json([
+            'url' => route('web_thanks', $onliSale->id)
+        ]);
+    }
+
+    private function cartItemsFromIds(array $ids)
+    {
+        $items = OnliItem::whereIn('id', $ids)->get()->keyBy('id');
+
+        if ($items->count() !== count($ids)) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                response()->json(['error' => 'Uno o mas productos del carrito ya no estan disponibles.'], 422)
+            );
+        }
+
+        return collect($ids)->map(fn ($id) => $items[(int) $id]);
+    }
+
+    private function cartTotal($items): float
+    {
+        return round($items->sum(fn ($item) => (float) $item->price), 2);
+    }
+
+    private function normalizeMercadoPagoPayer(array $payer): ?array
+    {
+        $email = strtolower(trim($payer['email'] ?? ''));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+
+        $payer['email'] = $email;
+
+        return $payer;
+    }
+
+    private function createCartSaleNote(OnliSale $onliSale, Person $person, array $data): Sale
+    {
+        $payments = [[
+            'type' => 6,
+            'reference' => $onliSale->mercado_payment_id,
+            'amount' => (float) $onliSale->total
+        ]];
+
+        $invoiceType = $data['invoice_type'] === 'factura' ? 1 : 2;
+        $invoiceName = $data['invoice_type'] === 'factura'
+            ? ($data['invoice_business_name'] ?? null)
+            : ($data['invoice_name'] ?? $person->full_name);
+        $invoiceNumber = $data['invoice_type'] === 'factura'
+            ? ($data['invoice_ruc'] ?? null)
+            : ($data['invoice_dni'] ?? $person->number);
+
+        return Sale::create([
+            'sale_date' => Carbon::now()->format('Y-m-d'),
+            'user_id' => Auth::id(),
+            'client_id' => $person->id,
+            'local_id' => 1,
+            'total' => $onliSale->total,
+            'advancement' => $onliSale->total,
+            'total_discount' => 0,
+            'payments' => $payments,
+            'petty_cash_id' => null,
+            'status' => true,
+            'physical' => 1,
+            'invoice_razon_social' => $invoiceName,
+            'invoice_ruc' => $invoiceNumber,
+            'invoice_direccion' => $data['invoice_address'] ?? null,
+            'invoice_ubigeo' => null,
+            'invoice_ubigeo_description' => null,
+            'invoice_type' => $invoiceType,
+        ]);
     }
 
     public function accounts()
@@ -978,14 +1393,24 @@ public function course_url_slug($id){
 
                 // Obtener los cursos (OnliItem) que coincidan con los onli_item_id
                 $courses = OnliItem::whereIn('id', $itemIds)->get();
+                $total = $sale->details->sum(function ($detail) {
+                    return (float) $detail->price * (float) $detail->quantity;
+                });
+
+                if ((float) $sale->total <= 0 && $total > 0) {
+                    $sale->total = round($total, 2);
+                    $sale->save();
+                }
             } else {
                 // Si no se encuentra la venta, inicializar cursos como una colección vacía
                 $courses = collect();
+                $total = 0;
             }
 
             return view('pages.thanks', [
                 'sale' => $sale,
                 'courses' => $courses,
+                'total' => round($total, 2),
             ]);
     }
 
