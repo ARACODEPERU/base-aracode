@@ -17,11 +17,11 @@ use Modules\Academic\Http\Controllers\AcaStudentApiController;
 |
 */
 
-Route::middleware('auth:api')->get('/academic', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:api')->get('/academic', function (Request $request) {
+//     return $request->user();
+// });
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('academic')->group(function () {
     // API Consultar estudiante por DNI
     Route::get('student/{dni}', [AcaStudentApiController::class, 'show'])
         ->name('aca_api_student_show');

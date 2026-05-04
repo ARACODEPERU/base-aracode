@@ -43,7 +43,6 @@ const storeIntegration = () => {
                 title: 'Éxito',
                 text: 'La integración ha sido creada correctamente.',
                 icon: 'success',
-                timer: 2000,
                 showConfirmButton: false,
                 padding: '2em',
                 customClass: 'sweet-alerts',

@@ -17,6 +17,7 @@ class IntegrationFieldMap extends Model
         'field_key',
         'field_value',
         'field_type',
+        'field_location',
         'source_type',
         'source_table',
         'source_field',

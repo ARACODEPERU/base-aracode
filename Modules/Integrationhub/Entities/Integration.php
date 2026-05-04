@@ -55,6 +55,11 @@ class Integration extends Model
         return $this->hasMany(IntegrationSchedule::class, 'integration_id');
     }
 
+    public function fieldMaps(): HasMany
+    {
+        return $this->hasMany(IntegrationFieldMap::class, 'integration_id');
+    }
+
     public function logs(): HasMany
     {
         return $this->hasMany(IntegrationExecLog::class, 'integration_id');

@@ -38,7 +38,7 @@ class IntegrationhubController extends Controller
         return Inertia::render('Integrationhub::Integration/Create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
@@ -131,15 +131,32 @@ class IntegrationhubController extends Controller
         $endpoint = IntegrationEndpoint::where('id', $request->endpoint_id)
             ->where('integration_id', $id)
             ->firstOrFail();
-
         // Start building the request
-        $url = rtrim($integration->url_base, '/') . '/' . ltrim($endpoint->url, '/');
-        
+
+        $url = rtrim($integration->url_base, '/') . '/' . ltrim($endpoint->endpoint_path, '/');
+
+        // Get enabled field maps ordered by sort_order
+        $fieldMaps = $endpoint->fieldMaps()->where('is_enabled', true)->orderBy('sort_order')->get();
+
+        // Path parameters (append to URL in order)
+        foreach ($fieldMaps->where('field_location', 'path') as $fieldMap) {
+            $url .= '/' . ($fieldMap->field_value ?? $fieldMap->default_value);
+        }
+
+        // Query parameters
+        $queryParams = [];
+        foreach ($fieldMaps->where('field_location', 'query') as $fieldMap) {
+            $queryParams[$fieldMap->field_key] = $fieldMap->field_value ? $fieldMap->field_value : $fieldMap->default_value;
+        }
+        if (!empty($queryParams)) {
+            $url .= (strpos($url, '?') !== false ? '&' : '?') . http_build_query($queryParams);
+        }
+        //dd($url);
         // Get enabled auth fields
-        $authFields = $integration->auths()->where('is_active', true)->get();
+        $authFields = $integration->auths()->where('is_enabled', true)->get();
         $headers = [];
         $body = [];
-        
+
         foreach ($authFields as $auth) {
             if ($auth->field_location === 'header') {
                 $headers[$auth->field_name] = $auth->field_value;
@@ -150,11 +167,16 @@ class IntegrationhubController extends Controller
             }
         }
 
-        // Get enabled field maps for this endpoint
-        $fieldMaps = $endpoint->fieldMaps()->where('is_active', true)->get();
-        
-        foreach ($fieldMaps as $fieldMap) {
-            $body[$fieldMap->field_key] = $fieldMap->field_value ?? $fieldMap->default_value;
+        // Body fields (only for POST/PUT/PATCH or when body_type != none)
+        if ($endpoint->http_method !== 'GET' || $endpoint->body_type != 'none') {
+            foreach ($fieldMaps->where('field_location', 'body') as $fieldMap) {
+                $body[$fieldMap->field_key] = $fieldMap->field_value ?? $fieldMap->default_value;
+            }
+        }
+
+        // Header fields from field maps
+        foreach ($fieldMaps->where('field_location', 'header') as $fieldMap) {
+            $headers[$fieldMap->field_key] = $fieldMap->field_value ?? $fieldMap->default_value;
         }
 
         $startTime = microtime(true);
@@ -171,12 +193,19 @@ class IntegrationhubController extends Controller
             ]);
 
             $options = [
-                'headers' => array_merge($headers, ['Content-Type' => 'application/json']),
-                'json' => $body,
+                'headers' => array_merge($headers, [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
+                ]),
                 'verify' => false
             ];
 
-            $response = $client->request($endpoint->method, $url, $options);
+            // Solo agregar json si hay datos en el body
+            if (!empty($body)) {
+                $options['json'] = $body;
+            }
+
+            $response = $client->request($endpoint->http_method, $url, $options);
 
             $executionTime = round((microtime(true) - $startTime) * 1000);
             $statusCode = $response->getStatusCode();
@@ -366,6 +395,7 @@ class IntegrationhubController extends Controller
             'field_key' => 'required|string|max:100',
             'field_value' => 'nullable|string|max:255',
             'field_type' => 'required|in:static,table_field,query,computed,custom',
+            'field_location' => 'required|in:query,path,body,header',
             'source_type' => 'required|in:static,database,query,function',
             'source_table' => 'nullable|string|max:100',
             'source_field' => 'nullable|string|max:100',
@@ -387,6 +417,7 @@ class IntegrationhubController extends Controller
                 'field_key' => $request->field_key,
                 'field_value' => $request->field_value ?? null,
                 'field_type' => $request->field_type,
+                'field_location' => $request->field_location,
                 'source_type' => $request->source_type,
                 'source_table' => $request->source_table ?? null,
                 'source_field' => $request->source_field ?? null,
@@ -408,6 +439,7 @@ class IntegrationhubController extends Controller
                 'field_key' => $request->field_key,
                 'field_value' => $request->field_value ?? null,
                 'field_type' => $request->field_type,
+                'field_location' => $request->field_location,
                 'source_type' => $request->source_type,
                 'source_table' => $request->source_table ?? null,
                 'source_field' => $request->source_field ?? null,
@@ -627,16 +659,16 @@ class IntegrationhubController extends Controller
             if (count($parts) < 5) {
                 return null;
             }
-            
+
             $minute = $parts[0];
             $hour = $parts[1];
             $day = $parts[2];
             $month = $parts[3];
             $weekday = $parts[4];
-            
+
             $now = now();
             $next = $now->copy()->startOfDay();
-            
+
             // Parse minute
             if ($minute === '*') {
                 $next->minute(0);
@@ -648,7 +680,7 @@ class IntegrationhubController extends Controller
             } else {
                 $next->minute((int)$minute);
             }
-            
+
             // Parse hour
             if ($hour === '*') {
                 if ($minute !== '*') {
@@ -666,19 +698,19 @@ class IntegrationhubController extends Controller
             } else {
                 $next->hour((int)$hour);
             }
-            
+
             // If the calculated time is in the past, add appropriate interval
             if ($next->lte($now)) {
                 if ($minute !== '*' && strpos($minute, '*/') === false) {
                     $next->addHour();
                 }
             }
-            
+
             // If still in the past, just return now + 1 day as fallback
             if ($next->lte($now)) {
                 return $now->addDay()->startOfDay();
             }
-            
+
             return $next;
         } catch (\Exception $e) {
             return null;

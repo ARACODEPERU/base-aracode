@@ -48,6 +48,7 @@ const newFieldMap = useForm({
     field_key: '',
     field_value: '',
     field_type: 'table_field',
+    field_location: 'query',
     source_type: 'database',
     source_table: '',
     source_field: '',
@@ -246,6 +247,7 @@ const editFieldMap = (fieldMap) => {
     newFieldMap.field_key = fieldMap.field_key;
     newFieldMap.field_value = fieldMap.field_value || '';
     newFieldMap.field_type = fieldMap.field_type;
+    newFieldMap.field_location = fieldMap.field_location || 'query';
     newFieldMap.source_type = fieldMap.source_type;
     newFieldMap.source_table = fieldMap.source_table || '';
     newFieldMap.default_value = fieldMap.default_value || '';
@@ -499,9 +501,9 @@ const saveSubitemsList = async () => {
         showSubitemsListModal.value = false;
         return;
     }
-    
+
     savingSubitems.value = true;
-    
+
     try {
         // Enviar al backend
         await axios.put(route('integrationhub_update_subitems', props.integrationId), {
@@ -514,7 +516,7 @@ const saveSubitemsList = async () => {
         if (fieldMapIndex >= 0) {
             props.fieldMaps[fieldMapIndex].subitems = subitemsList.value;
         }
-        
+
         savingSubitems.value = false;
 
         Swal2.fire({
@@ -796,6 +798,7 @@ const loadArrayDefaultColumns = async (table) => {
                     <th class="px-4 py-3">Endpoint</th>
                     <th class="px-4 py-3">Campo Clave</th>
                     <th class="px-4 py-3">Campo Valor</th>
+                    <th class="px-4 py-3">Ubicación</th>
                     <th class="px-4 py-3">Tipo</th>
                     <th class="px-4 py-3">Origen</th>
                     <th class="px-4 py-3 w-24">Subitems</th>
@@ -834,6 +837,11 @@ const loadArrayDefaultColumns = async (table) => {
                         <code class="text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-zinc-700 px-2 py-1 rounded">
                             {{ fm.field_value || fm.default_value || '-' }}
                         </code>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 text-xs rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300">
+                            {{ fm.field_location === 'query' ? 'Param URL' : (fm.field_location === 'path' ? 'Ruta URL' : (fm.field_location === 'body' ? 'Body' : 'Header')) }}
+                        </span>
                     </td>
                     <td class="px-4 py-3">
                         <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
@@ -1030,12 +1038,34 @@ const loadArrayDefaultColumns = async (table) => {
                     </div>
                     <div>
                         <InputLabel for="source_type" value="Tipo de Origen" />
-                        <select id="source_type" v-model="newFieldMap.source_type" class="form-select">
+                        <select id="source_type" v-model="newFieldMap.source_type" class="form-select" @change="onSourceTypeChange">
                             <option v-for="type in sourceTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                         </select>
                         <InputError :message="newFieldMap.errors.source_type" class="mt-2" />
                     </div>
                 </div>
+
+                <!-- Ubicación del Campo -->
+                <div>
+                    <InputLabel for="field_location" value="Ubicación del Campo" />
+                    <select id="field_location" v-model="newFieldMap.field_location" class="form-select">
+                        <option value="query">Parámetro URL (?key=value)</option>
+                        <option value="path">Ruta URL (/valor)</option>
+                        <option value="body">Cuerpo JSON (body)</option>
+                        <option value="header">Cabecera HTTP (header)</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Define dónde se enviará este campo en la petición</p>
+                    <InputError :message="newFieldMap.errors.field_location" class="mt-2" />
+                </div>
+
+                <div>
+                    <InputLabel for="source_type" value="Tipo de Origen" />
+                    <select id="source_type" v-model="newFieldMap.source_type" class="form-select">
+                        <option v-for="type in sourceTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                    </select>
+                    <InputError :message="newFieldMap.errors.source_type" class="mt-2" />
+                </div>
+
 
                 <!-- Tabla de Origen + Campo de Origen (solo si source_type = database) -->
                 <div v-if="showSourceFields" class="grid grid-cols-2 gap-3" :class="{'opacity-50 pointer-events-none': newFieldMap.has_subitems}">

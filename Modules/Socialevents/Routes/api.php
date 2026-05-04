@@ -22,7 +22,7 @@ use Modules\Socialevents\Http\Controllers\Api\MatchAdminController;
 */
 Route::prefix('socialevents')->name('api.')->group(function () {
 	// Rutas públicas - sin autenticación
-	Route::prefix('v1')->name('api.')->group(function () {
+	Route::prefix('v1')->group(function () {
 		// Información del evento y edición
 		Route::get('events', [EventApiController::class, 'getActiveEvents'])
 			->name('events.active');
