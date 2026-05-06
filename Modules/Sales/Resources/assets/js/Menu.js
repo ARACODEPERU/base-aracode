@@ -81,7 +81,7 @@ const menuSales = [
             {
                 route: route("sales.index"),
                 status: false,
-                text: "Punto de venta (POS)",
+                text: "Notas de venta",
                 permissions: "punto_ventas",
                 icom: faCashRegister,
             },

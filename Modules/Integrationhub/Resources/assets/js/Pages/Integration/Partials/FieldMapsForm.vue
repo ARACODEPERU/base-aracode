@@ -1058,15 +1058,6 @@ const loadArrayDefaultColumns = async (table) => {
                     <InputError :message="newFieldMap.errors.field_location" class="mt-2" />
                 </div>
 
-                <div>
-                    <InputLabel for="source_type" value="Tipo de Origen" />
-                    <select id="source_type" v-model="newFieldMap.source_type" class="form-select">
-                        <option v-for="type in sourceTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                    </select>
-                    <InputError :message="newFieldMap.errors.source_type" class="mt-2" />
-                </div>
-
-
                 <!-- Tabla de Origen + Campo de Origen (solo si source_type = database) -->
                 <div v-if="showSourceFields" class="grid grid-cols-2 gap-3" :class="{'opacity-50 pointer-events-none': newFieldMap.has_subitems}">
                     <div>

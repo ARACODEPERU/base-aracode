@@ -145,24 +145,63 @@ class IntegrationhubController extends Controller
 
         // Query parameters
         $queryParams = [];
+
         foreach ($fieldMaps->where('field_location', 'query') as $fieldMap) {
-            $queryParams[$fieldMap->field_key] = $fieldMap->field_value ? $fieldMap->field_value : $fieldMap->default_value;
+            $sqlOriginal = $fieldMap->field_value; // "select number from people where id = ?"
+            $defaultValue = $fieldMap->default_value; // "10"
+            $finalValue = null;
+
+            // 1. Verificamos si es una consulta SQL
+            if (stripos($sqlOriginal, 'select') !== false) {
+
+                // 2. Reemplazamos el '?' por el valor por defecto para la prueba
+                // Usamos var_export o comillas para asegurar que el SQL sea válido
+                $sqlReady = str_replace('?', "'$defaultValue'", $sqlOriginal);
+                    $data = DB::selectOne($sqlReady);
+
+                try {
+                    // 3. Ejecutamos la consulta
+                    // selectOne devuelve un objeto con la primera fila encontrada
+
+                    if ($data) {
+                        // Extraemos el primer valor de la fila (el número de DNI)
+                        $dataArray = (array)$data;
+                        $finalValue = reset($dataArray);
+                    } else {
+                        // Si no hay resultados en la DB, podemos usar el default como respaldo
+                        $finalValue = $defaultValue;
+                    }
+                } catch (\Exception $e) {
+                    // Si el SQL tiene un error (ej: escribiste 'form' en vez de 'from')
+                    // usamos el default para que la URL no salga vacía
+                    $finalValue = $defaultValue;
+                }
+            } else {
+                // Si no es un SQL, simplemente usamos el valor o el default
+                $finalValue = $sqlOriginal ?: $defaultValue;
+            }
+
+            // 4. Guardamos el valor REAL obtenido en el array de parámetros
+            $queryParams[$fieldMap->field_key] = $finalValue;
         }
+
         if (!empty($queryParams)) {
             $url .= (strpos($url, '?') !== false ? '&' : '?') . http_build_query($queryParams);
         }
-        //dd($url);
+
         // Get enabled auth fields
         $authFields = $integration->auths()->where('is_enabled', true)->get();
+
         $headers = [];
         $body = [];
 
         foreach ($authFields as $auth) {
-            if ($auth->field_location === 'header') {
+            if ($auth->auth_location === 'header') {
                 $headers[$auth->field_name] = $auth->field_value;
-            } elseif ($auth->field_location === 'body') {
+            } elseif ($auth->auth_location === 'body') {
                 $body[$auth->field_name] = $auth->field_value;
-            } elseif ($auth->field_location === 'query') {
+            } elseif ($auth->auth_location === 'query') {
+
                 $url .= (strpos($url, '?') !== false ? '&' : '?') . $auth->field_name . '=' . $auth->field_value;
             }
         }
@@ -175,6 +214,7 @@ class IntegrationhubController extends Controller
         }
 
         // Header fields from field maps
+
         foreach ($fieldMaps->where('field_location', 'header') as $fieldMap) {
             $headers[$fieldMap->field_key] = $fieldMap->field_value ?? $fieldMap->default_value;
         }
