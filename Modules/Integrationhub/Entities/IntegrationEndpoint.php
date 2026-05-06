@@ -32,6 +32,6 @@ class IntegrationEndpoint extends Model
     }
     public function fieldmaps()
     {
-        return $this->hasMany(IntegrationFieldmap::class, 'endpoint_id');
+        return $this->hasMany(IntegrationFieldMap::class, 'endpoint_id');
     }
 }
