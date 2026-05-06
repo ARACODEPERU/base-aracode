@@ -33,7 +33,7 @@ class IntegrationFieldMap extends Model
         'default_table',
         'default_field'
     ];
-
+    //default_type: fixed, source, custom
     protected $casts = [
         'transform_rule' => 'array',
         'is_enabled' => 'boolean',
