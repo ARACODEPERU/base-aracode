@@ -286,6 +286,19 @@ class AcaExamController extends Controller
             })->toJson();
     }
 
+    public function markStudentExamAsQualified($id)
+    {
+        $studentExam = AcaStudentExam::findOrFail($id);
+        $studentExam->status = 'calificado';
+        $studentExam->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'El examen fue marcado como calificado.',
+            'status' => $studentExam->status,
+        ]);
+    }
+
     public function questionAnswerPanelModule($cId, $mId, $eId)
     {
         $exam = AcaExam::with([

@@ -176,6 +176,29 @@
         return answer && !isNaN(answer.punctuation);
     }
 
+    const markAsQualified = (studentExam) => {
+        axios.post(route('aca_student_exam_mark_qualified', studentExam.id)).then(() => {
+            studentExam.status = 'calificado';
+            refreshTable();
+            Swal.fire({
+                icon: 'success',
+                title: 'Actualizado correctamente',
+                text: 'El examen ahora figura como calificado.',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }).catch((error) => {
+            const message = error.response?.data?.message || 'No se pudo cambiar el estado del examen.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message,
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        });
+    }
+
 
     const getAnswerPunctuation = (questionId) => {
         const answer = examForm.answers.find(ans => ans.id == questionId);
@@ -325,7 +348,15 @@
                     <template #status="props">
                         <div>
                             <span v-if="props.rowData.status == 'terminado'" v-tippy="{ content: 'El alumno termino su examen satisfactoriamente pero falta calificar algunas preguntas.', placement: 'bottom'}" class="badge bg-warning">Terminado</span>
-                            <span v-else-if="props.rowData.status == 'pendiente'" v-tippy="{ content: 'Le falta terminar de resolver su examen.', placement: 'bottom'}" class="badge bg-primary">Pendiente</span>
+                            <button
+                                v-else-if="props.rowData.status == 'pendiente'"
+                                @click="markAsQualified(props.rowData)"
+                                v-tippy="{ content: 'Cambiar a calificado', placement: 'bottom', theme: 'material' }"
+                                type="button"
+                                class="badge bg-primary hover:bg-success cursor-pointer border-0 transition-colors"
+                            >
+                                Pendiente
+                            </button>
                             <span v-else-if="props.rowData.status == 'calificado'" v-tippy="{ content: 'El examen ya fue calificado correctamente.', placement: 'bottom'}" class="badge bg-success">Calificado</span>
                         </div>
                     </template>

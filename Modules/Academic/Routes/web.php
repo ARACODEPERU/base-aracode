@@ -446,6 +446,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->name('aca_student_exam_review_exams');
 
     Route::get('student/review/exams/table', [AcaExamController::class, 'getAlumnsExam'])->name('aca_student_exam_review_exams_table');
+    Route::middleware(['middleware' => 'permission:aca_cursos_revisar_examenes'])
+        ->post('student/review/exams/{id}/mark-qualified', [AcaExamController::class, 'markStudentExamAsQualified'])
+        ->name('aca_student_exam_mark_qualified');
     Route::post('student/grade/exam/response/store', [AcaExamAnswerController::class, 'gradeExamResponse'])->name('aca_student_grade_exam_response_store');
     // //////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
@@ -683,12 +686,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_gestion_de_calificaciones'])
         ->post('grade/management/store', [AcaGradeManagementController::class, 'store'])
         ->name('aca_grade_management_store');
-
 });
 
 Route::middleware(['auth', 'role:Administrador|webAdmin|admin|Docente'])
     ->get('/landing_preview/{id}', [WebPageController::class, 'course_landing_preview'])
     ->name('landing_preview');
+
 
 Route::get('asistencia/registrar/clase', [AcaAttendanceController::class, 'registerAttendance']);
 Route::post('asistencia/registrar/clase/store', [AcaAttendanceController::class, 'storeAttendance'])->name('aca_asistencia_store');
