@@ -83,19 +83,29 @@ class SaleSummaryController extends Controller
                         'status' => $document['status'],
                         'total' => $document['invoice_mto_imp_sale'],
                     ]);
-
-                    SaleDocument::where('id', $document['id'])
-                        ->update(['invoice_status' => 'Enviada']);
                 }
 
                 $factura = new Resumen;
                 $result = $factura->create($summary, $documents);
+
+                // Marcar documentos como Enviada solo si el envío fue exitoso o ya fue enviado antes
+                $shouldMarkSent = $result['success']
+                    || ($result['is_already_sent'] ?? false);
+
+                if ($shouldMarkSent) {
+                    foreach ($documents as $document) {
+                        SaleDocument::where('id', $document['id'])
+                            ->update(['invoice_status' => 'Enviada']);
+                    }
+                }
 
                 return [
                     'success' => $result['success'],
                     'code' => $result['code'],
                     'message' => $result['message'],
                     'notes' => $result['notes'],
+                    'is_sunat_unavailable' => $result['is_sunat_unavailable'] ?? false,
+                    'is_already_sent' => $result['is_already_sent'] ?? false,
                 ];
             });
 
@@ -178,7 +188,52 @@ class SaleSummaryController extends Controller
             'code' => $result['code'],
             'message' => $result['message'],
             'notes' => $result['notes'],
+            'is_sunat_unavailable' => $result['is_sunat_unavailable'] ?? false,
+            'is_already_sent' => $result['is_already_sent'] ?? false,
         ]);
+    }
+
+    public function retrySummary($id)
+    {
+        try {
+            $summary = SaleSummary::findOrFail($id);
+
+            if ($summary->status !== 'sunat_disponible') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El resumen no está en estado de reintento.',
+                ]);
+            }
+
+            $documents = SaleDocument::join('sale_summary_details', 'sale_summary_details.document_id', 'sale_documents.id')
+                ->select('sale_documents.*')
+                ->where('summary_id', $id)
+                ->get()
+                ->toArray();
+
+            $factura = new Resumen;
+            $result = $factura->create($summary, $documents);
+
+            if ($result['success'] || ($result['is_already_sent'] ?? false)) {
+                foreach ($documents as $document) {
+                    SaleDocument::where('id', $document['id'])
+                        ->update(['invoice_status' => 'Enviada']);
+                }
+            }
+
+            return response()->json([
+                'success' => $result['success'],
+                'code' => $result['code'],
+                'message' => $result['message'],
+                'is_sunat_unavailable' => $result['is_sunat_unavailable'] ?? false,
+                'is_already_sent' => $result['is_already_sent'] ?? false,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function destroySummary($id)

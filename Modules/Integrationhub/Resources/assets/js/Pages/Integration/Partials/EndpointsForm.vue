@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Swal2 from 'sweetalert2';
 import axios from 'axios';
-import ModalSmall from '@/Components/ModalSmall.vue';
+import ModalLarge from '@/Components/ModalLarge.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { useForm, router } from '@inertiajs/vue3';
@@ -287,7 +287,7 @@ const refreshEndpoints = async () => {
     </div>
 
     <!-- Modal Endpoint -->
-    <ModalSmall :show="showModal" :onClose="() => showModal = false" :icon="'/img/punto-final.png'">
+    <ModalLarge :show="showModal" :onClose="() => showModal = false" :icon="'/img/punto-final.png'">
         <template #title>
             {{ editingIndex !== null ? 'Editar Endpoint' : 'Agregar Endpoint' }}
         </template>
@@ -308,21 +308,23 @@ const refreshEndpoints = async () => {
                     <p class="mt-1 text-xs text-gray-500">Ruta relativa a la URL base (ej: /api/users, /customers/list)</p>
                     <InputError :message="newEndpoint.errors.endpoint_path" class="mt-2" />
                 </div>
-                <div>
-                    <InputLabel for="http_method" value="Método HTTP *" />
-                    <select id="http_method" v-model="newEndpoint.http_method" class="form-select">
-                        <option v-for="method in httpMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Tipo de solicitud: GET (obtener), POST (crear), PUT (actualizar), DELETE (eliminar)</p>
-                    <InputError :message="newEndpoint.errors.http_method" class="mt-2" />
-                </div>
-                <div>
-                    <InputLabel for="body_type" value="Tipo de Body *" />
-                    <select id="body_type" v-model="newEndpoint.body_type" class="form-select">
-                        <option v-for="type in bodyTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Formato del cuerpo: JSON (más común), XML, Form Data, Raw o Ninguno</p>
-                    <InputError :message="newEndpoint.errors.body_type" class="mt-2" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <InputLabel for="http_method" value="Método HTTP *" />
+                        <select id="http_method" v-model="newEndpoint.http_method" class="form-select">
+                            <option v-for="method in httpMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Tipo de solicitud: GET (obtener), POST (crear), PUT (actualizar), DELETE (eliminar)</p>
+                        <InputError :message="newEndpoint.errors.http_method" class="mt-2" />
+                    </div>
+                    <div>
+                        <InputLabel for="body_type" value="Tipo de Body *" />
+                        <select id="body_type" v-model="newEndpoint.body_type" class="form-select">
+                            <option v-for="type in bodyTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Formato del cuerpo: JSON (más común), XML, Form Data, Raw o Ninguno</p>
+                        <InputError :message="newEndpoint.errors.body_type" class="mt-2" />
+                    </div>
                 </div>
             </div>
         </template>
@@ -332,5 +334,5 @@ const refreshEndpoints = async () => {
                 {{ saving ? 'Guardando...' : 'Guardar' }}
             </PrimaryButton>
         </template>
-    </ModalSmall>
+    </ModalLarge>
 </template>

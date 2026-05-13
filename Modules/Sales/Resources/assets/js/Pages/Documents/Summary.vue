@@ -141,7 +141,39 @@ const displaySearchLoading = ref(false);
                     preserveState: true,
                     preserveScroll: true,
                 });
-            }else{
+            } else if (res.data.is_sunat_unavailable) {
+                Swal.fire({
+                    title: 'SUNAT no disponible',
+                    html: 'Los servidores de SUNAT están saturados temporalmente. El sistema reintentará el envío automáticamente en unos minutos.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                documents.value = [];
+                getCurrentDate();
+                displayModalCreateSummary.value = false;
+                router.visit(route('salesummaries_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            } else if (res.data.is_already_sent) {
+                Swal.fire({
+                    title: 'Ya enviado anteriormente',
+                    html: 'El comprobante ya había sido recibido por SUNAT.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
+                    icon: 'info',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                documents.value = [];
+                getCurrentDate();
+                displayModalCreateSummary.value = false;
+                router.visit(route('salesummaries_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            } else {
                 Swal.fire({
                     title: 'Error',
                     html: 'Codigo: '+ res.data.code + '<br> Descripcion: ' + res.data.message ,
@@ -185,7 +217,33 @@ const displaySearchLoading = ref(false);
                     preserveState: true,
                     preserveScroll: true,
                 });
-            }else{
+            } else if (res.data.is_sunat_unavailable) {
+                Swal.fire({
+                    title: 'SUNAT no disponible',
+                    html: 'Los servidores de SUNAT están saturados temporalmente. El sistema reintentará el envío automáticamente en unos minutos. No es necesario que haga nada.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                router.visit(route('salesummaries_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            } else if (res.data.is_already_sent) {
+                Swal.fire({
+                    title: 'Ya enviado anteriormente',
+                    html: 'El comprobante ya había sido recibido por SUNAT.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
+                    icon: 'info',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                router.visit(route('salesummaries_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            } else {
                 Swal.fire({
                     title: 'Error',
                     html: 'Codigo: '+ res.data.code + '<br> Descripcion: ' + res.data.message ,
@@ -240,6 +298,70 @@ const displaySearchLoading = ref(false);
     const cloceModalDetailsDocuments = () => {
         displayModalDetailDocuments.value = false;
     }
+
+    const displayModalSunatCodes = ref(false);
+    const openModalSunatCodes = () => { displayModalSunatCodes.value = true; }
+    const closeModalSunatCodes = () => { displayModalSunatCodes.value = false; }
+
+    const sunatCodes = [
+        { code: '0', description: 'Aceptado', type: 'success' },
+        { code: '0109', description: 'Error de autenticaci\u00f3n - SUNAT no disponible temporalmente', type: 'warning' },
+        { code: '0127', description: 'El ticket de consulta no existe o ha expirado', type: 'error' },
+        { code: '2223', description: 'El archivo ya fue presentado anteriormente ante SUNAT', type: 'warning' },
+        { code: '2325', description: 'Aceptado con observaciones', type: 'warning' },
+        { code: '2335', description: 'El comprobante no cumple con el formato establecido', type: 'error' },
+        { code: '2016', description: 'El tipo de documento no es v\u00e1lido', type: 'error' },
+        { code: '2024', description: 'El n\u00famero de comprobante ya existe', type: 'error' },
+        { code: '2033', description: 'El monto total no coincide con los montos informados', type: 'error' },
+        { code: '2045', description: 'La fecha de emisi\u00f3n no corresponde al periodo declarado', type: 'error' },
+        { code: '2062', description: 'El RUC del emisor no est\u00e1 autorizado', type: 'error' },
+        { code: '2064', description: 'El comprobante fue rechazado por SUNAT', type: 'error' },
+        { code: '130-139', description: 'Errores de conexi\u00f3n con SUNAT (timeout, servidor ca\u00eddo, etc.)', type: 'error' },
+        { code: '-1', description: 'Timeout - SUNAT no respondi\u00f3 a tiempo', type: 'error' },
+        { code: '1033', description: 'Error interno del servicio SUNAT', type: 'error' },
+    ];
+
+    const retrySummary = (id, index) => {
+        let btnCheck = document.getElementById('btn-retry-summary'+ index);
+        let spCheck = document.getElementById('sp-retry-summary'+ index);
+        btnCheck.style.width = '120';
+        btnCheck.style.cursor = 'not-allowed';
+        spCheck.style.display = 'block';
+        btnCheck.style.opacity = '0.35';
+
+        axios.get(route('salesummaries_retry', id)).then((res) => {
+            if (res.data.success || res.data.is_already_sent) {
+                Swal.fire({
+                    title: 'Informaci\u00f3n Importante',
+                    text: 'El resumen se reenvi\u00f3 correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            } else if (res.data.is_sunat_unavailable) {
+                Swal.fire({
+                    title: 'SUNAT no disponible',
+                    text: 'Los servidores de SUNAT est\u00e1n saturados temporalmente. El sistema reintentar\u00e1 el env\u00edo autom\u00e1ticamente en unos minutos. No es necesario que haga nada.',
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    html: 'Codigo: '+ res.data.code + '<br> Descripcion: ' + res.data.message,
+                    icon: 'error',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            }
+            router.visit(route('salesummaries_list'), {
+                replace: false,
+                preserveState: true,
+                preserveScroll: true,
+            });
+        });
+    }
 </script>
 
 <template>
@@ -257,6 +379,33 @@ const displaySearchLoading = ref(false);
                 <span class="ltr:pr-2 rtl:pl-2"><strong class="ltr:mr-1 rtl:ml-1">Resumen diario:</strong>Para comunicar las boletas de ventas emitidas o anuladas, así como las notas de crédito/débito releacionadas, necesita hacerlo mediante un resumen diario. A diferencia del envío de una factura, donde la respuesta es inmediata, en este documento debemos hacer un consulta adicional para conocer su estado utilizando el numero de ticket.</span>
                 <button type="button" class="ltr:ml-auto rtl:mr-auto hover:opacity-80">
                     <icon-x />
+                </button>
+            </div>
+
+            <!-- Leyenda de estados -->
+            <div class="flex flex-wrap items-center gap-4 px-4 py-2 text-xs border rounded-lg bg-gray-50 dark:bg-zinc-800 dark:border-zinc-600">
+                <span class="font-semibold text-gray-700 dark:text-gray-300">Estados:</span>
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-3 h-3 rounded-full bg-green-500"></span> Enviado
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-3 h-3 rounded-full bg-blue-500"></span> Aceptado
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-3 h-3 rounded-full bg-orange-400"></span> SUNAT no disponible
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-3 h-3 rounded-full bg-purple-500"></span> Ya enviado
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-3 h-3 rounded-full bg-red-500"></span> Rechazado
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="inline-block w-3 h-3 rounded-full bg-gray-400"></span> Registrado
+                </span>
+                <button @click="openModalSunatCodes" type="button" class="ml-auto btn btn-xs btn-outline-info flex items-center gap-1" v-tippy="{ content: 'Ver c\u00f3digos de respuesta SUNAT', placement: 'bottom' }">
+                    <svg class="w-4 h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336h24V272H216c-13.3 0-24-10.7-24-24s10.7-24 24-24h48c13.3 0 24 10.7 24 24v88h8c13.3 0 24 10.7 24 24s-10.7 24-24 24H216c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
+                    Códigos SUNAT
                 </button>
             </div>
             <!-- ====== Table Section Start -->
@@ -318,7 +467,7 @@ const displaySearchLoading = ref(false);
                             </thead>
                             <tbody>
                                 <template v-for="(summary, index) in summaries.data" :key="summary.id">
-                                    <tr :class="summary.status ==='registrado' ? '' : summary.status ==='Rechazado' ? 'text-danger': summary.status ==='Enviado'? 'text-success' : 'text-primary'">
+                                    <tr :class="summary.status ==='registrado' ? '' : summary.status ==='Rechazado' ? 'text-danger': summary.status ==='Enviado'? 'text-success' : summary.status ==='sunat_disponible' ? 'text-warning' : summary.status ==='fue_enviado' ? 'text-secondary' : 'text-primary'">
                                         <td class="text-center">
                                             <div class="flex space-x-2 items-center justify-center">
                                                 <button :id="'btn-check-summary'+index" @click="statusTicket(summary.id,summary.ticket,index)" v-if="summary.status ==='Enviado'" type="button" class="btn btn-info text-sm btn-sm flex">
@@ -327,6 +476,13 @@ const displaySearchLoading = ref(false);
                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                                     </svg>
                                                     Consultar
+                                                </button>
+                                                <button :id="'btn-retry-summary'+index" @click="retrySummary(summary.id,index)" v-if="summary.status ==='sunat_disponible'" type="button" class="btn btn-warning text-sm btn-sm flex">
+                                                    <svg :id="'sp-retry-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                                                    </svg>
+                                                    Reintentar
                                                 </button>
                                                 <button :id="'btn-delete-summary'+index" @click="deleteSummary(summary.id,index)" v-if="summary.status ==='Rechazado'" type="button" class="btn btn-danger text-sm btn-sm flex">
                                                     <svg :id="'sp-delete-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -368,9 +524,17 @@ const displaySearchLoading = ref(false);
                                         <td>
                                             <h6 class="font-semibold">
                                                 {{ summary.summary_name }}
-                                                 <span v-if="summary.status == 'Rechazado' || summary.status == 'Aceptado'" class="block text-xs">
+                                                <span v-if="summary.status == 'Rechazado' || summary.status == 'Aceptado'" class="block text-xs">
                                                     <code v-if="summary.response_code != 0">
-                                                    Código: {{ summary.response_code }}
+                                                        Código: {{ summary.response_code }}
+                                                    </code>
+                                                    <code>
+                                                        Descripción: {{ summary.response_description }}
+                                                    </code>
+                                                </span>
+                                                <span v-else class="block text-xs text-red-500">
+                                                    <code v-if="summary.response_code != 0">
+                                                        Código: {{ summary.response_code }}
                                                     </code>
                                                     <code>
                                                         Descripción: {{ summary.response_description }}
@@ -385,7 +549,24 @@ const displaySearchLoading = ref(false);
                                         </td>
                                         <td>
                                             <small>Estado Sunat:</small>
-                                            {{ summary.status }}
+                                            <span v-if="summary.status ==='sunat_disponible'" class="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-orange-900/50 dark:text-orange-300 border border-orange-300">
+                                                SUNAT no disponible
+                                            </span>
+                                            <span v-else-if="summary.status ==='fue_enviado'" class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300">
+                                                Ya enviado
+                                            </span>
+                                            <span v-else-if="summary.status ==='Enviado'" class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-900/50 dark:text-green-300 border border-green-300">
+                                                Enviado
+                                            </span>
+                                            <span v-else-if="summary.status ==='Aceptado'" class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900/50 dark:text-blue-300 border border-blue-300">
+                                                Aceptado
+                                            </span>
+                                            <span v-else-if="summary.status ==='Rechazado'" class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-900/50 dark:text-red-300 border border-red-300">
+                                                Rechazado
+                                            </span>
+                                            <span v-else class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300 border border-gray-300">
+                                                {{ summary.status }}
+                                            </span>
                                         </td>
                                     </tr>
                                 </template>
@@ -542,6 +723,34 @@ const displaySearchLoading = ref(false);
                                     <td class="text-right">{{ item.document.overall_total }}</td>
                                 </tr>
                             </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+        </ModalLarge>
+
+        <!-- Modal C&oacute;digos SUNAT -->
+        <ModalLarge :show="displayModalSunatCodes" :onClose="closeModalSunatCodes" :icon="'/img/lupa-documento.png'">
+            <template #title>C&oacute;digos de respuesta SUNAT</template>
+            <template #message>Significado de los c&oacute;digos de respuesta de SUNAT</template>
+            <template #content>
+                <div class="max-h-96 overflow-y-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="w-24">C&oacute;digo</th>
+                                <th>Descripci&oacute;n</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in sunatCodes" :key="item.code" class="text-sm">
+                                <td>
+                                    <span :class="item.type === 'success' ? 'text-success' : item.type === 'warning' ? 'text-warning' : 'text-danger'" class="font-semibold">
+                                        {{ item.code }}
+                                    </span>
+                                </td>
+                                <td>{{ item.description }}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

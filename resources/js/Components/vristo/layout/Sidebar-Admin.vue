@@ -45,7 +45,7 @@
 
         // Actualizar las secciones expandidas si es necesario
         if (module && module.items) {
-            expandedSections.value[module.text] = true;
+            expandedSections.value = module.text;
             localStorage.setItem('expandedSections', JSON.stringify(expandedSections.value));
         }
     };

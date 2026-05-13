@@ -59,7 +59,7 @@ class PersonController extends Controller
         ]);
 
         // Base query
-        $query = Person::query()->with(['teacher', 'student']);
+        $query = Person::query()->with(['teacher', 'student', 'author']);
 
 
         // Ejecutar búsqueda según tipo

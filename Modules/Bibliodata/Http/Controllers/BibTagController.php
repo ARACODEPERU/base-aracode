@@ -3,65 +3,58 @@
 namespace Modules\Bibliodata\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Inertia\Inertia;
+use Modules\Bibliodata\Entities\BibTag;
 
 class BibTagController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    use ValidatesRequests;
+
     public function index()
     {
-        return view('bibliodata::index');
+        return Inertia::render('Bibliodata::Tag/List', [
+            'tags' => BibTag::all()
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function store(Request $request)
     {
-        return view('bibliodata::create');
+        $id = $request->get('id');
+
+        $this->validate($request, [
+            'name' => 'required|string|max:100',
+        ]);
+
+        if ($id) {
+            BibTag::find($id)->update(['name' => $request->name]);
+        } else {
+            BibTag::create(['name' => $request->name]);
+        }
+
+        return to_route('bib_tags');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        //
-    }
-
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('bibliodata::show');
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('bibliodata::edit');
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
-        //
+        $message = null;
+        $success = false;
+
+        try {
+            $tag = BibTag::findOrFail($id);
+            $tag->delete();
+
+            $message = 'Tag eliminado correctamente';
+            $success = true;
+        } catch (\Exception $e) {
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
     }
 }

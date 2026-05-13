@@ -90,6 +90,8 @@ class BibCategoryController extends Controller
      */
     public function destroy($id)
     {
-        //
+        BibCategory::findOrFail($id)->delete();
+
+        return response()->json(['success' => true]);
     }
 }

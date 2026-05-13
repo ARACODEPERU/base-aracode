@@ -32,6 +32,7 @@ use Modules\Sales\Http\Controllers\SalesController;
 use Modules\Sales\Http\Controllers\SaleSummaryController;
 use Modules\Sales\Http\Controllers\SerieController;
 use Modules\Sales\Http\Controllers\ServicesController;
+use Modules\Sales\Http\Controllers\QuickSaleController;
 
 Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->group(function () {
     route::get('dashboard', [SalesController::class, 'index'])->name('sales_dashboard');
@@ -53,6 +54,9 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
     Route::post('search/products', [ProductController::class, 'searchProduct'])->name('search_product');
 
     Route::post('search/products/all', [ProductController::class, 'searchProductAll'])->name('search_product_all');
+
+    // TPV - Punto de Venta Rápido
+    Route::get('quick-sale', [QuickSaleController::class, 'index'])->name('sales_quick_sale');
 
     Route::post('get/product/local/', [ProductController::class, 'getProductByLocal'])->name('get_product_by_local');
 
@@ -133,6 +137,7 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
     Route::get('salesummary/check/{id}/{ticket}', [SaleSummaryController::class, 'checkSummary'])->name('salesummaries_store_check');
     Route::get('salesummary/destroy/{id}', [SaleSummaryController::class, 'destroySummary'])->name('salesummaries_destroy');
     Route::get('salesummary/download/{id}/{type}', [SaleSummaryController::class, 'downloadFile'])->name('salesummaries_download');
+    Route::get('salesummary/retry/{id}', [SaleSummaryController::class, 'retrySummary'])->name('salesummaries_retry');
 
     // //rutas de comunicacion de baja
     Route::get('lowcommunication/list', [SaleLowCommunicationController::class, 'index'])->name('low_communication_list');

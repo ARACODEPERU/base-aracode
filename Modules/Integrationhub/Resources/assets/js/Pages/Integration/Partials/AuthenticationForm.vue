@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Swal2 from 'sweetalert2';
 import axios from 'axios';
-import ModalSmall from '@/Components/ModalSmall.vue';
+import ModalLarge from '@/Components/ModalLarge.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import InputError from '@/Components/InputError.vue';
@@ -26,6 +26,7 @@ const authFieldTypes = [
     { value: 'token', label: 'Token' },
     { value: 'api_key', label: 'API Key' },
     { value: 'oauth', label: 'OAuth' },
+    { value: 'basic_auth', label: 'Basic Auth' },
 ];
 
 const authLocations = [
@@ -46,6 +47,8 @@ const newAuthField = useForm({
 const showAuthModal = ref(false);
 const saving = ref(false);
 const togglingId = ref(null);
+const basicAuthUsername = ref('');
+const basicAuthPassword = ref('');
 
 const addAuthField = () => {
     showAuthModal.value = true;
@@ -58,6 +61,17 @@ const editAuthField = (auth) => {
     newAuthField.field_value = auth.field_value;
     newAuthField.auth_location = auth.auth_location;
     newAuthField.is_enabled = auth.is_enabled;
+
+    // Si es basic_auth, dividir el valor en username y password
+    if (auth.field_type === 'basic_auth' && auth.field_value && auth.field_value.includes(':')) {
+        const parts = auth.field_value.split(':');
+        basicAuthUsername.value = parts[0] || '';
+        basicAuthPassword.value = parts[1] || '';
+    } else {
+        basicAuthUsername.value = '';
+        basicAuthPassword.value = '';
+    }
+
     showAuthModal.value = true;
 };
 
@@ -138,6 +152,13 @@ const destroyServer = async (id) => {
 };
 
 const storeToServer = async () => {
+    // Si es basic_auth, combinar username y password en field_value
+    if (newAuthField.field_type === 'basic_auth') {
+        newAuthField.field_value = basicAuthUsername.value && basicAuthPassword.value
+            ? `${basicAuthUsername.value}:${basicAuthPassword.value}`
+            : '';
+    }
+
     newAuthField.put(route('integrationhub_update_auth', props.integrationId), {
         errorBag: 'storeToServer',
         preserveScroll: true,
@@ -151,6 +172,8 @@ const storeToServer = async () => {
             });
             showAuthModal.value = false;
             newAuthField.reset();
+            basicAuthUsername.value = '';
+            basicAuthPassword.value = '';
             refreshAuths();
         },
     });
@@ -267,7 +290,7 @@ const refreshAuths = async () => {
     </div>
 
     <!-- Modal Auth -->
-    <ModalSmall :show="showAuthModal" :onClose="() => showAuthModal = false" :icon="'/img/autenticacion-de-dos-factores.png'">
+    <ModalLarge :show="showAuthModal" :onClose="() => showAuthModal = false" :icon="'/img/autenticacion-de-dos-factores.png'">
         <template #title>
             {{ newAuthField.field_id ? 'Editar Campo de Autenticación' : 'Agregar Campo de Autenticación' }}
         </template>
@@ -275,35 +298,63 @@ const refreshAuths = async () => {
             Completa los datos del campo de autenticación
         </template>
         <template #content>
-            <div class="space-y-4">
-                <div>
-                    <InputLabel for="field_name" value="Nombre del Campo *" />
-                    <input id="field_name" v-model="newAuthField.field_name" type="text" class="form-input" placeholder="Ej: Authorization, api_key" />
-                    <p class="mt-1 text-xs text-gray-500">Nombre descriptivo para identificar el campo (ej: Authorization, api_key)</p>
-                    <InputError :message="newAuthField.errors.field_name" class="mt-2" />
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Columna izquierda -->
+                <div class="space-y-4">
+                    <div>
+                        <InputLabel for="field_name" value="Nombre del Campo *" />
+                        <input id="field_name" v-model="newAuthField.field_name" type="text" class="form-input" placeholder="Ej: Authorization, api_key" />
+                        <p class="mt-1 text-xs text-gray-500">Nombre descriptivo para identificar el campo</p>
+                        <InputError :message="newAuthField.errors.field_name" class="mt-2" />
+                    </div>
+                    <div>
+                        <InputLabel for="auth_location" value="Ubicación *" />
+                        <select id="auth_location" v-model="newAuthField.auth_location" class="form-select">
+                            <option v-for="loc in authLocations" :key="loc.value" :value="loc.value">{{ loc.label }}</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Dónde se envía: Header, Body o Query</p>
+                        <InputError :message="newAuthField.errors.auth_location" class="mt-2" />
+                    </div>
                 </div>
-                <div>
-                    <InputLabel for="field_type" value="Tipo de Campo *" />
-                    <select id="field_type" v-model="newAuthField.field_type" class="form-select">
-                        <option v-for="type in authFieldTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Tipo de valor: Texto, Password, Token, API Key, OAuth</p>
-                    <InputError :message="newAuthField.errors.field_type" class="mt-2" />
+
+                <!-- Columna derecha -->
+                <div class="space-y-4">
+                    <div>
+                        <InputLabel for="field_type" value="Tipo de Campo *" />
+                        <select id="field_type" v-model="newAuthField.field_type" class="form-select">
+                            <option v-for="type in authFieldTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Tipo de valor del campo de autenticación</p>
+                        <InputError :message="newAuthField.errors.field_type" class="mt-2" />
+                    </div>
+
+                    <!-- Campo field_value normal (oculto para basic_auth) -->
+                    <div v-if="newAuthField.field_type !== 'basic_auth'">
+                        <InputLabel for="field_value" value="Valor del Campo" />
+                        <input id="field_value" v-model="newAuthField.field_value" :type="newAuthField.field_type === 'password' ? 'password' : 'text'" class="form-input" placeholder="Token o clave de API" />
+                        <p class="mt-1 text-xs text-gray-500">Este valor se guardará de forma segura en la base de datos.</p>
+                        <InputError :message="newAuthField.errors.field_value" class="mt-2" />
+                    </div>
+
+                    <!-- Campos para Basic Auth: Username y Password -->
+                    <div v-if="newAuthField.field_type === 'basic_auth'" class="space-y-4">
+                        <div>
+                            <InputLabel for="basic_username" value="Usuario *" />
+                            <input id="basic_username" v-model="basicAuthUsername" type="text" class="form-input" placeholder="Usuario" />
+                        </div>
+                        <div>
+                            <InputLabel for="basic_password" value="Contraseña *" />
+                            <input id="basic_password" v-model="basicAuthPassword" type="password" class="form-input" placeholder="Contraseña" />
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <InputLabel for="auth_location" value="Ubicación *" />
-                    <select id="auth_location" v-model="newAuthField.auth_location" class="form-select">
-                        <option v-for="loc in authLocations" :key="loc.value" :value="loc.value">{{ loc.label }}</option>
-                    </select>
-                    <p class="mt-1 text-xs text-gray-500">Dónde se envía: Header (cabeceras), Body (cuerpo JSON), Query (URL)</p>
-                    <InputError :message="newAuthField.errors.auth_location" class="mt-2" />
-                </div>
-                <div>
-                    <InputLabel for="field_value" value="Valor del Campo" />
-                    <input id="field_value" v-model="newAuthField.field_value" :type="newAuthField.field_type === 'password' ? 'password' : 'text'" class="form-input" placeholder="Token o clave de API" />
-                    <p class="mt-1 text-xs text-gray-500">Este valor se guardará de forma segura en la base de datos.</p>
-                    <InputError :message="newAuthField.errors.field_value" class="mt-2" />
-                </div>
+            </div>
+
+            <!-- Texto de ayuda para Basic Auth (ancho completo fuera del grid) -->
+            <div v-if="newAuthField.field_type === 'basic_auth'" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p class="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Basic Auth:</strong> Ingresa el usuario y contraseña por separado. El sistema los combinará automáticamente y codificará en Base64 para el header <code class="px-1 py-0.5 bg-blue-100 dark:bg-blue-800 rounded text-xs">Authorization</code>.
+                </p>
             </div>
         </template>
         <template #buttons>
@@ -312,5 +363,5 @@ const refreshAuths = async () => {
                 {{ saving ? 'Guardando...' : 'Guardar' }}
             </PrimaryButton>
         </template>
-    </ModalSmall>
+    </ModalLarge>
 </template>

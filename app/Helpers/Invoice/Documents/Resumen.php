@@ -56,9 +56,19 @@ class Resumen
                 $error = $res->getError();
                 $codeError = $error->getCode();
                 $messageError = $error->getMessage();
-                $status = 'Rechazado';
-                // return array('success' => $res->isSuccess(), 'details' => $this->util->getErrorResponse($res->getError()));
 
+                if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
+                    $status = 'sunat_disponible';
+                } elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
+                    $status = 'fue_enviado';
+
+                    $ticket = $res->getTicket();
+                    if ($ticket) {
+                        $summary->ticket = $ticket;
+                    }
+                } else {
+                    $status = 'Rechazado';
+                }
             }
             $summary->response_code = $codeError;
             $summary->response_description = $messageError;
@@ -67,7 +77,17 @@ class Resumen
 
             $summary->save();
 
-            return ['success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes];
+            $isSunatUnavailable = $status === 'sunat_disponible';
+            $isAlreadySent = $status === 'fue_enviado';
+
+            return [
+                'success' => $res->isSuccess(),
+                'code' => $codeError,
+                'message' => $messageError,
+                'notes' => $notes,
+                'is_sunat_unavailable' => $isSunatUnavailable,
+                'is_already_sent' => $isAlreadySent,
+            ];
         } catch (\Exception $e) {
             return ['success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema'];
         }
@@ -75,6 +95,7 @@ class Resumen
 
     public function checkSummary($id, $ticket)
     {
+
         try {
             $summary = SaleSummary::find($id);
             $documents = SaleDocument::join('sale_summary_details', 'sale_summary_details.document_id', 'sale_documents.id')
@@ -92,27 +113,38 @@ class Resumen
             $messageError = null;
 
             $res = $see->getStatus($ticket);
+            dd($res);
             if (! $res->isSuccess()) {
                 $error = $res->getError();
                 $codeError = $error->getCode();
                 $messageError = $error->getMessage();
 
-                // Detectar si es error de conexión (no rechazo real)
-                $isConnectionError =
-                    empty($codeError)
-                    || stripos($messageError, 'connection') !== false
-                    || stripos($messageError, 'timeout') !== false
-                    || stripos($messageError, '505') !== false
-                    || stripos($messageError, 'soap') !== false
-                    || stripos($messageError, 'servidor') !== false
-                    || stripos($messageError, 'HTTP') !== false;
+                // Error 0109 - SUNAT autenticación no disponible
+                if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
+                    $isSunatUnavailable = true;
+                    $status = 'sunat_disponible';
+                }
+                // Error 2223 - Archivo ya presentado previamente
+                elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
+                    $isAlreadySent = true;
+                    $status = 'fue_enviado';
+                }
+                // Otros errores - detectar conexión o rechazo real
+                else {
+                    $isConnectionError =
+                        empty($codeError)
+                        || stripos($messageError, 'connection') !== false
+                        || stripos($messageError, 'timeout') !== false
+                        || stripos($messageError, '505') !== false
+                        || stripos($messageError, 'soap') !== false
+                        || stripos($messageError, 'servidor') !== false
+                        || stripos($messageError, 'HTTP') !== false;
 
-                if ($isConnectionError) {
-                    // Error de conexión - NO cambiar estado, mantener "Enviado"
-                    $status = 'Enviado';
-                } else {
-                    // Error real de SUNAT - cambiar a Rechazado
-                    $status = 'Rechazado';
+                    if ($isConnectionError) {
+                        $status = 'Enviado';
+                    } else {
+                        $status = 'Rechazado';
+                    }
                 }
             } else {
                 $cdr = $res->getCdrResponse();
@@ -136,7 +168,11 @@ class Resumen
             $summary->response_code = $codeError;
 
             // Mensaje personalizado según tipo de error
-            if (isset($isConnectionError) && $isConnectionError) {
+            if (isset($isSunatUnavailable) && $isSunatUnavailable) {
+                $summary->response_description = 'Los servidores de SUNAT no están disponibles temporalmente. Puede reintentar el envío manualmente. Detalle: '.$messageError;
+            } elseif (isset($isAlreadySent) && $isAlreadySent) {
+                $summary->response_description = 'El archivo ya fue presentado anteriormente ante SUNAT. Detalle: '.$messageError;
+            } elseif (isset($isConnectionError) && $isConnectionError) {
                 $summary->response_description = 'Error de conexión con SUNAT. Intenta consultar más tarde. Detalle: '.$messageError;
             } else {
                 $summary->response_description = $codeError == '0127' ? 'El ticket no existe' : $messageError;
@@ -146,7 +182,15 @@ class Resumen
             $summary->status = $status;
             $summary->save();
 
-            return ['success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes, 'is_connection_error' => isset($isConnectionError) ? $isConnectionError : false];
+            return [
+                'success' => $res->isSuccess(),
+                'code' => $codeError,
+                'message' => $messageError,
+                'notes' => $notes,
+                'is_connection_error' => isset($isConnectionError) ? $isConnectionError : false,
+                'is_sunat_unavailable' => isset($isSunatUnavailable) ? $isSunatUnavailable : false,
+                'is_already_sent' => isset($isAlreadySent) ? $isAlreadySent : false,
+            ];
         } catch (\Exception $e) {
             return ['success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema'];
         }

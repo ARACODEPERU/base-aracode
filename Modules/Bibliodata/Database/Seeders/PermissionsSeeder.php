@@ -32,6 +32,13 @@ class PermissionsSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'bib_libros_eliminar']));
         array_push($permissions, Permission::create(['name' => 'bib_libros_secciones']));
         array_push($permissions, Permission::create(['name' => 'bib_libros_paginas']));
+        array_push($permissions, Permission::create(['name' => 'bib_autores_listar']));
+        array_push($permissions, Permission::create(['name' => 'bib_autores_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'bib_autores_editar']));
+        array_push($permissions, Permission::create(['name' => 'bib_autores_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'bib_tags_listar']));
+        array_push($permissions, Permission::create(['name' => 'bib_tags_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'bib_tags_eliminar']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

@@ -86,6 +86,13 @@ const menuSales = [
                 icom: faCashRegister,
             },
             {
+                route: route("sales_quick_sale"),
+                status: false,
+                text: "Punto de venta rápido",
+                permissions: "punto_ventas",
+                icom: faCashRegister,
+            },
+            {
                 route: route("sale_physical_document_list"),
                 status: false,
                 text: "Documento Físico",

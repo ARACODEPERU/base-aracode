@@ -2,11 +2,11 @@
 import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import { useForm } from '@inertiajs/vue3';
-import Keypad from '@/Components/Keypad.vue';
 import Pagination from '@/Components/Pagination.vue';
 import Swal2 from 'sweetalert2';
 import { Link, router } from '@inertiajs/vue3';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
+import axios from 'axios';
 
 const props = defineProps({
     integrations: {
@@ -23,54 +23,48 @@ const form = useForm({
     search: props.filters.search || '',
 });
 
-const xhttp = assetUrl;
-
-const destroyIntegration = async (id) => {
-    const result = await Swal2.fire({
+const destroyIntegration = (id) => {
+    Swal2.fire({
         title: '¿Estás seguro?',
         text: 'Esta acción eliminará permanentemente la integración y todos sus datos.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Sí, eliminar',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '¡Sí, Eliminar!',
         cancelButtonText: 'Cancelar',
-        customClass: {
-            popup: 'rounded-lg shadow-xl',
-            confirmButton: 'rounded-md font-medium',
-            cancelButton: 'rounded-md font-medium',
+        showLoaderOnConfirm: true,
+        padding: '2em',
+        customClass: 'sweet-alerts',
+        preConfirm: () => {
+            return axios.delete(route('integrationhub_destroy', id)).then((res) => {
+                if (res.data && !res.data.success) {
+                    Swal2.showValidationMessage(res.data.message || 'Error al eliminar')
+                }
+                return res
+            }).catch((error) => {
+                Swal2.showValidationMessage(error.response?.data?.message || 'Error de conexión')
+            });
         },
+        allowOutsideClick: () => !Swal2.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se eliminó correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            router.visit(route('integrationhub_listado'), {
+                replace: false,
+                method: 'get',
+                preserveState: true,
+                preserveScroll: true,
+                only: ['integrations'],
+            });
+        }
     });
-
-    if (!result.isConfirmed) return;
-
-    try {
-        await axios.delete(route('integrationhub_destroy', id));
-        Swal2.fire({
-            title: 'Eliminado',
-            text: 'La integración ha sido eliminada correctamente.',
-            icon: 'success',
-            timer: 2000,
-            showConfirmButton: false,
-            customClass: {
-                popup: 'rounded-lg',
-            },
-        });
-        router.visit(route('integrationhub_listado'), {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['integrations'],
-        });
-    } catch (error) {
-        Swal2.fire({
-            title: 'Error',
-            text: 'No se pudo eliminar la integración. Inténtalo de nuevo.',
-            icon: 'error',
-            customClass: {
-                popup: 'rounded-lg',
-            },
-        });
-    }
 };
 
 const hasIntegrations = computed(() => props.integrations?.data?.length > 0);
@@ -90,52 +84,6 @@ const executionTypeLabel = (type) => {
         'webhook': 'Webhook'
     };
     return types[type] || type;
-};
-
-const executeIntegration = async (id) => {
-    const result = await Swal2.fire({
-        title: 'Ejecutar Integración',
-        text: '¿Deseas ejecutar esta integración ahora?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#22c55e',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Ejecutar',
-        cancelButtonText: 'Cancelar',
-        customClass: {
-            popup: 'rounded-lg shadow-xl',
-            confirmButton: 'rounded-md font-medium',
-            cancelButton: 'rounded-md font-medium',
-        },
-    });
-
-    if (!result.isConfirmed) return;
-
-    try {
-        const response = await axios.post(route('integrationhub_execute', id));
-        Swal2.fire({
-            title: 'Ejecutada',
-            text: response.data.message || 'La integración se ejecutó correctamente.',
-            icon: 'success',
-            customClass: {
-                popup: 'rounded-lg',
-            },
-        });
-        router.visit(route('integrationhub_listado'), {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['integrations'],
-        });
-    } catch (error) {
-        Swal2.fire({
-            title: 'Error',
-            text: error.response?.data?.message || 'No se pudo ejecutar la integración.',
-            icon: 'error',
-            customClass: {
-                popup: 'rounded-lg',
-            },
-        });
-    }
 };
 </script>
 
@@ -241,16 +189,6 @@ const executeIntegration = async (id) => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </Link>
-                                    <button
-                                        @click="executeIntegration(integration.id)"
-                                        class="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition"
-                                        title="Ejecutar"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.133a1 1 0 000-1.664z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
                                     <button
                                         @click="destroyIntegration(integration.id)"
                                         class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"

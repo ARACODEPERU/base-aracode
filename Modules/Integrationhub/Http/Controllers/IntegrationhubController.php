@@ -3,7 +3,6 @@
 namespace Modules\Integrationhub\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -111,13 +110,15 @@ class IntegrationhubController extends Controller
 
     }
 
-    public function destroy(int $id): RedirectResponse
+    public function destroy(int $id)
     {
         $integration = Integration::findOrFail($id);
         $integration->delete();
 
-        return redirect()->route('integrationhub_listado')
-            ->with('success', 'Integración eliminada correctamente');
+        return response()->json([
+            'success' => true,
+            'message' => 'Integración eliminada correctamente'
+        ]);
     }
 
     public function execute(Request $request, int $id)
@@ -157,11 +158,10 @@ class IntegrationhubController extends Controller
                 // 2. Reemplazamos el '?' por el valor por defecto para la prueba
                 // Usamos var_export o comillas para asegurar que el SQL sea válido
                 $sqlReady = str_replace('?', "'$defaultValue'", $sqlOriginal);
-                    $data = DB::selectOne($sqlReady);
 
                 try {
                     // 3. Ejecutamos la consulta
-                    // selectOne devuelve un objeto con la primera fila encontrada
+                    $data = DB::selectOne($sqlReady);
 
                     if ($data) {
                         // Extraemos el primer valor de la fila (el número de DNI)
@@ -196,12 +196,21 @@ class IntegrationhubController extends Controller
         $body = [];
 
         foreach ($authFields as $auth) {
-            if ($auth->auth_location === 'header') {
+            // Manejo especial para Basic Auth
+            if ($auth->field_type === 'basic_auth' && $auth->auth_location === 'header') {
+                // Formato esperado en field_value: "username:password"
+                if (!empty($auth->field_value) && strpos($auth->field_value, ':') !== false) {
+                    $encoded = base64_encode($auth->field_value);
+                    $headers['Authorization'] = 'Basic ' . $encoded;
+                } else {
+                    // Si no tiene formato username:password, usar el valor tal cual
+                    $headers[$auth->field_name] = $auth->field_value;
+                }
+            } elseif ($auth->auth_location === 'header') {
                 $headers[$auth->field_name] = $auth->field_value;
             } elseif ($auth->auth_location === 'body') {
                 $body[$auth->field_name] = $auth->field_value;
             } elseif ($auth->auth_location === 'query') {
-
                 $url .= (strpos($url, '?') !== false ? '&' : '?') . $auth->field_name . '=' . $auth->field_value;
             }
         }
@@ -209,7 +218,89 @@ class IntegrationhubController extends Controller
         // Body fields (only for POST/PUT/PATCH or when body_type != none)
         if ($endpoint->http_method !== 'GET' || $endpoint->body_type != 'none') {
             foreach ($fieldMaps->where('field_location', 'body') as $fieldMap) {
-                $body[$fieldMap->field_key] = $fieldMap->field_value ?? $fieldMap->default_value;
+                // Nuevo: Manejar subitems (configuración tipo tabla/campos)
+                if ($fieldMap->has_subitems && !empty($fieldMap->subitems)) {
+                    $subitems = $fieldMap->subitems;
+
+                    // Filtrar solo habilitados y ordenar
+                    $subitems = array_filter($subitems, fn($item) => $item['is_enabled'] ?? true);
+                    usort($subitems, fn($a, $b) => ($a['sort_order'] ?? 0) - ($b['sort_order'] ?? 0));
+
+                    $result = [];
+
+                    // Agrupar por tabla para hacer una sola consulta por tabla
+                    $tableGroups = [];
+                    foreach ($subitems as $item) {
+                        if (($item['source_type'] ?? '') === 'database' || ($item['field_type'] ?? '') === 'table_field') {
+                            $table = $item['source_table'] ?? null;
+                            if ($table) {
+                                $tableGroups[$table][] = $item;
+                            }
+                        } else {
+                            // Valor estático
+                            $result[$item['field_key']] = $item['default_value'] ?? $item['field_value'] ?? '';
+                        }
+                    }
+
+                    // Ejecutar consultas agrupadas por tabla
+                    foreach ($tableGroups as $table => $items) {
+                        $selects = array_unique(array_column($items, 'source_field'));
+                        $selects = array_filter($selects);
+                        if (empty($selects)) continue;
+
+                        $query = 'SELECT ' . implode(', ', $selects) . ' FROM ' . $table;
+
+                        try {
+                            if ($fieldMap->structure_type === 'array') {
+                                $rows = DB::select($query);
+                                $arrayResult = [];
+                                foreach ($rows as $row) {
+                                    $rowData = [];
+                                    foreach ($items as $item) {
+                                        $rowData[$item['field_key']] = $row->{$item['source_field']} ?? $item['default_value'] ?? '';
+                                    }
+                                    $arrayResult[] = $rowData;
+                                }
+                                $result = $arrayResult;
+                            } else {
+                                $data = DB::selectOne($query);
+                                if ($data) {
+                                    foreach ($items as $item) {
+                                        $result[$item['field_key']] = $data->{$item['source_field']} ?? $item['default_value'] ?? '';
+                                    }
+                                } else {
+                                    foreach ($items as $item) {
+                                        $result[$item['field_key']] = $item['default_value'] ?? '';
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            foreach ($items as $item) {
+                                $result[$item['field_key']] = $item['default_value'] ?? '';
+                            }
+                        }
+                    }
+
+                    $body[$fieldMap->field_key] = $result;
+                    continue;
+                }
+
+                // Lógica existente para field maps sin subitems
+                $sqlOriginal = $fieldMap->field_value;
+                $defaultValue = $fieldMap->default_value;
+
+                if ($sqlOriginal && stripos($sqlOriginal, 'select') !== false) {
+                    $sqlReady = str_replace('?', "'$defaultValue'", $sqlOriginal);
+
+                    try {
+                        $data = DB::select($sqlReady);
+                        $body[$fieldMap->field_key] = json_decode(json_encode($data), true);
+                    } catch (\Exception $e) {
+                        $body[$fieldMap->field_key] = $defaultValue;
+                    }
+                } else {
+                    $body[$fieldMap->field_key] = $sqlOriginal ?: $defaultValue;
+                }
             }
         }
 
@@ -234,15 +325,35 @@ class IntegrationhubController extends Controller
 
             $options = [
                 'headers' => array_merge($headers, [
-                    'Content-Type' => 'application/json',
                     'Accept' => 'application/json'
                 ]),
                 'verify' => false
             ];
 
-            // Solo agregar json si hay datos en el body
+            // Enviar body según el tipo configurado en el endpoint
             if (!empty($body)) {
-                $options['json'] = $body;
+                switch ($endpoint->body_type) {
+                    case 'json':
+                        $options['json'] = $body;
+                        break;
+
+                    case 'form':
+                        $options['form_params'] = $body;
+                        break;
+
+                    case 'xml':
+                        $xml = new \SimpleXMLElement('<root/>');
+                        $this->arrayToXml($body, $xml);
+                        $options['body'] = $xml->asXML();
+                        $options['headers']['Content-Type'] = 'application/xml';
+                        break;
+
+                    case 'raw':
+                        $rawValue = reset($body);
+                        $options['body'] = is_array($rawValue) ? json_encode($rawValue) : (string)$rawValue;
+                        $options['headers']['Content-Type'] = 'text/plain';
+                        break;
+                }
             }
 
             $response = $client->request($endpoint->http_method, $url, $options);
@@ -314,7 +425,7 @@ class IntegrationhubController extends Controller
         $this->validate($request, [
             'field_id' => 'nullable|integer',
             'field_name' => 'required|string|max:100',
-            'field_type' => 'required|in:text,password,token,api_key,oauth',
+            'field_type' => 'required|in:text,password,token,api_key,oauth,basic_auth',
             'field_value' => 'nullable|string',
             'auth_location' => 'required|in:header,body,query',
             'is_enabled' => 'boolean'
@@ -754,6 +865,25 @@ class IntegrationhubController extends Controller
             return $next;
         } catch (\Exception $e) {
             return null;
+        }
+    }
+
+    /**
+     * Convierte un array asociativo a XML para el body type 'xml'
+     */
+    private function arrayToXml(array $data, \SimpleXMLElement $xml): void
+    {
+        foreach ($data as $key => $value) {
+            if (is_numeric($key)) {
+                $key = 'item_' . $key;
+            }
+            $key = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $key);
+            if (is_array($value)) {
+                $child = $xml->addChild($key);
+                $this->arrayToXml($value, $child);
+            } else {
+                $xml->addChild($key, htmlspecialchars((string)$value));
+            }
         }
     }
 }

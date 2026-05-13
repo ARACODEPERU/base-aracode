@@ -82,19 +82,64 @@ class Factura
             } else {
                 // === CASO FALLO DE COMUNICACIÓN O ERROR DE SISTEMA ===
                 $error = $res->getError();
-                $code = (int)$error->getCode();
                 $codeError = $error->getCode();
-                // Lista de códigos de error de conexión o SUNAT caído
+                $messageError = $error->getMessage();
                 $connectionErrorCodes = [130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 1033];
 
-                // Si el código es 0130, -1 (timeout), o está en nuestra lista de errores temporales
-                if (in_array($code, $connectionErrorCodes) || $code === -1 || $code === 0) {
-                    $status = 'Error de Conexión';
-                    $messageError = "SUNAT no responde. El comprobante está en espera para reintento automático.";
-                } else {
-                    // Este es un rechazo real (ej: firma inválida, fecha incorrecta, etc)
-                    $status = 'Rechazada';
-                    $messageError = $error->getMessage();
+                // Error 0109 - SUNAT autenticación no disponible
+                if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
+                    $status = 'Pendiente de Reintento';
+                    $messageError = "SUNAT no responde. El comprobante quedará pendiente para reintento manual.";
+                }
+                // Error 2223 - Archivo ya presentado, intentar recuperar CDR
+                elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
+                    $ticket = $res->getTicket();
+                    if (!$ticket) {
+                        preg_match('/ticket[:\s]+([A-Z0-9\-]+)/i', $messageError, $matches);
+                        $ticket = $matches[1] ?? null;
+                    }
+
+                    if ($ticket) {
+                        try {
+                            $statusResult = $see->getStatus($ticket);
+                            if ($statusResult->isSuccess()) {
+                                $cdr = $statusResult->getCdrResponse();
+                                $codeError = $cdr->getCode();
+                                $messageError = $cdr->getDescription();
+                                if ((int)$cdr->getCode() === 0) {
+                                    $status = 'Aceptada';
+                                    $document->invoice_cdr = $this->util->writeCdr($invoice, $statusResult->getCdrZip());
+                                } else {
+                                    $status = 'Rechazada';
+                                }
+                                if ($cdr->getNotes()) {
+                                    $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
+                                }
+                            } else {
+                                $status = 'Pendiente de Reintento';
+                                $messageError = "El archivo ya fue presentado pero no se pudo recuperar la constancia. Ticket: {$ticket}";
+                            }
+                        } catch (\Exception $e) {
+                            $status = 'Pendiente de Reintento';
+                            $messageError = "Error al consultar ticket recuperado: ".$e->getMessage();
+                        }
+                    } else {
+                        if (in_array((int)$codeError, $connectionErrorCodes) || (int)$codeError === -1 || (int)$codeError === 0) {
+                            $status = 'Error de Conexión';
+                        } else {
+                            $status = 'Rechazada';
+                        }
+                    }
+                }
+                // Otros errores
+                else {
+                    $code = (int)$codeError;
+                    if (in_array($code, $connectionErrorCodes) || $code === -1 || $code === 0) {
+                        $status = 'Error de Conexión';
+                        $messageError = "SUNAT no responde. El comprobante está en espera para reintento automático.";
+                    } else {
+                        $status = 'Rechazada';
+                    }
                 }
             }
             $document->invoice_response_code = $codeError;
