@@ -12,13 +12,13 @@
 
         <x-header />
 
-        <x-about-welcome />
+        <x-about.about-welcome />
 
-        <x-about-vision-mission-values />
+        <x-about.about-vision-mission-values />
 
         <x-value-proposition />
 
-        <x-about-visionaries />
+        <x-about.about-visionaries />
         
         <x-bulletin />
 
