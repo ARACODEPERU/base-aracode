@@ -182,6 +182,13 @@ class WebPageController extends Controller
         return view('pages/terms');
     }
 
+
+    public function lms()
+    {
+        return view('pages/lms');
+    }
+
+
     public function courses()
     {
         $courses = OnliItem::whereHas('course') // Filtra para que solo traiga items con curso existente
@@ -259,7 +266,7 @@ class WebPageController extends Controller
 
     }
 
-public function course_url_slug($id){
+    public function course_url_slug($id){
         $landing = AcaCourseLanding::with('course')
             ->with('course.category')
             ->with('course.modality')
@@ -436,13 +443,6 @@ public function course_url_slug($id){
             'item' => $item,
             'latest_courses' => $latest_courses
         ]);
-    }
-
-
-
-    public function index2()
-    {
-        return view('pages.home2');
     }
 
 
