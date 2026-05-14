@@ -12,7 +12,7 @@
 
         <x-header />
 
-        <x-home-welcome />
+        <x-home.home-welcome />
 
         <x-home-about />
 
