@@ -14,9 +14,9 @@
 
         <x-home.home-welcome />
 
-        <x-home-about />
+        <x-home.home-about />
 
-        <x-home-tape />
+        <x-home.home-tape />
 
         <x-value-proposition />
 
@@ -622,12 +622,11 @@
             </div>
         </section> --}}
 
-        <x-home-products />
+        <x-home.home-products />
 
-        <x-home-location />
+        <x-home.home-location />
         
-
-        <x-home-customers />
+        <x-home.home-customers />
 
         {{-- <section id="section-faq" class="bg-dark section-dark text-light">
             <div class="container">
