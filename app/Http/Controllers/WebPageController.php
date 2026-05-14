@@ -184,7 +184,7 @@ class WebPageController extends Controller
 
     public function storeonline()
     {
-        return view('pages/storeonline');
+        return view('pages/store-online');
     }
 
     public function cms()
