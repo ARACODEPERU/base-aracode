@@ -188,6 +188,12 @@ class WebPageController extends Controller
         return view('pages/lms');
     }
 
+    
+    public function billing()
+    {
+        return view('pages/billing');
+    }
+
 
     public function courses()
     {
