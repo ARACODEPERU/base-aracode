@@ -182,7 +182,15 @@ class WebPageController extends Controller
         return view('pages/terms');
     }
 
+    public function storeonline()
+    {
+        return view('pages/storeonline');
+    }
 
+    public function cms()
+    {
+        return view('pages/cms');
+    }
     public function lms()
     {
         return view('pages/lms');
