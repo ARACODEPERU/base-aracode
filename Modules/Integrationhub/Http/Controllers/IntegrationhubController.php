@@ -15,6 +15,8 @@ use Modules\Integrationhub\Entities\IntegrationEndpoint;
 use Modules\Integrationhub\Entities\IntegrationFieldMap;
 use Modules\Integrationhub\Entities\IntegrationSchedule;
 use Modules\Integrationhub\Entities\IntegrationQuery;
+use Illuminate\Validation\ValidationException;
+use App\Services\IntegrationhubCronExpression;
 
 class IntegrationhubController extends Controller
 {
@@ -61,8 +63,9 @@ class IntegrationhubController extends Controller
         // Remover campos que no existen como columnas
         unset($validated['timeout'], $validated['retry_attempts']);
 
-        Integration::create($validated);
+        $integration = Integration::create($validated);
 
+        return redirect()->route('integrationhub_editar', $integration->id);
     }
 
     public function edit(int $id)
@@ -72,9 +75,13 @@ class IntegrationhubController extends Controller
             'endpoints',
             'endpoints.fieldMaps',
             'queries',
-            'schedules',
-            'logs'
+            'schedules.endpoint',
         ])->findOrFail($id);
+
+        $integration->setRelation(
+            'logs',
+            $integration->logs()->orderBy('executed_at', 'desc')->limit(10)->get()
+        );
 
         return Inertia::render('Integrationhub::Integration/Edit', [
             'integration' => $integration
@@ -126,7 +133,9 @@ class IntegrationhubController extends Controller
         $integration = Integration::findOrFail($id);
 
         $this->validate($request, [
-            'endpoint_id' => 'required|integer'
+            'endpoint_id' => 'required|integer',
+            'field_values' => 'nullable|array',
+            'extra_params' => 'nullable|array'
         ]);
 
         $endpoint = IntegrationEndpoint::where('id', $request->endpoint_id)
@@ -138,10 +147,102 @@ class IntegrationhubController extends Controller
 
         // Get enabled field maps ordered by sort_order
         $fieldMaps = $endpoint->fieldMaps()->where('is_enabled', true)->orderBy('sort_order')->get();
+        $fieldValueOverrides = collect(array_replace(
+            $request->input('field_values', []),
+            $request->input('variables', [])
+        ));
+        $extraParams = collect($request->input('extra_params', []));
+        $extraPathParams = collect($extraParams->get('path', []));
+        $extraQueryParams = collect($extraParams->get('query', []));
+        $extraBodyParams = collect($extraParams->get('body', []));
+        $extraHeaderParams = collect($extraParams->get('headers', []));
+        $usesBody = $endpoint->http_method !== 'GET' || $endpoint->body_type != 'none';
+        $configuredVariableKeys = $fieldMaps
+            ->flatMap(fn ($fieldMap) => [
+                (string) $fieldMap->id,
+                $fieldMap->id,
+                $fieldMap->field_key,
+            ])
+            ->filter(fn ($key) => !is_null($key) && $key !== '')
+            ->map(fn ($key) => (string) $key)
+            ->unique();
+        $additionalVariables = $fieldValueOverrides->reject(function ($value, $key) use ($configuredVariableKeys) {
+            return $configuredVariableKeys->contains((string) $key);
+        });
 
-        // Path parameters (append to URL in order)
+        $hasOverride = function ($fieldMap) use ($fieldValueOverrides) {
+            return $fieldValueOverrides->has((string) $fieldMap->id)
+                || $fieldValueOverrides->has($fieldMap->id)
+                || $fieldValueOverrides->has($fieldMap->field_key);
+        };
+
+        $getOverrideValue = function ($fieldMap) use ($fieldValueOverrides) {
+            if ($fieldValueOverrides->has((string) $fieldMap->id)) {
+                return $fieldValueOverrides->get((string) $fieldMap->id);
+            }
+
+            if ($fieldValueOverrides->has($fieldMap->id)) {
+                return $fieldValueOverrides->get($fieldMap->id);
+            }
+
+            if ($fieldValueOverrides->has($fieldMap->field_key)) {
+                return $fieldValueOverrides->get($fieldMap->field_key);
+            }
+
+            return null;
+        };
+
+        $hasFilledOverride = function ($fieldMap) use ($getOverrideValue, $hasOverride) {
+            if (!$hasOverride($fieldMap)) {
+                return false;
+            }
+
+            $value = $getOverrideValue($fieldMap);
+
+            return !is_null($value) && trim((string) $value) !== '';
+        };
+
+        $resolveFieldValue = function ($fieldMap) use ($fieldValueOverrides, $hasFilledOverride, $getOverrideValue) {
+            if ($fieldMap->source_type === 'query') {
+                if ($hasFilledOverride($fieldMap)) {
+                    return $getOverrideValue($fieldMap);
+                }
+
+                return $this->executeReadOnlyFieldQuery($fieldMap->field_value, $fieldMap->default_value);
+            }
+
+            if ($hasFilledOverride($fieldMap)) {
+                return $getOverrideValue($fieldMap);
+            }
+
+            $fieldValue = $fieldMap->field_value;
+            $defaultValue = $fieldMap->default_value;
+
+            if (!is_null($fieldValue) && trim((string) $fieldValue) !== '') {
+                return $fieldValue;
+            }
+
+            if (!is_null($defaultValue) && trim((string) $defaultValue) !== '') {
+                return $defaultValue;
+            }
+
+            return null;
+        };
+
+        // Path parameters replace placeholders like {contact_id} in the endpoint path.
         foreach ($fieldMaps->where('field_location', 'path') as $fieldMap) {
-            $url .= '/' . ($fieldMap->field_value ?? $fieldMap->default_value);
+            $pathValue = $resolveFieldValue($fieldMap) ?? '';
+            $placeholder = '{' . $fieldMap->field_key . '}';
+
+            if (!str_contains($url, $placeholder)) {
+                throw new \InvalidArgumentException("La ruta del endpoint debe contener el placeholder {$placeholder} para reemplazar el campo de Ruta URL.");
+            }
+
+            $url = str_replace($placeholder, rawurlencode((string) $pathValue), $url);
+        }
+
+        foreach ($extraPathParams as $key => $value) {
+            $url = str_replace('{' . $key . '}', rawurlencode((string) $value), $url);
         }
 
         // Query parameters
@@ -152,38 +253,32 @@ class IntegrationhubController extends Controller
             $defaultValue = $fieldMap->default_value; // "10"
             $finalValue = null;
 
+            if ($fieldMap->source_type === 'query') {
+                $queryParams[$fieldMap->field_key] = $resolveFieldValue($fieldMap);
+                continue;
+            }
+
+            if ($fieldMap->source_type === 'query' && !$this->isReadOnlySelectSql($sqlOriginal)) {
+                throw new \InvalidArgumentException('Solo se permiten consultas SELECT en mapeos de Integrationhub.');
+            }
+
+            if ($hasOverride($fieldMap)) {
+                $finalValue = $resolveFieldValue($fieldMap);
             // 1. Verificamos si es una consulta SQL
-            if (stripos($sqlOriginal, 'select') !== false) {
-
-                // 2. Reemplazamos el '?' por el valor por defecto para la prueba
-                // Usamos var_export o comillas para asegurar que el SQL sea válido
-                $sqlReady = str_replace('?', "'$defaultValue'", $sqlOriginal);
-
-                try {
-                    // 3. Ejecutamos la consulta
-                    $data = DB::selectOne($sqlReady);
-
-                    if ($data) {
-                        // Extraemos el primer valor de la fila (el número de DNI)
-                        $dataArray = (array)$data;
-                        $finalValue = reset($dataArray);
-                    } else {
-                        // Si no hay resultados en la DB, podemos usar el default como respaldo
-                        $finalValue = $defaultValue;
-                    }
-                } catch (\Exception $e) {
-                    // Si el SQL tiene un error (ej: escribiste 'form' en vez de 'from')
-                    // usamos el default para que la URL no salga vacía
-                    $finalValue = $defaultValue;
-                }
             } else {
                 // Si no es un SQL, simplemente usamos el valor o el default
-                $finalValue = $sqlOriginal ?: $defaultValue;
+                $finalValue = $resolveFieldValue($fieldMap);
             }
 
             // 4. Guardamos el valor REAL obtenido en el array de parámetros
             $queryParams[$fieldMap->field_key] = $finalValue;
         }
+
+        if (!$usesBody) {
+            $queryParams = array_merge($queryParams, $additionalVariables->toArray());
+        }
+
+        $queryParams = array_merge($queryParams, $extraQueryParams->toArray());
 
         if (!empty($queryParams)) {
             $url .= (strpos($url, '?') !== false ? '&' : '?') . http_build_query($queryParams);
@@ -215,8 +310,10 @@ class IntegrationhubController extends Controller
             }
         }
 
+        $headers = array_merge($headers, $extraHeaderParams->toArray());
+
         // Body fields (only for POST/PUT/PATCH or when body_type != none)
-        if ($endpoint->http_method !== 'GET' || $endpoint->body_type != 'none') {
+        if ($usesBody) {
             foreach ($fieldMaps->where('field_location', 'body') as $fieldMap) {
                 // Nuevo: Manejar subitems (configuración tipo tabla/campos)
                 if ($fieldMap->has_subitems && !empty($fieldMap->subitems)) {
@@ -289,25 +386,26 @@ class IntegrationhubController extends Controller
                 $sqlOriginal = $fieldMap->field_value;
                 $defaultValue = $fieldMap->default_value;
 
-                if ($sqlOriginal && stripos($sqlOriginal, 'select') !== false) {
-                    $sqlReady = str_replace('?', "'$defaultValue'", $sqlOriginal);
-
-                    try {
-                        $data = DB::select($sqlReady);
-                        $body[$fieldMap->field_key] = json_decode(json_encode($data), true);
-                    } catch (\Exception $e) {
-                        $body[$fieldMap->field_key] = $defaultValue;
-                    }
+                if ($fieldMap->source_type === 'query') {
+                    $body[$fieldMap->field_key] = $resolveFieldValue($fieldMap);
+                } elseif ($hasOverride($fieldMap)) {
+                    $body[$fieldMap->field_key] = $resolveFieldValue($fieldMap);
                 } else {
-                    $body[$fieldMap->field_key] = $sqlOriginal ?: $defaultValue;
+                    $body[$fieldMap->field_key] = $resolveFieldValue($fieldMap);
                 }
             }
         }
 
+        if ($usesBody) {
+            $body = array_merge($body, $additionalVariables->toArray());
+        }
+
+        $body = array_merge($body, $extraBodyParams->toArray());
+
         // Header fields from field maps
 
         foreach ($fieldMaps->where('field_location', 'header') as $fieldMap) {
-            $headers[$fieldMap->field_key] = $fieldMap->field_value ?? $fieldMap->default_value;
+            $headers[$fieldMap->field_key] = $resolveFieldValue($fieldMap);
         }
 
         $startTime = microtime(true);
@@ -356,11 +454,29 @@ class IntegrationhubController extends Controller
                 }
             }
 
+            $requestData = [
+                'method' => $endpoint->http_method,
+                'url' => $url,
+                'headers' => $options['headers'] ?? [],
+                'query' => $queryParams,
+                'body_type' => $endpoint->body_type,
+                'body' => $body,
+            ];
+
+            $logData['request_payload'] = $requestData;
+
             $response = $client->request($endpoint->http_method, $url, $options);
 
             $executionTime = round((microtime(true) - $startTime) * 1000);
             $statusCode = $response->getStatusCode();
-            $responseBody = json_decode($response->getBody()->getContents(), true);
+            $rawResponseBody = $response->getBody()->getContents();
+            $responseBody = json_decode($rawResponseBody, true);
+            $responseBody = json_last_error() === JSON_ERROR_NONE ? $responseBody : $rawResponseBody;
+            $receivedData = [
+                'status_code' => $statusCode,
+                'headers' => $response->getHeaders(),
+                'body' => $responseBody,
+            ];
 
             // Save success log
             $logData['status'] = $statusCode >= 200 && $statusCode < 300 ? 'success' : 'failed';
@@ -369,10 +485,13 @@ class IntegrationhubController extends Controller
             $logData['execution_time_ms'] = $executionTime;
 
             $integration->logs()->create($logData);
+            $this->pruneIntegrationLogs($integration);
 
             return response()->json([
                 'message' => 'Integración ejecutada correctamente',
                 'status_code' => $statusCode,
+                'request' => $requestData,
+                'received' => $receivedData,
                 'response' => $responseBody,
                 'executed_at' => now()
             ]);
@@ -380,20 +499,41 @@ class IntegrationhubController extends Controller
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $executionTime = round((microtime(true) - $startTime) * 1000);
             $statusCode = $e->getResponse()->getStatusCode();
-            $responseBody = json_decode($e->getResponse()->getBody()->getContents(), true);
+            $rawResponseBody = $e->getResponse()->getBody()->getContents();
+            $responseBody = json_decode($rawResponseBody, true);
+            $responseBody = json_last_error() === JSON_ERROR_NONE ? $responseBody : $rawResponseBody;
+            $receivedData = [
+                'status_code' => $statusCode,
+                'headers' => $e->getResponse()->getHeaders(),
+                'body' => $responseBody,
+            ];
+            $externalMessage = is_array($responseBody)
+                ? ($responseBody['message'] ?? $responseBody['error'] ?? null)
+                : trim(preg_replace('/\s+/', ' ', strip_tags((string) $responseBody)));
+            $externalMessage = $externalMessage ?: $e->getMessage();
 
             // Save failed log
             $logData['status'] = 'failed';
             $logData['response_body'] = $responseBody;
             $logData['response_status_code'] = $statusCode;
             $logData['execution_time_ms'] = $executionTime;
-            $logData['error_message'] = $responseBody['message'] ?? $e->getMessage();
+            $logData['error_message'] = $externalMessage;
 
             $integration->logs()->create($logData);
+            $this->pruneIntegrationLogs($integration);
 
             return response()->json([
-                'message' => 'Error en la solicitud: ' . ($responseBody['message'] ?? $e->getMessage()),
+                'message' => 'Error en la solicitud externa: ' . $externalMessage,
                 'status_code' => $statusCode,
+                'request' => $requestData ?? [
+                    'method' => $endpoint->http_method,
+                    'url' => $url,
+                    'headers' => $headers,
+                    'query' => $queryParams,
+                    'body_type' => $endpoint->body_type,
+                    'body' => $body,
+                ],
+                'received' => $receivedData,
                 'response' => $responseBody,
                 'executed_at' => now()
             ], $statusCode);
@@ -408,14 +548,39 @@ class IntegrationhubController extends Controller
             $logData['error_message'] = $e->getMessage();
 
             $integration->logs()->create($logData);
+            $this->pruneIntegrationLogs($integration);
 
             return response()->json([
                 'message' => 'Error al ejecutar la integración: ' . $e->getMessage(),
                 'status_code' => 500,
+                'request' => $requestData ?? [
+                    'method' => $endpoint->http_method,
+                    'url' => $url,
+                    'headers' => $headers,
+                    'query' => $queryParams,
+                    'body_type' => $endpoint->body_type,
+                    'body' => $body,
+                ],
+                'received' => null,
                 'response' => null,
                 'executed_at' => now()
             ], 500);
         }
+    }
+
+    public function executeByName(Request $request, string $integration, string $endpoint)
+    {
+        $integrationModel = Integration::where('name', urldecode($integration))->firstOrFail();
+
+        $endpointModel = $integrationModel->endpoints()
+            ->where('name', urldecode($endpoint))
+            ->firstOrFail();
+
+        $request->merge([
+            'endpoint_id' => $endpointModel->id,
+        ]);
+
+        return $this->execute($request, $integrationModel->id);
     }
 
     public function updateAuth(Request $request, int $id)
@@ -544,13 +709,14 @@ class IntegrationhubController extends Controller
             'field_map_id' => 'nullable|integer',
             'endpoint_id' => 'required|integer',
             'field_key' => 'required|string|max:100',
-            'field_value' => 'nullable|string|max:255',
+            'field_value' => 'nullable|string',
             'field_type' => 'required|in:static,table_field,query,computed,custom',
             'field_location' => 'required|in:query,path,body,header',
             'source_type' => 'required|in:static,database,query,function',
             'source_table' => 'nullable|string|max:100',
             'source_field' => 'nullable|string|max:100',
             'default_value' => 'nullable|string|max:255',
+            'is_required' => 'boolean',
             'is_enabled' => 'boolean',
             'has_subitems' => 'boolean',
             'subitems' => 'nullable|json',
@@ -561,18 +727,62 @@ class IntegrationhubController extends Controller
             'default_field' => 'nullable|string|max:100'
         ]);
 
+        $endpoint = IntegrationEndpoint::where('id', $request->endpoint_id)
+            ->where('integration_id', $integration->id)
+            ->firstOrFail();
+        $fieldKey = trim((string) $request->field_key);
+
+        if (preg_match('/^\{([^{}]+)\}$/', $fieldKey, $matches)) {
+            $fieldKey = trim($matches[1]);
+            $request->merge(['field_key' => $fieldKey]);
+        }
+
+        if ($request->field_location === 'path') {
+            $placeholder = '{' . $fieldKey . '}';
+
+            if (!str_contains($endpoint->endpoint_path, $placeholder)) {
+                throw ValidationException::withMessages([
+                    'field_key' => "La ruta del endpoint debe contener el placeholder {$placeholder}.",
+                ]);
+            }
+        }
+
+        if ($request->source_type === 'query' && !$this->isReadOnlySelectSql($request->field_value)) {
+            throw ValidationException::withMessages([
+                'field_value' => 'Solo se permiten consultas SELECT. No se aceptan INSERT, UPDATE, DELETE ni otras sentencias.',
+            ]);
+        }
+
+        if ($request->filled('array_query') && !$this->isReadOnlySelectSql($request->array_query)) {
+            throw ValidationException::withMessages([
+                'array_query' => 'Solo se permiten consultas SELECT para arrays.',
+            ]);
+        }
+
+        $this->validateSubitemQueries($request->subitems ? json_decode($request->subitems, true) : []);
+
         if ($request->input('field_map_id')) {
             $fieldMap = IntegrationFieldMap::where('id', $request->field_map_id)->firstOrFail();
+            $fieldValue = $request->field_value ?? null;
+
+            if ($request->source_type !== 'query'
+                && $fieldMap->source_type === 'query'
+                && trim((string) $fieldMap->field_value) === trim((string) $fieldValue)
+            ) {
+                $fieldValue = null;
+            }
+
             $fieldMap->update([
                 'endpoint_id' => $request->endpoint_id,
                 'field_key' => $request->field_key,
-                'field_value' => $request->field_value ?? null,
+                'field_value' => $fieldValue,
                 'field_type' => $request->field_type,
                 'field_location' => $request->field_location,
                 'source_type' => $request->source_type,
                 'source_table' => $request->source_table ?? null,
                 'source_field' => $request->source_field ?? null,
                 'default_value' => $request->default_value ?? null,
+                'is_required' => $request->is_required ?? false,
                 'is_enabled' => $request->is_enabled ?? true,
                 'has_subitems' => $request->has_subitems ?? false,
                 'subitems' => $request->subitems ?? null,
@@ -583,7 +793,6 @@ class IntegrationhubController extends Controller
                 'default_field' => $request->default_field ?? null
             ]);
         } else {
-            $endpoint = IntegrationEndpoint::findOrFail($request->endpoint_id);
             $index = $endpoint->fieldMaps()->count() + 1;
             $endpoint->fieldMaps()->create([
                 'endpoint_id' => $request->endpoint_id,
@@ -595,6 +804,7 @@ class IntegrationhubController extends Controller
                 'source_table' => $request->source_table ?? null,
                 'source_field' => $request->source_field ?? null,
                 'default_value' => $request->default_value ?? null,
+                'is_required' => $request->is_required ?? false,
                 'is_enabled' => $request->is_enabled ?? true,
                 'sort_order' => $index,
                 'has_subitems' => $request->has_subitems ?? false,
@@ -617,9 +827,12 @@ class IntegrationhubController extends Controller
             'subitems' => 'nullable|json'
         ]);
 
+        $subitems = $request->subitems ? json_decode($request->subitems, true) : null;
+        $this->validateSubitemQueries($subitems ?? []);
+
         $fieldMap = IntegrationFieldMap::where('id', $request->field_map_id)->firstOrFail();
         $fieldMap->update([
-            'subitems' => $request->subitems ? json_decode($request->subitems) : null
+            'subitems' => $subitems
         ]);
 
         return response()->json([
@@ -708,10 +921,16 @@ class IntegrationhubController extends Controller
             'query_id' => 'nullable|integer',
             'query_name' => 'required|string|max:100',
             'query_sql' => 'required|string',
-            'query_type' => 'required|in:select,raw_sql',
+            'query_type' => 'required|in:select',
             'parameters' => 'nullable|json',
             'is_active' => 'boolean'
         ]);
+
+        if (!$this->isReadOnlySelectSql($request->query_sql)) {
+            throw ValidationException::withMessages([
+                'query_sql' => 'Solo se permiten consultas SELECT.',
+            ]);
+        }
 
         if ($request->input('query_id')) {
             $query = IntegrationQuery::where('id', $request->query_id)->firstOrFail();
@@ -766,23 +985,35 @@ class IntegrationhubController extends Controller
 
         $this->validate($request, [
             'schedule_id' => 'nullable|integer',
+            'endpoint_id' => 'nullable|integer',
             'cron_expression' => 'required|string|max:100',
+            'payload' => 'nullable|array',
             'is_active' => 'boolean'
         ]);
 
+        if ($request->endpoint_id) {
+            IntegrationEndpoint::where('id', $request->endpoint_id)
+                ->where('integration_id', $integration->id)
+                ->firstOrFail();
+        }
+
         // Calcular próxima ejecución
-        $nextExecution = $this->calculateNextExecution($request->cron_expression);
+        $nextExecution = app(IntegrationhubCronExpression::class)->nextRunDate($request->cron_expression);
 
         if ($request->input('schedule_id')) {
             $schedule = IntegrationSchedule::where('id', $request->schedule_id)->firstOrFail();
             $schedule->update([
+                'endpoint_id' => $request->endpoint_id,
                 'cron_expression' => $request->cron_expression,
+                'payload' => $request->payload ?? [],
                 'is_active' => $request->is_active ?? true,
                 'next_execution_at' => $nextExecution
             ]);
         } else {
             $integration->schedules()->create([
+                'endpoint_id' => $request->endpoint_id,
                 'cron_expression' => $request->cron_expression,
+                'payload' => $request->payload ?? [],
                 'is_active' => $request->is_active ?? true,
                 'next_execution_at' => $nextExecution
             ]);
@@ -883,6 +1114,95 @@ class IntegrationhubController extends Controller
                 $this->arrayToXml($value, $child);
             } else {
                 $xml->addChild($key, htmlspecialchars((string)$value));
+            }
+        }
+    }
+
+    private function executeReadOnlyFieldQuery(?string $sql, mixed $defaultValue = null): mixed
+    {
+        if (!$this->isReadOnlySelectSql($sql)) {
+            throw new \InvalidArgumentException('Solo se permiten consultas SELECT en mapeos de Integrationhub.');
+        }
+
+        $bindings = array_fill(0, substr_count($sql, '?'), $defaultValue);
+        $rows = DB::select(trim($sql), $bindings);
+
+        if (empty($rows)) {
+            return $defaultValue;
+        }
+
+        $firstRow = (array) $rows[0];
+
+        return reset($firstRow);
+    }
+
+    private function pruneIntegrationLogs(Integration $integration): void
+    {
+        $keepIds = $integration->logs()
+            ->orderBy('executed_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->pluck('id');
+
+        $integration->logs()
+            ->whereNotIn('id', $keepIds)
+            ->delete();
+    }
+
+    private function isReadOnlySelectSql(?string $sql): bool
+    {
+        $sql = trim((string) $sql);
+
+        if ($sql === '') {
+            return false;
+        }
+
+        $withoutComments = preg_replace('/\/\*.*?\*\//s', '', $sql);
+        $withoutComments = preg_replace('/--.*$/m', '', $withoutComments);
+        $withoutComments = trim($withoutComments);
+
+        if (str_contains(rtrim($withoutComments, ';'), ';')) {
+            return false;
+        }
+
+        if (!preg_match('/^(select|with)\b/i', $withoutComments)) {
+            return false;
+        }
+
+        $withoutStringLiterals = preg_replace('/\'(?:\'\'|[^\'])*\'|"(?:\\\\"|""|[^"])*"/', "''", $withoutComments);
+        $writePatterns = [
+            '/\binsert\s+into\b/i',
+            '/\bupdate\s+[`"\[]?[a-zA-Z0-9_.$-]+[`"\]]?\s+set\b/i',
+            '/\bdelete\s+from\b/i',
+            '/\btruncate\s+table\b/i',
+            '/\bcreate\s+table\b/i',
+            '/\balter\s+table\b/i',
+            '/\bdrop\s+table\b/i',
+            '/\breplace\s+into\b/i',
+            '/\bmerge\s+into\b/i',
+            '/\bcall\s+[a-zA-Z0-9_.$-]+\b/i',
+            '/\bgrant\s+.+\s+on\b/i',
+            '/\brevoke\s+.+\s+on\b/i',
+            '/\block\s+tables?\b/i',
+            '/\bunlock\s+tables?\b/i',
+        ];
+
+        foreach ($writePatterns as $pattern) {
+            if (preg_match($pattern, $withoutStringLiterals)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function validateSubitemQueries(array $subitems): void
+    {
+        foreach ($subitems as $index => $subitem) {
+            if (($subitem['source_type'] ?? null) === 'query' && !$this->isReadOnlySelectSql($subitem['field_value'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'subitems' => 'Solo se permiten consultas SELECT en subitems. No se aceptan INSERT, UPDATE, DELETE, PATCH ni otras sentencias.',
+                ]);
             }
         }
     }

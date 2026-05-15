@@ -10,6 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         $now = now();
+        $userId = DB::table('users')->value('id');
+        $localId = DB::table('local_sales')->value('id');
 
         $existsBB01 = DB::table('series')
             ->where('description', 'BB01')
@@ -21,8 +23,8 @@ return new class extends Migration
                 'document_type_id' => 3,
                 'description' => 'BB01',
                 'number' => 1,
-                'user_id' => 3,
-                'local_id' => 1,
+                'user_id' => $userId,
+                'local_id' => $localId,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -38,8 +40,8 @@ return new class extends Migration
                 'document_type_id' => 3,
                 'description' => 'ND01',
                 'number' => 1,
-                'user_id' => 3,
-                'local_id' => 1,
+                'user_id' => $userId,
+                'local_id' => $localId,
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

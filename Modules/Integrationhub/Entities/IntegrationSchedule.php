@@ -14,13 +14,16 @@ class IntegrationSchedule extends Model
 
     protected $fillable = [
         'integration_id',
+        'endpoint_id',
         'cron_expression',
+        'payload',
         'is_active',
         'last_executed_at',
         'next_execution_at'
     ];
 
     protected $casts = [
+        'payload' => 'array',
         'is_active' => 'boolean',
         'last_executed_at' => 'datetime',
         'next_execution_at' => 'datetime'
@@ -29,5 +32,10 @@ class IntegrationSchedule extends Model
     public function integration(): BelongsTo
     {
         return $this->belongsTo(Integration::class, 'integration_id');
+    }
+
+    public function endpoint(): BelongsTo
+    {
+        return $this->belongsTo(IntegrationEndpoint::class, 'endpoint_id');
     }
 }

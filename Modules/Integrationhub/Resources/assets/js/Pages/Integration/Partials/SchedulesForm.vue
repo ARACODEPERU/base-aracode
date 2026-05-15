@@ -16,6 +16,10 @@ const props = defineProps({
     schedules: {
         type: Array,
         default: () => []
+    },
+    endpoints: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -32,13 +36,49 @@ const cronPresets = [
 
 const newSchedule = ref({
     schedule_id: null,
+    endpoint_id: null,
     cron_expression: '0 0 * * *',
+    payload: {},
     is_active: true
 });
 
 const showModal = ref(false);
 const saving = ref(false);
 const togglingId = ref(null);
+
+const selectedScheduleEndpoint = computed(() => {
+    return props.endpoints.find(endpoint => endpoint.id === newSchedule.value.endpoint_id) || null;
+});
+
+const selectedEndpointFields = computed(() => {
+    return (selectedScheduleEndpoint.value?.field_maps || selectedScheduleEndpoint.value?.fieldMaps || [])
+        .filter(field => field.is_enabled !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+});
+
+const requiredEndpointFields = computed(() => selectedEndpointFields.value.filter(field => field.is_required));
+
+const getEndpointName = (endpointId) => {
+    return props.endpoints.find(endpoint => endpoint.id === endpointId)?.name || 'Todos los endpoints activos';
+};
+
+const normalizePayload = (payload) => {
+    return payload && !Array.isArray(payload) && typeof payload === 'object' ? { ...payload } : {};
+};
+
+const resetPayloadForEndpoint = (endpointId, currentPayload = {}) => {
+    const endpoint = props.endpoints.find(item => item.id === endpointId);
+    const fields = endpoint?.field_maps || endpoint?.fieldMaps || [];
+    const payload = {};
+
+    fields
+        .filter(field => field.is_enabled !== false && field.field_key)
+        .forEach(field => {
+            payload[field.field_key] = currentPayload[field.field_key] ?? '';
+        });
+
+    newSchedule.value.payload = payload;
+};
 
 const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -60,18 +100,24 @@ const getCronDescription = (expression) => {
 const addSchedule = () => {
     newSchedule.value = {
         schedule_id: null,
+        endpoint_id: props.endpoints[0]?.id || null,
         cron_expression: '0 0 * * *',
+        payload: {},
         is_active: true
     };
+    resetPayloadForEndpoint(newSchedule.value.endpoint_id);
     showModal.value = true;
 };
 
 const editSchedule = (schedule) => {
     newSchedule.value = {
         schedule_id: schedule.id,
+        endpoint_id: schedule.endpoint_id || null,
         cron_expression: schedule.cron_expression,
+        payload: normalizePayload(schedule.payload),
         is_active: schedule.is_active
     };
+    resetPayloadForEndpoint(newSchedule.value.endpoint_id, newSchedule.value.payload);
     showModal.value = true;
 };
 
@@ -122,7 +168,9 @@ const toggleEnabled = (schedule) => {
 
     axios.put(route('integrationhub_update_schedule', props.integrationId), {
         schedule_id: schedule.id,
+        endpoint_id: schedule.endpoint_id || null,
         cron_expression: schedule.cron_expression,
+        payload: schedule.payload || {},
         is_active: isActive
     }).then(() => {
         schedule.is_active = isActive;
@@ -190,6 +238,10 @@ const refreshSchedules = async () => {
 const selectPreset = (value) => {
     newSchedule.value.cron_expression = value;
 };
+
+const onEndpointChange = () => {
+    resetPayloadForEndpoint(newSchedule.value.endpoint_id, newSchedule.value.payload);
+};
 </script>
 
 <template>
@@ -221,6 +273,7 @@ const selectPreset = (value) => {
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-zinc-700 dark:text-gray-400">
                 <tr>
                     <th class="px-4 py-3 w-24">Activo</th>
+                    <th class="px-4 py-3">Endpoint</th>
                     <th class="px-4 py-3">Expresión Cron</th>
                     <th class="px-4 py-3">Próxima Ejecución</th>
                     <th class="px-4 py-3">Última Ejecución</th>
@@ -244,6 +297,9 @@ const selectPreset = (value) => {
                                     class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 shadow-sm"></span>
                             </button>
                         </div>
+                    </td>
+                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {{ getEndpointName(schedule.endpoint_id) }}
                     </td>
                     <td class="px-4 py-3">
                         <div>
@@ -318,6 +374,45 @@ const selectPreset = (value) => {
                 </div>
 
                 <!-- Expresión cron personalizada -->
+                <div>
+                    <InputLabel for="endpoint_id" value="Endpoint a ejecutar *" />
+                    <select
+                        id="endpoint_id"
+                        v-model="newSchedule.endpoint_id"
+                        class="form-select"
+                        @change="onEndpointChange"
+                    >
+                        <option v-for="endpoint in endpoints" :key="endpoint.id" :value="endpoint.id">
+                            {{ endpoint.http_method }} - {{ endpoint.name }}
+                        </option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">La programacion enviara estos valores al endpoint seleccionado.</p>
+                </div>
+
+                <div v-if="selectedScheduleEndpoint && selectedEndpointFields.length" class="rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Valores para la ejecucion</h4>
+                        <span v-if="requiredEndpointFields.length" class="text-xs text-red-500">
+                            {{ requiredEndpointFields.length }} requerido(s)
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div v-for="field in selectedEndpointFields" :key="field.id">
+                            <InputLabel :for="`payload_${field.id}`" :value="`${field.field_key}${field.is_required ? ' *' : ''}`" />
+                            <input
+                                :id="`payload_${field.id}`"
+                                v-model="newSchedule.payload[field.field_key]"
+                                type="text"
+                                class="form-input"
+                                :placeholder="field.source_type === 'query' ? 'Vacio: ejecuta la consulta SQL configurada' : 'Valor a enviar'"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">
+                                {{ field.field_location === 'path' ? 'Ruta URL' : (field.field_location === 'query' ? 'Parametro URL' : (field.field_location === 'body' ? 'Body' : 'Header')) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <InputLabel for="cron_expression" value="Expresión Cron *" />
                     <input 

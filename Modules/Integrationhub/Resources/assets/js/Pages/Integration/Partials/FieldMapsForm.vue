@@ -53,6 +53,7 @@ const newFieldMap = useForm({
     source_table: '',
     source_field: '',
     default_value: '',
+    is_required: false,
     is_enabled: true,
     has_subitems: false,
     subitems: null,
@@ -215,6 +216,85 @@ const filteredFieldMaps = computed(() => {
     return props.fieldMaps.filter(fm => fm.endpoint_id === selectedEndpoint.value);
 });
 
+const selectedFormEndpoint = computed(() => {
+    return props.endpoints.find(ep => ep.id === newFieldMap.endpoint_id) || null;
+});
+
+const endpointPathPlaceholders = computed(() => {
+    const path = selectedFormEndpoint.value?.endpoint_path || '';
+    return [...path.matchAll(/\{([^{}]+)\}/g)].map(match => match[1]);
+});
+
+const isPathLocation = computed(() => {
+    return newFieldMap.field_location === 'path';
+});
+
+const fieldKeyPlaceholder = computed(() => {
+    return isPathLocation.value
+        ? `Ej: ${endpointPathPlaceholders.value[0] || 'contact_id'}`
+        : 'Ej: customer_name';
+});
+
+const fieldKeyHelp = computed(() => {
+    if (!isPathLocation.value) {
+        return 'Nombre del campo en el cuerpo de la peticion (JSON)';
+    }
+
+    if (endpointPathPlaceholders.value.length) {
+        return `Nombre de la variable del path. Si escribes ${endpointPathPlaceholders.value[0]}, se reemplazara {${endpointPathPlaceholders.value[0]}} en la ruta.`;
+    }
+
+    return 'La ruta del endpoint debe tener un placeholder como {contact_id}';
+});
+
+const getSqlValidationMessage = (sql) => {
+    const cleaned = String(sql || '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/--.*$/gm, '')
+        .trim();
+
+    if (!cleaned) {
+        return 'La consulta SQL no puede estar vacia.';
+    }
+
+    const withoutTrailingSemicolon = cleaned.replace(/;+\s*$/, '');
+    const withoutStringLiterals = withoutTrailingSemicolon.replace(/'(?:''|[^'])*'|"(?:\\"|""|[^"])*"/g, "''");
+    const writePatterns = [
+        /\binsert\s+into\b/i,
+        /\bupdate\s+[`"\[]?[a-zA-Z0-9_.$-]+[`"\]]?\s+set\b/i,
+        /\bdelete\s+from\b/i,
+        /\btruncate\s+table\b/i,
+        /\bcreate\s+table\b/i,
+        /\balter\s+table\b/i,
+        /\bdrop\s+table\b/i,
+        /\breplace\s+into\b/i,
+        /\bmerge\s+into\b/i,
+        /\bcall\s+[a-zA-Z0-9_.$-]+\b/i,
+        /\bgrant\s+.+\s+on\b/i,
+        /\brevoke\s+.+\s+on\b/i,
+        /\block\s+tables?\b/i,
+        /\bunlock\s+tables?\b/i,
+    ];
+
+    if (!/^(select|with)\b/i.test(withoutTrailingSemicolon)) {
+        return 'La consulta debe comenzar con SELECT o WITH. Puedes usar palabras como "inserte" dentro del SELECT, pero no como consulta completa.';
+    }
+
+    if (withoutTrailingSemicolon.includes(';')) {
+        return 'Solo se permite una consulta SELECT. No se aceptan multiples sentencias separadas por punto y coma.';
+    }
+
+    if (writePatterns.some(pattern => pattern.test(withoutStringLiterals))) {
+        return 'La consulta contiene una sentencia que modifica datos. No se aceptan INSERT INTO, UPDATE tabla SET, DELETE FROM, TRUNCATE TABLE ni CREATE TABLE.';
+    }
+
+    return null;
+};
+
+const isReadOnlySelectSql = (sql) => {
+    return getSqlValidationMessage(sql) === null;
+};
+
 const addFieldMap = () => {
     newFieldMap.endpoint_id = selectedEndpoint.value || (props.endpoints[0]?.id || null);
     newFieldMap.field_key = '';
@@ -224,6 +304,7 @@ const addFieldMap = () => {
     newFieldMap.source_table = '';
     newFieldMap.source_field = '';
     newFieldMap.default_value = '';
+    newFieldMap.is_required = false;
     newFieldMap.is_enabled = true;
     newFieldMap.has_subitems = false;
     newFieldMap.subitems = null;
@@ -251,6 +332,7 @@ const editFieldMap = (fieldMap) => {
     newFieldMap.source_type = fieldMap.source_type;
     newFieldMap.source_table = fieldMap.source_table || '';
     newFieldMap.default_value = fieldMap.default_value || '';
+    newFieldMap.is_required = fieldMap.is_required || false;
     newFieldMap.is_enabled = fieldMap.is_enabled;
     newFieldMap.has_subitems = fieldMap.has_subitems || false;
     newFieldMap.subitems = fieldMap.subitems || null;
@@ -298,8 +380,22 @@ const onFieldTypeChange = () => {
         newFieldMap.source_type = 'static';
         newFieldMap.source_table = '';
         newFieldMap.source_field = '';
+        if (isReadOnlySelectSql(newFieldMap.field_value)) {
+            newFieldMap.field_value = '';
+        }
     } else if (newFieldMap.source_type === 'query') {
         // Ya queda visible el textarea
+    }
+};
+
+const onSourceTypeChange = () => {
+    if (newFieldMap.source_type !== 'database') {
+        newFieldMap.source_table = '';
+        newFieldMap.source_field = '';
+    }
+
+    if (newFieldMap.source_type !== 'query' && isReadOnlySelectSql(newFieldMap.field_value)) {
+        newFieldMap.field_value = '';
     }
 };
 
@@ -387,6 +483,46 @@ const destroyServer = async (id) => {
 };
 
 const storeToServer = async () => {
+    if (newFieldMap.field_location === 'path') {
+        const normalizedFieldKey = String(newFieldMap.field_key || '').trim().replace(/^\{([^{}]+)\}$/, '$1');
+        const placeholder = `{${normalizedFieldKey}}`;
+
+        if (!endpointPathPlaceholders.value.includes(normalizedFieldKey)) {
+            Swal2.fire({
+                title: 'Placeholder no encontrado',
+                text: `La ruta del endpoint debe contener ${placeholder}. Por ejemplo: /flows/${placeholder}/send`,
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        newFieldMap.field_key = normalizedFieldKey;
+    }
+
+    if (newFieldMap.source_type === 'query' && !isReadOnlySelectSql(newFieldMap.field_value)) {
+        Swal2.fire({
+            title: 'Consulta no permitida',
+            text: getSqlValidationMessage(newFieldMap.field_value),
+            icon: 'error',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        return;
+    }
+
+    if (newFieldMap.array_query && !isReadOnlySelectSql(newFieldMap.array_query)) {
+        Swal2.fire({
+            title: 'Consulta no permitida',
+            text: getSqlValidationMessage(newFieldMap.array_query),
+            icon: 'error',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        return;
+    }
+
     // Si tiene subitems, manejar según el tipo de estructura
     if (newFieldMap.has_subitems) {
         newFieldMap.default_value = null;
@@ -614,6 +750,17 @@ const saveSubitem = async () => {
         Swal2.fire({
             title: 'Error',
             text: 'El campo clave es requerido',
+            icon: 'error',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        return;
+    }
+
+    if (editingSubitem.value.source_type === 'query' && !isReadOnlySelectSql(editingSubitem.value.field_value)) {
+        Swal2.fire({
+            title: 'Consulta no permitida',
+            text: getSqlValidationMessage(editingSubitem.value.field_value),
             icon: 'error',
             padding: '2em',
             customClass: 'sweet-alerts',
@@ -1050,7 +1197,7 @@ const loadArrayDefaultColumns = async (table) => {
                     <InputLabel for="field_location" value="Ubicación del Campo" />
                     <select id="field_location" v-model="newFieldMap.field_location" class="form-select">
                         <option value="query">Parámetro URL (?key=value)</option>
-                        <option value="path">Ruta URL (/valor)</option>
+                        <option value="path">Ruta URL ({campo})</option>
                         <option value="body">Cuerpo JSON (body)</option>
                         <option value="header">Cabecera HTTP (header)</option>
                     </select>
@@ -1095,31 +1242,46 @@ const loadArrayDefaultColumns = async (table) => {
                     <InputLabel for="field_value" value="Consulta SQL" />
                     <textarea id="field_value" v-model="newFieldMap.field_value" rows="4" class="form-textarea"
                         placeholder="SELECT campo FROM tabla WHERE..."></textarea>
-                    <p class="mt-1 text-xs text-gray-500">Escribe tu consulta SQL (SELECT, UPDATE, DELETE o CALL para stored procedure)</p>
+                    <p class="mt-1 text-xs text-gray-500">Solo se permiten consultas SELECT. Se enviará el primer valor retornado por la consulta.</p>
                     <InputError :message="newFieldMap.errors.field_value" class="mt-2" />
                 </div>
 
                 <!-- Valor por Defecto (último campo visible) -->
-                <div v-if="showDefault" :class="{'opacity-50 pointer-events-none': newFieldMap.has_subitems}">
+                <div v-if="false && showDefault" :class="{'opacity-50 pointer-events-none': newFieldMap.has_subitems}">
                     <InputLabel for="default_value" value="Valor por Defecto" />
                     <input id="default_value" v-model="newFieldMap.default_value" type="text" class="form-input" placeholder="Valor si el campo está vacío" :disabled="newFieldMap.has_subitems" />
                     <p class="mt-1 text-xs text-gray-500">Valor por defecto cuando el campo no tiene datos</p>
                     <InputError :message="newFieldMap.errors.default_value" class="mt-2" />
                 </div>
 
-                <!-- Campo Clave + Campo Valor (al final) -->
+                <!-- Campo Clave + Valor por Defecto + Campo Valor + Obligatoriedad -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <InputLabel for="field_key" value="Campo Clave *" />
-                        <input id="field_key" v-model="newFieldMap.field_key" type="text" class="form-input" placeholder="Ej: customer_name" />
-                        <p class="mt-1 text-xs text-gray-500">Nombre del campo en el cuerpo de la petición (JSON)</p>
+                        <input id="field_key" v-model="newFieldMap.field_key" type="text" class="form-input" :placeholder="fieldKeyPlaceholder" />
+                        <p class="mt-1 text-xs text-gray-500">{{ fieldKeyHelp }}</p>
                         <InputError :message="newFieldMap.errors.field_key" class="mt-2" />
+                    </div>
+                    <div v-if="showDefault" :class="{'opacity-50 pointer-events-none': newFieldMap.has_subitems}">
+                        <InputLabel for="default_value" value="Valor por Defecto" />
+                        <input id="default_value" v-model="newFieldMap.default_value" type="text" class="form-input" placeholder="Valor si Campo Valor esta vacio" :disabled="newFieldMap.has_subitems" />
+                        <p class="mt-1 text-xs text-gray-500">Se usa cuando Campo Valor esta vacio o como parametro de la consulta SQL</p>
+                        <InputError :message="newFieldMap.errors.default_value" class="mt-2" />
                     </div>
                     <div v-if="!showQueryField" :class="{'opacity-50 pointer-events-none': newFieldMap.has_subitems}">
                         <InputLabel for="field_value" value="Campo Valor" />
-                        <input id="field_value" v-model="newFieldMap.field_value" type="text" class="form-input" placeholder="Ej: {{name}} o valor estático" :disabled="newFieldMap.has_subitems" />
-                        <p class="mt-1 text-xs text-gray-500">Usa {{campo}} para referencias a campos de tu sistema</p>
+                        <input id="field_value" v-model="newFieldMap.field_value" type="text" class="form-input" placeholder="Ej: {name} o valor estático" :disabled="newFieldMap.has_subitems" />
+                        <p class="mt-1 text-xs text-gray-500">En Ruta URL, este valor reemplaza el placeholder indicado por Campo Clave</p>
                         <InputError :message="newFieldMap.errors.field_value" class="mt-2" />
+                    </div>
+                    <div>
+                        <InputLabel for="is_required" value="Obligatoriedad" />
+                        <select id="is_required" v-model="newFieldMap.is_required" class="form-select">
+                            <option :value="false">Opcional</option>
+                            <option :value="true">Requerido</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Indica si este valor debe enviarse siempre o puede quedar vacio</p>
+                        <InputError :message="newFieldMap.errors.is_required" class="mt-2" />
                     </div>
                 </div>
             </div>

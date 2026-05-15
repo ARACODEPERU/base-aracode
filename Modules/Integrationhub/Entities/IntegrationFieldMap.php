@@ -22,6 +22,7 @@ class IntegrationFieldMap extends Model
         'source_table',
         'source_field',
         'default_value',
+        'is_required',
         'is_enabled',
         'transform_rule',
         'sort_order',
@@ -36,6 +37,7 @@ class IntegrationFieldMap extends Model
     //default_type: fixed, source, custom
     protected $casts = [
         'transform_rule' => 'array',
+        'is_required' => 'boolean',
         'is_enabled' => 'boolean',
         'has_subitems' => 'boolean',
         'subitems' => 'array'

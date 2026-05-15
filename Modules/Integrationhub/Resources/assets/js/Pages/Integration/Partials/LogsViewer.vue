@@ -97,7 +97,7 @@ const closeLogModal = () => {
                 </select>
             </div>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-                {{ filteredLogs.length }} registro(s)
+                Últimas {{ filteredLogs.length }} prueba(s)
             </div>
         </div>
 

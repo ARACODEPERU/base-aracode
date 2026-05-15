@@ -24,6 +24,11 @@ class Kernel extends ConsoleKernel
                     ->dailyAt('00:20') // Cambiado a 00:10
                     ->timezone('America/Lima');
 
+        $schedule->command('integrationhub:run-scheduled')
+                    ->everyMinute()
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
     }
 
     /**

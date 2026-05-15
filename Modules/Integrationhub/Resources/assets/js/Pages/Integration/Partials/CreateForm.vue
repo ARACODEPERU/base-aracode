@@ -159,8 +159,8 @@ const storeIntegration = () => {
                 </Link>
                 <PrimaryButton
                     type="submit"
-                    :disabled="saving"
-                    :class="{ 'opacity-50': saving }"
+                    :disabled="form.processing"
+                    :class="{ 'opacity-50': form.processing }"
                 >
                     <span v-if="form.processing">Guardando...</span>
                     <span v-else>Guardar Integración</span>

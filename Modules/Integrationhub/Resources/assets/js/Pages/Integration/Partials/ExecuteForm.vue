@@ -27,16 +27,109 @@ const executing = ref(false);
 const executionResult = ref(null);
 const executionError = ref(null);
 const showResponse = ref(false);
+const showRequest = ref(true);
+const showFullDetails = ref(true);
+const testFieldValues = ref({});
 
 const selectedEndpoint = computed(() => {
     return props.endpoints.find(ep => ep.id === selectedEndpointId.value);
 });
+
+const selectedFieldMaps = computed(() => {
+    return (selectedEndpoint.value?.field_maps || selectedEndpoint.value?.fieldMaps || [])
+        .filter(field => field.is_enabled !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+});
+
+const mappedTestFields = computed(() => {
+    return selectedFieldMaps.value
+        .map(field => ({
+            ...field,
+            test_value: testFieldValues.value[field.id] ?? getDefaultFieldValue(field)
+        }));
+});
+
+const pathTestFields = computed(() => mappedTestFields.value.filter(field => field.field_location === 'path'));
+
+const testVariablesByKey = computed(() => {
+    return selectedFieldMaps.value.reduce((values, field) => {
+        if (field.field_key) {
+            values[field.field_key] = testFieldValues.value[field.id] ?? '';
+        }
+
+        return values;
+    }, {});
+});
+
+const fullEndpointUrl = computed(() => {
+    if (!selectedEndpoint.value) {
+        return '';
+    }
+
+    let path = selectedEndpoint.value.endpoint_path || '';
+
+    pathTestFields.value.forEach(field => {
+        const manualValue = testFieldValues.value[field.id];
+        const hasManualValue = manualValue !== null
+            && manualValue !== undefined
+            && String(manualValue).trim() !== '';
+        const value = hasManualValue
+            ? encodeURIComponent(manualValue)
+            : `{${field.field_key}}`;
+        path = path.replaceAll(`{${field.field_key}}`, value);
+    });
+
+    return `${String(props.integration.url_base || '').replace(/\/$/, '')}/${String(path).replace(/^\//, '')}`;
+});
+
+const locationLabels = {
+    path: 'Ruta URL',
+    query: 'Parametro URL',
+    body: 'Body',
+    header: 'Header'
+};
 
 const statusColors = {
     success: 'text-green-600 dark:text-green-400',
     error: 'text-red-600 dark:text-red-400',
     pending: 'text-yellow-600 dark:text-yellow-400'
 };
+
+const getDefaultFieldValue = (field) => {
+    const fieldValue = field.field_value;
+    const defaultValue = field.default_value;
+
+    if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).trim() !== '') {
+        return fieldValue;
+    }
+
+    if (defaultValue !== null && defaultValue !== undefined && String(defaultValue).trim() !== '') {
+        return defaultValue;
+    }
+
+    return '';
+};
+
+const resetTestFieldValues = () => {
+    const values = {};
+
+    selectedFieldMaps.value.forEach(field => {
+        values[field.id] = field.source_type === 'query' || field.field_location === 'path'
+            ? ''
+            : getDefaultFieldValue(field);
+    });
+
+    testFieldValues.value = values;
+};
+
+watch(selectedEndpointId, () => {
+    resetTestFieldValues();
+    executionResult.value = null;
+    executionError.value = null;
+    showResponse.value = false;
+    showRequest.value = true;
+    showFullDetails.value = true;
+});
 
 const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -60,6 +153,50 @@ const formatResponse = (data) => {
     }
 };
 
+const getCurrentRequest = () => {
+    return executionResult.value?.request || executionError.value?.request || null;
+};
+
+const getCurrentReceived = () => {
+    return executionResult.value?.received || executionError.value?.received || executionResult.value?.response || executionError.value?.response || null;
+};
+
+const summarizeRequest = (request) => {
+    if (!request) return null;
+
+    return {
+        method: request.method,
+        url: request.url,
+        body_type: request.body_type,
+        body: request.body
+    };
+};
+
+const summarizeReceived = (received) => {
+    if (!received) return null;
+
+    if (received.body !== undefined || received.status_code !== undefined) {
+        return {
+            status_code: received.status_code,
+            body: received.body
+        };
+    }
+
+    return {
+        body: received
+    };
+};
+
+const displayRequestData = () => {
+    const request = getCurrentRequest();
+    return showFullDetails.value ? request : summarizeRequest(request);
+};
+
+const displayReceivedData = () => {
+    const received = getCurrentReceived();
+    return showFullDetails.value ? received : summarizeReceived(received);
+};
+
 const executeIntegration = async () => {
     if (!selectedEndpointId.value) {
         Swal2.fire({
@@ -78,7 +215,9 @@ const executeIntegration = async () => {
 
     try {
         const response = await axios.post(route('integrationhub_execute', props.integrationId), {
-            endpoint_id: selectedEndpointId.value
+            endpoint_id: selectedEndpointId.value,
+            field_values: testFieldValues.value,
+            variables: testVariablesByKey.value
         });
 
         executing.value = false;
@@ -111,6 +250,9 @@ const resetExecution = () => {
     executionResult.value = null;
     executionError.value = null;
     showResponse.value = false;
+    showRequest.value = true;
+    showFullDetails.value = true;
+    testFieldValues.value = {};
 };
 </script>
 
@@ -156,7 +298,7 @@ const resetExecution = () => {
                     >
                         <option :value="null">Seleccionar endpoint...</option>
                         <option v-for="ep in endpoints" :key="ep.id" :value="ep.id">
-                            {{ ep.method }} - {{ ep.name }} ({{ ep.url }})
+                            {{ ep.http_method }} - {{ ep.name }} ({{ ep.endpoint_path }})
                         </option>
                     </select>
                 </div>
@@ -179,6 +321,50 @@ const resetExecution = () => {
                             Ejecutar Ahora
                         </template>
                     </PrimaryButton>
+                </div>
+            </div>
+
+            <div v-if="selectedEndpoint" class="mt-4 space-y-4">
+                <div class="rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900 p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-1 text-xs font-semibold rounded bg-primary/10 text-primary">
+                            {{ selectedEndpoint.http_method }}
+                        </span>
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Ruta completa</span>
+                    </div>
+                    <code class="block text-sm break-all text-gray-800 dark:text-gray-200">
+                        {{ fullEndpointUrl }}
+                    </code>
+                </div>
+
+                <div v-if="mappedTestFields.length" class="rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Variables de prueba</h4>
+                        <button type="button" @click="resetTestFieldValues" class="text-xs text-primary hover:text-primary/80">
+                            Restaurar valores por defecto
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div v-for="field in mappedTestFields" :key="field.id">
+                            <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                {{ field.field_key }}
+                                <span class="ml-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-zinc-700 text-[11px]">
+                                    {{ locationLabels[field.field_location] || field.field_location }}
+                                </span>
+                            </label>
+                            <input
+                                v-model="testFieldValues[field.id]"
+                                type="text"
+                                class="form-input"
+                                :placeholder="field.source_type === 'query' ? 'Consulta SQL: si escribe algo se enviará eso y no se hará la consulta' : String(getDefaultFieldValue(field) || 'Valor de prueba')"
+                                :disabled="executing"
+                            />
+                            <p v-if="field.source_type === 'query'" class="mt-1 text-xs text-gray-500">
+                                Vacío: ejecuta la consulta SQL configurada. Con valor: envía este dato manual.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -258,8 +444,34 @@ const resetExecution = () => {
                     </p>
                 </div>
 
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <input
+                        v-model="showFullDetails"
+                        type="checkbox"
+                        class="form-checkbox"
+                    />
+                    Mostrar detalle completo
+                </label>
+
+                <!-- Request enviado -->
+                <div v-if="executionResult?.request || executionError?.request">
+                    <button
+                        @click="showRequest = !showRequest"
+                        class="flex items-center gap-2 text-sm text-primary hover:text-primary/80"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" :class="showRequest ? 'rotate-180' : ''" class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        {{ showRequest ? 'Ocultar' : 'Ver' }} datos enviados
+                    </button>
+
+                    <div v-if="showRequest" class="mt-3">
+                        <pre class="bg-gray-100 dark:bg-zinc-900 p-4 rounded-lg text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto text-gray-700 dark:text-gray-300">{{ formatResponse(displayRequestData()) }}</pre>
+                    </div>
+                </div>
+
                 <!-- ToggleResponse -->
-                <div v-if="executionResult?.response || executionError?.response">
+                <div v-if="executionResult?.received || executionError?.received || executionResult?.response || executionError?.response">
                     <button
                         @click="showResponse = !showResponse"
                         class="flex items-center gap-2 text-sm text-primary hover:text-primary/80"
@@ -267,11 +479,11 @@ const resetExecution = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" :class="showResponse ? 'rotate-180' : ''" class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
-                        {{ showResponse ? 'Ocultar' : 'Ver' }} respuesta completa
+                        {{ showResponse ? 'Ocultar' : 'Ver' }} datos recibidos
                     </button>
 
                     <div v-if="showResponse" class="mt-3">
-                        <pre class="bg-gray-100 dark:bg-zinc-900 p-4 rounded-lg text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto text-gray-700 dark:text-gray-300">{{ formatResponse(executionResult?.response || executionError?.response) }}</pre>
+                        <pre class="bg-gray-100 dark:bg-zinc-900 p-4 rounded-lg text-xs font-mono overflow-x-auto max-h-96 overflow-y-auto text-gray-700 dark:text-gray-300">{{ formatResponse(displayReceivedData()) }}</pre>
                     </div>
                 </div>
 

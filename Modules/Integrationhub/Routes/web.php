@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->prefix('integrationhub')->group(functio
     Route::middleware(['middleware' => 'permission:integrationhub_editar'])->get('editar/{id}', [IntegrationhubController::class, 'edit'])->name('integrationhub_editar');
     Route::put('update/{id}', [IntegrationhubController::class, 'update'])->name('integrationhub_update');
     Route::middleware(['middleware' => 'permission:integrationhub_eliminar'])->delete('destroy/{id}', [IntegrationhubController::class, 'destroy'])->name('integrationhub_destroy');
+    Route::middleware(['middleware' => 'permission:integrationhub_ejecutar'])->post('execute-by-name/{integration}/{endpoint}', [IntegrationhubController::class, 'executeByName'])->name('integrationhub_execute_by_name');
     Route::middleware(['middleware' => 'permission:integrationhub_ejecutar'])->post('execute/{id}', [IntegrationhubController::class, 'execute'])->name('integrationhub_execute');
     Route::put('update-auth/{id}', [IntegrationhubController::class, 'updateAuth'])->name('integrationhub_update_auth');
     Route::delete('destroy-auth/{id}', [IntegrationhubController::class, 'destroyAuth'])->name('integrationhub_destroy_auth');

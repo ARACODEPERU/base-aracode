@@ -12,10 +12,10 @@ import { Switch } from 'ant-design-vue';
 import AuthenticationForm from './AuthenticationForm.vue';
 import EndpointsForm from './EndpointsForm.vue';
 import FieldMapsForm from './FieldMapsForm.vue';
-import DataSourcesForm from './DataSourcesForm.vue';
 import SchedulesForm from './SchedulesForm.vue';
 import ExecuteForm from './ExecuteForm.vue';
 import LogsViewer from './LogsViewer.vue';
+import IntegrationCodeForm from './IntegrationCodeForm.vue';
 
 const props = defineProps({
     integration: {
@@ -71,16 +71,16 @@ const tabs = [
     { key: 'auth', label: 'Autenticación', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
     { key: 'endpoints', label: 'Endpoints', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
     { key: 'fields', label: 'Mapeo Campos', icon: 'M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4M3 10h18M3 14h18' },
-    { key: 'data', label: 'Origen Datos', icon: 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4' },
     { key: 'schedule', label: 'Programación', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
     { key: 'execute', label: 'Ejecutar', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.133a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { key: 'integration', label: 'Integración', icon: 'M8 9l3 3-3 3m5 0h3M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z' },
     { key: 'logs', label: 'Historial', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01m9.01 9h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z' }
 ];
 </script>
 
 <template>
     <div class="panel mb-6">
-        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 justify-items-center">
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3 justify-items-center">
             <button
                 v-for="tab in tabs"
                 :key="tab.key"
@@ -182,19 +182,12 @@ const tabs = [
         />
     </div>
 
-    <!-- Origen Datos -->
-    <div v-show="activeTab === 'data'" class="panel min-h-[400px]">
-        <DataSourcesForm 
-            :integration-id="integration.id" 
-            :queries="integration.queries || []" 
-        />
-    </div>
-
     <!-- Programación -->
     <div v-show="activeTab === 'schedule'" class="panel min-h-[400px]">
         <SchedulesForm 
             :integration-id="integration.id" 
             :schedules="integration.schedules || []" 
+            :endpoints="integration.endpoints || []"
         />
     </div>
 
@@ -204,6 +197,14 @@ const tabs = [
             :integration-id="integration.id" 
             :integration="integration"
             :endpoints="integration.endpoints || []" 
+        />
+    </div>
+
+    <!-- Integración -->
+    <div v-show="activeTab === 'integration'" class="panel min-h-[400px]">
+        <IntegrationCodeForm
+            :integration="integration"
+            :endpoints="integration.endpoints || []"
         />
     </div>
 
