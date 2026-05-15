@@ -15,11 +15,11 @@
 
         <x-header />
 
-        <x-billing-welcome />
+        <x-billing.billing-welcome />
 
-        <x-billing-questions />
+        <x-billing.billing-questions />
 
-        <x-billing-plans />
+        <x-billing.billing-plans />
         
         <x-bulletin />
 
