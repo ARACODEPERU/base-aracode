@@ -12,7 +12,7 @@
 
         <x-header />
 
-        <x-lms-welcome />
+        <x-lms.lms-welcome />
 
         {{-- <section id="section-about" class="bg-dark section-dark text-light">
             <div class="container">
@@ -71,13 +71,13 @@
             </div>
         </section> --}}
 
-        <x-lms-benefits />
+        <x-lms.lms-benefits />
 
-        <x-lms-plans-essentials />
+        <x-lms.lms-plans-essentials />
 
-        <x-lms-plans-professionals />
+        <x-lms.lms-plans-professionals />
         
-        <x-lms-plans-advanced />
+        <x-lms.lms-plans-advanced />
 
         {{-- <section id="section-tickets" class="bg-dark section-dark text-light pt-80 relative" aria-label="section"
             style="background-size: cover; background-repeat: no-repeat;">
