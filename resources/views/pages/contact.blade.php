@@ -13,9 +13,9 @@
 
         <x-header />
 
-        <x-contact-welcome />
+        <x-contact.contact-welcome />
 
-        <x-contact />
+        <x-contact.contact-form />
 
     </div>
 
