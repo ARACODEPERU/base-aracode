@@ -34,6 +34,14 @@
                 <div class="col wow fadeInUp" data-wow-delay="0.1s">
                     <a href="">
                         <div class="customer-card h-100 d-flex align-items-center justify-content-center p-4 rounded-1">
+                            <img src="{{ asset('themes/webpage/images/customers/brise.png') }}" class="img-fluid"
+                                style="max-height: 60px; opacity: 0.7;" alt="Cliente">
+                        </div>
+                    </a>
+                </div>
+                <div class="col wow fadeInUp" data-wow-delay="0.1s">
+                    <a href="">
+                        <div class="customer-card h-100 d-flex align-items-center justify-content-center p-4 rounded-1">
                             <img src="{{ asset('themes/webpage/images/customers/iprase.png') }}" class="img-fluid"
                                 style="max-height: 60px; opacity: 0.7;" alt="Cliente">
                         </div>
