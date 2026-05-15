@@ -12,11 +12,11 @@
 
         <x-header />
 
-        <x-store-online-welcome />
+        <x-store-online.store-online-welcome />
 
-        <x-store-online-benefits />
+        <x-store-online.store-online-benefits />
         
-        <x-cms-questions />
+        <x-cms.cms-questions />
 
         {{-- <x-lms-plans-essentials />
 

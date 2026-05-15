@@ -12,7 +12,7 @@
 
         <x-header />
 
-        <x-cms-welcome />
+        <x-cms.cms-welcome />
 
         {{-- <section id="section-about" class="bg-dark section-dark text-light">
             <div class="container">
@@ -71,9 +71,9 @@
             </div>
         </section> --}}
 
-        <x-cms-benefits />
+        <x-cms.cms-benefits />
         
-        <x-cms-questions />
+        <x-cms.cms-questions />
 
         {{-- <x-lms-plans-essentials />
 
