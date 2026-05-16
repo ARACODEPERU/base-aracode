@@ -45,6 +45,7 @@ const newSchedule = ref({
 const showModal = ref(false);
 const saving = ref(false);
 const togglingId = ref(null);
+const minutesInterval = ref(5);
 
 const selectedScheduleEndpoint = computed(() => {
     return props.endpoints.find(endpoint => endpoint.id === newSchedule.value.endpoint_id) || null;
@@ -239,6 +240,12 @@ const selectPreset = (value) => {
     newSchedule.value.cron_expression = value;
 };
 
+const selectEveryMinutes = () => {
+    const minutes = Math.min(59, Math.max(1, Number(minutesInterval.value) || 1));
+    minutesInterval.value = minutes;
+    newSchedule.value.cron_expression = `*/${minutes} * * * *`;
+};
+
 const onEndpointChange = () => {
     resetPayloadForEndpoint(newSchedule.value.endpoint_id, newSchedule.value.payload);
 };
@@ -371,6 +378,29 @@ const onEndpointChange = () => {
                             <div class="text-xs opacity-75">{{ preset.description }}</div>
                         </button>
                     </div>
+                </div>
+
+                <div class="rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
+                    <InputLabel for="minutes_interval" value="Activar cada cierta cantidad de minutos" />
+                    <div class="mt-2 flex flex-col sm:flex-row gap-2">
+                        <input
+                            id="minutes_interval"
+                            v-model.number="minutesInterval"
+                            type="number"
+                            min="1"
+                            max="59"
+                            class="form-input sm:w-36"
+                            placeholder="5"
+                        />
+                        <button
+                            type="button"
+                            @click="selectEveryMinutes"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+                        >
+                            Usar intervalo
+                        </button>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Genera una expresion como <code>*/5 * * * *</code> para ejecutar cada 5 minutos.</p>
                 </div>
 
                 <!-- Expresión cron personalizada -->
