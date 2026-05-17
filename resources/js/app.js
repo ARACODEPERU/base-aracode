@@ -53,7 +53,7 @@ createInertiaApp({
             .use(ZiggyVue, Ziggy)
             .use(VueTheMask)
             .use(VueGates)
-            .use(Permissions)
+            .use(Permissions, props.initialPage?.props)
             .use(pinia)
             .use(i18n)
             .use(head)
@@ -99,4 +99,3 @@ createInertiaApp({
         showSpinner: false,
     },
 });
-

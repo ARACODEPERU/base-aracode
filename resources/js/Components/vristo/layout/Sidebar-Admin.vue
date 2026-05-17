@@ -33,15 +33,24 @@
     const activeOption = ref(null);
     const activeSubOption = ref(null);
 
+    const hasPermission = (permission) => {
+        const permissions = page.props.auth?.permissions || [];
+
+        return !permission || permissions.includes(permission);
+    };
+
+    const findAllowedModule = (moduleText) => {
+        return menuData.value.find((module) => module.text === moduleText && hasPermission(module.permissions));
+    };
+
     // Función para manejar clicks en los botones de módulos
     const handleModuleClick = (module) => {
-        isCollapsed.value = false;
         activeModule.value = module.text; // Guardar el módulo activo
         moduleSelected.value = module || []; // Cargar las opciones del módulo
 
-        // Guardar estado en localStorage (revertir temporalmente para estabilidad)
+        // Guardar solo claves estables; el contenido del menu debe venir siempre de MenuData.
         localStorage.setItem('activeModule', module.text);
-        localStorage.setItem('moduleSelected', JSON.stringify(module));
+        localStorage.removeItem('moduleSelected');
 
         // Actualizar las secciones expandidas si es necesario
         if (module && module.items) {
@@ -79,14 +88,21 @@
 
     onMounted(() => {
 
-        isCollapsed.value = !isCollapsed.value;
-
         // Restaurar estado desde localStorage de forma segura
         const savedModule = localStorage.getItem('activeModule');
 
 
         if (savedModule) {
-            activeModule.value = savedModule;
+            const allowedModule = findAllowedModule(savedModule);
+
+            if (allowedModule) {
+                activeModule.value = allowedModule.text;
+                moduleSelected.value = allowedModule;
+            } else {
+                activeModule.value = optionsDefault.text || 'Dashboard';
+                moduleSelected.value = optionsDefault;
+                localStorage.removeItem('activeModule');
+            }
         }
 
         const savedExpandedSections = localStorage.getItem('expandedSections');
@@ -100,16 +116,10 @@
             expandedSections.value = {};
         }
 
-        const savedModuleSelected = localStorage.getItem('moduleSelected');
-        if (savedModuleSelected) {
-            try {
-                moduleSelected.value = JSON.parse(savedModuleSelected);
-            } catch (e) {
-                //console.warn('Error parsing moduleSelected from localStorage:', e);
-            }
-        } else {
+        if (!moduleSelected.value?.text) {
             moduleSelected.value = optionsDefault;
         }
+        localStorage.removeItem('moduleSelected');
 
         // Restaurar opciones activas desde localStorage PRIMERO
         const savedActiveOption = localStorage.getItem('activeOption');
@@ -356,7 +366,8 @@
                                 <VueCollapsible v-if="option.items && option.items.length> 0" :isOpen="expandedSections == option.text">
                                     <div class="mt-1 ml-4 dark:border-slate-600 space-y-1">
                                         <template v-for="(subOption, subIndex) in option.items" :key="subIndex">
-                                        <Link :href="subOption.route"
+                                        <Link v-can="subOption.permissions"
+                                                :href="subOption.route"
                                                 @click="handleSubOptionClick(option.text, subOption.text)"
                                                 class="py-2 px-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-800/40 rounded-lg rounded-r-none transition-all duration-200 cursor-pointer block"
                                                 :class="{

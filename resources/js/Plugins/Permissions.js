@@ -1,21 +1,35 @@
 import { usePage } from "@inertiajs/vue3";
 
+const getAuth = (fallbackProps = null) => {
+    return usePage()?.props?.auth ?? fallbackProps?.auth ?? null;
+};
+
+const syncGates = (component, fallbackProps = null) => {
+    const auth = getAuth(fallbackProps);
+
+    if (auth !== null && component.$gates) {
+        component.$gates.setRoles(auth.roles ?? []);
+        component.$gates.setPermissions(auth.permissions ?? []);
+    }
+};
+
 export default {
 
-    install: (app) => {
+    install: (app, initialProps = null) => {
+        const auth = getAuth(initialProps);
+
+        if (auth !== null && app.config.globalProperties.$gates) {
+            app.config.globalProperties.$gates.setRoles(auth.roles ?? []);
+            app.config.globalProperties.$gates.setPermissions(auth.permissions ?? []);
+        }
+
         app.mixin({
+            beforeMount(){
+                syncGates(this, initialProps);
+            },
             mounted(){
-                let authRoles = usePage().props.auth;
-                //console.log(usePage().props.auth.roles)
-                let authPermissions;
-                if(authRoles !== null){
-                    authRoles = usePage().props.auth.roles;
-                    authPermissions = usePage().props.auth.permissions;
-                    this.$gates.setRoles(authRoles);
-                    this.$gates.setPermissions(authPermissions);
-                }
+                syncGates(this, initialProps);
             }
         })
     }
 }
-
