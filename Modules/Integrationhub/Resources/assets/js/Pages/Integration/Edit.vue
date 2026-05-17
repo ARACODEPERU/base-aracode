@@ -12,6 +12,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    apiRoutes: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 </script>
@@ -25,7 +29,7 @@ const props = defineProps({
             ]"
         />
         <div class="pt-5">
-            <EditForm :integration="integration" />
+            <EditForm :integration="integration" :api-routes="apiRoutes" />
         </div>
     </AppLayout>
 </template>

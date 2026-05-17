@@ -20,6 +20,10 @@ const props = defineProps({
     endpoints: {
         type: Array,
         default: () => []
+    },
+    apiRoutes: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -36,7 +40,9 @@ const cronPresets = [
 
 const newSchedule = ref({
     schedule_id: null,
+    target_type: 'integration_endpoint',
     endpoint_id: null,
+    api_route_name: null,
     cron_expression: '0 0 * * *',
     payload: {},
     is_active: true
@@ -46,6 +52,7 @@ const showModal = ref(false);
 const saving = ref(false);
 const togglingId = ref(null);
 const minutesInterval = ref(5);
+const apiPayloadJson = ref('{\n  "variables": {}\n}');
 
 const selectedScheduleEndpoint = computed(() => {
     return props.endpoints.find(endpoint => endpoint.id === newSchedule.value.endpoint_id) || null;
@@ -59,8 +66,21 @@ const selectedEndpointFields = computed(() => {
 
 const requiredEndpointFields = computed(() => selectedEndpointFields.value.filter(field => field.is_required));
 
+const selectedApiRoute = computed(() => {
+    return props.apiRoutes.find(apiRoute => apiRoute.name === newSchedule.value.api_route_name) || null;
+});
+
 const getEndpointName = (endpointId) => {
     return props.endpoints.find(endpoint => endpoint.id === endpointId)?.name || 'Todos los endpoints activos';
+};
+
+const getScheduleTargetName = (schedule) => {
+    if ((schedule.target_type || 'integration_endpoint') === 'module_api') {
+        const apiRoute = props.apiRoutes.find(route => route.name === schedule.api_route_name);
+        return apiRoute ? `${apiRoute.method} ${apiRoute.uri}` : (schedule.api_route_name || 'API REST no encontrada');
+    }
+
+    return getEndpointName(schedule.endpoint_id);
 };
 
 const normalizePayload = (payload) => {
@@ -79,6 +99,10 @@ const resetPayloadForEndpoint = (endpointId, currentPayload = {}) => {
         });
 
     newSchedule.value.payload = payload;
+};
+
+const formatJson = (payload = {}) => {
+    return JSON.stringify(payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {}, null, 2);
 };
 
 const formatDate = (dateString) => {
@@ -101,24 +125,37 @@ const getCronDescription = (expression) => {
 const addSchedule = () => {
     newSchedule.value = {
         schedule_id: null,
+        target_type: 'integration_endpoint',
         endpoint_id: props.endpoints[0]?.id || null,
+        api_route_name: props.apiRoutes[0]?.name || null,
         cron_expression: '0 0 * * *',
         payload: {},
         is_active: true
     };
     resetPayloadForEndpoint(newSchedule.value.endpoint_id);
+    apiPayloadJson.value = '{\n  "variables": {}\n}';
     showModal.value = true;
 };
 
 const editSchedule = (schedule) => {
+    const targetType = schedule.target_type || 'integration_endpoint';
     newSchedule.value = {
         schedule_id: schedule.id,
+        target_type: targetType,
         endpoint_id: schedule.endpoint_id || null,
+        api_route_name: schedule.api_route_name || props.apiRoutes[0]?.name || null,
         cron_expression: schedule.cron_expression,
         payload: normalizePayload(schedule.payload),
         is_active: schedule.is_active
     };
-    resetPayloadForEndpoint(newSchedule.value.endpoint_id, newSchedule.value.payload);
+
+    if (targetType === 'module_api') {
+        apiPayloadJson.value = formatJson(newSchedule.value.payload);
+    } else {
+        resetPayloadForEndpoint(newSchedule.value.endpoint_id, newSchedule.value.payload);
+        apiPayloadJson.value = formatJson({});
+    }
+
     showModal.value = true;
 };
 
@@ -169,7 +206,9 @@ const toggleEnabled = (schedule) => {
 
     axios.put(route('integrationhub_update_schedule', props.integrationId), {
         schedule_id: schedule.id,
+        target_type: schedule.target_type || 'integration_endpoint',
         endpoint_id: schedule.endpoint_id || null,
+        api_route_name: schedule.api_route_name || null,
         cron_expression: schedule.cron_expression,
         payload: schedule.payload || {},
         is_active: isActive
@@ -202,6 +241,29 @@ const storeToServer = async () => {
     saving.value = true;
     
     try {
+        if (newSchedule.value.target_type === 'module_api') {
+            try {
+                const parsedPayload = JSON.parse(apiPayloadJson.value || '{}');
+                if (!parsedPayload || Array.isArray(parsedPayload) || typeof parsedPayload !== 'object') {
+                    throw new Error();
+                }
+                newSchedule.value.payload = parsedPayload;
+                newSchedule.value.endpoint_id = null;
+            } catch (jsonError) {
+                saving.value = false;
+                Swal2.fire({
+                    title: 'JSON inválido',
+                    text: 'Revisa el cuerpo JSON que se enviará a la API REST.',
+                    icon: 'warning',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                return;
+            }
+        } else {
+            newSchedule.value.api_route_name = null;
+        }
+
         await axios.put(route('integrationhub_update_schedule', props.integrationId), newSchedule.value);
         
         saving.value = false;
@@ -249,6 +311,24 @@ const selectEveryMinutes = () => {
 const onEndpointChange = () => {
     resetPayloadForEndpoint(newSchedule.value.endpoint_id, newSchedule.value.payload);
 };
+
+const onTargetTypeChange = () => {
+    if (newSchedule.value.target_type === 'module_api') {
+        newSchedule.value.api_route_name = newSchedule.value.api_route_name || props.apiRoutes[0]?.name || null;
+        newSchedule.value.endpoint_id = null;
+        newSchedule.value.payload = {};
+        apiPayloadJson.value = '{\n  "variables": {}\n}';
+        return;
+    }
+
+    newSchedule.value.endpoint_id = newSchedule.value.endpoint_id || props.endpoints[0]?.id || null;
+    newSchedule.value.api_route_name = null;
+    resetPayloadForEndpoint(newSchedule.value.endpoint_id, {});
+};
+
+const middlewareLabel = (middleware = []) => {
+    return middleware.length ? middleware.join(', ') : '-';
+};
 </script>
 
 <template>
@@ -256,6 +336,41 @@ const onEndpointChange = () => {
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Configura la ejecución automática de la integración usando expresiones cron.
         </p>
+    </div>
+
+    <div class="mb-6 rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+            <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">APIs REST disponibles del módulo</h4>
+        </div>
+        <div v-if="apiRoutes.length === 0" class="px-4 py-5 text-sm text-gray-500 dark:text-gray-400">
+            No hay rutas API REST registradas para Integrationhub.
+        </div>
+        <div v-else class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-zinc-700 dark:text-gray-400">
+                    <tr>
+                        <th class="px-4 py-3">Método</th>
+                        <th class="px-4 py-3">Ruta</th>
+                        <th class="px-4 py-3">Nombre</th>
+                        <th class="px-4 py-3">Middleware</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="apiRoute in apiRoutes" :key="`${apiRoute.method}-${apiRoute.uri}`" class="border-t dark:border-zinc-700">
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                {{ apiRoute.method }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <code class="text-xs bg-gray-100 dark:bg-zinc-700 px-2 py-1 rounded">{{ apiRoute.uri }}</code>
+                        </td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ apiRoute.name || '-' }}</td>
+                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ middlewareLabel(apiRoute.middleware) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="mb-4 flex justify-end">
@@ -280,7 +395,7 @@ const onEndpointChange = () => {
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-zinc-700 dark:text-gray-400">
                 <tr>
                     <th class="px-4 py-3 w-24">Activo</th>
-                    <th class="px-4 py-3">Endpoint</th>
+                    <th class="px-4 py-3">Destino</th>
                     <th class="px-4 py-3">Expresión Cron</th>
                     <th class="px-4 py-3">Próxima Ejecución</th>
                     <th class="px-4 py-3">Última Ejecución</th>
@@ -306,7 +421,10 @@ const onEndpointChange = () => {
                         </div>
                     </td>
                     <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
-                        {{ getEndpointName(schedule.endpoint_id) }}
+                        <div class="font-medium">{{ getScheduleTargetName(schedule) }}</div>
+                        <div class="text-xs text-gray-500">
+                            {{ (schedule.target_type || 'integration_endpoint') === 'module_api' ? 'API REST del módulo' : 'Endpoint de conexión' }}
+                        </div>
                     </td>
                     <td class="px-4 py-3">
                         <div>
@@ -403,8 +521,49 @@ const onEndpointChange = () => {
                     <p class="mt-1 text-xs text-gray-500">Genera una expresion como <code>*/5 * * * *</code> para ejecutar cada 5 minutos.</p>
                 </div>
 
-                <!-- Expresión cron personalizada -->
                 <div>
+                    <InputLabel value="Qué debe ejecutar esta programación" />
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                        <label
+                            class="cursor-pointer rounded-lg border p-4 transition"
+                            :class="newSchedule.target_type === 'integration_endpoint' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800'"
+                        >
+                            <div class="flex items-start gap-3">
+                                <input
+                                    v-model="newSchedule.target_type"
+                                    value="integration_endpoint"
+                                    type="radio"
+                                    class="form-radio mt-1"
+                                    @change="onTargetTypeChange"
+                                />
+                                <div>
+                                    <div class="font-semibold text-gray-800 dark:text-gray-200">Endpoint de conexión</div>
+                                    <p class="text-xs text-gray-500 mt-1">Usa los endpoints configurados en esta integración.</p>
+                                </div>
+                            </div>
+                        </label>
+                        <label
+                            class="cursor-pointer rounded-lg border p-4 transition"
+                            :class="newSchedule.target_type === 'module_api' ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800'"
+                        >
+                            <div class="flex items-start gap-3">
+                                <input
+                                    v-model="newSchedule.target_type"
+                                    value="module_api"
+                                    type="radio"
+                                    class="form-radio mt-1"
+                                    @change="onTargetTypeChange"
+                                />
+                                <div>
+                                    <div class="font-semibold text-gray-800 dark:text-gray-200">API REST del módulo</div>
+                                    <p class="text-xs text-gray-500 mt-1">Ejecuta una ruta API interna de Integrationhub.</p>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div v-if="newSchedule.target_type === 'integration_endpoint'">
                     <InputLabel for="endpoint_id" value="Endpoint a ejecutar *" />
                     <select
                         id="endpoint_id"
@@ -419,7 +578,39 @@ const onEndpointChange = () => {
                     <p class="mt-1 text-xs text-gray-500">La programacion enviara estos valores al endpoint seleccionado.</p>
                 </div>
 
-                <div v-if="selectedScheduleEndpoint && selectedEndpointFields.length" class="rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
+                <div v-if="newSchedule.target_type === 'module_api'" class="space-y-3">
+                    <div>
+                        <InputLabel for="api_route_name" value="API REST a ejecutar *" />
+                        <select
+                            id="api_route_name"
+                            v-model="newSchedule.api_route_name"
+                            class="form-select"
+                        >
+                            <option v-for="apiRoute in apiRoutes" :key="apiRoute.name || apiRoute.uri" :value="apiRoute.name">
+                                {{ apiRoute.method }} - {{ apiRoute.uri }}
+                            </option>
+                        </select>
+                        <p v-if="selectedApiRoute" class="mt-1 text-xs text-gray-500">
+                            Ruta interna: <code>{{ selectedApiRoute.name }}</code>
+                        </p>
+                    </div>
+
+                    <div class="rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
+                        <InputLabel for="api_payload_json" value="JSON que se enviará a la API" />
+                        <textarea
+                            id="api_payload_json"
+                            v-model="apiPayloadJson"
+                            rows="8"
+                            class="form-textarea font-mono text-sm mt-2"
+                            placeholder='{"variables": {}}'
+                        />
+                        <p class="mt-1 text-xs text-gray-500">
+                            Este JSON se enviará como body de la petición interna. Para birthday_benefits puedes dejar variables vacío.
+                        </p>
+                    </div>
+                </div>
+
+                <div v-if="newSchedule.target_type === 'integration_endpoint' && selectedScheduleEndpoint && selectedEndpointFields.length" class="rounded-lg border border-gray-200 dark:border-zinc-700 p-4">
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Valores para la ejecucion</h4>
                         <span v-if="requiredEndpointFields.length" class="text-xs text-red-500">

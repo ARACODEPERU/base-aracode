@@ -26,6 +26,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    apiRoutes: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const activeTab = ref('general');
@@ -188,6 +192,7 @@ const tabs = [
             :integration-id="integration.id" 
             :schedules="integration.schedules || []" 
             :endpoints="integration.endpoints || []"
+            :api-routes="apiRoutes"
         />
     </div>
 

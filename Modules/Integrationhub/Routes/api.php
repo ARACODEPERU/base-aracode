@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Modules\Integrationhub\Http\Controllers\Api\BirthdayBenefitsController;
 
 /*
     |--------------------------------------------------------------------------
@@ -16,4 +17,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.')->group(function () {
     Route::get('integrationhub', fn (Request $request) => $request->user())->name('integrationhub');
+});
+
+Route::middleware(['localhost.only'])->prefix('integrationhub')->name('integrationhub.')->group(function () {
+    Route::post('birthday_benefits', BirthdayBenefitsController::class)->name('birthday_benefits');
 });

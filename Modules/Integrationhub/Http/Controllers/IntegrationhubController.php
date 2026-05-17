@@ -15,8 +15,10 @@ use Modules\Integrationhub\Entities\IntegrationEndpoint;
 use Modules\Integrationhub\Entities\IntegrationFieldMap;
 use Modules\Integrationhub\Entities\IntegrationSchedule;
 use Modules\Integrationhub\Entities\IntegrationQuery;
+use Modules\Integrationhub\Entities\IntegrationExecLog;
 use Illuminate\Validation\ValidationException;
 use App\Services\IntegrationhubCronExpression;
+use Illuminate\Support\Facades\Route;
 
 class IntegrationhubController extends Controller
 {
@@ -78,14 +80,64 @@ class IntegrationhubController extends Controller
             'schedules.endpoint',
         ])->findOrFail($id);
 
+        $recentLogIds = $integration->logs()
+            ->orderBy('executed_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->pluck('id');
+
+        $recentBatchIds = $integration->logs()
+            ->whereNotNull('batch_id')
+            ->orderBy('executed_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->limit(5)
+            ->pluck('batch_id')
+            ->unique()
+            ->values();
+
         $integration->setRelation(
             'logs',
-            $integration->logs()->orderBy('executed_at', 'desc')->limit(10)->get()
+            $integration->logs()
+                ->where(function ($query) use ($recentLogIds, $recentBatchIds) {
+                    $query->whereIn('id', $recentLogIds)
+                        ->orWhereIn('batch_id', $recentBatchIds);
+                })
+                ->orderBy('executed_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->get()
         );
 
         return Inertia::render('Integrationhub::Integration/Edit', [
-            'integration' => $integration
+            'integration' => $integration,
+            'apiRoutes' => $this->integrationhubApiRoutes(),
         ]);
+    }
+
+    private function integrationhubApiRoutes(): array
+    {
+        return collect(Route::getRoutes())
+            ->filter(function ($route) {
+                return str_starts_with($route->uri(), 'api/')
+                    && str_contains($route->uri(), 'integrationhub');
+            })
+            ->map(function ($route) {
+                $methods = collect($route->methods())
+                    ->reject(fn ($method) => $method === 'HEAD')
+                    ->values()
+                    ->all();
+
+                return [
+                    'methods' => $methods,
+                    'method' => implode('|', $methods),
+                    'uri' => '/' . ltrim($route->uri(), '/'),
+                    'name' => $route->getName(),
+                    'action' => $route->getActionName() !== 'Closure' ? $route->getActionName() : 'Closure',
+                    'middleware' => array_values($route->gatherMiddleware()),
+                ];
+            })
+            ->sortBy('uri')
+            ->values()
+            ->all();
     }
 
     public function update(Request $request, int $id)
@@ -135,8 +187,11 @@ class IntegrationhubController extends Controller
         $this->validate($request, [
             'endpoint_id' => 'required|integer',
             'field_values' => 'nullable|array',
-            'extra_params' => 'nullable|array'
+            'extra_params' => 'nullable|array',
+            'track_results' => 'nullable|boolean',
+            'batch_id' => 'nullable|string|max:80',
         ]);
+        $trackResults = $request->has('track_results') ? $request->boolean('track_results') : true;
 
         $endpoint = IntegrationEndpoint::where('id', $request->endpoint_id)
             ->where('integration_id', $id)
@@ -198,6 +253,10 @@ class IntegrationhubController extends Controller
             }
 
             $value = $getOverrideValue($fieldMap);
+
+            if (is_array($value)) {
+                return !empty($value);
+            }
 
             return !is_null($value) && trim((string) $value) !== '';
         };
@@ -317,6 +376,11 @@ class IntegrationhubController extends Controller
             foreach ($fieldMaps->where('field_location', 'body') as $fieldMap) {
                 // Nuevo: Manejar subitems (configuración tipo tabla/campos)
                 if ($fieldMap->has_subitems && !empty($fieldMap->subitems)) {
+                    if ($hasOverride($fieldMap)) {
+                        $body[$fieldMap->field_key] = $resolveFieldValue($fieldMap);
+                        continue;
+                    }
+
                     $subitems = $fieldMap->subitems;
 
                     // Filtrar solo habilitados y ordenar
@@ -412,6 +476,7 @@ class IntegrationhubController extends Controller
         $logData = [
             'integration_id' => $id,
             'endpoint_id' => $endpoint->id,
+            'batch_id' => $request->input('batch_id'),
             'executed_at' => now(),
             'request_payload' => $body
         ];
@@ -430,12 +495,21 @@ class IntegrationhubController extends Controller
 
             // Enviar body según el tipo configurado en el endpoint
             if (!empty($body)) {
+                $hasContentType = collect(array_keys($options['headers']))
+                    ->contains(fn ($header) => strtolower($header) === 'content-type');
+
                 switch ($endpoint->body_type) {
                     case 'json':
+                        if (!$hasContentType) {
+                            $options['headers']['Content-Type'] = 'application/json';
+                        }
                         $options['json'] = $body;
                         break;
 
                     case 'form':
+                        if (!$hasContentType) {
+                            $options['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
+                        }
                         $options['form_params'] = $body;
                         break;
 
@@ -443,13 +517,17 @@ class IntegrationhubController extends Controller
                         $xml = new \SimpleXMLElement('<root/>');
                         $this->arrayToXml($body, $xml);
                         $options['body'] = $xml->asXML();
-                        $options['headers']['Content-Type'] = 'application/xml';
+                        if (!$hasContentType) {
+                            $options['headers']['Content-Type'] = 'application/xml';
+                        }
                         break;
 
                     case 'raw':
                         $rawValue = reset($body);
                         $options['body'] = is_array($rawValue) ? json_encode($rawValue) : (string)$rawValue;
-                        $options['headers']['Content-Type'] = 'text/plain';
+                        if (!$hasContentType) {
+                            $options['headers']['Content-Type'] = 'text/plain';
+                        }
                         break;
                 }
             }
@@ -484,8 +562,10 @@ class IntegrationhubController extends Controller
             $logData['response_status_code'] = $statusCode;
             $logData['execution_time_ms'] = $executionTime;
 
-            $integration->logs()->create($logData);
-            $this->pruneIntegrationLogs($integration);
+            if ($trackResults) {
+                $integration->logs()->create($logData);
+                $this->pruneIntegrationLogs($integration);
+            }
 
             return response()->json([
                 'message' => 'Integración ejecutada correctamente',
@@ -519,8 +599,10 @@ class IntegrationhubController extends Controller
             $logData['execution_time_ms'] = $executionTime;
             $logData['error_message'] = $externalMessage;
 
-            $integration->logs()->create($logData);
-            $this->pruneIntegrationLogs($integration);
+            if ($trackResults) {
+                $integration->logs()->create($logData);
+                $this->pruneIntegrationLogs($integration);
+            }
 
             return response()->json([
                 'message' => 'Error en la solicitud externa: ' . $externalMessage,
@@ -547,8 +629,10 @@ class IntegrationhubController extends Controller
             $logData['execution_time_ms'] = $executionTime;
             $logData['error_message'] = $e->getMessage();
 
-            $integration->logs()->create($logData);
-            $this->pruneIntegrationLogs($integration);
+            if ($trackResults) {
+                $integration->logs()->create($logData);
+                $this->pruneIntegrationLogs($integration);
+            }
 
             return response()->json([
                 'message' => 'Error al ejecutar la integración: ' . $e->getMessage(),
@@ -581,6 +665,44 @@ class IntegrationhubController extends Controller
         ]);
 
         return $this->execute($request, $integrationModel->id);
+    }
+
+    public function logs(Request $request, int $id)
+    {
+        Integration::findOrFail($id);
+
+        $query = IntegrationExecLog::with('endpoint');
+
+        if (!$request->filled('batch_id')) {
+            $query->where('integration_id', $id);
+        }
+
+        if ($request->filled('batch_id')) {
+            $query->where('batch_id', $request->input('batch_id'));
+        }
+
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($subQuery) use ($search) {
+                $subQuery->where('batch_id', 'like', "%{$search}%")
+                    ->orWhere('error_message', 'like', "%{$search}%")
+                    ->orWhereHas('endpoint', function ($endpointQuery) use ($search) {
+                        $endpointQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        return response()->json([
+            'logs' => $query
+                ->orderBy('executed_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit((int) $request->input('limit', 200))
+                ->get(),
+        ]);
     }
 
     public function updateAuth(Request $request, int $id)
@@ -654,6 +776,18 @@ class IntegrationhubController extends Controller
             'body_type' => 'required|in:json,xml,form,raw,none',
             'is_active' => 'boolean'
         ]);
+
+        $duplicateEndpoint = IntegrationEndpoint::where('name', $request->name)
+            ->when($request->input('endpoint_id'), function ($query) use ($request) {
+                $query->where('id', '!=', $request->endpoint_id);
+            })
+            ->exists();
+
+        if ($duplicateEndpoint) {
+            throw ValidationException::withMessages([
+                'name' => 'Ya existe un endpoint con ese nombre. Usa un nombre unico para poder ejecutarlo por API.',
+            ]);
+        }
 
         $index = $integration->endpoints()->count() + 1;
 
@@ -985,16 +1119,29 @@ class IntegrationhubController extends Controller
 
         $this->validate($request, [
             'schedule_id' => 'nullable|integer',
+            'target_type' => 'required|in:integration_endpoint,module_api',
             'endpoint_id' => 'nullable|integer',
+            'api_route_name' => 'nullable|string|max:150',
             'cron_expression' => 'required|string|max:100',
             'payload' => 'nullable|array',
             'is_active' => 'boolean'
         ]);
 
-        if ($request->endpoint_id) {
+        if ($request->target_type === 'integration_endpoint' && $request->endpoint_id) {
             IntegrationEndpoint::where('id', $request->endpoint_id)
                 ->where('integration_id', $integration->id)
                 ->firstOrFail();
+        }
+
+        if ($request->target_type === 'module_api') {
+            $apiRoute = collect($this->integrationhubApiRoutes())
+                ->firstWhere('name', $request->api_route_name);
+
+            if (!$apiRoute) {
+                throw ValidationException::withMessages([
+                    'api_route_name' => 'Selecciona una API REST valida del modulo Integrationhub.',
+                ]);
+            }
         }
 
         // Calcular próxima ejecución
@@ -1003,7 +1150,9 @@ class IntegrationhubController extends Controller
         if ($request->input('schedule_id')) {
             $schedule = IntegrationSchedule::where('id', $request->schedule_id)->firstOrFail();
             $schedule->update([
-                'endpoint_id' => $request->endpoint_id,
+                'target_type' => $request->target_type,
+                'endpoint_id' => $request->target_type === 'integration_endpoint' ? $request->endpoint_id : null,
+                'api_route_name' => $request->target_type === 'module_api' ? $request->api_route_name : null,
                 'cron_expression' => $request->cron_expression,
                 'payload' => $request->payload ?? [],
                 'is_active' => $request->is_active ?? true,
@@ -1011,7 +1160,9 @@ class IntegrationhubController extends Controller
             ]);
         } else {
             $integration->schedules()->create([
-                'endpoint_id' => $request->endpoint_id,
+                'target_type' => $request->target_type,
+                'endpoint_id' => $request->target_type === 'integration_endpoint' ? $request->endpoint_id : null,
+                'api_route_name' => $request->target_type === 'module_api' ? $request->api_route_name : null,
                 'cron_expression' => $request->cron_expression,
                 'payload' => $request->payload ?? [],
                 'is_active' => $request->is_active ?? true,
@@ -1139,12 +1290,14 @@ class IntegrationhubController extends Controller
     private function pruneIntegrationLogs(Integration $integration): void
     {
         $keepIds = $integration->logs()
+            ->whereNull('batch_id')
             ->orderBy('executed_at', 'desc')
             ->orderBy('id', 'desc')
             ->limit(10)
             ->pluck('id');
 
         $integration->logs()
+            ->whereNull('batch_id')
             ->whereNotIn('id', $keepIds)
             ->delete();
     }

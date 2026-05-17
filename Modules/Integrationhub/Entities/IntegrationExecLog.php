@@ -15,6 +15,7 @@ class IntegrationExecLog extends Model
     protected $fillable = [
         'integration_id',
         'endpoint_id',
+        'batch_id',
         'executed_at',
         'status',
         'request_payload',

@@ -14,7 +14,9 @@ class IntegrationSchedule extends Model
 
     protected $fillable = [
         'integration_id',
+        'target_type',
         'endpoint_id',
+        'api_route_name',
         'cron_expression',
         'payload',
         'is_active',

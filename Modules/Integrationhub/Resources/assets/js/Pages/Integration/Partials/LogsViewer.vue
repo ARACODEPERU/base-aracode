@@ -20,17 +20,30 @@ const props = defineProps({
 });
 
 const statusFilter = ref('all');
+const batchFilter = ref('all');
+const searchText = ref('');
+const batchSearch = ref('');
+const loadingLogs = ref(false);
+const currentLogs = ref([...props.logs]);
 const selectedLog = ref(null);
 const showLogModal = ref(false);
 
 const filteredLogs = computed(() => {
-    let logs = [...props.logs];
+    let logs = [...currentLogs.value];
     
     if (statusFilter.value !== 'all') {
         logs = logs.filter(log => log.status === statusFilter.value);
     }
+
+    if (batchFilter.value !== 'all') {
+        logs = logs.filter(log => log.batch_id === batchFilter.value);
+    }
     
     return logs.sort((a, b) => new Date(b.executed_at) - new Date(a.executed_at));
+});
+
+const batchOptions = computed(() => {
+    return [...new Set(currentLogs.value.map(log => log.batch_id).filter(Boolean))];
 });
 
 const statusColors = {
@@ -46,8 +59,17 @@ const statusLabels = {
 };
 
 const getEndpointName = (endpointId) => {
+    const selected = selectedLog.value;
+    if (selected?.endpoint?.name && selected.endpoint_id === endpointId) {
+        return selected.endpoint.name;
+    }
+
     const endpoint = props.endpoints.find(ep => ep.id === endpointId);
     return endpoint ? endpoint.name : `Endpoint #${endpointId}`;
+};
+
+const endpointName = (log) => {
+    return log.endpoint?.name || getEndpointName(log.endpoint_id);
 };
 
 const formatDate = (dateString) => {
@@ -81,12 +103,47 @@ const closeLogModal = () => {
     showLogModal.value = false;
     selectedLog.value = null;
 };
+
+const fetchLogs = async () => {
+    loadingLogs.value = true;
+
+    try {
+        const response = await axios.get(route('integrationhub_logs', props.integrationId), {
+            params: {
+                status: statusFilter.value,
+                batch_id: batchSearch.value || (batchFilter.value !== 'all' ? batchFilter.value : null),
+                search: searchText.value || null,
+                limit: 300,
+            },
+        });
+
+        currentLogs.value = response.data.logs || [];
+    } catch (error) {
+        Swal2.fire({
+            title: 'Error',
+            text: 'No se pudo cargar el historial.',
+            icon: 'error',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    } finally {
+        loadingLogs.value = false;
+    }
+};
+
+const clearFilters = () => {
+    statusFilter.value = 'all';
+    batchFilter.value = 'all';
+    searchText.value = '';
+    batchSearch.value = '';
+    currentLogs.value = [...props.logs];
+};
 </script>
 
 <template>
     <div class="space-y-4">
         <!-- Filtros -->
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-end gap-4">
             <div>
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado:</label>
                 <select v-model="statusFilter" class="form-select ml-2">
@@ -96,9 +153,43 @@ const closeLogModal = () => {
                     <option value="partial">Parcial</option>
                 </select>
             </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Lote:</label>
+                <select v-model="batchFilter" class="form-select ml-2">
+                    <option value="all">Todos</option>
+                    <option v-for="batchId in batchOptions" :key="batchId" :value="batchId">{{ batchId }}</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar lote:</label>
+                <input v-model="batchSearch" type="text" class="form-input ml-2 w-72" placeholder="Pega el batch_id" />
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar:</label>
+                <input v-model="searchText" type="text" class="form-input ml-2 w-56" placeholder="Endpoint, error o lote" />
+            </div>
+            <button
+                type="button"
+                @click="fetchLogs"
+                :disabled="loadingLogs"
+                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-60"
+            >
+                {{ loadingLogs ? 'Buscando...' : 'Buscar' }}
+            </button>
+            <button
+                type="button"
+                @click="clearFilters"
+                class="px-4 py-2 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition"
+            >
+                Limpiar
+            </button>
             <div class="text-sm text-gray-500 dark:text-gray-400">
                 Últimas {{ filteredLogs.length }} prueba(s)
             </div>
+        </div>
+
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+            Para ejecuciones del API REST pega el batch_id devuelto por Postman en "Buscar lote".
         </div>
 
         <!-- Tabla de logs -->
@@ -115,6 +206,7 @@ const closeLogModal = () => {
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-zinc-700 dark:text-gray-400">
                     <tr>
                         <th class="px-4 py-3">Fecha/Hora</th>
+                        <th class="px-4 py-3">Lote</th>
                         <th class="px-4 py-3">Endpoint</th>
                         <th class="px-4 py-3">Estado</th>
                         <th class="px-4 py-3">Código</th>
@@ -127,8 +219,12 @@ const closeLogModal = () => {
                         <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                             {{ formatDate(log.executed_at) }}
                         </td>
+                        <td class="px-4 py-3">
+                            <code v-if="log.batch_id" class="text-xs bg-gray-100 dark:bg-zinc-700 px-2 py-1 rounded">{{ log.batch_id }}</code>
+                            <span v-else class="text-gray-400">-</span>
+                        </td>
                         <td class="px-4 py-3 text-gray-900 dark:text-white">
-                            {{ getEndpointName(log.endpoint_id) }}
+                            {{ endpointName(log) }}
                         </td>
                         <td class="px-4 py-3">
                             <span :class="statusColors[log.status]" class="px-2 py-1 text-xs rounded-full">
@@ -180,7 +276,12 @@ const closeLogModal = () => {
                     <!-- Endpoint -->
                     <div class="flex items-center gap-3">
                         <span class="text-sm text-gray-500 dark:text-gray-400">Endpoint:</span>
-                        <span class="text-gray-900 dark:text-white">{{ getEndpointName(selectedLog.endpoint_id) }}</span>
+                        <span class="text-gray-900 dark:text-white">{{ endpointName(selectedLog) }}</span>
+                    </div>
+
+                    <div v-if="selectedLog.batch_id" class="flex items-center gap-3">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Lote:</span>
+                        <code class="text-xs bg-gray-100 dark:bg-zinc-700 px-2 py-1 rounded">{{ selectedLog.batch_id }}</code>
                     </div>
 
                     <!-- Código de respuesta -->
