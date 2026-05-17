@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import Swal2 from 'sweetalert2';
 import axios from 'axios';
-import ModalLarge from '@/Components/ModalLarge.vue';
+import ModalLargeXX from '@/Components/ModalLargeXX.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { router } from '@inertiajs/vue3';
@@ -472,7 +472,7 @@ const middlewareLabel = (middleware = []) => {
     </div>
 
     <!-- Modal Schedule -->
-    <ModalLarge :show="showModal" :onClose="() => showModal = false" :icon="'/img/base-de-datos.png'">
+    <ModalLargeXX :show="showModal" :onClose="() => showModal = false" :icon="'/img/base-de-datos.png'">
         <template #title>
             {{ newSchedule.schedule_id ? 'Editar Programación' : 'Agregar Programación' }}
         </template>
@@ -484,7 +484,7 @@ const middlewareLabel = (middleware = []) => {
                 <!-- Frecuencias predefinidas -->
                 <div>
                     <InputLabel value="Frecuencia sugerida" />
-                    <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-2">
                         <button 
                             v-for="preset in cronPresets" 
                             :key="preset.value"
@@ -617,7 +617,7 @@ const middlewareLabel = (middleware = []) => {
                             {{ requiredEndpointFields.length }} requerido(s)
                         </span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                         <div v-for="field in selectedEndpointFields" :key="field.id">
                             <InputLabel :for="`payload_${field.id}`" :value="`${field.field_key}${field.is_required ? ' *' : ''}`" />
                             <input
@@ -687,5 +687,5 @@ const middlewareLabel = (middleware = []) => {
                 {{ saving ? 'Guardando...' : 'Guardar' }}
             </PrimaryButton>
         </template>
-    </ModalLarge>
+    </ModalLargeXX>
 </template>
