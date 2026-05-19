@@ -122,7 +122,7 @@ class SaleCreditNotesController extends Controller
         $saleDocumentTypes = SaleDocumentType::whereIn('id', [3, 4])->get();
         $typeCreditNote = DB::table('sunat_note_credit_types')->whereIn('id', ['01', '02'])->get();
         $typeDebitNote = DB::table('sunat_note_debit_types')->get();
-        $series = Serie::where('document_type_id', 1)->get();
+        $series = Serie::whereIn('document_type_id', [1, 2, 4])->get();
         $noteSeries = Serie::where('document_type_id', 3)->get();
         $unitTypes = DB::table('sunat_unit_types')->get();
 
