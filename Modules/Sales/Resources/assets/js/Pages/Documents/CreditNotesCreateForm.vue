@@ -77,7 +77,6 @@
         formSeDoc.value.number = null;
     });
 
-
     const formNote = useForm({
         document_id: null,
         document_serie: null,
@@ -370,7 +369,8 @@
                 </div>
                 <span class="ltr:mr-3 rtl:ml-3">Documento: </span>
                 <form @submit.prevent="submitFormSearch">
-                    <select v-model="formSeDoc.docType" id="docType" class="form-select text-white-dark flex-1" required>
+                    <div class="flex flex-col md:flex-row gap-4 items-center max-w-[900px] mx-auto">
+                        <select v-model="formSeDoc.docType" id="docType" class="form-select text-white-dark flex-1" required>
                             <template v-for="dtype in documentTypes">
                                 <option :value="dtype.id">{{ dtype.label }}</option>
                             </template>
