@@ -18,6 +18,7 @@ import menuConfig from '../../../Modules/Security/Resources/assets/js/Menu.js';
 import menuCMS from '../../../Modules/CMS/Resources/assets/js/Menu.js';
 import menuSocialevents from '../../../Modules/Socialevents/Resources/assets/js/Menu.js';
 import menuHelpdesk from '../../../Modules/Helpdesk/Resources/assets/js/Menu.js';
+import menuHealth from '../../../Modules/Health/Resources/assets/js/Menu.js';
 
 const props = defineProps({
     sidebarToggle: {
@@ -43,6 +44,7 @@ const menu = ref([
     menuSales,
     menuHelpdesk,
     menuCMS,
+    menuHealth,
     menuAcademic,
     menuRestaurant,
     menuSocialevents

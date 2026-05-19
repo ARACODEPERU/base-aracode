@@ -51,7 +51,7 @@ const MenuData = ref([
     menuOnlineshop,
     // menuHelpdesk,
     menuCMS,
-    //menuHealth,
+    menuHealth,
     menuAcademic,
     // menuRestaurant,
     menuSocialevents,
