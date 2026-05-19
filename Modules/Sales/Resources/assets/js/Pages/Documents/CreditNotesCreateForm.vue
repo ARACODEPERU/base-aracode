@@ -75,6 +75,7 @@
     watch(() => formSeDoc.value.docType, () => {
         formSeDoc.value.serie = null;
         formSeDoc.value.number = null;
+        applyNoteSeriesFilter();
     });
 
     const formNote = useForm({
@@ -155,6 +156,29 @@
 
     const dataTypeNote = ref([]);
     const dataNoteSeries = ref([]);
+    const allNoteSeries = ref([]);
+
+    const getAllowedNoteSeriePrefixes = () => {
+        if (formNote.note_type == 4 || formSeDoc.value.docType === 'debit_note') {
+            return ['ND'];
+        }
+
+        if (formSeDoc.value.docType === 'ticket') {
+            return ['B'];
+        }
+
+        return ['F'];
+    };
+
+    const applyNoteSeriesFilter = () => {
+        const prefixes = getAllowedNoteSeriePrefixes();
+
+        dataNoteSeries.value = (allNoteSeries.value || []).filter((serie) => {
+            return prefixes.some((prefix) => serie.description?.toUpperCase().startsWith(prefix));
+        });
+
+        formNote.note_serie = dataNoteSeries.value[0]?.id ?? null;
+    };
 
     const selectTypeNote = () => {
         dataTypeNote.value = [];
@@ -171,7 +195,8 @@
 
     onMounted(() => {
         selectTypeNote();
-        dataNoteSeries.value = props.noteSeries;
+        allNoteSeries.value = props.noteSeries;
+        applyNoteSeriesFilter();
         formNote.note_issue_date = fechaLima;
         startTaxes();
     });
@@ -180,9 +205,15 @@
         let did = formNote.note_type;
         axios.get(route('sale_document_series',did)).then((res) => {
             if (res.data.status) {
-                dataNoteSeries.value = res.data.series;
-                formNote.note_serie = dataNoteSeries.value[0].id;
+                allNoteSeries.value = res.data.series;
+                applyNoteSeriesFilter();
             } else {
+                applyNoteSeriesFilter();
+
+                if (dataNoteSeries.value.length > 0) {
+                    return;
+                }
+
                 Swal.fire({
                     title: 'Información Importante',
                     text: 'No existe serie para este local o tipo de documento',
