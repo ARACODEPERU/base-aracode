@@ -1,7 +1,7 @@
 <script setup>
     // Asumiendo que usas Pinia para el store
     import { useAppStore } from '@/stores/index';
-    import { computed, ref, onMounted, nextTick, watch } from 'vue';
+    import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js';
@@ -32,23 +32,108 @@
     // Estado para controlar la opción activa actual
     const activeOption = ref(null);
     const activeSubOption = ref(null);
+    const isOptionsLoading = ref(true);
+    let optionsLoadingTimer = null;
+
+    const permissions = computed(() => page.props.auth?.permissions || []);
+    const permissionsKey = computed(() => permissions.value.join('|'));
 
     const hasPermission = (permission) => {
-        const permissions = page.props.auth?.permissions || [];
+        if (!permission) {
+            return true;
+        }
 
-        return !permission || permissions.includes(permission);
+        if (Array.isArray(permission)) {
+            return permission.some((item) => permissions.value.includes(item));
+        }
+
+        return permissions.value.includes(permission);
     };
 
     const findAllowedModule = (moduleText) => {
         return menuData.value.find((module) => module.text === moduleText && hasPermission(module.permissions));
     };
 
+    const visibleOptions = computed(() => {
+        return (moduleSelected.value?.items || []).filter((option) => hasPermission(option.permissions));
+    });
+
+    const visibleSubOptions = (option) => {
+        return (option?.items || []).filter((subOption) => hasPermission(subOption.permissions));
+    };
+
+    const showOptionsLoading = () => {
+        isOptionsLoading.value = true;
+        window.clearTimeout(optionsLoadingTimer);
+    };
+
+    const hideOptionsLoading = () => {
+        window.clearTimeout(optionsLoadingTimer);
+        optionsLoadingTimer = window.setTimeout(() => {
+            isOptionsLoading.value = false;
+        }, 260);
+    };
+
+    const resolveInitialModule = () => {
+        const savedModule = localStorage.getItem('activeModule');
+
+        if (savedModule) {
+            const allowedModule = findAllowedModule(savedModule);
+
+            if (allowedModule) {
+                return allowedModule;
+            }
+        }
+
+        return menuData.value.find((module) => hasPermission(module.permissions)) || optionsDefault;
+    };
+
+    const restoreSidebarState = () => {
+        const module = resolveInitialModule();
+
+        activeModule.value = module?.text || 'Dashboard';
+        showOptionsLoading();
+        moduleSelected.value = module || [];
+
+        const savedExpandedSections = localStorage.getItem('expandedSections');
+        if (savedExpandedSections) {
+            try {
+                expandedSections.value = JSON.parse(savedExpandedSections);
+            } catch (e) {
+                expandedSections.value = {};
+            }
+        } else {
+            expandedSections.value = {};
+        }
+
+        localStorage.removeItem('moduleSelected');
+
+        const savedActiveOption = localStorage.getItem('activeOption');
+        const savedActiveSubOption = localStorage.getItem('activeSubOption');
+
+        if (savedActiveOption && (module?.items || []).some((option) => option.text === savedActiveOption && hasPermission(option.permissions))) {
+            activeOption.value = savedActiveOption;
+            expandedSections.value = savedActiveOption;
+        }
+
+        if (savedActiveSubOption) {
+            activeSubOption.value = savedActiveSubOption;
+        }
+
+        hideOptionsLoading();
+    };
+
     // Función para manejar clicks en los botones de módulos
     const handleModuleClick = (module) => {
+        if (!hasPermission(module.permissions)) {
+            return;
+        }
+
         activeModule.value = module.text; // Guardar el módulo activo
         moduleSelected.value = module || []; // Cargar las opciones del módulo
 
         // Guardar solo claves estables; el contenido del menu debe venir siempre de MenuData.
+        showOptionsLoading();
         localStorage.setItem('activeModule', module.text);
         localStorage.removeItem('moduleSelected');
 
@@ -57,6 +142,8 @@
             expandedSections.value = module.text;
             localStorage.setItem('expandedSections', JSON.stringify(expandedSections.value));
         }
+
+        hideOptionsLoading();
     };
 
     // Función para manejar clicks en opciones principales
@@ -87,53 +174,15 @@
     };
 
     onMounted(() => {
+        restoreSidebarState();
+    });
 
-        // Restaurar estado desde localStorage de forma segura
-        const savedModule = localStorage.getItem('activeModule');
+    watch(permissionsKey, () => {
+        restoreSidebarState();
+    });
 
-
-        if (savedModule) {
-            const allowedModule = findAllowedModule(savedModule);
-
-            if (allowedModule) {
-                activeModule.value = allowedModule.text;
-                moduleSelected.value = allowedModule;
-            } else {
-                activeModule.value = optionsDefault.text || 'Dashboard';
-                moduleSelected.value = optionsDefault;
-                localStorage.removeItem('activeModule');
-            }
-        }
-
-        const savedExpandedSections = localStorage.getItem('expandedSections');
-        if (savedExpandedSections) {
-            try {
-                expandedSections.value = JSON.parse(savedExpandedSections);
-            } catch (e) {
-                expandedSections.value = {};
-            }
-        } else {
-            expandedSections.value = {};
-        }
-
-        if (!moduleSelected.value?.text) {
-            moduleSelected.value = optionsDefault;
-        }
-        localStorage.removeItem('moduleSelected');
-
-        // Restaurar opciones activas desde localStorage PRIMERO
-        const savedActiveOption = localStorage.getItem('activeOption');
-        const savedActiveSubOption = localStorage.getItem('activeSubOption');
-
-        if (savedActiveOption) {
-            activeOption.value = savedActiveOption;
-            expandedSections.value = savedActiveOption;
-        }
-
-        if (savedActiveSubOption) {
-            activeSubOption.value = savedActiveSubOption;
-        }
-
+    onUnmounted(() => {
+        window.clearTimeout(optionsLoadingTimer);
     });
 
     watch(() => page.props.auth, (newAuth, oldAuth) => {
@@ -257,7 +306,7 @@
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <button
-                                                    v-can="menu.permissions"
+                                                    v-if="hasPermission(menu.permissions)"
                                                     @click="handleModuleClick(menu)"
                                                     class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
                                                     :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
@@ -277,7 +326,7 @@
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <button
-                                                    v-can="menu.permissions"
+                                                    v-if="hasPermission(menu.permissions)"
                                                     @click="handleModuleClick(menu)"
                                                     class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
                                                     :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
@@ -297,7 +346,7 @@
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <Link
-                                                    v-can="menu.permissions"
+                                                    v-if="hasPermission(menu.permissions)"
                                                     :href="menu.route"
                                                     @click="handleModuleClick(menu)"
                                                     class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
@@ -372,11 +421,24 @@
                             class="h-full"
                         >
                         <!-- Opciones dinámicas del módulo activo -->
-                        <div class="space-y-2">
-                            <template v-for="(option, index) in (moduleSelected.items || [])" :key="index">
-                                <template v-if="option.items && option.items.length> 0">
+                        <div v-if="isOptionsLoading" class="space-y-3">
+                            <div v-for="item in 5" :key="item" class="flex items-center gap-3 rounded-xl border border-slate-200/60 bg-white/70 px-3 py-3 dark:border-slate-700/60 dark:bg-slate-800/70">
+                                <div class="sidebar-skeleton h-9 w-9 shrink-0 rounded-lg"></div>
+                                <div class="min-w-0 flex-1 space-y-2">
+                                    <div class="sidebar-skeleton h-3 w-4/5 rounded"></div>
+                                    <div class="sidebar-skeleton h-2.5 w-1/2 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <TransitionGroup v-else name="sidebar-option" tag="div" class="space-y-2">
+                            <div
+                                v-for="(option, index) in visibleOptions"
+                                :key="option.text"
+                                class="sidebar-option-item"
+                                :style="{ transitionDelay: `${Math.min(index * 45, 180)}ms` }"
+                            >
+                                <template v-if="option.items && option.items.length > 0">
                                     <button
-                                        v-can="option.permissions"
                                         @click="handleOptionClick(option.text)"
                                         class="group w-full rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
                                         :class="optionLinkClasses(option)"
@@ -396,7 +458,7 @@
                                                 </div>
                                                 <div class="flex min-w-0 flex-col">
                                                     <span class="text-sm font-semibold leading-tight break-words" :class="optionTextClasses(option)">{{ option.text }}</span>
-                                                    <span class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{{ option.items.length }} opciones</span>
+                                                    <span class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{{ visibleSubOptions(option).length }} opciones</span>
                                                 </div>
                                             </div>
                                             <i v-if="option.items && option.items.length > 0"
@@ -408,7 +470,6 @@
                                 </template>
                                 <template v-else>
                                     <Link
-                                        v-can="option.permissions"
                                         :href="option.route"
                                         @click="handleOptionClick(option.text)"
                                         class="group relative block w-full overflow-hidden rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
@@ -447,10 +508,10 @@
                                     </Link>
                                 </template>
                                 <!-- Submenú desplegable si tiene subopciones -->
-                                <VueCollapsible v-if="option.items && option.items.length> 0" :isOpen="expandedSections == option.text">
+                                <VueCollapsible v-if="option.items && option.items.length > 0" :isOpen="expandedSections == option.text">
                                     <div class="ml-4 mt-2 space-y-1 border-l border-slate-200 pl-3 dark:border-slate-700">
-                                        <template v-for="(subOption, subIndex) in option.items" :key="subIndex">
-                                        <Link v-can="subOption.permissions"
+                                        <template v-for="(subOption, subIndex) in visibleSubOptions(option)" :key="subIndex">
+                                        <Link
                                                 :href="subOption.route"
                                                 @click="handleSubOptionClick(option.text, subOption.text)"
                                                 class="block cursor-pointer rounded-lg px-3 py-2 text-sm text-slate-600 transition-all duration-200 hover:bg-orange-50 hover:text-orange-700 dark:text-slate-300 dark:hover:bg-orange-950/30 dark:hover:text-orange-200"
@@ -469,10 +530,10 @@
                                     </div>
                                 </VueCollapsible>
 
-                            </template>
-                        </div>
+                            </div>
+                        </TransitionGroup>
                         <!-- Opciones estáticas si no hay módulo activo -->
-                        <template v-if="!moduleSelected.items || moduleSelected.items.length === 0">
+                        <template v-if="!isOptionsLoading && visibleOptions.length === 0">
                             <div class="rounded-xl border border-dashed border-slate-200 bg-white/70 py-8 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-400">
                                 <img :src="'/img/svg/site-stats-rafiki.svg'" class="max-w-[154px]" />
                             </div>
@@ -512,6 +573,50 @@
 
 .dark .overflow-y-auto::-webkit-scrollbar-thumb {
     background: rgba(71, 85, 105, 0.5);
+}
+
+.sidebar-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgba(226, 232, 240, 0.9);
+}
+
+.dark .sidebar-skeleton {
+    background: rgba(51, 65, 85, 0.75);
+}
+
+.sidebar-skeleton::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    animation: sidebar-shimmer 1.2s infinite;
+}
+
+.dark .sidebar-skeleton::after {
+    background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.18), transparent);
+}
+
+.sidebar-option-enter-active,
+.sidebar-option-leave-active {
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.sidebar-option-enter-from {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.sidebar-option-leave-to {
+    opacity: 0;
+    transform: translateX(8px);
+}
+
+@keyframes sidebar-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 </style>
