@@ -1,0 +1,1053 @@
+<script setup>
+ import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
+    import PrimaryButton from '@/Components/PrimaryButton.vue';
+    import SuccessButton from '@/Components/SuccessButton.vue';
+    import SearchClients from 'Modules/Sales/Resources/assets/js/Pages/Documents/Partials/SearchClients.vue';
+    import SearchProducts from 'Modules/Sales/Resources/assets/js/Pages/Documents/Partials/SearchProducts.vue';
+    import { faPlus, faXmark, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+    import { useForm } from '@inertiajs/vue3';
+    import InputError from '@/Components/InputError.vue';
+    import { ref, onMounted, watch } from 'vue';
+    import Swal2 from 'sweetalert2';
+    import { Link, router } from '@inertiajs/vue3';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import ModalLarge from '@/Components/ModalLarge.vue';
+    import TextInput from '@/Components/TextInput.vue';
+    import InputLabel from '@/Components/InputLabel.vue';
+    import { useAppStore } from '@/stores/index';
+    import { calcularMontosPorCuota } from 'Modules/Sales/Resources/assets/js/utilities/paymentCalculations';
+
+
+    const props = defineProps({
+        payments: {
+            type: Object,
+            default: () => ({}),
+        },
+        client: {
+            type: Object,
+            default: () => ({}),
+        },
+        documentTypes: {
+            type: Object,
+            default: () => ({}),
+        },
+        company:{
+            type: Object,
+            default: () => ({}),
+        },
+        saleDocumentTypes:{
+            type: Object,
+            default: () => ({}),
+        },
+        departments: {
+            type: Object,
+            default: () => ({}),
+        },
+        unitTypes: {
+            type: Object,
+            default: () => ({}),
+        },
+        type_operation: {
+            type: String,
+            default: () => ({}),
+        },
+        taxes: {
+            type: Object,
+            default: () => ({}),
+        },
+        commercialPayment: {
+            type: Object,
+            default: null,
+        }
+    });
+
+    const defaultSaleDocumentType = props.commercialPayment?.client?.document_type_id == 6 || props.client?.document_type_id == 6 ? 1 : 2;
+
+    const formDocument = useForm({
+        client_id: props.client.id,
+        client_name: props.client.number+"-"+props.client.full_name,
+        client_rzn_social: props.client.full_name,
+        client_ubigeo: props.client.ubigeo,
+        client_dti: props.client.document_type_id,
+        client_number: props.client.number,
+        client_ubigeo_description: props.commercialPayment ? (props.client.city || props.client.ubigeo_description) : props.company.city,
+        client_direction: props.commercialPayment ? props.client.address : props.company.fiscal_address,
+        client_phone: props.client.telephone,
+        client_email: props.client.email,
+        sale_documenttype_id: defaultSaleDocumentType,
+        type_operation: props.type_operation,
+        serie: null,
+        date_issue: null,
+        date_end: null,
+        items:[],
+        total_discount: 0,
+        total_igv: 0,
+        percentage_igv: 0,
+        total: 0,
+        total_taxed: 0, //operaciones gravadas
+        commercial_payment_id: props.commercialPayment?.id,
+        payments: [{
+            type:1,
+            reference: null,
+            amount: Number(props.commercialPayment?.balance_amount || props.commercialPayment?.total_amount || 0).toFixed(2)
+        }],
+        additional_description: null,
+        forma_pago: 'Contado',
+        quotas: {
+            number: 1,
+            days: 15,
+            amounts: [],
+            end_month: false,
+            amount: null
+        }
+    });
+
+    const series = ref([]);
+
+    const getSeriesByDocumentType = () => {
+        let did = formDocument.sale_documenttype_id;
+        axios.get(route('sale_document_series',did)).then((res) => {
+            if (res.data.status) {
+                series.value = res.data.series;
+                formDocument.serie = series.value[0].id;
+            } else {
+                Swal2.fire({
+                    title: 'Información Importante',
+                    text: 'No existe serie para este local o tipo de documento',
+                    icon: 'info',
+                    showDenyButton: true,
+                    showCancelButton: false,
+                    confirmButtonText: 'Ok',
+                    denyButtonText: `Crear serie`,
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                }).then((result) => {
+                    if (result.isDenied) {
+                        router.visit(route('establishments.index'),{
+                            method: 'get'
+                        });
+                    }
+                })
+            }
+        });
+    }
+
+    onMounted(() => {
+        getSeriesByDocumentType();
+        getCurrentDate();
+        startTaxes();
+        setCommercialPaymentData();
+    });
+
+    const taxes = ref({});
+    const startTaxes = () => {
+
+        let igv = parseFloat(props.taxes.igv);
+        let icbper = parseFloat(props.taxes.icbper);
+
+        let xa = {
+            nfactorIGV: (igv / 100) + 1,
+            rfactorIGV: (igv / 100),
+            icbper: icbper
+        }
+        taxes.value = xa;
+    }
+
+    const getCurrentDate = () => {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0'); // Los meses son base 0, por eso se suma 1
+        const day = String(currentDate.getDate()).padStart(2, '0');
+
+        // Formato de fecha: YYYY-MM-DD
+        formDocument.date_issue = `${year}-${month}-${day}`;
+        formDocument.date_end = `${year}-${month}-${day}`;
+    };
+
+    const setCommercialPaymentData = () => {
+        if (!props.commercialPayment) return;
+
+        const payment = props.commercialPayment;
+        const contract = payment.contract || {};
+        const service = contract.service || {};
+        const amount = Number(payment.balance_amount || payment.total_amount || payment.amount || 0);
+        const description = payment.description || `Cuota ${payment.payment_number}`;
+
+        formDocument.date_end = payment.due_date || formDocument.date_end;
+        //formDocument.additional_description = `Contrato: ${contract.title || '-'} | ${description}`;
+
+        getDataTable({
+            id: service.id || null,
+            interne: service.interne || null,
+            //description: `${service.description || 'Servicio'} - ${description}`,
+            description: `${service.description || 'Servicio'}`,
+            is_product: service.is_product == 1,
+            unit_type: service.type_unit_measure_id || 'ZZ',
+            quantity: 1,
+            unit_price: amount.toFixed(2),
+            discount: 0,
+            total: 0,
+            afe_igv: service.type_sale_affectation_id || '10',
+            size: null,
+            m_igv: 0,
+            presentations: service.presentations || null,
+            icbper: service.icbper || false,
+        });
+    };
+
+    const getDataClient = async (data) => {
+
+        if(formDocument.sale_documenttype_id == 2){
+            formDocument.client_id = data.id;
+            formDocument.client_name = data.number+"-"+data.full_name;
+            formDocument.client_rzn_social = data.full_name;
+            formDocument.client_ubigeo_description = data.ubigeo_description;
+            formDocument.client_ubigeo = data.ubigeo;
+            formDocument.client_direction = data.address;
+            formDocument.client_dti = data.document_type_id;
+            formDocument.client_number = data.number;
+            formDocument.client_phone = data.telephone;
+            formDocument.client_email = data.email;
+        }else{
+            if(data.document_type_id == '6'){
+                formDocument.client_id = data.id;
+                formDocument.client_name = data.number+"-"+data.full_name;
+                formDocument.client_ubigeo_description = data.ubigeo_description;
+                formDocument.client_ubigeo = data.ubigeo;
+                formDocument.client_direction = data.address;
+                formDocument.client_dti = data.document_type_id;
+                formDocument.client_number = data.number;
+                formDocument.client_phone = data.telephone;
+                formDocument.client_email = data.email;
+                formDocument.client_rzn_social = data.full_name;
+            }else{
+                Swal2.fire({
+                    title: 'Información Importante',
+                    text: "El cliente no cuenta con ruc para emitir una factura",
+                    icon: 'info',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            }
+        }
+        displayModalClientSearch.value = false;
+
+    }
+
+    const displayModalClientSearch = ref(false);
+    const saleDocumentTypesId = ref({});
+
+    const openModalClientSearch = () => {
+        displayModalClientSearch.value = true;
+        saleDocumentTypesId.value = formDocument.sale_documenttype_id
+    }
+    const closeModalClientSearch = () => {
+        saleDocumentTypesId.value =  null;
+        displayModalClientSearch.value = false;
+    }
+    const newItems = () => {
+        let item = {
+            id: null,
+            description: null,
+            is_product: true,
+            unit_type: 'NIU',
+            quantity: 1,
+            unit_price: 0,
+            discount: 0,
+            total: 0,
+            afe_igv: 10,
+            size: null,
+            m_igv: 0,
+            presentations: null,
+            icbper: false
+        }
+        formDocument.items.push(item);
+    }
+
+    const removeItem = (key) => {
+        //let t = parseFloat(formDocument.items[key].total);
+        //formDocument.total = parseFloat(formDocument.total) - t;
+        removeCalculateTotals(key);
+        formDocument.items.splice(key,1);
+
+    }
+
+    const calculateTotals = (key) => {
+        let c = parseFloat(formDocument.items[key].quantity) ?? 0;
+        let p = parseFloat(formDocument.items[key].unit_price) ?? 0;
+        let d = parseFloat(formDocument.items[key].discount) ?? 0;
+
+        let vu = p / taxes.value.nfactorIGV; //valor unitario
+        let fa = ((d * 100) / p) / 100; //factor del descuento
+        let md = fa * vu * c; //monto del descuento
+        let bi = (vu * c) - md; //base igv
+        let mi = bi * taxes.value.rfactorIGV; //total igv por item
+        let st = ((vu * c) - md) + mi;
+        let vs = (vu * c) - md;
+        // Verificar si el resultado es NaN y asignar 0 en su lugar
+        if (isNaN(st)) {
+            st = 0;
+        }
+        if (isNaN(mi)) {
+            mi = 0;
+        }
+        if (isNaN(vs)) {
+            vs = 0;
+        }
+
+        formDocument.items[key].m_igv = mi.toFixed(2);
+        formDocument.items[key].total = st.toFixed(2);
+        formDocument.items[key].v_sale = vs.toFixed(2);
+
+        // Calcular la suma de los totales de todos los items
+        formDocument.total = formDocument.items.reduce((acc, item) => acc + parseFloat(item.total), 0).toFixed(2);
+        formDocument.total_discount = formDocument.items.reduce((acc, item) => acc + (parseFloat(item.discount)*c), 0).toFixed(2);
+        formDocument.total_taxed = formDocument.items.reduce((acc, item) => acc + parseFloat(item.v_sale), 0).toFixed(2);
+        formDocument.total_igv = formDocument.items.reduce((acc, item) => acc + parseFloat(item.m_igv), 0).toFixed(2);
+        formDocument.payments[0].amount = formDocument.total;
+
+    }
+
+    const removeCalculateTotals = (key) => {
+        formDocument.payments = [];
+        formDocument.total = (parseFloat(formDocument.total) - parseFloat(formDocument.items[key].total)).toFixed(2);
+        formDocument.total_discount = (parseFloat(formDocument.total_discount) - parseFloat(formDocument.items[key].discount)).toFixed(2);
+        formDocument.total_taxed = (parseFloat(formDocument.total_taxed) - parseFloat(formDocument.items[key].v_sale)).toFixed(2);
+        formDocument.total_igv = (parseFloat(formDocument.total_igv) - parseFloat(formDocument.items[key].m_igv)).toFixed(2);
+
+        formDocument.payments.push({
+            type:1,
+            reference: null,
+            amount: formDocument.total
+        });
+
+    }
+
+    ////imprimir documento
+    const downloadDocument = (id,type,file) => {
+        let url = route('saledocuments_download',[id, type,file])
+        window.open(url, "_blank");
+    }
+
+    const saveDocument = () => {
+
+        formDocument.processing = true
+
+        if(formDocument.serie){
+            if(formDocument.client_dti != 6 && formDocument.sale_documenttype_id == 1){
+                Swal2.fire({
+                    title: 'Información Importante',
+                    text: "El cliente debe tener ruc para emitir una factura",
+                    icon: 'error',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                formDocument.processing = false
+                return;
+
+            }
+
+            axios.post(route('comm_contract_payment_document_store'), formDocument ).then((res) => {
+                console.log(res)
+                if (res.data?.success === false) {
+                    Swal2.fire({
+                        title: 'Error SQL / Exception 500',
+                        text: res.data.message,
+                        icon: 'error',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                    formDocument.processing = false
+                    return
+                }
+
+                formDocument.client_id = props.client.id,
+                formDocument.client_name = props.client.number+"-"+props.client.full_name,
+                formDocument.client_ubigeo = props.client.ubigeo,
+                formDocument.client_dti = props.client.document_type_id,
+                formDocument.client_number = props.client.number,
+                formDocument.client_ubigeo_description = props.company.city,
+                formDocument.client_direction = props.company.fiscal_address,
+                formDocument.client_phone = props.client.telephone,
+                formDocument.client_email = props.client.email,
+                formDocument.sale_documenttype_id = 2,
+                formDocument.type_operation = props.type_operation,
+                formDocument.serie = null
+                formDocument.items = [];
+                formDocument.total_discount = 0;
+                formDocument.total_igv = 0;
+                formDocument.total = 0;
+                formDocument.total_taxed = 0;
+                formDocument.payments = [{
+                    type:1,
+                    reference: null,
+                    amount:0
+                }];
+                formDocument.additional_description = null;
+                getSeriesByDocumentType();
+                formDocument.processing =  false;
+                formDocument.forma_pago = 'Contado'
+                Swal2.fire({
+                    title: 'Comprobante '+ res.data.invoice_serie +'-'+ res.data.invoice_correlative+ ' creado con éxito',
+                    text: "¿deseas enviar a sunat y/o Imprimir?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Enviar Ahora',
+                    cancelButtonText: 'Seguir vendiendo',
+                    showDenyButton: true,
+                    denyButtonText: `Solo Imprimir`,
+                    denyButtonColor: '#5E5A5A',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if(res.data.invoice_type_doc == '01'){
+                            sendSunatDocumentCreated(res.data)
+                        }else{
+                            Swal2.fire({
+                                title: 'Información Importante',
+                                text: "Las boletas se envian mediante un resumen",
+                                icon: 'info',
+                                padding: '2em',
+                                customClass: 'sweet-alerts',
+                            });
+                        }
+                    } else if (result.isDenied) {
+                        downloadDocument(res.data.id,res.data.invoice_type_doc,'PDF')
+                    }
+                });
+            }).catch(function (error) {
+                setFormError(error);
+            });
+        }else{
+            Swal2.fire({
+                title: 'Información Importante',
+                text: "Elejir serie de documento",
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            formDocument.processing = false
+            return;
+        }
+    }
+
+
+    const setFormError = (error) => {
+        let validationErrors = error.response.data.errors;
+
+        if(error.status == 422){
+            if (validationErrors && validationErrors.corelative) {
+                const corelativeErrors = validationErrors.corelative;
+                for (let i = 0; i < corelativeErrors.length; i++) {
+                    formDocument.setError('corelative', corelativeErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.serie) {
+                const serieErrors = validationErrors.serie;
+                for (let i = 0; i < serieErrors.length; i++) {
+                    formDocument.setError('serie', serieErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.client_name) {
+                const client_nameErrors = validationErrors.client_name;
+                for (let i = 0; i < client_nameErrors.length; i++) {
+                    formDocument.setError('client_name', client_nameErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.total) {
+                const totalErrors = validationErrors.total;
+                for (let i = 0; i < totalErrors.length; i++) {
+                    formDocument.setError('total', totalErrors[i]);
+                }
+            }
+
+            if (validationErrors && validationErrors.client_rzn_social) {
+                const client_rzn_socialErrors = validationErrors.client_rzn_social;
+                for (let i = 0; i < client_rzn_socialErrors.length; i++) {
+                    formDocument.setError('client_rzn_social', client_rzn_socialErrors[i]);
+                }
+            }
+
+            if (validationErrors && validationErrors.items) {
+                const itemsErrors = validationErrors.items;
+
+                for (let i = 0; i < itemsErrors.length; i++) {
+                    formDocument.setError('items.'+index+'.quantity', itemsErrors[i]);
+                }
+            }
+            if (validationErrors && validationErrors.payments) {
+                const paymentsErrors = validationErrors.payments;
+
+                for (let i = 0; i < paymentsErrors.length; i++) {
+                    formDocument.setError('payments.'+index+'.amount', paymentsErrors[i]);
+                }
+            }
+            showAlertMessage('Faltan ingresar datos importantes','error')
+        }else{
+            showAlertMessage(error.message,'error')
+        }
+        formDocument.processing =  false;
+    }
+
+    const showAlertMessage = async (msg, xicon = 'success') => {
+        const toast = Swal2.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        toast.fire({
+            icon: xicon,
+            title: msg,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    }
+
+    const addPayment = () => {
+        let ar = {
+            type:1,
+            reference: null,
+            amount:0
+        };
+        formDocument.payments.push(ar);
+    };
+    const removePayment = (index) => {
+        if(index>0){
+            formDocument.payments.splice(index,1);
+        }
+    };
+
+    const displaySearchProducts = ref(false);
+    const closeSearchProducus = () => {
+        displaySearchProducts.value = false;
+    }
+
+    const getDataTable = async (data) => {
+        let c = parseFloat(data.quantity) ?? 0;
+        let p = parseFloat(data.unit_price) ?? 0;
+        let d = parseFloat(data.discount) ?? 0;
+
+        let vu = p / taxes.value.nfactorIGV; //valor unitario
+        let fa = ((d * 100) / p) / 100; //factor del descuento
+        let md = fa * vu * c; //monto del descuento
+        let bi = (vu * c) - md; //base igv
+        let mi = bi * taxes.value.rfactorIGV; //total igv por item
+        let st = ((vu * c) - md) + mi;
+        let vs = (vu * c) - md;
+
+        // Verificar si el resultado es NaN y asignar 0 en su lugar
+        if (isNaN(st)) {
+            st = 0;
+        }
+        if (isNaN(mi)) {
+            mi = 0;
+        }
+        if (isNaN(vs)) {
+            vs = 0;
+        }
+        if (isNaN(md)) {
+            md = 0;
+        }
+        data.m_igv = mi.toFixed(2);
+        data.total = st.toFixed(2);
+        data.v_sale = vs.toFixed(2);
+
+        let tt = parseFloat(formDocument.total) + st;
+        let td = parseFloat(formDocument.total_discount) + md;
+        let tx = parseFloat(formDocument.total_taxed) + vs;
+        let ti = parseFloat(formDocument.total_igv) + mi;
+        // Calcular la suma de los totales de todos los items
+
+        formDocument.total = tt.toFixed(2);
+        formDocument.total_discount = td.toFixed(2);
+        formDocument.total_taxed = tx.toFixed(2);
+        formDocument.total_igv = ti.toFixed(2);
+        formDocument.items.push(data);
+        formDocument.payments[0].amount = formDocument.total;
+        displaySearchProducts.value = false;
+    }
+
+    const sendSunatDocumentCreated = (document) => {
+        Swal2.fire({
+            title: document.invoice_serie+'-'+document.number,
+            text: 'Enviar documento',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            showLoaderOnConfirm: true,
+            clickOutside: false,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            preConfirm: () => {
+                return axios.get(route('saledocuments_send', [document.id,document.invoice_type_doc])).then((res) => {
+                    if (!res.data.success) {
+                        var cadena = `Error código: ${res.data.code}<br>Descripción:${res.data.message}`;
+                        let notes = res.data.notes;
+                        if (notes) {
+                            cadena += `<br>Nota: ${notes}`;
+                        }
+                        Swal2.showValidationMessage(cadena)
+                        router.visit(route('saledocuments_list'), { replace: true });
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var cadena = "";
+                let array = JSON.parse(result.value.data.notes);
+                for (var i = 0; i < array.length; i++) {
+                    cadena += array[i] + "<br>";
+                }
+
+                Swal2.fire({
+                    title: `${result.value.data.message}`,
+                    html: `${cadena}`,
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                }).then(() => {
+                    router.visit(route('comm_contracts_payments', commercialPayment.contract.id),{
+                        method: 'get'
+                    });
+                });
+
+            }
+        });
+    }
+    const asetUrl = assetUrl;
+
+    const displayModalQuotas = ref();
+
+    const openModalQuotas = () => {
+        if(formDocument.forma_pago == 'Credito' && formDocument.total > 0){
+            displayModalQuotas.value = true;
+            formDocument.quotas.amount = formDocument.total;
+        } else {
+            displayModalQuotas.value = false;
+        }
+    }
+
+    const closeModalQuotas = () => {
+        displayModalQuotas.value = false;
+    }
+    // Watcher para recalcular las cuotas cuando cambian las dependencias
+    watch(() => [
+        formDocument.total,
+        formDocument.quotas.number,
+        formDocument.quotas.end_month,
+        formDocument.quotas.days,
+        formDocument.date_issue,
+        formDocument.forma_pago
+    ], ([newTotal, newNumber, newEndMonth, newDays, newDateIssue, newFormaPago]) => {
+        if (newFormaPago === 'Credito') {
+            formDocument.quotas.amounts = calcularMontosPorCuota(
+                newTotal,
+                newNumber,
+                newDateIssue,
+                newEndMonth,
+                newDays
+            );
+        } else {
+            formDocument.quotas.amounts = []; // Limpiar cuotas si no es a crédito
+        }
+    }, { immediate: true }); // 'immediate: true' para que se ejecute la primera vez al montar el componente
+
+    const cuotasCalculadas = () => {
+        showAlert()
+        displayModalQuotas.value = false;
+    }
+
+    const showAlert = async () => { // Puedes renombrarla a algo más descriptivo si quieres
+        const toast = Swal2.mixin({ // Usamos Swal directamente si ya lo importaste como Swal
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            showCloseButton: true,
+        });
+
+        toast.fire({
+            html: `
+                <div class="flex">
+                    <div class="shrink-0">
+                        <svg class="size-5 text-gray-100 mt-1 dark:text-neutral-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                            <path fill="currentColor" d="M192 96C156.7 96 128 124.7 128 160L128 384C128 419.3 156.7 448 192 448L544 448C579.3 448 608 419.3 608 384L608 160C608 124.7 579.3 96 544 96L192 96zM368 192C412.2 192 448 227.8 448 272C448 316.2 412.2 352 368 352C323.8 352 288 316.2 288 272C288 227.8 323.8 192 368 192zM192 216L192 168C192 163.6 195.6 160 200 160L248 160C252.4 160 256.1 163.6 255.5 168C251.9 197 228.9 219.9 200 223.5C195.6 224 192 220.4 192 216zM192 328C192 323.6 195.6 319.9 200 320.5C229 324.1 251.9 347.1 255.5 376C256 380.4 252.4 384 248 384L200 384C195.6 384 192 380.4 192 376L192 328zM536 223.5C507 219.9 484.1 196.9 480.5 168C480 163.6 483.6 160 488 160L536 160C540.4 160 544 163.6 544 168L544 216C544 220.4 540.4 224.1 536 223.5zM544 328L544 376C544 380.4 540.4 384 536 384L488 384C483.6 384 479.9 380.4 480.5 376C484.1 347 507.1 324.1 536 320.5C540.4 320 544 323.6 544 328zM80 216C80 202.7 69.3 192 56 192C42.7 192 32 202.7 32 216L32 480C32 515.3 60.7 544 96 544L488 544C501.3 544 512 533.3 512 520C512 506.7 501.3 496 488 496L96 496C87.2 496 80 488.8 80 480L80 216z"/>
+                        </svg>
+                    </div>
+                    <div class="ms-4">
+                        <h3 class="text-gray-100 font-semibold dark:text-white">
+                            Cuotas programadas con éxito
+                        </h3>
+                        <div class="mt-1 text-sm text-gray-100 dark:text-neutral-400">
+                            ${formDocument.quotas.number } pagos cada ${formDocument.quotas.end_month ? 'fin de mes' : formDocument.quotas.days +' días'}
+                        </div>
+                        <div class="mt-4">
+                        <div class="flex gap-x-3">
+                            <button id="reopenModalBtn" type="button" class="text-blue-300 decoration-2 hover:underline font-medium text-sm focus:outline-hidden focus:underline dark:text-blue-500">
+                                Ver cuotas
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+            `, // Usamos 'html' para insertar el botón
+            padding: '2em',
+            customClass: {
+                // Puedes agregar clases personalizadas aquí si las necesitas para el toast en general
+                // por ejemplo, para ajustar el ancho o el estilo del texto.
+                // popup: 'sweet-alerts', // Si esta clase define el ancho del popup, puede afectar el toast
+                title: 'text-sm' // Ejemplo para hacer el título más pequeño
+            },
+            didOpen: (toastElement) => {
+                // Este callback se ejecuta cuando el toast está visible en el DOM
+                const reopenBtn = toastElement.querySelector('#reopenModalBtn');
+                if (reopenBtn) {
+                    reopenBtn.addEventListener('click', () => {
+                        displayModalQuotas.value = true; // Abre el modal
+                        Swal2.close(); // Cierra el toast inmediatamente al hacer clic en el botón
+                    });
+                }
+            }
+        });
+    };
+</script>
+<template>
+    <AppLayout title="Documento de venta">
+        <Navigation :routeModule="route('comm_dashboard')" titleModule="Comercial"
+            :data="[
+                {route: route('comm_contracts'), title: 'Contratos'},
+                {route: route('comm_contracts_payments', commercialPayment.contract.id), title: 'Cronograma'},
+                {title: 'Generar documento'}
+            ]"
+        />
+        <div class="mt-5">
+            <div class="flex-shrink max-w-full w-full mb-6">
+                <div class="panel">
+                    <div class="flex justify-between items-center pb-4 border-b border-gray-200 dark:border-gray-700 mb-3">
+                        <div class="flex flex-col">
+                            <div class="text-3xl font-bold mb-1">
+                                <img v-if="company.logo == '/img/logo176x32.png'" style="width: 242px;height: 53.2333px;" class="inline-block h-auto ltr:mr-2 rtl:ml-2" :src="company.logo">
+                                <img v-else style="width: 242px;height: 53.2333px;" class="inline-block h-auto ltr:mr-2 rtl:ml-2" :src="asetUrl+'storage/'+company.logo">
+                            </div>
+                            <p class="text-sm">Ancash, Chimbote<br>{{ company.fiscal_address }}</p>
+                        </div>
+                        <div class="text-4xl uppercase font-bold">
+                            <select @change="getSeriesByDocumentType" v-model="formDocument.sale_documenttype_id" class="w-full appearance-none text-3xl rounded-xl text-center font-extrabold text-blue-800 border-4  py-6 px-4 bg-green-100">
+                                <option v-for="(type, index) in saleDocumentTypes" :value="type.id"> {{  type.description  }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex flex-row justify-between py-2">
+                        <div class="flex-1 pr-4 ">
+                            <div class="grid grid-cols-3 gap-4 justify-between mb-1">
+                                <div style="font-size: 14px;" class="col-span-3 sm:col-span-1 uppercase">Cliente:</div>
+                                <div class="col-span-3 sm:col-span-2 ltr:text-right rtl:text-left">
+                                    <input @click="openModalClientSearch" @input="openModalClientSearch" :value="formDocument.client_name" class="form-input form-input-sm" type="text" />
+                                    <SearchClients
+                                        :display="displayModalClientSearch"
+                                        :closeModalClient="closeModalClientSearch"
+                                        @clientId="getDataClient"
+                                        :clientDefault="client"
+                                        :documentTypes="documentTypes"
+                                        :saleDocumentTypes="saleDocumentTypesId"
+                                        :ubigeo="departments"
+                                    />
+                                   <div><InputError :message="formDocument.errors.client_id" class="mt-2" /></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 justify-between mb-1">
+                                <div style="font-size: 14px;" class="col-span-3 sm:col-span-1 uppercase">Ciudad:</div>
+                                <div class="col-span-3 sm:col-span-2 ltr:text-right rtl:text-left">
+                                    <input :value="formDocument.client_ubigeo_description" class="form-input form-input-sm" disabled type="text" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 justify-between mb-1">
+                                <div style="font-size: 14px;" class="col-span-3 sm:col-span-1 uppercase">Dirección:</div>
+                                <div class="col-span-3 sm:col-span-2 ltr:text-right rtl:text-left">
+                                    <input :value="formDocument.client_direction" class="form-input form-input-sm" disabled type="text" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between mb-1">
+                                <div style="font-size: 14px;" class="flex-1 uppercase">Serie:</div>
+                                <div class="flex-1 ltr:text-right rtl:text-left">
+                                    <select v-model="formDocument.serie" class="form-select text-white-dark py-1.5 text-xs">
+                                        <option v-for="(serie) in series" :value="serie.id" >{{ serie.description }}</option>
+                                    </select>
+                                    <InputError :message="formDocument.errors.serie" class="mt-2" />
+                                </div>
+                            </div>
+                            <div class="flex justify-between mb-1">
+                                <div style="font-size: 14px;" class="flex-1 uppercase">Fecha de Emisión:</div>
+                                <div class="flex-1 ltr:text-right rtl:text-left">
+                                    <input v-model="formDocument.date_issue" class="form-input form-input-sm" type="date" />
+                                    <InputError :message="formDocument.errors.date_issue" class="mt-2" />
+                                </div>
+                            </div>
+                            <div class="flex justify-between mb-1">
+                                <div style="font-size: 14px;" class="flex-1 uppercase">Fecha de vencimiento:</div>
+                                <div class="flex-1 ltr:text-right rtl:text-left">
+                                    <input v-model="formDocument.date_end" class="form-input form-input-sm" type="date" />
+                                    <InputError :message="formDocument.errors.date_end" class="mt-2" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="max-w-full py-2">
+                        <table class="w-full ltr:text-left rtl:text-right text-gray-600">
+                            <thead class="">
+                                <tr class="bg-gray-100 dark:bg-gray-900 dark:bg-opacity-20">
+                                    <th style="width: 60px;" class="text-right py-1">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button v-can="'sale_registar_producto_alvender'" @click="newItems" type="button" v-tippy="{ content: 'Agregar nuevo', placement: 'bottom'}" class="btn btn-sm btn-outline-success">
+                                                <font-awesome-icon :icon="faPlus" />
+                                            </button>
+                                            <SearchProducts
+                                                @eventdata="getDataTable"
+                                                :iconSearch="faMagnifyingGlass"
+                                             />
+                                        </div>
+                                    </th>
+                                    <th class="text-left text-xs uppercase px-2 py-1 dark:text-white-dark">Item</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Producto</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Tipo de Unidad</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Cantidad</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Precio unitario</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Descuento</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-if="formDocument.items && formDocument.items.length > 0">
+                                    <template v-for="(row, key) in formDocument.items">
+                                        <tr>
+                                            <td class="text-right" >
+                                                <button @click="removeItem(key)" type="button" class="btn btn-sm btn-outline-danger">
+                                                    <font-awesome-icon :icon="faXmark"  />
+                                                </button>
+                                            </td>
+                                            <td class="">
+                                                <!-- <input v-model="row.description"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
+                                                :ref="'item-description-' + key"
+                                                :style="row.id ? 'cursor: not-allowed': ''"
+                                                class="form-input form-input-sm" type="text" /> -->
+
+                                                <textarea v-model="row.description"
+                                                    :ref="'item-description-' + key"
+                                                    class="form-textarea form-input-sm"
+                                                    rows="4"
+                                                >
+                                                </textarea>
+                                            </td>
+                                            <td style="width: 80px;" class="text-center">
+                                                <input v-model="row.is_product"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
+                                                :style="row.id ? 'cursor: not-allowed': ''"
+                                                type="checkbox">
+                                            </td>
+                                            <td style="width: 110px;">
+                                                <select v-model="row.unit_type"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
+                                                :style="row.id ? 'cursor: not-allowed': ''"
+                                                class="form-select form-select-sm text-white-dark">
+                                                    <template v-for="(unitType) in unitTypes">
+                                                        <option :value="unitType.id" >{{ unitType.description }}</option>
+                                                    </template>
+                                                </select>
+                                            </td>
+                                            <td style="width: 70px;" class="text-center">
+                                                <input v-model="row.quantity"
+                                                @input="calculateTotals(key)"
+
+                                                class="form-input form-input-sm" type="text" />
+                                            </td>
+                                            <td style="width: 120px;" class="text-right">
+                                                <input v-model="row.unit_price"
+                                                @input="calculateTotals(key)"
+                                                :disabled="row.id ? true : false"
+                                                :style="row.id ? 'cursor: not-allowed': ''"
+                                                :class="row.id ? 'bg-gray-100' : ''"
+                                                class="form-input form-input-sm text-right" type="text" />
+                                            </td>
+                                            <td style="width: 90px;" class="text-right">
+                                                <input v-model="row.discount" @input="calculateTotals(key)"
+                                                :disabled="row.id ? true : false"
+                                                :class="row.id ? 'bg-gray-100' : ''"
+                                                :style="row.id ? 'cursor: not-allowed': ''"
+                                                class="form-input form-input-sm text-right" type="text" />
+                                            </td>
+                                            <td style="width: 110px;" class="text-right ">
+                                                <input v-model="row.total"
+                                                style="cursor: not-allowed"
+                                                class="form-input form-input-sm text-right" disabled type="text" />
+                                                <InputError :message="formDocument.errors[`items.${key}.total`]" class="mt-2" />
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <template v-else>
+                                    <tr>
+                                        <td colspan="8">
+                                            <div class="flex items-center mt-1 p-2 text-sm text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800" role="alert">
+                                                <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                                </svg>
+                                                <span class="sr-only">Info</span>
+                                                <div class="flex">
+                                                <div v-can="'sale_registar_producto_alvender'">
+                                                    Click en <span class="p-1 bg-blue-700 text-white"><font-awesome-icon @click="newItems" :icon="faPlus" /></span> para agregar o
+                                                </div>
+                                                    Click en <span class="p-1 bg-gray-700 text-white"><font-awesome-icon :icon="faMagnifyingGlass" /></span> para buscar producto o servicio
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                            <tfoot class="dark:text-gray-300">
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td colspan="4" class="text-right uppercase pt-4"><b>OP. GRAVADAS: S/</b></td>
+                                    <td class="text-right pr-8">{{ formDocument.total_taxed }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td colspan="4" class="text-right uppercase"><b>descuento: S/</b></td>
+                                    <td class="text-right pr-8">{{ formDocument.total_discount  }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td colspan="4" class="text-right uppercase"><b>IGV: S/</b></td>
+                                    <td class="text-right pr-8">{{ formDocument.total_igv }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3"></td>
+                                    <td colspan="4" class="text-right uppercase pb-4"><b>TOTAL A PAGAR: S/</b></td>
+                                    <td class="text-right font-bold pr-8">
+                                        {{ formDocument.total }}
+                                        <InputError :message="formDocument.errors.total" class="mt-2" />
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="max-w-full py-2">
+                        <div class="grid sm:grid-cols-2 items-center gap-6">
+                            <p style="font-size: 14px;" class="italic font-bold uppercase mb-4">Medio de Pago <button @click="addPayment()" type="button" class="inline-block px-0 py-2 bg-transparent text-blue-600 font-medium text-xs leading-tight uppercase rounded transition duration-150 ease-in-out">Agregar (+)</button></p>
+                            <div class="flex sm:flex-row flex-col items-center">
+                                <label  class="mb-0 sm:w-3/5 sm:ltr:mr-2 rtl:ml-2 text-right uppercase">Forma de pago</label>
+                                <select @change="openModalQuotas" v-model="formDocument.forma_pago" class="form-select form-select-sm flex-1">
+                                    <option value="Contado">Al contado</option>
+                                    <option value="Credito">Al crédito</option>
+                                </select>
+                            </div>
+                        </div>
+                        <table class="w-full ltr:text-left rtl:text-right text-gray-600">
+                            <tbody>
+                                <tr v-for="(row, index) in formDocument.payments" v-bind:key="index">
+                                    <td style="width: 70px;" class="text-right">
+                                        <button @click="removePayment(index)" type="button" class="btn btn-sm btn-outline-danger">
+                                            <font-awesome-icon :icon="faXmark" />
+                                        </button>
+                                    </td>
+                                    <td >
+                                        <select v-model="row.type" class="form-select text-white-dark py-1.5 text-xs">
+                                            <template v-for="(payment) in payments">
+                                                <option :value="payment.id">{{ payment.description }}</option>
+                                            </template>
+                                        </select>
+                                        <InputError :message="formDocument.errors[`payments.${index}.id`]" class="mt-2" />
+                                    </td>
+                                    <td>
+                                        <input v-model="row.reference" type="text" id="first_name" class="form-input form-input-sm text-right" placeholder="Referencia">
+                                        <InputError :message="formDocument.errors[`payments.${index}.reference`]" class="mt-2" />
+                                    </td>
+                                    <td style="width: 110px;">
+                                        <input v-model="row.amount" type="text" id="first_name" class="form-input form-input-sm text-right" autofocus placeholder="Monto" required>
+                                        <InputError :message="formDocument.errors[`payments.${index}.amount`]" class="mt-2" />
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="col-span-4 sm:col-span-3">
+                            <label for="additional_description">Descripcion adicional (Opcional)</label>
+                            <textarea v-model="formDocument.additional_description" ref="additional_description" class="form-textarea sm:w-10/12"></textarea>
+                        </div>
+                        <div class="col-span-4 sm:col-span-1 space-y-2">
+                            <PrimaryButton @click="saveDocument" :class="{ 'opacity-25': formDocument.processing }" :disabled="formDocument.processing" class="w-full">
+                                <svg v-show="formDocument.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                                </svg>
+                                Generar
+                            </PrimaryButton>
+                            <Link :href="route('comm_contracts_payments', commercialPayment.contract.id)" class="btn btn-danger uppercase text-xs w-full">
+                                Cancelar
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ModalLarge :show="displayModalQuotas" :onClose="closeModalQuotas" :icon="'/img/pago.png'">
+            <template #title>Programar pagos</template>
+            <template #message>Gestión interna de Cuentas por Cobrar.</template>
+            <template #content>
+                <div class="space-y-5">
+                    <div class="grid sm:grid-cols-2 gap-6">
+                        <div>
+                            <InputLabel for="small-range">Número de Cuota</InputLabel>
+                            <select v-model="formDocument.quotas.number" id="small-range" class="form-select text-white-dark w-full">
+                                <option v-for="n in 36" :key="n" :value="n">
+                                    {{ n }}
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <InputLabel>Número de días / Cada fin de mes <input v-model="formDocument.quotas.end_month" type="checkbox" class="form-checkbox" /></InputLabel>
+                            <select
+                                v-model="formDocument.quotas.days"
+                                :disabled="formDocument.quotas.end_month"
+                                id="small-range"
+                                class="form-select text-white-dark w-full"
+                                :class="formDocument.quotas.end_month ? 'bg-gray-200': ''"
+                            >
+                                <option v-for="n in 31" :key="n" :value="n">
+                                    {{ n }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div v-for="(quota, index) in formDocument.quotas.amounts" :key="quota.id" class="grid sm:grid-cols-2 gap-6">
+                        <div>
+                            <InputLabel>Monto de la Cuota {{ index + 1 }}:</InputLabel>
+                            <TextInput v-model="formDocument.quotas.amounts[index].amount" type="number" />
+                        </div>
+                        <div>
+                            <InputLabel>Fecha de Vencimiento Cuota {{ index + 1 }}:</InputLabel>
+                            <TextInput v-model="formDocument.quotas.amounts[index].dueDate" type="date" />
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template #buttons>
+                <SuccessButton @click="cuotasCalculadas">Hecho</SuccessButton>
+            </template>
+        </ModalLarge>
+    </AppLayout>
+</template>

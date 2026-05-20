@@ -18,6 +18,7 @@ import menuOnlineshop from 'Modules/Onlineshop/Resources/assets/js/Menu.js';
 //import menuCiglesia from 'Modules/Churchcommunity/Resources/assets/js/Menu.js'
 import menuBibliodata from 'Modules/Bibliodata/Resources/assets/js/Menu.js';
 import menuIntegrationhub from 'Modules/Integrationhub/Resources/assets/js/Menu.js';
+import menuCommercial from 'Modules/Commercial/Resources/assets/js/Menu.js';
 
 const MenuData = ref([
     {
@@ -58,6 +59,7 @@ const MenuData = ref([
     menuCRM,
     // menuCiglesia,
     menuBibliodata,
-    menuIntegrationhub
+    menuIntegrationhub,
+    menuCommercial
 ]);
 export default MenuData;
