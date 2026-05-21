@@ -90,7 +90,9 @@
 
     async function loadTeachers() {
         try {
-            const response = await axios.get(route('crm_contacts_docents_chat'));
+            const response = await axios.get(route('crm_contacts_docents_chat'), {
+                timeout: 0,
+            });
 
             const data = response.data;
 
@@ -114,12 +116,6 @@
             };
 
         } catch (error) {
-            // Silenciar el error 403 - el usuario no tiene permiso o no hay suscripción activa
-            // No hacer nada para que no aparezca en consola
-            if (error.response?.status === 403) {
-                return;
-            }
-            // Para otros errores, mostrar en consola solo en desarrollo
             console.error("Error cargando docentes:", error);
         }
     }
@@ -373,4 +369,3 @@
         </div>
     </header>
 </template>
-

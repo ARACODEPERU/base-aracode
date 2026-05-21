@@ -20,7 +20,12 @@ class CrmConversation extends Model
         'description',
         'type_action',
         'status',
-        'new_message'
+        'new_message',
+        'last_email_notification_at'
+    ];
+
+    protected $casts = [
+        'last_email_notification_at' => 'datetime',
     ];
 
     protected static function newFactory(): CrmConversationFactory

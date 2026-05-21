@@ -22,60 +22,71 @@ class CrmConversationController extends Controller
     {
         $persomId = Auth::user()->person_id;
 
-        $conversations = CrmParticipant::join('crm_conversations', 'conversation_id', 'crm_conversations.id')
-            ->join('people', 'crm_participants.person_id', 'people.id')
+        $latestReceivedMessage = CrmMessage::select('crm_messages.*')
+            ->joinSub(
+                CrmMessage::select('conversation_id', DB::raw('MAX(id) as last_message_id'))
+                    ->where('person_id', '<>', $persomId)
+                    ->groupBy('conversation_id'),
+                'latest_messages',
+                function ($join) {
+                    $join->on('crm_messages.id', '=', 'latest_messages.last_message_id');
+                }
+            );
+
+        $baseConversations = CrmParticipant::join('crm_conversations', 'crm_participants.conversation_id', 'crm_conversations.id')
+            ->joinSub($latestReceivedMessage, 'last_message', function ($join) {
+                $join->on('crm_conversations.id', '=', 'last_message.conversation_id');
+            })
+            ->join('people', 'last_message.person_id', 'people.id')
+            ->where('crm_participants.person_id', $persomId);
+
+        $total_new = (clone $baseConversations)
+            ->where('crm_conversations.new_message', true)
+            ->count();
+
+        $conversations = $baseConversations
             ->select(
                 'crm_conversations.new_message',
                 'crm_conversations.id',
+                'last_message.id as message_id',
+                'last_message.person_id as message_person_id',
+                'last_message.content as message_content',
+                'last_message.type as message_type',
+                'last_message.created_at as message_created_at',
+                'people.full_name',
+                'people.image',
+                'people.email',
             )
-            ->where('crm_participants.person_id', $persomId)
+            ->orderByDesc('last_message.created_at')
             ->limit(5)
             ->get();
 
-        $total_new = 0;
-        foreach ($conversations as $row) {
-            if ($row->new_message) {
-                $total_new += 1;
-            }
-        }
-
-        $formattedConversations = $conversations->map(function ($conversation) use ($persomId) {
-            $message_last = CrmMessage::with('person')
-                ->where('conversation_id', $conversation->id)
-                ->where('person_id', '<>', $persomId)
-                ->orderByDesc('id')
-                ->first();
-
+        $formattedConversations = $conversations->map(function ($conversation) {
             $preview = '';
-            if ($message_last) {
-                $who = $message_last->person_id == $persomId ? '<strong class="text-sm mr-1">Tu: </strong>' : '<strong class="text-sm mr-1">' . $message_last->person->full_name . ': </strong>';
+            $who = '<strong class="text-sm mr-1">' . $conversation->full_name . ': </strong>';
 
-                if ($message_last->type == 'text') {
-                    $strcontent = strlen($message_last->content) > 30 ? substr($message_last->content, 0, 30) . ' ...' : $message_last->content;
-                    $preview = ($who . $strcontent);
-                } else if ($message_last->type == 'audio') {
-                    $preview = ($who . 'audio');
-                } else if ($message_last->type == 'link') {
-                    $preview = ($who . 'enlace');
-                } else {
-                    $preview = ($who . 'archivo');
-                }
+            if ($conversation->message_type == 'text') {
+                $content = html_entity_decode($conversation->message_content, ENT_QUOTES, "UTF-8");
+                $strcontent = strlen($content) > 30 ? substr($content, 0, 30) . ' ...' : $content;
+                $preview = ($who . $strcontent);
+            } else if ($conversation->message_type == 'audio') {
+                $preview = ($who . 'audio');
+            } else if ($conversation->message_type == 'link') {
+                $preview = ($who . 'enlace');
+            } else {
+                $preview = ($who . 'archivo');
             }
-            $conversation->time = $message_last ? timeElapsed($message_last->created_at) : null;
-            $conversation->image = $message_last ? $message_last->person->image : null;
-            $conversation->full_name = $message_last ? $message_last->person->full_name : null;
-            $conversation->person_id = $message_last ? $message_last->person->id : null;
-            $conversation->email = $message_last ? $message_last->person->email : null;
-            $conversation->preview = $message_last ? $preview : null;
-            $conversation->new_order = $message_last ? $message_last->created_at : null;
+
+            $conversation->time = timeElapsed($conversation->message_created_at);
+            $conversation->person_id = $conversation->message_person_id;
+            $conversation->preview = $preview;
+            $conversation->new_order = $conversation->message_created_at;
 
             return $conversation;
         });
-        //dd($formattedConversations);
-        $formattedConversations = $formattedConversations->sortByDesc('new_order')->values();
 
         return response()->json([
-            'conversations' => $formattedConversations,
+            'conversations' => $formattedConversations->values(),
             'totalNew' => $total_new
         ]);
     }

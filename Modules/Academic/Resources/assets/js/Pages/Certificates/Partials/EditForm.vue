@@ -4,7 +4,7 @@
     import InputLabel from '@/Components/InputLabel.vue';
     import TextInput from '@/Components/TextInput.vue';
     import Swal2 from 'sweetalert2';
-    import { ref, watch, onMounted, onUnmounted } from 'vue';
+    import { computed, nextTick, ref, watch, onMounted, onUnmounted } from 'vue';
     import iconMenu from '@/Components/vristo/icon/icon-menu.vue';
     import iconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
     import VueCollapsible from 'vue-height-collapsible/vue3';
@@ -16,6 +16,7 @@
     import { Image } from 'ant-design-vue';
     import ImagePng from '@/Components/loader/image-png.vue';
     import switchMobinkakei from '@/Components/switch/switch-mobinkakei.vue';
+    import QRCode from 'qrcode';
 
     const props = defineProps({
         certificate: {
@@ -39,6 +40,7 @@
         id: props.certificate.id,
         grade_id: props.gradeConfig?.id ?? null,
         action_type: null,
+        render_preview_client: true,
         course_id: null,
         for_module: props.certificate.for_module == 1 ? true : false,
         certificate_img: props.certificate.certificate_img_finished ?? props.certificate.certificate_img,
@@ -74,6 +76,7 @@
         font_size_description: props.certificate.font_size_description,
         max_width_description: props.certificate.max_width_description,
         text_align_description: props.certificate.text_align_description || 'left',
+        content_type: props.certificate.content_type || 'description',
         interspace_description: props.certificate.interspace_description,
         name_certificate: props.certificate.name_certificate,
         state: props.certificate.state == 1 ? true :  false,
@@ -224,6 +227,508 @@
         return form.certificate_img_preview;
     };
 
+    const previewWrap = ref(null);
+    const frontBaseImage = ref(null);
+    const backBaseImage = ref(null);
+    const qrImage = ref(null);
+    const stageWidth = ref(1000);
+    const stageScale = ref(1);
+    const transformerRef = ref(null);
+    const selectedNode = ref(null);
+
+    const frontTemplateUrl = computed(() => getImage(props.certificate.certificate_img));
+    const backTemplateUrl = computed(() => {
+        if (form.back_certificate_img_preview) {
+            return form.back_certificate_img_preview;
+        }
+
+        if (form.back_certificate_img && typeof form.back_certificate_img === 'string') {
+            return getImage(form.back_certificate_img);
+        }
+
+        return null;
+    });
+    const hasBackTemplateImage = computed(() => Boolean(form.back_certificate_img_preview || form.back_certificate_img));
+
+    const activeBaseImage = computed(() => activeTab.value === 'back' ? backBaseImage.value : frontBaseImage.value);
+    const canvasWidth = computed(() => {
+        if (activeTab.value === 'back') {
+            return Number(props.certificate.back_certificate_img_width || backBaseImage.value?.naturalWidth || 1550);
+        }
+
+        return Number(props.certificate.certificate_img_width || frontBaseImage.value?.naturalWidth || 1550);
+    });
+    const canvasHeight = computed(() => {
+        if (activeTab.value === 'back') {
+            return Number(props.certificate.back_certificate_img_height || backBaseImage.value?.naturalHeight || 1096);
+        }
+
+        return Number(props.certificate.certificate_img_height || frontBaseImage.value?.naturalHeight || 1096);
+    });
+    const stageHeight = computed(() => canvasHeight.value * stageScale.value);
+    const stageConfig = computed(() => ({
+        width: stageWidth.value,
+        height: stageHeight.value,
+    }));
+    const layerConfig = computed(() => ({
+        scaleX: stageScale.value,
+        scaleY: stageScale.value,
+    }));
+    const transformerConfig = {
+        rotateEnabled: false,
+        keepRatio: true,
+        enabledAnchors: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+        borderEnabled: true,
+        borderStroke: '#0f62fe',
+        borderStrokeWidth: 2,
+        borderDash: [6, 4],
+        anchorStroke: '#0f62fe',
+        anchorStrokeWidth: 2,
+        anchorFill: '#ffffff',
+        anchorSize: 14,
+        anchorCornerRadius: 0,
+        padding: 6,
+        centeredScaling: false,
+        boundBoxFunc: (oldBox, newBox) => {
+            if (newBox.width < 20 || newBox.height < 20) {
+                return oldBox;
+            }
+
+            return newBox;
+        },
+    };
+
+    const loadKonvaImage = (url, targetRef) => {
+        if (!url || typeof window === 'undefined') {
+            targetRef.value = null;
+            return;
+        }
+
+        const image = new window.Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+            targetRef.value = image;
+            updateStageSize();
+        };
+        image.src = url;
+    };
+
+    const updateStageSize = () => {
+        nextTick(() => {
+            const maxWidth = previewWrap.value?.clientWidth || canvasWidth.value;
+            stageScale.value = Math.min(1, maxWidth / canvasWidth.value);
+            stageWidth.value = canvasWidth.value * stageScale.value;
+        });
+    };
+
+    const toNumber = (value, fallback = 0) => {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : fallback;
+    };
+
+    const fontName = (fontFile, fallback = 'Arial') => {
+        return (fontFile || fallback).replace(/\.(ttf|otf)$/i, '').replace(/[-_]/g, ' ');
+    };
+
+    const textConfig = (item) => ({
+        x: toNumber(form[item.x], 0),
+        y: toNumber(form[item.y], 0),
+        text: item.text,
+        fontSize: toNumber(form[item.size], item.defaultSize || 24),
+        fontFamily: fontName(form[item.family]),
+        fill: form[item.color] || '#000000',
+        width: item.width ? toNumber(form[item.width], item.defaultWidth || 600) : undefined,
+        align: form[item.align] || 'left',
+        lineHeight: item.lineHeight || 1.25,
+        draggable: true,
+        opacity: 0.96,
+    });
+
+    const previewTexts = computed(() => {
+        if (activeTab.value === 'back') {
+            const items = [
+                {
+                    id: 'back-date',
+                    text: 'Lima, 30 de abril de 2026',
+                    x: 'back_position_date_x',
+                    y: 'back_position_date_y',
+                    size: 'back_font_size_date',
+                    family: 'back_fontfamily_date',
+                    color: 'back_color_date',
+                    align: 'back_font_align_date',
+                    visible: form.back_visible_date,
+                    action: 6,
+                },
+                {
+                    id: 'back-names',
+                    text: 'Nombres del Estudiante o alumnos',
+                    x: 'back_position_names_x',
+                    y: 'back_position_names_y',
+                    size: 'back_font_size_names',
+                    family: 'back_fontfamily_names',
+                    color: 'back_color_names',
+                    align: 'back_font_align_names',
+                    visible: form.back_visible_names,
+                    action: 7,
+                },
+                {
+                    id: 'back-title',
+                    text: 'Titulo del Curso 3025 - II',
+                    x: 'back_position_title_x',
+                    y: 'back_position_title_y',
+                    size: 'back_font_size_title',
+                    family: 'back_fontfamily_title',
+                    color: 'back_color_title',
+                    align: 'back_font_align_title',
+                    width: 'back_max_width_title',
+                    defaultWidth: 700,
+                    visible: form.back_visible_title,
+                    action: 8,
+                },
+                {
+                    id: 'back-description',
+                    text: form.back_description || 'Descripcion del certificado para vista previa.',
+                    x: 'back_position_description_x',
+                    y: 'back_position_description_y',
+                    size: 'back_font_size_description',
+                    family: 'back_fontfamily_description',
+                    color: 'back_color_description',
+                    align: 'back_text_align_description',
+                    width: 'back_max_width_description',
+                    defaultWidth: 800,
+                    visible: form.back_visible_description,
+                    action: 9,
+                    lineHeight: 1.35,
+                },
+                {
+                    id: 'back-course',
+                    text: 'Contenido del curso\nModulo 1: Introduccion\nModulo 2: Desarrollo\nModulo 3: Evaluacion',
+                    x: 'back_position_course_x',
+                    y: 'back_position_course_y',
+                    size: 'back_font_size_course',
+                    family: 'back_fontfamily_course',
+                    color: 'back_color_course',
+                    align: 'back_font_align_course',
+                    width: 'back_max_width_course',
+                    defaultWidth: 750,
+                    visible: form.back_visible_course && !form.for_module,
+                    action: 12,
+                    lineHeight: 1.35,
+                },
+                {
+                    id: 'back-module',
+                    text: 'Modulo 1: Nombre del Modulo\nTema 1\nTema 2\nTema 3',
+                    x: 'back_position_module_x',
+                    y: 'back_position_module_y',
+                    size: 'back_font_size_module',
+                    family: 'back_fontfamily_module',
+                    color: 'back_color_module',
+                    align: 'back_font_align_module',
+                    width: 'back_max_width_module',
+                    defaultWidth: 750,
+                    visible: form.back_visible_module && form.for_module,
+                    action: 13,
+                    lineHeight: 1.35,
+                },
+                {
+                    id: 'back-grade',
+                    text: 'PROMEDIO FINAL   18',
+                    x: 'back_position_grade_x',
+                    y: 'back_position_grade_y',
+                    size: 'back_font_size_grade',
+                    family: 'back_fontfamily_grade',
+                    color: 'back_color_grade',
+                    visible: form.back_visible_grade,
+                    action: 15,
+                    defaultSize: 18,
+                },
+            ];
+
+            return items.filter((item) => item.visible).map((item) => ({ ...item, config: textConfig(item) }));
+        }
+
+        const items = [
+            {
+                id: 'front-date',
+                text: 'Lima, 30 de abril de 2026',
+                x: 'position_date_x',
+                y: 'position_date_y',
+                size: 'font_size_date',
+                family: 'fontfamily_date',
+                color: 'color_date',
+                align: 'font_align_date',
+                visible: form.visible_date,
+                action: 1,
+            },
+            {
+                id: 'front-names',
+                text: 'Nombres del Estudiante o alumnos',
+                x: 'position_names_x',
+                y: 'position_names_y',
+                size: 'font_size_names',
+                family: 'fontfamily_names',
+                color: 'color_names',
+                align: 'font_align_names',
+                visible: form.visible_names,
+                action: 2,
+            },
+            {
+                id: 'front-title',
+                text: 'Titulo del Curso 3025 - II',
+                x: 'position_title_x',
+                y: 'position_title_y',
+                size: 'font_size_title',
+                family: 'fontfamily_title',
+                color: 'color_title',
+                align: 'font_align_title',
+                width: 'max_width_title',
+                defaultWidth: 700,
+                visible: form.visible_title,
+                action: 3,
+            },
+            {
+                id: 'front-description',
+                text: form.content_type === 'table'
+                    ? 'MODULO                         CONTENIDO\nModulo 1: Fundamentos       Introduccion, entorno, routing\nModulo 2: APIs RESTful       API, autenticacion, validacion\nModulo 3: Vue.js Integrado   Componentes, estado, consumo de API'
+                    : 'Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas academicas. Texto de ejemplo para ubicar la descripcion dentro del certificado.',
+                x: 'position_description_x',
+                y: 'position_description_y',
+                size: 'font_size_description',
+                family: 'fontfamily_description',
+                color: 'color_description',
+                align: 'text_align_description',
+                width: 'max_width_description',
+                defaultWidth: 800,
+                visible: form.visible_description,
+                action: 5,
+                lineHeight: 1.35,
+            },
+            {
+                id: 'front-module-description',
+                text: 'Descripcion personalizada del modulo para vista previa.',
+                x: 'position_module_description_x',
+                y: 'position_module_description_y',
+                size: 'font_size_module_description',
+                family: 'fontfamily_module_description',
+                color: 'color_module_description',
+                align: 'text_align_module_description',
+                width: 'max_width_module_description',
+                defaultWidth: 800,
+                visible: form.for_module && form.visible_module_description,
+                action: 11,
+                lineHeight: 1.35,
+            },
+        ];
+
+        return items.filter((item) => item.visible).map((item) => ({ ...item, config: textConfig(item) }));
+    });
+
+    const qrAnchorToPosition = (align, x, y, size) => {
+        const normalized = align || 'top-left';
+        let positionX = x;
+        let positionY = y;
+
+        if (normalized.includes('right')) positionX = canvasWidth.value - size - x;
+        if (normalized.includes('center')) positionX = (canvasWidth.value - size) / 2 + x;
+        if (normalized.includes('bottom')) positionY = canvasHeight.value - size - y;
+
+        return { x: positionX, y: positionY };
+    };
+
+    const qrPositionToAnchor = (align, x, y, size) => {
+        const normalized = align || 'top-left';
+        let positionX = x;
+        let positionY = y;
+
+        if (normalized.includes('right')) positionX = canvasWidth.value - size - x;
+        if (normalized.includes('center')) positionX = x - (canvasWidth.value - size) / 2;
+        if (normalized.includes('bottom')) positionY = canvasHeight.value - size - y;
+
+        return { x: Math.round(positionX), y: Math.round(positionY) };
+    };
+
+    const previewQr = computed(() => {
+        const isBack = activeTab.value === 'back';
+        const visible = isBack ? form.back_visible_qr : form.visible_image_qr;
+        const size = toNumber(isBack ? form.back_size_qr : form.size_qr, 100);
+
+        if (!visible || !qrImage.value || !size) {
+            return null;
+        }
+
+        const align = isBack ? 'top-left' : form.font_align_qr;
+        const position = qrAnchorToPosition(
+            align,
+            toNumber(isBack ? form.back_position_qr_x : form.position_qr_x, 0),
+            toNumber(isBack ? form.back_position_qr_y : form.position_qr_y, 0),
+            size
+        );
+
+        return {
+            isBack,
+            align,
+            size,
+            config: {
+                image: qrImage.value,
+                x: position.x,
+                y: position.y,
+                width: size,
+                height: size,
+                draggable: true,
+            },
+        };
+    });
+
+    const onTextDragEnd = (item, event) => {
+        form[item.x] = Math.round(event.target.x());
+        form[item.y] = Math.round(event.target.y());
+    };
+
+    const openSidebarSection = (tab, section) => {
+        activeTab.value = tab;
+        accordians3.value = section;
+        isShowChatMenu.value = true;
+    };
+
+    const textSectionByAction = {
+        1: { tab: 'front', section: 1 },
+        2: { tab: 'front', section: 2 },
+        3: { tab: 'front', section: 3 },
+        5: { tab: 'front', section: 5 },
+        11: { tab: 'front', section: 11 },
+        6: { tab: 'back', section: 21 },
+        7: { tab: 'back', section: 22 },
+        8: { tab: 'back', section: 23 },
+        9: { tab: 'back', section: 24 },
+        12: { tab: 'back', section: 25 },
+        13: { tab: 'back', section: 26 },
+        15: { tab: 'back', section: 28 },
+    };
+
+    const attachTransformer = (event) => {
+        if (event.cancelBubble !== undefined) {
+            event.cancelBubble = true;
+        }
+
+        selectedNode.value = event.target;
+
+        nextTick(() => {
+            const transformer = transformerRef.value?.getNode?.();
+            if (!transformer || !selectedNode.value) return;
+
+            transformer.nodes([selectedNode.value]);
+            transformer.moveToTop();
+            transformer.forceUpdate();
+            transformer.getLayer()?.batchDraw();
+        });
+    };
+
+    const selectTextElement = (item, event) => {
+        const section = textSectionByAction[item.action];
+        if (section) {
+            openSidebarSection(section.tab, section.section);
+        }
+
+        attachTransformer(event);
+    };
+
+    const selectQrElement = (event) => {
+        if (previewQr.value?.isBack) {
+            openSidebarSection('back', 27);
+        } else {
+            openSidebarSection('front', 4);
+        }
+
+        attachTransformer(event);
+    };
+
+    const clearSelection = (event) => {
+        if (event.target !== event.target.getStage()) return;
+
+        selectedNode.value = null;
+        const transformer = transformerRef.value?.getNode?.();
+        transformer?.nodes([]);
+        transformer?.getLayer()?.batchDraw();
+    };
+
+    const onTextTransformEnd = (item, event) => {
+        const node = event.target;
+        const scale = Math.max(node.scaleX(), node.scaleY());
+        const currentSize = toNumber(form[item.size], item.defaultSize || 24);
+
+        form[item.x] = Math.round(node.x());
+        form[item.y] = Math.round(node.y());
+        form[item.size] = Math.max(6, Math.round(currentSize * scale));
+
+        if (item.width) {
+            form[item.width] = Math.max(40, Math.round(toNumber(form[item.width], item.defaultWidth || 600) * node.scaleX()));
+        }
+
+        node.scaleX(1);
+        node.scaleY(1);
+    };
+
+    const onQrDragEnd = (event) => {
+        if (!previewQr.value) return;
+
+        const position = qrPositionToAnchor(
+            previewQr.value.align,
+            event.target.x(),
+            event.target.y(),
+            previewQr.value.size
+        );
+
+        if (previewQr.value.isBack) {
+            form.back_position_qr_x = position.x;
+            form.back_position_qr_y = position.y;
+            return;
+        }
+
+        form.position_qr_x = position.x;
+        form.position_qr_y = position.y;
+    };
+
+    const onQrTransformEnd = (event) => {
+        if (!previewQr.value) return;
+
+        const node = event.target;
+        const size = Math.max(20, Math.round(previewQr.value.size * Math.max(node.scaleX(), node.scaleY())));
+        const position = qrPositionToAnchor(
+            previewQr.value.align,
+            node.x(),
+            node.y(),
+            size
+        );
+
+        if (previewQr.value.isBack) {
+            form.back_size_qr = size;
+            form.back_position_qr_x = position.x;
+            form.back_position_qr_y = position.y;
+        } else {
+            form.size_qr = size;
+            form.position_qr_x = position.x;
+            form.position_qr_y = position.y;
+        }
+
+        node.scaleX(1);
+        node.scaleY(1);
+        node.width(size);
+        node.height(size);
+    };
+
+    const loadQrPreview = async () => {
+        if (typeof window === 'undefined') return;
+
+        const qrUrl = typeof route === 'function' ? route('aca_image_download', { id: 1 }) : window.location.href;
+        const dataUrl = await QRCode.toDataURL(qrUrl, {
+            margin: 1,
+            width: 300,
+            errorCorrectionLevel: 'M',
+        });
+
+        loadKonvaImage(dataUrl, qrImage);
+    };
+
     // Cargar la imagen principal desde la URL
     const loadMainImage = (urlImage) => {
         form.certificate_img_preview = urlImage;
@@ -259,12 +764,23 @@
     // Cargar la imagen principal al montar el componente
     onMounted(() => {
         loadMainImage(getImage(form.certificate_img));
+        loadKonvaImage(frontTemplateUrl.value, frontBaseImage);
+        loadQrPreview();
+        updateStageSize();
+        window.addEventListener('resize', updateStageSize);
         // Cargar imagen del reverso si existe
         if (form.back_certificate_img) {
-            let imgBack = form.back_certificate_img_finished ?? form.back_certificate_img;
-            loadBackImage(imgBack);
+            loadBackImage(form.back_certificate_img);
         }
     });
+
+    onUnmounted(() => {
+        window.removeEventListener('resize', updateStageSize);
+    });
+
+    watch(frontTemplateUrl, (url) => loadKonvaImage(url, frontBaseImage));
+    watch(backTemplateUrl, (url) => loadKonvaImage(url, backBaseImage), { immediate: true });
+    watch([activeTab, canvasWidth, canvasHeight], updateStageSize);
 
     const updateCertificateData = (par) => {
         form.action_type = par;
@@ -274,12 +790,10 @@
             url: route('aca_certificate_update_info'),
             data: form
         }).then((response) => {
-            if (activeTab.value === 'back') {
+            if (response.data.image && activeTab.value === 'back') {
                 // Actualizar vista previa del reverso con la imagen generada
-                if (response.data.image) {
-                    form.back_certificate_img_preview = response.data.image;
-                }
-            } else {
+                form.back_certificate_img_preview = response.data.image;
+            } else if (response.data.image) {
                 form.certificate_img_preview = response.data.image;
             }
         }).finally(() => {
@@ -305,6 +819,37 @@
                 customClass: 'sweet-alerts',
             });
         });
+    }
+
+    const saveAllCertificateElements = async () => {
+        const actions = [1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 12, 13, 14, 15];
+        const payload = form.data ? form.data() : { ...form };
+
+        form.processing = true;
+        imagePreviewLoading.value = true;
+
+        try {
+            await Promise.all(actions.map((action) => axios({
+                method: 'post',
+                url: route('aca_certificate_update_info'),
+                data: {
+                    ...payload,
+                    action_type: action,
+                    render_preview_client: true,
+                },
+            })));
+
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se guardaron todos los elementos correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        } finally {
+            form.processing = false;
+            imagePreviewLoading.value = false;
+        }
     }
 
 </script>
@@ -741,7 +1286,6 @@
                                                 <option value="left">left</option>
                                                 <option value="center">center</option>
                                                 <option value="right">right</option>
-                                                <option value="justify">justify</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">
@@ -785,6 +1329,13 @@
                                                 <option value="justify">Justificado</option>
                                             </select>
                                         </div>
+                                        <div class="col-span-4">
+                                            <InputLabel for="content_type">Tipo de contenido</InputLabel>
+                                            <select v-model="form.content_type" id="content_type" class="form-select text-white-dark">
+                                                <option value="description">DescripciÃ³n</option>
+                                                <option value="table">Tabla de contenido</option>
+                                            </select>
+                                        </div>
                                         <!-- <div class="col-span-2">
                                             <InputLabel for="interspace_description">Espaciado entre líneas</InputLabel>
                                             <TextInput
@@ -816,9 +1367,11 @@
 
                         <!-- Descripción del Módulo (solo para for_module) -->
                         <div v-if="form.for_module" class="col-span-2">
-                            <vue-collapsible isOpen="false">
+                            <vue-collapsible :isOpen="accordians3 === 11">
                                 <div
                                     class="p-2.5 w-full flex items-center text-white-dark dark:bg-[#1b2e4b] border border-[#d3d3d3] dark:border-[#1b2e4b] rounded-t-lg"
+                                    :class="{ '!text-primary': accordians3 === 11 }"
+                                    @click="accordians3 === 11 ? (accordians3 = null) : (accordians3 = 11)"
                                     slot="trigger"
                                 >
                                     <icon-info-circle-two class="w-4 h-4 mr-2" />
@@ -1623,6 +2176,21 @@
                         </button>
                     </div>
                     </template>
+
+                    <div class="col-span-2 flex justify-start pt-6">
+                        <button
+                            type="button"
+                            class="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-60"
+                            :disabled="form.processing"
+                            @click="saveAllCertificateElements"
+                        >
+                            <svg v-show="form.processing" aria-hidden="true" role="status" class="mr-2 inline h-4 w-4 animate-spin text-blue-100" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#fff"/>
+                            </svg>
+                            Guardar todos los elementos
+                        </button>
+                    </div>
                 </div>
             </div>
             <div
@@ -1647,7 +2215,7 @@
                 </div>
                 <div class="h-px w-full border-b border-[#e0e6ed] dark:border-[#1b2e4b]"></div>
                 <div>
-                    <template v-if="activeTab === 'back' && !form.back_certificate_img_preview">
+                    <template v-if="activeTab === 'back' && !hasBackTemplateImage">
                         <div class="flex flex-col items-center justify-center h-64 bg-gray-100 dark:bg-gray-800 rounded-lg">
                             <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -1660,10 +2228,44 @@
                     </template>
                     <template v-else>
                         <image-png v-if="imagePreviewLoading" :alt="'Maximizar'" />
-                        <Image v-else
-                            :src="getPreviewImage()"
-                            style="width: 100%; height: auto;"
-                        />
+                        <div v-else ref="previewWrap" class="w-full overflow-auto rounded border border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-900">
+                            <div class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                                Arrastra para mover. Selecciona un texto o QR y usa las esquinas para cambiar su tamaÃ±o antes de guardar.
+                            </div>
+                            <v-stage :config="stageConfig" @mousedown="clearSelection" @touchstart="clearSelection">
+                                <v-layer :config="layerConfig">
+                                    <v-image
+                                        v-if="activeBaseImage"
+                                        :config="{ image: activeBaseImage, x: 0, y: 0, width: canvasWidth, height: canvasHeight }"
+                                    />
+                                    <v-rect
+                                        :config="{ x: 0, y: 0, width: canvasWidth, height: canvasHeight, stroke: '#000000', strokeWidth: 1, listening: false }"
+                                    />
+                                    <v-image
+                                        v-if="previewQr"
+                                        :config="previewQr.config"
+                                        @mousedown="selectQrElement"
+                                        @touchstart="selectQrElement"
+                                        @click="selectQrElement"
+                                        @tap="selectQrElement"
+                                        @dragend="onQrDragEnd"
+                                        @transformend="onQrTransformEnd"
+                                    />
+                                    <v-text
+                                        v-for="item in previewTexts"
+                                        :key="item.id"
+                                        :config="item.config"
+                                        @mousedown="(event) => selectTextElement(item, event)"
+                                        @touchstart="(event) => selectTextElement(item, event)"
+                                        @click="(event) => selectTextElement(item, event)"
+                                        @tap="(event) => selectTextElement(item, event)"
+                                        @dragend="(event) => onTextDragEnd(item, event)"
+                                        @transformend="(event) => onTextTransformEnd(item, event)"
+                                    />
+                                    <v-transformer ref="transformerRef" :config="transformerConfig" />
+                                </v-layer>
+                            </v-stage>
+                        </div>
                     </template>
                 </div>
             </div>

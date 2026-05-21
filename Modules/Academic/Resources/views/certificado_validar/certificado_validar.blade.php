@@ -3,13 +3,16 @@
 @section('content')
 
 
-    <!-- App Header Wrapper-->
-    <x-nav />
+    <div class="tap-top"><i data-feather="chevrons-up"></i></div>
 
-    <!-- Sidebar -->
-    <x-slidebar />
+    <div class="page-wrapper" id="pageWrapper">
+        <x-header />
 
-    <main class="main-content w-full px-[var(--margin-x)] pb-8">
+        <div class="page-body-wrapper">
+            <x-sidebar />
+
+            <div class="page-body" x-data>
+                <div class="container-fluid pb-5">
 
         <div class="mt-5 w-full transition-all duration-[.25s] sm:mt-5 lg:mt-6">
             <div style="text-align:center;">
@@ -111,12 +114,14 @@
         </div>
         @endif
 
-        <x-courses.list-card />
-        <x-social-networks />
+                    <x-courses.list-card />
+                    <x-social-networks />
 
-        <x-footer />
-
-    </main>
+                    <x-footer />
+                </div>
+            </div>
+        </div>
+    </div>
 
     <br>
     <br>

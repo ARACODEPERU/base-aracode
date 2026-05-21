@@ -24,7 +24,7 @@ class NotifyChatMessage extends Mailable
     {
         $from_mail = env('MAIL_FROM_ADDRESS');
         $from_name = env('MAIL_FROM_NAME');
-        $title = 'Consulta de Alumno';
+        $title = '✉️ Nuevo mensaje de ' . ($this->data['fullName'] ?? 'un alumno');
 
         return new Envelope(
             from: new Address($from_mail, $from_name),
