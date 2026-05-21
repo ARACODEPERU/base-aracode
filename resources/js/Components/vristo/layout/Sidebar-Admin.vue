@@ -147,13 +147,20 @@
     };
 
     // Función para manejar clicks en opciones principales
-    const handleOptionClick = (optionText) => {
-        expandedSections.value = optionText;
+    const handleOptionClick = (optionText, hasChildren = false) => {
+        const isClosing = hasChildren && expandedSections.value === optionText;
+        expandedSections.value = isClosing ? null : optionText;
         // Actualizar la opción activa
-        activeOption.value = optionText;
+        activeOption.value = isClosing ? null : optionText;
         activeSubOption.value = null; // Resetear subopción
 
         // Guardar estado
+        if (isClosing) {
+            localStorage.removeItem('expandedSections');
+            localStorage.removeItem('activeOption');
+            return;
+        }
+
         localStorage.setItem('expandedSections', JSON.stringify(expandedSections.value));
         localStorage.setItem('activeOption', optionText);
     };
@@ -276,7 +283,6 @@
                     class="flex flex-col w-[70px] min-w-[70px] items-center bg-blue-50 dark:bg-slate-700 border-r border-slate-200/50 dark:border-slate-600/50 pt-4 pb-2.5 h-full z-10"
                 >
                     <div class="mb-6 flex h-10 w-10 flex items-center justify-center rounded-xl bg-blue-50 text-white shadow-sm dark:bg-blue-700 ">
-                    >
                         <Link :href="route('dashboard')" class="text-center">
                             <template v-if="store.theme === 'light' || store.theme === 'system'">
                                 <img v-if="$page.props.company.isotipo == '/img/isotipo.png'" class="w-8 h-8" :src="xasset+$page.props.company.isotipo" alt="" />
@@ -439,7 +445,7 @@
                             >
                                 <template v-if="option.items && option.items.length > 0">
                                     <button
-                                        @click="handleOptionClick(option.text)"
+                                        @click="handleOptionClick(option.text, true)"
                                         class="group w-full rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
                                         :class="optionLinkClasses(option)"
                                     >
@@ -509,12 +515,17 @@
                                 </template>
                                 <!-- Submenú desplegable si tiene subopciones -->
                                 <VueCollapsible v-if="option.items && option.items.length > 0" :isOpen="expandedSections == option.text">
-                                    <div class="ml-4 mt-2 space-y-1 border-l border-slate-200 pl-3 dark:border-slate-700">
+                                    <TransitionGroup
+                                        name="sidebar-suboption"
+                                        tag="div"
+                                        class="ml-4 mt-2 space-y-1 border-l border-slate-200 pl-3 dark:border-slate-700"
+                                    >
                                         <template v-for="(subOption, subIndex) in visibleSubOptions(option)" :key="subIndex">
                                         <Link
                                                 :href="subOption.route"
                                                 @click="handleSubOptionClick(option.text, subOption.text)"
                                                 class="block cursor-pointer rounded-lg px-3 py-2 text-sm text-slate-600 transition-all duration-200 hover:bg-orange-50 hover:text-orange-700 dark:text-slate-300 dark:hover:bg-orange-950/30 dark:hover:text-orange-200"
+                                                :style="{ transitionDelay: `${Math.min(subIndex * 35, 140)}ms` }"
                                                 :class="{
                                                     'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100/50 dark:bg-blue-950/50 dark:text-blue-100 dark:shadow-blue-950/40': activeSubOption === subOption.text
                                                 }">
@@ -527,7 +538,7 @@
                                             </div>
                                         </Link>
                                         </template>
-                                    </div>
+                                    </TransitionGroup>
                                 </VueCollapsible>
 
                             </div>
@@ -611,6 +622,21 @@
 .sidebar-option-leave-to {
     opacity: 0;
     transform: translateX(8px);
+}
+
+.sidebar-suboption-enter-active,
+.sidebar-suboption-leave-active {
+    transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.sidebar-suboption-enter-from {
+    opacity: 0;
+    transform: translateY(-6px) translateX(-6px);
+}
+
+.sidebar-suboption-leave-to {
+    opacity: 0;
+    transform: translateY(-4px) translateX(6px);
 }
 
 @keyframes sidebar-shimmer {
