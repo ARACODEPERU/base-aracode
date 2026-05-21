@@ -18,8 +18,6 @@
         url.searchParams.set('per_page', selectedPerPage.value);
         router.visit(url.toString(), { preserveState: true });
     };
-
-    console.log('Pagination data:', props.data);
 </script>
 <template>
     <div v-if="data.links.length > 0" class="p-0">
