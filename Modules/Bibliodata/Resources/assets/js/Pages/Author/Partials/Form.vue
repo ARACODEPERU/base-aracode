@@ -1,5 +1,6 @@
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3';
+import FormSection from '@/Components/FormSection.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -64,112 +65,93 @@ defineExpose({ form, setPersonData });
 </script>
 
 <template>
-    <form @submit.prevent="submit" class="space-y-6">
-        <div class="panel">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Tipo Documento -->
-                <div>
-                    <InputLabel value="Tipo de Identificación *" />
-                    <select v-model="form.document_type_id" class="form-select w-full">
-                        <option v-for="dt in identityDocumentTypes" :key="dt.id" :value="dt.id">
-                            {{ dt.description }}
-                        </option>
-                    </select>
-                    <InputError :message="form.errors.document_type_id" />
-                </div>
+    <FormSection @submitted="submit">
+        <template #title>{{ form.id ? 'Editar autor' : 'Nuevo autor' }}</template>
+        <template #description>
+            Identificación de la persona y datos bibliográficos. Los campos con * son obligatorios.
+        </template>
 
-                <!-- Número -->
-                <div>
-                    <InputLabel value="Número *" />
-                    <TextInput type="text" v-model="form.number" class="w-full" placeholder="N° de documento" />
-                    <InputError :message="form.errors.number" />
-                </div>
-
-                <!-- Nombres -->
-                <div>
-                    <InputLabel value="Nombres *" />
-                    <TextInput type="text" v-model="form.names" class="w-full" placeholder="Nombres" />
-                    <InputError :message="form.errors.names" />
-                </div>
-
-                <!-- Apellido Paterno -->
-                <div>
-                    <InputLabel value="Apellido Paterno *" />
-                    <TextInput type="text" v-model="form.father_lastname" class="w-full" placeholder="Apellido paterno" />
-                    <InputError :message="form.errors.father_lastname" />
-                </div>
-
-                <!-- Apellido Materno -->
-                <div>
-                    <InputLabel value="Apellido Materno" />
-                    <TextInput type="text" v-model="form.mother_lastname" class="w-full" placeholder="Apellido materno" />
-                    <InputError :message="form.errors.mother_lastname" />
-                </div>
-
-                <!-- Género -->
-                <div>
-                    <InputLabel value="Género" />
-                    <select v-model="form.gender" class="form-select w-full">
-                        <option :value="null">Seleccionar</option>
-                        <option value="M">Masculino</option>
-                        <option value="F">Femenino</option>
-                    </select>
-                    <InputError :message="form.errors.gender" />
-                </div>
-
-                <!-- Fecha de Nacimiento -->
-                <div>
-                    <InputLabel value="Fecha de Nacimiento" />
-                    <TextInput type="date" v-model="form.birthdate" class="w-full" />
-                    <InputError :message="form.errors.birthdate" />
-                </div>
-
-                <!-- País -->
-                <div>
-                    <InputLabel value="País" />
-                    <select v-model="form.country_id" class="form-select w-full">
-                        <option :value="null">Seleccionar</option>
-                        <option v-for="country in countries" :key="country.id" :value="country.id">
-                            {{ country.description }}
-                        </option>
-                    </select>
-                    <InputError :message="form.errors.country_id" />
-                </div>
+        <template #form>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Tipo de Identificación *" />
+                <select v-model="form.document_type_id" class="form-select w-full">
+                    <option v-for="dt in identityDocumentTypes" :key="dt.id" :value="dt.id">
+                        {{ dt.description }}
+                    </option>
+                </select>
+                <InputError :message="form.errors.document_type_id" />
             </div>
-        </div>
-
-        <div class="panel">
-            <h3 class="text-lg font-semibold mb-4">Datos del Autor</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Especialidad -->
-                <div>
-                    <InputLabel value="Especialidad" />
-                    <TextInput type="text" v-model="form.specialty" class="w-full" placeholder="Género literario, especialidad" />
-                    <InputError :message="form.errors.specialty" />
-                </div>
-
-                <!-- Web -->
-                <div>
-                    <InputLabel value="Web / Portafolio" />
-                    <TextInput type="url" v-model="form.webpage" class="w-full" placeholder="https://..." />
-                    <InputError :message="form.errors.webpage" />
-                </div>
-
-                <!-- Biografía -->
-                <div class="md:col-span-2">
-                    <InputLabel value="Biografía" />
-                    <textarea v-model="form.biography" rows="4" class="form-textarea w-full" placeholder="Biografía del autor"></textarea>
-                    <InputError :message="form.errors.biography" />
-                </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Número *" />
+                <TextInput v-model="form.number" type="text" class="w-full" placeholder="N° de documento" />
+                <InputError :message="form.errors.number" />
             </div>
-        </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Nombres *" />
+                <TextInput v-model="form.names" type="text" class="w-full" placeholder="Nombres" />
+                <InputError :message="form.errors.names" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Apellido Paterno *" />
+                <TextInput v-model="form.father_lastname" type="text" class="w-full" placeholder="Apellido paterno" />
+                <InputError :message="form.errors.father_lastname" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Apellido Materno" />
+                <TextInput v-model="form.mother_lastname" type="text" class="w-full" placeholder="Apellido materno" />
+                <InputError :message="form.errors.mother_lastname" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Género" />
+                <select v-model="form.gender" class="form-select w-full">
+                    <option :value="null">Seleccionar</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                </select>
+                <InputError :message="form.errors.gender" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="Fecha de Nacimiento" />
+                <TextInput v-model="form.birthdate" type="date" class="w-full" />
+                <InputError :message="form.errors.birthdate" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel value="País" />
+                <select v-model="form.country_id" class="form-select w-full">
+                    <option :value="null">Seleccionar</option>
+                    <option v-for="country in countries" :key="country.id" :value="country.id">
+                        {{ country.description }}
+                    </option>
+                </select>
+                <InputError :message="form.errors.country_id" />
+            </div>
 
-        <div class="flex justify-end gap-3">
-            <Link :href="route('bib_authors')" class="btn btn-danger px-6 py-2">Cancelar</Link>
-            <PrimaryButton type="submit" :disabled="form.processing">
-                <IconLoader v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
+            <div class="col-span-6 border-t border-gray-200 dark:border-zinc-700 pt-4 mt-2">
+                <p class="text-sm font-semibold text-gray-700 dark:text-neutral-200">Datos del autor</p>
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel value="Especialidad" />
+                <TextInput v-model="form.specialty" type="text" class="w-full" placeholder="Género literario, especialidad" />
+                <InputError :message="form.errors.specialty" />
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel value="Web / Portafolio" />
+                <TextInput v-model="form.webpage" type="url" class="w-full" placeholder="https://..." />
+                <InputError :message="form.errors.webpage" />
+            </div>
+            <div class="col-span-6">
+                <InputLabel value="Biografía" />
+                <textarea v-model="form.biography" rows="4" class="form-textarea w-full" placeholder="Biografía del autor" />
+                <InputError :message="form.errors.biography" />
+            </div>
+        </template>
+
+        <template #actions>
+            <Link :href="route('bib_authors')" class="btn btn-danger mr-2">Cancelar</Link>
+            <PrimaryButton :disabled="form.processing">
+                <IconLoader v-if="form.processing" class="w-4 h-4 mr-2 animate-spin inline" />
                 {{ form.id ? 'Actualizar Autor' : 'Guardar Autor' }}
             </PrimaryButton>
-        </div>
-    </form>
+        </template>
+    </FormSection>
 </template>

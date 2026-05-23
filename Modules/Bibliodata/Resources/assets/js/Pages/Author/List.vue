@@ -108,7 +108,7 @@ const deleteAuthor = (id) => {
                                     </div>
                                     <div class="min-w-0">
                                         <h3 class="font-semibold text-gray-800 dark:text-neutral-200 truncate">
-                                            {{ author.person?.full_name }}
+                                            {{ author.person?.formatted_name || author.person?.full_name }}
                                         </h3>
                                         <p class="text-xs text-gray-500 dark:text-neutral-500">
                                             {{ author.person?.number }}

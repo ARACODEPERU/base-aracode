@@ -4,6 +4,9 @@ import {
     faGripVertical,
     faUserPen,
     faTags,
+    faLayerGroup,
+    faBuilding,
+    faIdCard,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuBibliodata = {
@@ -11,7 +14,7 @@ const menuBibliodata = {
     text: "Biblio Data",
     icom: faBookReader,
     route: 'module',
-    permissions: "aca_dashboard",
+    permissions: "bib_dashboard",
     items: [
         {
             route: route("bib_authors"),
@@ -40,6 +43,27 @@ const menuBibliodata = {
             text: "Libros",
             icom: faBook,
             permissions: "bib_libros_listado",
+        },
+        {
+            route: route("bib_subscription_plans"),
+            status: false,
+            text: "Planes",
+            icom: faLayerGroup,
+            permissions: "bib_planes_listar",
+        },
+        {
+            route: route("bib_organizations"),
+            status: false,
+            text: "Organizaciones",
+            icom: faBuilding,
+            permissions: "bib_organizaciones_listar",
+        },
+        {
+            route: route("bib_subscriptions"),
+            status: false,
+            text: "Suscripciones",
+            icom: faIdCard,
+            permissions: "bib_suscripciones_listar",
         },
     ],
 };

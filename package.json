@@ -2,7 +2,9 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build && vite build --ssr"
+        "build": "vite build && vite build --ssr",
+        "editor:build": "npm run build --prefix ../editor-aracode",
+        "prebuild": "npm run editor:build"
     },
     "name": "aracode",
     "version": "3.0",
@@ -44,6 +46,7 @@
         "@vueup/vue-quill": "^1.2.0",
         "@vueuse/head": "^2.0.0",
         "@websitebeaver/vue-magnifier": "^1.1.0",
+        "animejs": "^4.4.1",
         "ant-design-vue": "^4.0.8",
         "aracode": "file:",
         "compressorjs": "^1.2.1",

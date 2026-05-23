@@ -1,0 +1,461 @@
+.bib-reader-shell {
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Transición suave claro ↔ oscuro en área lector */
+html.bib-reader-smooth-theme .bib-reader-shell,
+html.bib-reader-smooth-theme .bib-reader-header,
+html.bib-reader-smooth-theme .bib-reader-sidebar,
+html.bib-reader-smooth-theme .bib-reader-main,
+html.bib-reader-smooth-theme .bib-reader-welcome,
+html.bib-reader-smooth-theme .bib-reader-page-stage,
+html.bib-reader-smooth-theme .bib-reader-page-sheet,
+html.bib-reader-smooth-theme .bib-reader-page-content,
+html.bib-reader-smooth-theme .bib-reader-header__logout {
+    transition:
+        background-color 0.45s ease,
+        color 0.4s ease,
+        border-color 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+.bib-reader-theme-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bib-reader-theme-overlay.is-to-dark {
+    background: radial-gradient(ellipse at 25% 0%, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.15) 60%, transparent 85%);
+}
+
+.bib-reader-theme-overlay.is-to-light {
+    background: radial-gradient(ellipse at 25% 0%, rgba(255, 255, 255, 0.72), rgba(236, 254, 255, 0.35) 55%, transparent 85%);
+}
+
+.bib-reader-theme-overlay.is-visible {
+    opacity: 1;
+}
+
+.bib-reader-header__grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .bib-reader-header__grid {
+        display: grid;
+        grid-template-columns: 20rem minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0;
+    }
+}
+
+.bib-reader-header__brand {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    max-width: 20rem;
+}
+
+@media (min-width: 768px) {
+    .bib-reader-header__brand {
+        flex: none;
+    }
+}
+
+.bib-reader-header__switch-col {
+    display: none;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 0.25rem;
+    min-width: 0;
+}
+
+@media (min-width: 768px) {
+    .bib-reader-header__switch-col {
+        display: flex;
+    }
+}
+
+.bib-reader-header__switch-mobile {
+    flex-shrink: 0;
+    margin-right: 0.125rem;
+}
+
+@media (min-width: 768px) {
+    .bib-reader-header__switch-mobile {
+        display: none;
+    }
+}
+
+.bib-reader-header__actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    margin-left: auto;
+    gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .bib-reader-header__actions {
+        gap: 0.75rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .bib-reader-header__actions {
+        margin-left: 0;
+    }
+}
+
+.bib-reader-header {
+    flex-shrink: 0;
+    border-bottom: 1px solid rgb(186 230 253);
+    background: linear-gradient(135deg, #ecfeff 0%, #e0e7ff 55%, #f8fafc 100%);
+    box-shadow: 0 1px 0 rgba(34, 211, 238, 0.08);
+}
+
+.dark .bib-reader-header {
+    border-bottom-color: rgb(22 78 99);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #172554 100%);
+    box-shadow: 0 1px 0 rgba(34, 211, 238, 0.12);
+}
+
+.bib-reader-header__eyebrow {
+    color: rgb(8 145 178);
+}
+
+.dark .bib-reader-header__eyebrow {
+    color: rgb(103 232 249);
+}
+
+.bib-reader-header__title {
+    color: rgb(15 23 42);
+}
+
+.dark .bib-reader-header__title {
+    color: rgb(248 250 252);
+}
+
+.bib-reader-header__user {
+    color: rgb(51 65 85);
+}
+
+.dark .bib-reader-header__user {
+    color: rgb(203 213 225);
+}
+
+.bib-reader-header__logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: 9999px;
+    border: 1px solid rgb(14 116 144 / 0.22);
+    color: #0e7490;
+    background: rgb(255 255 255 / 0.92);
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
+    transition:
+        background 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+
+.bib-reader-header__logout:hover {
+    background: #fff;
+    color: #0c4a6e;
+    border-color: rgb(14 116 144 / 0.4);
+    box-shadow: 0 2px 8px rgb(14 116 144 / 0.15);
+}
+
+.dark .bib-reader-header__logout {
+    border-color: rgb(100 116 139 / 0.45);
+    color: #cbd5e1;
+    background: rgb(30 41 59 / 0.75);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+.dark .bib-reader-header__logout:hover {
+    background: rgb(51 65 85);
+    color: #f1f5f9;
+    border-color: rgb(148 163 184 / 0.5);
+}
+
+.bib-reader-user-avatar {
+    background: rgb(241 245 249);
+}
+
+.bib-reader-sidebar {
+    width: 100%;
+    max-width: 20rem;
+    flex-shrink: 0;
+    border-right: 1px solid rgb(226 232 240);
+    background: rgb(248 250 252);
+}
+
+.dark .bib-reader-sidebar {
+    border-color: rgb(51 65 85);
+    background: rgb(15 23 42);
+}
+
+.bib-reader-main {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    background: linear-gradient(165deg, #e8edf3 0%, #dde4ec 50%, #e9eef4 100%);
+}
+
+.dark .bib-reader-main {
+    background: linear-gradient(165deg, #151b28 0%, #1e2433 55%, #171d2a 100%);
+}
+
+/* Escenario de lectura (fondo degradado detrás de la hoja) */
+.bib-reader-page-stage {
+    min-height: 100%;
+    padding: 1.75rem 1rem 5rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: linear-gradient(
+        165deg,
+        rgba(226, 232, 240, 0.95) 0%,
+        rgba(203, 213, 225, 0.55) 38%,
+        rgba(241, 245, 249, 0.9) 100%
+    );
+}
+
+.dark .bib-reader-page-stage {
+    background: linear-gradient(
+        165deg,
+        rgba(30, 41, 59, 0.85) 0%,
+        rgba(15, 23, 42, 0.65) 45%,
+        rgba(26, 35, 50, 0.9) 100%
+    );
+}
+
+@media (min-width: 768px) {
+    .bib-reader-page-stage {
+        padding: 2rem 2rem 5rem;
+    }
+}
+
+.bib-reader-page-sheet-scaler {
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+    transition: transform 0.25s ease;
+}
+
+/* Hoja A4: ancho 210 mm; alto crece con el contenido (sin máximo) */
+.bib-reader-page-sheet {
+    width: 210mm;
+    max-width: 210mm;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 20mm 18mm 24mm;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 2px;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.06),
+        0 6px 20px rgba(15, 23, 42, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    color: #1e293b;
+    position: relative;
+}
+
+.bib-reader-page-sheet::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0) 12%,
+        rgba(255, 255, 255, 0) 88%,
+        rgba(15, 23, 42, 0.02) 100%
+    );
+}
+
+.dark .bib-reader-page-sheet {
+    background: #fafaf8;
+    border-color: #94a3b8;
+    color: #1e293b;
+    box-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.25),
+        0 12px 32px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.bib-reader-page-sheet__header {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bib-reader-page-sheet__section {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #0e7490;
+}
+
+.bib-reader-page-sheet__title {
+    margin-top: 0.35rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #0f172a;
+}
+
+.bib-reader-page-sheet__body {
+    position: relative;
+}
+
+/* PC / laptop: altura mínima de una hoja A4; si hay más texto, sigue creciendo */
+@media (min-width: 768px) {
+    .bib-reader-page-sheet {
+        min-height: 297mm;
+    }
+}
+
+@media (max-width: 767px) {
+    .bib-reader-page-sheet-scaler {
+        width: fit-content;
+        max-width: 100%;
+        transform: none !important;
+    }
+
+    .bib-reader-page-sheet {
+        width: 210mm;
+        max-width: 210mm;
+        min-height: auto;
+        height: auto;
+        padding: 16mm 14mm 20mm;
+    }
+
+    .bib-reader-page-stage {
+        overflow-x: auto;
+    }
+}
+
+.bib-reader-welcome {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.bib-reader-page-content {
+    line-height: 1.8;
+    font-size: 1.0625rem;
+}
+
+.bib-reader-page-content :deep(h1),
+.bib-reader-page-content :deep(h2),
+.bib-reader-page-content :deep(h3) {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 700;
+}
+
+.bib-reader-page-content :deep(p) {
+    margin-bottom: 1em;
+}
+
+.bib-reader-page-content :deep(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+}
+
+.bib-reader-page-content :deep(a) {
+    color: #0e7490;
+}
+
+.bib-reader-page-content :deep(blockquote) {
+    border-left: 3px solid #cbd5e1;
+    padding-left: 1rem;
+    color: #475569;
+}
+
+.bib-reader-page-content :deep(table),
+.bib-reader-page-content :deep(th),
+.bib-reader-page-content :deep(td) {
+    border-color: #e2e8f0;
+}
+
+.bib-reader-index-sections {
+    will-change: height;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bib-reader-index-sections {
+        transition: none !important;
+    }
+}
+
+.bib-reader-index-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.5rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: rgb(51 65 85);
+    transition: background 0.15s, color 0.15s;
+}
+
+.dark .bib-reader-index-btn {
+    color: rgb(203 213 225);
+}
+
+.bib-reader-index-btn:hover {
+    background: rgb(241 245 249);
+}
+
+.dark .bib-reader-index-btn:hover {
+    background: rgb(30 41 59);
+}
+
+.bib-reader-index-btn.is-active {
+    background: rgb(224 242 254);
+    color: rgb(14 116 144);
+    font-weight: 600;
+}
+
+.dark .bib-reader-index-btn.is-active {
+    background: rgb(22 78 99 / 0.35);
+    color: rgb(103 232 249);
+}
+
+.bib-reader-index-page.is-selected {
+    background: rgb(207 250 254);
+    color: rgb(14 116 144);
+    font-weight: 600;
+}
+
+.dark .bib-reader-index-page.is-selected {
+    background: rgb(22 78 99 / 0.4);
+    color: rgb(103 232 249);
+}

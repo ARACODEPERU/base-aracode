@@ -28,4 +28,18 @@ class BibAuthor extends Model
     {
         return $this->hasMany(BibBook::class, 'author_id');
     }
+
+    /**
+     * Nombre para mostrar según formato configurado en Person (P000020).
+     */
+    public function getDisplayNameAttribute(): ?string
+    {
+        $person = $this->person;
+
+        if (! $person) {
+            return null;
+        }
+
+        return $person->formatted_name ?: $person->full_name;
+    }
 }

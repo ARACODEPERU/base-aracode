@@ -39,6 +39,19 @@ class PermissionsSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'bib_tags_listar']));
         array_push($permissions, Permission::create(['name' => 'bib_tags_nuevo']));
         array_push($permissions, Permission::create(['name' => 'bib_tags_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'bib_leer_libro']));
+        array_push($permissions, Permission::create(['name' => 'bib_planes_listar']));
+        array_push($permissions, Permission::create(['name' => 'bib_planes_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'bib_planes_editar']));
+        array_push($permissions, Permission::create(['name' => 'bib_planes_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'bib_organizaciones_listar']));
+        array_push($permissions, Permission::create(['name' => 'bib_organizaciones_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'bib_organizaciones_editar']));
+        array_push($permissions, Permission::create(['name' => 'bib_organizaciones_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'bib_suscripciones_listar']));
+        array_push($permissions, Permission::create(['name' => 'bib_suscripciones_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'bib_suscripciones_editar']));
+        array_push($permissions, Permission::create(['name' => 'bib_suscripciones_cancelar']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

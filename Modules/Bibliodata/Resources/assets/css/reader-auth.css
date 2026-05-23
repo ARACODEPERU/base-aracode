@@ -1,0 +1,605 @@
+/* Login biblioteca — estilos aislados del lector (reader.css no se importa aquí) */
+.bib-reader-auth {
+    --bib-accent: 34 211 238;
+    --bib-accent-secondary: 167 139 250;
+    --bib-glow-cyan: rgba(34, 211, 238, 0.35);
+    --bib-glow-violet: rgba(167, 139, 250, 0.3);
+    --bib-auth-text: #f1f5f9;
+    --bib-auth-text-muted: #94a3b8;
+    --bib-auth-text-soft: #cbd5e1;
+    --bib-auth-label: #cbd5e1;
+    --bib-auth-link: #22d3ee;
+    --bib-auth-link-hover: #67e8f9;
+    --bib-auth-feature-title: #f1f5f9;
+    --bib-auth-feature-text: #94a3b8;
+    --bib-auth-hero-lead: #cbd5e1;
+    --bib-auth-hero-desc: #64748b;
+    --bib-auth-panel-bg: rgba(2, 6, 23, 0.45);
+    --bib-auth-panel-border: rgba(255, 255, 255, 0.06);
+    --bib-auth-input-bg: rgba(2, 6, 23, 0.65);
+    --bib-auth-input-border: rgba(255, 255, 255, 0.1);
+    --bib-auth-input-text: #f1f5f9;
+    --bib-auth-input-placeholder: #64748b;
+    --bib-auth-status-bg: rgba(34, 211, 238, 0.1);
+    --bib-auth-status-border: rgba(34, 211, 238, 0.3);
+    --bib-auth-status-text: #a5f3fc;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    color: var(--bib-auth-text);
+}
+
+body:not(.dark) .bib-reader-auth {
+    --bib-auth-text: #0f172a;
+    --bib-auth-text-muted: #64748b;
+    --bib-auth-text-soft: #475569;
+    --bib-auth-label: #334155;
+    --bib-auth-link: #0e7490;
+    --bib-auth-link-hover: #0891b2;
+    --bib-auth-feature-title: #0f172a;
+    --bib-auth-feature-text: #64748b;
+    --bib-auth-hero-lead: #334155;
+    --bib-auth-hero-desc: #64748b;
+    --bib-auth-panel-bg: rgba(255, 255, 255, 0.55);
+    --bib-auth-panel-border: rgb(226 232 240);
+    --bib-auth-input-bg: #ffffff;
+    --bib-auth-input-border: rgb(203 213 225);
+    --bib-auth-input-text: #0f172a;
+    --bib-auth-input-placeholder: #94a3b8;
+    --bib-auth-status-bg: rgba(34, 211, 238, 0.12);
+    --bib-auth-status-border: rgba(8, 145, 178, 0.35);
+    --bib-auth-status-text: #0e7490;
+}
+
+.bib-auth-vignette {
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(2, 6, 23, 0.55) 100%);
+}
+
+body:not(.dark) .bib-reader-auth .bib-auth-vignette {
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(248, 250, 252, 0.35) 100%);
+}
+
+html.bib-auth-smooth-theme .bib-reader-auth,
+html.bib-auth-smooth-theme .bib-reader-auth .bib-auth-panel,
+html.bib-auth-smooth-theme .bib-reader-auth .bib-auth-form,
+html.bib-auth-smooth-theme .bib-reader-auth .bib-auth-input,
+html.bib-auth-smooth-theme .bib-reader-auth .bib-auth-feature {
+    transition:
+        background-color 0.45s ease,
+        color 0.4s ease,
+        border-color 0.4s ease,
+        box-shadow 0.4s ease;
+}
+
+/* Capas de fondo (anime.js opera aquí) */
+.bib-auth-bg-layer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.bib-auth-bg-layer--base {
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 15% 20%, rgba(34, 211, 238, 0.18), transparent 55%),
+        radial-gradient(ellipse 70% 55% at 85% 75%, rgba(167, 139, 250, 0.22), transparent 50%),
+        linear-gradient(145deg, #020617 0%, #1e1b4b 42%, #312e81 100%);
+}
+
+.bib-auth-bg-layer--motion {
+    z-index: 1;
+}
+
+.bib-auth-bg-layer--mesh {
+    z-index: 2;
+    opacity: 0.55;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 20%, transparent 75%);
+}
+
+.bib-auth-grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.15) 1px, transparent 0);
+    background-size: 32px 32px;
+}
+
+.bib-auth-bg--static .bib-auth-blob,
+.bib-auth-bg--static .bib-auth-orb,
+.bib-auth-bg--static .bib-auth-ring {
+    display: none;
+}
+
+/* Elementos animados con anime.js */
+.bib-auth-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(56px);
+    pointer-events: none;
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+}
+
+.bib-auth-blob--cyan {
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.75) 0%, rgba(34, 211, 238, 0.15) 45%, transparent 72%);
+}
+
+.bib-auth-blob--violet {
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.7) 0%, rgba(167, 139, 250, 0.12) 45%, transparent 72%);
+}
+
+.bib-auth-blob--indigo {
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.65) 0%, rgba(99, 102, 241, 0.1) 45%, transparent 72%);
+}
+
+.bib-auth-orb {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+    box-shadow: 0 0 12px currentColor;
+}
+
+.bib-auth-orb--cyan {
+    background: #22d3ee;
+    color: rgba(34, 211, 238, 0.8);
+}
+
+.bib-auth-orb--violet {
+    background: #a78bfa;
+    color: rgba(167, 139, 250, 0.8);
+}
+
+.bib-auth-orb--amber {
+    background: #fbbf24;
+    color: rgba(251, 191, 36, 0.7);
+}
+
+.bib-auth-orb--white {
+    background: #f8fafc;
+    color: rgba(248, 250, 252, 0.5);
+}
+
+.bib-auth-ring {
+    position: absolute;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    pointer-events: none;
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
+    box-shadow:
+        0 0 40px rgba(34, 211, 238, 0.08),
+        inset 0 0 30px rgba(167, 139, 250, 0.06);
+}
+
+/* Layout login */
+.bib-auth-shell {
+    display: grid;
+    min-height: 100vh;
+    width: 100%;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+    .bib-auth-shell {
+        grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
+    }
+}
+
+.bib-auth-hero {
+    position: relative;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 3.5rem 3rem 4rem;
+    overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+    .bib-auth-hero {
+        display: flex;
+    }
+}
+
+.bib-auth-hero-glow {
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    width: 320px;
+    height: 320px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.2), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+}
+
+.bib-auth-hero-title {
+    font-size: clamp(2.25rem, 4vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #f8fafc 0%, #a5f3fc 45%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.bib-auth-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    background: rgba(34, 211, 238, 0.08);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #67e8f9;
+}
+
+.bib-auth-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(8px);
+}
+
+.bib-auth-feature-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(167, 139, 250, 0.2));
+    font-size: 1.1rem;
+}
+
+.bib-auth-hero-lead {
+    margin-top: 1rem;
+    font-size: 1.125rem;
+    line-height: 1.625;
+    color: var(--bib-auth-hero-lead);
+}
+
+.bib-auth-hero-desc {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--bib-auth-hero-desc);
+}
+
+.bib-auth-feature-title {
+    font-weight: 600;
+    color: var(--bib-auth-feature-title);
+}
+
+.bib-auth-feature-text {
+    margin-top: 0.125rem;
+    font-size: 0.875rem;
+    color: var(--bib-auth-feature-text);
+}
+
+.bib-auth-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 1.25rem 2.5rem;
+    color: var(--bib-auth-text);
+}
+
+@media (min-width: 1024px) {
+    .bib-auth-panel {
+        padding: 2.5rem 3rem 2.5rem 2rem;
+        border-left: 1px solid var(--bib-auth-panel-border);
+        background: var(--bib-auth-panel-bg);
+        backdrop-filter: blur(12px);
+    }
+}
+
+.bib-auth-panel-intro {
+    margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+.bib-auth-panel-intro-title {
+    margin-top: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--bib-auth-text);
+}
+
+.bib-auth-panel-intro-tagline {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--bib-auth-text-muted);
+}
+
+.bib-auth-form {
+    width: 100%;
+    max-width: 420px;
+}
+
+.bib-auth-form-header {
+    margin-bottom: 1.75rem;
+    text-align: center;
+}
+
+.bib-auth-form-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--bib-auth-text);
+}
+
+@media (min-width: 640px) {
+    .bib-auth-form-title {
+        font-size: 1.75rem;
+    }
+}
+
+.bib-auth-form-subtitle {
+    margin-top: 0.375rem;
+    font-size: 0.875rem;
+    color: var(--bib-auth-text-muted);
+}
+
+.bib-auth-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.bib-auth-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--bib-auth-label);
+}
+
+.bib-auth-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.bib-auth-remember {
+    display: flex;
+    cursor: pointer;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--bib-auth-text-muted);
+}
+
+.bib-auth-checkbox {
+    height: 1rem;
+    width: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--bib-auth-input-border);
+    background: var(--bib-auth-input-bg);
+    color: #22d3ee;
+    accent-color: #0891b2;
+}
+
+.bib-auth-link {
+    font-weight: 500;
+    color: var(--bib-auth-link);
+    transition: color 0.2s;
+}
+
+.bib-auth-link:hover {
+    color: var(--bib-auth-link-hover);
+}
+
+.bib-auth-status {
+    margin-bottom: 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--bib-auth-status-border);
+    background: var(--bib-auth-status-bg);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--bib-auth-status-text);
+}
+
+.bib-auth-footer {
+    margin-top: 2rem;
+    max-width: 24rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--bib-auth-text-muted);
+}
+
+.bib-auth-cover {
+    margin: 0 auto 1rem;
+    height: 5.5rem;
+    width: 4rem;
+    overflow: hidden;
+    border-radius: 0.65rem;
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.bib-auth-avatar {
+    margin: 0 auto 1rem;
+    display: flex;
+    height: 4rem;
+    width: 4rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    background: linear-gradient(135deg, #22d3ee, #a78bfa);
+    box-shadow: 0 8px 24px rgba(34, 211, 238, 0.35);
+}
+
+.bib-auth-input-wrap {
+    position: relative;
+}
+
+.bib-auth-input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--bib-auth-text-muted);
+    pointer-events: none;
+}
+
+.bib-auth-input {
+    width: 100%;
+    border-radius: 0.875rem;
+    border: 1px solid var(--bib-auth-input-border);
+    background: var(--bib-auth-input-bg);
+    padding: 0.8rem 1rem 0.8rem 2.75rem;
+    font-size: 0.9375rem;
+    color: var(--bib-auth-input-text);
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s,
+        background 0.2s;
+}
+
+.bib-auth-input--plain {
+    padding-left: 1rem;
+}
+
+.bib-auth-input::placeholder {
+    color: var(--bib-auth-input-placeholder);
+}
+
+.bib-auth-input:focus {
+    outline: none;
+    border-color: rgba(34, 211, 238, 0.55);
+    box-shadow:
+        0 0 0 3px rgba(34, 211, 238, 0.12),
+        0 0 24px rgba(34, 211, 238, 0.08);
+}
+
+body:not(.dark) .bib-reader-auth .bib-auth-input:focus {
+    border-color: rgb(8 145 178);
+    background: var(--bib-auth-input-bg);
+}
+
+.bib-auth-btn {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border: none;
+    border-radius: 0.875rem;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, #0e7490 0%, #0891b2 55%, #0d9488 100%);
+    box-shadow: 0 4px 16px rgba(8, 145, 178, 0.35);
+    transition:
+        transform 0.15s,
+        box-shadow 0.2s,
+        opacity 0.15s,
+        background 0.2s;
+}
+
+body.dark .bib-reader-auth .bib-auth-btn {
+    color: #e2e8f0;
+    background: linear-gradient(180deg, #1a5f73 0%, #164e63 100%);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .bib-reader-auth .bib-auth-btn::after {
+    background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.1) 50%, transparent 58%);
+}
+
+.bib-auth-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+    transform: translateX(-120%);
+    transition: transform 0.5s ease;
+}
+
+.bib-auth-btn:hover:not(:disabled)::after {
+    transform: translateX(120%);
+}
+
+.bib-auth-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(8, 145, 178, 0.45);
+}
+
+body.dark .bib-reader-auth .bib-auth-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #1f6f85 0%, #1a5f73 100%);
+    border-color: rgba(148, 163, 184, 0.32);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.bib-auth-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.bib-auth-footer-link {
+    color: var(--bib-auth-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+}
+
+.bib-auth-footer-link:hover {
+    color: var(--bib-auth-link);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    [data-bib-auth-enter] {
+        opacity: 0;
+    }
+}
+
+/* Fondo modo claro */
+body:not(.dark) .bib-reader-auth .bib-auth-bg-layer--base {
+    background:
+        radial-gradient(ellipse 80% 60% at 15% 20%, rgba(34, 211, 238, 0.12), transparent 55%),
+        radial-gradient(ellipse 70% 55% at 85% 75%, rgba(167, 139, 250, 0.15), transparent 50%),
+        linear-gradient(145deg, #f8fafc 0%, #e0e7ff 48%, #ede9fe 100%);
+}
+
+body:not(.dark) .bib-reader-auth .bib-auth-hero-title {
+    background: linear-gradient(135deg, #0f172a 0%, #0891b2 45%, #6d28d9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+body:not(.dark) .bib-reader-auth .bib-auth-hero-badge {
+    color: #0e7490;
+    border-color: rgba(8, 145, 178, 0.35);
+    background: rgba(34, 211, 238, 0.12);
+}
+
+body:not(.dark) .bib-reader-auth .bib-auth-feature {
+    border-color: rgb(226 232 240);
+    background: rgba(255, 255, 255, 0.75);
+}

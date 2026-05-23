@@ -108,7 +108,8 @@
                     method: 'get',
                     replace: true,
                     preserveState: true,
-                    preserveScroll: false
+                    preserveScroll: false,
+                    only: ['students'],
                 });
             }
         }, 5000); // Actualizar cada 5 segundos
