@@ -3,13 +3,19 @@
 namespace Modules\Bibliodata\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 use Modules\Bibliodata\Entities\BibBook;
 use Modules\Bibliodata\Entities\BibBookPage;
 use Modules\Bibliodata\Entities\BibBookSection;
+use Modules\Bibliodata\Entities\BibSubscription;
 
 class BibReaderAccessService
 {
+    public function __construct(
+        protected BibSubscriptionService $subscriptionService
+    ) {}
+
     public function readerRoleName(): string
     {
         return config('bibliodata.reader.role', 'Lector');
@@ -32,10 +38,26 @@ class BibReaderAccessService
         }
     }
 
+    public function getActiveSubscription(User $user, ?int $bookId = null): ?BibSubscription
+    {
+        return $this->subscriptionService->getActiveSubscriptionForUser($user, $bookId);
+    }
+
     public function resolveBookForReader(User $user): ?BibBook
     {
-        // Fase lector (próxima): usar BibSubscriptionService::getActiveSubscriptionForUser($user)
-        // y el book_id de bib_subscriptions en lugar de default_book_id / primer libro available.
+        $subscription = $this->getActiveSubscription($user);
+
+        if ($subscription?->book_id) {
+            $book = BibBook::query()
+                ->where('id', $subscription->book_id)
+                ->where('status', 'available')
+                ->first();
+
+            if ($book) {
+                return $book;
+            }
+        }
+
         $bookId = config('bibliodata.reader.default_book_id');
 
         if ($bookId) {
@@ -49,6 +71,86 @@ class BibReaderAccessService
             ->where('status', 'available')
             ->latest('id')
             ->first();
+    }
+
+    public function previewSessionKey(User $user, int $bookId): string
+    {
+        return "bib_reader.preview.{$user->id}.{$bookId}";
+    }
+
+    public function getPreviewPageId(User $user, int $bookId): ?int
+    {
+        $value = Session::get($this->previewSessionKey($user, $bookId));
+
+        return $value !== null ? (int) $value : null;
+    }
+
+    public function setPreviewPageId(User $user, int $bookId, int $pageId): void
+    {
+        Session::put($this->previewSessionKey($user, $bookId), $pageId);
+    }
+
+    /**
+     * @return array{allowed: bool, has_subscription: bool, reason: ?string, preview_page_id: ?int}
+     */
+    public function evaluatePageAccess(User $user, BibBook $book, int $pageId): array
+    {
+        $subscription = $this->getActiveSubscription($user, $book->id);
+
+        if ($subscription) {
+            return [
+                'allowed' => true,
+                'has_subscription' => true,
+                'reason' => null,
+                'preview_page_id' => null,
+            ];
+        }
+
+        $previewPageId = $this->getPreviewPageId($user, $book->id);
+
+        if ($previewPageId === null) {
+            $this->setPreviewPageId($user, $book->id, $pageId);
+
+            return [
+                'allowed' => true,
+                'has_subscription' => false,
+                'reason' => null,
+                'preview_page_id' => $pageId,
+            ];
+        }
+
+        if ((int) $previewPageId === $pageId) {
+            return [
+                'allowed' => true,
+                'has_subscription' => false,
+                'reason' => null,
+                'preview_page_id' => $previewPageId,
+            ];
+        }
+
+        return [
+            'allowed' => false,
+            'has_subscription' => false,
+            'reason' => 'subscription_required',
+            'preview_page_id' => $previewPageId,
+        ];
+    }
+
+    public function buildAccessPayload(User $user, ?BibBook $book): array
+    {
+        if (! $book) {
+            return [
+                'hasActiveSubscription' => false,
+                'previewPageId' => null,
+            ];
+        }
+
+        $subscription = $this->getActiveSubscription($user, $book->id);
+
+        return [
+            'hasActiveSubscription' => (bool) $subscription,
+            'previewPageId' => $this->getPreviewPageId($user, $book->id),
+        ];
     }
 
     public function assertPageBelongsToBook(BibBookPage $page, BibBook $book): void

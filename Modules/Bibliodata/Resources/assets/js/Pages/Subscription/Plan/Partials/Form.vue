@@ -104,7 +104,10 @@ const submit = () => {
                     <input v-model="form.is_active" type="checkbox" class="form-checkbox" />
                     <span class="text-sm">Plan activo</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer opacity-70" title="Próximamente">
+                <label
+                    v-tippy="{ content: 'Próximamente', placement: 'bottom' }"
+                    class="flex items-center gap-2 cursor-pointer opacity-70"
+                >
                     <input v-model="form.includes_ai_chatbot" type="checkbox" class="form-checkbox" disabled />
                     <span class="text-sm">Incluye chatbot IA (próximamente)</span>
                 </label>

@@ -5,6 +5,7 @@ namespace Modules\Bibliodata\Entities;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class BibSubscription extends Model
 {
@@ -51,5 +52,15 @@ class BibSubscription extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function beneficiaries(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'bib_subscription_beneficiaries',
+            'subscription_id',
+            'user_id'
+        )->withTimestamps();
     }
 }

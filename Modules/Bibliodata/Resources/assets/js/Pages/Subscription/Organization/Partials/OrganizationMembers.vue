@@ -418,16 +418,16 @@ const documentLabel = (member) => {
                             <div class="flex items-center justify-center gap-2">
                                 <button
                                     type="button"
+                                    v-tippy="{ content: 'Editar', placement: 'bottom' }"
                                     class="text-primary hover:underline"
-                                    title="Editar"
                                     @click="openEditModal(member)"
                                 >
                                     <IconEdit class="w-4 h-4" />
                                 </button>
                                 <button
                                     type="button"
+                                    v-tippy="{ content: 'Quitar de la organización', placement: 'bottom' }"
                                     class="text-danger hover:underline"
-                                    title="Quitar de la organización"
                                     @click="removeMember(member.id)"
                                 >
                                     <IconTrash class="w-4 h-4" />

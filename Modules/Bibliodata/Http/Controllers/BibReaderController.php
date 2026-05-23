@@ -27,6 +27,10 @@ class BibReaderController extends Controller
                 'user' => ['name' => $user->name],
                 'book' => null,
                 'sections' => [],
+                'access' => [
+                    'hasActiveSubscription' => false,
+                    'previewPageId' => null,
+                ],
                 'welcomeMessage' => 'Bienvenido a tu biblioteca digital. Aún no hay un libro disponible para leer.',
             ]);
         }
@@ -43,6 +47,7 @@ class BibReaderController extends Controller
                 'author' => $book->author?->display_name,
             ],
             'sections' => $this->readerAccess->buildSectionTree($book->id),
+            'access' => $this->readerAccess->buildAccessPayload($user, $book),
             'welcomeMessage' => sprintf(
                 '¡Bienvenido, %s! Selecciona una página del índice para comenzar a leer «%s».',
                 $user->name,
@@ -98,6 +103,17 @@ class BibReaderController extends Controller
         $page = BibBookPage::with('section')->findOrFail($id);
         $this->readerAccess->assertPageBelongsToBook($page, $book);
 
+        $access = $this->readerAccess->evaluatePageAccess($user, $book, $page->id);
+
+        if (! $access['allowed']) {
+            return response()->json([
+                'success' => false,
+                'code' => 'subscription_required',
+                'message' => 'Necesitas una suscripción activa para continuar leyendo.',
+                'preview_page_id' => $access['preview_page_id'],
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'page' => [
@@ -110,6 +126,10 @@ class BibReaderController extends Controller
             'book' => [
                 'id' => $book->id,
                 'title' => $book->title,
+            ],
+            'access' => [
+                'hasActiveSubscription' => $access['has_subscription'],
+                'previewPageId' => $access['preview_page_id'] ?? $this->readerAccess->getPreviewPageId($user, $book->id),
             ],
         ]);
     }

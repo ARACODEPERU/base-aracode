@@ -6,15 +6,21 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Inertia\Inertia;
+use Modules\Bibliodata\Services\BibDashboardService;
 
 class BibliodataController extends Controller
 {
+    public function __construct(
+        protected BibDashboardService $dashboardService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view('bibliodata::index');
+        return Inertia::render('Bibliodata::Dashboard', $this->dashboardService->getDashboardData());
     }
 
     /**

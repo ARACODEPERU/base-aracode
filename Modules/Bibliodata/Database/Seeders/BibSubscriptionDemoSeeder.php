@@ -87,7 +87,7 @@ class BibSubscriptionDemoSeeder extends Seeder
         }
 
         if (! BibSubscription::where('organization_id', $org->id)->exists()) {
-            BibSubscription::create([
+            $orgSub = BibSubscription::create([
                 'plan_id' => $lifetimePlan->id,
                 'subscriber_type' => 'organization',
                 'organization_id' => $org->id,
@@ -97,6 +97,12 @@ class BibSubscriptionDemoSeeder extends Seeder
                 'status' => 'active',
                 'notes' => 'Suscripción demo organización',
             ]);
+            $service->syncBeneficiaries(
+                $orgSub,
+                $lectors->pluck('id')->all(),
+                $org->id,
+                $book->id
+            );
         }
     }
 }

@@ -126,7 +126,17 @@ class BibSubscriptionService
                 'created_by' => $createdBy,
             ]);
 
-            return $subscription->load(['plan.books', 'user', 'organization', 'book']);
+            if ($data['subscriber_type'] === 'organization') {
+                $beneficiaryIds = $data['beneficiary_user_ids'] ?? [];
+                $this->syncBeneficiaries(
+                    $subscription,
+                    $beneficiaryIds,
+                    (int) $data['organization_id'],
+                    $bookId
+                );
+            }
+
+            return $subscription->load(['plan.books', 'user', 'organization', 'book', 'beneficiaries']);
         });
     }
 
@@ -157,19 +167,32 @@ class BibSubscriptionService
 
             $this->validateSubscriber($subscriberType, $userId, $organizationId);
 
+            $bookId = $plan->books->first()?->id ?? $subscription->book_id;
+
             $subscription->update([
                 'plan_id' => $plan->id,
                 'subscriber_type' => $subscriberType,
                 'user_id' => $userId,
                 'organization_id' => $organizationId,
-                'book_id' => $plan->books->first()?->id ?? $subscription->book_id,
+                'book_id' => $bookId,
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
                 'status' => $data['status'] ?? $subscription->status,
                 'notes' => $data['notes'] ?? $subscription->notes,
             ]);
 
-            return $subscription->fresh()->load(['plan.books', 'user', 'organization', 'book']);
+            if ($subscriberType === 'organization' && array_key_exists('beneficiary_user_ids', $data)) {
+                $this->syncBeneficiaries(
+                    $subscription,
+                    $data['beneficiary_user_ids'] ?? [],
+                    (int) $organizationId,
+                    $bookId
+                );
+            } elseif ($subscriberType === 'individual') {
+                $subscription->beneficiaries()->detach();
+            }
+
+            return $subscription->fresh()->load(['plan.books', 'user', 'organization', 'book', 'beneficiaries']);
         });
     }
 
@@ -196,8 +219,97 @@ class BibSubscriptionService
     }
 
     /**
-     * Fase lector: resolver suscripción activa del usuario para un libro.
-     * No usado aún por BibReaderController.
+     * Lista miembros de la organización para el modal de beneficiarios.
+     */
+    public function getOrganizationMembersForSubscription(
+        int $organizationId,
+        int $planId,
+        ?int $subscriptionId = null
+    ): array {
+        $plan = BibSubscriptionPlan::with('books')->findOrFail($planId);
+        $bookId = $plan->books->first()?->id;
+
+        $organization = BibOrganization::with(['members.person'])->findOrFail($organizationId);
+
+        $currentBeneficiaryIds = $subscriptionId
+            ? BibSubscription::with('beneficiaries')->find($subscriptionId)?->beneficiaries->pluck('id')->all() ?? []
+            : [];
+
+        return $organization->members->map(function (User $user) use ($bookId, $currentBeneficiaryIds) {
+            $person = $user->person;
+            $hasIndividual = $bookId
+                ? $this->userHasActiveIndividualSubscriptionForBook((int) $user->id, (int) $bookId)
+                : false;
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'document_number' => $person?->number,
+                'is_member' => true,
+                'has_individual_subscription' => $hasIndividual,
+                'individual_subscription_label' => $hasIndividual
+                    ? 'Tiene suscripción individual activa'
+                    : null,
+                'is_current_beneficiary' => in_array($user->id, $currentBeneficiaryIds, true),
+            ];
+        })->values()->all();
+    }
+
+    public function syncBeneficiaries(
+        BibSubscription $subscription,
+        array $userIds,
+        int $organizationId,
+        ?int $bookId
+    ): void {
+        $userIds = array_values(array_unique(array_map('intval', array_filter($userIds))));
+
+        if ($userIds === []) {
+            throw ValidationException::withMessages([
+                'beneficiary_user_ids' => 'Seleccione al menos un beneficiario.',
+            ]);
+        }
+
+        $orgMemberIds = BibOrganizationUser::where('organization_id', $organizationId)
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        foreach ($userIds as $userId) {
+            if (! in_array($userId, $orgMemberIds, true)) {
+                throw ValidationException::withMessages([
+                    'beneficiary_user_ids' => 'Uno o más usuarios no pertenecen a la organización.',
+                ]);
+            }
+
+            if ($bookId && $this->userHasActiveIndividualSubscriptionForBook($userId, $bookId)) {
+                throw ValidationException::withMessages([
+                    'beneficiary_user_ids' => 'No puede incluir trabajadores con suscripción individual activa para el mismo libro.',
+                ]);
+            }
+        }
+
+        $subscription->beneficiaries()->sync($userIds);
+    }
+
+    public function userHasActiveIndividualSubscriptionForBook(int $userId, int $bookId, ?int $excludeSubscriptionId = null): bool
+    {
+        $today = Carbon::today();
+
+        return BibSubscription::query()
+            ->where('subscriber_type', 'individual')
+            ->where('user_id', $userId)
+            ->where('book_id', $bookId)
+            ->whereIn('status', ['active', 'pending'])
+            ->when($excludeSubscriptionId, fn ($q) => $q->where('id', '!=', $excludeSubscriptionId))
+            ->get()
+            ->contains(fn (BibSubscription $sub) => $this->resolveStatus($sub) === 'active'
+                && $sub->starts_at->lte($today)
+                && ($sub->ends_at === null || $sub->ends_at->gte($today)));
+    }
+
+    /**
+     * Resolver suscripción activa del usuario para un libro.
      */
     public function getActiveSubscriptionForUser(User $user, ?int $bookId = null): ?BibSubscription
     {
@@ -230,6 +342,7 @@ class BibSubscriptionService
             ->whereIn('organization_id', $orgIds)
             ->whereIn('status', ['active', 'pending'])
             ->when($bookId, fn ($q) => $q->where('book_id', $bookId))
+            ->whereHas('beneficiaries', fn ($q) => $q->where('users.id', $user->id))
             ->get()
             ->first(fn ($sub) => $this->resolveStatus($sub) === 'active'
                 && $sub->starts_at->lte($today)

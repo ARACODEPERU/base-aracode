@@ -97,12 +97,14 @@ const deletePlan = (id) => {
                                 <div class="flex items-center justify-center gap-2">
                                     <Link
                                         :href="route('bib_subscription_plans_edit', plan.id)"
+                                        v-tippy="{ content: 'Editar', placement: 'bottom' }"
                                         class="text-primary hover:underline"
                                     >
                                         <IconEdit class="w-4 h-4" />
                                     </Link>
                                     <button
                                         type="button"
+                                        v-tippy="{ content: 'Eliminar', placement: 'bottom' }"
                                         class="text-danger hover:underline"
                                         @click="deletePlan(plan.id)"
                                     >

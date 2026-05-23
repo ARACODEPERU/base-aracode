@@ -6,6 +6,7 @@ import ReaderLayout from '../../layouts/ReaderLayout.vue';
 import UserAvatar from '../../components/UserAvatar.vue';
 import ReaderIndexNode from './components/ReaderIndexNode.vue';
 import ReaderPageZoom from './components/ReaderPageZoom.vue';
+import ReaderAccessBlockedOverlay from './components/ReaderAccessBlockedOverlay.vue';
 import IconMenu from '@/Components/vristo/icon/icon-menu.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
@@ -14,6 +15,10 @@ const props = defineProps({
     user: { type: Object, required: true },
     book: { type: Object, default: null },
     sections: { type: Array, default: () => [] },
+    access: {
+        type: Object,
+        default: () => ({ hasActiveSubscription: false, previewPageId: null }),
+    },
     welcomeMessage: { type: String, default: '' },
 });
 
@@ -26,6 +31,8 @@ const pageLoading = ref(false);
 const pageError = ref(null);
 const pageZoom = ref(100);
 const isMobileView = ref(false);
+const showAccessBlocked = ref(false);
+const previewPageId = ref(props.access?.previewPageId ?? null);
 
 const updateMobileView = () => {
     isMobileView.value = window.matchMedia('(max-width: 767px)').matches;
@@ -90,11 +97,22 @@ const onToggleExpand = async (section) => {
 };
 
 const onSelectPage = async (page) => {
+    if (
+        !props.access?.hasActiveSubscription &&
+        previewPageId.value &&
+        previewPageId.value !== page.id
+    ) {
+        showAccessBlocked.value = true;
+        selectedPageId.value = page.id;
+        mobileIndexOpen.value = false;
+        return;
+    }
+
     selectedPageId.value = page.id;
     mobileIndexOpen.value = false;
     pageLoading.value = true;
     pageError.value = null;
-    currentPage.value = null;
+    showAccessBlocked.value = false;
 
     try {
         const { data } = await axios.get(route('bib_reader_page_show', page.id), {
@@ -102,9 +120,24 @@ const onSelectPage = async (page) => {
         });
         if (data.success) {
             currentPage.value = data.page;
+            if (data.access?.previewPageId) {
+                previewPageId.value = data.access.previewPageId;
+            }
+            if (data.access?.hasActiveSubscription) {
+                previewPageId.value = null;
+            }
         }
-    } catch {
-        pageError.value = 'No se pudo cargar el contenido de la página.';
+    } catch (err) {
+        const payload = err.response?.data;
+        if (err.response?.status === 403 && payload?.code === 'subscription_required') {
+            showAccessBlocked.value = true;
+            if (payload.preview_page_id) {
+                previewPageId.value = payload.preview_page_id;
+            }
+        } else {
+            pageError.value = payload?.message || 'No se pudo cargar el contenido de la página.';
+            currentPage.value = null;
+        }
     } finally {
         pageLoading.value = false;
     }
@@ -114,6 +147,8 @@ const onSelectPage = async (page) => {
 <template>
     <ReaderLayout :book-title="book?.title ?? ''">
         <Head :title="book ? `Leer — ${book.title}` : 'Mi biblioteca'" />
+
+        <ReaderAccessBlockedOverlay v-if="showAccessBlocked" @close="showAccessBlocked = false" />
 
         <aside
             class="bib-reader-sidebar hidden flex-col overflow-hidden md:flex"

@@ -8,6 +8,7 @@ import axios from 'axios';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Pagination from '@/Components/Pagination.vue';
 import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
+import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import IconXCircle from '@/Components/vristo/icon/icon-x-circle.vue';
 
 const props = defineProps({
@@ -150,16 +151,16 @@ const cancelSub = (id) => {
                                 <div class="flex items-center justify-center gap-2">
                                     <Link
                                         :href="route('bib_subscriptions_edit', sub.id)"
+                                        v-tippy="{ content: 'Editar', placement: 'bottom' }"
                                         class="text-primary hover:underline"
-                                        title="Editar"
                                     >
                                         <IconEdit class="w-4 h-4" />
                                     </Link>
                                     <button
                                         v-if="sub.status !== 'cancelled'"
                                         type="button"
+                                        v-tippy="{ content: 'Cancelar suscripción', placement: 'bottom' }"
                                         class="text-danger hover:underline"
-                                        title="Cancelar suscripción"
                                         @click="cancelSub(sub.id)"
                                     >
                                         <IconXCircle class="w-4 h-4" />

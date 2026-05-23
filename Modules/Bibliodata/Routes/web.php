@@ -259,6 +259,10 @@ Route::middleware(['auth', 'verified'])->prefix('bibliodata')->group(function ()
         ->get('subscriptions/create', [BibSubscriptionController::class, 'create'])
         ->name('bib_subscriptions_create');
 
+    Route::middleware(['middleware' => 'permission:bib_suscripciones_nuevo|bib_suscripciones_editar'])
+        ->post('subscriptions/organization-members', [BibSubscriptionController::class, 'organizationMembers'])
+        ->name('bib_subscriptions_organization_members');
+
     Route::middleware(['middleware' => 'permission:bib_suscripciones_nuevo'])
         ->post('subscriptions/store', [BibSubscriptionController::class, 'store'])
         ->name('bib_subscriptions_store');

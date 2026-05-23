@@ -25,6 +25,7 @@ class BibSubscriptionController extends Controller
     public function index()
     {
         $subscriptions = BibSubscription::with(['plan.books', 'user', 'organization', 'book'])
+            ->withCount('beneficiaries')
             ->when(request('status'), fn ($q) => $q->where('status', request('status')))
             ->when(request('plan_id'), fn ($q) => $q->where('plan_id', request('plan_id')))
             ->when(request('book_id'), fn ($q) => $q->where('book_id', request('book_id')))
@@ -70,9 +71,31 @@ class BibSubscriptionController extends Controller
         return to_route('bib_subscriptions');
     }
 
+    public function organizationMembers(Request $request)
+    {
+        $request->validate([
+            'organization_id' => 'required|exists:bib_organizations,id',
+            'plan_id' => 'required|exists:bib_subscription_plans,id',
+            'subscription_id' => 'nullable|exists:bib_subscriptions,id',
+        ]);
+
+        $members = $this->subscriptionService->getOrganizationMembersForSubscription(
+            (int) $request->input('organization_id'),
+            (int) $request->input('plan_id'),
+            $request->input('subscription_id') ? (int) $request->input('subscription_id') : null
+        );
+
+        return response()->json([
+            'success' => true,
+            'members' => $members,
+            'total' => count($members),
+        ]);
+    }
+
     public function edit($id)
     {
-        $subscription = BibSubscription::with(['plan.books', 'user', 'organization', 'book'])->findOrFail($id);
+        $subscription = BibSubscription::with(['plan.books', 'user', 'organization', 'book', 'beneficiaries'])
+            ->findOrFail($id);
 
         return Inertia::render('Bibliodata::Subscription/Subscription/Edit', [
             'subscription' => $subscription,
@@ -122,6 +145,11 @@ class BibSubscriptionController extends Controller
             'notes' => 'nullable|string',
             'recalculate_ends' => 'boolean',
         ];
+
+        if ($request->input('subscriber_type') === 'organization') {
+            $rules['beneficiary_user_ids'] = 'required|array|min:1';
+            $rules['beneficiary_user_ids.*'] = 'integer|exists:users,id';
+        }
 
         if ($subscriptionId) {
             $rules['id'] = 'required|exists:bib_subscriptions,id';

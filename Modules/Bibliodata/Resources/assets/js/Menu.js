@@ -7,6 +7,7 @@ import {
     faLayerGroup,
     faBuilding,
     faIdCard,
+    faGauge,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuBibliodata = {
@@ -16,6 +17,14 @@ const menuBibliodata = {
     route: 'module',
     permissions: "bib_dashboard",
     items: [
+        {
+            route: route("bib_dashboard"),
+            status: false,
+            text: "Dashboard",
+            icom: faGauge,
+            permissions: "bib_dashboard",
+            dashboard: true,
+        },
         {
             route: route("bib_authors"),
             status: false,

@@ -10,7 +10,7 @@ return [
 
     'reader' => [
         'role' => 'Lector',
-        // Temporal hasta fase lector: usar BibSubscriptionService::getActiveSubscriptionForUser()
         'default_book_id' => env('BIB_READER_DEFAULT_BOOK_ID', null),
+        'preview_pages_per_book' => 1,
     ],
 ];
