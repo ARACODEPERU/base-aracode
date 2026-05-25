@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-use Modules\Health\Entities\Healcie10;
 
 return new class extends Migration
 {
@@ -12674,13 +12674,19 @@ return new class extends Migration
         ['Z999','Z999','DEPENDENCIA DE MAQUINA Y DISPOSITIVO CAPACITANTE, NO ESPECIFICADA']
 ];
 
-foreach ($data as $row) {
-    Healcie10::create([
-        'cie10x' => $row[0],
-        'cie10' => $row[1],
-        'description' => $row[2]
-    ]);
-    }
+        if (DB::table('heal_cie10s')->count() === 0) {
+            $now = now();
+            collect($data)
+                ->map(fn ($row) => [
+                    'cie10x' => $row[0],
+                    'cie10' => $row[1],
+                    'description' => $row[2],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+                ->chunk(500)
+                ->each(fn ($chunk) => DB::table('heal_cie10s')->insert($chunk->all()));
+        }
 }
 
     /**
