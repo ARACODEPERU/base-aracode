@@ -997,7 +997,7 @@ onBeforeUnmount(() => {
                                         <!-- Tooltip en slots ocupados -->
                                         <div
                                             v-if="slot.hasEventOverlap && slot.overlappingEventNames?.length"
-                                            class="invisible absolute left-1/2 z-50 -translate-x-1/2 rounded bg-gray-900 px-2.5 py-1.5 text-[10px] font-normal text-white shadow-lg opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700"
+                                            class="invisible absolute left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-2.5 py-1.5 text-[10px] font-normal text-white shadow-lg opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700"
                                             style="bottom: calc(100% + 6px); white-space: nowrap;"
                                         >
                                             <div class="flex flex-col gap-0.5 text-left">
@@ -1036,7 +1036,7 @@ onBeforeUnmount(() => {
                                                 { 'cursor-pointer hover:ring-2 hover:ring-primary/40': canOpenAttention(event) },
                                                 { 'cursor-grab active:cursor-grabbing': isDraggableEvent(event) },
                                                 { 'ring-2 ring-primary/60 opacity-20 scale-[0.97] shadow-none': draggedEvent?.id === event.id },
-                                                { 'z-50': draggedEvent?.id !== event.id },
+                                                { 'z-20': draggedEvent?.id !== event.id },
                                             ]"
                                             :style="eventCardStyle(event)"
                                             @click="openAttentionFromAppointment(event)"
@@ -1054,7 +1054,7 @@ onBeforeUnmount(() => {
                                             <!-- Tooltip para citas de 15 min o menos -->
                                             <div
                                                 v-if="eventDurationMinutes(event) <= 15"
-                                                class="invisible absolute left-1/2 z-[70] -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-[10px] text-white shadow-xl opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700 pointer-events-none"
+                                                class="invisible absolute left-1/2 z-30 -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-[10px] text-white shadow-xl opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700 pointer-events-none"
                                                 style="bottom: calc(100% + 6px); min-width: max-content;"
                                             >
                                                 <div class="flex flex-col gap-1 text-left whitespace-nowrap">
@@ -1069,7 +1069,7 @@ onBeforeUnmount(() => {
 
                                         <div
                                             v-if="dragOverTarget?.dateStr === dateStr && dragOverTarget?.time === slot.time && draggedEvent"
-                                            class="absolute z-30 overflow-hidden rounded border-2 border-dashed border-primary/50 bg-primary/5 px-2 py-1.5 backdrop-blur-sm"
+                                            class="absolute z-20 overflow-hidden rounded border-2 border-dashed border-primary/50 bg-primary/5 px-2 py-1.5 backdrop-blur-sm"
                                             :style="dragPreviewStyle"
                                         >
                                             <div class="flex flex-col gap-0.5">

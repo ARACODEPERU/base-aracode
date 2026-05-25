@@ -8,8 +8,6 @@ import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import Keypad from '@/Components/Keypad.vue';
 import iconSearch from '@/Components/vristo/icon/icon-search.vue';
 import iconProcessing from '@/Components/vristo/icon/icon-processing.vue';
 import iconPlus from '@/Components/vristo/icon/icon-plus.vue';
@@ -17,6 +15,7 @@ import iconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
 import EndodonticTreatmentFields from '@/Components/Health/EndodonticTreatmentFields.vue';
 import IconAllergySvgrepo from '@/Components/Health/IconAllergySvgrepo.vue';
+import HealthFormIcon from '@/Components/Health/HealthFormIcon.vue';
 import { isDentalServiceType, normalizeHealthServiceType, serviceTypesByGroup } from '@/Components/Health/healthOptions.js';
 import Odontogram from './Odontogram.vue';
 
@@ -1365,18 +1364,18 @@ watch(selectedCie10, (value) => {
 </script>
 
 <template>
-    <form @submit.prevent="saveAttention" class="space-y-5">
-        <div v-if="isSigned" class="panel border-danger/40 bg-danger/10 text-danger">
+    <form @submit.prevent="saveAttention" class="health-attention-shell">
+        <div v-if="isSigned" class="panel health-alert border-danger/40 bg-danger/10 text-danger">
             <div class="font-semibold">Atención firmada</div>
             <div class="text-sm">Este documento médico legal fue firmado el {{ formatSummaryDate(props.attention.signed_at) }} y ya no puede modificarse.</div>
         </div>
-        <div v-if="form.errors.appointment_id" class="panel border-danger/40 bg-danger/10 text-danger">
+        <div v-if="form.errors.appointment_id" class="panel health-alert border-danger/40 bg-danger/10 text-danger">
             {{ form.errors.appointment_id }}
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-5">
-            <div class="space-y-5 xl:order-2">
-                <div class="panel">
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+            <div class="space-y-4 xl:order-2">
+                <div class="panel health-side-hero">
                     <div class="flex flex-col items-center">
                         <template v-if="seeker.patient">
                             <div class="flex items-center justify-center gap-3">
@@ -1384,18 +1383,18 @@ watch(selectedCie10, (value) => {
                                     v-if="hasPatientImage(seeker.patient)"
                                     :src="patientImageUrl(seeker.patient)"
                                     alt=""
-                                    class="w-24 h-24 rounded-full object-cover"
+                                    class="w-24 h-24 rounded-full object-cover health-patient-avatar"
                                     @error="markImageFailed(seeker.patient)"
                                 />
                                 <img
                                     v-else
                                     :src="avatarUrl(seeker.patient.person?.full_name, 300)"
                                     alt=""
-                                    class="w-24 h-24 rounded-full object-cover"
+                                    class="w-24 h-24 rounded-full object-cover health-patient-avatar"
                                 />
                                 <button
                                     type="button"
-                                    class="btn btn-outline-danger btn-sm whitespace-nowrap"
+                                    class="btn btn-outline-danger btn-sm whitespace-nowrap health-soft-danger"
                                     @click="addPatientAllergy"
                                 >
                                     <IconAllergySvgrepo class="w-4 h-4 mr-1" />
@@ -1408,14 +1407,22 @@ watch(selectedCie10, (value) => {
                             </div>
                         </template>
                         <template v-else>
-                            <img src="/img/svg/questions-pana.svg" alt="" class="w-24 h-24 rounded-full object-cover" />
-                            <div class="mt-3 text-sm text-white-dark">Busca y selecciona un paciente</div>
+                            <div class="health-hero-illustration">
+                                <HealthFormIcon name="clipboard" class="h-20 w-20" />
+                            </div>
+                            <div class="mt-4 text-center">
+                                <div class="text-base font-bold text-[#101a44] dark:text-white">Seleccione o busque un paciente</div>
+                                <div class="mt-1 text-xs text-white-dark">Para iniciar el registro de la atención</div>
+                            </div>
                         </template>
                     </div>
                 </div>
 
-                <div class="panel">
-                    <h3 class="font-semibold text-base dark:text-white mb-4">Resumen del paciente</h3>
+                <div class="panel health-side-card">
+                    <div class="health-section-title mb-4">
+                        <span class="health-title-icon"><HealthFormIcon name="patient" /></span>
+                        <h3>Resumen del paciente</h3>
+                    </div>
                     <template v-if="seeker.patient">
                         <div class="space-y-4 text-sm">
                             <div class="grid grid-cols-2 gap-3">
@@ -1468,8 +1475,11 @@ watch(selectedCie10, (value) => {
                     </template>
                 </div>
 
-                <div class="panel">
-                    <h3 class="font-semibold text-base dark:text-white mb-4">Firma medica</h3>
+                <div class="panel health-side-card">
+                    <div class="health-section-title mb-4">
+                        <span class="health-title-icon"><HealthFormIcon name="lock" /></span>
+                        <h3>Firma médica</h3>
+                    </div>
                     <template v-if="isSigned">
                         <div class="rounded border border-success/30 bg-success/10 text-success p-3 text-sm">
                             <div class="font-semibold">Documento firmado</div>
@@ -1502,8 +1512,12 @@ watch(selectedCie10, (value) => {
                 </div>
             </div>
 
-            <div class="xl:col-span-3 xl:order-1 space-y-5">
-                <div class="panel grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div class="xl:col-span-3 xl:order-1 space-y-4">
+                <div class="panel health-card grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div class="md:col-span-6 health-section-title">
+                        <span class="health-title-icon health-title-icon-blue"><HealthFormIcon name="patient" /></span>
+                        <h3>Información principal</h3>
+                    </div>
                     <div class="md:col-span-3">
                         <InputLabel value="Paciente" />
                         <div class="relative">
@@ -1566,7 +1580,10 @@ watch(selectedCie10, (value) => {
                     </div>
 
                     <div class="md:col-span-3">
-                        <InputLabel value="Doctor que atendió" />
+                        <div class="health-section-title health-inline-title">
+                            <span class="health-title-icon"><HealthFormIcon name="doctor" /></span>
+                            <h3>Doctor que atendió</h3>
+                        </div>
                         <multiselect
                             v-model="form.doctor_id"
                             :options="doctors"
@@ -1626,7 +1643,6 @@ watch(selectedCie10, (value) => {
                             :disabled="!canEdit"
                         />
                         <InputError :message="form.errors.attention_time" class="mt-1" />
-                        <div class="mt-1 text-xs text-white-dark">Solo se permite el momento actual o hasta 24 horas hacia atrás.</div>
                     </div>
 
                     <div class="md:col-span-2">
@@ -1647,28 +1663,32 @@ watch(selectedCie10, (value) => {
                             Especialidad del doctor: {{ form.doctor_id.specialty }}
                         </div>
                     </div>
+                    <div class="md:col-span-6 health-info-note">
+                        <HealthFormIcon name="clipboard" class="h-4 w-4" />
+                        <span>Solo se permite el encuentro actual o hasta 24 horas hacia atrás.</span>
+                    </div>
                 </div>
 
-                <div class="panel">
+                <div class="panel health-card health-clinical-card">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div>
-                    <InputLabel value="Relato del paciente" />
+                    <div class="health-field-title health-pink"><HealthFormIcon name="chat" />Relato del paciente</div>
                     <textarea v-model="form.patient_story" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                     <InputError :message="form.errors.patient_story" class="mt-1" />
                 </div>
                 <div>
-                    <InputLabel value="Hallazgos por observación del doctor" />
+                    <div class="health-field-title health-purple"><HealthFormIcon name="search" />Hallazgos por observación del doctor</div>
                     <textarea v-model="form.doctor_observation" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                     <InputError :message="form.errors.doctor_observation" class="mt-1" />
                 </div>
-                <div>
-                    <InputLabel value="Hallazgos clínicos" />
+                <div class="lg:col-span-2">
+                    <div class="health-field-title health-violet"><HealthFormIcon name="stethoscope" />Hallazgos clínicos</div>
                     <textarea v-model="form.clinical_findings" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                     <InputError :message="form.errors.clinical_findings" class="mt-1" />
                 </div>
                 <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <InputLabel value="Código CIE10" />
+                        <div class="health-field-title health-green"><HealthFormIcon name="tag" />Código CIE10</div>
                         <multiselect
                             v-model="selectedCie10"
                             :options="cie10CodeOptions"
@@ -1687,7 +1707,7 @@ watch(selectedCie10, (value) => {
                         />
                     </div>
                     <div>
-                        <InputLabel value="Descripción CIE10" />
+                        <div class="health-field-title health-green"><HealthFormIcon name="document" />Descripción CIE10</div>
                         <multiselect
                             v-model="selectedCie10"
                             :options="cie10DescriptionOptions"
@@ -1708,19 +1728,19 @@ watch(selectedCie10, (value) => {
                     <InputError :message="form.errors.cie10_id" class="md:col-span-2 mt-1" />
                 </div>
                 <div>
-                    <InputLabel value="Diagnóstico / comentario clínico" />
+                    <div class="health-field-title health-blue"><HealthFormIcon name="document" />Diagnóstico / comentario clínico</div>
                     <textarea v-model="form.diagnosis" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                 </div>
                 <div>
-                    <InputLabel value="Plan de tratamiento" />
+                    <div class="health-field-title health-blue"><HealthFormIcon name="clipboard" />Plan de tratamiento</div>
                     <textarea v-model="form.treatment_plan" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                 </div>
                 <div>
-                    <InputLabel value="Observaciones" />
+                    <div class="health-field-title health-blue"><HealthFormIcon name="document" />Observaciones</div>
                     <textarea v-model="form.observations" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                 </div>
                 <div class="lg:col-span-2">
-                    <InputLabel value="Indicaciones no farmacológicas" />
+                    <div class="health-field-title health-blue"><HealthFormIcon name="clipboard" />Indicaciones no farmacológicas</div>
                     <textarea
                         v-model="form.non_pharmacological_indications"
                         class="form-textarea"
@@ -1730,74 +1750,138 @@ watch(selectedCie10, (value) => {
                     ></textarea>
                     <p class="mt-1 text-xs text-white-dark">Instrucciones y recomendaciones sobre estilo de vida, dieta, ejercicio, cuidados, etc.</p>
                 </div>
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-2" :class="{ 'hidden': showVitalSigns }">
                     <button type="button" class="btn btn-outline-primary btn-sm" @click="toggleVitalSigns">
                         <icon-plus class="w-4 h-4 mr-1" />
                         {{ showVitalSigns ? 'Ocultar signos vitales' : 'Agregar signos vitales' }}
                     </button>
                 </div>
-                <div v-if="showVitalSigns" class="lg:col-span-2 rounded border border-slate-200 p-4 dark:border-slate-700">
-                    <div class="mb-3 font-semibold dark:text-white">Signos vitales</div>
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        <div>
-                            <InputLabel value="Presión arterial" />
-                            <div class="flex items-center gap-2">
-                                <TextInput
-                                    v-model="form.blood_pressure_systolic"
-                                    type="number"
-                                    min="1"
-                                    max="300"
-                                    class="form-input"
-                                    placeholder="Sístole"
-                                    :disabled="!canEdit"
-                                />
-                                <span class="text-lg font-semibold text-white-dark">/</span>
-                                <TextInput
-                                    v-model="form.blood_pressure_diastolic"
-                                    type="number"
-                                    min="1"
-                                    max="200"
-                                    class="form-input"
-                                    placeholder="Diástole"
-                                    :disabled="!canEdit"
-                                />
+                <div v-if="showVitalSigns" class="lg:col-span-2 health-vitals-panel">
+                    <div class="health-vitals-header">
+                        <div class="health-vitals-heading">
+                            <span class="health-vitals-main-icon"><HealthFormIcon name="heart-pulse" /></span>
+                            <span>
+                                <strong>Signos vitales</strong>
+                                <small>Registre las mediciones actuales del paciente.</small>
+                            </span>
+                        </div>
+                        <button type="button" class="health-vitals-toggle" @click="toggleVitalSigns">
+                            <HealthFormIcon name="eye-off" />
+                            Ocultar signos vitales
+                            <HealthFormIcon name="chevron-up" />
+                        </button>
+                    </div>
+
+                    <div class="health-vitals-grid">
+                        <section class="health-vital-card health-vital-pink">
+                            <div class="health-vital-title">
+                                <span><HealthFormIcon name="heart-pulse" /></span>
+                                <strong>Presión arterial</strong>
+                            </div>
+                            <div class="health-pressure-grid">
+                                <label>
+                                    <span>Sístole (mmHg)</span>
+                                    <div class="health-unit-input">
+                                        <TextInput v-model="form.blood_pressure_systolic" type="number" min="1" max="300" class="form-input" placeholder="Ej. 120" :disabled="!canEdit" />
+                                    </div>
+                                </label>
+                                <b>/</b>
+                                <label>
+                                    <span>Diástole (mmHg)</span>
+                                    <div class="health-unit-input">
+                                        <TextInput v-model="form.blood_pressure_diastolic" type="number" min="1" max="200" class="form-input" placeholder="Ej. 80" :disabled="!canEdit" />
+                                    </div>
+                                </label>
                             </div>
                             <InputError :message="form.errors.blood_pressure_systolic || form.errors.blood_pressure_diastolic" class="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel value="Frecuencia cardiaca" />
-                            <TextInput v-model="form.heart_rate" type="number" min="1" max="300" class="form-input" :disabled="!canEdit" />
+                        </section>
+
+                        <section class="health-vital-card health-vital-rose">
+                            <div class="health-vital-title">
+                                <span><HealthFormIcon name="heart-pulse" /></span>
+                                <strong>Frecuencia cardíaca</strong>
+                            </div>
+                            <label class="health-vital-measure">
+                                <span class="sr-only">Frecuencia cardíaca</span>
+                                <div class="health-unit-input">
+                                    <TextInput v-model="form.heart_rate" type="number" min="1" max="300" class="form-input" placeholder="Ej. 72" :disabled="!canEdit" />
+                                    <em>lpm</em>
+                                </div>
+                            </label>
                             <InputError :message="form.errors.heart_rate" class="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel value="Frecuencia respiratoria" />
-                            <TextInput v-model="form.respiratory_rate" type="number" min="1" max="120" class="form-input" :disabled="!canEdit" />
+                        </section>
+
+                        <section class="health-vital-card health-vital-sky">
+                            <div class="health-vital-title">
+                                <span><HealthFormIcon name="lungs" /></span>
+                                <strong>Frecuencia respiratoria</strong>
+                            </div>
+                            <label class="health-vital-measure">
+                                <span class="sr-only">Frecuencia respiratoria</span>
+                                <div class="health-unit-input">
+                                    <TextInput v-model="form.respiratory_rate" type="number" min="1" max="120" class="form-input" placeholder="Ej. 18" :disabled="!canEdit" />
+                                    <em>rpm</em>
+                                </div>
+                            </label>
                             <InputError :message="form.errors.respiratory_rate" class="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel value="Talla (cm)" />
-                            <TextInput v-model="form.height" type="number" min="1" max="300" step="0.01" class="form-input" :disabled="!canEdit" />
+                        </section>
+
+                        <section class="health-vital-card health-vital-cyan">
+                            <div class="health-vital-title">
+                                <span><HealthFormIcon name="ruler" /></span>
+                                <strong>Talla</strong>
+                            </div>
+                            <label class="health-vital-measure">
+                                <span>Centímetros (cm)</span>
+                                <div class="health-unit-input">
+                                    <TextInput v-model="form.height" type="number" min="1" max="300" step="0.01" class="form-input" placeholder="Ej. 170" :disabled="!canEdit" />
+                                    <em>cm</em>
+                                </div>
+                            </label>
                             <InputError :message="form.errors.height" class="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel value="Peso (kg)" />
-                            <TextInput v-model="form.weight" type="number" min="1" max="500" step="0.01" class="form-input" :disabled="!canEdit" />
+                        </section>
+
+                        <section class="health-vital-card health-vital-emerald">
+                            <div class="health-vital-title">
+                                <span><HealthFormIcon name="weight-scale" /></span>
+                                <strong>Peso</strong>
+                            </div>
+                            <label class="health-vital-measure">
+                                <span>Kilogramos (kg)</span>
+                                <div class="health-unit-input">
+                                    <TextInput v-model="form.weight" type="number" min="1" max="500" step="0.01" class="form-input" placeholder="Ej. 65" :disabled="!canEdit" />
+                                    <em>kg</em>
+                                </div>
+                            </label>
                             <InputError :message="form.errors.weight" class="mt-1" />
-                        </div>
-                        <div>
-                            <InputLabel value="IMC" />
-                            <TextInput v-model="form.body_mass_index" type="number" min="1" max="200" step="0.01" class="form-input" disabled />
+                        </section>
+
+                        <section class="health-vital-card health-vital-orange">
+                            <div class="health-vital-title">
+                                <span><HealthFormIcon name="body-mass" /></span>
+                                <strong>IMC</strong>
+                            </div>
+                            <label class="health-vital-measure">
+                                <span class="sr-only">IMC</span>
+                                <div class="health-unit-input">
+                                    <TextInput v-model="form.body_mass_index" type="number" min="1" max="200" step="0.01" class="form-input" placeholder="Ej. 22.5" disabled />
+                                    <em>kg/m²</em>
+                                </div>
+                            </label>
                             <InputError :message="form.errors.body_mass_index" class="mt-1" />
-                        </div>
+                        </section>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel health-card health-repeat-card">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <div>
-                    <h3 class="text-lg font-semibold dark:text-white">Tratamientos</h3>
+                    <div class="health-section-title">
+                        <span class="health-title-icon health-title-icon-blue"><HealthFormIcon name="treatment" /></span>
+                        <h3>Tratamientos</h3>
+                    </div>
                     <p class="text-sm text-white-dark">Farmacologicos, dentales, preventivos u otros tratamientos indicados.</p>
                 </div>
                 <button v-if="canEdit" type="button" class="btn btn-outline-primary btn-sm" @click="addTreatment">
@@ -1887,10 +1971,13 @@ watch(selectedCie10, (value) => {
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel health-card health-repeat-card">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <div>
-                    <h3 class="text-lg font-semibold dark:text-white">Exámenes complementarios</h3>
+                    <div class="health-section-title">
+                        <span class="health-title-icon health-title-icon-blue"><HealthFormIcon name="flask" /></span>
+                        <h3>Exámenes complementarios</h3>
+                    </div>
                     <p class="text-sm text-white-dark">Radiografias, tomografias, laboratorio u otros estudios.</p>
                 </div>
                 <button v-if="canEdit" type="button" class="btn btn-outline-primary btn-sm" @click="addExam">
@@ -1942,23 +2029,31 @@ watch(selectedCie10, (value) => {
 
         <Odontogram v-if="isDentalServiceType(form.service_type)" v-model="form.odontogram" :disabled="!canEdit" />
 
-        <div class="flex justify-between items-center">
-            <span class="text-primary text-sm">Los campos paciente, doctor y momento de atención son obligatorios.</span>
-            <Keypad>
-                <template #botones>
-                    <PrimaryButton :disabled="form.processing || !canEdit" :class="{ 'opacity-25': form.processing || !canEdit }">
-                        {{ isEdit ? 'Actualizar' : 'Guardar' }}
-                    </PrimaryButton>                        <button v-if="isEdit && !isSigned" type="button" class="btn btn-danger ml-2" :class="{ 'opacity-25 cursor-not-allowed': signing }" :disabled="signing" @click="signAttention">
-                            <svg v-if="signing" class="inline-block h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
-                            </svg>
-                            {{ signing ? 'Firmando...' : 'Firmar' }}
-                        </button>
-                    <Link :href="route('heal_attentions_list')" class="ml-2">
-                        <SecondaryButton type="button">Volver</SecondaryButton>
-                    </Link>
-                </template>
-            </Keypad>
+        <div class="health-action-bar">
+            <span class="health-info-note">
+                <HealthFormIcon name="clipboard" class="h-4 w-4" />
+                Los campos paciente, doctor y momento de atención son obligatorios.
+            </span>
+            <div class="health-action-buttons">
+                <Link :href="route('health_dashboard')" class="health-nav-button">
+                    <HealthFormIcon name="home" class="h-4 w-4" />
+                    Panel de inicio
+                </Link>
+                <PrimaryButton :disabled="form.processing || !canEdit" :class="['health-save-button', { 'opacity-25': form.processing || !canEdit }]">
+                    <HealthFormIcon name="save" class="h-4 w-4" />
+                    {{ isEdit ? 'Actualizar' : 'Guardar' }}
+                </PrimaryButton>
+                <button v-if="isEdit && !isSigned" type="button" class="btn btn-danger health-sign-bottom" :class="{ 'opacity-25 cursor-not-allowed': signing }" :disabled="signing" @click="signAttention">
+                    <svg v-if="signing" class="inline-block h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                    </svg>
+                    {{ signing ? 'Firmando...' : 'Firmar' }}
+                </button>
+                <Link :href="route('heal_attentions_list')" class="health-back-button">
+                    <HealthFormIcon name="back" class="h-4 w-4" />
+                    Volver
+                </Link>
+            </div>
         </div>
 
         <div v-if="showCreatePatientModal" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4 py-6">
@@ -2135,3 +2230,511 @@ watch(selectedCie10, (value) => {
         </div>
     </form>
 </template>
+
+<style scoped>
+.health-attention-shell {
+    --health-blue: #4f63f6;
+    --health-blue-dark: #24328e;
+    --health-soft-blue: #eef2ff;
+    --health-line: #dbe5ff;
+    --health-text: #101a44;
+    --health-muted: #66749b;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 5.75rem;
+}
+
+.health-attention-shell :deep(.panel),
+.health-card,
+.health-side-card,
+.health-side-hero {
+    border: 1px solid rgba(186, 202, 245, 0.72);
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(124, 139, 255, 0.09), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 255, 0.94));
+    box-shadow: 0 12px 32px rgba(31, 45, 108, 0.08);
+}
+
+.health-alert {
+    border-radius: 10px;
+}
+
+.health-side-hero {
+    min-height: 190px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 77% 35%, rgba(81, 99, 246, 0.18), transparent 20%),
+        linear-gradient(135deg, #f2f5ff 0%, #e9e7ff 100%);
+}
+
+.health-hero-illustration {
+    display: flex;
+    height: 86px;
+    width: 86px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--health-blue);
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(79, 99, 246, 0.18), 0 12px 28px rgba(79, 99, 246, 0.14);
+}
+
+.health-patient-avatar {
+    box-shadow: 0 10px 24px rgba(79, 99, 246, 0.18);
+}
+
+.health-soft-danger {
+    border-color: rgba(255, 56, 96, 0.35);
+    background: rgba(255, 56, 96, 0.08);
+}
+
+.health-section-title,
+.health-field-title,
+.health-info-note,
+.health-action-buttons,
+.health-nav-button,
+.health-back-button {
+    display: flex;
+    align-items: center;
+}
+
+.health-section-title {
+    gap: 0.65rem;
+    color: var(--health-text);
+}
+
+.health-section-title h3 {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.health-inline-title {
+    margin-bottom: 0.75rem;
+}
+
+.health-title-icon {
+    display: inline-flex;
+    height: 30px;
+    width: 30px;
+    flex: 0 0 30px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--health-blue);
+    background: #eef1ff;
+    box-shadow: inset 0 0 0 1px rgba(79, 99, 246, 0.18);
+}
+
+.health-title-icon svg {
+    height: 18px;
+    width: 18px;
+}
+
+.health-title-icon-blue {
+    color: #2c6ae8;
+    background: #eaf3ff;
+}
+
+.health-field-title {
+    gap: 0.45rem;
+    margin-bottom: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--health-text);
+}
+
+.health-field-title svg {
+    height: 18px;
+    width: 18px;
+}
+
+.health-pink { color: #c026d3; }
+.health-purple { color: #9333ea; }
+.health-violet { color: #7c3aed; }
+.health-green { color: #10b981; }
+.health-blue { color: #2c6ae8; }
+
+.health-info-note {
+    gap: 0.45rem;
+    width: fit-content;
+    color: var(--health-blue);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.health-attention-shell :deep(label),
+.health-attention-shell :deep(.form-label) {
+    color: #17214d;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.health-attention-shell :deep(.form-input),
+.health-attention-shell :deep(.form-select),
+.health-attention-shell :deep(.form-textarea),
+.health-attention-shell :deep(.multiselect__tags) {
+    min-height: 42px;
+    border-color: var(--health-line);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.92);
+    color: var(--health-text);
+    box-shadow: 0 6px 18px rgba(44, 78, 156, 0.05);
+}
+
+.health-attention-shell :deep(.form-input:focus),
+.health-attention-shell :deep(.form-select:focus),
+.health-attention-shell :deep(.form-textarea:focus),
+.health-attention-shell :deep(.multiselect--active .multiselect__tags) {
+    border-color: rgba(79, 99, 246, 0.72);
+    box-shadow: 0 0 0 3px rgba(79, 99, 246, 0.12);
+}
+
+.health-attention-shell :deep(.form-textarea) {
+    min-height: 58px;
+}
+
+.health-clinical-card :deep(.form-textarea) {
+    min-height: 72px;
+}
+
+.health-repeat-card :deep(.border.rounded) {
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.health-vitals-panel {
+    padding: 1.35rem;
+    border: 1px solid rgba(186, 202, 245, 0.68);
+    border-radius: 10px;
+    background:
+        radial-gradient(circle at 8% 0%, rgba(124, 139, 255, 0.08), transparent 30%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(252, 253, 255, 0.96));
+    box-shadow: 0 12px 32px rgba(31, 45, 108, 0.08);
+}
+
+.health-vitals-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.15rem;
+    border-bottom: 2px solid rgba(116, 96, 255, 0.72);
+}
+
+.health-vitals-heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--health-text);
+}
+
+.health-vitals-heading strong {
+    display: block;
+    font-size: 1.12rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.health-vitals-heading small {
+    display: block;
+    margin-top: 0.35rem;
+    color: #516083;
+    font-size: 0.9rem;
+}
+
+.health-vitals-main-icon,
+.health-vital-title span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+}
+
+.health-vitals-main-icon {
+    height: 48px;
+    width: 48px;
+    flex: 0 0 48px;
+    color: #5b48ff;
+    background: #f0edff;
+}
+
+.health-vitals-main-icon svg {
+    height: 29px;
+    width: 29px;
+}
+
+.health-vitals-toggle {
+    display: inline-flex;
+    min-height: 48px;
+    min-width: 230px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    border: 1px solid rgba(105, 91, 255, 0.66);
+    border-radius: 9px;
+    color: #5148f2;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(81, 72, 242, 0.07);
+}
+
+.health-vitals-toggle svg {
+    height: 20px;
+    width: 20px;
+}
+
+.health-vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    padding-top: 1.35rem;
+}
+
+.health-vital-card {
+    min-height: 160px;
+    padding: 1.2rem 1.35rem;
+    border: 1px solid rgba(225, 231, 246, 0.78);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow: 0 16px 32px rgba(31, 45, 108, 0.08);
+}
+
+.health-vital-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.15rem;
+    color: var(--health-text);
+}
+
+.health-vital-title span {
+    height: 46px;
+    width: 46px;
+    flex: 0 0 46px;
+    background: var(--vital-bg);
+    color: var(--vital-color);
+}
+
+.health-vital-title svg {
+    height: 25px;
+    width: 25px;
+}
+
+.health-vital-title strong {
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.health-vital-measure,
+.health-pressure-grid label {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.45rem;
+    color: #364668;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.health-pressure-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: end;
+    gap: 0.8rem;
+}
+
+.health-pressure-grid > b {
+    padding-bottom: 0.8rem;
+    color: #59637d;
+    font-size: 1.15rem;
+}
+
+.health-unit-input {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+}
+
+.health-unit-input :deep(.form-input) {
+    width: 100%;
+    height: 50px;
+    min-height: 50px;
+    border-color: color-mix(in srgb, var(--vital-color) 42%, #dbe5ff);
+    border-radius: 8px;
+    padding-left: 1rem;
+    padding-right: 4.7rem;
+    color: var(--health-text);
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.health-unit-input :deep(.form-input::placeholder) {
+    color: #8a98b6;
+}
+
+.health-unit-input em {
+    position: absolute;
+    inset-block: 1px;
+    right: 1px;
+    display: inline-flex;
+    min-width: 58px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 7px 7px 0;
+    color: var(--vital-color);
+    background: color-mix(in srgb, var(--vital-color) 8%, #ffffff);
+    font-style: normal;
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
+.health-vital-pink {
+    --vital-color: #d12ac4;
+    --vital-bg: #fdeafd;
+}
+
+.health-vital-rose {
+    --vital-color: #f43f77;
+    --vital-bg: #ffeaf1;
+}
+
+.health-vital-sky {
+    --vital-color: #1f7df2;
+    --vital-bg: #eaf4ff;
+}
+
+.health-vital-cyan {
+    --vital-color: #10bcd5;
+    --vital-bg: #e9fbfd;
+}
+
+.health-vital-emerald {
+    --vital-color: #0fae71;
+    --vital-bg: #e9fbf1;
+}
+
+.health-vital-orange {
+    --vital-color: #f28a19;
+    --vital-bg: #fff3e7;
+}
+
+.health-action-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 25;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 -1.25rem -1.25rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid rgba(186, 202, 245, 0.65);
+    background: rgba(248, 250, 255, 0.93);
+    backdrop-filter: blur(10px);
+}
+
+.health-action-buttons {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.health-nav-button,
+.health-back-button,
+.health-save-button,
+.health-sign-bottom {
+    min-height: 46px;
+    min-width: 140px;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0;
+}
+
+.health-nav-button {
+    border: 1px solid rgba(79, 99, 246, 0.35);
+    color: var(--health-blue);
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(79, 99, 246, 0.08);
+}
+
+.health-back-button {
+    border: 1px solid rgba(239, 68, 68, 0.42);
+    color: #ef4444;
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(239, 68, 68, 0.08);
+}
+
+.health-save-button {
+    border: 0;
+    color: #ffffff;
+    background: linear-gradient(135deg, #5968ff, #2935d8);
+    box-shadow: 0 12px 24px rgba(79, 99, 246, 0.24);
+}
+
+.health-sign-bottom {
+    min-width: 118px;
+}
+
+@media (max-width: 767px) {
+    .health-vitals-panel {
+        padding: 1rem;
+    }
+
+    .health-vitals-header,
+    .health-vitals-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .health-vitals-toggle,
+    .health-vitals-grid {
+        width: 100%;
+    }
+
+    .health-vitals-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .health-pressure-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .health-pressure-grid > b {
+        display: none;
+    }
+
+    .health-action-bar {
+        position: static;
+        margin: 0;
+        padding: 1rem 0 0;
+        background: transparent;
+        backdrop-filter: none;
+    }
+
+    .health-action-buttons,
+    .health-action-buttons > * {
+        width: 100%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+    .health-vitals-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+</style>
