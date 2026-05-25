@@ -6,6 +6,7 @@ import { Link, router, useForm } from '@inertiajs/vue3';
 import IconSearch from '@/Components/vristo/icon/icon-search.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconPencil from '@/Components/vristo/icon/icon-pencil.vue';
+import IconEye from '@/Components/vristo/icon/icon-eye.vue';
 import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import IconTooth from '@/Components/vristo/icon/icon-tooth.vue';
 import IconHeart from '@/Components/vristo/icon/icon-heart.vue';
@@ -53,14 +54,77 @@ const formatDate = (value) => {
     }).format(new Date(value));
 };
 
+const editAttention = (attention) => {
+    if (attention.signed_at) {
+        const doctorName = attention.doctor?.person?.full_name || 'el doctor';
+
+        Swal.fire({
+            title: '¡Atención firmada!',
+            html: `
+                <div class="flex flex-col items-center gap-4">
+                    <div class="flex h-28 w-28 animate-pulse items-center justify-center rounded-full bg-warning/20 text-warning">
+                        <svg width="68" height="68" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-bounce">
+                            <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="1.8" />
+                            <path d="M2 12C2 12 5 4 12 4C19 4 22 12 22 12C22 12 19 20 12 20C5 20 2 12 2 12Z" stroke="currentColor" stroke-width="1.8" />
+                            <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12" stroke="currentColor" stroke-width="1.8" />
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <p class="m-0 text-base font-semibold">Esta atención ya fue <span class="text-warning">firmada</span></p>
+                        <p class="m-0 mt-1 text-sm text-white-dark">
+                            Fue firmada por <strong>${doctorName}</strong> y <span class="text-danger font-semibold">no puede modificarse</span>.
+                        </p>
+                    </div>
+                    <div class="mt-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning-dark dark:text-warning">
+                        <svg class="inline-block h-4 w-4 ltr:mr-1 rtl:ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8V12" stroke-linecap="round" />
+                            <circle cx="12" cy="16" r="0.5" fill="currentColor" />
+                        </svg>
+                        Los documentos firmados quedan bloqueados para mantener su integridad médico legal.
+                    </div>
+                </div>
+            `,
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            customClass: {
+                popup: 'sweet-alerts animate__animated animate__headShake',
+                confirmButton: 'btn btn-warning',
+            },
+            buttonsStyling: false,
+            padding: '2em',
+        });
+        return;
+    }
+
+    router.visit(route('heal_attentions_edit', attention.id));
+};
+
 const deleteAttention = (attention) => {
     if (attention.signed_at) {
         Swal.fire({
-            icon: 'info',
-            title: 'Atención firmada',
-            text: 'Esta atención ya fue firmada y no puede eliminarse.',
+            title: '¡Atención firmada!',
+            html: `
+                <div class="flex flex-col items-center gap-4">
+                    <div class="flex h-24 w-24 animate-pulse items-center justify-center rounded-full bg-danger/20 text-danger">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-bounce">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" />
+                            <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                    </div>
+                    <p class="m-0 text-base font-semibold">Esta atención ya fue <span class="text-danger">firmada</span> por el doctor</p>
+                    <p class="m-0 text-sm text-white-dark">Las atenciones firmadas no pueden ser eliminadas.</p>
+                </div>
+            `,
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            customClass: {
+                popup: 'sweet-alerts animate__animated animate__headShake',
+                confirmButton: 'btn btn-danger',
+            },
+            buttonsStyling: false,
             padding: '2em',
-            customClass: 'sweet-alerts',
         });
         return;
     }
@@ -160,24 +224,46 @@ const deleteAttention = (attention) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="attention in attentions.data" :key="attention.id">
+                                <tr
+                                    v-for="(attention, index) in attentions.data"
+                                    :key="attention.id"
+                                    :class="[
+                                        'transition-all duration-150 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-md att-row',
+                                        index % 2 === 0 ? 'att-sky' : 'att-amber'
+                                    ]"
+                                >
                                     <td>
                                         <div class="flex gap-1 items-center justify-center">
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-primary"
+                                                :class="{ 'opacity-50 cursor-not-allowed': attention.signed_at }"
+                                                v-tippy="{
+                                                    content: attention.signed_at ? 'Firmada - No se puede editar' : 'Editar',
+                                                    placement: 'bottom'
+                                                }"
+                                                @click="editAttention(attention)"
+                                            >
+                                                <IconPencil class="w-4 h-4 text-white" />
+                                            </button>
                                             <Link
                                                 :href="route('heal_attentions_edit', attention.id)"
-                                                class="btn btn-sm btn-outline-primary"
-                                                v-tippy="{ content: 'Editar', placement: 'bottom' }"
+                                                class="btn btn-sm btn-info"
+                                                v-tippy="{ content: 'Ver Atención', placement: 'bottom' }"
                                             >
-                                                <IconPencil class="w-4 h-4" />
+                                                <IconEye class="w-4 h-4 text-white" />
                                             </Link>
                                             <button
                                                 type="button"
-                                                class="btn btn-sm btn-outline-danger"
-                                                :disabled="Boolean(attention.signed_at)"
-                                                v-tippy="{ content: 'Eliminar', placement: 'bottom' }"
+                                                class="btn btn-sm btn-danger"
+                                                :class="{ 'opacity-50 cursor-not-allowed': attention.signed_at }"
+                                                v-tippy="{
+                                                    content: attention.signed_at ? 'Firmada - No se puede eliminar' : 'Eliminar',
+                                                    placement: 'bottom'
+                                                }"
                                                 @click="deleteAttention(attention)"
                                             >
-                                                <IconTrash class="w-4 h-4" />
+                                                <IconTrash class="w-4 h-4 text-white" />
                                             </button>
                                         </div>
                                     </td>
@@ -214,3 +300,37 @@ const deleteAttention = (attention) => {
         </div>
     </AppLayout>
 </template>
+
+<style>
+/* ===== Attentions List - Row colors & hover ===== */
+/* Light mode */
+table tbody tr.att-row.att-sky {
+    background-color: #e0f2fe !important; /* sky-100 */
+}
+table tbody tr.att-row.att-amber {
+    background-color: #fef3c7 !important; /* amber-100 */
+}
+table tbody tr.att-row:hover {
+    background-color: #a7f3d0 !important; /* emerald-200 */
+}
+table tbody tr.att-row td {
+    background-color: transparent !important;
+}
+
+/* Dark mode */
+.dark table tbody tr.att-row.att-sky {
+    background-color: #0c4a6e !important; /* sky-900 */
+    color: #f1f5f9 !important;
+}
+.dark table tbody tr.att-row.att-amber {
+    background-color: #78350f !important; /* amber-900 */
+    color: #f1f5f9 !important;
+}
+.dark table tbody tr.att-row:hover {
+    background-color: #065f46 !important; /* emerald-800 */
+    color: #f1f5f9 !important;
+}
+.dark table tbody tr.att-row td {
+    background-color: transparent !important;
+}
+</style>

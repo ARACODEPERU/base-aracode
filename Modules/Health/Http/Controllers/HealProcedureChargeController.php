@@ -36,7 +36,15 @@ class HealProcedureChargeController extends Controller
                         });
                 });
             })
-            ->when($onlyPending, fn ($query) => $query->where('status', 'pending'))
+            ->when($onlyPending, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('status', 'pending')
+                        ->orWhere(function ($paidWithoutDocument) {
+                            $paidWithoutDocument->where('status', 'paid')
+                                ->whereNull('sale_document_id');
+                        });
+                });
+            })
             ->when(!$onlyPending && $status, fn ($query) => $query->where('status', $status))
             ->latest('charged_at')
             ->latest('id')
@@ -210,7 +218,7 @@ class HealProcedureChargeController extends Controller
     public function updateChargeStatus(Request $request, HealPatientCharge $charge): RedirectResponse
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['pending', 'billed', 'paid', 'cancelled'])],
+            'status' => ['required', Rule::in(['cancelled'])],
         ]);
 
         $charge->update($data);
@@ -227,11 +235,17 @@ class HealProcedureChargeController extends Controller
 
         $charges = HealPatientCharge::with('patient.person')
             ->whereIn('id', $data['charge_ids'])
-            ->where('status', 'pending')
+            ->where(function ($query) {
+                $query->where('status', 'pending')
+                    ->orWhere(function ($paidWithoutDocument) {
+                        $paidWithoutDocument->where('status', 'paid')
+                            ->whereNull('sale_document_id');
+                    });
+            })
             ->get();
 
         if ($charges->isEmpty()) {
-            return back()->withErrors(['charges' => 'Selecciona cobros pendientes para revisar en Sales.']);
+            return back()->withErrors(['charges' => 'Selecciona cobros pendientes o pagados sin documento para revisar en Sales.']);
         }
 
         $patientIds = $charges->pluck('patient_id')->unique();

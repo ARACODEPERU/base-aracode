@@ -109,7 +109,16 @@ const formatDate = (value) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="patient in patients.data" :key="patient.id">
+                                <tr
+                                    v-for="(patient, index) in patients.data"
+                                    :key="patient.id"
+                                    :class="[
+                                        'transition-all duration-150 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-md tr-custom-bg',
+                                        index % 2 === 0
+                                            ? 'tr-sky'
+                                            : 'tr-amber',
+                                    ]"
+                                >
                                     <td>
                                         <div class="font-semibold">{{ patient.full_name }}</div>
                                         <div class="text-xs text-white-dark">{{ patient.patient_code || 'Sin código' }}</div>
@@ -147,3 +156,55 @@ const formatDate = (value) => {
         </div>
     </AppLayout>
 </template>
+
+<style>
+table tbody tr.tr-custom-bg td {
+    background-color: transparent !important;
+}
+
+table tbody tr.tr-custom-bg:hover td {
+    background-color: transparent !important;
+}
+
+table tbody tr.tr-sky {
+    background-color: #e0f2fe !important;
+}
+
+table tbody tr.tr-sky:hover {
+    background-color: #a7f3d0 !important;
+}
+
+table tbody tr.tr-amber {
+    background-color: #fef3c7 !important;
+}
+
+table tbody tr.tr-amber:hover {
+    background-color: #a7f3d0 !important;
+}
+
+.dark table tbody tr.tr-sky {
+    background-color: #0c4a6e !important;
+    color: #f1f5f9 !important;
+}
+
+.dark table tbody tr.tr-sky:hover {
+    background-color: #065f46 !important;
+}
+
+.dark table tbody tr.tr-amber {
+    background-color: #78350f !important;
+    color: #f1f5f9 !important;
+}
+
+.dark table tbody tr.tr-amber:hover {
+    background-color: #065f46 !important;
+}
+
+.dark table tbody tr.tr-custom-bg td {
+    background-color: transparent !important;
+}
+
+.dark table tbody tr.tr-custom-bg:hover td {
+    background-color: transparent !important;
+}
+</style>

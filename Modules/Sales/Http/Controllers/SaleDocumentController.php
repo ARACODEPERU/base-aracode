@@ -604,7 +604,7 @@ class SaleDocumentController extends Controller
                 HealPatientCharge::whereIn('id', $healthChargeIds)->update([
                     'sale_id' => $res->sale_id,
                     'sale_document_id' => $res->id,
-                    'status' => 'billed',
+                    'status' => 'paid',
                 ]);
             }
 

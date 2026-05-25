@@ -14,6 +14,7 @@ import IconPencil from '@/Components/vristo/icon/icon-pencil.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconSearch from '@/Components/vristo/icon/icon-search.vue';
 import IconTooth from '@/Components/vristo/icon/icon-tooth.vue';
+import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import Swal from 'sweetalert2';
 import PendingSignatureReminder from '../../Components/PendingSignatureReminder.vue';
 
@@ -98,7 +99,8 @@ const attentionSearch = reactive({
 const activeProcedures = computed(() => props.procedures.filter((procedure) => procedure.is_active));
 const selectedProcedure = computed(() => props.procedures.find((procedure) => Number(procedure.id) === Number(quickCharge.procedure_id)));
 
-const pendingVisibleCharges = computed(() => (props.charges.data || []).filter((charge) => charge.status === 'pending'));
+const needsSaleDocument = (charge) => !charge.sale_document_id && !charge.sale_document && ['pending', 'paid'].includes(charge.status);
+const reviewableVisibleCharges = computed(() => (props.charges.data || []).filter((charge) => needsSaleDocument(charge)));
 const groupedCharges = computed(() => {
     const groups = new Map();
 
@@ -147,19 +149,31 @@ const attentionLabel = (charge) => {
     return `${formatDate(charge.attention.attention_at || charge.charged_at)} - ${doctorName}`;
 };
 
-const statusLabel = (status) => ({
+const statusLabel = (charge) => {
+    if (charge.status === 'paid' && needsSaleDocument(charge)) {
+        return 'Pagado sin documento';
+    }
+
+    return ({
     pending: 'Pendiente',
     billed: 'Facturado',
     paid: 'Pagado',
     cancelled: 'Anulado',
-}[status] || status);
+    }[charge.status] || charge.status);
+};
 
-const statusClass = (status) => ({
+const statusClass = (charge) => {
+    if (charge.status === 'paid' && needsSaleDocument(charge)) {
+        return 'bg-warning';
+    }
+
+    return ({
     pending: 'bg-warning',
     billed: 'bg-info',
     paid: 'bg-success',
     cancelled: 'bg-danger',
-}[status] || 'bg-secondary');
+    }[charge.status] || 'bg-secondary');
+};
 
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
     '&': '&amp;',
@@ -467,10 +481,10 @@ const confirmCancelCharge = (charge) => {
 };
 
 const openSalesReviewModal = (group) => {
-    const pendingCharges = group.charges.filter((charge) => charge.status === 'pending');
+    const pendingCharges = group.charges.filter((charge) => needsSaleDocument(charge));
 
     if (!pendingCharges.length) {
-        Swal.fire({ icon: 'info', title: 'Sin cobros pendientes', text: 'Este paciente no tiene cobros pendientes para enviar a Sales.', customClass: 'sweet-alerts', padding: '2em' });
+        Swal.fire({ icon: 'info', title: 'Sin cobros por documentar', text: 'Este paciente no tiene cobros pendientes o pagados sin documento para enviar a Sales.', customClass: 'sweet-alerts', padding: '2em' });
         return;
     }
 
@@ -490,14 +504,14 @@ const closeSalesReviewModal = () => {
 const prepareSalesReview = (chargeIds = null) => {
     const idsToReview = chargeIds || (selectedChargeIds.value.length
         ? selectedChargeIds.value
-        : pendingVisibleCharges.value.map((charge) => charge.id));
-    const patientIds = pendingVisibleCharges.value
+        : reviewableVisibleCharges.value.map((charge) => charge.id));
+    const patientIds = reviewableVisibleCharges.value
         .filter((charge) => idsToReview.includes(charge.id))
         .map((charge) => charge.patient_id);
     const uniquePatientIds = [...new Set(patientIds)];
 
     if (!idsToReview.length) {
-        Swal.fire({ icon: 'info', title: 'Sin cobros pendientes', text: 'Registra o marca cobros pendientes antes de revisar en Sales.', customClass: 'sweet-alerts', padding: '2em' });
+        Swal.fire({ icon: 'info', title: 'Sin cobros por documentar', text: 'Registra cobros pendientes o pagados sin documento antes de revisar en Sales.', customClass: 'sweet-alerts', padding: '2em' });
         return;
     }
 
@@ -587,7 +601,7 @@ const prepareSelectedSalesReview = () => {
                             <div>
                                 <InputLabel value="Paciente" />
                                 <div class="relative">
-                                    <TextInput v-model="patientSearch.term" type="text" class="form-input pr-10" placeholder="Buscar paciente" @keyup.enter.prevent="searchPatients" />
+                                    <TextInput v-model="patientSearch.term" type="text" class="form-input pr-10" placeholder="Buscar paciente" @keydown.enter.prevent.stop="searchPatients" />
                                     <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-white-dark" @click="searchPatients">
                                         <IconSearch class="h-4 w-4" />
                                     </button>
@@ -605,6 +619,11 @@ const prepareSelectedSalesReview = () => {
                                         <div class="text-xs text-white-dark">{{ patient.person.number }}</div>
                                     </button>
                                 </div>
+                            </div>
+
+                            <div>
+                                <InputLabel value="Fecha" />
+                                <TextInput v-model="quickCharge.charged_at" type="datetime-local" class="form-input" />
                             </div>
 
                             <div>
@@ -650,7 +669,7 @@ const prepareSelectedSalesReview = () => {
                                 <div v-else class="text-sm text-white-dark">Esta atención no tiene tratamientos registrados.</div>
                             </div>
 
-                            <div class="rounded border border-dashed border-slate-300 p-3 dark:border-slate-700">
+                            <div class="rounded border border-dashed border-emerald-300 bg-emerald-100 p-3 dark:border-emerald-600 dark:bg-emerald-900/40">
                                 <div class="mb-3 font-semibold">Agregar procedimiento adicional</div>
                                 <InputLabel value="Procedimiento" />
                                 <select v-model="quickCharge.procedure_id" class="form-select" @change="syncProcedurePrice">
@@ -680,18 +699,29 @@ const prepareSelectedSalesReview = () => {
                                 </button>
                             </div>
 
-                            <div>
-                                <InputLabel value="Fecha" />
-                                <TextInput v-model="quickCharge.charged_at" type="datetime-local" class="form-input" />
-                            </div>
+                            <div class="border-t-2 border-slate-300 dark:border-slate-600"></div>
 
                             <div class="space-y-2">
                                 <div class="font-semibold">Procedimientos a cobrar</div>
                                 <div v-if="chargeForm.charges.length" class="space-y-2">
-                                    <div v-for="(charge, index) in chargeForm.charges" :key="index" class="rounded border border-slate-200 p-3 dark:border-slate-700">
+                                    <div
+                                        v-for="(charge, index) in chargeForm.charges"
+                                        :key="index"
+                                        class="rounded border p-3"
+                                        :class="index % 2 === 0
+                                            ? 'border-sky-200 bg-sky-50/80 dark:border-sky-700/60 dark:bg-sky-900/20'
+                                            : 'border-amber-200 bg-amber-50/80 dark:border-amber-700/60 dark:bg-amber-900/20'"
+                                    >
                                         <div class="mb-2 flex items-start justify-between gap-2">
                                             <div class="font-semibold">{{ charge.name }}</div>
-                                            <button type="button" class="text-danger" @click="removeChargeRow(index)">Quitar</button>
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-danger p-1.5"
+                                                v-tippy="{ content: 'Quitar este procedimiento de la lista', placement: 'left' }"
+                                                @click="removeChargeRow(index)"
+                                            >
+                                                <IconTrash class="h-4 w-4 text-white" />
+                                            </button>
                                         </div>
                                         <div class="grid grid-cols-2 gap-3">
                                             <div>
@@ -726,7 +756,7 @@ const prepareSelectedSalesReview = () => {
                             <div class="flex flex-wrap gap-2">
                                 <label class="inline-flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
                                     <input v-model="filters.only_pending" type="checkbox" class="form-checkbox" @change="toggleOnlyPending" />
-                                    <span>Mostrar solo pendientes de pago</span>
+                                    <span>Mostrar pendientes por documentar</span>
                                 </label>
                                 <select v-model="filters.status" class="form-select w-40" :disabled="filters.only_pending" @change="search">
                                     <option value="">Todos</option>
@@ -742,18 +772,20 @@ const prepareSelectedSalesReview = () => {
                                     </button>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-success" :disabled="reviewingSales" @click="prepareSalesReview()">
-                                <IconCreditCard class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
-                                {{ reviewingSales ? 'Preparando...' : 'Revisar en Sales' }}
-                            </button>
                         </div>
 
                         <Pagination :data="charges">
                             <div class="space-y-4 p-5 pt-0">
                                 <div
-                                    v-for="group in groupedCharges"
+                                    v-for="(group, groupIndex) in groupedCharges"
                                     :key="group.patient_id"
-                                    class="rounded border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+                                    :class="[
+                                        'transition-all duration-150 rounded border group-card',
+                                        'hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-md',
+                                        groupIndex % 2 === 0
+                                            ? 'border-sky-200 bg-sky-50 dark:border-sky-700 card-sky'
+                                            : 'border-amber-200 bg-amber-50 dark:border-amber-700 card-amber',
+                                    ]"
                                 >
                                     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-700">
                                         <div>
@@ -763,7 +795,7 @@ const prepareSelectedSalesReview = () => {
                                         <button
                                             type="button"
                                             class="btn btn-outline-success btn-sm"
-                                            :disabled="reviewingSales || !group.charges.some((charge) => charge.status === 'pending')"
+                                            :disabled="reviewingSales || !group.charges.some((charge) => needsSaleDocument(charge))"
                                             @click="openSalesReviewModal(group)"
                                         >
                                             <IconCreditCard class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
@@ -778,7 +810,7 @@ const prepareSelectedSalesReview = () => {
                                             class="grid grid-cols-1 gap-3 p-4 md:grid-cols-12 md:items-center"
                                         >
                                             <div class="md:col-span-1">
-                                                <input v-if="charge.status === 'pending'" v-model="selectedChargeIds" type="checkbox" class="form-checkbox" :value="charge.id" />
+                                                <input v-if="needsSaleDocument(charge)" v-model="selectedChargeIds" type="checkbox" class="form-checkbox" :value="charge.id" />
                                             </div>
                                             <div class="md:col-span-4">
                                                 <div class="font-semibold">{{ charge.name_snapshot }}</div>
@@ -787,11 +819,10 @@ const prepareSelectedSalesReview = () => {
                                             <div class="md:col-span-2 text-sm">{{ formatDate(charge.charged_at) }}</div>
                                             <div class="md:col-span-2 font-semibold">{{ formatMoney(charge.total, charge.currency_type_id) }}</div>
                                             <div class="md:col-span-1">
-                                                <span class="badge" :class="statusClass(charge.status)">{{ statusLabel(charge.status) }}</span>
+                                                <span class="badge" :class="statusClass(charge)">{{ statusLabel(charge) }}</span>
                                             </div>
                                             <div class="md:col-span-2">
                                                 <div class="flex flex-wrap justify-end gap-1">
-                                                    <button v-if="charge.status === 'pending'" type="button" class="btn btn-sm btn-outline-success" @click="changeStatus(charge, 'paid')">Pagado</button>
                                                     <button v-if="charge.status !== 'cancelled'" type="button" class="btn btn-sm btn-outline-danger" @click="changeStatus(charge, 'cancelled')">Anular</button>
                                                 </div>
                                             </div>
@@ -947,3 +978,39 @@ const prepareSelectedSalesReview = () => {
         </div>
     </AppLayout>
 </template>
+
+<style>
+.group-card.card-sky {
+    background-color: #f0f9ff !important;
+}
+
+.group-card.card-sky:hover {
+    background-color: #a7f3d0 !important;
+}
+
+.group-card.card-amber {
+    background-color: #fffbeb !important;
+}
+
+.group-card.card-amber:hover {
+    background-color: #a7f3d0 !important;
+}
+
+.dark .group-card.card-sky {
+    background-color: #0c4a6e !important;
+    color: #f1f5f9 !important;
+}
+
+.dark .group-card.card-sky:hover {
+    background-color: #065f46 !important;
+}
+
+.dark .group-card.card-amber {
+    background-color: #78350f !important;
+    color: #f1f5f9 !important;
+}
+
+.dark .group-card.card-amber:hover {
+    background-color: #065f46 !important;
+}
+</style>
