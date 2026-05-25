@@ -2690,6 +2690,172 @@ watch(selectedCie10, (value) => {
     min-width: 118px;
 }
 
+.dark .health-attention-shell {
+    --health-blue: #8ea0ff;
+    --health-blue-dark: #c7d2fe;
+    --health-soft-blue: rgba(99, 102, 241, 0.14);
+    --health-line: rgba(100, 116, 139, 0.72);
+    --health-text: #eef4ff;
+    --health-muted: #94a3b8;
+}
+
+.dark .health-attention-shell :deep(.panel),
+.dark .health-card,
+.dark .health-side-card,
+.dark .health-side-hero {
+    border-color: rgba(71, 85, 105, 0.78);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(99, 102, 241, 0.16), transparent 30%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+}
+
+.dark .health-side-hero {
+    background:
+        radial-gradient(circle at 77% 35%, rgba(129, 140, 248, 0.22), transparent 24%),
+        linear-gradient(135deg, #111827 0%, #1e1b4b 100%);
+}
+
+.dark .health-hero-illustration {
+    color: #a5b4fc;
+    background: rgba(30, 41, 59, 0.78);
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.26), 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.dark .health-section-title,
+.dark .health-field-title,
+.dark .health-vitals-heading,
+.dark .health-vital-title {
+    color: var(--health-text);
+}
+
+.dark .health-title-icon {
+    color: #a5b4fc;
+    background: rgba(79, 70, 229, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.24);
+}
+
+.dark .health-title-icon-blue {
+    color: #93c5fd;
+    background: rgba(37, 99, 235, 0.2);
+}
+
+.dark .health-info-note {
+    color: #9aaeff;
+}
+
+.dark .health-attention-shell :deep(label),
+.dark .health-attention-shell :deep(.form-label) {
+    color: #dbeafe;
+}
+
+.dark .health-attention-shell :deep(.form-input),
+.dark .health-attention-shell :deep(.form-select),
+.dark .health-attention-shell :deep(.form-textarea),
+.dark .health-attention-shell :deep(.multiselect__tags) {
+    border-color: rgba(71, 85, 105, 0.9);
+    background-color: rgba(15, 23, 42, 0.92);
+    color: #e5edf9;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.dark .health-attention-shell :deep(.form-input::placeholder),
+.dark .health-attention-shell :deep(.form-textarea::placeholder),
+.dark .health-unit-input :deep(.form-input::placeholder) {
+    color: #64748b;
+}
+
+.dark .health-attention-shell :deep(.multiselect__input),
+.dark .health-attention-shell :deep(.multiselect__single) {
+    background: transparent;
+    color: #e5edf9;
+}
+
+.dark .health-attention-shell :deep(.multiselect__content-wrapper) {
+    border-color: rgba(71, 85, 105, 0.9);
+    background: #0f172a;
+}
+
+.dark .health-attention-shell :deep(.multiselect__option--highlight) {
+    background: rgba(79, 70, 229, 0.75);
+}
+
+.dark .health-repeat-card :deep(.border.rounded) {
+    border-color: rgba(71, 85, 105, 0.82);
+    background: rgba(15, 23, 42, 0.72);
+}
+
+.dark .health-vitals-panel {
+    border-color: rgba(71, 85, 105, 0.82);
+    background:
+        radial-gradient(circle at 8% 0%, rgba(129, 140, 248, 0.14), transparent 32%),
+        linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.96));
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.34);
+}
+
+.dark .health-vitals-header {
+    border-bottom-color: rgba(129, 140, 248, 0.72);
+}
+
+.dark .health-vitals-heading small,
+.dark .health-vital-measure,
+.dark .health-pressure-grid label,
+.dark .health-pressure-grid > b {
+    color: #b6c2d6;
+}
+
+.dark .health-vitals-main-icon {
+    color: #a5b4fc;
+    background: rgba(79, 70, 229, 0.2);
+}
+
+.dark .health-vitals-toggle {
+    border-color: rgba(129, 140, 248, 0.62);
+    color: #a5b4fc;
+    background: rgba(15, 23, 42, 0.86);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+}
+
+.dark .health-vital-card {
+    border-color: rgba(71, 85, 105, 0.78);
+    background: rgba(15, 23, 42, 0.78);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.26);
+}
+
+.dark .health-vital-title span {
+    background: color-mix(in srgb, var(--vital-color) 18%, #0f172a);
+}
+
+.dark .health-unit-input :deep(.form-input) {
+    border-color: color-mix(in srgb, var(--vital-color) 44%, #334155);
+    background-color: rgba(2, 6, 23, 0.82);
+    color: #eef4ff;
+}
+
+.dark .health-unit-input em {
+    background: color-mix(in srgb, var(--vital-color) 18%, #0f172a);
+}
+
+.dark .health-action-bar {
+    border-top-color: rgba(71, 85, 105, 0.82);
+    background: rgba(15, 23, 42, 0.94);
+}
+
+.dark .health-nav-button,
+.dark .health-back-button {
+    background: rgba(15, 23, 42, 0.86);
+}
+
+.dark .health-nav-button {
+    border-color: rgba(129, 140, 248, 0.42);
+    color: #a5b4fc;
+}
+
+.dark .health-back-button {
+    border-color: rgba(248, 113, 113, 0.46);
+    color: #fca5a5;
+}
+
 @media (max-width: 767px) {
     .health-vitals-panel {
         padding: 1rem;
