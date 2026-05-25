@@ -23,33 +23,6 @@ class DoctorController extends Controller
 {
     use ValidatesRequests;
 
-    private const ATTENTION_SERVICE_TYPES = [
-        'general',
-        'medicina_general',
-        'medicina_interna',
-        'pediatria',
-        'ginecologia',
-        'cardiologia',
-        'dermatologia',
-        'traumatologia',
-        'neurologia',
-        'oftalmologia',
-        'otorrinolaringologia',
-        'gastroenterologia',
-        'endocrinologia',
-        'urologia',
-        'psicologia',
-        'nutricion',
-        'dental',
-        'odontologia_general',
-        'ortodoncia',
-        'endodoncia',
-        'periodoncia',
-        'rehabilitacion_oral',
-        'cirugia_bucal',
-        'odontopediatria',
-        'implantologia',
-    ];
     /**
      * Display a listing of the resource.
      */
@@ -148,7 +121,7 @@ class DoctorController extends Controller
                 'colegiatura'        => 'nullable|string|max:80',
                 'profession'         => 'required|max:120',
                 'specialty'          => 'nullable|max:120',
-                'attention_service_type' => 'required|in:' . implode(',', self::ATTENTION_SERVICE_TYPES),
+                'attention_service_type' => 'required|in:' . implode(',', config('health.attention_service_types')),
                 'generate_user'      => 'nullable|boolean',
                 'user_email'         => $request->boolean('generate_user') ? 'required|email|max:255|unique:users,email' : 'nullable|email|max:255',
                 'user_password'      => $request->boolean('generate_user') ? 'required|string|min:4' : 'nullable|string|min:4',
@@ -271,7 +244,7 @@ class DoctorController extends Controller
                 'colegiatura'        => 'nullable|string|max:80',
                 'profession'         => 'required|max:120',
                 'specialty'          => 'nullable|max:120',
-                'attention_service_type' => 'required|in:' . implode(',', self::ATTENTION_SERVICE_TYPES),
+                'attention_service_type' => 'required|in:' . implode(',', config('health.attention_service_types')),
                 'generate_user'      => 'nullable|boolean',
                 'user_email'         => $request->boolean('generate_user') ? 'required|email|max:255|unique:users,email' : 'nullable|email|max:255',
                 'user_password'      => $request->boolean('generate_user') ? 'required|string|min:4' : 'nullable|string|min:4',

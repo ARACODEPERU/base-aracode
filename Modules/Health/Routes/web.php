@@ -15,6 +15,7 @@ use Modules\Health\Http\Controllers\HealHistoryController;
 use Modules\Health\Http\Controllers\HealAttentionController;
 use Modules\Health\Http\Controllers\HealAgendaController;
 use Modules\Health\Http\Controllers\HealProcedureChargeController;
+use Modules\Health\Http\Controllers\HealActivityController;
 use Modules\Health\Http\Controllers\Odontology\HealOdoAppointmentController;
 
 Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::get('agendas/day', [HealAgendaController::class, 'day'])->name('heal_agendas_day');
     Route::get('agendas/availability', [HealAgendaController::class, 'availability'])->name('heal_agendas_availability');
     Route::post('agendas/appointments/store', [HealAgendaController::class, 'storeAppointment'])->name('heal_agendas_appointments_store');
+    Route::post('agendas/appointments/move', [HealAgendaController::class, 'moveAppointment'])->name('heal_agendas_appointments_move');
 
     Route::post('patients/search', 'HealPatientController@searchPatient')->name('heal_patients_search');
 
@@ -68,4 +70,9 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::post('charges/store-many', [HealProcedureChargeController::class, 'storeManyCharges'])->name('heal_patient_charges_store_many');
     Route::put('charges/{charge}/status', [HealProcedureChargeController::class, 'updateChargeStatus'])->name('heal_patient_charges_status');
     Route::post('charges/prepare-sales-review', [HealProcedureChargeController::class, 'prepareSalesReview'])->name('heal_patient_charges_prepare_sales');
+
+    Route::middleware(['role:admin|Administrador|webAdmin'])->prefix('admin')->group(function () {
+        Route::get('activities', [HealActivityController::class, 'index'])->name('heal_activities_list');
+        Route::get('activities/{id}', [HealActivityController::class, 'show'])->name('heal_activities_show');
+    });
 });

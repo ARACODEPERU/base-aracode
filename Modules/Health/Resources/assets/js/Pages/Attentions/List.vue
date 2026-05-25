@@ -10,6 +10,7 @@ import IconEye from '@/Components/vristo/icon/icon-eye.vue';
 import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import IconTooth from '@/Components/vristo/icon/icon-tooth.vue';
 import IconHeart from '@/Components/vristo/icon/icon-heart.vue';
+import IconGlasses from '@/Components/vristo/icon/icon-glasses.vue';
 import { serviceTypeOption } from '@/Components/Health/healthOptions.js';
 import Swal from 'sweetalert2';
 import PendingSignatureReminder from '../../Components/PendingSignatureReminder.vue';
@@ -271,6 +272,10 @@ const deleteAttention = (attention) => {
                                     <td>
                                         <span v-if="serviceTypeOption(attention.service_type).dental" class="badge bg-info inline-flex items-center gap-1">
                                             <IconTooth class="w-4 h-4" />
+                                            {{ serviceTypeOption(attention.service_type).label }}
+                                        </span>
+                                        <span v-else-if="attention.service_type === 'oftalmologia'" class="badge bg-primary inline-flex items-center gap-1">
+                                            <IconGlasses class="w-4 h-4" />
                                             {{ serviceTypeOption(attention.service_type).label }}
                                         </span>
                                         <span v-else class="badge bg-primary inline-flex items-center gap-1">

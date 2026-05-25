@@ -6,7 +6,8 @@ import {
     faNotesMedical,
     faCashRegister,
     faFileMedical,
-    faCalendarDays
+    faCalendarDays,
+    faClipboardList
 } from "@fortawesome/free-solid-svg-icons";
 import menuDental from 'Modules/Dental/Resources/assets/js/Menu.js';
 
@@ -59,7 +60,14 @@ const menuHealth = {
             icom: faCashRegister,
             permissions: 'heal_atenciones_listado',
         },
-        menuDental
+        menuDental,
+        {
+            route: route('heal_activities_list'),
+            status: false,
+            text: 'Registro de Actividades',
+            icom: faClipboardList,
+            permissions: 'heal_actividades_listado',
+        },
     ]
     
 };

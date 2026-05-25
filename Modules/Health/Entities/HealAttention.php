@@ -8,10 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Health\Support\LogsActivity;
 
 class HealAttention extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+    use LogsActivity;
 
     protected $fillable = [
         'attention_at',

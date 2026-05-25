@@ -50,17 +50,27 @@ class HealAgendaController extends Controller
         $data = $request->validate([
             'doctor_id' => ['required', 'exists:heal_doctors,id'],
             'date' => ['required', 'date_format:Y-m-d'],
+            'days' => ['nullable', 'integer', 'min:1', 'max:7'],
         ]);
 
         $doctorId = (int) $data['doctor_id'];
-        $date = $data['date'];
-        $this->expireMissedAppointments($doctorId, $date);
+        $startDate = $data['date'];
+        $days = (int) ($data['days'] ?? 1);
 
-        return response()->json([
-            'events' => $this->dayEvents($doctorId, $date),
-            'free_slots' => $this->freeSlots($doctorId, $date, self::SLOT_MINUTES),
-            'punctuality' => $this->punctualitySummary($doctorId, $date),
-        ]);
+        $dateCursor = Carbon::parse($startDate);
+        $result = [];
+
+        for ($i = 0; $i < $days; $i++) {
+            $currentDate = $dateCursor->copy()->addDays($i)->toDateString();
+            $this->expireMissedAppointments($doctorId, $currentDate);
+            $result[$currentDate] = [
+                'events' => $this->dayEvents($doctorId, $currentDate),
+                'free_slots' => $this->freeSlots($doctorId, $currentDate, self::SLOT_MINUTES),
+                'punctuality' => $this->punctualitySummary($doctorId, $currentDate),
+            ];
+        }
+
+        return response()->json($result);
     }
 
     public function availability(Request $request)
@@ -138,6 +148,53 @@ class HealAgendaController extends Controller
         ]);
     }
 
+    public function moveAppointment(Request $request)
+    {
+        $data = $request->validate([
+            'appointment_id' => ['required', 'exists:dent_appointments,id'],
+            'doctor_id' => ['required', 'exists:heal_doctors,id'],
+            'date' => ['required', 'date_format:Y-m-d'],
+            'time' => ['required', 'date_format:H:i'],
+            'duration_minutes' => ['required', 'integer', 'min:15', 'max:240', 'multiple_of:15'],
+        ]);
+
+        $appointmentId = (int) $data['appointment_id'];
+        $doctorId = (int) $data['doctor_id'];
+        $newStart = Carbon::parse($data['date'] . ' ' . $data['time'])->seconds(0);
+        $newEnd = $newStart->copy()->addMinutes((int) $data['duration_minutes']);
+
+        $appointment = DentAppointment::findOrFail($appointmentId);
+
+        if ($appointment->status !== '1') {
+            throw ValidationException::withMessages([
+                'appointment_id' => 'Solo se pueden reagendar citas pendientes.',
+            ]);
+        }
+
+        if ($this->hasConflict($doctorId, $newStart, $newEnd, $appointmentId)) {
+            throw ValidationException::withMessages([
+                'time' => 'Ese horario no está disponible. Horarios libres: ' . $this->formatFreeSlots($doctorId, $data['date'], (int) $data['duration_minutes']),
+            ]);
+        }
+
+        $doctor = HealDoctor::with('person')->findOrFail($doctorId);
+
+        $appointment->update([
+            'doctor_id' => $doctorId,
+            'doctor_person_id' => $doctor->person_id,
+            'date_appointmen' => $data['date'],
+            'time_appointmen' => $data['time'],
+            'date_end_appointmen' => $data['date'],
+            'time_end_appointmen' => $newEnd->format('H:i:s'),
+            'status' => '1',
+            'updated_user_id' => Auth::id(),
+        ]);
+
+        return response()->json([
+            'appointment' => $appointment->fresh()->load(['patient', 'doctor']),
+        ]);
+    }
+
     private function dayEvents(int $doctorId, string $date): array
     {
         $appointments = DentAppointment::with(['patient', 'doctor', 'healthAttention'])
@@ -207,12 +264,15 @@ class HealAgendaController extends Controller
             ->all();
     }
 
-    private function busyIntervals(int $doctorId, string $date): array
+    private function busyIntervals(int $doctorId, string $date, ?int $excludeAppointmentId = null): array
     {
         $appointments = DentAppointment::query()
             ->where('doctor_id', $doctorId)
             ->where('status', '1')
             ->whereDate('date_appointmen', $date)
+            ->when($excludeAppointmentId, function ($query) use ($excludeAppointmentId) {
+                $query->where('id', '<>', $excludeAppointmentId);
+            })
             ->get()
             ->map(function (DentAppointment $appointment) {
                 return [
@@ -357,9 +417,9 @@ class HealAgendaController extends Controller
         return $slots;
     }
 
-    private function hasConflict(int $doctorId, Carbon $start, Carbon $end): bool
+    private function hasConflict(int $doctorId, Carbon $start, Carbon $end, ?int $excludeAppointmentId = null): bool
     {
-        return $this->intervalOverlaps($start, $end, $this->busyIntervals($doctorId, $start->toDateString()));
+        return $this->intervalOverlaps($start, $end, $this->busyIntervals($doctorId, $start->toDateString(), $excludeAppointmentId));
     }
 
     private function intervalOverlaps(Carbon $start, Carbon $end, array $intervals): bool

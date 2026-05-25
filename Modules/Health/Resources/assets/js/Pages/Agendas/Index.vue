@@ -1,6 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Dialog, DialogOverlay, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { router, useForm } from '@inertiajs/vue3';
 import Multiselect from '@suadelabs/vue3-multiselect';
@@ -66,15 +66,79 @@ const props = defineProps({
 
 const selectedDate = ref(props.selectedDate || new Date().toISOString().slice(0, 10));
 const selectedDoctor = ref(props.doctors.find((doctor) => doctor.code === props.selectedDoctorId) || props.currentDoctor || props.doctors[0] || null);
-const events = ref([]);
-const freeSlots = ref([]);
-const punctuality = ref({
-    early: [],
-    on_time: [],
-    late: [],
-    grace_minutes: 5,
-});
+const daysData = ref({});
+const dayCount = ref(3);
 const loadingAgenda = ref(false);
+const draggedEvent = ref(null);
+const dragOverTarget = ref(null);
+const dragSource = ref(null);
+const dropSuccessTarget = ref(null);
+const moveLoading = ref(false);
+const updateDayCount = () => {
+    dayCount.value = window.innerWidth >= 1400 ? 5 : 3;
+};
+
+const displayDates = computed(() => {
+    if (!selectedDate.value) return [];
+    const dates = [];
+    const start = new Date(selectedDate.value + 'T12:00:00');
+    for (let i = 0; i < dayCount.value; i++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        dates.push(d.toISOString().slice(0, 10));
+    }
+    return dates;
+});
+
+const selectedDayData = computed(() => daysData.value[selectedDate.value] || { events: [], free_slots: [], punctuality: { early: [], on_time: [], late: [], grace_minutes: 5 } });
+
+const globalAgendaRange = computed(() => {
+    const normalStart = minutesFromTime(props.normalStart);
+    const normalEnd = minutesFromTime(props.normalEnd);
+    let globalStart = normalStart;
+    let globalEnd = normalEnd;
+
+    displayDates.value.forEach((dateStr) => {
+        const dayData = daysData.value[dateStr];
+        if (!dayData?.events?.length) return;
+        dayData.events.forEach((event) => {
+            const eventStart = minutesFromTime(timeFromDate(event.start));
+            const eventEnd = minutesFromTime(timeFromDate(event.end));
+            if (eventStart < globalStart) globalStart = floorToSlot(eventStart);
+            if (eventEnd > globalEnd) globalEnd = ceilToSlot(eventEnd);
+        });
+    });
+
+    return { start: globalStart, end: globalEnd };
+});
+
+const toLocalDateStr = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+const formatDayHeader = (dateStr) => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const today = new Date();
+    const todayStr = toLocalDateStr(today);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = toLocalDateStr(tomorrow);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = toLocalDateStr(yesterday);
+
+    const dayName = d.toLocaleDateString('es-ES', { weekday: 'long' });
+    const dayNameCapitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+    if (dateStr === todayStr) {
+        return 'Hoy';
+    }
+    if (dateStr === tomorrowStr) {
+        return 'Mañana';
+    }
+    if (dateStr === yesterdayStr) {
+        return 'Ayer';
+    }
+    return dayNameCapitalized;
+};
 const appointmentModal = ref(false);
 const availabilityLoading = ref(false);
 const modalFreeSlots = ref([]);
@@ -103,8 +167,9 @@ const form = useForm({
 
 const selectedDoctorName = computed(() => selectedDoctor.value?.name || 'Sin doctor');
 
-const layoutedEvents = computed(() => {
-    const sortedEvents = events.value
+const getDayLayoutedEvents = (dayData) => {
+    if (!dayData?.events?.length) return [];
+    const sortedEvents = dayData.events
         .map((event) => ({
             ...event,
             start_minutes: minutesFromTime(timeFromDate(event.start)),
@@ -148,17 +213,19 @@ const layoutedEvents = computed(() => {
     });
 
     return sortedEvents;
-});
+};
 
-const agendaSlots = computed(() => {
+const getDaySlots = (dayData, globalStart, globalEnd) => {
+    if (!dayData?.free_slots) return [];
+    const events = dayData.events || [];
+    const freeSlots = dayData.free_slots || [];
+    const layoutedEvents = getDayLayoutedEvents(dayData);
     const slots = [];
     const normalStart = minutesFromTime(props.normalStart);
     const normalEnd = minutesFromTime(props.normalEnd);
-    const eventStarts = layoutedEvents.value.map((event) => floorToSlot(event.start_minutes));
-    const eventEnds = layoutedEvents.value.map((event) => ceilToSlot(event.end_minutes));
-    const start = Math.min(normalStart, ...eventStarts);
-    const end = Math.max(normalEnd, ...eventEnds);
-    const freeKeys = new Set(freeSlots.value.map((slot) => slot.start));
+    const start = globalStart ?? Math.min(normalStart, ...layoutedEvents.map((event) => floorToSlot(event.start_minutes)));
+    const end = globalEnd ?? Math.max(normalEnd, ...layoutedEvents.map((event) => ceilToSlot(event.end_minutes)));
+    const freeKeys = new Set(freeSlots.map((slot) => slot.start));
 
     for (let minute = start; minute < end; minute += props.slotMinutes) {
         const time = timeFromMinutes(minute);
@@ -166,21 +233,22 @@ const agendaSlots = computed(() => {
             time,
             withinNormalHours: minute >= normalStart && minute < normalEnd,
             available: freeKeys.has(time),
-            hasEventOverlap: layoutedEvents.value.some((event) => eventOverlapsSlot(event, minute)),
-            startingEvents: layoutedEvents.value.filter((event) => slotStartForEvent(event.start) === time),
+            hasEventOverlap: layoutedEvents.some((event) => eventOverlapsSlot(event, minute)),
+            startingEvents: layoutedEvents.filter((event) => slotStartForEvent(event.start) === time),
+            overlappingEventNames: layoutedEvents
+                .filter((event) => eventOverlapsSlot(event, minute))
+                .slice(0, 3)
+                .map((e) => e.patient || 'Paciente'),
+            totalOverlapping: layoutedEvents.filter((event) => eventOverlapsSlot(event, minute)).length,
         });
     }
 
     return slots;
-});
+};
 
 const statusLabel = (event) => {
-    if (event.type === 'attention') {
+    if (event.type === 'attention' || event.status === '2') {
         return event.status === 'signed' ? 'Atención firmada' : 'Atención registrada';
-    }
-
-    if (event.status === '2') {
-        return 'Cita atendida';
     }
 
     if (event.status === '0') {
@@ -195,16 +263,12 @@ const statusLabel = (event) => {
 };
 
 const eventClass = (event) => {
-    if (event.type === 'attention') {
+    if (event.type === 'attention' || event.status === '2') {
         return 'border-info bg-info/10 text-info';
     }
 
     if (event.status === '0' || event.status === '3') {
         return 'border-danger bg-danger/10 text-danger';
-    }
-
-    if (event.status === '2') {
-        return 'border-primary bg-primary/10 text-primary';
     }
 
     return 'border-success bg-success/10 text-success';
@@ -232,7 +296,7 @@ const arrivalLabel = (event) => {
 
 const punctualityTitle = (key) => ({
     early: 'Llegaron antes',
-    on_time: `Puntuales (0-${punctuality.value.grace_minutes} min)`,
+    on_time: `Puntuales (0-${selectedDayData.value.punctuality.grace_minutes} min)`,
     late: 'Llegaron tarde',
 }[key]);
 
@@ -255,19 +319,18 @@ const openAttentionFromAppointment = (event) => {
 
 const loadAgenda = () => {
     if (!selectedDoctor.value?.code || !selectedDate.value) {
-        return;
+        return Promise.resolve();
     }
 
     loadingAgenda.value = true;
-    axios.get(route('heal_agendas_day'), {
+    return axios.get(route('heal_agendas_day'), {
         params: {
             doctor_id: selectedDoctor.value.code,
             date: selectedDate.value,
+            days: dayCount.value,
         },
     }).then((response) => {
-        events.value = response.data.events || [];
-        freeSlots.value = response.data.free_slots || [];
-        punctuality.value = response.data.punctuality || punctuality.value;
+        daysData.value = response.data || {};
     }).finally(() => {
         loadingAgenda.value = false;
     });
@@ -325,9 +388,7 @@ const submitWithAxios = () => {
             selectedDoctor.value = props.doctors.find((doctor) => doctor.code === savedDoctorId) || selectedDoctor.value;
             selectedDate.value = savedDate;
         } else {
-            events.value = response.data.events || [];
-            freeSlots.value = response.data.free_slots || [];
-            punctuality.value = response.data.punctuality || punctuality.value;
+            loadAgenda();
         }
 
         closeAppointmentModal();
@@ -446,10 +507,267 @@ const eventCardStyle = (event) => {
 
     return {
         top: `${top}px`,
-        minHeight: `${height}px`,
+        height: `${height}px`,
         left: `calc(1rem + (${laneWidth} + ${laneGap}px) * ${lane})`,
         width: `calc(${laneWidth})`,
     };
+};
+
+const dayCounts = (events = []) => {
+    let attentions = 0;
+    let appointments = 0;
+    events.forEach((event) => {
+        if (event.type === 'attention' || (event.type === 'appointment' && event.status === '2')) {
+            attentions++;
+        } else {
+            appointments++;
+        }
+    });
+    return { attentions, appointments };
+};
+
+const isDraggableEvent = (event) => event.type === 'appointment' && event.status === '1';
+
+const onDragStart = (event, evt) => {
+    if (!isDraggableEvent(event)) {
+        evt.preventDefault();
+        return;
+    }
+    draggedEvent.value = event;
+    evt.dataTransfer.effectAllowed = 'move';
+    evt.dataTransfer.setData('text/plain', event.id);
+
+    // Guardar slot de origen para resaltarlo
+    const srcDate = String(event.start || '').slice(0, 10);
+    const srcTime = slotStartForEvent(event.start);
+    dragSource.value = { dateStr: srcDate, time: srcTime };
+
+    // Crear un ghost minimalista en vez de clonar toda la tarjeta
+    const ghost = document.createElement('div');
+    const duration = eventDurationMinutes(event);
+    ghost.textContent = `${event.patient || 'Paciente'} · ${formatTimeLabel(timeFromDate(event.start))} - ${formatTimeLabel(timeFromDate(event.end))} (${duration} min)`;
+    ghost.style.position = 'absolute';
+    ghost.style.top = '-9999px';
+    ghost.style.left = '-9999px';
+    ghost.style.padding = '6px 14px';
+    ghost.style.background = 'rgba(16, 185, 129, 0.92)';
+    ghost.style.color = '#fff';
+    ghost.style.fontSize = '13px';
+    ghost.style.fontWeight = '600';
+    ghost.style.fontFamily = 'Inter, system-ui, sans-serif';
+    ghost.style.borderRadius = '8px';
+    ghost.style.whiteSpace = 'nowrap';
+    ghost.style.boxShadow = '0 4px 16px rgba(0,0,0,0.18)';
+    ghost.style.letterSpacing = '0.01em';
+    ghost.style.pointerEvents = 'none';
+    document.body.appendChild(ghost);
+    evt.dataTransfer.setDragImage(ghost, evt.offsetX ?? 100, evt.offsetY ?? 40);
+    requestAnimationFrame(() => {
+        if (ghost.parentNode) document.body.removeChild(ghost);
+    });
+};
+
+const onDragEnd = () => {
+    draggedEvent.value = null;
+    dragOverTarget.value = null;
+    dragSource.value = null;
+};
+
+const onDragEnter = (dateStr, time) => {
+    if (!draggedEvent.value) return;
+    dragOverTarget.value = { dateStr, time };
+};
+
+const onDragOver = (dateStr, time) => {
+    if (!draggedEvent.value) return;
+    if (!dragOverTarget.value || dragOverTarget.value.dateStr !== dateStr || dragOverTarget.value.time !== time) {
+        dragOverTarget.value = { dateStr, time };
+    }
+};
+
+const onDragLeave = (evt, rowEl) => {
+    if (!draggedEvent.value) return;
+    const related = evt.relatedTarget;
+    if (rowEl && related && rowEl.contains(related)) return;
+    dragOverTarget.value = null;
+};
+
+const draggingDurationMinutes = () => {
+    if (!draggedEvent.value) return props.slotMinutes;
+    return eventDurationMinutes(draggedEvent.value);
+};
+
+const dragPreviewStyle = computed(() => {
+    if (!draggedEvent.value || !dragOverTarget.value) return null;
+    const duration = draggingDurationMinutes();
+    const slotHeight = 58;
+    const rowGap = 8;
+    const laneGap = 8;
+    const height = Math.max(slotHeight - rowGap, (duration / props.slotMinutes) * slotHeight - rowGap);
+    const laneWidth = `(100% - 2rem - ${laneGap * 0}px) / 1`;
+    return {
+        top: '4px',
+        height: `${height}px`,
+        left: `calc(1rem + (${laneWidth} + ${laneGap}px) * 0)`,
+        width: `calc(${laneWidth})`,
+    };
+});
+
+const maxAvailableDuration = (dateStr, startTime) => {
+    const dayData = daysData.value[dateStr];
+    if (!dayData?.events) return null;
+    const startMin = minutesFromTime(startTime);
+    const maxEnd = minutesFromTime(props.normalEnd);
+    const sourceId = draggedEvent.value?.source_id;
+
+    let availableEnd = startMin;
+    for (let m = startMin; m < maxEnd; m += props.slotMinutes) {
+        const hasConflict = dayData.events.some((event) => {
+            if (event.source_id === sourceId && event.type === 'appointment') return false;
+            const eventStart = minutesFromTime(timeFromDate(event.start));
+            const eventEnd = minutesFromTime(timeFromDate(event.end));
+            return m < eventEnd && (m + props.slotMinutes) > eventStart;
+        });
+        if (hasConflict) break;
+        availableEnd = m + props.slotMinutes;
+    }
+    return Math.max(props.slotMinutes, availableEnd - startMin);
+};
+
+const onDrop = (dateStr, time) => {
+    if (!draggedEvent.value) return;
+    const sourceId = draggedEvent.value.source_id;
+    if (!sourceId) {
+        draggedEvent.value = null;
+        dragOverTarget.value = null;
+        return;
+    }
+
+    const originalDuration = draggingDurationMinutes();
+    const dayData = daysData.value[dateStr];
+    const targetMinutes = minutesFromTime(time);
+    const maxAvail = maxAvailableDuration(dateStr, time);
+    const finalDuration = maxAvail !== null ? Math.min(originalDuration, maxAvail) : originalDuration;
+    const durationWillReduce = finalDuration < originalDuration;
+
+    const hasOccupiedSlot = dayData?.events?.some((event) => {
+        if (event.source_id === sourceId && event.type === 'appointment') return false;
+        return eventOverlapsSlot(event, targetMinutes);
+    });
+
+    let swalTitle = '';
+    let swalHtml = '';
+    let swalIcon = '';
+
+    if (hasOccupiedSlot && durationWillReduce) {
+        swalIcon = 'warning';
+        swalTitle = 'Atención';
+        swalHtml = `
+            El horario <strong>${formatTimeLabel(time)}</strong> del <strong>${dateStr}</strong> ya tiene un evento y solo hay espacio para <strong>${finalDuration} min</strong> (la cita original dura ${originalDuration} min).
+            <br><br><small class="text-white-dark">La cita se reubicará con ${finalDuration} min de duración, reemplazando la existente.</small>
+        `;
+    } else if (hasOccupiedSlot) {
+        swalIcon = 'warning';
+        swalTitle = 'Slot ocupado';
+        swalHtml = `El horario <strong>${formatTimeLabel(time)}</strong> del <strong>${dateStr}</strong> ya tiene un evento. ¿Reagendar de todos modos?<br><br><small class="text-white-dark">La cita existente se reemplazará.</small>`;
+    } else if (durationWillReduce) {
+        swalIcon = 'info';
+        swalTitle = 'Duración reducida';
+        swalHtml = `La cita original dura <strong>${originalDuration} min</strong>, pero en ese horario solo hay espacio para <strong>${finalDuration} min</strong>. La duración se reducirá automáticamente.`;
+    }
+
+    if (swalTitle) {
+        Swal.fire({
+            icon: swalIcon,
+            title: swalTitle,
+            html: swalHtml,
+            showCancelButton: true,
+            confirmButtonText: hasOccupiedSlot ? 'Sí, reagendar' : 'Reducir y reagendar',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'sweet-alerts',
+                confirmButton: 'btn btn-warning',
+                cancelButton: 'btn btn-dark ltr:mr-3 rtl:ml-3',
+            },
+            buttonsStyling: false,
+            reverseButtons: true,
+            padding: '2em',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                moveAppointment(sourceId, dateStr, time, finalDuration);
+            } else {
+                draggedEvent.value = null;
+                dragOverTarget.value = null;
+            }
+        });
+    } else {
+        moveAppointment(sourceId, dateStr, time, finalDuration);
+    }
+};
+
+const moveAppointment = (appointmentId, targetDate, targetTime, durationMinutes) => {
+    moveLoading.value = true;
+    axios.post(route('heal_agendas_appointments_move'), {
+        appointment_id: appointmentId,
+        doctor_id: selectedDoctor.value?.code,
+        date: targetDate,
+        time: targetTime,
+        duration_minutes: durationMinutes,
+    }).then(() => {
+        showMessage('Cita reagendada correctamente.');
+        triggerDropSuccess(targetDate, targetTime);
+        loadAgenda().then(() => {
+            requestAnimationFrame(() => scrollToSlot(targetDate, targetTime));
+        });
+    }).catch((error) => {
+        const errors = error.response?.data?.errors || {};
+        const message = Object.values(errors).flat().join(' ');
+        showMessage(message || 'No se pudo reagendar la cita.', 'error');
+    }).finally(() => {
+        moveLoading.value = false;
+        draggedEvent.value = null;
+        dragOverTarget.value = null;
+        dragSource.value = null;
+    });
+};
+
+const playDropSound = () => {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        // Tono ascendente agradable (ding)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523, ctx.currentTime);       // C5
+        osc.frequency.exponentialRampToValueAtTime(784, ctx.currentTime + 0.08);  // G5
+        osc.frequency.exponentialRampToValueAtTime(1047, ctx.currentTime + 0.16); // C6
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.35);
+    } catch (e) {
+        // Silently fail — audio no esencial
+    }
+};
+
+const scrollToSlot = (dateStr, time) => {
+    const selector = `[data-slot="${dateStr}-${time}"]`;
+    const el = document.querySelector(selector);
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+};
+
+const triggerDropSuccess = (dateStr, time) => {
+    dropSuccessTarget.value = { dateStr, time };
+    playDropSound();
+    setTimeout(() => {
+        if (dropSuccessTarget.value && dropSuccessTarget.value.dateStr === dateStr && dropSuccessTarget.value.time === time) {
+            dropSuccessTarget.value = null;
+        }
+    }, 800);
 };
 
 const isOutsideNormalHours = (time) => {
@@ -467,6 +785,10 @@ watch([selectedDoctor, selectedDate], () => {
     loadAgenda();
 });
 
+watch(dayCount, () => {
+    loadAgenda();
+});
+
 watch(() => form.doctor_id, loadAvailability);
 watch(() => form.date_appointmen, loadAvailability);
 watch(() => form.duration_minutes, loadAvailability);
@@ -479,7 +801,24 @@ watch(durationMode, (value) => {
     form.duration_minutes = Number(value);
 });
 
-onMounted(loadAgenda);
+let resizeTimer;
+const onResize = () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        updateDayCount();
+    }, 250);
+};
+
+onMounted(() => {
+    updateDayCount();
+    window.addEventListener('resize', onResize);
+    loadAgenda();
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', onResize);
+    clearTimeout(resizeTimer);
+});
 </script>
 
 <template>
@@ -501,7 +840,7 @@ onMounted(loadAgenda);
                     <div>
                         <h2 class="text-xl font-semibold">Agendas</h2>
                         <p class="mt-1 text-sm text-white-dark">
-                            Agenda diaria de {{ selectedDoctorName }}. Las atenciones bloquean {{ attentionBlockMinutes }} minutos.
+                            Agenda de {{ selectedDoctorName }}. Las atenciones bloquean {{ attentionBlockMinutes }} minutos.
                         </p>
                     </div>
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(220px,320px)_180px_auto] sm:items-end">
@@ -537,60 +876,158 @@ onMounted(loadAgenda);
                     <div class="flex items-center justify-between border-b border-[#e0e6ed] px-4 py-3 dark:border-[#1b2e4b]">
                         <div class="flex items-center gap-2 font-semibold">
                             <IconCalendar class="h-5 w-5 text-primary" />
-                            {{ selectedDate }}
+                            {{ displayDates[0] }} - {{ displayDates[displayDates.length - 1] || displayDates[0] }}
                         </div>
                         <div class="flex flex-wrap items-center gap-3 text-xs text-white-dark">
                             <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-success"></span>Cita pendiente</span>
-                            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-primary"></span>Cita atendida</span>
+                            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-info"></span>Atención registrada</span>
                             <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-danger"></span>No concretada</span>
-                            <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-info"></span>Atención</span>
                         </div>
                     </div>
 
                     <div v-if="loadingAgenda" class="p-8 text-center text-white-dark">
                         Cargando agenda...
                     </div>
-                    <div v-else class="divide-y divide-[#e0e6ed] dark:divide-[#1b2e4b]">
+                    <div v-else-if="Object.keys(daysData).length === 0" class="p-8 text-center text-white-dark">
+                        Selecciona un doctor y fecha para ver la agenda.
+                    </div>                        <div v-else class="flex overflow-x-auto">
                         <div
-                            v-for="slot in agendaSlots"
-                            :key="slot.time"
-                            class="grid min-h-[58px] grid-cols-[96px_1fr] hover:bg-gray-50 dark:hover:bg-white/5"
-                            :class="{ 'bg-warning/5': !slot.withinNormalHours }"
+                            v-for="(dateStr, index) in displayDates"
+                            :key="dateStr"
+                            class="min-w-[300px] flex-1 border-r border-[#e0e6ed] dark:border-[#1b2e4b] last:border-r-0"
+                            :class="{ 'hidden xl:block': index >= 3 }"
                         >
-                            <div class="border-r border-[#e0e6ed] px-4 py-3 text-sm font-semibold text-white-dark dark:border-[#1b2e4b]">
-                                <div>{{ formatTimeLabel(slot.time) }}</div>
-                                <div v-if="!slot.withinNormalHours" class="mt-1 text-[10px] font-normal text-warning">Fuera de horario</div>
+                            <div class="sticky top-0 z-10 border-b border-[#e0e6ed] bg-[#fbfbfb] px-3 py-2 text-center dark:border-[#1b2e4b] dark:bg-[#121c2c]">
+                                <div class="font-semibold text-sm" :class="{ 'text-primary': index === 0 }">{{ formatDayHeader(dateStr) }}</div>
+                                <div class="text-xs text-white-dark">{{ dateStr }}</div>
+                                <div class="mt-1 flex items-center justify-center gap-2 text-xs">
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-info/10 px-2 py-0.5 font-medium text-info">
+                                        {{ dayCounts(daysData[dateStr]?.events || []).attentions }} atenciones
+                                    </span>
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 font-medium text-success">
+                                        {{ dayCounts(daysData[dateStr]?.events || []).appointments }} citas
+                                    </span>
+                                </div>
                             </div>
-                            <div class="relative flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center">
-                                <button
-                                    v-if="slot.withinNormalHours && slot.available && !slot.hasEventOverlap"
-                                    type="button"
-                                    class="inline-flex w-max items-center rounded border border-dashed border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary hover:text-white"
-                                    @click="openAppointmentModal(slot.time)"
-                                >
-                                    <IconPlus class="h-3.5 w-3.5 ltr:mr-1 rtl:ml-1" />
-                                    Agendar
-                                </button>
-                                <span v-else-if="!slot.hasEventOverlap" class="text-xs text-white-dark">
-                                    {{ slot.withinNormalHours ? 'No disponible' : 'Sin citas fuera de horario' }}
-                                </span>
-
+                            <div class="divide-y divide-[#e0e6ed] dark:divide-[#1b2e4b]">
                                 <div
-                                    v-for="event in slot.startingEvents"
-                                    :key="event.id"
-                                    class="absolute z-10 overflow-hidden rounded border px-3 py-2 shadow-sm"
-                                    :class="[eventClass(event), { 'cursor-pointer hover:ring-2 hover:ring-primary/40': canOpenAttention(event) }]"
-                                    :style="eventCardStyle(event)"
-                                    @click="openAttentionFromAppointment(event)"
+                                    v-for="slot in getDaySlots(daysData[dateStr], globalAgendaRange.start, globalAgendaRange.end)"
+                                    :key="dateStr + '-' + slot.time"
+                                    :data-slot="`${dateStr}-${slot.time}`"
+                                    class="grid min-h-[58px] grid-cols-[80px_1fr] hover:bg-gray-50 dark:hover:bg-white/5"
+                                    :class="[
+                                        { 'bg-warning/5': !slot.withinNormalHours },
+                                        { 'bg-primary/5 ring-1 ring-inset ring-primary/30': dragOverTarget?.dateStr === dateStr && dragOverTarget?.time === slot.time },
+                                        { 'bg-success/5 ring-1 ring-inset ring-success/40': draggedEvent && slot.available && !slot.hasEventOverlap },
+                                        { 'bg-danger/5 ring-1 ring-inset ring-danger/30': draggedEvent && slot.hasEventOverlap },
+                                        { 'bg-warning/10 ring-1 ring-inset ring-warning/40': dragSource?.dateStr === dateStr && dragSource?.time === slot.time && draggedEvent && !(dragOverTarget?.dateStr === dateStr && dragOverTarget?.time === slot.time) },
+                                        { 'drop-success-pulse': dropSuccessTarget?.dateStr === dateStr && dropSuccessTarget?.time === slot.time },
+                                    ]"
+                        @dragover.prevent="onDragOver(dateStr, slot.time)"
+                        @dragenter="onDragEnter(dateStr, slot.time)"
+                        @dragleave="onDragLeave($event, $event.currentTarget)"
+                        @drop.prevent="onDrop(dateStr, slot.time)"
                                 >
-                                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                        <div class="font-semibold">{{ event.title }} - {{ event.patient || 'Paciente no registrado' }}</div>
-                                        <div class="text-xs">{{ formatEventTime(event) }}</div>
+                                    <div class="group relative border-r border-[#e0e6ed] px-2 py-3 text-xs font-semibold text-white-dark dark:border-[#1b2e4b]">
+                                        <div>{{ formatTimeLabel(slot.time) }}</div>
+                                        <div v-if="!slot.withinNormalHours" class="mt-1 text-[10px] font-normal text-warning">F. hora</div>
+
+                                        <!-- Tooltip en slots ocupados -->
+                                        <div
+                                            v-if="slot.hasEventOverlap && slot.overlappingEventNames?.length"
+                                            class="invisible absolute left-1/2 z-50 -translate-x-1/2 rounded bg-gray-900 px-2.5 py-1.5 text-[10px] font-normal text-white shadow-lg opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700"
+                                            style="bottom: calc(100% + 6px); white-space: nowrap;"
+                                        >
+                                            <div class="flex flex-col gap-0.5 text-left">
+                                                <div class="mb-1 border-b border-white/15 pb-1 text-center text-[11px] font-bold">
+                                                    {{ slot.totalOverlapping }} {{ slot.totalOverlapping === 1 ? 'paciente en este horario' : 'pacientes en este horario' }}
+                                                </div>
+                                                <div v-for="(name, i) in slot.overlappingEventNames" :key="i" class="flex items-center gap-1">
+                                                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-danger"></span>
+                                                    {{ name }}
+                                                </div>
+                                                <div v-if="slot.totalOverlapping > 3" class="text-white-dark">+ {{ slot.totalOverlapping - 3 }} más...</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="mt-1 text-xs opacity-90">{{ statusLabel(event) }}</div>
-                                    <div v-if="arrivalLabel(event)" class="mt-1 text-xs opacity-90">{{ arrivalLabel(event) }}</div>
-                                    <div v-if="event.no_show_at" class="mt-1 text-xs opacity-80">Marcada no concretada: {{ formatTimeLabel(timeFromDate(event.no_show_at)) }}</div>
-                                    <div v-if="event.details" class="mt-1 text-xs opacity-80">{{ event.details }}</div>
+                                    <div class="relative flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center" :class="{ 'pointer-events-none': !!draggedEvent }">
+                                        <button
+                                            v-if="slot.withinNormalHours && slot.available && !slot.hasEventOverlap"
+                                            type="button"
+                                            class="inline-flex w-max items-center rounded border border-dashed border-primary px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary hover:text-white"
+                                            @click="openAppointmentModal(slot.time)"
+                                        >
+                                            <IconPlus class="h-3 w-3 ltr:mr-1 rtl:ml-1" />
+                                            Agendar
+                                        </button>
+                                        <span v-else-if="!slot.hasEventOverlap" class="text-[10px] text-white-dark">
+                                            {{ slot.withinNormalHours ? 'No disponible' : 'Sin citas' }}
+                                        </span>
+
+                                        <div
+                                            v-for="event in slot.startingEvents"
+                                            :key="event.id"
+                                            :draggable="isDraggableEvent(event)"
+                                            class="group absolute z-10 rounded border px-2 py-1.5 shadow-sm transition-all duration-300 ease-in-out"
+                                            :class="[
+                                                eventClass(event),
+                                                { 'cursor-pointer hover:ring-2 hover:ring-primary/40': canOpenAttention(event) },
+                                                { 'cursor-grab active:cursor-grabbing': isDraggableEvent(event) },
+                                                { 'ring-2 ring-primary/60 opacity-20 scale-[0.97] shadow-none': draggedEvent?.id === event.id },
+                                                { 'z-50': draggedEvent?.id !== event.id },
+                                            ]"
+                                            :style="eventCardStyle(event)"
+                                            @click="openAttentionFromAppointment(event)"
+                                            @dragstart="onDragStart(event, $event)"
+                                            @dragend="onDragEnd($event)"
+                                        >
+                                            <div class="flex flex-col gap-0.5 overflow-hidden">
+                                                <div class="font-semibold text-xs leading-tight">{{ event.patient || 'Paciente' }}</div>
+                                                <div class="text-[10px] opacity-90">{{ formatEventTime(event) }}</div>
+                                                <div class="text-[10px] opacity-90">{{ event.title }}</div>
+                                                <div class="mt-0.5 text-[10px] opacity-90">{{ statusLabel(event) }}</div>
+                                                <div v-if="arrivalLabel(event)" class="text-[10px] opacity-80">{{ arrivalLabel(event) }}</div>
+                                            </div>
+
+                                            <!-- Tooltip para citas de 15 min o menos -->
+                                            <div
+                                                v-if="eventDurationMinutes(event) <= 15"
+                                                class="invisible absolute left-1/2 z-[70] -translate-x-1/2 rounded-lg bg-gray-900 px-3 py-2 text-[10px] text-white shadow-xl opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 dark:bg-gray-700 pointer-events-none"
+                                                style="bottom: calc(100% + 6px); min-width: max-content;"
+                                            >
+                                                <div class="flex flex-col gap-1 text-left whitespace-nowrap">
+                                                    <div class="font-semibold">{{ event.patient || 'Paciente' }}</div>
+                                                    <div>{{ formatEventTime(event) }}</div>
+                                                    <div>{{ event.title }}</div>
+                                                    <div>{{ statusLabel(event) }}</div>
+                                                    <div v-if="arrivalLabel(event)">{{ arrivalLabel(event) }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            v-if="dragOverTarget?.dateStr === dateStr && dragOverTarget?.time === slot.time && draggedEvent"
+                                            class="absolute z-30 overflow-hidden rounded border-2 border-dashed border-primary/50 bg-primary/5 px-2 py-1.5 backdrop-blur-sm"
+                                            :style="dragPreviewStyle"
+                                        >
+                                            <div class="flex flex-col gap-0.5">
+                                                <div class="font-semibold text-xs leading-tight text-primary/60">
+                                                    {{ draggedEvent.patient || 'Paciente' }}
+                                                </div>
+                                                <div class="text-[10px] text-primary/50">
+                                                    {{ formatTimeLabel(dragOverTarget.time) }}
+                                                    -
+                                                    {{ formatTimeLabel(timeFromMinutes(minutesFromTime(dragOverTarget.time) + draggingDurationMinutes())) }}
+                                                </div>
+                                                <div class="mt-0.5 flex items-center gap-1 text-[10px] text-primary/50">
+                                                    <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M5 9l7 7 7-7" />
+                                                    </svg>
+                                                    Soltar aquí
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -612,7 +1049,7 @@ onMounted(loadAgenda);
                         </div>
                         <div class="mt-4 grid grid-cols-2 gap-2">
                             <button
-                                v-for="slot in freeSlots.slice(0, 12)"
+                                v-for="slot in (selectedDayData.free_slots || []).slice(0, 12)"
                                 :key="slot.start"
                                 type="button"
                                 class="btn btn-outline-primary btn-sm"
@@ -621,7 +1058,7 @@ onMounted(loadAgenda);
                                 {{ formatTimeLabel(slot.start) }}
                             </button>
                         </div>
-                        <p v-if="freeSlots.length === 0" class="mt-4 text-sm text-white-dark">
+                        <p v-if="(selectedDayData.free_slots || []).length === 0" class="mt-4 text-sm text-white-dark">
                             No hay espacios libres dentro del horario normal.
                         </p>
                     </div>
@@ -632,11 +1069,11 @@ onMounted(loadAgenda);
                             <div v-for="key in ['early', 'on_time', 'late']" :key="key">
                                 <div class="mb-2 flex items-center justify-between text-sm font-semibold">
                                     <span>{{ punctualityTitle(key) }}</span>
-                                    <span>{{ punctuality[key]?.length || 0 }}</span>
+                                    <span>{{ selectedDayData.punctuality?.[key]?.length || 0 }}</span>
                                 </div>
-                                <div v-if="punctuality[key]?.length" class="space-y-2">
+                                <div v-if="selectedDayData.punctuality?.[key]?.length" class="space-y-2">
                                     <div
-                                        v-for="item in punctuality[key]"
+                                        v-for="item in selectedDayData.punctuality[key]"
                                         :key="`${key}-${item.patient_id}-${item.attention_at}`"
                                         class="rounded border px-3 py-2 text-xs"
                                         :class="punctualityClass(key)"
@@ -821,3 +1258,23 @@ onMounted(loadAgenda);
         </TransitionRoot>
     </AppLayout>
 </template>
+
+<style scoped>
+.drop-success-pulse {
+    animation: dropPulse 0.8s ease-out;
+}
+@keyframes dropPulse {
+    0% {
+        background-color: rgba(16, 185, 129, 0.25);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    50% {
+        background-color: rgba(16, 185, 129, 0.15);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+</style>

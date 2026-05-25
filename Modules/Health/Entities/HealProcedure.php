@@ -4,9 +4,13 @@ namespace Modules\Health\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Health\Support\LogsActivity;
 
 class HealProcedure extends Model
 {
+    use SoftDeletes;
+    use LogsActivity;
     protected $fillable = [
         'name',
         'category',

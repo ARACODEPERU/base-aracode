@@ -275,6 +275,7 @@ const cie10SearchTerms = reactive({
     code: '',
     description: '',
 });
+const signing = ref(false);
 const showVitalSigns = ref(Boolean(
     props.attention?.blood_pressure_systolic
     || props.attention?.blood_pressure_diastolic
@@ -873,6 +874,7 @@ const sendDoctorAccessReset = () => {
 };
 
 const continueSignAttention = () => {
+    signing.value = true;
     Swal.fire({
         icon: 'warning',
         title: 'Firma médico legal',
@@ -890,6 +892,7 @@ const continueSignAttention = () => {
         padding: '2em',
     }).then((warning) => {
         if (!warning.isConfirmed) {
+            signing.value = false;
             return;
         }
 
@@ -943,8 +946,8 @@ const continueSignAttention = () => {
                         Swal.showValidationMessage(message || error.response?.data?.message || 'No se pudo firmar la atención.');
                         return false;
                     });
-            },
-        }).then((result) => {
+            },            }).then((result) => {
+            signing.value = false;
             if (result.isConfirmed) {
                 Swal.fire({
                     icon: 'success',
@@ -956,6 +959,9 @@ const continueSignAttention = () => {
                     router.reload();
                 });
             }
+        })
+        .catch(() => {
+            signing.value = false;
         });
     });
 };
@@ -1261,8 +1267,11 @@ watch(selectedCie10, (value) => {
                         <p class="text-sm text-white-dark mb-4">
                             La firma bloquea la atención para nuevas modificaciones.
                         </p>
-                        <button v-if="isEdit" type="button" class="btn btn-danger w-full" @click="signAttention">
-                            Firmar atención
+                        <button v-if="isEdit" type="button" class="btn btn-danger w-full" :class="{ 'opacity-25 cursor-not-allowed': signing }" :disabled="signing" @click="signAttention">
+                            <svg v-if="signing" class="inline-block h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                            </svg>
+                            {{ signing ? 'Firmando...' : 'Firmar atención' }}
                         </button>
                         <div v-else class="text-xs text-white-dark">
                             Guarda la atención para habilitar la firma.
@@ -1652,10 +1661,12 @@ watch(selectedCie10, (value) => {
                 <template #botones>
                     <PrimaryButton :disabled="form.processing || !canEdit" :class="{ 'opacity-25': form.processing || !canEdit }">
                         {{ isEdit ? 'Actualizar' : 'Guardar' }}
-                    </PrimaryButton>
-                    <button v-if="isEdit && !isSigned" type="button" class="btn btn-danger ml-2" @click="signAttention">
-                        Firmar
-                    </button>
+                    </PrimaryButton>                        <button v-if="isEdit && !isSigned" type="button" class="btn btn-danger ml-2" :class="{ 'opacity-25 cursor-not-allowed': signing }" :disabled="signing" @click="signAttention">
+                            <svg v-if="signing" class="inline-block h-4 w-4 animate-spin ltr:mr-2 rtl:ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                            </svg>
+                            {{ signing ? 'Firmando...' : 'Firmar' }}
+                        </button>
                     <Link :href="route('heal_attentions_list')" class="ml-2">
                         <SecondaryButton type="button">Volver</SecondaryButton>
                     </Link>

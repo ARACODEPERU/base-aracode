@@ -11,6 +11,7 @@ import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
 import IconClipboardText from '@/Components/vristo/icon/icon-clipboard-text.vue';
 import IconFile from '@/Components/vristo/icon/icon-file.vue';
 import IconPlusCircle from '@/Components/vristo/icon/icon-plus-circle.vue';
+import { serviceTypeOption } from '@/Components/Health/healthOptions.js';
 
 const props = defineProps({
     patient: {
@@ -123,12 +124,7 @@ const formatDate = (value) => {
     }).format(new Date(value));
 };
 
-const serviceTypeLabel = (value) => ({
-    general: 'General',
-    medicina: 'Medicina',
-    odontologia: 'Odontología',
-    dental: 'Odontología',
-}[value] || value || 'Sin tipo');
+const serviceTypeLabel = (value) => serviceTypeOption(value)?.label || value || 'Sin tipo';
 
 const examTypeLabel = (value) => ({
     radiografia: 'Radiografía',

@@ -33,46 +33,6 @@ class HealAttentionController extends Controller
 {
     use ValidatesRequests;
 
-    private const ATTENTION_SERVICE_TYPES = [
-        'general',
-        'medicina_general',
-        'medicina_interna',
-        'pediatria',
-        'ginecologia',
-        'cardiologia',
-        'dermatologia',
-        'traumatologia',
-        'neurologia',
-        'oftalmologia',
-        'otorrinolaringologia',
-        'gastroenterologia',
-        'endocrinologia',
-        'urologia',
-        'psicologia',
-        'nutricion',
-        'dental',
-        'odontologia_general',
-        'ortodoncia',
-        'endodoncia',
-        'periodoncia',
-        'rehabilitacion_oral',
-        'cirugia_bucal',
-        'odontopediatria',
-        'implantologia',
-    ];
-
-    private const DENTAL_SERVICE_TYPES = [
-        'dental',
-        'odontologia_general',
-        'ortodoncia',
-        'endodoncia',
-        'periodoncia',
-        'rehabilitacion_oral',
-        'cirugia_bucal',
-        'odontopediatria',
-        'implantologia',
-    ];
-
     public function index(): Response
     {
         $attentions = HealAttention::with(['patient.person', 'doctor.person', 'history', 'cie10'])
@@ -538,7 +498,7 @@ class HealAttentionController extends Controller
             'attention_at' => ['required', 'date'],
             'attention_date' => ['required', 'date_format:Y-m-d'],
             'attention_time' => ['required', 'date_format:H:i'],
-            'service_type' => ['required', 'in:' . implode(',', self::ATTENTION_SERVICE_TYPES)],
+            'service_type' => ['required', 'in:' . implode(',', config('health.attention_service_types'))],
             'patient_id' => ['required', 'exists:heal_patients,id'],
             'doctor_id_value' => [$this->canChooseDoctor() ? 'required' : 'nullable', 'exists:heal_doctors,id'],
             'patient_story' => ['nullable', 'string'],
@@ -819,7 +779,7 @@ class HealAttentionController extends Controller
 
     private function isDentalServiceType(?string $serviceType): bool
     {
-        return in_array($serviceType, self::DENTAL_SERVICE_TYPES, true);
+        return in_array($serviceType, config('health.dental_service_types'), true);
     }
 
     private function normalizeServiceType(?string $serviceType): string
@@ -844,7 +804,7 @@ class HealAttentionController extends Controller
     {
         $attention = HealAttention::with('odontogram')
             ->where('patient_id', $patientId)
-            ->whereIn('service_type', self::DENTAL_SERVICE_TYPES)
+            ->whereIn('service_type', config('health.dental_service_types'))
             ->whereHas('odontogram')
             ->latest('attention_at')
             ->first();

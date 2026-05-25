@@ -7,9 +7,13 @@ use App\Models\SaleDocument;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Health\Support\LogsActivity;
 
 class HealPatientCharge extends Model
 {
+    use SoftDeletes;
+    use LogsActivity;
     protected $fillable = [
         'patient_id',
         'attention_id',
