@@ -32,6 +32,7 @@ class HealAttention extends Model
         'diagnosis',
         'treatment_plan',
         'observations',
+        'non_pharmacological_indications',
         'blood_pressure_systolic',
         'blood_pressure_diastolic',
         'heart_rate',

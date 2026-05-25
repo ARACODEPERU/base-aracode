@@ -12,6 +12,7 @@ import IconRestore from '@/Components/vristo/icon/icon-restore.vue';
 
 import IconUser from '@/Components/vristo/icon/icon-user.vue';
 import ActivityDetailModal from '@/Components/Health/ActivityDetailModal.vue';
+import EstablishmentBadge from '../../../Components/EstablishmentBadge.vue';
 
 const props = defineProps({
     activities: {
@@ -93,11 +94,14 @@ const hasActiveFilters = computed(() => {
 
 <template>
     <AppLayout title="Registro de Actividades">
-        <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Registro de Actividades</span>
-            </li>
-        </Navigation>
+        <div class="flex items-center justify-between">
+            <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
+                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                    <span>Registro de Actividades</span>
+                </li>
+            </Navigation>
+            <EstablishmentBadge />
+        </div>
 
         <div class="pt-5 space-y-5">
             <!-- Header -->

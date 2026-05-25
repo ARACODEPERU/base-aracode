@@ -120,6 +120,46 @@ const splitDateTime = (value = null) => {
 
 const localDateTimeInputValue = (value = null) => formatDateTime(value).replace(' ', 'T');
 
+const prescriptionDownloadUrl = (attentionId) => route('heal_attentions_prescription', {
+    id: attentionId,
+    download: 1,
+});
+
+const openPrescriptionPdf = (attentionId) => {
+    if (!attentionId) {
+        return;
+    }
+
+    window.open(prescriptionDownloadUrl(attentionId), '_blank');
+};
+
+const showPrescriptionOption = ({ title, html, attentionId, onClose = null }) => {
+    Swal.fire({
+        icon: 'success',
+        title,
+        html,
+        showCancelButton: Boolean(attentionId),
+        confirmButtonText: attentionId ? 'Ver Receta' : 'Continuar',
+        cancelButtonText: 'Continuar',
+        reverseButtons: true,
+        customClass: {
+            popup: 'sweet-alerts',
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-dark ltr:mr-3 rtl:ml-3',
+        },
+        buttonsStyling: false,
+        padding: '2em',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            openPrescriptionPdf(attentionId);
+        }
+
+        if (onClose) {
+            onClose();
+        }
+    });
+};
+
 const attentionWindowLimits = computed(() => {
     const now = new Date();
     const minimum = new Date(now.getTime() - (24 * 60 * 60 * 1000));
@@ -182,6 +222,19 @@ const normalizeEndodonticData = (value = null) => {
     return data;
 };
 
+const defaultPharmacologicalData = () => ({
+    active_ingredient: null,
+    dosage: null,
+    frequency: null,
+    brand: null,
+    administration_indications: null,
+});
+
+const normalizePharmacologicalData = (value = null) => ({
+    ...defaultPharmacologicalData(),
+    ...(value || {}),
+});
+
 const normalizeTreatment = (treatment = {}) => {
     const treatmentType = treatment.treatment_type || 'farmacologica';
 
@@ -192,6 +245,9 @@ const normalizeTreatment = (treatment = {}) => {
         indications: treatment.indications || null,
         endodontic_data: treatmentType === 'endodontico'
             ? normalizeEndodonticData(treatment.endodontic_data)
+            : null,
+        pharmacological_data: treatmentType === 'farmacologica'
+            ? normalizePharmacologicalData(treatment.pharmacological_data)
             : null,
     };
 };
@@ -245,6 +301,7 @@ const form = useForm({
     diagnosis: props.attention?.diagnosis || null,
     treatment_plan: props.attention?.treatment_plan || null,
     observations: props.attention?.observations || null,
+    non_pharmacological_indications: props.attention?.non_pharmacological_indications || null,
     blood_pressure_systolic: props.attention?.blood_pressure_systolic || null,
     blood_pressure_diastolic: props.attention?.blood_pressure_diastolic || null,
     heart_rate: props.attention?.heart_rate || null,
@@ -746,6 +803,20 @@ const syncEndodonticData = (treatment) => {
     treatment.endodontic_data = null;
 };
 
+const syncPharmacologicalData = (treatment) => {
+    if (treatment.treatment_type === 'farmacologica') {
+        treatment.pharmacological_data = normalizePharmacologicalData(treatment.pharmacological_data);
+        return;
+    }
+
+    treatment.pharmacological_data = null;
+};
+
+const onTreatmentTypeChange = (treatment) => {
+    syncEndodonticData(treatment);
+    syncPharmacologicalData(treatment);
+};
+
 const queueCie10Search = (search, mode) => {
     cie10SearchTerms[mode] = search || '';
 };
@@ -949,14 +1020,13 @@ const continueSignAttention = () => {
             },            }).then((result) => {
             signing.value = false;
             if (result.isConfirmed) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Atención firmada',
-                    text: 'El documento quedó bloqueado para modificaciones.',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                }).then(() => {
-                    router.reload();
+                showPrescriptionOption({
+                    title: 'Atencion firmada',
+                    html: 'El documento quedo bloqueado para modificaciones.<br><br>Puedes descargar la receta medica ahora.',
+                    attentionId: props.attention.id,
+                    onClose: () => {
+                        router.reload();
+                    },
                 });
             }
         })
@@ -1014,7 +1084,7 @@ const submitAttention = ({ afterSuccess = null, showSuccess = true, stayOnAttent
 
     const options = {
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (page) => {
             closeProcedureChargeModal();
 
             if (afterSuccess) {
@@ -1026,13 +1096,23 @@ const submitAttention = ({ afterSuccess = null, showSuccess = true, stayOnAttent
                 return;
             }
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Enhorabuena',
-                text: 'La atención se guardó correctamente.',
-                padding: '2em',
-                customClass: 'sweet-alerts',
-            });
+            if (isEdit.value && props.attention?.id) {
+                const attentionId = props.attention.id;
+
+                showPrescriptionOption({
+                    title: 'Atencion actualizada',
+                    html: 'La atencion se guardo correctamente.<br><br>Puedes descargar la receta medica ahora.',
+                    attentionId,
+                });
+            } else {
+                const attentionId = page?.props?.attention?.id;
+
+                showPrescriptionOption({
+                    title: 'Atencion guardada',
+                    html: 'La atencion se guardo correctamente.<br><br>Puedes descargar la receta medica ahora.',
+                    attentionId,
+                });
+            }
         },
         onFinish: () => {
             form.stay_on_attention = false;
@@ -1494,6 +1574,17 @@ watch(selectedCie10, (value) => {
                     <textarea v-model="form.observations" class="form-textarea" rows="5" :disabled="!canEdit"></textarea>
                 </div>
                 <div class="lg:col-span-2">
+                    <InputLabel value="Indicaciones no farmacológicas" />
+                    <textarea
+                        v-model="form.non_pharmacological_indications"
+                        class="form-textarea"
+                        rows="4"
+                        :disabled="!canEdit"
+                        placeholder="Ej: reposo por 48 horas, dieta blanda, aplicar hielo local cada 6 horas, evitar esfuerzo físico..."
+                    ></textarea>
+                    <p class="mt-1 text-xs text-white-dark">Instrucciones y recomendaciones sobre estilo de vida, dieta, ejercicio, cuidados, etc.</p>
+                </div>
+                <div class="lg:col-span-2">
                     <button type="button" class="btn btn-outline-primary btn-sm" @click="toggleVitalSigns">
                         <icon-plus class="w-4 h-4 mr-1" />
                         {{ showVitalSigns ? 'Ocultar signos vitales' : 'Agregar signos vitales' }}
@@ -1570,32 +1661,77 @@ watch(selectedCie10, (value) => {
             </div>
 
             <div class="space-y-4">
-                <div v-for="(treatment, index) in form.treatments" :key="index" class="grid grid-cols-1 md:grid-cols-12 gap-3 border border-slate-200 dark:border-slate-700 rounded p-3">
-                    <div class="md:col-span-3">
+                <div v-for="(treatment, index) in form.treatments" :key="index" :class="[
+                    'grid grid-cols-1 md:grid-cols-12 gap-3 border rounded p-3',
+                    index % 2 === 0
+                        ? 'border-blue-200 bg-blue-50/40 dark:border-blue-800 dark:bg-blue-900/15'
+                        : 'border-yellow-200 bg-yellow-50/40 dark:border-yellow-800 dark:bg-yellow-900/15'
+                ]">
+                    <div class="md:col-span-2">
                         <InputLabel value="Tipo" />
-                        <select v-model="treatment.treatment_type" class="form-select" :disabled="!canEdit" @change="syncEndodonticData(treatment)">
+                        <select v-model="treatment.treatment_type" class="form-select" :disabled="!canEdit" @change="onTreatmentTypeChange(treatment)">
                             <option v-for="type in treatmentTypes" :key="type.value" :value="type.value">
                                 {{ type.label }}
                             </option>
                         </select>
                     </div>
-                    <div class="md:col-span-3">
-                        <InputLabel value="Nombre" />
-                        <TextInput v-model="treatment.name" :disabled="!canEdit" />
-                    </div>
-                    <div class="md:col-span-3">
-                        <InputLabel value="Descripción" />
-                        <textarea v-model="treatment.description" class="form-textarea" rows="2" :disabled="!canEdit"></textarea>
-                    </div>
-                    <div class="md:col-span-2">
-                        <InputLabel value="Indicaciones" />
-                        <textarea v-model="treatment.indications" class="form-textarea" rows="2" :disabled="!canEdit"></textarea>
-                    </div>
+                    <template v-if="treatment.treatment_type !== 'farmacologica'">
+                        <div class="md:col-span-2">
+                            <InputLabel value="Nombre" />
+                            <TextInput v-model="treatment.name" :disabled="!canEdit" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <InputLabel value="Descripción" />
+                            <textarea v-model="treatment.description" class="form-textarea" rows="2" :disabled="!canEdit"></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Indicaciones" />
+                            <textarea v-model="treatment.indications" class="form-textarea" rows="2" :disabled="!canEdit"></textarea>
+                        </div>
+                    </template>
+
+                    <!-- Pharmacological fields for farmacologica treatment type (replaces name/desc) -->
+                    <template v-if="treatment.treatment_type === 'farmacologica'">
+                        <div class="md:col-span-2">
+                            <InputLabel value="Principio activo" />
+                            <TextInput v-model="treatment.pharmacological_data.active_ingredient" :disabled="!canEdit" placeholder="Ej: Ibuprofeno, Amoxicilina" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Dosis" />
+                            <TextInput v-model="treatment.pharmacological_data.dosage" :disabled="!canEdit" placeholder="Ej: 500mg, 1000UI, 200mg/ml" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Frecuencia" />
+                            <div class="flex gap-2">
+                                <select v-model="treatment.pharmacological_data.frequency" class="form-select w-full" :disabled="!canEdit">
+                                    <option value="">Personalizar...</option>
+                                    <option value="Cada 4 horas">Cada 4 horas</option>
+                                    <option value="Cada 6 horas">Cada 6 horas</option>
+                                    <option value="Cada 8 horas">Cada 8 horas</option>
+                                    <option value="Cada 12 horas">Cada 12 horas</option>
+                                    <option value="Cada 24 horas">Cada 24 horas</option>
+                                    <option value="Cada 48 horas">Cada 48 horas</option>
+                                    <option value="Semanal">Semanal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Marca comercial" />
+                            <TextInput v-model="treatment.pharmacological_data.brand" :disabled="!canEdit" placeholder="Ej: Advil, Amoxal" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <InputLabel value="Indicaciones de administración" />
+                            <textarea v-model="treatment.pharmacological_data.administration_indications" class="form-textarea" rows="2" :disabled="!canEdit" placeholder="Ej: Tomar después de cada comida, evitar con alcohol..."></textarea>
+                        </div>
+                    </template>
+
+                    <!-- Delete button always at the end -->
                     <div v-if="canEdit" class="md:col-span-1 flex items-end">
-                        <button type="button" class="btn btn-outline-danger w-full" @click="removeTreatment(index)">
-                            <icon-trash class="w-4 h-4 mx-auto" />
+                        <button type="button" class="btn btn-danger w-full" @click="removeTreatment(index)">
+                            <icon-trash class="w-4 h-4 mx-auto text-white" />
                         </button>
                     </div>
+
                     <EndodonticTreatmentFields
                         v-if="treatment.treatment_type === 'endodontico'"
                         v-model="treatment.endodontic_data"
@@ -1618,7 +1754,12 @@ watch(selectedCie10, (value) => {
             </div>
 
             <div class="space-y-4">
-                <div v-for="(exam, index) in form.exams" :key="index" class="grid grid-cols-1 md:grid-cols-12 gap-3 border border-slate-200 dark:border-slate-700 rounded p-3">
+                <div v-for="(exam, index) in form.exams" :key="index" :class="[
+                    'grid grid-cols-1 md:grid-cols-12 gap-3 border rounded p-3',
+                    index % 2 === 0
+                        ? 'border-blue-200 bg-blue-50/40 dark:border-blue-800 dark:bg-blue-900/15'
+                        : 'border-yellow-200 bg-yellow-50/40 dark:border-yellow-800 dark:bg-yellow-900/15'
+                ]">
                     <div class="md:col-span-2">
                         <InputLabel value="Tipo" />
                         <select v-model="exam.exam_type" class="form-select" :disabled="!canEdit">
@@ -1641,8 +1782,8 @@ watch(selectedCie10, (value) => {
                         <textarea v-model="exam.result" class="form-textarea" rows="2" :disabled="!canEdit"></textarea>
                     </div>
                     <div v-if="canEdit" class="md:col-span-1 flex items-end">
-                        <button type="button" class="btn btn-outline-danger w-full" @click="removeExam(index)">
-                            <icon-trash class="w-4 h-4 mx-auto" />
+                        <button type="button" class="btn btn-danger w-full" @click="removeExam(index)">
+                            <icon-trash class="w-4 h-4 mx-auto text-white" />
                         </button>
                     </div>
                 </div>

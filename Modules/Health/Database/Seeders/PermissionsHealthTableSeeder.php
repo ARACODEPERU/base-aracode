@@ -47,6 +47,7 @@ class PermissionsHealthTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'heal_atenciones_editar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'heal_atenciones_eliminar']));
                 array_push($permissions, Permission::firstOrCreate(['name' => 'heal_actividades_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'heal_configuracion']));
 
         ///////odontologico///////////
         array_push($permissions, Permission::firstOrCreate(['name' => 'heal_odontology']));

@@ -2,7 +2,9 @@
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Pagination from '@/Components/Pagination.vue';
+import ModalLarge from '@/Components/ModalLarge.vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import IconSearch from '@/Components/vristo/icon/icon-search.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconPencil from '@/Components/vristo/icon/icon-pencil.vue';
@@ -11,9 +13,12 @@ import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import IconTooth from '@/Components/vristo/icon/icon-tooth.vue';
 import IconHeart from '@/Components/vristo/icon/icon-heart.vue';
 import IconGlasses from '@/Components/vristo/icon/icon-glasses.vue';
+import IconNotes from '@/Components/vristo/icon/icon-notes.vue';
+import IconFilePdf from '@/Components/vristo/icon/icon-file-pdf.vue';
 import { serviceTypeOption } from '@/Components/Health/healthOptions.js';
 import Swal from 'sweetalert2';
 import PendingSignatureReminder from '../../Components/PendingSignatureReminder.vue';
+import EstablishmentBadge from '../../Components/EstablishmentBadge.vue';
 
 const props = defineProps({
     attentions: {
@@ -32,6 +37,22 @@ const props = defineProps({
 
 const form = useForm({
     search: props.filters.search,
+});
+
+const displayPrescriptionModal = ref(false);
+const selectedAttention = ref(null);
+
+const selectedPharmacologicalTreatments = computed(() => {
+    return (selectedAttention.value?.treatments || [])
+        .filter((treatment) => treatment.treatment_type === 'farmacologica')
+        .map((treatment) => ({
+            ...treatment,
+            pharmacological_data: treatment.pharmacological_data || {},
+        }));
+});
+
+const hasPrescriptionIndications = computed(() => {
+    return selectedPharmacologicalTreatments.value.some((treatment) => treatment.pharmacological_data?.administration_indications);
 });
 
 const search = () => {
@@ -53,6 +74,44 @@ const formatDate = (value) => {
         hour: '2-digit',
         minute: '2-digit',
     }).format(new Date(value));
+};
+
+const patientAge = (attention) => {
+    const birthdate = attention?.patient?.person?.birthdate;
+
+    if (!birthdate) {
+        return '-';
+    }
+
+    const birth = new Date(birthdate);
+    const today = new Date();
+
+    if (Number.isNaN(birth.getTime()) || birth > today) {
+        return '-';
+    }
+
+    let years = today.getFullYear() - birth.getFullYear();
+    let months = today.getMonth() - birth.getMonth();
+
+    if (today.getDate() < birth.getDate()) {
+        months -= 1;
+    }
+
+    if (months < 0) {
+        years -= 1;
+        months += 12;
+    }
+
+    return `${years}a ${months}m`;
+};
+
+const openPrescriptionModal = (attention) => {
+    selectedAttention.value = attention;
+    displayPrescriptionModal.value = true;
+};
+
+const closePrescriptionModal = () => {
+    displayPrescriptionModal.value = false;
 };
 
 const editAttention = (attention) => {
@@ -178,11 +237,14 @@ const deleteAttention = (attention) => {
     <AppLayout title="Atenciones">
         <PendingSignatureReminder :items="pendingSignatures" />
 
-        <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Atenciones</span>
-            </li>
-        </Navigation>
+        <div class="flex items-center justify-between">
+            <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
+                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                    <span>Atenciones</span>
+                </li>
+            </Navigation>
+            <EstablishmentBadge />
+        </div>
 
         <div class="pt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
@@ -256,6 +318,15 @@ const deleteAttention = (attention) => {
                                             </Link>
                                             <button
                                                 type="button"
+                                                class="btn btn-sm btn-success inline-flex items-center gap-1"
+                                                v-tippy="{ content: 'Ver receta', placement: 'bottom' }"
+                                                @click="openPrescriptionModal(attention)"
+                                            >
+                                                <IconNotes class="w-4 h-4 text-white" />
+                                                Receta
+                                            </button>
+                                            <button
+                                                type="button"
                                                 class="btn btn-sm btn-danger"
                                                 :class="{ 'opacity-50 cursor-not-allowed': attention.signed_at }"
                                                 v-tippy="{
@@ -303,6 +374,103 @@ const deleteAttention = (attention) => {
                 </Pagination>
             </div>
         </div>
+
+        <ModalLarge :show="displayPrescriptionModal" :onClose="closePrescriptionModal">
+            <template #title>
+                Receta medica
+            </template>
+            <template #message>
+                {{ selectedAttention?.patient?.person?.full_name || 'Paciente sin nombre' }}
+            </template>
+            <template #content>
+                <div v-if="selectedAttention" class="space-y-4">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="rounded border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
+                            <div class="text-xs font-semibold uppercase text-white-dark">Paciente</div>
+                            <div class="mt-1 font-semibold">{{ selectedAttention.patient?.person?.full_name || '-' }}</div>
+                            <div class="mt-1 text-sm text-white-dark">Edad: {{ patientAge(selectedAttention) }}</div>
+                        </div>
+                        <div class="rounded border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800">
+                            <div class="text-xs font-semibold uppercase text-white-dark">Doctor</div>
+                            <div class="mt-1 font-semibold">{{ selectedAttention.doctor?.person?.full_name || '-' }}</div>
+                            <div class="mt-1 text-sm text-white-dark">{{ selectedAttention.doctor?.specialty || '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <div class="mb-2 text-sm font-semibold text-primary">Terapia farmacologica</div>
+                            <div v-if="selectedPharmacologicalTreatments.length" class="space-y-2">
+                                <div
+                                    v-for="treatment in selectedPharmacologicalTreatments"
+                                    :key="treatment.id"
+                                    class="rounded border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    <div class="font-semibold">
+                                        <template v-if="treatment.pharmacological_data.active_ingredient && treatment.pharmacological_data.brand">
+                                            {{ treatment.pharmacological_data.active_ingredient }} ({{ treatment.pharmacological_data.brand }})
+                                        </template>
+                                        <template v-else>
+                                            {{ treatment.pharmacological_data.active_ingredient || treatment.pharmacological_data.brand || treatment.name || treatment.description || 'Medicamento' }}
+                                        </template>
+                                    </div>
+                                    <div class="mt-1 text-sm text-white-dark">
+                                        {{ treatment.pharmacological_data.dosage || 'Dosis no registrada' }}
+                                    </div>
+                                    <div v-if="treatment.pharmacological_data.frequency" class="mt-1 text-sm text-white-dark">
+                                        {{ treatment.pharmacological_data.frequency }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="rounded border border-dashed border-gray-300 p-4 text-sm text-white-dark dark:border-gray-600">
+                                No se indicaron medicamentos.
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="mb-2 text-sm font-semibold text-primary">Indicaciones</div>
+                            <div v-if="hasPrescriptionIndications || selectedAttention.non_pharmacological_indications" class="space-y-2">
+                                <template v-for="treatment in selectedPharmacologicalTreatments" :key="`indication-${treatment.id}`">
+                                    <div
+                                        v-if="treatment.pharmacological_data.administration_indications"
+                                        class="rounded border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800"
+                                    >
+                                        <div class="text-sm font-semibold">
+                                            {{ treatment.pharmacological_data.active_ingredient || treatment.pharmacological_data.brand || treatment.name || 'Medicamento' }}
+                                        </div>
+                                        <div class="mt-1 whitespace-pre-line text-sm text-white-dark">
+                                            {{ treatment.pharmacological_data.administration_indications }}
+                                        </div>
+                                    </div>
+                                </template>
+                                <div
+                                    v-if="selectedAttention.non_pharmacological_indications"
+                                    class="rounded border border-gray-200 bg-white p-3 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    <div class="text-sm font-semibold">Indicaciones no farmacologicas</div>
+                                    <div class="mt-1 whitespace-pre-line text-sm text-white-dark">
+                                        {{ selectedAttention.non_pharmacological_indications }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="rounded border border-dashed border-gray-300 p-4 text-sm text-white-dark dark:border-gray-600">
+                                Sin indicaciones registradas.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template #buttons>
+                <a
+                    v-if="selectedAttention"
+                    :href="route('heal_attentions_prescription', { id: selectedAttention.id, download: 1 })"
+                    class="btn btn-primary inline-flex items-center gap-2"
+                >
+                    <IconFilePdf class="h-5 w-5" />
+                    Ver PDF
+                </a>
+            </template>
+        </ModalLarge>
     </AppLayout>
 </template>
 

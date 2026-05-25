@@ -44,6 +44,7 @@ class HealActivityController extends Controller
                 'cancelled' => 'Anulación',
                 'restored' => 'Restauración',
             ],
+            'subjectTypes' => ['settings' => 'Configuración'],
         ]);
     }
 

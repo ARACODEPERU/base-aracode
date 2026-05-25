@@ -86,6 +86,7 @@ class HealActivity extends Model
             'HealProcedure' => 'Procedimiento',
             'HealPatientCharge' => 'Cobro',
             'HealHistory' => 'Historia Clínica',
+            'HealSetting' => 'Configuración',
             default => $type,
         };
     }

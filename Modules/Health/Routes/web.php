@@ -16,6 +16,8 @@ use Modules\Health\Http\Controllers\HealAttentionController;
 use Modules\Health\Http\Controllers\HealAgendaController;
 use Modules\Health\Http\Controllers\HealProcedureChargeController;
 use Modules\Health\Http\Controllers\HealActivityController;
+use Modules\Health\Http\Controllers\HealSettingController;
+use Modules\Health\Http\Controllers\HealAttentionPdfController;
 use Modules\Health\Http\Controllers\Odontology\HealOdoAppointmentController;
 
 Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
@@ -74,5 +76,16 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::middleware(['role:admin|Administrador|webAdmin'])->prefix('admin')->group(function () {
         Route::get('activities', [HealActivityController::class, 'index'])->name('heal_activities_list');
         Route::get('activities/{id}', [HealActivityController::class, 'show'])->name('heal_activities_show');
+
+        // Settings / Configuration
+        Route::get('settings', [HealSettingController::class, 'index'])->name('heal_settings');
+        Route::post('settings/update', [HealSettingController::class, 'update'])->name('heal_settings_update');
+        Route::post('settings/upload-logo', [HealSettingController::class, 'uploadLogo'])->name('heal_settings_upload_logo');
+        Route::post('settings/delete-logo', [HealSettingController::class, 'deleteLogo'])->name('heal_settings_delete_logo');
+
     });
+
+    // PDF Reports (outside admin middleware — accessible to doctors)
+    Route::get('attentions/{id}/pdf', [HealAttentionPdfController::class, 'download'])->name('heal_attentions_pdf');
+    Route::get('attentions/{id}/prescription', [HealAttentionPdfController::class, 'prescription'])->name('heal_attentions_prescription');
 });

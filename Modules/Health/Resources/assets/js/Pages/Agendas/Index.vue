@@ -12,6 +12,7 @@ import IconClock from '@/Components/vristo/icon/icon-clock.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
 import PendingSignatureReminder from '../../Components/PendingSignatureReminder.vue';
+import EstablishmentBadge from '../../Components/EstablishmentBadge.vue';
 
 const props = defineProps({
     doctors: {
@@ -49,6 +50,12 @@ const props = defineProps({
     normalEnd: {
         type: String,
         default: '20:00',
+    },
+    workingHoursRanges: {
+        type: Array,
+        default: () => [
+            { start: '08:00', end: '20:00' },
+        ],
     },
     slotMinutes: {
         type: Number,
@@ -148,8 +155,17 @@ const durationOptions = [
     { value: '30', label: '30 min' },
     { value: '45', label: '45 min' },
     { value: '60', label: '1 hora' },
+    { value: '90', label: '1:30 h' },
+    { value: '120', label: '2 horas' },
+    { value: '150', label: '2:30 h' },
+    { value: '180', label: '3 horas' },
+    { value: '240', label: '4 horas' },
     { value: 'custom', label: 'Más tiempo' },
 ];
+
+const sidebarDuration = ref(props.slotMinutes);
+const sidebarFreeSlots = ref([]);
+const sidebarAvailabilityLoading = ref(false);
 
 const preselectedPatient = computed(() => props.patients.find((patient) => patient.code === props.preselectedPatientId) || null);
 const appointmentDoctor = computed(() => props.canChooseAppointmentDoctor ? selectedDoctor.value : props.currentDoctor);
@@ -231,7 +247,7 @@ const getDaySlots = (dayData, globalStart, globalEnd) => {
         const time = timeFromMinutes(minute);
         slots.push({
             time,
-            withinNormalHours: minute >= normalStart && minute < normalEnd,
+            withinNormalHours: isWithinWorkingHours(minute),
             available: freeKeys.has(time),
             hasEventOverlap: layoutedEvents.some((event) => eventOverlapsSlot(event, minute)),
             startingEvents: layoutedEvents.filter((event) => slotStartForEvent(event.start) === time),
@@ -357,14 +373,35 @@ const loadAvailability = () => {
     });
 };
 
-const openAppointmentModal = (time = null) => {
+const loadSidebarAvailability = () => {
+    if (!selectedDoctor.value?.code || !selectedDate.value) {
+        sidebarFreeSlots.value = [];
+        return;
+    }
+
+    sidebarAvailabilityLoading.value = true;
+    axios.get(route('heal_agendas_availability'), {
+        params: {
+            doctor_id: selectedDoctor.value.code,
+            date: selectedDate.value,
+            duration_minutes: sidebarDuration.value,
+        },
+    }).then((response) => {
+        sidebarFreeSlots.value = response.data.free_slots || [];
+    }).finally(() => {
+        sidebarAvailabilityLoading.value = false;
+    });
+};
+
+const openAppointmentModal = (time = null, duration = null) => {
+    const dur = duration ?? props.slotMinutes;
     form.clearErrors();
     form.patient_id = preselectedPatient.value || form.patient_id;
     form.doctor_id = appointmentDoctor.value;
     form.date_appointmen = selectedDate.value;
     form.time_appointmen = time;
-    form.duration_minutes = props.slotMinutes;
-    durationMode.value = String(props.slotMinutes);
+    form.duration_minutes = dur;
+    durationMode.value = String(dur);
     appointmentModal.value = true;
     loadAvailability();
 };
@@ -442,6 +479,15 @@ const showMessage = (msg = '', type = 'success') => {
         icon: type,
         title: msg,
         padding: '10px 20px',
+    });
+};
+
+const isWithinWorkingHours = (timeMinutes) => {
+    const ranges = props.workingHoursRanges?.length ? props.workingHoursRanges : [{ start: props.normalStart, end: props.normalEnd }];
+    return ranges.some((range) => {
+        const start = minutesFromTime(range.start);
+        const end = minutesFromTime(range.end);
+        return timeMinutes >= start && timeMinutes < end;
     });
 };
 
@@ -775,18 +821,30 @@ const isOutsideNormalHours = (time) => {
         return false;
     }
 
-    const start = minutesFromTime(time);
-    const end = start + Number(form.duration_minutes || props.slotMinutes);
+    const timeMinutes = minutesFromTime(time);
 
-    return start < minutesFromTime(props.normalStart) || end > minutesFromTime(props.normalEnd);
+    // Check if the ENTIRE appointment fits within any single working hours range
+    const duration = Number(form.duration_minutes || props.slotMinutes);
+    const ranges = props.workingHoursRanges?.length ? props.workingHoursRanges : [{ start: props.normalStart, end: props.normalEnd }];
+
+    return !ranges.some((range) => {
+        const rangeStart = minutesFromTime(range.start);
+        const rangeEnd = minutesFromTime(range.end);
+        return timeMinutes >= rangeStart && (timeMinutes + duration) <= rangeEnd;
+    });
 };
 
 watch([selectedDoctor, selectedDate], () => {
     loadAgenda();
+    loadSidebarAvailability();
 });
 
 watch(dayCount, () => {
     loadAgenda();
+});
+
+watch(sidebarDuration, () => {
+    loadSidebarAvailability();
 });
 
 watch(() => form.doctor_id, loadAvailability);
@@ -813,6 +871,7 @@ onMounted(() => {
     updateDayCount();
     window.addEventListener('resize', onResize);
     loadAgenda();
+    loadSidebarAvailability();
 });
 
 onBeforeUnmount(() => {
@@ -882,6 +941,9 @@ onBeforeUnmount(() => {
                             <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-success"></span>Cita pendiente</span>
                             <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-info"></span>Atención registrada</span>
                             <span class="inline-flex items-center gap-1"><span class="h-2.5 w-2.5 rounded-sm bg-danger"></span>No concretada</span>
+                        </div>
+                        <div class="flex items-center">
+                            <EstablishmentBadge />
                         </div>
                     </div>
 
@@ -1044,23 +1106,36 @@ onBeforeUnmount(() => {
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-white-dark">Duración de cita</span>
-                                <span class="font-semibold">Desde 15 min</span>
+                                <select v-model.number="sidebarDuration" class="form-select form-select-sm w-[110px] text-xs">
+                                    <option
+                                        v-for="opt in [15, 30, 45, 60, 90, 120, 150, 180, 240]"
+                                        :key="opt"
+                                        :value="opt"
+                                    >
+                                        {{ opt === 60 ? '1 hora' : opt === 90 ? '1:30 h' : opt === 120 ? '2 horas' : opt === 150 ? '2:30 h' : opt === 180 ? '3 horas' : opt === 240 ? '4 horas' : opt + ' min' }}
+                                    </option>
+                                </select>
                             </div>
                         </div>
-                        <div class="mt-4 grid grid-cols-2 gap-2">
-                            <button
-                                v-for="slot in (selectedDayData.free_slots || []).slice(0, 12)"
-                                :key="slot.start"
-                                type="button"
-                                class="btn btn-outline-primary btn-sm"
-                                @click="openAppointmentModal(slot.start)"
-                            >
-                                {{ formatTimeLabel(slot.start) }}
-                            </button>
+                        <div class="mt-4">
+                            <div v-if="sidebarAvailabilityLoading" class="text-sm text-center py-2 text-white-dark">
+                                Consultando agenda...
+                            </div>
+                            <div v-else-if="sidebarFreeSlots.length === 0" class="text-sm text-center py-2 text-white-dark">
+                                No hay espacios libres de {{ sidebarDuration }} min dentro del horario normal.
+                            </div>
+                            <div v-else class="flex max-h-[440px] flex-col gap-1 overflow-y-auto pr-1">
+                                <button
+                                    v-for="slot in sidebarFreeSlots"
+                                    :key="slot.start"
+                                    type="button"
+                                    class="btn btn-outline-primary btn-sm w-full"
+                                    @click="openAppointmentModal(slot.start, sidebarDuration)"
+                                >
+                                    {{ formatTimeLabel(slot.start) }} - {{ formatTimeLabel(slot.end) }}
+                                </button>
+                            </div>
                         </div>
-                        <p v-if="(selectedDayData.free_slots || []).length === 0" class="mt-4 text-sm text-white-dark">
-                            No hay espacios libres dentro del horario normal.
-                        </p>
                     </div>
 
                     <div class="panel">

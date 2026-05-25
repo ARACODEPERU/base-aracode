@@ -17,10 +17,12 @@ class HealAttentionTreatment extends Model
         'description',
         'indications',
         'endodontic_data',
+        'pharmacological_data',
     ];
 
     protected $casts = [
         'endodontic_data' => 'array',
+        'pharmacological_data' => 'array',
     ];
 
     public function attention(): BelongsTo

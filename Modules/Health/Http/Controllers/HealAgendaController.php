@@ -13,15 +13,41 @@ use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealAttention;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
+use Modules\Health\Entities\HealSetting;
 use Modules\Health\Support\PendingSignatureReminder;
 
 class HealAgendaController extends Controller
 {
-    private const NORMAL_START = '08:00';
-    private const NORMAL_END = '20:00';
     private const SLOT_MINUTES = 15;
     private const ATTENTION_BLOCK_MINUTES = 60;
     private const ON_TIME_GRACE_MINUTES = 5;
+
+    private function workingHours(): array
+    {
+        $settings = HealSetting::first();
+
+        return $settings?->working_hours ?: [
+            ['start' => '08:00', 'end' => '20:00'],
+        ];
+    }
+
+    private function normalStart(): string
+    {
+        $hours = $this->workingHours();
+        $starts = array_column($hours, 'start');
+        sort($starts);
+
+        return $starts[0] ?? '08:00';
+    }
+
+    private function normalEnd(): string
+    {
+        $hours = $this->workingHours();
+        $ends = array_column($hours, 'end');
+        rsort($ends);
+
+        return $ends[0] ?? '20:00';
+    }
 
     public function index(Request $request): Response
     {
@@ -37,8 +63,9 @@ class HealAgendaController extends Controller
             'selectedDoctorId' => $selectedDoctorId,
             'selectedDate' => $selectedDate,
             'preselectedPatientId' => $request->integer('patient_id') ?: null,
-            'normalStart' => self::NORMAL_START,
-            'normalEnd' => self::NORMAL_END,
+            'normalStart' => $this->normalStart(),
+            'normalEnd' => $this->normalEnd(),
+            'workingHoursRanges' => $this->workingHours(),
             'slotMinutes' => self::SLOT_MINUTES,
             'attentionBlockMinutes' => self::ATTENTION_BLOCK_MINUTES,
             'pendingSignatures' => PendingSignatureReminder::items(),
@@ -67,6 +94,7 @@ class HealAgendaController extends Controller
                 'events' => $this->dayEvents($doctorId, $currentDate),
                 'free_slots' => $this->freeSlots($doctorId, $currentDate, self::SLOT_MINUTES),
                 'punctuality' => $this->punctualitySummary($doctorId, $currentDate),
+                'working_hours_ranges' => $this->workingHours(),
             ];
         }
 
@@ -88,6 +116,7 @@ class HealAgendaController extends Controller
 
         return response()->json([
             'free_slots' => $this->freeSlots($doctorId, $data['date'], $duration),
+            'working_hours_ranges' => $this->workingHours(),
         ]);
     }
 
@@ -397,21 +426,26 @@ class HealAgendaController extends Controller
     private function freeSlots(int $doctorId, string $date, int $durationMinutes): array
     {
         $day = Carbon::parse($date);
-        $cursor = Carbon::parse($day->toDateString() . ' ' . self::NORMAL_START)->seconds(0);
-        $endOfNormalDay = Carbon::parse($day->toDateString() . ' ' . self::NORMAL_END)->seconds(0);
+        $hours = $this->workingHours();
         $busyIntervals = $this->busyIntervals($doctorId, $date);
         $slots = [];
 
-        while ($cursor->copy()->addMinutes($durationMinutes)->lte($endOfNormalDay)) {
-            $slotEnd = $cursor->copy()->addMinutes($durationMinutes);
-            if (!$this->intervalOverlaps($cursor, $slotEnd, $busyIntervals)) {
-                $slots[] = [
-                    'start' => $cursor->format('H:i'),
-                    'end' => $slotEnd->format('H:i'),
-                ];
-            }
+        foreach ($hours as $range) {
+            $cursor = Carbon::parse($day->toDateString() . ' ' . $range['start'])->seconds(0);
+            $rangeEnd = Carbon::parse($day->toDateString() . ' ' . $range['end'])->seconds(0);
 
-            $cursor->addMinutes(self::SLOT_MINUTES);
+            while ($cursor->copy()->addMinutes($durationMinutes)->lte($rangeEnd)) {
+                $slotEnd = $cursor->copy()->addMinutes($durationMinutes);
+
+                if (!$this->intervalOverlaps($cursor, $slotEnd, $busyIntervals)) {
+                    $slots[] = [
+                        'start' => $cursor->format('H:i'),
+                        'end' => $slotEnd->format('H:i'),
+                    ];
+                }
+
+                $cursor->addMinutes(self::SLOT_MINUTES);
+            }
         }
 
         return $slots;

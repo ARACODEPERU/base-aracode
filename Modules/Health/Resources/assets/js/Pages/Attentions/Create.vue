@@ -4,6 +4,7 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import { Link } from '@inertiajs/vue3';
 import AttentionForm from './Partials/AttentionForm.vue';
 import PendingSignatureReminder from '../../Components/PendingSignatureReminder.vue';
+import EstablishmentBadge from '../../Components/EstablishmentBadge.vue';
 
 defineProps({
     doctors: {
@@ -41,14 +42,17 @@ defineProps({
     <AppLayout title="Crear Atención">
         <PendingSignatureReminder :items="pendingSignatures" />
 
-        <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('heal_attentions_list')" class="text-primary hover:underline">Atenciones</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Nuevo</span>
-            </li>
-        </Navigation>
+        <div class="flex items-center justify-between">
+            <Navigation :routeModule="route('health_dashboard')" :titleModule="'Salud'">
+                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                    <Link :href="route('heal_attentions_list')" class="text-primary hover:underline">Atenciones</Link>
+                </li>
+                <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
+                    <span>Nuevo</span>
+                </li>
+            </Navigation>
+            <EstablishmentBadge />
+        </div>
         <div class="pt-5">
             <AttentionForm
                 :doctors="doctors"

@@ -35,7 +35,7 @@ class HealAttentionController extends Controller
 
     public function index(): Response
     {
-        $attentions = HealAttention::with(['patient.person', 'doctor.person', 'history', 'cie10'])
+        $attentions = HealAttention::with(['patient.person', 'doctor.person', 'history', 'cie10', 'treatments'])
             ->when(!$this->canChooseDoctor(), function ($query) {
                 $query->where('doctor_id', $this->currentDoctorOrFail()->id);
             })
@@ -45,7 +45,8 @@ class HealAttentionController extends Controller
                         ->orWhere('number', 'like', '%' . $search . '%');
                 });
             })
-            ->latest('attention_at')
+            ->latest('created_at')
+            ->latest('id')
             ->paginate(request('per_page', 10))
             ->onEachSide(2)
             ->withQueryString();
@@ -113,6 +114,7 @@ class HealAttentionController extends Controller
                 'diagnosis' => $request->get('diagnosis'),
                 'treatment_plan' => $request->get('treatment_plan'),
                 'observations' => $request->get('observations'),
+                'non_pharmacological_indications' => $request->get('non_pharmacological_indications'),
                 'blood_pressure_systolic' => $request->get('blood_pressure_systolic'),
                 'blood_pressure_diastolic' => $request->get('blood_pressure_diastolic'),
                 'heart_rate' => $request->get('heart_rate'),
@@ -207,6 +209,7 @@ class HealAttentionController extends Controller
                 'diagnosis' => $request->get('diagnosis'),
                 'treatment_plan' => $request->get('treatment_plan'),
                 'observations' => $request->get('observations'),
+                'non_pharmacological_indications' => $request->get('non_pharmacological_indications'),
                 'blood_pressure_systolic' => $request->get('blood_pressure_systolic'),
                 'blood_pressure_diastolic' => $request->get('blood_pressure_diastolic'),
                 'heart_rate' => $request->get('heart_rate'),
@@ -508,6 +511,7 @@ class HealAttentionController extends Controller
             'diagnosis' => ['nullable', 'string'],
             'treatment_plan' => ['nullable', 'string'],
             'observations' => ['nullable', 'string'],
+            'non_pharmacological_indications' => ['nullable', 'string'],
             'blood_pressure_systolic' => ['nullable', 'integer', 'min:1', 'max:300'],
             'blood_pressure_diastolic' => ['nullable', 'integer', 'min:1', 'max:200'],
             'heart_rate' => ['nullable', 'integer', 'min:1', 'max:300'],
@@ -863,6 +867,9 @@ class HealAttentionController extends Controller
                 'indications' => $treatment['indications'] ?? null,
                 'endodontic_data' => $treatmentType === 'endodontico'
                     ? $this->normalizeEndodonticData($treatment['endodontic_data'] ?? [], $attention)
+                    : null,
+                'pharmacological_data' => $treatmentType === 'farmacologica'
+                    ? ($treatment['pharmacological_data'] ?? null)
                     : null,
             ]);
         }
