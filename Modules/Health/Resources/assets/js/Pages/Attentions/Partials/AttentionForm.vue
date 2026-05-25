@@ -14,6 +14,7 @@ import iconSearch from '@/Components/vristo/icon/icon-search.vue';
 import iconProcessing from '@/Components/vristo/icon/icon-processing.vue';
 import iconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import iconTrash from '@/Components/vristo/icon/icon-trash.vue';
+import IconUserPlus from '@/Components/vristo/icon/icon-user-plus.vue';
 import EndodonticTreatmentFields from '@/Components/Health/EndodonticTreatmentFields.vue';
 import IconAllergySvgrepo from '@/Components/Health/IconAllergySvgrepo.vue';
 import { isDentalServiceType, normalizeHealthServiceType, serviceTypesByGroup } from '@/Components/Health/healthOptions.js';
@@ -47,6 +48,14 @@ const props = defineProps({
     attentionDefaults: {
         type: Object,
         default: null,
+    },
+    identityDocumentTypes: {
+        type: [Array, Object],
+        default: () => [],
+    },
+    ubigeo: {
+        type: [Array, Object],
+        default: () => [],
     },
 });
 
@@ -363,6 +372,34 @@ const seeker = reactive({
 });
 
 const summary = ref(props.patientSummary);
+const showCreatePatientModal = ref(false);
+const creatingPatient = ref(false);
+const createPatientErrors = ref({});
+const createPatientUbigeos = ref([]);
+const identityDocumentTypeOptions = computed(() => (
+    Array.isArray(props.identityDocumentTypes)
+        ? props.identityDocumentTypes
+        : Object.values(props.identityDocumentTypes || {})
+));
+const ubigeoOptions = computed(() => (
+    Array.isArray(props.ubigeo)
+        ? props.ubigeo
+        : Object.values(props.ubigeo || {})
+));
+const createPatientForm = reactive({
+    document_type_id: 1,
+    number: null,
+    telephone: null,
+    email: null,
+    address: null,
+    ubigeo: null,
+    birthdate: null,
+    names: null,
+    father_lastname: null,
+    mother_lastname: null,
+    ubigeo_description: null,
+    gender: 'M',
+});
 const failedImages = ref({});
 const odontogramLoadedFromHistory = ref(false);
 const loadedOdontogramPatientId = ref(null);
@@ -455,6 +492,102 @@ const selectPatient = (patient) => {
     }
 
     loadPatientSummary(patient.id);
+};
+
+const resetCreatePatientForm = () => {
+    Object.assign(createPatientForm, {
+        document_type_id: identityDocumentTypeOptions.value[0]?.id || 1,
+        number: null,
+        telephone: null,
+        email: null,
+        address: null,
+        ubigeo: null,
+        birthdate: null,
+        names: null,
+        father_lastname: null,
+        mother_lastname: null,
+        ubigeo_description: null,
+        gender: 'M',
+    });
+    createPatientErrors.value = {};
+    createPatientUbigeos.value = [];
+};
+
+const openCreatePatientModal = () => {
+    if (!canEdit.value || isEdit.value) {
+        return;
+    }
+
+    resetCreatePatientForm();
+    showCreatePatientModal.value = true;
+};
+
+const closeCreatePatientModal = () => {
+    if (creatingPatient.value) {
+        return;
+    }
+
+    showCreatePatientModal.value = false;
+};
+
+const filterCreatePatientCities = () => {
+    const term = (createPatientForm.ubigeo_description || '').trim().toLowerCase();
+
+    if (!term) {
+        createPatientUbigeos.value = [];
+        return;
+    }
+
+    createPatientUbigeos.value = ubigeoOptions.value
+        .filter((row) => `${row.department_name} ${row.province_name} ${row.district_name}`.toLowerCase().includes(term))
+        .slice(0, 30);
+};
+
+const selectCreatePatientCity = (item) => {
+    createPatientForm.ubigeo_description = `${item.department_name}-${item.province_name}-${item.district_name}`;
+    createPatientForm.ubigeo = item.district_id;
+    createPatientUbigeos.value = [];
+};
+
+const createPatientFromAttention = () => {
+    creatingPatient.value = true;
+    createPatientErrors.value = {};
+
+    axios.post(route('heal_patients_store'), createPatientForm, {
+        headers: { Accept: 'application/json' },
+    })
+        .then((response) => {
+            const patient = response.data?.patient;
+
+            if (!patient) {
+                throw new Error('No se recibio el paciente creado.');
+            }
+
+            selectPatient(patient);
+            showCreatePatientModal.value = false;
+            Swal.fire({
+                icon: 'success',
+                title: 'Paciente registrado',
+                text: 'El paciente se cargo en esta atencion.',
+                customClass: 'sweet-alerts',
+                padding: '2em',
+            });
+        })
+        .catch((error) => {
+            createPatientErrors.value = error.response?.data?.errors || {};
+            const message = Object.values(createPatientErrors.value).flat().filter(Boolean).join(' ');
+
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo registrar el paciente',
+                text: message || error.response?.data?.message || error.message || 'Revisa los campos obligatorios.',
+                customClass: 'sweet-alerts',
+                padding: '2em',
+            });
+        })
+        .finally(() => {
+            creatingPatient.value = false;
+        });
 };
 
 const addPatientAllergy = () => {
@@ -1377,15 +1510,28 @@ watch(selectedCie10, (value) => {
                             <input
                                 v-model="seeker.search"
                                 type="text"
-                                class="form-input pr-10"
+                                class="form-input pr-24"
                                 placeholder="Buscar por nombre o documento"
                                 :disabled="!canEdit"
                                 @keydown.enter.prevent="searchPatients"
                             />
-                            <button type="button" class="btn btn-primary absolute right-1 inset-y-0 my-auto rounded-md w-7 h-7 p-0" :disabled="!canEdit" @click="searchPatients">
+                            <div class="absolute right-1 inset-y-0 my-auto flex h-7 items-center gap-1">
+                                <button
+                                    v-if="!isEdit"
+                                    type="button"
+                                    class="inline-flex h-7 w-10 items-center justify-center gap-0.5 rounded bg-success text-white shadow hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                    :disabled="!canEdit"
+                                    v-tippy="{ content: 'Registrar paciente', placement: 'top' }"
+                                    @click="openCreatePatientModal"
+                                >
+                                    <icon-plus class="h-3.5 w-3.5" />
+                                    <IconUserPlus class="h-4 w-4" />
+                                </button>
+                                <button type="button" class="btn btn-primary rounded-md w-7 h-7 p-0" :disabled="!canEdit" @click="searchPatients">
                                 <icon-processing v-if="seeker.loading" class="w-4 h-4" />
                                 <icon-search v-else class="w-4 h-4" />
                             </button>
+                            </div>
 
                             <div v-if="seeker.several" class="absolute z-20 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md mt-1 shadow-lg max-h-64 overflow-auto">
                                 <button
@@ -1813,6 +1959,113 @@ watch(selectedCie10, (value) => {
                     </Link>
                 </template>
             </Keypad>
+        </div>
+
+        <div v-if="showCreatePatientModal" class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4 py-6">
+            <div class="w-full max-w-4xl rounded bg-white shadow-xl dark:bg-[#0e1726]">
+                <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700">
+                    <div>
+                        <h3 class="text-lg font-semibold dark:text-white">Registrar paciente</h3>
+                        <p class="text-sm text-white-dark">Al registrar, el paciente quedara seleccionado en esta atencion.</p>
+                    </div>
+                    <button type="button" class="btn btn-outline-dark btn-sm" :disabled="creatingPatient" @click="closeCreatePatientModal">Cerrar</button>
+                </div>
+
+                <div class="max-h-[72vh] overflow-y-auto p-5">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-6">
+                        <div class="md:col-span-2">
+                            <InputLabel value="Tipo documento *" />
+                            <select v-model="createPatientForm.document_type_id" class="form-select">
+                                <option value="">Seleccionar</option>
+                                <option v-for="documentType in identityDocumentTypeOptions" :key="documentType.id" :value="documentType.id">
+                                    {{ documentType.description }}
+                                </option>
+                            </select>
+                            <InputError :message="createPatientErrors.document_type_id?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Numero *" />
+                            <TextInput v-model="createPatientForm.number" type="text" class="form-input" />
+                            <InputError :message="createPatientErrors.number?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Fecha nacimiento *" />
+                            <TextInput v-model="createPatientForm.birthdate" type="date" class="form-input" />
+                            <InputError :message="createPatientErrors.birthdate?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Nombres *" />
+                            <TextInput v-model="createPatientForm.names" type="text" class="form-input" />
+                            <InputError :message="createPatientErrors.names?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Apellido paterno *" />
+                            <TextInput v-model="createPatientForm.father_lastname" type="text" class="form-input" />
+                            <InputError :message="createPatientErrors.father_lastname?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Apellido materno *" />
+                            <TextInput v-model="createPatientForm.mother_lastname" type="text" class="form-input" />
+                            <InputError :message="createPatientErrors.mother_lastname?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <InputLabel value="Direccion *" />
+                            <TextInput v-model="createPatientForm.address" type="text" class="form-input" />
+                            <InputError :message="createPatientErrors.address?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <InputLabel value="Ciudad *" />
+                            <div class="relative">
+                                <TextInput
+                                    v-model="createPatientForm.ubigeo_description"
+                                    type="text"
+                                    class="form-input"
+                                    placeholder="Buscar distrito"
+                                    @input="filterCreatePatientCities"
+                                />
+                                <div v-if="createPatientUbigeos.length" class="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded border border-slate-200 bg-white shadow dark:border-slate-700 dark:bg-slate-900">
+                                    <button
+                                        v-for="item in createPatientUbigeos"
+                                        :key="item.district_id"
+                                        type="button"
+                                        class="block w-full px-3 py-2 text-left text-sm hover:bg-primary/10"
+                                        @click="selectCreatePatientCity(item)"
+                                    >
+                                        {{ item.department_name }}-{{ item.province_name }}-{{ item.district_name }}
+                                    </button>
+                                </div>
+                            </div>
+                            <InputError :message="createPatientErrors.ubigeo?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <InputLabel value="Telefono *" />
+                            <TextInput v-model="createPatientForm.telephone" type="text" class="form-input" />
+                            <InputError :message="createPatientErrors.telephone?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-3">
+                            <InputLabel value="Email *" />
+                            <TextInput v-model="createPatientForm.email" type="email" class="form-input" />
+                            <InputError :message="createPatientErrors.email?.[0]" class="mt-1" />
+                        </div>
+                        <div class="md:col-span-1">
+                            <InputLabel value="Sexo" />
+                            <select v-model="createPatientForm.gender" class="form-select">
+                                <option value="M">M</option>
+                                <option value="F">F</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700">
+                    <button type="button" class="btn btn-outline-dark" :disabled="creatingPatient" @click="closeCreatePatientModal">Cancelar</button>
+                    <button type="button" class="btn btn-success" :disabled="creatingPatient" @click="createPatientFromAttention">
+                        <icon-processing v-if="creatingPatient" class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                        <IconUserPlus v-else class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                        {{ creatingPatient ? 'Registrando...' : 'Registrar y seleccionar' }}
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div v-if="showProcedureChargeModal" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 px-4 py-6">

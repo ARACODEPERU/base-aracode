@@ -4,6 +4,7 @@ namespace Modules\Health\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ResetPassword;
+use App\Models\District;
 use App\Models\User;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\RedirectResponse;
@@ -83,6 +84,8 @@ class HealAttentionController extends Controller
             'patientSummary' => $patientId ? $this->patientSummary($patientId) : null,
             'attentionDefaults' => $appointmentDefaults,
             'pendingSignatures' => PendingSignatureReminder::items(),
+            'identityDocumentTypes' => $this->identityDocumentTypes(),
+            'ubigeo' => $this->ubigeoOptions(),
         ]);
     }
 
@@ -168,6 +171,8 @@ class HealAttentionController extends Controller
             'canChooseDoctor' => $this->canChooseDoctor(),
             'patientSummary' => $this->patientSummary($attention->patient_id),
             'pendingSignatures' => PendingSignatureReminder::items(),
+            'identityDocumentTypes' => $this->identityDocumentTypes(),
+            'ubigeo' => $this->ubigeoOptions(),
         ]);
     }
 
@@ -598,6 +603,25 @@ class HealAttentionController extends Controller
     private function allergyOptions()
     {
         return HealAllergy::orderBy('title')->get(['id', 'title']);
+    }
+
+    private function identityDocumentTypes()
+    {
+        return DB::table('identity_document_type')->get()->values();
+    }
+
+    private function ubigeoOptions()
+    {
+        return District::join('provinces', 'province_id', 'provinces.id')
+            ->join('departments', 'provinces.department_id', 'departments.id')
+            ->select(
+                'districts.id AS district_id',
+                'districts.name AS district_name',
+                'provinces.name AS province_name',
+                'departments.name AS department_name'
+            )
+            ->get()
+            ->values();
     }
 
     private function canChooseDoctor(): bool

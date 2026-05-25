@@ -142,10 +142,17 @@ class HealPatientController extends Controller
             'gender'                => $request->get('gender')
         ]);
 
-        HealPatient::create([
+        $patient = HealPatient::create([
             'person_id'     => $per->id,
             'patient_code'  => $request->get('number')
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'patient' => $patient->load('person'),
+            ]);
+        }
 
         return redirect()->route('heal_patients_create')
             ->with('message', __('Producto creado con éxito'));

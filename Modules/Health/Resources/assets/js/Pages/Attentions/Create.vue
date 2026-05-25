@@ -35,6 +35,14 @@ defineProps({
         type: Array,
         default: () => [],
     },
+    identityDocumentTypes: {
+        type: [Array, Object],
+        default: () => [],
+    },
+    ubigeo: {
+        type: [Array, Object],
+        default: () => [],
+    },
 });
 </script>
 
@@ -61,6 +69,8 @@ defineProps({
                 :current-doctor="currentDoctor"
                 :can-choose-doctor="canChooseDoctor"
                 :attention-defaults="attentionDefaults"
+                :identity-document-types="identityDocumentTypes"
+                :ubigeo="ubigeo"
             />
         </div>
     </AppLayout>
