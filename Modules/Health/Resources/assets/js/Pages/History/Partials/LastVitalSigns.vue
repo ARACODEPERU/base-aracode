@@ -233,7 +233,7 @@
                             <icon-blood-pressure class="w-7 h-7"/>
                         </span>
                         <div class="px-3 flex-1">
-                            <div>Presion Arterial</div>
+                            <div>Presión Arterial</div>
                             <div v-if="vitals.data.date_time_attention" class="text-xs text-white-dark dark:text-gray-500">
                                 {{ formatFecha(vitals.data.date_time_attention) }}
                             </div>

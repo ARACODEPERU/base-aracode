@@ -5,7 +5,9 @@ namespace Modules\Dental\Entities;
 use App\Models\Person;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Health\Entities\HealAttention;
 
 class DentAppointment extends Model
 {
@@ -30,10 +32,15 @@ class DentAppointment extends Model
         'details',
         'message',
         'status',
+        'no_show_at',
         'important',
         'created_user_id',
         'updated_user_id',
         'sick_time'
+    ];
+
+    protected $casts = [
+        'no_show_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -60,5 +67,15 @@ class DentAppointment extends Model
     public function doctor(): HasOne
     {
         return $this->hasOne(Person::class, 'id', 'doctor_person_id');
+    }
+
+    public function healthAttentions(): HasMany
+    {
+        return $this->hasMany(HealAttention::class, 'appointment_id');
+    }
+
+    public function healthAttention(): HasOne
+    {
+        return $this->hasOne(HealAttention::class, 'appointment_id')->latestOfMany();
     }
 }

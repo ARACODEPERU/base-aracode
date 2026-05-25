@@ -52,9 +52,9 @@
                                 </div>
                             </div>
                             <div class="flex justify-between border-b border-[#e0e6ed] px-4 py-2.5">
-                                <button class="btn btn-primary btn-sm">
+                                <Link :href="route('heal_agendas_list', { patient_id: patient.id })" class="btn btn-primary btn-sm">
                                     Crear cita
-                                </button>
+                                </Link>
                                 <button class="btn btn-warning btn-sm">
                                     Cobrar
                                 </button>

@@ -6,6 +6,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
+import CropperImage from '@/Components/CropperImage.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch } from 'vue';
 
@@ -43,6 +44,16 @@ const form = useForm({
     gender: props.patient.gender,
     
 });
+
+const baseUrl = assetUrl;
+
+const getImage = (image_preview) => {
+    if (!image_preview || String(image_preview).startsWith('data:') || String(image_preview).startsWith('http')) {
+        return image_preview;
+    }
+
+    return baseUrl + 'storage/' + image_preview;
+};
 
 const updatePatient = () => {
     form.post(route('heal_patients_update'), {
@@ -96,6 +107,11 @@ const loadFile = (event) => {
         URL.revokeObjectURL(imageFile); // libera memoria
     }
 };
+
+const cropImageAndSave = (res) => {
+    form.image = res;
+    form.image_preview = res;
+};
 </script>
 
 <template>
@@ -140,20 +156,11 @@ const loadFile = (event) => {
                 <InputError :message="form.errors.birthdate" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-6 ">
-                <div class="flex items-center space-x-6">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-[auto,1fr]">
                     <div v-show="form.image_preview" class="shrink-0">
-                        <img id='preview_img' class="h-16 w-16 object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
+                        <img id='preview_img' class="h-16 w-16 object-cover rounded-full" :src="getImage(form.image_preview)" alt="Current profile photo" />
                     </div>
-                    <label class="block ml-1">
-                        <span class="sr-only">Elige foto</span>
-                        <input  type="file" @change="loadFile" class="block w-full text-sm text-slate-500
-                            mr-4 py-2 px-4
-                            rounded-full border-0
-                            text-sm font-semibold
-                            bg-violet-50 text-violet-700
-                            hover:bg-violet-100
-                        " />
-                    </label>
+                    <CropperImage ref="cropper" :aspect-ratio="1" @onCrop="cropImageAndSave" />
                 </div>
             </div>
             <div class="col-span-6 sm:col-span-3 ">

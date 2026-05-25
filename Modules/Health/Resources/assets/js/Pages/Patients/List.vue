@@ -167,7 +167,7 @@
                 </template>
                 <template v-else>
                     <div class="flex items-center p-4 mb-4 text-gray-800 border-t-2 border-gray-300 bg-white dark:text-blue-400 dark:bg-gray-800 dark:border-blue-800" role="alert">
-                        <span class="font-medium">Aun la tabla esta vacía</span> puede registrar datos.
+                        <span class="font-medium">Aún la tabla está vacía</span> puede registrar datos.
                     </div>
                 </template>
                 

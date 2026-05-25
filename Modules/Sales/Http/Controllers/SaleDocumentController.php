@@ -31,6 +31,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Modules\Health\Entities\HealPatientCharge;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SaleSummary;
 use Modules\Sales\Entities\SaleSummaryDetail;
@@ -145,7 +146,10 @@ class SaleDocumentController extends Controller
         $payments = PaymentMethod::all();
         $company = Company::first();
 
-        $client = Person::find(1);
+        $healthBillingDraft = session()->pull('health_billing_draft');
+        $client = !empty($healthBillingDraft['client']['id'])
+            ? Person::find($healthBillingDraft['client']['id'])
+            : Person::find(1);
         $unitTypes = DB::table('sunat_unit_types')->get();
         $documentTypes = DB::table('identity_document_type')->get();
         $saleDocumentTypes = DB::table('sale_document_types')->whereIn('sunat_id', ['01', '03'])->get();
@@ -179,6 +183,7 @@ class SaleDocumentController extends Controller
                 'igv' => $this->igv,
                 'icbper' => $this->icbper,
             ],
+            'healthBillingDraft' => $healthBillingDraft,
         ]);
     }
 
@@ -588,6 +593,20 @@ class SaleDocumentController extends Controller
 
                 return $document;
             });
+
+            $healthChargeIds = collect($request->get('items', []))
+                ->pluck('health_charge_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($healthChargeIds->isNotEmpty()) {
+                HealPatientCharge::whereIn('id', $healthChargeIds)->update([
+                    'sale_id' => $res->sale_id,
+                    'sale_document_id' => $res->id,
+                    'status' => 'billed',
+                ]);
+            }
 
             return response()->json($res);
         } catch (\Exception $e) {

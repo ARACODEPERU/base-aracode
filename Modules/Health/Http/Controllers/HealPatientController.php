@@ -9,6 +9,8 @@ use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Modules\Health\Entities\HealPatient;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -118,21 +120,7 @@ class HealPatientController extends Controller
 
         // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
         // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';
-        $path = null;
-        $destination = 'uploads/patients';
-        $file = $request->file('image');
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = date('YmdHis') . '.' . $extension;
-            //dd($destination);
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
-        }
+        $path = $this->storeProfileImage($request, 'uploads/patients');
 
         $per = Person::create([
             'document_type_id'      => $request->get('document_type_id'),
@@ -255,19 +243,8 @@ class HealPatientController extends Controller
         $person->father_lastname    = $request->get('father_lastname');
         $person->mother_lastname    = $request->get('mother_lastname');
 
-        $path = null;
-        $destination = 'uploads/patients';
-        $file = $request->file('image');
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = date('YmdHis') . '.' . $extension;
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
+        $path = $this->storeProfileImage($request, 'uploads/patients');
+        if ($path) {
             $person->image = $path;
         }
 
@@ -335,5 +312,33 @@ class HealPatientController extends Controller
                 'success' => false
             ]);
         }
+    }
+
+    private function storeProfileImage(Request $request, string $destination): ?string
+    {
+        $image = $request->get('image');
+
+        if (is_string($image) && str_starts_with($image, 'data:image')) {
+            [$meta, $content] = explode(',', $image, 2);
+            preg_match('/data:image\/(?<extension>[^;]+);base64/', $meta, $matches);
+            $extension = $matches['extension'] ?? 'png';
+            $extension = $extension === 'jpeg' ? 'jpg' : $extension;
+            $fileName = date('YmdHis') . '_' . Str::random(8) . '.' . $extension;
+            $path = $destination . '/' . $fileName;
+
+            Storage::disk('public')->put($path, base64_decode($content));
+
+            return $path;
+        }
+
+        $file = $request->file('image');
+        if (!$file) {
+            return null;
+        }
+
+        $extension = $file->getClientOriginalExtension();
+        $fileName = date('YmdHis') . '_' . Str::random(8) . '.' . $extension;
+
+        return $file->storeAs($destination, $fileName, 'public');
     }
 }

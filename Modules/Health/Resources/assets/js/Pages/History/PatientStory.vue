@@ -57,7 +57,7 @@
                 <Link :href="route('heal_patients_list')" class="text-primary hover:underline">Pacientes</Link>
             </li>
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Historia clinica</span>
+                <span>Historia clínica</span>
             </li>
         </Navigation>
         <div class="pt-5">
