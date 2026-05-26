@@ -17,6 +17,7 @@ use Modules\Health\Http\Controllers\HealAgendaController;
 use Modules\Health\Http\Controllers\HealProcedureChargeController;
 use Modules\Health\Http\Controllers\HealActivityController;
 use Modules\Health\Http\Controllers\HealSettingController;
+use Modules\Health\Http\Controllers\HealTestDataController;
 use Modules\Health\Http\Controllers\HealAttentionPdfController;
 use Modules\Health\Http\Controllers\Odontology\HealOdoAppointmentController;
 
@@ -82,6 +83,9 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
         Route::post('settings/update', [HealSettingController::class, 'update'])->name('heal_settings_update');
         Route::post('settings/upload-logo', [HealSettingController::class, 'uploadLogo'])->name('heal_settings_upload_logo');
         Route::post('settings/delete-logo', [HealSettingController::class, 'deleteLogo'])->name('heal_settings_delete_logo');
+        Route::get('test-data/status', [HealTestDataController::class, 'status'])->name('heal_test_data_status');
+        Route::post('test-data/generate', [HealTestDataController::class, 'store'])->name('heal_test_data_generate');
+        Route::delete('test-data/destroy', [HealTestDataController::class, 'destroy'])->name('heal_test_data_destroy');
 
     });
 

@@ -17,6 +17,8 @@ const extra = computed(() => props.settings?.settings || {});
 
 const establishmentLogo = ref(props.settings?.establishment_logo ? `/storage/${props.settings.establishment_logo}` : null);
 const uploadingLogo = ref(false);
+const testDataSummary = ref(null);
+const testDataProcessing = ref(false);
 
 const workingHours = ref(
     props.settings?.working_hours?.length
@@ -138,6 +140,136 @@ const removeLogo = () => {
         });
 };
 
+const refreshTestDataSummary = () => {
+    axios.get(route('heal_test_data_status'))
+        .then((response) => {
+            testDataSummary.value = response.data;
+        })
+        .catch(() => {
+            testDataSummary.value = {
+                records: 0,
+                batches: 0,
+                doctors: 0,
+                patients: 0,
+                appointments: 0,
+                attentions: 0,
+                odontograms: 0,
+            };
+        });
+};
+
+const confirmPassword = async (title, text, confirmButtonText, confirmButtonClass) => {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title,
+        text,
+        input: 'password',
+        inputLabel: 'Confirma con tu contraseña',
+        inputPlaceholder: 'Contraseña',
+        inputAttributes: {
+            autocomplete: 'current-password',
+        },
+        showCancelButton: true,
+        confirmButtonText,
+        cancelButtonText: 'Cancelar',
+        customClass: {
+            popup: 'sweet-alerts',
+            confirmButton: `btn ${confirmButtonClass}`,
+            cancelButton: 'btn btn-outline-dark ltr:mr-3 rtl:ml-3',
+        },
+        buttonsStyling: false,
+        reverseButtons: true,
+        preConfirm: (password) => {
+            if (!password) {
+                Swal.showValidationMessage('Ingresa tu contraseña.');
+                return false;
+            }
+
+            return password;
+        },
+    });
+
+    return result.isConfirmed ? result.value : null;
+};
+
+const generateTestData = async () => {
+    const password = await confirmPassword(
+        'Generar datos de prueba',
+        'Se crearan doctores, pacientes, citas, atenciones, tratamientos, examenes y odontogramas de prueba.',
+        'Generar',
+        'btn-primary'
+    );
+
+    if (!password) return;
+
+    testDataProcessing.value = true;
+    axios.post(route('heal_test_data_generate'), { password })
+        .then((response) => {
+            testDataSummary.value = response.data.summary;
+            Swal.fire({
+                icon: 'success',
+                title: 'Datos generados',
+                text: response.data.message,
+                customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-success' },
+                buttonsStyling: false,
+            });
+        })
+        .catch((error) => {
+            const message = error.response?.data?.message
+                || Object.values(error.response?.data?.errors || {}).flat().join(' ')
+                || 'No se pudieron generar los datos de prueba.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message,
+                customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-danger' },
+                buttonsStyling: false,
+            });
+        })
+        .finally(() => {
+            testDataProcessing.value = false;
+        });
+};
+
+const destroyTestData = async () => {
+    const password = await confirmPassword(
+        'Eliminar datos de prueba',
+        'Se eliminaran solo los registros creados por el boton Test del modulo Health.',
+        'Eliminar',
+        'btn-danger'
+    );
+
+    if (!password) return;
+
+    testDataProcessing.value = true;
+    axios.delete(route('heal_test_data_destroy'), { data: { password } })
+        .then((response) => {
+            testDataSummary.value = response.data.summary;
+            Swal.fire({
+                icon: 'success',
+                title: 'Datos eliminados',
+                text: response.data.message,
+                customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-success' },
+                buttonsStyling: false,
+            });
+        })
+        .catch((error) => {
+            const message = error.response?.data?.message
+                || Object.values(error.response?.data?.errors || {}).flat().join(' ')
+                || 'No se pudieron eliminar los datos de prueba.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message,
+                customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-danger' },
+                buttonsStyling: false,
+            });
+        })
+        .finally(() => {
+            testDataProcessing.value = false;
+        });
+};
+
 const hoursLabel = computed(() => {
     return workingHours.value
         .map((r) => `${r.start} - ${r.end}`)
@@ -147,6 +279,8 @@ const hoursLabel = computed(() => {
 const canSave = computed(() => {
     return workingHours.value.every((r) => r.start && r.end && r.start < r.end);
 });
+
+refreshTestDataSummary();
 </script>
 
 <template>
@@ -296,6 +430,54 @@ const canSave = computed(() => {
                                     <label class="mb-1 block text-sm font-semibold">Plantilla de receta médica (texto base)</label>
                                     <textarea v-model="form.recipe_template" rows="3" class="form-textarea" placeholder="Texto que aparecerá por defecto en las recetas..."></textarea>
                                     <p class="mt-1 text-xs text-white-dark">Texto predefinido para recetas médicas. Se puede editar al generar.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <div class="font-semibold">Datos de prueba</div>
+                                    <p class="text-xs text-white-dark">
+                                        Genera o elimina registros de prueba trazados por el modulo Health.
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary btn-sm"
+                                        :disabled="testDataProcessing"
+                                        @click="generateTestData"
+                                    >
+                                        Test
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-danger btn-sm"
+                                        :disabled="testDataProcessing || !(testDataSummary?.records > 0)"
+                                        @click="destroyTestData"
+                                    >
+                                        Eliminar datos de prueba
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+                                <div class="rounded border border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                                    <div class="text-xs text-white-dark">Doctores</div>
+                                    <div class="text-lg font-semibold">{{ testDataSummary?.doctors || 0 }}</div>
+                                </div>
+                                <div class="rounded border border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                                    <div class="text-xs text-white-dark">Pacientes</div>
+                                    <div class="text-lg font-semibold">{{ testDataSummary?.patients || 0 }}</div>
+                                </div>
+                                <div class="rounded border border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                                    <div class="text-xs text-white-dark">Citas</div>
+                                    <div class="text-lg font-semibold">{{ testDataSummary?.appointments || 0 }}</div>
+                                </div>
+                                <div class="rounded border border-[#e0e6ed] p-3 dark:border-[#1b2e4b]">
+                                    <div class="text-xs text-white-dark">Odontogramas</div>
+                                    <div class="text-lg font-semibold">{{ testDataSummary?.odontograms || 0 }}</div>
                                 </div>
                             </div>
                         </div>
