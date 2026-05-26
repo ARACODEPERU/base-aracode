@@ -323,6 +323,14 @@
                                                     />
                                                     <!-- Badge indicador activo -->
                                                     <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
+                                                    <!-- Badge PIN pendiente (solo Salud) -->
+                                                    <div
+                                                        v-if="menu.text === 'Salud' && page.props.health?.currentDoctor && !page.props.health?.currentDoctor?.has_custom_pin"
+                                                        class="absolute -top-0.5 -right-0.5 w-[22px] h-[22px] rounded-full bg-red-500 border-[3px] border-white dark:border-gray-800 flex items-center justify-center shadow-sm shadow-red-400/50 animate-pulse z-10"
+                                                        title="PIN de firma pendiente de cambio"
+                                                    >
+                                                        <span class="text-white text-[10px] font-extrabold leading-none mt-[-1px]">!</span>
+                                                    </div>
                                                 </button>
                                             </Tooltip>
                                         </template>
@@ -343,6 +351,14 @@
                                                     />
                                                     <!-- Badge indicador activo -->
                                                     <div v-if="activeModule === menu.text" class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 border-2 border-white dark:border-gray-800"></div>
+                                                    <!-- Badge PIN pendiente (solo Salud) - sobreescribe al badge activo cuando existe -->
+                                                    <div
+                                                        v-if="menu.text === 'Salud' && page.props.health?.currentDoctor && !page.props.health?.currentDoctor?.has_custom_pin"
+                                                        class="absolute -top-0.5 -right-0.5 w-[22px] h-[22px] rounded-full bg-red-500 border-[3px] border-white dark:border-gray-800 flex items-center justify-center shadow-sm shadow-red-400/50 animate-pulse z-10"
+                                                        title="PIN de firma pendiente de cambio"
+                                                    >
+                                                        <span class="text-white text-[10px] font-extrabold leading-none mt-[-1px]">!</span>
+                                                    </div>
                                                 </button>
                                             </Tooltip>
                                         </template>

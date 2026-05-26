@@ -396,11 +396,6 @@ class HealAttentionController extends Controller
 
     public function updateDoctorPin(Request $request)
     {
-        $request->validate([
-            'current_pin' => ['required', 'digits:4'],
-            'new_pin' => ['required', 'digits:4', 'confirmed'],
-        ]);
-
         $doctor = $this->currentDoctor();
 
         if (!$doctor) {
@@ -409,10 +404,41 @@ class HealAttentionController extends Controller
             ]);
         }
 
-        if (!$this->pinMatches($doctor, $request->get('current_pin'))) {
-            throw ValidationException::withMessages([
-                'current_pin' => 'El PIN actual no es correcto.',
+        $user = Auth::user();
+
+        // Si el doctor usa el PIN por defecto (signature_pin_hash es null),
+        // se requiere verificar email + password del usuario autenticado.
+        $isDefaultPin = !$doctor->signature_pin_hash;
+
+        if ($isDefaultPin) {
+            $request->validate([
+                'email' => ['required', 'email'],
+                'password' => ['required', 'string'],
+                'new_pin' => ['required', 'digits:4', 'confirmed'],
             ]);
+
+            if (strtolower(trim($request->get('email'))) !== strtolower(trim($user->email))) {
+                throw ValidationException::withMessages([
+                    'email' => 'El correo no coincide con tu cuenta.',
+                ]);
+            }
+
+            if (!Hash::check($request->get('password'), $user->password)) {
+                throw ValidationException::withMessages([
+                    'password' => 'La contraseña no es correcta.',
+                ]);
+            }
+        } else {
+            $request->validate([
+                'current_pin' => ['required', 'digits:4'],
+                'new_pin' => ['required', 'digits:4', 'confirmed'],
+            ]);
+
+            if (!$this->pinMatches($doctor, $request->get('current_pin'))) {
+                throw ValidationException::withMessages([
+                    'current_pin' => 'El PIN actual no es correcto.',
+                ]);
+            }
         }
 
         $doctor->update([

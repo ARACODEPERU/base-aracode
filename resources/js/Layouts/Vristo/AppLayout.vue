@@ -11,6 +11,7 @@
     //import Sidebar from '@/Components/vristo/layout/Sidebar-Old.vue';
     import SidebarStudent from '@/Components/vristo/layout/Sidebar-Student.vue';
     import ChatBox from 'Modules/CRM/Resources/assets/js/Components/ChatBox.vue';
+    import ForcePinChange from 'Modules/Health/Resources/assets/js/Components/ForcePinChange.vue';
 
     const store = useAppStore();
     const userData = usePage().props.auth.user;
@@ -138,6 +139,7 @@
             </div>
         </div>
         <ChatBox />
+        <ForcePinChange />
     </div>
 </template>
 

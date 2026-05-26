@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
-import { Link, router, useForm } from '@inertiajs/vue3';
+import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import Multiselect from '@suadelabs/vue3-multiselect';
+
+const page = usePage();
 import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 import Swal from 'sweetalert2';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -986,16 +988,96 @@ const changeDoctorPin = () => {
         return;
     }
 
+    const hasCustomPin = props.currentDoctor.has_custom_pin;
+
     Swal.fire({
         title: 'Cambiar PIN de firma',
+        width: 520,
         html: `
-            <div class="text-left space-y-3">
-                <label class="block text-sm font-semibold">PIN actual</label>
-                <input id="current_pin" type="password" maxlength="4" inputmode="numeric" class="swal2-input" placeholder="1234">
-                <label class="block text-sm font-semibold">Nuevo PIN</label>
-                <input id="new_pin" type="password" maxlength="4" inputmode="numeric" class="swal2-input" placeholder="4 digitos">
-                <label class="block text-sm font-semibold">Confirmar PIN</label>
-                <input id="new_pin_confirmation" type="password" maxlength="4" inputmode="numeric" class="swal2-input" placeholder="4 digitos">
+            <div class="text-left space-y-4">
+                <div class="rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+                    <div class="text-sm font-semibold text-primary">${props.currentDoctor.name || 'Doctor'}</div>
+                    <div class="mt-1 text-xs text-white-dark">
+                        ${hasCustomPin
+                            ? 'Para cambiar tu PIN, primero debes verificar tu identidad.'
+                            : 'Estás usando el PIN por defecto <strong>1234</strong>. Por seguridad, debes cambiarlo.'}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Correo electrónico
+                    </label>
+                    <input
+                        id="cp_email"
+                        type="email"
+                        class="form-input w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        placeholder="tu@correo.com"
+                        autocomplete="email"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Contraseña
+                    </label>
+                    <input
+                        id="cp_password"
+                        type="password"
+                        class="form-input w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                    />
+                </div>
+
+                <hr class="border-slate-200 dark:border-slate-700" />
+
+                ${hasCustomPin ? `
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        PIN actual
+                    </label>
+                    <input
+                        id="cp_current_pin"
+                        type="password"
+                        maxlength="4"
+                        inputmode="numeric"
+                        class="form-input w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        placeholder="PIN actual"
+                        autocomplete="off"
+                    />
+                </div>
+                ` : ''}
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Nuevo PIN (4 dígitos)
+                    </label>
+                    <input
+                        id="cp_new_pin"
+                        type="password"
+                        maxlength="4"
+                        inputmode="numeric"
+                        class="form-input w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        placeholder="Nuevo PIN"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Confirmar nuevo PIN
+                    </label>
+                    <input
+                        id="cp_new_pin_confirmation"
+                        type="password"
+                        maxlength="4"
+                        inputmode="numeric"
+                        class="form-input w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                        placeholder="Repite el PIN"
+                        autocomplete="off"
+                    />
+                </div>
             </div>
         `,
         showCancelButton: true,
@@ -1009,26 +1091,71 @@ const changeDoctorPin = () => {
         buttonsStyling: false,
         reverseButtons: true,
         preConfirm: () => {
-            const currentPin = document.getElementById('current_pin')?.value;
-            const newPin = document.getElementById('new_pin')?.value;
-            const confirmation = document.getElementById('new_pin_confirmation')?.value;
+            const email = document.getElementById('cp_email')?.value?.trim();
+            const password = document.getElementById('cp_password')?.value;
+            const newPin = document.getElementById('cp_new_pin')?.value;
+            const confirmation = document.getElementById('cp_new_pin_confirmation')?.value;
 
-            if (!/^\d{4}$/.test(currentPin || '') || !/^\d{4}$/.test(newPin || '') || newPin !== confirmation) {
-                Swal.showValidationMessage('Ingresa PINes de 4 números y confirma correctamente.');
+            if (!email) {
+                Swal.showValidationMessage('Ingresa tu correo electrónico.');
                 return false;
             }
 
-            return axios.post(route('heal_doctors_pin_update'), {
-                current_pin: currentPin,
+            if (!password) {
+                Swal.showValidationMessage('Ingresa tu contraseña.');
+                return false;
+            }
+
+            if (!/^\d{4}$/.test(newPin || '')) {
+                Swal.showValidationMessage('El nuevo PIN debe tener exactamente 4 dígitos.');
+                return false;
+            }
+
+            if (newPin !== confirmation) {
+                Swal.showValidationMessage('El nuevo PIN y su confirmación no coinciden.');
+                return false;
+            }
+
+            const payload = {
+                email,
+                password,
                 new_pin: newPin,
                 new_pin_confirmation: confirmation,
-            }).catch((error) => {
-                Swal.showValidationMessage(error.response?.data?.message || 'No se pudo actualizar el PIN.');
-                return false;
-            });
+            };
+
+            // If the doctor already has a custom PIN, also send current_pin
+            if (hasCustomPin) {
+                const currentPin = document.getElementById('cp_current_pin')?.value;
+
+                if (!/^\d{4}$/.test(currentPin || '')) {
+                    Swal.showValidationMessage('Ingresa tu PIN actual (4 dígitos).');
+                    return false;
+                }
+
+                payload.current_pin = currentPin;
+            }
+
+            return axios.post(route('heal_doctors_pin_update'), payload)
+                .then((response) => response.data)
+                .catch((error) => {
+                    const errors = error.response?.data?.errors || {};
+                    const message = Object.values(errors).flat().join(' ');
+                    Swal.showValidationMessage(message || 'No se pudo actualizar el PIN.');
+                    return false;
+                });
         },
     }).then((result) => {
         if (result.isConfirmed) {
+            // Update has_custom_pin locally so the UI reflects the change
+            if (props.currentDoctor) {
+                props.currentDoctor.has_custom_pin = true;
+            }
+
+            // Also update the global health state
+            if (page.props.health?.currentDoctor) {
+                page.props.health.currentDoctor.has_custom_pin = true;
+            }
+
             Swal.fire({
                 icon: 'success',
                 title: 'PIN actualizado',

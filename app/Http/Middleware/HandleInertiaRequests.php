@@ -3,7 +3,9 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
+use Modules\Health\Entities\HealDoctor;
 use Tightenco\Ziggy\Ziggy;
 
 class HandleInertiaRequests extends Middleware
@@ -44,6 +46,36 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'message' => fn () => $request->session()->get('message')
             ],
+            'health' => function () use ($request) {
+                $user = $request->user();
+
+                if (!$user) {
+                    return ['currentDoctor' => null];
+                }
+
+                $doctor = HealDoctor::with('person')
+                    ->where('user_id', $user->id)
+                    ->when($user->person_id, function ($query) use ($user) {
+                        $query->orWhere('person_id', $user->person_id);
+                    })
+                    ->first();
+
+                if (!$doctor) {
+                    return ['currentDoctor' => null];
+                }
+
+                return [
+                    'currentDoctor' => [
+                        'code' => $doctor->id,
+                        'name' => $doctor->person?->full_name,
+                        'colegiatura' => $doctor->colegiatura,
+                        'profession' => $doctor->profession,
+                        'specialty' => $doctor->specialty,
+                        'service_type' => $doctor->attention_service_type ?: 'general',
+                        'has_custom_pin' => (bool) $doctor->signature_pin_hash,
+                    ],
+                ];
+            },
         ]);
     }
 }
