@@ -5,6 +5,7 @@ use Modules\Bibliodata\Http\Controllers\BibAuthController;
 use Modules\Bibliodata\Http\Controllers\BibAuthorController;
 use Modules\Bibliodata\Http\Controllers\BibBookController;
 use Modules\Bibliodata\Http\Controllers\BibBookPageController;
+use Modules\Bibliodata\Http\Controllers\BibBookPagePracticalCaseController;
 use Modules\Bibliodata\Http\Controllers\BibBookSectionController;
 use Modules\Bibliodata\Http\Controllers\BibCategoryController;
 use Modules\Bibliodata\Http\Controllers\BibReaderController;
@@ -166,6 +167,22 @@ Route::middleware(['auth', 'verified'])->prefix('bibliodata')->group(function ()
     Route::middleware(['middleware' => 'permission:bib_libros_editar'])
         ->delete('books/pages/{id}', [BibBookPageController::class, 'destroy'])
         ->name('bib_books_pages_destroy');
+
+    Route::middleware(['middleware' => 'permission:bib_libros_editar'])
+        ->get('books/pages/{pageId}/practical-cases', [BibBookPagePracticalCaseController::class, 'index'])
+        ->name('bib_books_practical_cases_index');
+
+    Route::middleware(['middleware' => 'permission:bib_libros_editar'])
+        ->post('books/pages/{pageId}/practical-cases', [BibBookPagePracticalCaseController::class, 'store'])
+        ->name('bib_books_practical_cases_store');
+
+    Route::middleware(['middleware' => 'permission:bib_libros_editar'])
+        ->patch('books/practical-cases/{id}', [BibBookPagePracticalCaseController::class, 'update'])
+        ->name('bib_books_practical_cases_update');
+
+    Route::middleware(['middleware' => 'permission:bib_libros_editar'])
+        ->delete('books/practical-cases/{id}', [BibBookPagePracticalCaseController::class, 'destroy'])
+        ->name('bib_books_practical_cases_destroy');
 
     Route::middleware(['middleware' => 'permission:bib_planes_listar'])
         ->get('subscription-plans', [BibSubscriptionPlanController::class, 'index'])

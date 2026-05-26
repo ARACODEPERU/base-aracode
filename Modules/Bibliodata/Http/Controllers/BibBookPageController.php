@@ -45,7 +45,7 @@ class BibBookPageController extends Controller
 
     public function show($id)
     {
-        $page = BibBookPage::with('section')->findOrFail($id);
+        $page = BibBookPage::with('section')->withCount('practicalCases')->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -222,6 +222,7 @@ class BibBookPageController extends Controller
             'page_number' => $page->page_number,
             'preview' => $preview ?: '(vacío)',
             'has_content' => ! empty(trim(strip_tags($page->content ?? ''))),
+            'practical_cases_count' => (int) ($page->practical_cases_count ?? 0),
         ];
 
         if ($withContent) {

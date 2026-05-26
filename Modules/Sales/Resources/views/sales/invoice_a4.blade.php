@@ -996,15 +996,26 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                             {{ $document->getClient()->getNumDoc() }}
                                         </td>
                                     </tr>
-                                    @if($document->getClient()->getAddress())
+                                    @php
+                                        $clientAddress = $document->getClient()->getAddress();
+                                        $clientAddressText = is_object($clientAddress) && method_exists($clientAddress, 'getDireccion')
+                                            ? $clientAddress->getDireccion()
+                                            : ($clientAddress ?? '');
+                                        $clientLocationText = is_object($clientAddress) && method_exists($clientAddress, 'getDepartamento')
+                                            ? trim(($clientAddress->getDepartamento() ?? '').'-'.($clientAddress->getProvincia() ?? '').'-'.($clientAddress->getDistrito() ?? ''), '-')
+                                            : '';
+                                    @endphp
+                                    @if($clientAddressText)
                                         <tr>
                                             <td>Dirección: </td>
-                                            <td>{{ $document->getClient()->getAddress()->getDireccion() }}</td>
+                                            <td>{{ $clientAddressText }}</td>
                                         </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td>{{ $document->getClient()->getAddress()->getDepartamento() }}-{{ $document->getClient()->getAddress()->getProvincia() }}-{{ $document->getClient()->getAddress()->getDistrito() }}</td>
-                                        </tr>
+                                        @if($clientLocationText)
+                                            <tr>
+                                                <td></td>
+                                                <td>{{ $clientLocationText }}</td>
+                                            </tr>
+                                        @endif
                                     @endif
                                 </table>
                             </td>
@@ -1023,6 +1034,14 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
             </div>
 
             <div class="px-14 py-6 text-xs text-neutral-700">
+                @php
+                    $documentDiscountTotal = 0;
+                    foreach ($document->getDetails() as $detail) {
+                        $documentDiscountTotal += method_exists($detail, 'getDescuento')
+                            ? (float) ($detail->getDescuento() ?? 0)
+                            : 0;
+                    }
+                @endphp
                 <table class="w-full border-collapse border-spacing-0">
                     <thead>
                         <tr>
@@ -1036,6 +1055,11 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                     </thead>
                     <tbody>
                         @foreach ($document->getDetails() as $item)
+                            @php
+                                $itemDiscount = method_exists($item, 'getDescuento')
+                                    ? (float) ($item->getDescuento() ?? 0)
+                                    : 0;
+                            @endphp
                             <tr>
                                 <td class="border-b py-2 pl-3 text-left">
                                     {{ $item->getCantidad() }}
@@ -1048,6 +1072,11 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                 </td>
                                 <td class="border-b py-2 pl-2 text-left">
                                     {{ $item->getDescripcion() }}
+                                    @if ($itemDiscount > 0)
+                                        <div class="text-[10px] text-slate-500">
+                                            Desc. SUNAT: S/ {{ number_format($itemDiscount, 2, '.', ',') }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="border-b py-2 pl-2 pr-3 text-right">
                                     S/ {{ number_format($item->getMtoPrecioUnitario(), 2, '.', ',') }}
@@ -1089,6 +1118,21 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                                                 </div>
                                                             </td>
                                                         </tr>
+                                                        @if ($documentDiscountTotal > 0)
+                                                            <tr>
+                                                                <td class="py-2 pl-2 pr-3">
+                                                                    <div class="whitespace-nowrap text-slate-400">
+                                                                        Descuento:
+                                                                    </div>
+                                                                </td>
+                                                                <td class="py-2 pl-2 pr-3 text-right">
+                                                                    <div class="whitespace-nowrap font-bold text-main">
+                                                                        S/
+                                                                        {{ number_format($documentDiscountTotal, 2, '.', ',') }}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        @endif
                                                         <tr>
                                                             <td class="bg-main py-2 pl-2 pr-3">
                                                                 <div class="whitespace-nowrap font-bold text-white">

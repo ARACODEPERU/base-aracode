@@ -5,6 +5,7 @@ namespace Modules\Bibliodata\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Modules\Bibliodata\Entities\BibBookPagePracticalCase;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Bibliodata\Entities\BibBookPage;
@@ -100,7 +101,13 @@ class BibReaderController extends Controller
             return response()->json(['success' => false, 'message' => 'Libro no disponible'], 404);
         }
 
-        $page = BibBookPage::with('section')->findOrFail($id);
+        $page = BibBookPage::with([
+            'section',
+            'practicalCases' => fn ($query) => $query
+                ->where('status', true)
+                ->orderBy('sort_order')
+                ->orderBy('id'),
+        ])->findOrFail($id);
         $this->readerAccess->assertPageBelongsToBook($page, $book);
 
         $access = $this->readerAccess->evaluatePageAccess($user, $book, $page->id);
@@ -122,6 +129,9 @@ class BibReaderController extends Controller
                 'page_number' => $page->page_number,
                 'content' => $page->content ?? '',
                 'section_title' => $page->section?->title,
+                'practical_cases' => $page->practicalCases
+                    ->map(fn (BibBookPagePracticalCase $case) => $this->formatPracticalCase($case))
+                    ->values(),
             ],
             'book' => [
                 'id' => $book->id,
@@ -145,5 +155,19 @@ class BibReaderController extends Controller
         }
 
         return mb_strlen($plain) > 80 ? mb_substr($plain, 0, 80) . '...' : $plain;
+    }
+
+    private function formatPracticalCase(BibBookPagePracticalCase $practicalCase): array
+    {
+        return [
+            'id' => $practicalCase->id,
+            'title' => $practicalCase->title,
+            'type' => $practicalCase->type,
+            'content_html' => $practicalCase->content_html ?? '',
+            'file_name' => $practicalCase->file_name,
+            'file_mime' => $practicalCase->file_mime,
+            'file_url' => $practicalCase->file_path ? asset('storage/' . $practicalCase->file_path) : null,
+            'sort_order' => (int) $practicalCase->sort_order,
+        ];
     }
 }

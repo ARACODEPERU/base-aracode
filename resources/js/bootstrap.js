@@ -31,6 +31,24 @@ const waitForSocketIoRetry = (retryCount) => new Promise((resolve) => {
     setTimeout(resolve, getSocketIoRetryDelay(retryCount));
 });
 
+const authPaths = [
+    '/login',
+    '/logout',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+];
+
+const buildLoginRedirectUrl = () => {
+    const currentLocation = `${window.location.pathname}${window.location.search}`;
+
+    if (authPaths.some((path) => window.location.pathname.startsWith(path))) {
+        return '/login';
+    }
+
+    return `/login?redirect_to=${encodeURIComponent(currentLocation)}`;
+};
+
 window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -52,18 +70,10 @@ window.axios.interceptors.response.use(
     },
     (error) => {
       if (error.response && error.response.status === 401) {
-        // Si la respuesta tiene un código de estado 401, significa que el usuario no está autenticado.
-        // Aquí redirigiremos al usuario a la página de inicio de sesión.
-
-        // Redirigir al usuario a la página de inicio de sesión (reemplaza "/login" con la ruta real)
-        window.location.href = '/login';
+        window.location.replace(buildLoginRedirectUrl());
       }
       if (error.response && error.response.status === 419) {
-        // Si la respuesta tiene un código de estado 401, significa que el usuario no está autenticado.
-        // Aquí redirigiremos al usuario a la página de inicio de sesión.
-
-        // Redirigir al usuario a la página de inicio de sesión (reemplaza "/login" con la ruta real)
-        window.location.href = '/login';
+        window.location.replace(buildLoginRedirectUrl());
       }
       if (isSocketIoRequest(error.config)) {
         const retryCount = error.config.__socketIoRetryCount ?? 0;

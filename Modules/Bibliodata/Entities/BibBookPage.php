@@ -4,6 +4,7 @@ namespace Modules\Bibliodata\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BibBookPage extends Model
 {
@@ -24,5 +25,10 @@ class BibBookPage extends Model
     public function section()
     {
         return $this->belongsTo(BibBookSection::class, 'section_id');
+    }
+
+    public function practicalCases(): HasMany
+    {
+        return $this->hasMany(BibBookPagePracticalCase::class, 'page_id');
     }
 }

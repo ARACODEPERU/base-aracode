@@ -7,7 +7,7 @@ export const useAppStore = defineStore('app', {
         isDarkMode: false,
         mainLayout: 'app',
         theme: 'dark',
-        menu: 'vertical',
+        menu: 'collapsible-vertical',
         layout: 'full',
         rtlClass: 'ltr',
         animation: '',
@@ -63,9 +63,14 @@ export const useAppStore = defineStore('app', {
                 document.querySelector('body')?.classList.remove('dark');
             }
         },
+        initMenu(payload: string) {
+            this.menu = payload;
+            localStorage.setItem('menu', payload);
+        },
         toggleMenu(payload: any = null) {
             payload = payload || this.menu; // vertical, collapsible-vertical, horizontal
             this.sidebar = false; // reset sidebar state
+            localStorage.setItem('sidebar', 'false');
             localStorage.setItem('menu', payload);
             this.menu = payload;
         },
@@ -110,6 +115,7 @@ export const useAppStore = defineStore('app', {
         },
         toggleSidebar(state: boolean = false) {
             this.sidebar = !this.sidebar;
+            localStorage.setItem('sidebar', String(this.sidebar));
         },
         toggleMainLoader(state: boolean = false) {
             this.isShowMainLoader = true;

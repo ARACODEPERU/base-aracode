@@ -16,6 +16,7 @@ use Greenter\Report\Resolver\DefaultTemplateResolver;
 use Greenter\Report\XmlUtils;
 use Greenter\See;
 use Greenter\Ws\Services\SunatEndpoints;
+use Modules\Sales\Support\SalesA4Template;
 
 final class Util
 {
@@ -174,35 +175,34 @@ final class Util
 
     public function generatePdf(DocumentInterface $document, $seller = null, $qr_path = null, $format = 'A4', $status = 1, $forma_pago = 'Contado')
     {
+        $format = strtolower((string) $format);
+        if ($format === 'ticket') {
+            $format = 't80';
+        } elseif ($format === 'a4') {
+            $format = 'A4';
+        }
 
         $params = self::getParametersPdf($this->company, $seller, $forma_pago);
 
-        $fileDir = public_path();
+        $fileDir = public_path().DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'invoice';
 
         if (! file_exists($fileDir)) {
             mkdir($fileDir, 0777, true);
         }
 
         $filename = $document->getName().'.pdf';
-        $filePath = $fileDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'invoice'.DIRECTORY_SEPARATOR.$filename;
+        $filePath = $fileDir.DIRECTORY_SEPARATOR.$filename;
 
         if ($format == 'A4') {
-            // dd($document);
-            if ($document->getTipoDoc() == '07' || $document->getTipoDoc() == '08') {
-                $pdf = Pdf::loadView('sales::sales.notas_a4', [
+            $pdf = Pdf::loadView(
+                SalesA4Template::electronicView($document->getTipoDoc()),
+                [
                     'document' => $document,
                     'params' => $params,
                     'qr_path' => $qr_path,
                     'status' => $status,
-                ]);
-            } else {
-                $pdf = Pdf::loadView('sales::sales.invoice_a4', [
-                    'document' => $document,
-                    'params' => $params,
-                    'qr_path' => $qr_path,
-                    'status' => $status,
-                ]);
-            }
+                ]
+            );
 
             $pdf->setPaper('a4', 'portrait');
         } elseif ($format == 't80') {
@@ -213,8 +213,12 @@ final class Util
                 'status' => $status,
             ]);
             $pdf->setPaper([0, 0, 273, 1000], 'portrait');
+        } else {
+            throw new \InvalidArgumentException("Formato PDF no soportado: {$format}");
         }
 
+        $pdf->setOption('isRemoteEnabled', false);
+        $pdf->setOption('isHtml5ParserEnabled', true);
         $pdf->render();
         $pdf->save($filePath);
 

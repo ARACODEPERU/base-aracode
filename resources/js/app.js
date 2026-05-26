@@ -28,6 +28,24 @@ const appName =
 const pinia = createPinia();
 const head = createHead();
 
+const authPaths = [
+    "/login",
+    "/logout",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
+];
+
+const buildLoginRedirectUrl = () => {
+    const currentLocation = `${window.location.pathname}${window.location.search}`;
+
+    if (authPaths.some((path) => window.location.pathname.startsWith(path))) {
+        return "/login";
+    }
+
+    return `/login?redirect_to=${encodeURIComponent(currentLocation)}`;
+};
+
 createInertiaApp({
     //title: (title) => `${title} - ${appName}`,
     title: (title) => `${appName} - ${title}`,
@@ -72,12 +90,10 @@ createInertiaApp({
                 router.on("error", (error) => {
                     //console.log(error);
                     if (error.response && error.response.status === 401) {
-                        // Redirigir al inicio de sesión cuando la sesión ha caducado
-                        router.visit("/login", { replace: true });
+                        router.visit(buildLoginRedirectUrl(), { replace: true });
                     }
                     if (error.response && error.response.status === 419) {
-                        // Redirigir al inicio de sesión cuando la sesión ha caducado
-                        router.visit("/login", { replace: true });
+                        router.visit(buildLoginRedirectUrl(), { replace: true });
                     }
                 });
             },

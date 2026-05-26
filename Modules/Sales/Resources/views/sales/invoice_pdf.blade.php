@@ -363,6 +363,14 @@
                         </tbody>
                     </table>
                     <div class="tabla_borde">
+                        @php
+                            $documentDiscountTotal = 0;
+                            foreach ($document->getDetails() as $detail) {
+                                $documentDiscountTotal += method_exists($detail, 'getDescuento')
+                                    ? (float) ($detail->getDescuento() ?? 0)
+                                    : 0;
+                            }
+                        @endphp
                         <table width="100%" border="0" cellpadding="5" cellspacing="0">
                             <tbody>
                                 <tr>
@@ -385,7 +393,13 @@
                                     </td>
                                     <td width="40%" align="left">
                                         <strong>Dirección: </strong>
-                                        {{ $document->getClient()->getAddress() }}
+                                        @php
+                                            $clientAddress = $document->getClient()->getAddress();
+                                            $clientAddressText = is_object($clientAddress) && method_exists($clientAddress, 'getDireccion')
+                                                ? $clientAddress->getDireccion()
+                                                : ($clientAddress ?? '');
+                                        @endphp
+                                        {{ $clientAddressText }}
                                     </td>
                                 </tr>
                                 <tr>
@@ -407,6 +421,11 @@
                                     <td align="center" class="bold">Valor Total</td>
                                 </tr>
                                 @foreach ($document->getDetails() as $item)
+                                    @php
+                                        $itemDiscount = method_exists($item, 'getDescuento')
+                                            ? (float) ($item->getDescuento() ?? 0)
+                                            : 0;
+                                    @endphp
                                     <tr class="border_top">
                                         <td align="right">
                                             {{ $item->getCantidad() }}
@@ -419,6 +438,9 @@
                                         </td>
                                         <td align="left" width="300px">
                                             <span>{{ $item->getDescripcion() }}</span>
+                                            @if ($itemDiscount > 0)
+                                                <br><span style="font-size: 10px;">Desc. SUNAT: S/ {{ number_format($itemDiscount, 2, '.', ',') }}</span>
+                                            @endif
                                         </td>
                                         {{-- <td align="right">
                                             S/ {{ $item->getMtoValorUnitario() }}
@@ -500,6 +522,14 @@
                                                     S/ {{ number_format($document->getMtoIGV(), 2, '.', ',') }}
                                                 </td>
                                             </tr>
+                                            @if ($documentDiscountTotal > 0)
+                                                <tr>
+                                                    <td align="right"><strong>Descuento:</strong></td>
+                                                    <td width="120" align="right">
+                                                        S/ {{ number_format($documentDiscountTotal, 2, '.', ',') }}
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             <tr>
                                                 <td align="right"><strong>Precio Venta:</strong></td>
                                                 <td width="120" align="right">

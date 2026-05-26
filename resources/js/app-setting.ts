@@ -2,8 +2,23 @@ import { $themeConfig } from '../theme.config';
 import { useAppStore } from '@/stores/index';
 
 export default {
+    applyLayoutDefaults() {
+        const version = $themeConfig.defaultsVersion ?? 1;
+        const stored = parseInt(localStorage.getItem('theme_defaults_version') || '0', 10);
+
+        if (stored >= version) {
+            return;
+        }
+
+        localStorage.setItem('menu', $themeConfig.menu);
+        localStorage.setItem('sidebar', 'false');
+        localStorage.setItem('theme_defaults_version', String(version));
+    },
+
     init() {
         const store = useAppStore();
+
+        this.applyLayoutDefaults();
 
         // set default styles
         let val: any = localStorage.getItem('theme'); // light, dark, system
@@ -11,8 +26,13 @@ export default {
         store.toggleTheme(val);
 
         val = localStorage.getItem('menu'); // vertical, collapsible-vertical, horizontal
-        val = val || $themeConfig.menu;
-        store.toggleMenu(val);
+        if (!val || !['vertical', 'collapsible-vertical', 'horizontal'].includes(val)) {
+            val = $themeConfig.menu;
+        }
+        store.initMenu(val);
+
+        val = localStorage.getItem('sidebar');
+        store.sidebar = val === 'true';
 
         val = localStorage.getItem('layout'); // full, boxed-layout
         val = val || $themeConfig.layout;

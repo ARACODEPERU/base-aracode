@@ -7,16 +7,16 @@ import TextInput from "@/Components/TextInput.vue";
 import EditorAracode from "@/Components/EditorAracode.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 import { Link, useForm } from "@inertiajs/vue3";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faFilePdf, faMagnifyingGlass, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faFilePdf, faMagnifyingGlass, faPen, faUpload, faXmark } from "@fortawesome/free-solid-svg-icons";
+import SearchService from "./SearchService.vue";
 
 const props = defineProps({
     contract: { type: Object, default: null },
     clients: { type: Array, default: () => [] },
-    services: { type: Array, default: () => [] },
     identityDocumentTypes: { type: Array, default: () => [] },
     currencyTypes: { type: Array, default: () => [] },
     contractTypes: { type: Array, default: () => [] },
@@ -25,6 +25,9 @@ const props = defineProps({
 const fileInput = ref(null);
 const selectedPdfName = ref(null);
 const responsibleSearchLoading = ref(false);
+const searchServiceRef = ref(null);
+const serviceDisplay = ref("");
+const selectedService = ref(null);
 
 const form = useForm({
     client_id: props.contract?.client_id ?? null,
@@ -57,11 +60,6 @@ const clientOptions = computed(() => props.clients.map((item) => ({
     label: `${item.full_name} - ${item.number}`,
 })));
 
-const serviceOptions = computed(() => props.services.map((item) => ({
-    value: item.id,
-    label: `${item.interne || 'SERV'} - ${item.description}`,
-})));
-
 const currencyOptions = computed(() => props.currencyTypes.map((item) => ({
     value: item.id,
     label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
@@ -78,22 +76,60 @@ const onlyResponsibleNumbers = () => {
     form.responsible_number = form.responsible_number ? String(form.responsible_number).replace(/\D/g, "") : null;
 };
 
-const servicePrice = (service) => {
-    if (!service?.sale_prices) return null;
-
-    try {
-        const prices = typeof service.sale_prices === "string" ? JSON.parse(service.sale_prices) : service.sale_prices;
-        return prices?.high ?? prices?.medium ?? prices?.under ?? null;
-    } catch (error) {
-        return null;
+const parseSalePrices = (salePrices) => {
+    if (!salePrices) return {};
+    if (typeof salePrices === "string") {
+        try {
+            return JSON.parse(salePrices);
+        } catch {
+            return {};
+        }
     }
+    return salePrices;
 };
 
-watch(() => form.service_id, (serviceId) => {
-    const service = props.services.find((item) => String(item.id) === String(serviceId));
-    const price = servicePrice(service);
+const servicePrice = (service) => {
+    const prices = parseSalePrices(service?.sale_prices);
+    const value = prices?.high ?? prices?.medium ?? prices?.under ?? null;
+    return value !== null && value !== undefined && value !== "" ? value : null;
+};
 
+const formatServiceLabel = (service) => {
+    if (!service) return "";
+    return `${service.interne || "SERV"} - ${service.description}`;
+};
+
+const applySelectedService = (service) => {
+    if (!service?.id) return;
+    selectedService.value = service;
+    form.service_id = service.id;
+    serviceDisplay.value = formatServiceLabel(service);
+    const price = servicePrice(service);
     form.amount = price !== null && price !== undefined && price !== "" ? price : null;
+};
+
+const onServiceSelected = (service) => {
+    applySelectedService(service);
+};
+
+const openServiceSearch = () => {
+    searchServiceRef.value?.openModal();
+};
+
+const openServiceEdit = () => {
+    if (!form.service_id) return;
+    searchServiceRef.value?.openModalForEdit(form.service_id);
+};
+
+onMounted(() => {
+    if (props.contract?.service) {
+        applySelectedService({
+            id: props.contract.service.id,
+            interne: props.contract.service.interne,
+            description: props.contract.service.description,
+            sale_prices: parseSalePrices(props.contract.service.sale_prices),
+        });
+    }
 });
 
 const fillResponsible = (person) => {
@@ -207,6 +243,8 @@ const submit = () => {
                 form.body = "";
                 form.responsible_document_type_id = "1";
                 form.responsible_gender = "M";
+                serviceDisplay.value = "";
+                selectedService.value = null;
                 selectedPdfName.value = null;
                 if (fileInput.value) fileInput.value.value = null;
             }
@@ -247,15 +285,34 @@ const submit = () => {
 
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel value="Servicio" />
-                <Select
-                    v-model:value="form.service_id"
-                    :options="serviceOptions"
-                    :filter-option="filterOption"
-                    allow-clear
-                    show-search
-                    style="width: 100%"
-                />
+                <div class="mt-1 flex items-start gap-2">
+                    <button
+                        v-if="form.service_id"
+                        type="button"
+                        v-tippy="{ content: 'Editar servicio', placement: 'bottom' }"
+                        class="btn btn-outline-primary shrink-0 px-3"
+                        @click="openServiceEdit"
+                    >
+                        <FontAwesomeIcon :icon="faPen" class="h-4 w-4" />
+                    </button>
+                    <TextInput
+                        v-model="serviceDisplay"
+                        type="text"
+                        class="block min-w-0 flex-1"
+                        readonly
+                        placeholder="Seleccione un servicio..."
+                    />
+                    <button
+                        type="button"
+                        class="btn btn-info shrink-0 whitespace-nowrap"
+                        @click="openServiceSearch"
+                    >
+                        <FontAwesomeIcon :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
+                        Buscar servicio
+                    </button>
+                </div>
                 <InputError :message="form.errors.service_id" class="mt-2" />
+                <SearchService ref="searchServiceRef" @selected="onServiceSelected" />
             </div>
 
             <div class="col-span-6 sm:col-span-2">

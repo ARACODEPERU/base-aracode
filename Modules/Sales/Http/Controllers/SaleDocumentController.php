@@ -34,6 +34,8 @@ use Inertia\Inertia;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SaleSummary;
 use Modules\Sales\Entities\SaleSummaryDetail;
+use Modules\Sales\Services\QuickSaleItemCalculator;
+use Modules\Sales\Support\ElectronicDiscountMode;
 
 class SaleDocumentController extends Controller
 {
@@ -52,12 +54,17 @@ class SaleDocumentController extends Controller
 
     private $icbper;
 
-    public function __construct()
+    private string $electronicDiscountMode;
+
+    public function __construct(private readonly QuickSaleItemCalculator $calculator)
     {
         $this->ubl = Parameter::where('parameter_code', 'P000003')->value('value_default');
         $this->igv = Parameter::where('parameter_code', 'P000001')->value('value_default');
         $this->top = Parameter::where('parameter_code', 'P000002')->value('value_default');
         $this->icbper = Parameter::where('parameter_code', 'P000004')->value('value_default');
+        $this->electronicDiscountMode = ElectronicDiscountMode::resolve(
+            Parameter::where('parameter_code', ElectronicDiscountMode::PARAMETER_CODE)->value('value_default')
+        );
     }
 
     public function index()
@@ -179,6 +186,7 @@ class SaleDocumentController extends Controller
                 'igv' => $this->igv,
                 'icbper' => $this->icbper,
             ],
+            'electronicDiscountMode' => $this->electronicDiscountMode,
         ]);
     }
 
@@ -377,78 +385,20 @@ class SaleDocumentController extends Controller
                         $item = $new_product;
                     }
 
-                    // / imiciamos las variables para hacer los calculos por item;
-                    $percentage_igv = $this->igv;
-                    $mto_base_igv = 0;
-
-                    $price_sale = $produc['unit_price'];
-                    $nfactorIGV = round(($percentage_igv / 100) + 1, 2);
-                    $ifactorIGV = round($percentage_igv / 100, 2);
+                    $tax = $this->calculateElectronicItemTaxes($produc);
                     $quantity = $produc['quantity'];
-                    $value_unit = 0;
-                    $igv = 0;
-                    $total_tax = 0;
-                    $icbper = 0;
-                    $value_sale = 0;
-                    $total_item = 0;
-                    $mto_discount = 0;
-                    $array_discounts = [];
-
-                    if ($produc['afe_igv'] == '10') {
-                        // valor unitario presio de venta / 1.IGV para quitarle el igv
-                        // se tiene que quitar el igv porque el sistema trabaja con los precios
-                        // incluido el igv
-                        $value_unit = round($price_sale / $nfactorIGV, 2);
-                        // la base para hacer el descuento
-                        $base = round($value_unit * $quantity, 2);
-                        // el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
-                        $factor = (($produc['discount'] * 100) / $price_sale) / 100;
-                        // el descuento se aplica por unidad vendida
-                        $descuento_monto = $factor * $value_unit * $quantity;
-                        // a la base igv le restamos el descuento
-                        $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        // una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                        // el valor total igv
-                        $igv = ($mto_base_igv * $ifactorIGV);
-                        // total del item
-                        $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                        // el valor de la venta
-                        $value_sale = ($value_unit * $quantity) - $descuento_monto;
-                        // si tiene descuento creamos el array de descuento
-                        // 2023-07-20 el sistema solo trabaja con un descuento
-                        if ($produc['discount'] > 0) {
-                            // el precio unitario se calcula
-                            // (Valor venta + Total Impuestos) / Cantidad
-                            $unit_price = round(($value_sale + $igv) / $quantity, 2);
-                            $array_discounts[0] = [
-                                'value' => $produc['discount'],
-                                'type' => '00',
-                                'base' => round($base, 2),
-                                'factor' => $factor,
-                                'monto' => round($descuento_monto, 2),
-                            ];
-                        } else {
-                            // el precio unitario es el mismo
-                            $unit_price = $price_sale;
-                        }
-
-                        $mto_discount = round($descuento_monto, 2);
-                    }
-                    if ($produc['afe_igv'] == '20') { // Exonerated
-
-                    }
-                    if ($produc['afe_igv'] == '30') { // Unaffected
-
-                    }
-
-                    if ($produc['icbper'] == 1) {
-                        $porcentage_item_icbper = $porcentage_icbper;
-                        $icbper = ($quantity * $porcentage_item_icbper);
-                    } else {
-                        $porcentage_item_icbper = 0;
-                        $icbper = 0;
-                    }
-                    $total_tax = $igv + $icbper;
+                    $mto_base_igv = $tax['mto_base_igv'];
+                    $igv = $tax['igv'];
+                    $total_tax = $tax['total_tax'];
+                    $icbper = $tax['icbper'];
+                    $value_sale = $tax['value_sale'];
+                    $value_unit = $tax['value_unit'];
+                    $unit_price = $tax['unit_price'];
+                    $price_sale = $tax['price_sale'];
+                    $total_item = $tax['total_item'];
+                    $mto_discount = $tax['mto_discount'];
+                    $array_discounts = $tax['array_discounts'];
+                    $porcentage_item_icbper = $tax['porcentage_item_icbper'];
 
                     // se inserta los datos al detalle del documento
                     SaleDocumentItem::create([
@@ -469,7 +419,7 @@ class SaleDocumentController extends Controller
                         'mto_value_unit' => $value_unit,
                         'mto_price_unit' => $unit_price,
                         'price_sale' => $price_sale,
-                        'mto_total' => round($unit_price * $produc['quantity'], 2),
+                        'mto_total' => $tax['line_total'],
                         'mto_discount' => $mto_discount ?? 0,
                         'json_discounts' => json_encode($array_discounts),
                         'entity_name_product' => Product::class,
@@ -534,6 +484,7 @@ class SaleDocumentController extends Controller
                     $mto_igv = $mto_igv + $igv; // total del igv
                     $total_icbper = $total_icbper + $icbper; // total del impuesto a la bolsa plastica
                     $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
+                    $total_discount = $total_discount + $mto_discount;
                     $total = $total + $total_item; // total de la venta general
                 }
                 // totales de la cabesera del documento
@@ -575,6 +526,7 @@ class SaleDocumentController extends Controller
                 $document->invoice_total_taxes = $total_taxes;
                 $document->invoice_value_sale = $mto_oper_taxed;
                 $document->invoice_subtotal = $subtotal;
+                $document->invoice_mto_discount = $total_discount;
                 $document->invoice_rounding = $rounding;
                 $document->invoice_mto_imp_sale = $ttotal;
                 $document->invoice_sunat_points = null;
@@ -617,6 +569,20 @@ class SaleDocumentController extends Controller
             'status' => $status,
             'series' => $series,
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $product
+     * @return array<string, mixed>
+     */
+    private function calculateElectronicItemTaxes(array $product): array
+    {
+        return $this->calculator->calculateTaxedLine(
+            $product,
+            (float) $this->igv,
+            (float) $this->icbper,
+            $this->electronicDiscountMode
+        );
     }
 
     public function sendSunatDocument($id, $type)
@@ -670,83 +636,32 @@ class SaleDocumentController extends Controller
             $mto_oper_taxed = 0;
             $mto_igv = 0;
             $total_icbper = 0;
-            $porcentage_icbper = 0.20;
             $total_discount = 0;
             $total = 0;
 
             foreach ($items as $t => $item) {
-                // / imiciamos las variables para hacer los calculos por item;
-                $percentage_igv = $this->igv;
-                $mto_base_igv = 0;
-                $price_sale = $item['price_sale'];
-                $nfactorIGV = round(($percentage_igv / 100) + 1, 2);
-                $ifactorIGV = round($percentage_igv / 100, 2);
+                $productForTax = [
+                    'unit_price' => $item['price_sale'],
+                    'quantity' => $item['quantity'],
+                    'discount' => $item['mto_discount'],
+                    'afe_igv' => $item['type_afe_igv'],
+                    'icbper' => $item['icbper'],
+                ];
+
+                $tax = $this->calculateElectronicItemTaxes($productForTax);
                 $quantity = $item['quantity'];
-                $value_unit = 0;
-                $igv = 0;
-                $total_tax = 0;
-                $icbper = 0;
-                $value_sale = 0;
-                $total_item = 0;
-                $mto_discount = 0;
-                $array_discounts = [];
-
-                if ($item['type_afe_igv'] == '10') {
-                    // valor unitario presio de venta / 1.IGV para quitarle el igv
-                    // se tiene que quitar el igv porque el sistema trabaja con los precios
-                    // incluido el igv
-                    $value_unit = round($price_sale / $nfactorIGV, 2);
-                    // la base para hacer el descuento
-                    $base = round($value_unit * $quantity, 2);
-                    // el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
-                    $factor = (($item['mto_discount'] * 100) / $price_sale) / 100;
-                    // el descuento se aplica por unidad vendida
-                    $descuento_monto = $factor * $value_unit * $quantity;
-                    // a la base igv le restamos el descuento
-                    $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                    // una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                    // el valor total igv
-                    $igv = ($mto_base_igv * $ifactorIGV);
-                    // total del item
-                    $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                    // el valor de la venta
-                    $value_sale = ($value_unit * $quantity) - $descuento_monto;
-                    // si tiene descuento creamos el array de descuento
-                    // 2023-07-20 el sistema solo trabaja con un descuento
-                    if ($item['mto_discount'] > 0) {
-                        // el precio unitario se calcula
-                        // (Valor venta + Total Impuestos) / Cantidad
-                        $unit_price = round(($value_sale + $igv) / $quantity, 2);
-                        $array_discounts[0] = [
-                            'value' => $item['mto_discount'],
-                            'type' => '00',
-                            'base' => round($base, 2),
-                            'factor' => $factor,
-                            'monto' => round($descuento_monto, 2),
-                        ];
-                    } else {
-                        // el precio unitario es el mismo
-                        $unit_price = $price_sale;
-                    }
-
-                    // $mto_base_igv = $mto_base_igv - $item['mto_discount'];
-                    $mto_discount = round($descuento_monto, 2);
-                }
-
-                if ($item['type_afe_igv'] == '20') { // Exonerated
-
-                }
-                if ($item['type_afe_igv'] == '30') { // Unaffected
-
-                }
-                if ($item['icbper'] == 1) {
-                    $porcentage_item_icbper = $porcentage_icbper;
-                    $icbper = ($quantity * $porcentage_item_icbper);
-                } else {
-                    $porcentage_item_icbper = 0;
-                    $icbper = 0;
-                }
-                $total_tax = $igv + $icbper;
+                $mto_base_igv = $tax['mto_base_igv'];
+                $igv = $tax['igv'];
+                $total_tax = $tax['total_tax'];
+                $icbper = $tax['icbper'];
+                $value_sale = $tax['value_sale'];
+                $value_unit = $tax['value_unit'];
+                $unit_price = $tax['unit_price'];
+                $price_sale = $tax['price_sale'];
+                $total_item = $tax['total_item'];
+                $mto_discount = $tax['mto_discount'];
+                $array_discounts = $tax['array_discounts'];
+                $porcentage_item_icbper = $tax['porcentage_item_icbper'];
 
                 // se inserta los datos al detalle del documento
                 SaleDocumentItem::where('id', $item['id'])->update([
@@ -764,7 +679,7 @@ class SaleDocumentController extends Controller
                     'mto_value_unit' => $value_unit,
                     'mto_price_unit' => $unit_price,
                     'price_sale' => $price_sale,
-                    'mto_total' => round($total_item, 2),
+                    'mto_total' => $tax['line_total'],
                     'mto_discount' => $mto_discount ?? 0,
                     'json_discounts' => json_encode($array_discounts),
                 ]);
@@ -825,6 +740,7 @@ class SaleDocumentController extends Controller
                 $mto_igv = $mto_igv + $igv; // total del igv
                 $total_icbper = $total_icbper + $icbper; // total del impuesto a la bolsa plastica
                 $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
+                $total_discount = $total_discount + $mto_discount;
                 $total = $total + $total_item; // total de la venta general
             }
             // totales de la cabesera del documento
@@ -843,6 +759,7 @@ class SaleDocumentController extends Controller
                 'invoice_total_taxes' => $total_taxes,
                 'invoice_value_sale' => $mto_oper_taxed,
                 'invoice_subtotal' => $subtotal,
+                'invoice_mto_discount' => $total_discount,
                 'invoice_rounding' => $rounding,
                 'invoice_mto_imp_sale' => $ttotal,
                 'invoice_sunat_points' => null,
@@ -853,7 +770,6 @@ class SaleDocumentController extends Controller
             Sale::where('id', $document->sale_id)->update([
                 'total' => $ttotal,
                 'advancement' => $ttotal,
-                'total_discount' => $total_discount,
             ]);
 
             return $document->id;
@@ -914,6 +830,20 @@ class SaleDocumentController extends Controller
                 }
 
                 break;
+            case '08':
+                $notaDebito = new NotaDebito;
+                if ($file == 'PDF') {
+                    $content_type = 'application/pdf';
+                    $res = $notaDebito->getNotaDebitoPdf($id, $format);
+                } elseif ($file == 'XML') {
+                    $content_type = 'application/xml';
+                    $res = $notaDebito->getNotaDebitoXML($id);
+                } else {
+                    $content_type = 'application/zip';
+                    $res = $notaDebito->getNotaDebitoCDR($id);
+                }
+
+                break;
             case 2:
                 echo 'i es igual a 2';
                 break;
@@ -970,6 +900,7 @@ class SaleDocumentController extends Controller
                 'igv' => $this->igv,
                 'icbper' => $this->icbper,
             ],
+            'electronicDiscountMode' => $this->electronicDiscountMode,
         ]);
     }
 
@@ -1120,77 +1051,20 @@ class SaleDocumentController extends Controller
                     $product_id = $produc['id'];
                     $interne = $produc['interne'];
 
-                    // / imiciamos las variables para hacer los calculos por item;
-                    $percentage_igv = $this->igv;
-                    $mto_base_igv = 0;
-                    $price_sale = $produc['unit_price'];
-                    $nfactorIGV = round(($percentage_igv / 100) + 1, 2);
-                    $ifactorIGV = round($percentage_igv / 100, 2);
+                    $tax = $this->calculateElectronicItemTaxes($produc);
                     $quantity = $produc['quantity'];
-                    $value_unit = 0;
-                    $igv = 0;
-                    $total_tax = 0;
-                    $icbper = 0;
-                    $value_sale = 0;
-                    $total_item = 0;
-                    $mto_discount = 0;
-                    $array_discounts = [];
-
-                    if ($produc['afe_igv'] == '10') {
-                        // valor unitario presio de venta / 1.IGV para quitarle el igv
-                        // se tiene que quitar el igv porque el sistema trabaja con los precios
-                        // incluido el igv
-                        $value_unit = round($price_sale / $nfactorIGV, 2);
-                        // la base para hacer el descuento
-                        $base = round($value_unit * $quantity, 2);
-                        // el sistema resive un monto fijo como descuento y lo convierte a un porcentaje
-                        $factor = (($produc['discount'] * 100) / $price_sale) / 100;
-                        // el descuento se aplica por unidad vendida
-                        $descuento_monto = $factor * $value_unit * $quantity;
-                        // a la base igv le restamos el descuento
-                        $mto_base_igv = ($value_unit * $quantity) - $descuento_monto;
-                        // una ves restada la vase lo multiplicamos por el 18% vigente para sacar
-                        // el valor total igv
-                        $igv = ($mto_base_igv * $ifactorIGV);
-                        // total del item
-                        $total_item = (($value_unit * $quantity) - $descuento_monto) + $igv;
-                        // el valor de la venta
-                        $value_sale = ($value_unit * $quantity) - $descuento_monto;
-                        // si tiene descuento creamos el array de descuento
-                        // 2023-07-20 el sistema solo trabaja con un descuento
-                        if ($produc['discount'] > 0) {
-                            // el precio unitario se calcula
-                            // (Valor venta + Total Impuestos) / Cantidad
-                            $unit_price = round(($value_sale + $igv) / $quantity, 2);
-                            $array_discounts[0] = [
-                                'value' => $produc['discount'],
-                                'type' => '00',
-                                'base' => round($base, 2),
-                                'factor' => $factor,
-                                'monto' => round($descuento_monto, 2),
-                            ];
-                        } else {
-                            // el precio unitario es el mismo
-                            $unit_price = $price_sale;
-                        }
-
-                        $mto_discount = round($descuento_monto, 2);
-                    }
-                    if ($produc['afe_igv'] == '20') { // Exonerated
-
-                    }
-                    if ($produc['afe_igv'] == '30') { // Unaffected
-
-                    }
-
-                    if ($produc['icbper'] == 1) {
-                        $porcentage_item_icbper = $porcentage_icbper;
-                        $icbper = ($quantity * $porcentage_item_icbper);
-                    } else {
-                        $porcentage_item_icbper = 0;
-                        $icbper = 0;
-                    }
-                    $total_tax = $igv + $icbper;
+                    $mto_base_igv = $tax['mto_base_igv'];
+                    $igv = $tax['igv'];
+                    $total_tax = $tax['total_tax'];
+                    $icbper = $tax['icbper'];
+                    $value_sale = $tax['value_sale'];
+                    $value_unit = $tax['value_unit'];
+                    $unit_price = $tax['unit_price'];
+                    $price_sale = $tax['price_sale'];
+                    $total_item = $tax['total_item'];
+                    $mto_discount = $tax['mto_discount'];
+                    $array_discounts = $tax['array_discounts'];
+                    $porcentage_item_icbper = $tax['porcentage_item_icbper'];
 
                     // se inserta los datos al detalle del documento
                     SaleDocumentItem::create([
@@ -1211,7 +1085,7 @@ class SaleDocumentController extends Controller
                         'mto_value_unit' => $value_unit,
                         'mto_price_unit' => $unit_price,
                         'price_sale' => $price_sale,
-                        'mto_total' => round($total_item, 2),
+                        'mto_total' => $tax['line_total'],
                         'mto_discount' => $mto_discount ?? 0,
                         'json_discounts' => json_encode($array_discounts),
 
@@ -1220,6 +1094,7 @@ class SaleDocumentController extends Controller
                     $mto_igv = $mto_igv + $igv; // total del igv
                     $total_icbper = $total_icbper + $icbper; // total del impuesto a la bolsa plastica
                     $mto_oper_taxed = $mto_oper_taxed + $value_sale; // total operaciones gravadas
+                    $total_discount = $total_discount + $mto_discount;
                     $total = $total + $total_item; // total de la venta general
                 }
                 // totales de la cabesera del documento
@@ -1236,10 +1111,18 @@ class SaleDocumentController extends Controller
                     'invoice_total_taxes' => $total_taxes,
                     'invoice_value_sale' => $mto_oper_taxed,
                     'invoice_subtotal' => $subtotal,
+                    'invoice_mto_discount' => $total_discount,
                     'invoice_rounding' => $rounding,
                     'invoice_mto_imp_sale' => $ttotal,
                     'invoice_sunat_points' => null,
                     'invoice_status' => 'Pendiente',
+                ]);
+
+                $sale->update([
+                    'total' => $ttotal,
+                    'advancement' => $ttotal,
+                    'total_discount' => $request->get('total_discount'),
+                    'petty_cash_id' => $petty_cash->id,
                 ]);
 
                 $serie->increment('number', 1);

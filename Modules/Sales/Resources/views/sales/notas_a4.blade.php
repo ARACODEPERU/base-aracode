@@ -878,7 +878,13 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                         @endif
                                         {{ $document->getClient()->getNumDoc() }}
                                     </p>
-                                    <p>Dirección: {{ $document->getClient()->getAddress() }}</p>
+                                    @php
+                                        $clientAddress = $document->getClient()->getAddress();
+                                        $clientAddressText = is_object($clientAddress) && method_exists($clientAddress, 'getDireccion')
+                                            ? $clientAddress->getDireccion()
+                                            : ($clientAddress ?? '');
+                                    @endphp
+                                    <p>Dirección: {{ $clientAddressText }}</p>
                                 </div>
                             </td>
                             <td style="width: 60px"></td>

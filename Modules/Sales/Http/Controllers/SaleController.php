@@ -25,6 +25,7 @@ use PDF;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
+use Modules\Sales\Support\SalesA4Template;
 
 class SaleController extends Controller
 {
@@ -341,7 +342,7 @@ class SaleController extends Controller
 
     public function ticketPdf($id)
     {
-        $sale = Sale::find($id);
+        $sale = Sale::with('client')->findOrFail($id);
         $document = SaleDocument::join('series', 'serie_id', 'series.id')
             ->select(
                 'series.description',
@@ -350,28 +351,74 @@ class SaleController extends Controller
             )
             ->where('sale_documents.sale_id', $sale->id)
             ->first();
+
+        if (! $document) {
+            abort(404, 'No se encontró el documento de venta.');
+        }
+
         $local = LocalSale::find($sale->local_id);
         $products = SaleProduct::where('sale_id', $sale->id)->get();
         $company = Company::first();
         $seller = User::find($sale->user_id);
-        $payments = PaymentMethod::all();
+        $paymentMethods = PaymentMethod::all()->keyBy('id');
+        $salePayments = json_decode($sale->payments ?? '[]', true) ?: [];
 
         $data = [
-            'local'     => $local,
-            'sale'      => $sale,
-            'products'  => $products,
-            'document'  => $document,
-            'company'   => $company,
-            'seller'    => $seller,
-            'payments'  => $payments
+            'local'          => $local,
+            'sale'           => $sale,
+            'products'       => $products,
+            'document'       => $document,
+            'company'        => $company,
+            'seller'         => $seller,
+            'client'         => $sale->client,
+            'paymentMethods' => $paymentMethods,
+            'salePayments'   => $salePayments,
+            'logoSrc'        => $this->ticketLogoDataUri($company),
         ];
 
-        $file = public_path('ticket/') . $seller->id . '-ticket.pdf';
-        $pdf = PDF::loadView('sales::sales.ticket_pdf', $data);
-        $pdf->setPaper(array(0, 0, 273, 500), 'portrait');
-        $pdf->save($file);
+        $itemCount = max(1, $products->count());
+        $paymentCount = count($salePayments);
+        $paperHeight = min(1400, max(420, 300 + ($itemCount * 40) + ($paymentCount * 24)));
 
-        return response()->download($file);
+        $pdf = PDF::loadView('sales::sales.ticket_pdf', $data);
+        $pdf->setOption('isRemoteEnabled', false);
+        $pdf->setOption('isHtml5ParserEnabled', true);
+        $pdf->setOption('defaultFont', 'DejaVu Sans');
+        $pdf->setPaper([0, 0, 226, $paperHeight], 'portrait');
+
+        $filename = 'ticket-' . $sale->id . '.pdf';
+
+        return $pdf->download($filename)->withHeaders([
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Pragma'        => 'no-cache',
+        ]);
+    }
+
+    /**
+     * Logo embebido en base64 para evitar que DomPDF bloquee el navegador con rutas/archivos pesados.
+     */
+    private function ticketLogoDataUri(?Company $company): ?string
+    {
+        if (! $company || empty($company->logo_document)) {
+            return null;
+        }
+
+        $path = $company->logo_document === '/img/logo176x32.png'
+            ? public_path($company->logo_document)
+            : public_path('storage' . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $company->logo_document), DIRECTORY_SEPARATOR));
+
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $size = filesize($path);
+        if ($size === false || $size > 512000) {
+            return null;
+        }
+
+        $mime = mime_content_type($path) ?: 'image/png';
+
+        return 'data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($path));
     }
 
     public function printA4Pdf($id)
@@ -404,7 +451,7 @@ class SaleController extends Controller
         //return view('sales::sales.A4_pdf', $data);
 
         $file = public_path('ticket/') . $seller->id . '-A4.pdf';
-        $pdf = PDF::loadView('sales::sales.A4_pdf', $data);
+        $pdf = PDF::loadView(SalesA4Template::noteSaleView(), $data);
         $pdf->setPaper('a4', 'portrait');
         $pdf->save($file);
 

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Commercial\Http\Controllers\CommercialClientController;
 use Modules\Commercial\Http\Controllers\CommercialContractController;
 use Modules\Commercial\Http\Controllers\CommercialContractPaymentController;
+use Modules\Commercial\Http\Controllers\CommercialContractServiceController;
 use Modules\Commercial\Http\Controllers\CommercialController;
 
 Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function () {
@@ -66,6 +67,24 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
 
     Route::post('contracts/responsible/search', [CommercialContractController::class, 'searchResponsible'])
         ->name('comm_contracts_responsible_search');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_nuevo|comm_contratos_editar'])
+        ->post('contracts/services/search', [CommercialContractServiceController::class, 'search'])
+        ->name('comm_contracts_services_search');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_nuevo|comm_contratos_editar'])
+        ->get('contracts/services/{id}', [CommercialContractServiceController::class, 'show'])
+        ->whereNumber('id')
+        ->name('comm_contracts_services_show');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_nuevo|comm_contratos_editar'])
+        ->post('contracts/services/store', [CommercialContractServiceController::class, 'store'])
+        ->name('comm_contracts_services_store');
+
+    Route::middleware(['middleware' => 'permission:comm_contratos_nuevo|comm_contratos_editar'])
+        ->put('contracts/services/update/{id}', [CommercialContractServiceController::class, 'update'])
+        ->whereNumber('id')
+        ->name('comm_contracts_services_update');
 
     Route::middleware(['middleware' => 'permission:comm_contratos_cronograma'])
         ->get('contracts/payments/{payment}/document/create', [CommercialContractPaymentController::class, 'createDocument'])

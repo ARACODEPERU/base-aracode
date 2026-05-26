@@ -260,7 +260,7 @@
                                     @endif
                                 @endforeach
                             </td>
-                            <td style="padding: 0.3em;text-align: left">{{ $payment->reference }}</td>
+                            <td style="padding: 0.3em;text-align: left">{{ $payment->reference ?? '' }}</td>
                             <td style="padding: 0.3em;text-align: right">
                                 {{ number_format($payment->amount, 2, '.', ',') }}</td>
                         </tr>

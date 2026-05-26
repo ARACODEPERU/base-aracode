@@ -270,7 +270,13 @@
                 </div>
                 <div class="detail" style="font-size: 12px">
                     <strong>Dirección: </strong>
-                    {{ $document->getClient()->getAddress() }}
+                    @php
+                        $clientAddress = $document->getClient()->getAddress();
+                        $clientAddressText = is_object($clientAddress) && method_exists($clientAddress, 'getDireccion')
+                            ? $clientAddress->getDireccion()
+                            : ($clientAddress ?? '');
+                    @endphp
+                    {{ $clientAddressText }}
                 </div>
                 <div class="detail" style="font-size: 12px">
                     <strong>Fecha Emisión: </strong>
@@ -282,6 +288,14 @@
                     {{ $extra['name'] }} : {{ $extra['value'] }}<br />
                 @endforeach
             </div>
+            @php
+                $documentDiscountTotal = 0;
+                foreach ($document->getDetails() as $detail) {
+                    $documentDiscountTotal += method_exists($detail, 'getDescuento')
+                        ? (float) ($detail->getDescuento() ?? 0)
+                        : 0;
+                }
+            @endphp
             <table style="font-size: 11px; width: 100%;border: 0px; border-collapse: collapse; ">
                 <thead>
                     <tr>
@@ -297,6 +311,11 @@
                 </thead>
                 <tbody>
                     @foreach ($document->getDetails() as $item)
+                        @php
+                            $itemDiscount = method_exists($item, 'getDescuento')
+                                ? (float) ($item->getDescuento() ?? 0)
+                                : 0;
+                        @endphp
                         <tr>
                             <td align="center" style="padding: 4px 0px 4px 0px">
                                 {{ $item->getCantidad() }}
@@ -306,6 +325,9 @@
                             </td>
                             <td align="left" style="padding: 4px 0px 4px 0px">
                                 {{ $item->getCodProducto() }} - {{ $item->getDescripcion() }}
+                                @if ($itemDiscount > 0)
+                                    <br><span style="font-size: 10px">Desc. SUNAT: S/ {{ number_format($itemDiscount, 2, '.', ',') }}</span>
+                                @endif
                             </td>
                             <td align="right" style="padding: 4px 0px 4px 0px">
                                 S/ {{ number_format($item->getMtoPrecioUnitario(), 2, '.', ',') }}
@@ -332,6 +354,14 @@
                             S/ {{ number_format($document->getMtoIGV(), 2, '.', ',') }}
                         </td>
                     </tr>
+                    @if ($documentDiscountTotal > 0)
+                        <tr>
+                            <td width="70%" align="right"><strong>Descuento:</strong></td>
+                            <td width="30%" align="right">
+                                S/ {{ number_format($documentDiscountTotal, 2, '.', ',') }}
+                            </td>
+                        </tr>
+                    @endif
                     <tr>
                         <td width="70%" align="right"><strong>Precio Venta:</strong></td>
                         <td width="30%" align="right">

@@ -149,6 +149,14 @@ return new class extends Migration
             'json_query_data'   => null,
             'value_default'     => 'aracode_atencion@gmail.com'
         ]);
+
+        Parameter::create([
+            'parameter_code'    => 'P000025',
+            'description'       => 'Modo de descuento en comprobantes electrónicos (boleta y factura)',
+            'control_type'      => 'rdj',
+            'json_query_data'   => '[{"value": "1", "label": "Trabajar con precio final (no enviar descuento separado a SUNAT)"},{"value": "2", "label": "Enviar descuento por ítem a SUNAT"}]',
+            'value_default'     => 1
+        ]);
     }
 
     /**

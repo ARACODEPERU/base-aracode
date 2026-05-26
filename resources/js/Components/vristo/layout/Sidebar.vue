@@ -98,6 +98,14 @@
 
     const xasset = assetUrl;
 
+    const isNewBadge = (badge) => ['new', 'nuevo'].includes(String(badge || '').toLowerCase());
+
+    const badgeClasses = (badge) => {
+        return isNewBadge(badge)
+            ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200'
+            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200';
+    };
+
     const menuChatAI = ref({});
 
     async function loadTeachers() {
@@ -243,12 +251,28 @@
                                                                         <div class="ltr:mr-2 rtl:ml-2">
                                                                             <img :src="`${xasset}storage/${subSubItem.img}`" alt="" class="w-8 h-8 rounded" />
                                                                         </div>
-                                                                        <div class="flex-1 text-xs">
-                                                                            {{ subSubItem.text }}
+                                                                        <div class="flex flex-1 items-center justify-between gap-2 text-xs">
+                                                                            <span>{{ subSubItem.text }}</span>
+                                                                            <span
+                                                                                v-if="subSubItem.badge"
+                                                                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                                :class="badgeClasses(subSubItem.badge)"
+                                                                            >
+                                                                                {{ subSubItem.badge }}
+                                                                            </span>
                                                                         </div>
                                                                     </template>
                                                                     <template v-else>
-                                                                        {{ subSubItem.text }}
+                                                                        <div class="flex w-full items-center justify-between gap-2">
+                                                                            <span>{{ subSubItem.text }}</span>
+                                                                            <span
+                                                                                v-if="subSubItem.badge"
+                                                                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                                :class="badgeClasses(subSubItem.badge)"
+                                                                            >
+                                                                                {{ subSubItem.badge }}
+                                                                            </span>
+                                                                        </div>
                                                                     </template>
                                                                 </Link>
                                                             </li>
@@ -282,9 +306,18 @@
                                                         <div class="flex items-center">
                                                             <font-awesome-icon :icon="subItem.icom" class="group-hover:!text-primary shrink-0" />
 
-                                                            <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
-                                                                {{ subItem.text }}
-                                                            </span>
+                                                            <div class="flex flex-1 items-center justify-between gap-2">
+                                                                <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
+                                                                    {{ subItem.text }}
+                                                                </span>
+                                                                <span
+                                                                    v-if="subItem.badge"
+                                                                    class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                    :class="badgeClasses(subItem.badge)"
+                                                                >
+                                                                    {{ subItem.badge }}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </Link>
                                                 </Popover>
@@ -300,9 +333,18 @@
                                                     <div class="flex items-center">
                                                         <font-awesome-icon :icon="subItem.icom" class="group-hover:!text-primary shrink-0" />
 
-                                                        <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
-                                                            {{ subItem.text }}
-                                                        </span>
+                                                        <div class="flex flex-1 items-center justify-between gap-2">
+                                                            <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
+                                                                {{ subItem.text }}
+                                                            </span>
+                                                            <span
+                                                                v-if="subItem.badge"
+                                                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                                :class="badgeClasses(subItem.badge)"
+                                                            >
+                                                                {{ subItem.badge }}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </Link>
                                             </li>
@@ -322,9 +364,18 @@
                                         <div class="flex items-center">
                                             <!-- <icon-menu-font-icons class="group-hover:!text-primary shrink-0" /> -->
                                             <font-awesome-icon :icon="item.icom" class="group-hover:!text-primary shrink-0" />
-                                            <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
-                                                {{ item.text }}
-                                            </span>
+                                            <div class="flex flex-1 items-center justify-between gap-2">
+                                                <span class="ltr:pl-3 rtl:pr-3 text-black dark:text-[#506690] dark:group-hover:text-white-dark">
+                                                    {{ item.text }}
+                                                </span>
+                                                <span
+                                                    v-if="item.badge"
+                                                    class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                                    :class="badgeClasses(item.badge)"
+                                                >
+                                                    {{ item.badge }}
+                                                </span>
+                                            </div>
                                         </div>
                                     </Link>
                                 </li>

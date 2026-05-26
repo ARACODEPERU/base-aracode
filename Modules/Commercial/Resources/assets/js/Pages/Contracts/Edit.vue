@@ -6,7 +6,6 @@ import ContractForm from "./Partials/ContractForm.vue";
 defineProps({
     contract: Object,
     clients: Object,
-    services: Object,
     identityDocumentTypes: Object,
     contractTypes: Array,
     currencyTypes: { type: Array, default: () => [] },
@@ -26,7 +25,6 @@ defineProps({
             <ContractForm
                 :contract="contract"
                 :clients="clients"
-                :services="services"
                 :identity-document-types="identityDocumentTypes"
                 :contract-types="contractTypes"
                 :currency-types="currencyTypes"

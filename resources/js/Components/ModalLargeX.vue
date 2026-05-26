@@ -22,12 +22,16 @@
         icon: {
             type: String,
             default: null,
-        }
+        },
+        zIndex: {
+            type: String,
+            default: 'z-50',
+        },
     });
 </script>
 <template>
     <TransitionRoot appear :show="show" as="template">
-        <Dialog as="div" class="relative z-50">
+        <Dialog as="div" :class="['relative', zIndex]">
             <TransitionChild
               as="template"
               enter="duration-300 ease-out"

@@ -210,6 +210,20 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
     background: rgb(15 23 42);
 }
 
+.bib-reader-sidebar--condensed {
+    width: 13.5rem;
+    max-width: 13.5rem;
+}
+
+.bib-reader-sidebar--condensed .bib-reader-index-btn {
+    padding-inline: 0.55rem;
+    font-size: 0.8125rem;
+}
+
+.bib-reader-sidebar--condensed .bib-reader-index-page {
+    font-size: 0.8125rem;
+}
+
 .bib-reader-main {
     flex: 1;
     min-width: 0;
@@ -219,6 +233,93 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
 
 .dark .bib-reader-main {
     background: linear-gradient(165deg, #151b28 0%, #1e2433 55%, #171d2a 100%);
+}
+
+.bib-reader-reading-layout {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.bib-reader-reading-layout__sheet {
+    min-width: 0;
+    flex: 1;
+}
+
+@media (min-width: 1536px) {
+    .bib-reader-reading-layout--with-rail {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 22rem;
+        align-items: start;
+        min-height: 100%;
+    }
+
+    .bib-reader-reading-layout__rail {
+        min-height: 100%;
+        border-left: 1px solid rgb(226 232 240);
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .dark .bib-reader-reading-layout__rail {
+        border-left-color: rgb(51 65 85);
+        background: rgba(15, 23, 42, 0.3);
+    }
+
+    .bib-reader-reading-layout__rail-shell {
+        position: sticky;
+        top: 0;
+        display: flex;
+        height: calc(100vh - 4.25rem);
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+    }
+
+    .bib-reader-reading-layout__rail-topbar {
+        display: flex;
+        justify-content: flex-end;
+        padding: 0.6rem 0.6rem 0;
+    }
+
+    .bib-reader-reading-layout__rail-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 9999px;
+        border: 1px solid rgb(226 232 240);
+        background: rgba(248, 250, 252, 0.95);
+        color: rgb(71 85 105);
+        transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .bib-reader-reading-layout__rail-close:hover {
+        background: rgb(241 245 249);
+        color: rgb(15 23 42);
+        transform: scale(1.03);
+    }
+
+    .dark .bib-reader-reading-layout__rail-close {
+        border-color: rgb(51 65 85);
+        background: rgba(30, 41, 59, 0.92);
+        color: rgb(203 213 225);
+    }
+
+    .dark .bib-reader-reading-layout__rail-close:hover {
+        background: rgb(51 65 85);
+        color: rgb(248 250 252);
+    }
+
+    .bib-reader-reading-layout__rail-shell .bib-reader-cases-panel {
+        height: 100%;
+        overflow: hidden;
+        border-top: 0;
+        background: transparent;
+    }
+
+    .dark .bib-reader-reading-layout__rail-shell .bib-reader-cases-panel {
+        background: transparent;
+    }
 }
 
 /* Escenario de lectura (fondo degradado detrás de la hoja) */
@@ -458,6 +559,542 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
 .dark .bib-reader-index-page.is-selected {
     background: rgb(22 78 99 / 0.4);
     color: rgb(103 232 249);
+}
+
+.bib-reader-cases-panel {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    height: 100%;
+    border-top: 1px solid rgb(226 232 240);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+}
+
+.dark .bib-reader-cases-panel {
+    border-top-color: rgb(51 65 85);
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.bib-reader-cases-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.1rem 1.1rem 0.9rem;
+    border-bottom: 1px solid rgb(226 232 240 / 0.9);
+}
+
+.dark .bib-reader-cases-panel__header {
+    border-bottom-color: rgb(51 65 85 / 0.9);
+}
+
+.bib-reader-cases-panel__eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(14 116 144);
+}
+
+.dark .bib-reader-cases-panel__eyebrow {
+    color: rgb(103 232 249);
+}
+
+.bib-reader-cases-panel__title {
+    margin-top: 0.2rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: rgb(15 23 42);
+}
+
+.dark .bib-reader-cases-panel__title {
+    color: rgb(248 250 252);
+}
+
+.bib-reader-cases-panel__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 9999px;
+    background: rgb(224 242 254);
+    color: rgb(14 116 144);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.dark .bib-reader-cases-panel__count {
+    background: rgb(8 47 73);
+    color: rgb(103 232 249);
+}
+
+.bib-reader-cases-panel__body {
+    padding: 0.95rem 1rem 1.2rem;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.bib-reader-cases-panel__viewer {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    padding: 0.95rem 1rem 1.2rem;
+    overflow: hidden;
+}
+
+.bib-reader-cases-panel__viewer-topbar {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding-bottom: 0.35rem;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.dark .bib-reader-cases-panel__viewer-topbar {
+    background: rgba(15, 23, 42, 0.96);
+}
+
+.bib-reader-cases-panel__viewer-back {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.8rem;
+    background: rgb(240 249 255);
+    color: rgb(14 116 144);
+    font-size: 0.78rem;
+    font-weight: 700;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.bib-reader-cases-panel__viewer-back:hover {
+    background: rgb(224 242 254);
+    transform: translateY(-1px);
+}
+
+.dark .bib-reader-cases-panel__viewer-back {
+    background: rgb(8 47 73);
+    color: rgb(103 232 249);
+}
+
+.dark .bib-reader-cases-panel__viewer-back:hover {
+    background: rgb(12 74 110);
+}
+
+.bib-reader-cases-panel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.bib-reader-cases-panel__item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid rgb(226 232 240);
+    border-radius: 1rem;
+    text-align: left;
+    background: rgba(248, 250, 252, 0.9);
+    transition:
+        border-color 0.18s ease,
+        background-color 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.bib-reader-cases-panel__item:hover {
+    border-color: rgb(125 211 252);
+    background: rgb(240 249 255);
+    transform: translateY(-1px);
+}
+
+.bib-reader-cases-panel__item.is-active {
+    border-color: rgb(34 211 238 / 0.6);
+    background: linear-gradient(135deg, rgba(236, 254, 255, 0.95) 0%, rgba(224, 242, 254, 0.98) 100%);
+    box-shadow: 0 12px 30px rgb(14 116 144 / 0.12);
+}
+
+.dark .bib-reader-cases-panel__item {
+    border-color: rgb(51 65 85);
+    background: rgba(15, 23, 42, 0.78);
+}
+
+.dark .bib-reader-cases-panel__item:hover {
+    border-color: rgb(34 211 238 / 0.4);
+    background: rgb(15 23 42);
+}
+
+.dark .bib-reader-cases-panel__item.is-active {
+    border-color: rgb(34 211 238 / 0.45);
+    background: linear-gradient(135deg, rgba(8, 47, 73, 0.9) 0%, rgba(14, 116, 144, 0.34) 100%);
+    box-shadow: 0 16px 34px rgb(2 8 23 / 0.35);
+}
+
+.bib-reader-cases-panel__item-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgb(15 23 42);
+}
+
+.dark .bib-reader-cases-panel__item-title {
+    color: rgb(248 250 252);
+}
+
+.bib-reader-cases-panel__item-type {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(100 116 139);
+}
+
+.bib-reader-cases-panel__detail {
+    margin-top: 0;
+    min-height: 0;
+    flex: 1;
+    padding: 1rem;
+    border: 1px solid rgb(226 232 240);
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 14px 34px rgb(15 23 42 / 0.08);
+    overflow-y: auto;
+}
+
+.dark .bib-reader-cases-panel__detail {
+    border-color: rgb(51 65 85);
+    background: rgba(15, 23, 42, 0.9);
+    box-shadow: 0 16px 36px rgb(2 8 23 / 0.28);
+}
+
+.bib-reader-cases-panel__detail-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.32rem 0.65rem;
+    border-radius: 9999px;
+    background: rgb(240 249 255);
+    color: rgb(14 116 144);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.dark .bib-reader-cases-panel__detail-badge {
+    background: rgb(8 47 73);
+    color: rgb(103 232 249);
+}
+
+.bib-reader-cases-panel__detail-title {
+    margin-top: 0.7rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: rgb(15 23 42);
+}
+
+.dark .bib-reader-cases-panel__detail-title {
+    color: rgb(248 250 252);
+}
+
+.bib-reader-cases-panel__media-wrap {
+    margin-top: 0.9rem;
+    display: flex;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    background: rgb(248 250 252);
+}
+
+.dark .bib-reader-cases-panel__media-wrap {
+    background: rgb(15 23 42);
+}
+
+.bib-reader-cases-panel__media {
+    max-width: 100%;
+    max-height: 18rem;
+    border-radius: 0.85rem;
+    object-fit: contain;
+}
+
+.bib-reader-cases-panel__document {
+    margin-top: 0.9rem;
+}
+
+.bib-reader-cases-panel__document-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgb(15 23 42);
+}
+
+.dark .bib-reader-cases-panel__document-name {
+    color: rgb(248 250 252);
+}
+
+.bib-reader-cases-panel__document-meta {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: rgb(100 116 139);
+}
+
+.bib-reader-cases-panel__document-link {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 0.9rem;
+    padding: 0.65rem 0.95rem;
+    border-radius: 0.9rem;
+    background: rgb(14 116 144);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease;
+}
+
+.bib-reader-cases-panel__document-link:hover {
+    background: rgb(8 145 178);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgb(8 145 178 / 0.18);
+}
+
+.bib-reader-cases-panel__empty {
+    padding: 1rem 1rem 1.25rem;
+}
+
+.bib-reader-cases-panel__empty-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgb(15 23 42);
+}
+
+.dark .bib-reader-cases-panel__empty-title {
+    color: rgb(248 250 252);
+}
+
+.bib-reader-cases-panel__empty-text {
+    margin-top: 0.45rem;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: rgb(100 116 139);
+}
+
+.bib-reader-cases-fab {
+    position: fixed;
+    right: calc(1.25rem + 4px);
+    top: calc(4.55rem + 4px);
+    z-index: 42;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.9rem;
+    height: 2.9rem;
+    padding: 0;
+    border-radius: 9999px;
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.28);
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s,
+        background 0.2s,
+        border-color 0.2s;
+}
+
+.bib-reader-cases-fab:hover {
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 14px 30px rgba(124, 58, 237, 0.35);
+}
+
+.bib-reader-cases-fab::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 0.7rem);
+    transform: translateY(-50%) translateX(8px);
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.92);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+
+.bib-reader-cases-fab:hover::after,
+.bib-reader-cases-fab:focus-visible::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+.bib-reader-cases-float {
+    position: fixed;
+    top: 4.5rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: min(24rem, calc(100vw - 1.5rem));
+    z-index: 44;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgb(226 232 240);
+    box-shadow:
+        0 20px 45px rgba(15, 23, 42, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    backdrop-filter: blur(12px);
+    pointer-events: auto;
+}
+
+.dark .bib-reader-cases-float {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgb(51 65 85);
+    box-shadow: 0 20px 45px rgba(2, 8, 23, 0.45);
+}
+
+.bib-reader-cases-float__topbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.6rem 0.6rem 0;
+}
+
+.bib-reader-cases-float__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(226 232 240);
+    background: rgba(248, 250, 252, 0.95);
+    color: rgb(71 85 105);
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.bib-reader-cases-float__close:hover {
+    background: rgb(241 245 249);
+    color: rgb(15 23 42);
+    transform: scale(1.03);
+}
+
+.dark .bib-reader-cases-float__close {
+    border-color: rgb(51 65 85);
+    background: rgba(30, 41, 59, 0.92);
+    color: rgb(203 213 225);
+}
+
+.dark .bib-reader-cases-float__close:hover {
+    background: rgb(51 65 85);
+    color: rgb(248 250 252);
+}
+
+.bib-reader-cases-float .bib-reader-cases-panel {
+    height: 100%;
+    overflow: hidden;
+    border-top: 0;
+    background: transparent;
+}
+
+.dark .bib-reader-cases-float .bib-reader-cases-panel {
+    background: transparent;
+}
+
+@media (max-width: 767px) {
+    .bib-reader-cases-fab {
+        right: calc(1rem + 4px);
+        top: calc(4.15rem + 4px);
+    }
+
+    .bib-reader-cases-float {
+        top: 4rem;
+        right: 0.5rem;
+        bottom: 0.5rem;
+        width: calc(100vw - 1rem);
+    }
+}
+
+.bib-reader-cases-float-enter-active,
+.bib-reader-cases-float-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.bib-reader-cases-float-enter-active,
+.bib-reader-cases-float-leave-active {
+    transition:
+        transform 0.22s ease,
+        opacity 0.22s ease;
+}
+
+.bib-reader-cases-float-enter-from,
+.bib-reader-cases-float-leave-to {
+    transform: translateX(18px);
+    opacity: 0;
+}
+
+.bib-reader-case-content {
+    margin-top: 0.9rem;
+    color: rgb(51 65 85);
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+.dark .bib-reader-case-content {
+    color: rgb(203 213 225);
+}
+
+.bib-reader-case-content h1,
+.bib-reader-case-content h2,
+.bib-reader-case-content h3 {
+    margin-top: 1em;
+    margin-bottom: 0.4em;
+    font-weight: 700;
+}
+
+.bib-reader-case-content p {
+    margin-bottom: 0.85em;
+}
+
+.bib-reader-case-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.8rem;
+}
+
+.bib-reader-case-content table,
+.bib-reader-case-content th,
+.bib-reader-case-content td {
+    border-color: #e2e8f0;
+}
+
+@media (min-width: 1280px) {
+    .bib-reader-cases-panel {
+        position: sticky;
+        top: 0;
+        height: 100%;
+        min-height: 100%;
+        border-top: 0;
+        border-left: 1px solid rgb(226 232 240);
+    }
+
+    .dark .bib-reader-cases-panel {
+        border-left-color: rgb(51 65 85);
+    }
 }
 
 /* Overlay acceso bloqueado (sin suscripción) */

@@ -12,9 +12,9 @@
     const page = usePage();
 
 
-    // Computed para determinar si está colapsado
+    // Colapsado por defecto en modo collapsible-vertical; expandido al activar toggle (store.sidebar)
     const isCollapsed = computed(() => {
-        return store.menu === 'collapsible-vertical';
+        return store.menu === 'collapsible-vertical' && !store.sidebar;
     });
 
     // Estado para controlar qué sección está expandida
@@ -33,6 +33,7 @@
     const activeOption = ref(null);
     const activeSubOption = ref(null);
     const isOptionsLoading = ref(true);
+    const activeModuleTooltip = ref(null);
     let optionsLoadingTimer = null;
 
     const permissions = computed(() => page.props.auth?.permissions || []);
@@ -60,6 +61,158 @@
 
     const visibleSubOptions = (option) => {
         return (option?.items || []).filter((subOption) => hasPermission(subOption.permissions));
+    };
+
+    const normalizeRoutePath = (url) => {
+        if (!url || url === 'module') {
+            return null;
+        }
+
+        try {
+            const parsedUrl = new URL(url, window.location.origin);
+            const routePath = `${parsedUrl.pathname}${parsedUrl.search}`;
+
+            if (routePath.length > 1 && routePath.endsWith('/')) {
+                return routePath.slice(0, -1);
+            }
+
+            return routePath || '/';
+        } catch (error) {
+            if (typeof url !== 'string') {
+                return null;
+            }
+
+            const [pathPart, queryPart] = url.split('?');
+            const normalizedPath = pathPart.length > 1 && pathPart.endsWith('/') ? pathPart.slice(0, -1) : pathPart;
+
+            return queryPart ? `${normalizedPath}?${queryPart}` : normalizedPath;
+        }
+    };
+
+    const stripRouteQuery = (url) => {
+        const normalizedRoute = normalizeRoutePath(url);
+
+        return normalizedRoute ? normalizedRoute.split('?')[0] : null;
+    };
+
+    const routesMatch = (candidateRoute, currentRoute) => {
+        const normalizedCandidate = normalizeRoutePath(candidateRoute);
+        const normalizedCurrent = normalizeRoutePath(currentRoute);
+
+        if (!normalizedCandidate || !normalizedCurrent) {
+            return false;
+        }
+
+        return normalizedCandidate === normalizedCurrent || stripRouteQuery(normalizedCandidate) === stripRouteQuery(normalizedCurrent);
+    };
+
+    const persistSidebarSelection = ({ moduleText = null, optionText = null, subOptionText = null, expandedSection = null }) => {
+        if (moduleText) {
+            localStorage.setItem('activeModule', moduleText);
+        } else {
+            localStorage.removeItem('activeModule');
+        }
+
+        localStorage.removeItem('moduleSelected');
+
+        if (optionText) {
+            localStorage.setItem('activeOption', optionText);
+        } else {
+            localStorage.removeItem('activeOption');
+        }
+
+        if (subOptionText) {
+            localStorage.setItem('activeSubOption', subOptionText);
+        } else {
+            localStorage.removeItem('activeSubOption');
+        }
+
+        if (expandedSection) {
+            localStorage.setItem('expandedSections', JSON.stringify(expandedSection));
+        } else {
+            localStorage.removeItem('expandedSections');
+        }
+    };
+
+    const findMatchingOptionState = (option, routePath) => {
+        if (!hasPermission(option?.permissions)) {
+            return null;
+        }
+
+        if (routesMatch(option?.route, routePath)) {
+            return {
+                optionText: option.text,
+                subOptionText: null,
+                expandedSection: null,
+            };
+        }
+
+        for (const subOption of visibleSubOptions(option)) {
+            if (routesMatch(subOption?.route, routePath)) {
+                return {
+                    optionText: option.text,
+                    subOptionText: subOption.text,
+                    expandedSection: option.text,
+                };
+            }
+        }
+
+        return null;
+    };
+
+    const resolveSidebarRouteState = (url) => {
+        const routePath = normalizeRoutePath(url);
+        currentPath.value = routePath ?? '';
+
+        if (!routePath) {
+            return null;
+        }
+
+        for (const module of menuData.value) {
+            if (!hasPermission(module?.permissions)) {
+                continue;
+            }
+
+            for (const option of (module?.items || [])) {
+                const matchingOption = findMatchingOptionState(option, routePath);
+
+                if (matchingOption) {
+                    return {
+                        module,
+                        ...matchingOption,
+                    };
+                }
+            }
+
+            if (routesMatch(module?.route, routePath)) {
+                return {
+                    module,
+                    optionText: null,
+                    subOptionText: null,
+                    expandedSection: null,
+                };
+            }
+        }
+
+        return null;
+    };
+
+    const applySidebarState = ({ module, optionText = null, subOptionText = null, expandedSection = null }) => {
+        activeModule.value = module?.text || 'Dashboard';
+        showOptionsLoading();
+        moduleSelected.value = module || [];
+        activeOption.value = optionText;
+        activeSubOption.value = subOptionText;
+        expandedSections.value = expandedSection;
+
+        persistSidebarSelection({
+            moduleText: module?.text ?? null,
+            optionText,
+            subOptionText,
+            expandedSection,
+        });
+
+        hideOptionsLoading();
     };
 
     const showOptionsLoading = () => {
@@ -90,10 +243,13 @@
 
     const restoreSidebarState = () => {
         const module = resolveInitialModule();
+        currentPath.value = normalizeRoutePath(page.url) ?? '';
 
         activeModule.value = module?.text || 'Dashboard';
         showOptionsLoading();
         moduleSelected.value = module || [];
+        activeOption.value = null;
+        activeSubOption.value = null;
 
         const savedExpandedSections = localStorage.getItem('expandedSections');
         if (savedExpandedSections) {
@@ -123,12 +279,24 @@
         hideOptionsLoading();
     };
 
+    const syncSidebarFromRoute = () => {
+        const routeState = resolveSidebarRouteState(page.url);
+
+        if (routeState) {
+            applySidebarState(routeState);
+            return;
+        }
+
+        restoreSidebarState();
+    };
+
     // Función para manejar clicks en los botones de módulos
     const handleModuleClick = (module) => {
         if (!hasPermission(module.permissions)) {
             return;
         }
 
+        activeModuleTooltip.value = null;
         activeModule.value = module.text; // Guardar el módulo activo
         moduleSelected.value = module || []; // Cargar las opciones del módulo
 
@@ -158,11 +326,13 @@
         if (isClosing) {
             localStorage.removeItem('expandedSections');
             localStorage.removeItem('activeOption');
+            localStorage.removeItem('activeSubOption');
             return;
         }
 
         localStorage.setItem('expandedSections', JSON.stringify(expandedSections.value));
         localStorage.setItem('activeOption', optionText);
+        localStorage.removeItem('activeSubOption');
     };
 
     // Función para manejar clicks en subopciones
@@ -181,11 +351,21 @@
     };
 
     onMounted(() => {
-        restoreSidebarState();
+        syncSidebarFromRoute();
     });
 
     watch(permissionsKey, () => {
-        restoreSidebarState();
+        syncSidebarFromRoute();
+    });
+
+    watch(() => page.url, () => {
+        syncSidebarFromRoute();
+    });
+
+    watch(isCollapsed, (collapsed) => {
+        if (!collapsed) {
+            activeModuleTooltip.value = null;
+        }
     });
 
     onUnmounted(() => {
@@ -203,6 +383,23 @@
     const getImage = (path) => {
         return xasset + 'storage/'+ path;
     }
+
+    const showModuleTooltip = (moduleText) => {
+        if (!isCollapsed.value) {
+            activeModuleTooltip.value = null;
+            return;
+        }
+
+        activeModuleTooltip.value = moduleText;
+    };
+
+    const hideModuleTooltip = (moduleText = null) => {
+        if (moduleText && activeModuleTooltip.value !== moduleText) {
+            return;
+        }
+
+        activeModuleTooltip.value = null;
+    };
 
     const isDashboardOption = (option) => option?.dashboard === true;
     const isOptionActive = (option) => activeOption.value === option?.text;
@@ -266,6 +463,20 @@
             : 'bg-sky-100 text-sky-700 dark:bg-sky-900/70 dark:text-sky-200';
     };
 
+    const isNewBadge = (badge) => {
+        return typeof badge === 'string' && badge.trim().toLowerCase() === 'nuevo';
+    };
+
+    const badgeClasses = (badge) => {
+        if (isNewBadge(badge)) {
+            return 'bg-blue-100 text-blue-800 ring-1 ring-blue-300 shadow-sm shadow-blue-100/70 dark:bg-blue-500/15 dark:text-blue-200 dark:ring-blue-400/35 dark:shadow-blue-950/30';
+        }
+
+        return 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-700/70 dark:text-slate-200 dark:ring-slate-600';
+    };
+
+    const badgeBaseClasses = 'ml-2 inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-[0.08em]';
+
     const colorTooltip = 'purple';
     const fontTitleTooltip = 'font-bold text-gray-200';
 
@@ -307,13 +518,23 @@
                                 <div class="w-full flex flex-col gap-3 items-center py-3">
                                     <template v-for="menu in menuData">
                                         <template v-if="menu.route == null">
-                                            <Tooltip :color="colorTooltip" placement="right">
+                                            <Tooltip
+                                                :color="colorTooltip"
+                                                placement="right"
+                                                :open="activeModuleTooltip === menu.text && isCollapsed"
+                                                :mouseLeaveDelay="0"
+                                                :destroyTooltipOnHide="true"
+                                            >
                                                 <template #title>
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <button
                                                     v-if="hasPermission(menu.permissions)"
                                                     @click="handleModuleClick(menu)"
+                                                    @mouseenter="showModuleTooltip(menu.text)"
+                                                    @mouseleave="hideModuleTooltip(menu.text)"
+                                                    @focus="showModuleTooltip(menu.text)"
+                                                    @blur="hideModuleTooltip(menu.text)"
                                                     class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
                                                     :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                                                 >
@@ -327,13 +548,23 @@
                                             </Tooltip>
                                         </template>
                                          <template v-else-if="menu.route == 'module'">
-                                            <Tooltip :color="colorTooltip" placement="right">
+                                            <Tooltip
+                                                :color="colorTooltip"
+                                                placement="right"
+                                                :open="activeModuleTooltip === menu.text && isCollapsed"
+                                                :mouseLeaveDelay="0"
+                                                :destroyTooltipOnHide="true"
+                                            >
                                                 <template #title>
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <button
                                                     v-if="hasPermission(menu.permissions)"
                                                     @click="handleModuleClick(menu)"
+                                                    @mouseenter="showModuleTooltip(menu.text)"
+                                                    @mouseleave="hideModuleTooltip(menu.text)"
+                                                    @focus="showModuleTooltip(menu.text)"
+                                                    @blur="hideModuleTooltip(menu.text)"
                                                     class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
                                                     :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                                                 >
@@ -347,7 +578,13 @@
                                             </Tooltip>
                                         </template>
                                         <template v-else>
-                                            <Tooltip :color="colorTooltip" placement="right">
+                                            <Tooltip
+                                                :color="colorTooltip"
+                                                placement="right"
+                                                :open="activeModuleTooltip === menu.text && isCollapsed"
+                                                :mouseLeaveDelay="0"
+                                                :destroyTooltipOnHide="true"
+                                            >
                                                 <template #title>
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
@@ -355,6 +592,10 @@
                                                     v-if="hasPermission(menu.permissions)"
                                                     :href="menu.route"
                                                     @click="handleModuleClick(menu)"
+                                                    @mouseenter="showModuleTooltip(menu.text)"
+                                                    @mouseleave="hideModuleTooltip(menu.text)"
+                                                    @focus="showModuleTooltip(menu.text)"
+                                                    @blur="hideModuleTooltip(menu.text)"
                                                     class="group relative w-12 h-12 rounded-xl flex items-center justify-center hover:bg-blue-100 dark:hover:bg-blue-800/40 transition-all duration-200 hover:scale-105 hover:shadow-sm hover:shadow-blue-200/50 dark:hover:shadow-blue-900/50"
                                                     :class="activeModule === menu.text ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md dark:bg-blue-700 dark:hover:bg-blue-800' : ''"
                                                 >
@@ -449,7 +690,7 @@
                                         class="group w-full rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
                                         :class="optionLinkClasses(option)"
                                     >
-                                        <div class="flex items-center justify-between">
+                                        <div class="flex items-center justify-between gap-3">
                                             <div class="flex min-w-0 items-center space-x-3">
                                                 <div
                                                     class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-200"
@@ -463,14 +704,24 @@
                                                     />
                                                 </div>
                                                 <div class="flex min-w-0 flex-col">
-                                                    <span class="text-sm font-semibold leading-tight break-words" :class="optionTextClasses(option)">{{ option.text }}</span>
+                                                    <div class="flex min-w-0 items-center">
+                                                        <span class="text-sm font-semibold leading-tight break-words" :class="optionTextClasses(option)">{{ option.text }}</span>
+                                                    </div>
                                                     <span class="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">{{ visibleSubOptions(option).length }} opciones</span>
                                                 </div>
                                             </div>
-                                            <i v-if="option.items && option.items.length > 0"
-                                               class="ri-arrow-down-s-line text-slate-400 dark:text-slate-500 text-sm transition-transform flex-shrink-0"
-                                               :class="{ 'rotate-180': activeOption === option.text }"
-                                            ></i>
+                                            <div class="flex flex-shrink-0 items-center gap-2 pl-2">
+                                                <span
+                                                    v-if="option.badge"
+                                                    :class="[badgeBaseClasses, badgeClasses(option.badge)]"
+                                                >
+                                                    {{ option.badge }}
+                                                </span>
+                                                <i v-if="option.items && option.items.length > 0"
+                                                   class="ri-arrow-down-s-line text-slate-400 dark:text-slate-500 text-sm transition-transform flex-shrink-0"
+                                                   :class="{ 'rotate-180': activeOption === option.text }"
+                                                ></i>
+                                            </div>
                                         </div>
                                     </button>
                                 </template>
@@ -495,7 +746,9 @@
                                                     />
                                                 </div>
                                                 <div class="flex min-w-0 flex-col">
-                                                    <span class="text-sm font-semibold leading-tight break-words" :class="optionTextClasses(option)">{{ option.text }}</span>
+                                                    <div class="flex min-w-0 items-center">
+                                                        <span class="text-sm font-semibold leading-tight break-words" :class="optionTextClasses(option)">{{ option.text }}</span>
+                                                    </div>
                                                     <span
                                                         v-if="isDashboardOption(option)"
                                                         class="mt-1 w-fit rounded px-2 py-0.5 text-[10px] font-bold uppercase leading-none"
@@ -505,11 +758,19 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div
-                                                v-if="isDashboardOption(option)"
-                                                class="hidden h-7 w-1.5 rounded-full sm:block"
-                                                :class="isOptionActive(option) ? 'bg-white/60' : 'bg-sky-300 dark:bg-sky-700'"
-                                            ></div>
+                                            <div class="flex flex-shrink-0 items-center gap-2 pl-2">
+                                                <span
+                                                    v-if="option.badge"
+                                                    :class="[badgeBaseClasses, badgeClasses(option.badge)]"
+                                                >
+                                                    {{ option.badge }}
+                                                </span>
+                                                <div
+                                                    v-if="isDashboardOption(option)"
+                                                    class="hidden h-7 w-1.5 rounded-full sm:block"
+                                                    :class="isOptionActive(option) ? 'bg-white/60' : 'bg-sky-300 dark:bg-sky-700'"
+                                                ></div>
+                                            </div>
                                         </div>
                                     </Link>
                                 </template>
@@ -529,12 +790,20 @@
                                                 :class="{
                                                     'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100/50 dark:bg-blue-950/50 dark:text-blue-100 dark:shadow-blue-950/40': activeSubOption === subOption.text
                                                 }">
-                                            <div class="flex items-center space-x-3">
-                                                <div
-                                                    class="h-2 w-2 flex-shrink-0 rounded-full"
-                                                    :class="activeSubOption === subOption.text ? 'bg-blue-500 dark:bg-blue-300' : 'bg-slate-300 dark:bg-slate-600'"
-                                                ></div>
-                                                <span class="text-slate-700 dark:text-slate-200 leading-tight break-words">{{ subOption.text }}</span>
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="flex min-w-0 items-center space-x-3">
+                                                    <div
+                                                        class="h-2 w-2 flex-shrink-0 rounded-full"
+                                                        :class="activeSubOption === subOption.text ? 'bg-blue-500 dark:bg-blue-300' : 'bg-slate-300 dark:bg-slate-600'"
+                                                    ></div>
+                                                    <span class="text-slate-700 dark:text-slate-200 leading-tight break-words">{{ subOption.text }}</span>
+                                                </div>
+                                                <span
+                                                    v-if="subOption.badge"
+                                                    :class="[badgeBaseClasses, badgeClasses(subOption.badge)]"
+                                                >
+                                                    {{ subOption.badge }}
+                                                </span>
                                             </div>
                                         </Link>
                                         </template>

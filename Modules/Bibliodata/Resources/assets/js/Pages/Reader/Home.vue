@@ -7,6 +7,7 @@ import UserAvatar from '../../components/UserAvatar.vue';
 import ReaderIndexNode from './components/ReaderIndexNode.vue';
 import ReaderPageZoom from './components/ReaderPageZoom.vue';
 import ReaderAccessBlockedOverlay from './components/ReaderAccessBlockedOverlay.vue';
+import ReaderPracticalCasesPanel from './components/ReaderPracticalCasesPanel.vue';
 import IconMenu from '@/Components/vristo/icon/icon-menu.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
@@ -31,20 +32,25 @@ const pageLoading = ref(false);
 const pageError = ref(null);
 const pageZoom = ref(100);
 const isMobileView = ref(false);
+const isDesktopRailView = ref(false);
 const showAccessBlocked = ref(false);
 const previewPageId = ref(props.access?.previewPageId ?? null);
+const selectedPracticalCaseId = ref(null);
+const practicalCasesOpen = ref(false);
+const practicalCasesViewMode = ref('list');
 
-const updateMobileView = () => {
+const updateViewportState = () => {
     isMobileView.value = window.matchMedia('(max-width: 767px)').matches;
+    isDesktopRailView.value = window.matchMedia('(min-width: 1536px)').matches;
 };
 
 onMounted(() => {
-    updateMobileView();
-    window.addEventListener('resize', updateMobileView);
+    updateViewportState();
+    window.addEventListener('resize', updateViewportState);
 });
 
 onUnmounted(() => {
-    window.removeEventListener('resize', updateMobileView);
+    window.removeEventListener('resize', updateViewportState);
 });
 
 const sheetScalerStyle = computed(() => {
@@ -57,6 +63,11 @@ const sheetScalerStyle = computed(() => {
         transformOrigin: 'top center',
     };
 });
+
+const practicalCases = computed(() => currentPage.value?.practical_cases ?? []);
+const showPracticalCasesPanel = computed(() => !!currentPage.value);
+const showPracticalCasesRail = computed(() => practicalCasesOpen.value && isDesktopRailView.value);
+const showPracticalCasesFloating = computed(() => practicalCasesOpen.value && !isDesktopRailView.value);
 
 const csrfHeaders = () => ({
     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
@@ -120,6 +131,9 @@ const onSelectPage = async (page) => {
         });
         if (data.success) {
             currentPage.value = data.page;
+            selectedPracticalCaseId.value = data.page?.practical_cases?.[0]?.id ?? null;
+            practicalCasesOpen.value = false;
+            practicalCasesViewMode.value = 'list';
             if (data.access?.previewPageId) {
                 previewPageId.value = data.access.previewPageId;
             }
@@ -137,10 +151,39 @@ const onSelectPage = async (page) => {
         } else {
             pageError.value = payload?.message || 'No se pudo cargar el contenido de la página.';
             currentPage.value = null;
+            selectedPracticalCaseId.value = null;
+            practicalCasesOpen.value = false;
+            practicalCasesViewMode.value = 'list';
         }
     } finally {
         pageLoading.value = false;
     }
+};
+
+const onSelectPracticalCase = (caseId) => {
+    selectedPracticalCaseId.value = caseId;
+    practicalCasesViewMode.value = 'detail';
+};
+
+const togglePracticalCases = () => {
+    if (!showPracticalCasesPanel.value) {
+        return;
+    }
+
+    if (!practicalCasesOpen.value) {
+        practicalCasesViewMode.value = 'list';
+    }
+
+    practicalCasesOpen.value = !practicalCasesOpen.value;
+};
+
+const closePracticalCases = () => {
+    practicalCasesOpen.value = false;
+    practicalCasesViewMode.value = 'list';
+};
+
+const backToPracticalCasesList = () => {
+    practicalCasesViewMode.value = 'list';
 };
 </script>
 
@@ -212,21 +255,47 @@ const onSelectPage = async (page) => {
                 <p class="text-red-500">{{ pageError }}</p>
             </div>
 
-            <div v-else-if="currentPage" class="bib-reader-page-stage">
-                <div class="bib-reader-page-sheet-scaler" :style="sheetScalerStyle">
-                    <article class="bib-reader-page-sheet bib-reader-page-content">
-                        <header class="bib-reader-page-sheet__header">
-                            <p v-if="currentPage.section_title" class="bib-reader-page-sheet__section">
-                                {{ currentPage.section_title }}
-                            </p>
-                            <h2 class="bib-reader-page-sheet__title">
-                                Página {{ currentPage.page_number }}
-                            </h2>
-                        </header>
-                        <div class="bib-reader-page-sheet__body" v-html="currentPage.content" />
-                    </article>
-                </div>
-                <ReaderPageZoom v-model="pageZoom" />
+            <div v-else-if="currentPage" class="bib-reader-reading-layout" :class="{ 'bib-reader-reading-layout--with-rail': showPracticalCasesRail }">
+                <section class="bib-reader-reading-layout__sheet">
+                    <div class="bib-reader-page-stage">
+                        <div class="bib-reader-page-sheet-scaler" :style="sheetScalerStyle">
+                            <article class="bib-reader-page-sheet bib-reader-page-content">
+                                <header class="bib-reader-page-sheet__header">
+                                    <p v-if="currentPage.section_title" class="bib-reader-page-sheet__section">
+                                        {{ currentPage.section_title }}
+                                    </p>
+                                    <h2 class="bib-reader-page-sheet__title">
+                                        Página {{ currentPage.page_number }}
+                                    </h2>
+                                </header>
+                                <div class="bib-reader-page-sheet__body" v-html="currentPage.content" />
+                            </article>
+                        </div>
+                        <ReaderPageZoom v-model="pageZoom" />
+                    </div>
+                </section>
+
+                <aside v-if="showPracticalCasesRail" class="bib-reader-reading-layout__rail">
+                    <div class="bib-reader-reading-layout__rail-shell">
+                        <div class="bib-reader-reading-layout__rail-topbar">
+                            <button
+                                type="button"
+                                class="bib-reader-reading-layout__rail-close"
+                                aria-label="Cerrar casos prácticos"
+                                @click="closePracticalCases"
+                            >
+                                <IconX class="h-5 w-5" />
+                            </button>
+                        </div>
+                        <ReaderPracticalCasesPanel
+                            :cases="practicalCases"
+                            :selected-case-id="selectedPracticalCaseId"
+                            :view-mode="practicalCasesViewMode"
+                            @select-case="onSelectPracticalCase"
+                            @back-to-list="backToPracticalCasesList"
+                        />
+                    </div>
+                </aside>
             </div>
 
             <div v-else class="bib-reader-welcome">
@@ -253,6 +322,50 @@ const onSelectPage = async (page) => {
                 </p>
             </div>
         </main>
+
+        <button
+            v-if="showPracticalCasesPanel && !practicalCasesOpen"
+            type="button"
+            class="bib-reader-cases-fab"
+            aria-label="Casos prácticos"
+            data-tooltip="Casos prácticos"
+            @click="togglePracticalCases"
+        >
+            <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+            >
+                <rect x="5" y="4" width="14" height="16" rx="2.5" stroke="currentColor" stroke-width="1.8" />
+                <path d="M8 9H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                <path d="M8 17H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+        </button>
+
+        <Transition name="bib-reader-cases-float">
+            <div v-if="showPracticalCasesFloating" class="bib-reader-cases-float">
+                <div class="bib-reader-cases-float__topbar">
+                    <button
+                        type="button"
+                        class="bib-reader-cases-float__close"
+                        aria-label="Cerrar casos prácticos"
+                        @click="closePracticalCases"
+                    >
+                        <IconX class="h-5 w-5" />
+                    </button>
+                </div>
+                <ReaderPracticalCasesPanel
+                    :cases="practicalCases"
+                    :selected-case-id="selectedPracticalCaseId"
+                    :view-mode="practicalCasesViewMode"
+                    @select-case="onSelectPracticalCase"
+                    @back-to-list="backToPracticalCasesList"
+                />
+            </div>
+        </Transition>
     </ReaderLayout>
 </template>
 

@@ -159,25 +159,9 @@ class Boleta
                 ->setMtoValorUnitario($detail->mto_value_unit)
                 ->setMtoPrecioUnitario($detail->mto_price_unit);
 
-            $descuent = $detail->mto_discount;
-
-            if ($descuent > 0) {
-
-                $item->setDescuento($descuent);
-
-                $json_discounts = json_decode($detail->json_discounts);
-
-                $charges = [];
-
-                foreach ($json_discounts as $k => $json_discount) {
-                    $charges[$k] = (new Charge())
-                        ->setCodTipo($json_discount->type)
-                        ->setMontoBase($json_discount->base)
-                        ->setFactor($json_discount->factor)
-                        ->setMonto($json_discount->monto);
-                }
-
-                $item->setDescuentos($charges);
+            if ($this->hasPersistedItemDiscount($detail)) {
+                $item->setDescuento((float) $detail->mto_discount);
+                $item->setDescuentos($this->buildDiscountCharges($detail));
             }
 
             array_push($items, $item);
@@ -347,5 +331,37 @@ class Boleta
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    private function hasPersistedItemDiscount(SaleDocumentItem $detail): bool
+    {
+        $jsonDiscounts = json_decode($detail->json_discounts ?? '[]');
+
+        return (float) $detail->mto_discount > 0
+            && is_array($jsonDiscounts)
+            && count($jsonDiscounts) > 0;
+    }
+
+    /**
+     * @return array<int, Charge>
+     */
+    private function buildDiscountCharges(SaleDocumentItem $detail): array
+    {
+        $jsonDiscounts = json_decode($detail->json_discounts ?? '[]');
+        $charges = [];
+
+        if (! is_array($jsonDiscounts)) {
+            return $charges;
+        }
+
+        foreach ($jsonDiscounts as $k => $jsonDiscount) {
+            $charges[$k] = (new Charge())
+                ->setCodTipo($jsonDiscount->type)
+                ->setMontoBase($jsonDiscount->base)
+                ->setFactor($jsonDiscount->factor)
+                ->setMonto($jsonDiscount->monto);
+        }
+
+        return $charges;
     }
 }

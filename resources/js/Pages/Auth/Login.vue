@@ -18,8 +18,9 @@
     import SpinnerLoading from '@/Components/SpinnerLoading.vue';
 
     const store = useAppStore();
-    const company = usePage().props.company;
-    const socialNetworks = usePage().props.socialNetworks;
+    const page = usePage();
+    const company = page.props.company;
+    const socialNetworks = page.props.socialNetworks;
     // multi language
     const i18n = reactive(useI18n());
     const changeLanguage = (item) => {
@@ -34,10 +35,18 @@
 
     const baseUrl = assetUrl;
 
+    const redirectTo = computed(() => {
+        const queryString = page.url?.split('?')[1] ?? '';
+        const params = new URLSearchParams(queryString);
+
+        return params.get('redirect_to') ?? '';
+    });
+
     const form = useForm({
         email: '',
         password: '',
         remember: false,
+        redirect_to: redirectTo.value,
     });
 
     const submit = () => {

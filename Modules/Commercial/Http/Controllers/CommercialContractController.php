@@ -6,7 +6,6 @@ use App\Http\Controllers\ApisnetPeController;
 use App\Http\Controllers\Controller;
 use App\Models\IdentityDocumentType;
 use App\Models\Person;
-use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -164,9 +163,6 @@ class CommercialContractController extends Controller
             'clients' => Person::where('is_client', true)
                 ->orderBy('full_name')
                 ->get(['id', 'document_type_id', 'number', 'full_name', 'telephone', 'email']),
-            'services' => Product::where('is_product', false)
-                ->orderBy('description')
-                ->get(['id', 'interne', 'description', 'sale_prices']),
             'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get(),
             'currencyTypes' => DB::table('sunat_currency_types')
                 ->where('active', true)

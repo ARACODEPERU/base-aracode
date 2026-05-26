@@ -9,6 +9,7 @@ import SectionFormModal from './components/SectionFormModal.vue';
 import PageToolbar from './components/PageToolbar.vue';
 import PageEditorPanel from './components/PageEditorPanel.vue';
 import BulkPagesModal from './components/BulkPagesModal.vue';
+import PracticalCasesWorkspace from './components/PracticalCasesWorkspace.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -29,6 +30,7 @@ const currentPage = ref(null);
 const pageContent = ref('');
 const pageLoading = ref(false);
 const pageSaving = ref(false);
+const showPracticalCasesWorkspace = ref(false);
 const showBulkModal = ref(false);
 const bulkProcessing = ref(false);
 
@@ -398,6 +400,24 @@ const saveCurrentPage = async () => {
     }
 };
 
+const openPracticalCasesWorkspace = () => {
+    if (!currentPage.value?.id) return;
+    showPracticalCasesWorkspace.value = true;
+};
+
+const closePracticalCasesWorkspace = () => {
+    showPracticalCasesWorkspace.value = false;
+};
+
+const onPracticalCasesCountChanged = (count) => {
+    if (currentPage.value) {
+        currentPage.value = {
+            ...currentPage.value,
+            practical_cases_count: count,
+        };
+    }
+};
+
 const addChapter = (parentId = null) => {
     openSectionModal('create', { parentId });
 };
@@ -430,6 +450,7 @@ const deleteSection = (section) => {
                 selectedPageId.value = null;
                 currentPage.value = null;
                 pageContent.value = '';
+                showPracticalCasesWorkspace.value = false;
             }
             Swal.fire({
                 icon: 'success',
@@ -580,7 +601,7 @@ onMounted(() => {
             </div>
 
             <div
-                class="panel p-0 overflow-hidden flex flex-col lg:flex-row min-h-[calc(100vh-220px)] border border-gray-200 dark:border-zinc-700 box-border"
+                class="panel relative p-0 overflow-hidden flex flex-col lg:flex-row min-h-[calc(100vh-220px)] border border-gray-200 dark:border-zinc-700 box-border"
             >
                 <aside
                     class="w-full lg:w-80 shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-zinc-700 flex flex-col min-h-0 max-h-[320px] lg:max-h-none box-border"
@@ -611,7 +632,9 @@ onMounted(() => {
                         :has-page="!!currentPage"
                         :saving="pageSaving"
                         :loading="pageLoading"
+                        :practical-cases-count="currentPage?.practical_cases_count || 0"
                         @save="saveCurrentPage"
+                        @open-practical-cases="openPracticalCasesWorkspace"
                     />
                     <PageEditorPanel
                         v-model:content="pageContent"
@@ -620,6 +643,15 @@ onMounted(() => {
                         :image-upload-url="route('bib_books_upload_image')"
                     />
                 </main>
+
+                <PracticalCasesWorkspace
+                    :show="showPracticalCasesWorkspace"
+                    :page-id="currentPage?.id || null"
+                    :page-label="pageLabel"
+                    :image-upload-url="route('bib_books_upload_image')"
+                    @close="closePracticalCasesWorkspace"
+                    @count-changed="onPracticalCasesCountChanged"
+                />
             </div>
         </div>
 

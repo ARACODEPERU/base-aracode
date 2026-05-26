@@ -5,7 +5,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
-import SearchClients from '../Partials/SearchClients.vue';
+import SearchClients from '../../Documents/Partials/SearchClients.vue';
 import QuickSaleTouch from './Partials/QuickSaleTouch.vue';
 import QuickSaleWeb from './Partials/QuickSaleWeb.vue';
 
@@ -14,33 +14,94 @@ const props = defineProps({
     clientDefault: { type: Object, default: () => ({}) },
     paymentMethods: { type: Array, default: () => [] },
     saleDocumentTypes: { type: Array, default: () => [] },
+    documentTypes: { type: Array, default: () => [] },
+    departments: { type: Array, default: () => [] },
 });
 
 const isMobile = ref(window.innerWidth < 768 || 'ontouchstart' in window);
 const viewMode = ref(isMobile.value ? 'touch' : 'web');
 const documentType = ref('80');
 const printOption = ref('auto');
-const selectedClient = ref(props.clientDefault);
-const showClientModal = ref(false);
+const selectedClient = ref({
+    id: props.clientDefault?.id,
+    full_name: props.clientDefault?.full_name ?? 'Cliente genérico',
+    number: props.clientDefault?.number ?? '',
+});
+
+const displayModalClient = ref(false);
+const saleDocumentTypesId = ref(null);
+
+const clientLabel = computed(() => {
+    const name = selectedClient.value?.full_name ?? 'Cliente genérico';
+    const number = selectedClient.value?.number;
+    return number ? `${number} - ${name}` : name;
+});
+
+const openModalClient = () => {
+    const docType = props.saleDocumentTypes.find((dt) => dt.sunat_id === documentType.value);
+    saleDocumentTypesId.value = docType?.id ?? null;
+    displayModalClient.value = true;
+};
+
+const closeModalClient = () => {
+    saleDocumentTypesId.value = null;
+    displayModalClient.value = false;
+};
+
+const onClientSelected = (data) => {
+    selectedClient.value = {
+        id: data.id,
+        full_name: data.full_name,
+        number: data.number ?? '',
+    };
+    closeModalClient();
+};
+
+const PRODUCT_ENTITY_CLASS = 'App\\Models\\Product';
+
+/** Copia plana del producto (evita proxies de Vue y pérdida de campos al serializar). */
+const snapshotProduct = (product) => JSON.parse(JSON.stringify(product ?? {}));
+
 const cart = ref([]);
 const saving = ref(false);
 
+const getItemDiscount = (item) => {
+    const discount = Number(item?.discount ?? 0);
+    if (!Number.isFinite(discount) || discount < 0) return 0;
+    return Math.min(discount, Number(item?.price ?? 0));
+};
+
+const getItemTotal = (item) => {
+    const price = Number(item?.price ?? 0);
+    const qty = Number(item?.qty ?? 0);
+    return Math.max(0, (price - getItemDiscount(item)) * qty);
+};
+
 const total = computed(() =>
-    cart.value.reduce((sum, item) => sum + item.price * item.qty, 0)
+    cart.value.reduce((sum, item) => sum + getItemTotal(item), 0)
 );
+
+const buildCartLine = (product, qty) => {
+    const price = getProductPrice(product);
+    return {
+        id: product.id,
+        qty,
+        price,
+        discount: 0,
+        description: product.description,
+        interne: product.interne,
+        entity_name_product: product.entity_name_product ?? PRODUCT_ENTITY_CLASS,
+        product: snapshotProduct(product),
+    };
+};
 
 const addToCart = (product) => {
     const existing = cart.value.find(i => i.id === product.id);
     if (existing) {
         existing.qty++;
+        existing.product = snapshotProduct(product);
     } else {
-        cart.value.push({
-            id: product.id,
-            description: product.description,
-            price: getProductPrice(product),
-            interne: product.interne,
-            qty: 1,
-        });
+        cart.value.push(buildCartLine(product, 1));
     }
 };
 
@@ -66,40 +127,184 @@ const updateQty = (item, change) => {
     }
 };
 
+const updateDiscount = (item, value) => {
+    const idx = cart.value.findIndex(i => i.id === item.id);
+    if (idx < 0) return;
+
+    const raw = Number(value);
+    const nextDiscount = Number.isFinite(raw) ? raw : 0;
+    cart.value[idx].discount = Math.min(Math.max(nextDiscount, 0), Number(cart.value[idx].price ?? 0));
+};
+
 const removeItem = (item) => {
     const idx = cart.value.findIndex(i => i.id === item.id);
     if (idx >= 0) cart.value.splice(idx, 1);
 };
 
-const checkout = async () => {
-    if (cart.value.length === 0) {
-        Swal.fire('Error', 'El carrito está vacío', 'error');
+const paymentMethodLabel = (id) => {
+    const pm = props.paymentMethods.find((p) => p.id === id);
+    return pm?.description ?? `Método #${id}`;
+};
+
+let printWindow = null;
+
+const openUrl = (url) => {
+    if (!url) return;
+    const fullUrl = `${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`;
+    try {
+        if (printWindow && !printWindow.closed) {
+            printWindow.close();
+        }
+    } catch {
+        /* ventana ya cerrada */
+    }
+    printWindow = window.open(fullUrl, '_blank', 'noopener,noreferrer');
+};
+
+const handlePrintAfterSale = async (saleResult) => {
+    const ticketUrl = saleResult?.ticket_url;
+    const pdfA4Url = saleResult?.pdf_a4_url;
+
+    if (printOption.value === 'manual') {
         return;
     }
-    saving.value = true;
-    try {
-        const response = await axios.post(route('sales_quick_sale_store'), {
-            items: cart.value.map(i => ({ id: i.id, qty: i.qty, price: i.price })),
-            payment_amount: total.value,
-            client_id: selectedClient.value.id,
-            document_type_id: documentType.value,
+
+    if (printOption.value === 'auto') {
+        setTimeout(() => openUrl(ticketUrl || pdfA4Url), 600);
+        return;
+    }
+
+    if (printOption.value === 'ask') {
+        const docLabel = saleResult?.invoice_serie && saleResult?.invoice_correlative
+            ? `${saleResult.invoice_serie}-${saleResult.invoice_correlative}`
+            : 'comprobante';
+
+        const { value: action } = await Swal.fire({
+            icon: 'question',
+            title: 'Venta registrada',
+            html: `<p class="text-sm mb-2">${docLabel} guardado correctamente.</p>
+                <p class="text-sm text-gray-500">¿Qué desea hacer?</p>`,
+            input: 'select',
+            inputOptions: {
+                print_ticket: 'Imprimir ticket',
+                print_a4: 'Ver / imprimir PDF A4',
+                email: 'Enviar por correo',
+                whatsapp: 'Enviar por WhatsApp',
+                none: 'Solo registrar (cerrar)',
+            },
+            inputPlaceholder: 'Seleccione una opción',
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cerrar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
         });
+
+        if (!action) return;
+
+        if (action === 'print_ticket') {
+            setTimeout(() => openUrl(ticketUrl || pdfA4Url), 300);
+            return;
+        }
+
+        if (action === 'print_a4') {
+            setTimeout(() => openUrl(pdfA4Url || ticketUrl), 300);
+            return;
+        }
+
+        if (action === 'email' || action === 'whatsapp') {
+            const isEmail = action === 'email';
+            const { value: contact } = await Swal.fire({
+                icon: 'info',
+                title: isEmail ? 'Enviar por correo' : 'Enviar por WhatsApp',
+                input: isEmail ? 'email' : 'tel',
+                inputPlaceholder: isEmail ? 'correo@ejemplo.com' : '999 999 999',
+                showCancelButton: true,
+                confirmButtonText: 'Enviar',
+                cancelButtonText: 'Cancelar',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+
+            if (contact) {
+                console.info(`[Venta rápida] Envío ${action} pendiente de implementar:`, contact, saleResult);
+                await Swal.fire({
+                    icon: 'info',
+                    title: 'Próximamente',
+                    text: 'El envío se habilitará en una siguiente versión. Por ahora puede imprimir el PDF.',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                openUrl(pdfA4Url || ticketUrl);
+            }
+        }
+    }
+};
+
+const formatPaymentsSummary = (paymentPayload) => {
+    const lines = (paymentPayload.payments || []).map(
+        (p) => `• ${paymentMethodLabel(p.payment_method_id)}: S/ ${Number(p.amount).toFixed(2)}${p.reference ? ` (${p.reference})` : ''}`
+    );
+    if (paymentPayload.cash?.change > 0) {
+        lines.push(`• Vuelto: S/ ${Number(paymentPayload.cash.change).toFixed(2)}`);
+    }
+    return lines.join('<br>');
+};
+
+/** Cobro con payload de pago (Yape, Plin, efectivo, otros, combinado). */
+const checkout = async (paymentPayload) => {
+    if (cart.value.length === 0) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'El carrito está vacío', padding: '2em', customClass: 'sweet-alerts' });
+        return;
+    }
+
+    saving.value = true;
+
+    const body = {
+        items: cart.value.map((i) => ({
+            id: i.id,
+            qty: i.qty,
+            price: i.price,
+            discount: i.discount ?? 0,
+            entity_name_product: i.entity_name_product ?? PRODUCT_ENTITY_CLASS,
+            product: i.product,
+        })),
+        payment_amount: total.value,
+        client_id: selectedClient.value.id,
+        document_type_id: documentType.value,
+        payment_mode: paymentPayload?.mode ?? 'quick',
+        payments: paymentPayload?.payments ?? [],
+        cash: paymentPayload?.cash ?? null,
+        quick_method: paymentPayload?.quick_method ?? null,
+    };
+
+    try {
+        const response = await axios.post(route('sales_quick_sale_store'), body);
+
         if (response.data.success) {
             cart.value = [];
-            if (printOption.value === 'auto') {
-                window.open(response.data.ticket_url, '_blank');
-            } else if (printOption.value === 'ask') {
-                const result = await Swal.fire({
-                    icon: 'question', title: '¿Imprimir ticket?',
-                    showCancelButton: true, confirmButtonText: 'Sí',
-                    cancelButtonText: 'No',
-                });
-                if (result.isConfirmed) window.open(response.data.ticket_url, '_blank');
-            }
-            Swal.fire({ icon: 'success', title: 'Venta realizada', timer: 2000, showConfirmButton: false });
+            await handlePrintAfterSale(response.data);
+            await Swal.fire({
+                icon: 'success',
+                title: 'Venta realizada',
+                html: `<p class="text-sm">${formatPaymentsSummary(paymentPayload)}</p>`,
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
         }
     } catch (error) {
-        Swal.fire('Error', error.response?.data?.message || 'No se pudo procesar la venta', 'error');
+        const validationErrors = error.response?.data?.errors;
+        let message = error.response?.data?.message || 'No se pudo procesar la venta';
+        if (validationErrors) {
+            message = Object.values(validationErrors).flat().join('\n');
+        }
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
     } finally {
         saving.value = false;
     }
@@ -157,8 +362,10 @@ const closeMobileMenu = () => {
 
 <template>
     <AppLayout title="Venta Rápida">
-        <Navigation v-if="!isMaximized" :routeModule="route('sales_dashboard')" :titleModule="'Venta Rápida'"
-            :data="[{ title: 'Punto de Venta Rápido' }]" />
+        <Navigation v-if="!isMaximized" :routeModule="route('sales_dashboard')" :titleModule="'Ventas'"
+            :data="[
+                { title: 'Punto de Venta Rápido' }
+            ]" />
 
         <div ref="contentEl" :class="[isMaximized ? 'fixed inset-0 z-50 bg-slate-900 overflow-y-auto p-4 maximized-dark' : 'pt-5 px-4']">
             <!-- Toolbar -->
@@ -207,10 +414,12 @@ const closeMobileMenu = () => {
                         <option value="manual">No imprimir</option>
                     </select>
 
-                    <button @click="showClientModal = true; closeMobileMenu()"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1 shrink-0">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="currentColor" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></svg>
-                        {{ selectedClient.full_name }}
+                    <button @click="openModalClient(); closeMobileMenu()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1 shrink-0 max-w-[220px] truncate"
+                        type="button"
+                        title="Buscar, crear o editar cliente">
+                        <svg class="w-4 h-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path fill="currentColor" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></svg>
+                        <span class="truncate">{{ clientLabel }}</span>
                     </button>
 
                     <button @click="toggleMaximize(); closeMobileMenu()"
@@ -236,8 +445,10 @@ const closeMobileMenu = () => {
                 :cart="cart"
                 :total="total"
                 :saving="saving"
+                :payment-methods="paymentMethods"
                 @add-to-cart="addToCart"
                 @update-qty="updateQty"
+                @update-discount="updateDiscount"
                 @remove-item="removeItem"
                 @checkout="checkout"
             />
@@ -250,25 +461,20 @@ const closeMobileMenu = () => {
                 :payment-methods="paymentMethods"
                 @add-to-cart="addToCart"
                 @update-qty="updateQty"
+                @update-discount="updateDiscount"
                 @remove-item="removeItem"
                 @checkout="checkout"
             />
 
-            <!-- Modal de cliente -->
-            <div v-if="showClientModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-                @click.self="showClientModal = false">
-                <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">Seleccionar Cliente</h3>
-                        <button @click="showClientModal = false" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
-                    </div>
-                    <SearchClients
-                        :client-default="selectedClient"
-                        :document-types="[]"
-                        @clientId="(data) => { selectedClient = data; showClientModal = false; }"
-                    />
-                </div>
-            </div>
+            <SearchClients
+                :display="displayModalClient"
+                :close-modal-client="closeModalClient"
+                :client-default="clientDefault"
+                :document-types="documentTypes"
+                :sale-document-types="saleDocumentTypesId"
+                :ubigeo="departments"
+                @client-id="onClientSelected"
+            />
         </div>
     </AppLayout>
 </template>
