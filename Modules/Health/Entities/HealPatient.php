@@ -7,10 +7,14 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Health\Support\LogsActivity;
 
 class HealPatient extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+    use LogsActivity;
 
     protected $fillable = [
         'person_id', 'user_id', 'patient_code'

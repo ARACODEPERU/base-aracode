@@ -4,6 +4,7 @@ namespace Modules\Health\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Inertia\Inertia;
 
 class HealthServiceProvider extends ServiceProvider
 {
@@ -28,6 +29,23 @@ class HealthServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        $this->shareHealthSettings();
+    }
+
+    /**
+     * Share health settings globally via Inertia
+     */
+    private function shareHealthSettings(): void
+    {
+        Inertia::share('healthSettings', function () {
+            try {
+                $settings = \Modules\Health\Entities\HealSetting::first();
+                return $settings ? $settings->toArray() : [];
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
     }
 
     /**

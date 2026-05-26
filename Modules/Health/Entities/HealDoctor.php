@@ -8,10 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Modules\Health\Database\factories\HealDoctorFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Health\Support\LogsActivity;
 
 class HealDoctor extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+    use LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -19,7 +23,12 @@ class HealDoctor extends Model
     protected $fillable = [
         'person_id',
         'user_id',
-        'doctor_code'
+        'doctor_code',
+        'signature_pin_hash',
+        'colegiatura',
+        'profession',
+        'specialty',
+        'attention_service_type',
     ];
 
     public function person(): HasOne
@@ -29,6 +38,6 @@ class HealDoctor extends Model
 
     public function user(): HasOne
     {
-        return $this->hasOne(User::class, 'user_id', 'id');
+        return $this->hasOne(User::class, 'id', 'user_id');
     }
 }

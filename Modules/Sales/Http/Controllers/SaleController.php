@@ -26,6 +26,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
 use Modules\Sales\Support\SalesA4Template;
+use Modules\Health\Entities\HealPatientCharge;
 
 class SaleController extends Controller
 {
@@ -239,6 +240,21 @@ class SaleController extends Controller
                         Product::find($produc['id'])->decrement('stock', $produc['quantity']);
                     }
                 }
+
+                $healthChargeIds = collect($products)
+                    ->pluck('health_charge_id')
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                if ($healthChargeIds->isNotEmpty()) {
+                    HealPatientCharge::whereIn('id', $healthChargeIds)->update([
+                        'sale_id' => $sale->id,
+                        'sale_document_id' => $document->id,
+                        'status' => 'paid',
+                    ]);
+                }
+
                 return $sale;
             });
 

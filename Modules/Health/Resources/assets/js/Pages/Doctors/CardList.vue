@@ -13,6 +13,8 @@
     import IconLinkedin from '@/Components/vristo/icon/icon-linkedin.vue';
     import IconTwitter from '@/Components/vristo/icon/icon-twitter.vue';
     import IconBox from '@/Components/vristo/icon/icon-box.vue';
+    import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
+    import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
     import { useForm, Link } from '@inertiajs/vue3';
 
 
@@ -68,7 +70,7 @@
     };
 </script>
 <template>
-    <AppLayout title="Pacientes">
+    <AppLayout title="Doctores">
         <ul class="flex space-x-2 rtl:space-x-reverse">
             <li>
                 <a href="javascript:;" class="text-primary hover:underline">Salud</a>
@@ -135,6 +137,8 @@
                                 <tr>
                                     <th class="!text-center">Acciones</th>
                                     <th>Nombre</th>
+                                    <th>Profesion</th>
+                                    <th>Especialidad</th>
                                     <th>Email</th>
                                     <th>Dirección</th>
                                     <th>Teléfono</th>
@@ -146,8 +150,24 @@
                                     <tr>
                                         <td>
                                             <div class="flex gap-4 items-center justify-center">
-                                                <Link :href="route('heal_doctors_edit',contact.person_id)" type="button" class="btn btn-sm btn-outline-primary">Editar</Link>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" @click="deleteUser(contact.person_id)">Eliminar</button>
+                                                <Link
+                                                    :href="route('heal_doctors_edit',contact.person_id)"
+                                                    type="button"
+                                                    class="btn btn-sm btn-outline-primary p-2"
+                                                    v-tippy="{ content: 'Editar', placement: 'bottom' }"
+                                                    aria-label="Editar"
+                                                >
+                                                    <IconEdit class="w-4 h-4" />
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-outline-danger p-2"
+                                                    v-tippy="{ content: 'Eliminar', placement: 'bottom' }"
+                                                    aria-label="Eliminar"
+                                                    @click="deleteUser(contact.person_id)"
+                                                >
+                                                    <IconTrash class="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                         <td>
@@ -163,6 +183,8 @@
                                                 <div>{{ contact.full_name }}</div>
                                             </div>
                                         </td>
+                                        <td>{{ contact.profession || 'Sin dato' }}</td>
+                                        <td>{{ contact.specialty || 'Sin especialidad' }}</td>
                                         <td>{{ contact.email }}</td>
                                         <td class="whitespace-nowrap">{{ contact.address }}</td>
                                         <td class="whitespace-nowrap">{{ contact.telephone }}</td>
@@ -200,6 +222,8 @@
                             <div class="px-6 pb-24 -mt-10 relative">
                                 <div class="shadow-md bg-white dark:bg-gray-900 rounded-md px-2 py-4">
                                     <div class="text-xl">{{ contact.full_name }}</div>
+                                    <div class="text-primary text-sm">{{ contact.profession || 'Sin profesion' }}</div>
+                                    <div class="text-white-dark text-sm">{{ contact.specialty || 'Sin especialidad' }}</div>
                                     <div class="text-white-dark">{{ contact.email }}</div>
                                     <!-- <div class="flex items-center justify-between flex-wrap mt-6 gap-3">
                                         <div class="flex-auto">
@@ -257,8 +281,24 @@
                                 </div>
                             </div>
                             <div class="mt-6 flex gap-4 absolute bottom-0 w-full ltr:left-0 rtl:right-0 p-6">
-                                <Link :href="route('heal_doctors_edit',contact.person_id)" type="button" class="btn btn-outline-primary w-1/2">Editar</Link>
-                                <button type="button" class="btn btn-outline-danger w-1/2" @click="deleteUser(contact.id)">Eliminar</button>
+                                <Link
+                                    :href="route('heal_doctors_edit',contact.person_id)"
+                                    type="button"
+                                    class="btn btn-outline-primary w-1/2"
+                                    v-tippy="{ content: 'Editar', placement: 'top' }"
+                                    aria-label="Editar"
+                                >
+                                    <IconEdit class="w-4 h-4" />
+                                </Link>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-danger w-1/2"
+                                    v-tippy="{ content: 'Eliminar', placement: 'top' }"
+                                    aria-label="Eliminar"
+                                    @click="deleteUser(contact.id)"
+                                >
+                                    <IconTrash class="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                     </template>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Modules\Health\Entities\HealAllergy;
 use Modules\Health\Entities\HealAllergyPatient;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\DB;
@@ -42,9 +43,13 @@ class HealAllergyPatientController extends Controller
 
             $request,
             [
+                'patient' => 'required|exists:heal_patients,id',
+                'allergy' => 'required|exists:heal_allergies,id',
                 'description'  => 'required|max:500',
             ]
         );
+
+        $allergyType = HealAllergy::findOrFail($allergy);
 
         $AllergyPatient = HealAllergyPatient::create([
             'allergy_id' => $allergy,
@@ -54,7 +59,13 @@ class HealAllergyPatientController extends Controller
 
         return response()->json([
             'success' => true,
-            'allergyId' => $AllergyPatient->id
+            'allergyId' => $AllergyPatient->id,
+            'allergy' => [
+                'id' => $AllergyPatient->id,
+                'title' => $allergyType->title,
+                'description' => $AllergyPatient->description,
+                'created_at' => $AllergyPatient->created_at,
+            ],
         ]);
     }
 

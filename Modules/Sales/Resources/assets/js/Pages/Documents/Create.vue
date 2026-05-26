@@ -54,6 +54,10 @@
         taxes: {
             type: Object,
             default: () => ({}),
+        },
+        healthBillingDraft: {
+            type: Object,
+            default: null,
         }
     });
 
@@ -129,6 +133,7 @@
         getSeriesByDocumentType();
         getCurrentDate();
         startTaxes();
+        applyHealthBillingDraft();
     });
 
     const taxes = ref({});
@@ -143,6 +148,36 @@
             icbper: icbper
         }
         taxes.value = xa;
+    }
+
+    const applyHealthBillingDraft = () => {
+        if (!props.healthBillingDraft?.items?.length) {
+            return;
+        }
+
+        const client = props.healthBillingDraft.client;
+
+        if (client) {
+            formDocument.client_id = client.id;
+            formDocument.client_name = `${client.number}-${client.full_name}`;
+            formDocument.client_rzn_social = client.full_name;
+            formDocument.client_ubigeo = client.ubigeo;
+            formDocument.client_dti = client.document_type_id;
+            formDocument.client_number = client.number;
+            formDocument.client_direction = client.address || formDocument.client_direction;
+            formDocument.client_phone = client.telephone;
+            formDocument.client_email = client.email;
+        }
+
+        formDocument.items = props.healthBillingDraft.items.map((item) => ({
+            ...item,
+            v_sale: 0,
+            m_igv: 0,
+            total: 0,
+        }));
+
+        formDocument.additional_description = props.healthBillingDraft.additional_description || formDocument.additional_description;
+        formDocument.items.forEach((item, index) => calculateTotals(index));
     }
 
     const getCurrentDate = () => {

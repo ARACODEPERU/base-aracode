@@ -68,13 +68,16 @@
     const displayModalAppointments = ref(false);
     const loadingAppointments = ref(false);
     const listAppointments = ref([]);
+    const selectedAppointmentPatient = ref(null);
 
     const showModalAppointments = (item) => {
+        selectedAppointmentPatient.value = item;
         getAppointments(item.id);
         displayModalAppointments.value = true;
     }
     const hideModalAppointments = () => {
         displayModalAppointments.value = false;
+        selectedAppointmentPatient.value = null;
     }
     const getAppointments = (id) => {
         loadingAppointments.value = true;
@@ -306,6 +309,16 @@
         <template #title>Citas</template>
         <template #message>Listado de citas del Paciente</template>
         <template #content>
+            <div class="mb-4 flex justify-end">
+                <Link
+                    v-if="selectedAppointmentPatient"
+                    :href="route('heal_agendas_list', { patient_id: selectedAppointmentPatient.id })"
+                    class="btn btn-primary"
+                >
+                    <IconCalendar class="h-4 w-4 ltr:mr-2 rtl:ml-2" />
+                    Nueva cita
+                </Link>
+            </div>
             <div class="space-y-2 font-semibold">
                 <template v-for="(item, ix) in listAppointments">
                     <div class="border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
@@ -356,6 +369,7 @@
                                                         <span v-if="appointment.status == 1" class="badge bg-info my-auto ltr:ml-3 rtl:mr-3 hover:top-0">Pendiente</span>
                                                         <span v-if="appointment.status == 2" class="badge bg-success my-auto ltr:ml-3 rtl:mr-3 hover:top-0">Atendido</span>
                                                         <span v-if="appointment.status == 0" class="badge bg-danger my-auto ltr:ml-3 rtl:mr-3 hover:top-0">Rechazado</span>
+                                                        <span v-if="appointment.status == 3" class="badge bg-danger my-auto ltr:ml-3 rtl:mr-3 hover:top-0">No concretada</span>
                                                     </p>
                                                 </div>
                                             </div>
