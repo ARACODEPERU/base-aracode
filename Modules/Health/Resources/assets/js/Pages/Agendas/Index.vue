@@ -333,12 +333,14 @@ const openAttentionFromAppointment = (event) => {
     });
 };
 
-const loadAgenda = () => {
+const loadAgenda = ({ silent = false } = {}) => {
     if (!selectedDoctor.value?.code || !selectedDate.value) {
         return Promise.resolve();
     }
 
-    loadingAgenda.value = true;
+    if (!silent) {
+        loadingAgenda.value = true;
+    }
     return axios.get(route('heal_agendas_day'), {
         params: {
             doctor_id: selectedDoctor.value.code,
@@ -348,7 +350,9 @@ const loadAgenda = () => {
     }).then((response) => {
         daysData.value = response.data || {};
     }).finally(() => {
-        loadingAgenda.value = false;
+        if (!silent) {
+            loadingAgenda.value = false;
+        }
     });
 };
 
@@ -751,7 +755,78 @@ const onDrop = (dateStr, time) => {
     }
 };
 
+const cloneDaysData = () => JSON.parse(JSON.stringify(daysData.value || {}));
+
+const dateTimeValue = (dateStr, time) => `${dateStr} ${String(time).slice(0, 5)}:00`;
+
+const addMinutesToTime = (time, minutes) => {
+    return timeFromMinutes(minutesFromTime(time) + minutes);
+};
+
+const moveAppointmentLocally = (appointmentId, targetDate, targetTime, durationMinutes) => {
+    const nextDaysData = cloneDaysData();
+    let movedEvent = null;
+    let sourceDate = null;
+
+    Object.entries(nextDaysData).some(([dateStr, dayData]) => {
+        const events = dayData?.events || [];
+        const index = events.findIndex((event) => event.type === 'appointment' && Number(event.source_id) === Number(appointmentId));
+
+        if (index === -1) {
+            return false;
+        }
+
+        sourceDate = dateStr;
+        movedEvent = { ...events[index] };
+        events.splice(index, 1);
+        nextDaysData[dateStr] = { ...dayData, events };
+
+        return true;
+    });
+
+    if (!movedEvent) {
+        return false;
+    }
+
+    const targetEndTime = addMinutesToTime(targetTime, durationMinutes);
+    movedEvent.start = dateTimeValue(targetDate, targetTime);
+    movedEvent.end = dateTimeValue(targetDate, targetEndTime);
+    movedEvent.doctor_id = selectedDoctor.value?.code;
+
+    const targetDayData = nextDaysData[targetDate] || {
+        events: [],
+        free_slots: [],
+        punctuality: { early: [], on_time: [], late: [], grace_minutes: 5 },
+        working_hours_ranges: props.workingHoursRanges,
+    };
+
+    nextDaysData[targetDate] = {
+        ...targetDayData,
+        events: [
+            ...(targetDayData.events || []),
+            movedEvent,
+        ],
+    };
+
+    if (sourceDate && sourceDate !== targetDate && !nextDaysData[sourceDate]?.events?.length) {
+        nextDaysData[sourceDate] = {
+            ...(nextDaysData[sourceDate] || {}),
+            events: [],
+        };
+    }
+
+    daysData.value = nextDaysData;
+
+    return true;
+};
+
 const moveAppointment = (appointmentId, targetDate, targetTime, durationMinutes) => {
+    const previousDaysData = cloneDaysData();
+
+    moveAppointmentLocally(appointmentId, targetDate, targetTime, durationMinutes);
+    triggerDropSuccess(targetDate, targetTime);
+    requestAnimationFrame(() => scrollToSlot(targetDate, targetTime));
+
     moveLoading.value = true;
     axios.post(route('heal_agendas_appointments_move'), {
         appointment_id: appointmentId,
@@ -761,11 +836,9 @@ const moveAppointment = (appointmentId, targetDate, targetTime, durationMinutes)
         duration_minutes: durationMinutes,
     }).then(() => {
         showMessage('Cita reagendada correctamente.');
-        triggerDropSuccess(targetDate, targetTime);
-        loadAgenda().then(() => {
-            requestAnimationFrame(() => scrollToSlot(targetDate, targetTime));
-        });
+        loadAgenda({ silent: true });
     }).catch((error) => {
+        daysData.value = previousDaysData;
         const errors = error.response?.data?.errors || {};
         const message = Object.values(errors).flat().join(' ');
         showMessage(message || 'No se pudo reagendar la cita.', 'error');
