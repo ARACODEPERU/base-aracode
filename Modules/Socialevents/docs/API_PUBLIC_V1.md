@@ -93,6 +93,12 @@ Cada ítem en `data`:
 
 Igual que la tabla pero con `rank` en lugar de `position` y campo `is_champion`.
 
+## Landing pública (web)
+
+- URL: `/torneos/{public_slug}` (o id numérico con redirección 301 al slug).
+- Requiere `landing_published = true`.
+- Cache de vista: 120 s por defecto (`SOCIALEVENTS_LANDING_CACHE_TTL`). Se invalida al guardar edición, partidos o recalcular tabla.
+
 ## Configuración en admin
 
 En **Ediciones → Editar**, sección **Publicación web y app móvil**:

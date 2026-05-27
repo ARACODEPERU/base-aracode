@@ -4,6 +4,7 @@ namespace Modules\Socialevents\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
+use App\Models\Person;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -62,7 +63,9 @@ class EvenEventController extends Controller
             ->where('status', true)
             ->whereNull('main_category_id')
             ->get();
-        $instructors = AcaTeacher::with('person')->get();
+        //$instructors = AcaTeacher::with('person')->get();
+        $instructors = Person::all();
+
         $locales = EvenLocal::where('status', true)->get();
 
         return Inertia::render('Socialevents::Events/Create', [
@@ -121,7 +124,7 @@ class EvenEventController extends Controller
             }
         }
 
-        if (count($exhibitors) > 0) {
+        if ($exhibitors && count($exhibitors) > 0) {
             foreach ($exhibitors as $exhibitor) {
                 EvenEventExhibitor::create([
                     'event_id' => $event->id,
@@ -183,7 +186,8 @@ class EvenEventController extends Controller
     public function edit($id)
     {
         $categories = EvenCategory::where('status', true)->get();
-        $instructors = AcaTeacher::with('person')->get();
+        //$instructors = AcaTeacher::with('person')->get();
+        $instructors = Person::all();
         $locales = EvenLocal::where('status', true)->get();
         $event = EvenEvent::find($id);
 

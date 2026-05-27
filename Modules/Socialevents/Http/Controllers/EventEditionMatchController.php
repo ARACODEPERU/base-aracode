@@ -22,6 +22,7 @@ use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Services\TournamentService;
 use Modules\Socialevents\Services\PositionTableService;
+use Modules\Socialevents\Support\TournamentLandingCache;
 
 
 class EventEditionMatchController extends Controller
@@ -227,6 +228,8 @@ class EventEditionMatchController extends Controller
             'location'     => $validated['location'],
             'status'       => 'pending', // Por defecto
         ]);
+
+        TournamentLandingCache::forget((int) $validated['edition_id']);
     }
 
     /**
@@ -271,6 +274,8 @@ class EventEditionMatchController extends Controller
                 'status' => 'closed',
             ]);
             $this->positionService->updateTablePositions($request->get('edition_id'));
+        } else {
+            TournamentLandingCache::forget((int) $match->edition_id);
         }
 
     }

@@ -1,20 +1,40 @@
 @php
-    $eventTitle = $edition->evento->title ?? 'Torneo';
-    $teamCount = count($edition->equipos);
-    $prizeLabel = $edition->inscription_fee
-        ? 'S/ ' . number_format((float) $edition->inscription_fee, 0)
-        : '—';
-    $heroImage = $edition->landing_hero_image
-        ? asset('storage/' . $edition->landing_hero_image)
-        : 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2070&auto=format&fit=crop';
+    $eventTitle = $eventTitle ?? ($edition->evento->title ?? 'Torneo');
+    $teamCount = $teamCount ?? count($edition->equipos);
+    $heroImage = $heroImage ?? \Modules\Socialevents\Support\TournamentLandingPresenter::resolveHeroImage($edition);
+    $seoTitle = $seoTitle ?? ($eventTitle . ' | ' . $edition->name);
+    $seoDescription = $seoDescription ?? ($eventTitle . ' — ' . $edition->name . '. Fixture, posiciones y estadísticas.');
+    $canonicalUrl = $canonicalUrl ?? $edition->landingUrl();
+    $seoImage = $seoImage ?? $heroImage;
+    $prizeSummary = $prizeSummary ?? null;
+    $inscriptionLabel = $inscriptionLabel ?? (filled($edition->inscription_fee) ? 'S/ ' . number_format((float) $edition->inscription_fee, 0) : null);
+    $prizePlaces = $prizePlaces ?? [];
+    $hasPrizeSection = $hasPrizeSection ?? (count($prizePlaces) > 0);
+    $accentColor = $accentColor ?? $edition->accentColor();
+    $heroStatValue = $prizeSummary ?? ($inscriptionLabel ?? '—');
 @endphp
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ $eventTitle }} — {{ $edition->name }}. Fixture, posiciones y estadísticas.">
-    <title>{{ $eventTitle }} | {{ $edition->name }}</title>
+    <meta name="description" content="{{ $seoDescription }}">
+    <title>{{ $seoTitle }}</title>
+    <link rel="canonical" href="{{ $canonicalUrl }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $seoTitle }}">
+    <meta property="og:description" content="{{ $seoDescription }}">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:image" content="{{ $seoImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $seoTitle }}">
+    <meta name="twitter:description" content="{{ $seoDescription }}">
+    <meta name="twitter:image" content="{{ $seoImage }}">
+    @if (!empty($accentColor))
+        <style>
+            :root { --se-accent: {{ $accentColor }}; }
+        </style>
+    @endif
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     @vite(['Modules/Socialevents/Resources/assets/js/torneos-landing.js'])
 </head>
@@ -38,6 +58,9 @@
             <nav class="se-nav" aria-label="Secciones">
                 <a href="#inicio">Inicio</a>
                 <a href="#equipos">Equipos</a>
+                @if ($hasPrizeSection)
+                    <a href="#premios">Premios</a>
+                @endif
                 <a href="#fixture">Fixture</a>
                 <a href="#posiciones">Posiciones</a>
                 <a href="#contacto">Contacto</a>
@@ -55,6 +78,9 @@
     <nav id="se-mobile-nav" class="se-mobile-nav" data-se-mobile-nav aria-label="Menú móvil">
         <a href="#inicio">Inicio</a>
         <a href="#equipos">Equipos</a>
+        @if ($hasPrizeSection)
+            <a href="#premios">Premios</a>
+        @endif
         <a href="#fixture">Fixture</a>
         <a href="#posiciones">Posiciones</a>
         <a href="#contacto">Contacto</a>
@@ -63,7 +89,7 @@
     <main>
         <section id="inicio" class="se-hero">
             <div class="se-hero__bg">
-                <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=2070&auto=format&fit=crop" alt="" loading="eager">
+                <img src="{{ $heroImage }}" alt="{{ $eventTitle }}" loading="eager">
             </div>
             <div class="se-container se-hero__grid">
                 <div class="se-hero__content">
@@ -88,8 +114,18 @@
                     </div>
                     <div class="se-stat-card" data-se-hero>
                         <i class="fas fa-trophy se-stat-card__icon" aria-hidden="true"></i>
-                        <div class="se-stat-card__value">{{ $prizeLabel }}</div>
-                        <div class="se-stat-card__label">Inscripción / premios</div>
+                        <div class="se-stat-card__value">{{ $heroStatValue }}</div>
+                        <div class="se-stat-card__label">
+                            @if ($prizeSummary && $inscriptionLabel)
+                                Premio 1.º · Inscripción {{ $inscriptionLabel }}
+                            @elseif ($prizeSummary)
+                                Premio 1.er puesto
+                            @elseif ($inscriptionLabel)
+                                Inscripción
+                            @else
+                                Premios e inscripción
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,6 +154,30 @@
                 </div>
             </div>
         </section>
+
+        @if ($hasPrizeSection)
+            <section id="premios" class="se-section">
+                <div class="se-container">
+                    <header class="se-section__head" data-se-reveal>
+                        <h2 class="se-section__title">Premios <span>del torneo</span></h2>
+                        <p class="se-section__sub">Reconocimientos configurados para esta edición</p>
+                    </header>
+                    <div class="se-prizes-grid">
+                        @foreach ($prizePlaces as $place)
+                            <article class="se-prize-card" data-se-reveal>
+                                <div class="se-prize-card__place">{{ $place['title'] }}</div>
+                                <div class="se-prize-card__value">{{ $place['label_text'] }}</div>
+                            </article>
+                        @endforeach
+                    </div>
+                    @if ($inscriptionLabel)
+                        <p class="se-section__sub se-prizes-inscription" data-se-reveal>
+                            Inscripción por equipo: <strong>{{ $inscriptionLabel }}</strong>
+                        </p>
+                    @endif
+                </div>
+            </section>
+        @endif
 
         <section id="fixture" class="se-section">
             <div class="se-container se-fixture-wrap">
@@ -327,7 +387,12 @@
                         </div>
                         <h3>Edición</h3>
                         <p class="se-contact-card__value">{{ $edition->name }}</p>
-                        <p class="se-contact-card__hint">{{ $teamCount }} equipos · {{ $prizeLabel }}</p>
+                        <p class="se-contact-card__hint">
+                            {{ $teamCount }} equipos
+                            @if ($inscriptionLabel)
+                                · Inscripción {{ $inscriptionLabel }}
+                            @endif
+                        </p>
                     </article>
                 </div>
 

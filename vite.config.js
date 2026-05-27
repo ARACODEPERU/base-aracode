@@ -64,6 +64,7 @@ export default defineConfig(({ command }) => {
                 ],
                 ssr: "resources/js/ssr.js",
                 refresh: true,
+                detectTls: false,
             }),
             vue({
                 template: {

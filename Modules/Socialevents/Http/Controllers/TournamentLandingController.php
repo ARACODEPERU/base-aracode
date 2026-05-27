@@ -5,6 +5,8 @@ namespace Modules\Socialevents\Http\Controllers;
 use Illuminate\Routing\Controller;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Services\TournamentPublicDataService;
+use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Support\TournamentLandingPresenter;
 
 class TournamentLandingController extends Controller
 {
@@ -46,6 +48,20 @@ class TournamentLandingController extends Controller
             abort(404, 'La landing de este torneo no está publicada.');
         }
 
-        return view('socialevents::torneos.landing', $this->publicDataService->buildForLanding($edition));
+        $editionId = $edition->id;
+
+        $viewData = TournamentLandingCache::remember($editionId, function () use ($editionId) {
+            $fresh = EventEdition::with([
+                'evento',
+                'equipos.equipo',
+            ])->findOrFail($editionId);
+
+            return array_merge(
+                $this->publicDataService->buildForLanding($fresh),
+                TournamentLandingPresenter::viewMeta($fresh),
+            );
+        });
+
+        return view('socialevents::torneos.landing', $viewData);
     }
 }

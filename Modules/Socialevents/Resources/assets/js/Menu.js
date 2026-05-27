@@ -5,16 +5,25 @@ import {
     faElevator,
     faTicket,
     faPeopleGroup,
-    faBoltLightning
+    faBoltLightning,
+    faGauge,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSocialevents = {
     status: false,
     text: "Eventos",
     icom: faMasksTheater,
-    route: 'module',
+    route: "module",
     permissions: "even_dashboard",
     items: [
+        {
+            route: route("even_dashboard"),
+            status: false,
+            text: "Dashboard",
+            permissions: "even_dashboard",
+            icom: faGauge,
+            dashboard: true,
+        },
         {
             route: route("even_categories_list"),
             status: false,

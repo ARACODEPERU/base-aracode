@@ -6,6 +6,7 @@ use App\Models\Company;
 use Illuminate\Support\ServiceProvider;
 use App\Rules\SizeExistence;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
@@ -21,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (filter_var(env('VITE_USE_BUILD', false), FILTER_VALIDATE_BOOLEAN)) {
+            Vite::useHotFile(public_path('hot.disabled'));
+        }
+
         Validator::extend('size_existence', function ($attribute, $value, $parameters, $validator) {
             $rule = new SizeExistence($parameters);
 

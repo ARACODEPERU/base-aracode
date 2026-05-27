@@ -5,16 +5,19 @@ namespace Modules\Socialevents\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Inertia\Inertia;
+use Inertia\Response;
+use Modules\Socialevents\Services\SocialeventsDashboardService;
 
 class SocialeventsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(
+        private SocialeventsDashboardService $dashboardService
+    ) {}
+
+    public function index(): Response
     {
-        return view('socialevents::index');
+        return Inertia::render('Socialevents::Dashboard', $this->dashboardService->build());
     }
 
     /**

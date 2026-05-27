@@ -16,6 +16,7 @@ use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Services\PositionTableService;
 use Modules\Socialevents\Support\EditionSlugService;
+use Modules\Socialevents\Support\TournamentLandingCache;
 
 class EventEditionController extends Controller
 {
@@ -131,6 +132,9 @@ class EventEditionController extends Controller
             $edition->save();
         }
 
+        $this->storeEditionFiles($request, $edition);
+        TournamentLandingCache::forget((int) $edition->id);
+
         return to_route('even_ediciones_listado');
     }
 
@@ -212,6 +216,7 @@ class EventEditionController extends Controller
         ]);
 
         $this->storeEditionFiles($request, $edition);
+        TournamentLandingCache::forget((int) $edition->id);
 
         return to_route('even_ediciones_listado');
     }

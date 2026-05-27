@@ -11,16 +11,16 @@ import { ref, watch, onMounted } from 'vue';
 import EditorAracode from '@/Components/EditorAracode.vue'
 
 const editorImageUploadUrl = route('even_editor_upload_image')
-import { 
+import {
     ConfigProvider,
-    Select, 
+    Select,
     SelectOption,
     InputNumber,
     Textarea,
     DatePicker,
     RangePicker,
-    Switch, 
-    Input, 
+    Switch,
+    Input,
     Upload,
     Button
 } from 'ant-design-vue';
@@ -116,9 +116,9 @@ const cropImageAndSave = (res) => {
             <ConfigProvider :locale="esES">
                 <div class="col-span-6 sm:col-span-2">
                     <InputLabel for="category_id" value="Categoría *" class="mb-1" />
-                    <Select 
+                    <Select
                         style="width: 100%;"
-                        v-model:value="form.category_id" 
+                        v-model:value="form.category_id"
                         id="category_id"
                         :options="categories.map((obj) => ({value:obj.id,label:obj.description}))"
                     />
@@ -162,11 +162,11 @@ const cropImageAndSave = (res) => {
                     <InputError :message="form.errors.iframe_transmission" class="mt-2" />
                 </div>
 
-                
+
                 <div class="col-span-6">
                     <InputLabel for="file_input" value="Imagen *" />
                     <CropperImage
-                        :aspectRatio="1920 / 500"
+                        :aspectRatio="1920 / 809"
                         :viewMode="1"
                         :imgDefault="iimg"
                         ref="cropper"

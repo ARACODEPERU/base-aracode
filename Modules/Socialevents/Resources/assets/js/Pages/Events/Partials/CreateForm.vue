@@ -196,7 +196,7 @@ const showLeafIcon = ref(false);
                 <div v-if="form.just_transmit == 0" class="col-span-6">
                     <InputLabel for="file_input" value="Imagen *" />
                     <CropperImage
-                        :aspectRatio="1920 / 500"
+                        :aspectRatio="1920 / 809"
                         :viewMode="1"
                         ref="cropper"
                         @onCrop="cropImageAndSave"

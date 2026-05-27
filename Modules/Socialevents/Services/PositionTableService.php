@@ -4,6 +4,7 @@ namespace Modules\Socialevents\Services;
 
 use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionTeam;
+use Modules\Socialevents\Support\TournamentLandingCache;
 
 class PositionTableService
 {
@@ -117,6 +118,8 @@ class PositionTableService
         }
 
         $this->updateRank($editionId);
+
+        TournamentLandingCache::forget((int) $editionId);
     }
 
     public function getStandings($editionId)
