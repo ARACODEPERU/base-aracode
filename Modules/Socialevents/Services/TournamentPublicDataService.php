@@ -83,7 +83,7 @@ class TournamentPublicDataService
             'landing_published' => (bool) $edition->landing_published,
             'mobile_enabled' => (bool) $edition->mobile_enabled,
             'public_slug' => $edition->public_slug,
-            'branding' => $edition->branding ?? [],
+            'branding' => $this->brandingForApi($edition->branding),
             'accent_color' => $edition->accentColor(),
             'hero_image' => TournamentMedia::url($edition->landing_hero_image),
         ];
@@ -139,5 +139,19 @@ class TournamentPublicDataService
             'name' => $edition->name_database_file ?? 'bases_torneo.pdf',
             'url' => TournamentMedia::url($edition->path_database_file),
         ];
+    }
+
+    /**
+     * JSON object `{}` when vacío (evita `[]` que rompe clientes móviles).
+     *
+     * @return array<string, mixed>|\stdClass
+     */
+    private function brandingForApi(mixed $branding): array|\stdClass
+    {
+        if (! is_array($branding) || $branding === [] || array_is_list($branding)) {
+            return new \stdClass;
+        }
+
+        return $branding;
     }
 }
