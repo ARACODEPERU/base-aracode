@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import AracodeEditor from '@elmerrodriguez/editor-aracode';
-//import '@elmerrodriguez/editor-aracode/dist/aracode-editor.css';
+import '@editor-aracode-styles';
 
 const props = defineProps({
     modelValue: { type: String, default: '' },
