@@ -13,7 +13,10 @@ export default defineConfig(({ command }) => {
     return {
         plugins: [
             laravel({
-                input: "resources/js/app.js",
+                input: [
+                    "resources/js/app.js",
+                    "Modules/Socialevents/resources/assets/js/torneos-landing.js",
+                ],
                 ssr: "resources/js/ssr.js",
                 refresh: true,
             }),

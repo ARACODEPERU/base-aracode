@@ -20,6 +20,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 const props = defineProps({
+    subscriptionsSchemaReady: { type: Boolean, default: true },
     metrics: { type: Object, default: () => ({}) },
     charts: { type: Object, default: () => ({}) },
     tables: { type: Object, default: () => ({}) },
@@ -195,6 +196,23 @@ const cards = computed(() => [
         />
 
         <div class="mt-5 space-y-5">
+            <div
+                v-if="!subscriptionsSchemaReady"
+                class="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+                role="alert"
+            >
+                <FontAwesomeIcon :icon="faTriangleExclamation" class="mt-0.5 h-5 w-5 shrink-0" />
+                <div class="text-sm">
+                    <p class="font-semibold">Esquema de suscripciones incompleto</p>
+                    <p class="mt-1 text-amber-800 dark:text-amber-200">
+                        Faltan tablas de suscripciones en la base de datos (por ejemplo
+                        <code class="rounded bg-amber-100 px-1 dark:bg-amber-900">bib_subscriptions</code>).
+                        Ejecute en el servidor:
+                        <code class="mt-1 block rounded bg-amber-100 px-2 py-1 font-mono text-xs dark:bg-amber-900">php artisan migrate --force</code>
+                    </p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div
                     v-for="card in cards"

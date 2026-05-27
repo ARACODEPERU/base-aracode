@@ -13,10 +13,6 @@
             type: Object,
             default: () => ({}),
         },
-        tinyApiKey: {
-            type: String,
-            default: () => ({}),
-        },
         edicion: {
             type: Object,
             default: () => ({}),
@@ -38,7 +34,6 @@
             <CreateForm
                 :eventos="eventos"
                 :formats="formats"
-                :tinyApiKey="tinyApiKey"
             />
         </div>
     </AppLayout>

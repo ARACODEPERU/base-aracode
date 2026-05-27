@@ -5,6 +5,7 @@ namespace Modules\Bibliodata\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\Bibliodata\Entities\BibBookPage;
 use Modules\Bibliodata\Entities\BibBookSection;
 
@@ -45,7 +46,13 @@ class BibBookPageController extends Controller
 
     public function show($id)
     {
-        $page = BibBookPage::with('section')->withCount('practicalCases')->findOrFail($id);
+        $query = BibBookPage::with('section');
+
+        if (Schema::hasTable('bib_book_page_practical_cases')) {
+            $query->withCount('practicalCases');
+        }
+
+        $page = $query->findOrFail($id);
 
         return response()->json([
             'success' => true,

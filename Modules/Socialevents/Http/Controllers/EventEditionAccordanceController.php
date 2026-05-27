@@ -38,7 +38,6 @@ class EventEditionAccordanceController extends Controller
     {
         $edicion = EventEdition::find($id);
         $typeSessions = getEnumValues('event_edition_accordances','minutes_type');
-        $tinyApiKey = $this->P000010;
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
@@ -51,7 +50,6 @@ class EventEditionAccordanceController extends Controller
 
         return Inertia::render('Socialevents::Editions/MinutesCreate',[
             'edicion' => $edicion,
-            'tinyApiKey' => $tinyApiKey,
             'typeSessions' => $typeSessions,
             'ubigeo' => $ubigeo,
             'documentTypes' => $documentTypes,
@@ -117,7 +115,6 @@ class EventEditionAccordanceController extends Controller
         $accordance = EventEditionAccordance::find($id);
         $edicion = EventEdition::find($accordance->edition_id);
         $typeSessions = getEnumValues('event_edition_accordances','minutes_type');
-        $tinyApiKey = $this->P000010;
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
@@ -130,7 +127,6 @@ class EventEditionAccordanceController extends Controller
 
         return Inertia::render('Socialevents::Editions/MinutesEdit',[
             'edicion' => $edicion,
-            'tinyApiKey' => $tinyApiKey,
             'typeSessions' => $typeSessions,
             'ubigeo' => $ubigeo,
             'documentTypes' => $documentTypes,

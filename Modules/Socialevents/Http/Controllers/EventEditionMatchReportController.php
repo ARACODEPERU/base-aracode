@@ -17,7 +17,7 @@ use Modules\Socialevents\Entities\EventEditionMatchReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
-use Modules\SocialEvents\Services\PositionTableService;
+use Modules\Socialevents\Services\PositionTableService;
 
 class EventEditionMatchReportController extends Controller
 {
@@ -235,7 +235,6 @@ class EventEditionMatchReportController extends Controller
             //dd($accordance);
         $edicion = EventEdition::find($accordance->partido->edition_id);
         $resolutionStatus = getEnumValues('event_edition_match_reports','protest_status');
-        $tinyApiKey = $this->P000010;
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
@@ -248,7 +247,6 @@ class EventEditionMatchReportController extends Controller
 
         return Inertia::render('Socialevents::Editions/MinutesMatchEdit', [
             'edicion' => $edicion,
-            'tinyApiKey' => $tinyApiKey,
             'resolutionStatus' => $resolutionStatus,
             'ubigeo' => $ubigeo,
             'documentTypes' => $documentTypes,

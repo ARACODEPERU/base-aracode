@@ -37,8 +37,36 @@ class EventEdition extends Model
         'status',
         'yellow_price',
         'direct_red_price',
-        'double_yellow_price'
+        'double_yellow_price',
+        'contact_name',
+        'contact_phone',
+        'contact_whatsapp',
+        'landing_hero_image',
+        'landing_published',
+        'public_slug',
+        'mobile_enabled',
+        'branding',
     ];
+
+    protected $casts = [
+        'landing_published' => 'boolean',
+        'mobile_enabled' => 'boolean',
+        'branding' => 'array',
+        'inscription_fee' => 'decimal:2',
+        'yellow_price' => 'decimal:2',
+        'direct_red_price' => 'decimal:2',
+        'double_yellow_price' => 'decimal:2',
+    ];
+
+    public function landingUrl(): string
+    {
+        return route('socialevents_torneos_landing', ['eId' => $this->id]);
+    }
+
+    public function accentColor(): ?string
+    {
+        return $this->branding['accent_color'] ?? null;
+    }
 
     public function evento(): BelongsTo
     {

@@ -16,7 +16,6 @@
     import FlatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
-    import Editor from '@tinymce/tinymce-vue';
     import iconUpload from '@/Components/vristo/icon/icon-upload.vue';
     import SearchClients from '../../Teams/Partials/SearchClients.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
@@ -33,10 +32,6 @@
         resolutionStatus: {
             type: Array,
             default: () => ([]),
-        },
-        tinyApiKey: {
-            type: String,
-            default: null,
         },
         ubigeo: {
             type: Object,

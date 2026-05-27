@@ -68,7 +68,6 @@ class EvenEventController extends Controller
         return Inertia::render('Socialevents::Events/Create', [
             'categories' => $categories,
             'instructors'   => $instructors,
-            'tiny_api_key' => $this->P000010,
             'locales' => $locales
         ]);
     }
@@ -194,7 +193,6 @@ class EvenEventController extends Controller
         return Inertia::render('Socialevents::Events/Edit', [
             'categories' => $categories,
             'instructors'   => $instructors,
-            'tiny_api_key' => $this->P000010,
             'locales' => $locales,
             'socialevent' => $event,
             'eventLocales' => $eventLocales,

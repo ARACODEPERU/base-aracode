@@ -9,6 +9,7 @@ use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
+use Modules\Socialevents\Support\TournamentPhaseLabels;
 
 class TournamentLandingController extends Controller
 {
@@ -24,6 +25,12 @@ class TournamentLandingController extends Controller
         if (!$edition) {
             abort(404, 'Edición o evento no encontrado.');
         }
+
+        if (! $edition->landing_published) {
+            abort(404, 'La landing de este torneo no está publicada.');
+        }
+
+        $phaseLabels = TournamentPhaseLabels::labels();
 
         // Obtener todos los partidos
         $matches = EventEditionMatch::with(['equipolocal', 'equipovisitante'])
@@ -65,7 +72,14 @@ class TournamentLandingController extends Controller
         $goalkeepersRanking = $this->calculateGoalkeepersRanking($playerStats, $sanctions);
 
         // Pasar los datos a la vista
-        return view('socialevents::torneos.landing', compact('edition', 'matches', 'currentEquipment', 'playersRanking', 'goalkeepersRanking'));
+        return view('socialevents::torneos.landing', compact(
+            'edition',
+            'matches',
+            'currentEquipment',
+            'playersRanking',
+            'goalkeepersRanking',
+            'phaseLabels'
+        ));
     }
 
     private function calculatePlayersRanking($playerStats, $sanctions)

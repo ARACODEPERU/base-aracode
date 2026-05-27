@@ -13,10 +13,6 @@
             type: Object,
             default: () => ({}),
         },
-        tinyApiKey: {
-            type: String,
-            default: () => ({}),
-        },
         edicion: {
             type: Object,
             default: () => ({}),
@@ -43,7 +39,6 @@
             <EditForm
                 :eventos="eventos"
                 :formats="formats"
-                :tinyApiKey="tinyApiKey"
                 :edicion="edicion"
             />
         </div>

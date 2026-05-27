@@ -14,6 +14,7 @@ use Modules\Socialevents\Http\Controllers\EventEditionMatchSanctionController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
+use Modules\Socialevents\Http\Controllers\SocialeventsEditorController;
 use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 /*
@@ -29,6 +30,7 @@ use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function () {
     Route::get('dashboard', 'SocialeventsController@index')->name('even_dashboard');
+    Route::post('editor/upload-image', [SocialeventsEditorController::class, 'uploadImage'])->name('even_editor_upload_image');
 
     Route::middleware(['middleware' => 'permission:even_categoria_listado'])->get('categories', [EvenCategoryController::class, 'index'])->name('even_categories_list');
     Route::middleware(['middleware' => 'permission:even_categoria_nuevo'])->get('categories/create', [EvenCategoryController::class, 'create'])->name('even_categoriess_create');

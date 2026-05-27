@@ -21,7 +21,7 @@ use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Services\TournamentService;
-use Modules\SocialEvents\Services\PositionTableService;
+use Modules\Socialevents\Services\PositionTableService;
 
 
 class EventEditionMatchController extends Controller

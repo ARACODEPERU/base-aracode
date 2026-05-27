@@ -59,9 +59,16 @@
         return (moduleSelected.value?.items || []).filter((option) => hasPermission(option.permissions));
     });
 
+    /** Módulos del rail izquierdo: sin permiso no se monta Tooltip ni wrapper (evita huecos). */
+    const visibleModules = computed(() => {
+        return menuData.value.filter((menu) => hasPermission(menu.permissions));
+    });
+
     const visibleSubOptions = (option) => {
         return (option?.items || []).filter((subOption) => hasPermission(subOption.permissions));
     };
+
+    const isExpandableOption = (option) => visibleSubOptions(option).length > 0;
 
     const normalizeRoutePath = (url) => {
         if (!url || url === 'module') {
@@ -516,7 +523,7 @@
                                 class="h-full"
                             >
                                 <div class="w-full flex flex-col gap-3 items-center py-3">
-                                    <template v-for="menu in menuData">
+                                    <template v-for="menu in visibleModules" :key="menu.text">
                                         <template v-if="menu.route == null">
                                             <Tooltip
                                                 :color="colorTooltip"
@@ -529,7 +536,6 @@
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <button
-                                                    v-if="hasPermission(menu.permissions)"
                                                     @click="handleModuleClick(menu)"
                                                     @mouseenter="showModuleTooltip(menu.text)"
                                                     @mouseleave="hideModuleTooltip(menu.text)"
@@ -567,7 +573,6 @@
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <button
-                                                    v-if="hasPermission(menu.permissions)"
                                                     @click="handleModuleClick(menu)"
                                                     @mouseenter="showModuleTooltip(menu.text)"
                                                     @mouseleave="hideModuleTooltip(menu.text)"
@@ -605,7 +610,6 @@
                                                     <span class="uppercase" :class="fontTitleTooltip">{{ menu.text }}</span>
                                                 </template>
                                                 <Link
-                                                    v-if="hasPermission(menu.permissions)"
                                                     :href="menu.route"
                                                     @click="handleModuleClick(menu)"
                                                     @mouseenter="showModuleTooltip(menu.text)"
@@ -700,7 +704,7 @@
                                 class="sidebar-option-item"
                                 :style="{ transitionDelay: `${Math.min(index * 45, 180)}ms` }"
                             >
-                                <template v-if="option.items && option.items.length > 0">
+                                <template v-if="isExpandableOption(option)">
                                     <button
                                         @click="handleOptionClick(option.text, true)"
                                         class="group w-full rounded-xl border border-transparent bg-white/70 px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:bg-slate-800/80 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
@@ -733,7 +737,7 @@
                                                 >
                                                     {{ option.badge }}
                                                 </span>
-                                                <i v-if="option.items && option.items.length > 0"
+                                                <i
                                                    class="ri-arrow-down-s-line text-slate-400 dark:text-slate-500 text-sm transition-transform flex-shrink-0"
                                                    :class="{ 'rotate-180': activeOption === option.text }"
                                                 ></i>
@@ -791,7 +795,7 @@
                                     </Link>
                                 </template>
                                 <!-- Submenú desplegable si tiene subopciones -->
-                                <VueCollapsible v-if="option.items && option.items.length > 0" :isOpen="expandedSections == option.text">
+                                <VueCollapsible v-if="isExpandableOption(option)" :isOpen="expandedSections == option.text">
                                     <TransitionGroup
                                         name="sidebar-suboption"
                                         tag="div"

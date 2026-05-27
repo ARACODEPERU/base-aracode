@@ -8,6 +8,8 @@
     import Keypad from '@/Components/Keypad.vue';
     import Swal2 from 'sweetalert2';
     import { ref, computed, onMounted } from 'vue';
+
+    const xhttp = assetUrl;
     import { ConfigProvider, Select, TreeSelect } from 'ant-design-vue';
     import 'cropperjs/dist/cropper.css';
     import CropperImage from '@/Components/CropperImage.vue';
@@ -18,8 +20,10 @@
     import FlatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
-    import Editor from '@tinymce/tinymce-vue';
+    import EditorAracode from '@/Components/EditorAracode.vue';
     import iconUpload from '@/Components/vristo/icon/icon-upload.vue';
+
+    const editorImageUploadUrl = route('even_editor_upload_image');
 
     const props = defineProps({
         eventos: {
@@ -29,10 +33,6 @@
         formats: {
             type: Object,
             default: () => ({}),
-        },
-        tinyApiKey: {
-            type: String,
-            default: null,
         },
         edicion: {
             type: Object,
@@ -83,8 +83,45 @@
         file: null,
         yellow_price: props.edicion.yellow_price,
         direct_red_price: props.edicion.direct_red_price,
-        double_yellow_price: props.edicion.double_yellow_price
+        double_yellow_price: props.edicion.double_yellow_price,
+        contact_name: props.edicion.contact_name ?? '',
+        contact_phone: props.edicion.contact_phone ?? '',
+        contact_whatsapp: props.edicion.contact_whatsapp ?? '',
+        landing_published: Boolean(props.edicion.landing_published),
+        mobile_enabled: props.edicion.mobile_enabled !== false,
+        public_slug: props.edicion.public_slug ?? '',
+        branding_accent_color: props.edicion.branding?.accent_color ?? '',
+        landing_hero_file: null,
     });
+
+    const landingHeroInput = ref(null);
+
+    const openLandingHeroExplorer = () => {
+        landingHeroInput.value?.click();
+    };
+
+    const onLandingHeroSelected = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        form.landing_hero_file = file;
+    };
+
+    const landingUrl = computed(() => route('socialevents_torneos_landing', props.edicion.id));
+
+    const copyLandingUrl = async () => {
+        try {
+            await navigator.clipboard.writeText(landingUrl.value);
+            Swal2.fire({
+                title: 'Copiado',
+                text: 'Enlace de la landing copiado al portapapeles',
+                icon: 'success',
+                timer: 1800,
+                showConfirmButton: false,
+            });
+        } catch {
+            Swal2.fire({ title: 'Error', text: 'No se pudo copiar el enlace', icon: 'error' });
+        }
+    };
 
     const updateEdition = () => {
         form.post(route('even_ediciones_update'), {
@@ -243,14 +280,11 @@
                         </div>
                         <div class="sm:col-span-6">
                             <InputLabel for="details" value="Detalles" class="mb-1" />
-                            <Editor
-                                id="details"
-                                :api-key="tinyApiKey"
+                            <EditorAracode
                                 v-model="form.details"
-                                :init="{
-                                    plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
-                                    language: 'es',
-                                }"
+                                minHeight="320px"
+                                placeholder="Detalles de la edición..."
+                                :imageUploadUrl="editorImageUploadUrl"
                             />
                             <InputError :message="form.errors.details" class="mt-2" />
                         </div>
@@ -397,6 +431,63 @@
                             <InputError :message="form.errors.double_yellow_price" class="mt-2" />
                         </div>
 
+                        <div class="col-span-3">
+                            <h4 class="text-lg font-bold mt-6 mb-2">Publicación web y app móvil</h4>
+                        </div>
+                        <div class="sm:col-span-3 grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel for="contact_name" value="Nombre de contacto" class="mb-1" />
+                                <TextInput id="contact_name" v-model="form.contact_name" />
+                                <InputError :message="form.errors.contact_name" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="contact_phone" value="Teléfono" class="mb-1" />
+                                <TextInput id="contact_phone" v-model="form.contact_phone" />
+                                <InputError :message="form.errors.contact_phone" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="contact_whatsapp" value="WhatsApp (solo números)" class="mb-1" />
+                                <TextInput id="contact_whatsapp" v-model="form.contact_whatsapp" placeholder="51999999999" />
+                                <InputError :message="form.errors.contact_whatsapp" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="public_slug" value="Slug URL (opcional)" class="mb-1" />
+                                <TextInput id="public_slug" v-model="form.public_slug" placeholder="apertura-2026" />
+                                <InputError :message="form.errors.public_slug" class="mt-2" />
+                            </div>
+                            <div>
+                                <InputLabel for="branding_accent_color" value="Color acento (#hex)" class="mb-1" />
+                                <TextInput id="branding_accent_color" v-model="form.branding_accent_color" placeholder="#3b82f6" />
+                            </div>
+                            <div class="flex flex-col gap-3 justify-end">
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" v-model="form.landing_published" class="form-checkbox" />
+                                    <span class="text-sm font-medium">Publicar landing web</span>
+                                </label>
+                                <label class="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" v-model="form.mobile_enabled" class="form-checkbox" />
+                                    <span class="text-sm font-medium">Disponible en app móvil</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <InputLabel value="Imagen hero landing (JPG/PNG)" class="mb-1" />
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button type="button" @click="openLandingHeroExplorer" class="btn btn-outline-primary btn-sm">
+                                    <icon-upload class="w-4 h-4 mr-1" />
+                                    Subir imagen
+                                </button>
+                                <input ref="landingHeroInput" type="file" class="hidden" accept="image/*" @change="onLandingHeroSelected" />
+                                <a v-if="edicion.landing_hero_image" :href="xhttp + 'storage/' + edicion.landing_hero_image" target="_blank" class="text-sm text-primary underline">
+                                    Ver imagen actual
+                                </a>
+                            </div>
+                            <InputError :message="form.errors.landing_hero_file" class="mt-2" />
+                        </div>
+                        <div class="sm:col-span-3 flex flex-wrap gap-2">
+                            <a :href="landingUrl" target="_blank" class="btn btn-outline-secondary btn-sm">Ver landing</a>
+                            <button type="button" @click="copyLandingUrl" class="btn btn-outline-secondary btn-sm">Copiar enlace</button>
+                        </div>
                         <div class="sm:col-span-3">
                             <InputLabel value="Estado" />
                             <div class="flex flex-wrap justify-start gap-1.5 sm:gap-2">

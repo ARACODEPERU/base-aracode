@@ -5,6 +5,7 @@ namespace Modules\Bibliodata\Services;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\Bibliodata\Entities\BibBook;
 use Modules\Bibliodata\Entities\BibOrganization;
 use Modules\Bibliodata\Entities\BibOrganizationUser;
@@ -19,18 +20,87 @@ class BibDashboardService
         $today = Carbon::today();
         $nextThirtyDays = $today->copy()->addDays(30);
 
+        $subscriptionsReady = $this->subscriptionsSchemaReady();
+
         return [
-            'metrics' => $this->metrics($today, $nextThirtyDays),
-            'charts' => $this->charts($today),
-            'tables' => $this->tables($today, $nextThirtyDays),
+            'subscriptionsSchemaReady' => $subscriptionsReady,
+            'metrics' => $this->metrics($today, $nextThirtyDays, $subscriptionsReady),
+            'charts' => $this->charts($today, $subscriptionsReady),
+            'tables' => $this->tables($today, $nextThirtyDays, $subscriptionsReady),
         ];
     }
 
-    private function metrics(Carbon $today, Carbon $nextThirtyDays): array
+    private function subscriptionsSchemaReady(): bool
+    {
+        return Schema::hasTable('bib_subscriptions')
+            && Schema::hasTable('bib_subscription_plans')
+            && Schema::hasTable('bib_organizations');
+    }
+
+    private function emptySubscriptionMetrics(): array
+    {
+        return [
+            'activeSubscriptions' => 0,
+            'expiringSubscriptions' => 0,
+            'orgWithoutBeneficiaries' => 0,
+            'stalePendingSubscriptions' => 0,
+        ];
+    }
+
+    private function emptySubscriptionCharts(): array
+    {
+        return [
+            'newSubscriptions' => ['labels' => [], 'values' => []],
+            'subscriptionStatus' => [],
+            'subscriberTypes' => [],
+        ];
+    }
+
+    private function emptySubscriptionTables(): array
+    {
+        return [
+            'expiringSubscriptions' => [],
+            'orgWithoutBeneficiaries' => [],
+            'recentSubscriptions' => [],
+            'topBooksBySubscriptions' => [],
+        ];
+    }
+
+    private function metrics(Carbon $today, Carbon $nextThirtyDays, bool $subscriptionsReady): array
     {
         $readerRole = config('bibliodata.reader.role', 'Lector');
         $readerRoleExists = Role::where('name', $readerRole)->exists();
 
+        $subscriptionMetrics = $subscriptionsReady
+            ? $this->subscriptionMetrics($today, $nextThirtyDays)
+            : $this->emptySubscriptionMetrics();
+
+        $readersCount = $readerRoleExists
+            ? User::role($readerRole)->count()
+            : 0;
+
+        $readersInOrganizations = Schema::hasTable('bib_organization_users')
+            ? (int) BibOrganizationUser::query()->distinct('user_id')->count('user_id')
+            : 0;
+
+        return array_merge($subscriptionMetrics, [
+            'readers' => $readersCount,
+            'readersInOrganizations' => $readersInOrganizations,
+            'activeOrganizations' => Schema::hasTable('bib_organizations')
+                ? BibOrganization::where('status', 'active')->count()
+                : 0,
+            'organizationMembers' => Schema::hasTable('bib_organization_users')
+                ? BibOrganizationUser::count()
+                : 0,
+            'availableBooks' => BibBook::where('status', 'available')->count(),
+            'activePlans' => Schema::hasTable('bib_subscription_plans')
+                ? BibSubscriptionPlan::where('is_active', true)->count()
+                : 0,
+        ]);
+    }
+
+    private function subscriptionMetrics(Carbon $today, Carbon $nextThirtyDays): array
+    {
         $activeSubscriptions = BibSubscription::query()
             ->where('status', 'active')
             ->where(function ($q) use ($today) {
@@ -43,23 +113,9 @@ class BibDashboardService
             ->whereDate('ends_at', '<=', $nextThirtyDays)
             ->count();
 
-        $readersCount = $readerRoleExists
-            ? User::role($readerRole)->count()
-            : 0;
-
-        $readersInOrganizations = (int) BibOrganizationUser::query()
-            ->distinct('user_id')
-            ->count('user_id');
-
         return [
             'activeSubscriptions' => (clone $activeSubscriptions)->count(),
             'expiringSubscriptions' => $expiringSubscriptions,
-            'readers' => $readersCount,
-            'readersInOrganizations' => $readersInOrganizations,
-            'activeOrganizations' => BibOrganization::where('status', 'active')->count(),
-            'organizationMembers' => BibOrganizationUser::count(),
-            'availableBooks' => BibBook::where('status', 'available')->count(),
-            'activePlans' => BibSubscriptionPlan::where('is_active', true)->count(),
             'orgWithoutBeneficiaries' => $this->orgWithoutBeneficiariesQuery()->count(),
             'stalePendingSubscriptions' => BibSubscription::where('status', 'pending')
                 ->where('created_at', '<', $today->copy()->subDays(7))
@@ -67,8 +123,12 @@ class BibDashboardService
         ];
     }
 
-    private function charts(Carbon $today): array
+    private function charts(Carbon $today, bool $subscriptionsReady): array
     {
+        if (! $subscriptionsReady) {
+            return $this->emptySubscriptionCharts();
+        }
+
         $monthLabels = [];
         $newSubscriptions = [];
 
@@ -139,8 +199,12 @@ class BibDashboardService
         ];
     }
 
-    private function tables(Carbon $today, Carbon $nextThirtyDays): array
+    private function tables(Carbon $today, Carbon $nextThirtyDays, bool $subscriptionsReady): array
     {
+        if (! $subscriptionsReady) {
+            return $this->emptySubscriptionTables();
+        }
+
         $expiringSubscriptions = BibSubscription::with(['plan', 'user', 'organization', 'book'])
             ->where('status', 'active')
             ->whereNotNull('ends_at')
@@ -200,10 +264,15 @@ class BibDashboardService
 
     private function orgWithoutBeneficiariesQuery()
     {
-        return BibSubscription::query()
+        $query = BibSubscription::query()
             ->where('subscriber_type', 'organization')
-            ->whereIn('status', ['active', 'pending'])
-            ->whereDoesntHave('beneficiaries');
+            ->whereIn('status', ['active', 'pending']);
+
+        if (Schema::hasTable('bib_subscription_beneficiaries')) {
+            $query->whereDoesntHave('beneficiaries');
+        }
+
+        return $query;
     }
 
     private function subscriptionRow(BibSubscription $sub, Carbon $today): array

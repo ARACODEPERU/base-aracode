@@ -16,8 +16,10 @@
     import FlatPickr from 'vue-flatpickr-component';
     import 'flatpickr/dist/flatpickr.css';
     import { Spanish } from "flatpickr/dist/l10n/es.js"
-    import Editor from '@tinymce/tinymce-vue';
+    import EditorAracode from '@/Components/EditorAracode.vue';
     import iconUpload from '@/Components/vristo/icon/icon-upload.vue';
+
+    const editorImageUploadUrl = route('even_editor_upload_image');
     import SearchClients from '../../Teams/Partials/SearchClients.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
 
@@ -33,10 +35,6 @@
         typeSessions: {
             type: Array,
             default: () => ([]),
-        },
-        tinyApiKey: {
-            type: String,
-            default: null,
         },
         ubigeo: {
             type: Object,
@@ -238,16 +236,11 @@
 
                 <div class="col-span-full">
                     <InputLabel for="minutes_body" value="Desarrollo de la Reunión y Acuerdos *" />
-                    <Editor
-                        placeholder="Puntos tratados..."
-                        id="minutes_body"
-                        :api-key="tinyApiKey"
+                    <EditorAracode
                         v-model="form.minutes_body"
-                        :init="{
-                            plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
-                            language: 'es',
-                        }"
-
+                        minHeight="420px"
+                        placeholder="Puntos tratados, acuerdos y desarrollo de la reunión..."
+                        :imageUploadUrl="editorImageUploadUrl"
                     />
                     <InputError :message="form.errors.minutes_body" class="mt-2" />
                 </div>

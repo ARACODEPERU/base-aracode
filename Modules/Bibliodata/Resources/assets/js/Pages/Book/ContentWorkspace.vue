@@ -353,7 +353,23 @@ const loadPageById = async (pageId) => {
             pageContent.value = data.page.content || '';
             selectedPageId.value = data.page.id;
             selectedSection.value = findSectionById(sections.value, data.page.section_id);
+            return;
         }
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo cargar la página',
+            text: data?.message || 'Respuesta inválida del servidor',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    } catch (e) {
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo cargar la página',
+            text: e.response?.data?.message || e.message || 'Revise la consola o ejecute las migraciones pendientes.',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
     } finally {
         pageLoading.value = false;
     }

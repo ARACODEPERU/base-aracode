@@ -13,7 +13,8 @@ export default defineConfig({
             buildDirectory: 'build-socialevents',
             input: [
                 __dirname + '/resources/assets/sass/app.scss',
-                __dirname + '/resources/assets/js/app.js'
+                __dirname + '/resources/assets/js/app.js',
+                __dirname + '/resources/assets/js/torneos-landing.js',
             ],
             refresh: true,
         }),

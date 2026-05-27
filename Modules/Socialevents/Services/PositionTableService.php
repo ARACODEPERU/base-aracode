@@ -2,8 +2,8 @@
 
 namespace Modules\Socialevents\Services;
 
-use Modules\SocialEvents\Entities\EventEditionMatch;
-use Modules\SocialEvents\Entities\EventEditionTeam;
+use Modules\Socialevents\Entities\EventEditionMatch;
+use Modules\Socialevents\Entities\EventEditionTeam;
 
 class PositionTableService
 {

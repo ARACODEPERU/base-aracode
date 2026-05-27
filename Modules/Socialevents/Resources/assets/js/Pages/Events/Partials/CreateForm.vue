@@ -8,7 +8,9 @@ import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
 import { ref, watch, onMounted } from 'vue';
-import Editor from '@tinymce/tinymce-vue'
+import EditorAracode from '@/Components/EditorAracode.vue'
+
+const editorImageUploadUrl = route('even_editor_upload_image')
 import {
     ConfigProvider,
     Select,
@@ -39,10 +41,6 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
-    tiny_api_key: {
-        type: String,
-        default: null,
-    }
 });
 
 const form = useForm({
@@ -168,13 +166,11 @@ const showLeafIcon = ref(false);
                 </div>
                 <div v-if="form.just_transmit == 0" class="col-span-6">
                     <InputLabel for="description" value="Descripción *" class="mb-1" />
-                    <Editor
-                        :api-key="tiny_api_key"
+                    <EditorAracode
                         v-model="form.description"
-                        :init="{
-                            plugins: 'anchor autolink charmap codesample emoticons link lists media searchreplace table visualblocks wordcount',
-                            language: 'es',
-                        }"
+                        minHeight="320px"
+                        placeholder="Descripción del evento..."
+                        :imageUploadUrl="editorImageUploadUrl"
                     />
                     <InputError :message="form.errors.description" class="mt-2" />
                 </div>

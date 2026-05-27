@@ -21,10 +21,6 @@
             type: Array,
             default: () => ([]),
         },
-        tinyApiKey: {
-            type: String,
-            default: null,
-        },
         ubigeo: {
             type: Object,
             default: () => ({}),
@@ -57,7 +53,6 @@
             <MinutesEditForm
                 :edicion="edicion"
                 :typeSessions="typeSessions"
-                :tinyApiKey="tinyApiKey"
                 :ubigeo="ubigeo"
                 :documentTypes="documentTypes"
                 :accordance="accordance"

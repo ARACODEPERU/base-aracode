@@ -8,6 +8,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EvenEvent;
 use Modules\Socialevents\Entities\EventEdition;
@@ -52,11 +54,9 @@ class EventEditionController extends Controller
     {
         $events = EvenEvent::get();
         $formats = getEnumValues('event_editions','competition_format');
-        $tinyApiKey = $this->P000010;
         return Inertia::render('Socialevents::Editions/Create',[
             'eventos' => $events,
             'formats' => $formats,
-            'tinyApiKey' => $tinyApiKey
         ]);
     }
 
@@ -82,6 +82,7 @@ class EventEditionController extends Controller
                 'yellow_price'   => 'required',
                 'direct_red_price'   => 'required',
                 'double_yellow_price'   => 'required',
+                ...$this->publicationValidationRules(),
             ]
         );
 
@@ -146,13 +147,11 @@ class EventEditionController extends Controller
     {
         $events = EvenEvent::get();
         $formats = getEnumValues('event_editions','competition_format');
-        $tinyApiKey = $this->P000010;
         $edicion = EventEdition::with('evento')->where('id', $id)->first();
 
         return Inertia::render('Socialevents::Editions/Edit',[
             'eventos' => $events,
             'formats' => $formats,
-            'tinyApiKey' => $tinyApiKey,
             'edicion' => $edicion
         ]);
     }
@@ -180,13 +179,14 @@ class EventEditionController extends Controller
                 'yellow_price'   => 'required',
                 'direct_red_price'   => 'required',
                 'double_yellow_price'   => 'required',
+                ...$this->publicationValidationRules($id),
             ]
         );
 
         $prize_details = $request->get('prize_details');
         $details = $request->get('details');
 
-        $edition = EventEdition::find($id);
+        $edition = EventEdition::findOrFail($id);
         $edition->update([
             'event_id' => $request->get('event_id'),
             'year' => $request->get('year'),
@@ -206,26 +206,12 @@ class EventEditionController extends Controller
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),
             'double_yellow_price' => $request->get('double_yellow_price'),
+            ...$this->publicationAttributesFromRequest($request),
         ]);
 
-        $path = null;
-        $destination = 'uploads/eventos/ediciones';
-        $file = $request->file('file');
+        $this->storeEditionFiles($request, $edition);
 
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $extension = $file->getClientOriginalExtension();
-            $file_name = date('YmdHis') . '.' . $extension;
-            $path = $request->file('file')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
-
-            $edition->name_database_file = $original_name;
-            $edition->path_database_file = $path;
-            $edition->save();
-        }
+        return to_route('even_ediciones_listado');
     }
 
     /**
@@ -294,5 +280,83 @@ class EventEditionController extends Controller
             'success' => true,
             'message' => 'Estado actualizado correctamente.'
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function publicationValidationRules(?int $editionId = null): array
+    {
+        return [
+            'contact_name' => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+            'contact_whatsapp' => 'nullable|string|max:50',
+            'landing_published' => 'nullable|boolean',
+            'mobile_enabled' => 'nullable|boolean',
+            'public_slug' => [
+                'nullable',
+                'string',
+                'max:120',
+                'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
+                Rule::unique('event_editions', 'public_slug')->ignore($editionId),
+            ],
+            'branding_accent_color' => 'nullable|string|max:20',
+            'landing_hero_file' => 'nullable|image|max:5120',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function publicationAttributesFromRequest(Request $request): array
+    {
+        $slug = $request->input('public_slug');
+        if (is_string($slug) && $slug !== '') {
+            $slug = Str::slug($slug);
+        } else {
+            $slug = null;
+        }
+
+        $accent = $request->input('branding_accent_color');
+        $branding = null;
+        if (is_string($accent) && $accent !== '') {
+            $branding = ['accent_color' => $accent];
+        }
+
+        return [
+            'contact_name' => $request->input('contact_name'),
+            'contact_phone' => $request->input('contact_phone'),
+            'contact_whatsapp' => $request->input('contact_whatsapp'),
+            'landing_published' => $request->boolean('landing_published'),
+            'mobile_enabled' => $request->boolean('mobile_enabled', true),
+            'public_slug' => $slug,
+            'branding' => $branding,
+        ];
+    }
+
+    private function storeEditionFiles(Request $request, EventEdition $edition): void
+    {
+        $destination = 'uploads/eventos/ediciones';
+        $file = $request->file('file');
+
+        if ($file) {
+            $original_name = strtolower(trim($file->getClientOriginalName()));
+            $extension = $file->getClientOriginalExtension();
+            $file_name = date('YmdHis') . '_bases.' . $extension;
+            $path = $file->storeAs($destination, $file_name, 'public');
+
+            $edition->name_database_file = $original_name;
+            $edition->path_database_file = $path;
+            $edition->save();
+        }
+
+        $heroFile = $request->file('landing_hero_file');
+        if ($heroFile) {
+            $extension = $heroFile->getClientOriginalExtension();
+            $file_name = date('YmdHis') . '_hero.' . $extension;
+            $path = $heroFile->storeAs($destination . '/landing', $file_name, 'public');
+            $edition->landing_hero_image = $path;
+            $edition->save();
+        }
     }
 }

@@ -143,6 +143,22 @@ const getPrizes = (prizeDetails) => {
     return Object.entries(prizeDetails).filter(([position, prize]) => prize && (prize.money || prize.gift)).map(([position, prize]) => ({ position, ...prize }));
 };
 
+const copyLandingUrl = async (editionId) => {
+    const url = route('socialevents_torneos_landing', editionId);
+    try {
+        await navigator.clipboard.writeText(url);
+        Swal2.fire({
+            title: 'Copiado',
+            text: 'Enlace de la landing copiado',
+            icon: 'success',
+            timer: 1800,
+            showConfirmButton: false,
+        });
+    } catch {
+        Swal2.fire({ title: 'Error', text: 'No se pudo copiar el enlace', icon: 'error' });
+    }
+};
+
 const getPositionLabel = (position) => {
     const labels = {
         'first': '1°',
@@ -217,11 +233,21 @@ const getPositionLabel = (position) => {
                     </svg>
                      <!-- Header de la edición -->
                      <div class="bg-gray-100 px-6 py-4 border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-                         <div class="flex justify-between items-center pl-4">
+                         <div class="flex justify-between items-center pl-4 flex-wrap gap-2">
                              <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ edition.name }}</h3>
-                             <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
-                                 {{ edition.year }}
-                             </span>
+                             <div class="flex flex-wrap items-center gap-2">
+                                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                                     {{ edition.year }}
+                                 </span>
+                                 <span
+                                     v-if="edition.landing_published"
+                                     class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold"
+                                 >Landing</span>
+                                 <span
+                                     v-if="edition.mobile_enabled !== false"
+                                     class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-semibold"
+                                 >App</span>
+                             </div>
                          </div>
                          <p class="text-gray-600 mt-1 pl-4">{{ edition.evento.title }}</p>
                      </div>
@@ -355,6 +381,22 @@ const getPositionLabel = (position) => {
                                  </label>
                              </div>
                              <div class="flex flex-wrap gap-3">
+                                <a
+                                    v-if="edition.landing_published"
+                                    :href="route('socialevents_torneos_landing', edition.id)"
+                                    target="_blank"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
+                                >
+                                    Ver landing
+                                </a>
+                                <button
+                                    v-if="edition.landing_published"
+                                    type="button"
+                                    @click="copyLandingUrl(edition.id)"
+                                    class="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-200"
+                                >
+                                    Copiar enlace
+                                </button>
                                  <Link
                                 v-can="'even_ediciones_editar'"
                                 :href="route('even_ediciones_editar', edition.id)"
