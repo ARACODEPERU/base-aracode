@@ -15,7 +15,7 @@ export default defineConfig(({ command }) => {
             laravel({
                 input: [
                     "resources/js/app.js",
-                    "Modules/Socialevents/resources/assets/js/torneos-landing.js",
+                    "Modules/Socialevents/Resources/assets/js/torneos-landing.js",
                 ],
                 ssr: "resources/js/ssr.js",
                 refresh: true,

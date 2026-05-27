@@ -1,5 +1,10 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const assets = (...segments) => path.join(__dirname, 'Resources', 'assets', ...segments);
 
 export default defineConfig({
     build: {
@@ -12,9 +17,9 @@ export default defineConfig({
             publicDirectory: '../../public',
             buildDirectory: 'build-socialevents',
             input: [
-                __dirname + '/resources/assets/sass/app.scss',
-                __dirname + '/resources/assets/js/app.js',
-                __dirname + '/resources/assets/js/torneos-landing.js',
+                assets('sass', 'app.scss'),
+                assets('js', 'app.js'),
+                assets('js', 'torneos-landing.js'),
             ],
             refresh: true,
         }),

@@ -16,7 +16,7 @@
     <meta name="description" content="{{ $eventTitle }} — {{ $edition->name }}. Fixture, posiciones y estadísticas.">
     <title>{{ $eventTitle }} | {{ $edition->name }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    @vite(['Modules/Socialevents/resources/assets/js/torneos-landing.js'])
+    @vite(['Modules/Socialevents/Resources/assets/js/torneos-landing.js'])
 </head>
 <body class="se-landing">
     <div class="se-ambient" aria-hidden="true">
