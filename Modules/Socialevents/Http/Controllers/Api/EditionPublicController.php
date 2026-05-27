@@ -5,18 +5,16 @@ namespace Modules\Socialevents\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\Socialevents\Http\Concerns\ChecksEditionMobileAccess;
-use Modules\Socialevents\Services\TournamentStandingsService;
+use Modules\Socialevents\Services\TournamentPublicDataService;
 
-class StandingsApiController extends Controller
+class EditionPublicController extends Controller
 {
     use ChecksEditionMobileAccess;
 
-    public function __construct(
-        private TournamentStandingsService $standingsService
-    ) {}
-
-    public function getStandings(int $editionId): JsonResponse
-    {
+    public function show(
+        int $editionId,
+        TournamentPublicDataService $publicDataService
+    ): JsonResponse {
         $edition = $this->editionForMobileApi($editionId);
 
         if ($edition instanceof JsonResponse) {
@@ -25,8 +23,8 @@ class StandingsApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Tabla de posiciones obtenida correctamente',
-            'data' => $this->standingsService->asStandingsPayload($editionId),
+            'message' => 'Datos públicos de la edición obtenidos correctamente',
+            'data' => $publicDataService->buildForApi($editionId),
         ]);
     }
 }

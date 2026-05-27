@@ -99,4 +99,6 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
 });
 
 // Ruta pública para landing de torneos
-Route::get('torneos/{eId}', [TournamentLandingController::class, 'show'])->name('socialevents_torneos_landing');
+Route::get('torneos/{slug}', [TournamentLandingController::class, 'show'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->name('socialevents_torneos_landing');

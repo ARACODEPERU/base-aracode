@@ -58,9 +58,18 @@ class EventEdition extends Model
         'double_yellow_price' => 'decimal:2',
     ];
 
+    public function landingSlug(): string
+    {
+        if (filled($this->public_slug)) {
+            return $this->public_slug;
+        }
+
+        return (string) $this->id;
+    }
+
     public function landingUrl(): string
     {
-        return route('socialevents_torneos_landing', ['eId' => $this->id]);
+        return route('socialevents_torneos_landing', ['slug' => $this->landingSlug()]);
     }
 
     public function accentColor(): ?string

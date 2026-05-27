@@ -15,6 +15,7 @@ use Modules\Socialevents\Entities\EvenEvent;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Services\PositionTableService;
+use Modules\Socialevents\Support\EditionSlugService;
 
 class EventEditionController extends Controller
 {
@@ -108,6 +109,7 @@ class EventEditionController extends Controller
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),
             'double_yellow_price' => $request->get('double_yellow_price'),
+            ...$this->publicationAttributesFromRequest($request),
         ]);
 
         $path = null;
@@ -206,7 +208,7 @@ class EventEditionController extends Controller
             'yellow_price' => $request->get('yellow_price'),
             'direct_red_price' => $request->get('direct_red_price'),
             'double_yellow_price' => $request->get('double_yellow_price'),
-            ...$this->publicationAttributesFromRequest($request),
+            ...$this->publicationAttributesFromRequest($request, $id),
         ]);
 
         $this->storeEditionFiles($request, $edition);
@@ -308,13 +310,17 @@ class EventEditionController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function publicationAttributesFromRequest(Request $request): array
+    private function publicationAttributesFromRequest(Request $request, ?int $editionId = null): array
     {
-        $slug = $request->input('public_slug');
-        if (is_string($slug) && $slug !== '') {
-            $slug = Str::slug($slug);
-        } else {
-            $slug = null;
+        $slugService = app(EditionSlugService::class);
+        $slug = $slugService->normalizeSlug($request->input('public_slug'));
+
+        if ($slug === null) {
+            $slug = $slugService->generateUniqueSlug(
+                (string) $request->input('name', ''),
+                $request->input('year'),
+                $editionId
+            );
         }
 
         $accent = $request->input('branding_accent_color');

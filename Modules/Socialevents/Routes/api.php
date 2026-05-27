@@ -9,6 +9,7 @@ use Modules\Socialevents\Http\Controllers\Api\PlayerStatsApiController;
 use Modules\Socialevents\Http\Controllers\Api\TeamApiController;
 use Modules\Socialevents\Http\Controllers\Api\PlayerApiController;
 use Modules\Socialevents\Http\Controllers\Api\MatchAdminController;
+use Modules\Socialevents\Http\Controllers\Api\EditionPublicController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,9 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 
 		Route::get('edition/current', [EventApiController::class, 'getCurrentEdition'])
 			->name('edition.current');
+
+		Route::get('edition/{editionId}/public', [EditionPublicController::class, 'show'])
+			->name('edition.public');
 
 		// Partidos
 		Route::get('edition/{editionId}/matches/upcoming', [MatchesApiController::class, 'getUpcomingMatches'])

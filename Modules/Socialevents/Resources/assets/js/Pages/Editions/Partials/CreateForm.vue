@@ -18,6 +18,7 @@
     import { Spanish } from "flatpickr/dist/l10n/es.js"
     import EditorAracode from '@/Components/EditorAracode.vue';
     import iconUpload from '@/Components/vristo/icon/icon-upload.vue';
+    import EditionPublicationPanel from './EditionPublicationPanel.vue';
 
     const editorImageUploadUrl = route('even_editor_upload_image');
 
@@ -90,17 +91,13 @@
         landing_hero_file: null,
     });
 
-    const landingHeroInput = ref(null);
-
-    const openLandingHeroExplorer = () => {
-        landingHeroInput.value?.click();
-    };
-
-    const onLandingHeroSelected = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-        form.landing_hero_file = file;
-    };
+    const landingPathPreview = computed(() => {
+        const slug = (form.public_slug || '').trim();
+        if (slug) {
+            return `/torneos/${slug}`;
+        }
+        return '/torneos/ (se genera al guardar desde nombre y año)';
+    });
 
     const createNow = () => {
         form.post(route('even_ediciones_store'), {
@@ -190,7 +187,7 @@
 
         <template #form>
             <ConfigProvider :locale="esES">
-                <div class="sm:col-span-4">
+                <div class="col-span-6 lg:col-span-4">
                     <div class="grid sm:grid-cols-6 gap-6">
                         <div class="col-span-6">
                             <InputLabel for="event_name" value="Evento *" class="mb-1" />
@@ -408,52 +405,14 @@
                             <InputError :message="form.errors.double_yellow_price" class="mt-2" />
                         </div>
 
-
-                        <div class="col-span-3">
-                            <h4 class="text-lg font-bold mt-6 mb-2">Publicación web y app móvil</h4>
-                        </div>
-                        <div class="sm:col-span-3 grid sm:grid-cols-2 gap-4">
-                            <div>
-                                <InputLabel for="contact_name" value="Nombre de contacto" class="mb-1" />
-                                <TextInput id="contact_name" v-model="form.contact_name" />
-                            </div>
-                            <div>
-                                <InputLabel for="contact_phone" value="Teléfono" class="mb-1" />
-                                <TextInput id="contact_phone" v-model="form.contact_phone" />
-                            </div>
-                            <div>
-                                <InputLabel for="contact_whatsapp" value="WhatsApp" class="mb-1" />
-                                <TextInput id="contact_whatsapp" v-model="form.contact_whatsapp" />
-                            </div>
-                            <div>
-                                <InputLabel for="public_slug" value="Slug URL (opcional)" class="mb-1" />
-                                <TextInput id="public_slug" v-model="form.public_slug" />
-                            </div>
-                            <div>
-                                <InputLabel for="branding_accent_color" value="Color acento" class="mb-1" />
-                                <TextInput id="branding_accent_color" v-model="form.branding_accent_color" placeholder="#3b82f6" />
-                            </div>
-                            <div class="flex flex-col gap-3 justify-end">
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" v-model="form.landing_published" class="form-checkbox" />
-                                    <span class="text-sm font-medium">Publicar landing web</span>
-                                </label>
-                                <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" v-model="form.mobile_enabled" class="form-checkbox" />
-                                    <span class="text-sm font-medium">Disponible en app móvil</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="sm:col-span-3">
-                            <InputLabel value="Imagen hero landing" class="mb-1" />
-                            <button type="button" @click="openLandingHeroExplorer" class="btn btn-outline-primary btn-sm">
-                                <icon-upload class="w-4 h-4 mr-1" />
-                                Subir imagen
-                            </button>
-                            <input ref="landingHeroInput" type="file" class="hidden" accept="image/*" @change="onLandingHeroSelected" />
-                        </div>
-
-                        <div class="sm:col-span-3">
+                    </div>
+                </div>
+                <EditionPublicationPanel
+                    :form="form"
+                    :landing-path-preview="landingPathPreview"
+                >
+                    <template #footer>
+                        <div class="border-t border-gray-200 pt-4 dark:border-zinc-700">
                             <InputLabel value="Estado" />
                             <div class="flex flex-wrap justify-start gap-1.5 sm:gap-2">
                                 <button @click="form.status = 'pending'"
@@ -491,8 +450,8 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </template>
+                </EditionPublicationPanel>
             </ConfigProvider>
         </template>
 

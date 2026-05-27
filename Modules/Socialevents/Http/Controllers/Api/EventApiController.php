@@ -7,9 +7,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Modules\Socialevents\Entities\EvenEvent;
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Services\TournamentStandingsService;
+use Modules\Socialevents\Support\TournamentMedia;
 
 class EventApiController extends Controller
 {
+    public function __construct(
+        private TournamentStandingsService $standingsService
+    ) {}
+
     /**
      * Obtiene la lista de eventos activos con sus ediciones
      *
@@ -101,7 +107,7 @@ class EventApiController extends Controller
 
         $eventData = $this->formatEventData($event);
         $editionData = $edition ? $this->formatEditionData($edition) : null;
-        $rankings = $edition ? $this->getRankings($edition) : [];
+        $rankings = $edition ? $this->standingsService->asRankingsPayload($edition->id) : [];
 
         return response()->json([
             'success' => true,
@@ -139,7 +145,7 @@ class EventApiController extends Controller
 
         $eventData = $this->formatEventData($event);
         $editionData = $edition ? $this->formatEditionData($edition) : null;
-        $rankings = $edition ? $this->getRankings($edition) : [];
+        $rankings = $edition ? $this->standingsService->asRankingsPayload($edition->id) : [];
 
         return response()->json([
             'success' => true,
@@ -240,50 +246,11 @@ class EventApiController extends Controller
     }
 
     /**
-     * Obtiene los rankings de la edición
-     */
-    private function getRankings(EventEdition $edition): array
-    {
-        $rankings = [];
-
-        $equipos = $edition->equipos()
-            ->with('equipo')
-            ->orderBy('rank', 'asc')
-            ->get();
-
-        foreach ($equipos as $et) {
-            $rankings[] = [
-                'rank' => $et->rank,
-                'team_id' => $et->team_id,
-                'team_name' => $et->equipo?->name ?? 'Equipo',
-                'team_short_name' => $et->equipo?->short_name ?? '',
-                'team_logo' => $this->formatImageUrl($et->equipo?->logo_path),
-                'matches_played' => $et->matches_played,
-                'matches_won' => $et->matches_won,
-                'matches_drawn' => $et->matches_drawn,
-                'matches_lost' => $et->matches_lost,
-                'goals_for' => $et->goals_for,
-                'goals_against' => $et->goals_against,
-                'goal_difference' => $et->goal_difference,
-                'points' => $et->points,
-                'is_champion' => (bool) $et->is_champion,
-            ];
-        }
-
-        return $rankings;
-    }
-
-    /**
      * Formatea la URL de una imagen
      */
     private function formatImageUrl(?string $path): ?string
     {
-        $img = null;
-        if ($path) {
-            $img = asset('storage/'.$path);
-        }
-
-        return $img;
+        return TournamentMedia::url($path);
     }
 
     /**

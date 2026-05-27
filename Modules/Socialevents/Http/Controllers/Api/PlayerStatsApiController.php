@@ -6,11 +6,21 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
+use Modules\Socialevents\Http\Concerns\ChecksEditionMobileAccess;
+use Modules\Socialevents\Support\TournamentMedia;
 
 class PlayerStatsApiController extends Controller
 {
+    use ChecksEditionMobileAccess;
+
     public function getAllStats(int $editionId, string $filter = 'goals'): JsonResponse
     {
+        $edition = $this->editionForMobileApi($editionId);
+
+        if ($edition instanceof JsonResponse) {
+            return $edition;
+        }
+
         // Get all player stats with team and player info
         $stats = EventEditionMatchPlayerStat::selectRaw('
             player_id,
@@ -113,11 +123,6 @@ class PlayerStatsApiController extends Controller
 
     private function formatImageUrl(?string $path): ?string
     {
-        $url = null;
-        if ($path) {
-            $url = asset('storage/'.$path);
-        }
-
-        return $url;
+        return TournamentMedia::url($path);
     }
 }

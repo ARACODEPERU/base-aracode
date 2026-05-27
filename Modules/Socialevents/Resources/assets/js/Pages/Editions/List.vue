@@ -143,8 +143,13 @@ const getPrizes = (prizeDetails) => {
     return Object.entries(prizeDetails).filter(([position, prize]) => prize && (prize.money || prize.gift)).map(([position, prize]) => ({ position, ...prize }));
 };
 
-const copyLandingUrl = async (editionId) => {
-    const url = route('socialevents_torneos_landing', editionId);
+const editionLandingSlug = (edition) => {
+    const slug = (edition.public_slug || '').trim();
+    return slug || String(edition.id);
+};
+
+const copyLandingUrl = async (edition) => {
+    const url = route('socialevents_torneos_landing', { slug: editionLandingSlug(edition) });
     try {
         await navigator.clipboard.writeText(url);
         Swal2.fire({
@@ -383,7 +388,7 @@ const getPositionLabel = (position) => {
                              <div class="flex flex-wrap gap-3">
                                 <a
                                     v-if="edition.landing_published"
-                                    :href="route('socialevents_torneos_landing', edition.id)"
+                                    :href="route('socialevents_torneos_landing', { slug: editionLandingSlug(edition) })"
                                     target="_blank"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
                                 >
@@ -392,7 +397,7 @@ const getPositionLabel = (position) => {
                                 <button
                                     v-if="edition.landing_published"
                                     type="button"
-                                    @click="copyLandingUrl(edition.id)"
+                                    @click="copyLandingUrl(edition)"
                                     class="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 transition-colors duration-200"
                                 >
                                     Copiar enlace
