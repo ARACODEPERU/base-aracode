@@ -81,9 +81,25 @@ const form = useForm({
     exhibitors: props.eventExhibitors
 });
 
+const showFormErrors = (errors) => {
+    const bag = errors && typeof errors === 'object' ? errors : form.errors;
+    const messages = Object.values(bag)
+        .flat()
+        .filter(Boolean);
+
+    Swal2.fire({
+        title: 'Error',
+        html: messages.length
+            ? messages.join('<br>')
+            : 'No se pudo actualizar el evento. Verifique su conexión o reduzca el tamaño de la imagen.',
+        icon: 'error',
+    });
+};
+
 const updateNow = () => {
-    form.post(route('even_eventos_update'), {
-        forceFormData: true,
+    form.date = value4.value;
+
+    const options = {
         errorBag: 'updateNow',
         preserveScroll: true,
         onSuccess: () => {
@@ -93,8 +109,26 @@ const updateNow = () => {
                 icon: 'success',
             });
         },
-    });
-}
+        onError: (errors) => {
+            showFormErrors(errors);
+        },
+        onFinish: () => {
+            if (!form.wasSuccessful && Object.keys(form.errors).length === 0) {
+                Swal2.fire({
+                    title: 'Error',
+                    text: 'Tiempo de espera agotado o error de conexión al guardar.',
+                    icon: 'error',
+                });
+            }
+        },
+    };
+
+    if (form.image1) {
+        options.forceFormData = true;
+    }
+
+    form.post(route('even_eventos_update'), options);
+};
 
 const cropImageAndSave = (res) => {
     form.image1 = res;
