@@ -35,7 +35,16 @@ return [
             'label' => 'Deportes y torneos',
             'icon' => 'futbol',
             'enabled' => true,
+            'permission' => 'even_ediciones_listado',
             'description' => 'Ediciones, equipos, fixture, tabla y landing pública.',
+        ],
+        [
+            'id' => 'local_rentals',
+            'label' => 'Alquiler de local',
+            'icon' => 'house',
+            'enabled' => true,
+            'permission' => 'even_alquiler_local_listado',
+            'description' => 'Reservas, adelantos, abonos y notas de venta.',
         ],
         [
             'id' => 'concerts',

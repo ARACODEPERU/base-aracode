@@ -7,6 +7,7 @@ import {
     faPeopleGroup,
     faBoltLightning,
     faGauge,
+    faHouseChimney,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSocialevents = {
@@ -37,6 +38,13 @@ const menuSocialevents = {
             text: "Locales",
             permissions: "even_local_listado",
             icom: faBuildingFlag,
+        },
+        {
+            route: route("even_alquiler_local_index"),
+            status: false,
+            text: "Alquiler de local",
+            permissions: "even_alquiler_local_listado",
+            icom: faHouseChimney,
         },
         {
             route: route("even_eventos_list"),

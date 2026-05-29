@@ -6,6 +6,7 @@ use Modules\Socialevents\Http\Controllers\EvenEventController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickeClientController;
 use Modules\Socialevents\Http\Controllers\EvenEventTickePriceController;
 use Modules\Socialevents\Http\Controllers\EvenLocalController;
+use Modules\Socialevents\Http\Controllers\EvenLocalRentalController;
 use Modules\Socialevents\Http\Controllers\EventEditionAccordanceController;
 use Modules\Socialevents\Http\Controllers\EventEditionController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
@@ -45,6 +46,21 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_local_editar'])->get('locales/{id}/edit', [EvenLocalController::class, 'edit'])->name('even_local_editar');
     Route::post('locales/update', [EvenLocalController::class, 'update'])->name('even_local_update');
     Route::middleware(['middleware' => 'permission:even_local_eliminar'])->delete('locales/destroy/{id}', [EvenLocalController::class, 'destroy'])->name('even_local_destroy');
+
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_listado'])->get('alquiler-local', [EvenLocalRentalController::class, 'index'])->name('even_alquiler_local_index');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->get('alquiler-local/create', [EvenLocalRentalController::class, 'create'])->name('even_alquiler_local_create');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->post('alquiler-local', [EvenLocalRentalController::class, 'store'])->name('even_alquiler_local_store');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->get('alquiler-local/rates/{localId}', [EvenLocalRentalController::class, 'ratesByLocal'])->name('even_alquiler_local_rates_by_local');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->post('alquiler-local/rates/store', [EvenLocalRentalController::class, 'storeRate'])->name('even_alquiler_local_rates_store');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_editar'])->get('alquiler-local/{id}/edit', [EvenLocalRentalController::class, 'edit'])->name('even_alquiler_local_edit');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_editar'])->put('alquiler-local/{id}', [EvenLocalRentalController::class, 'update'])->name('even_alquiler_local_update');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_editar'])->put('alquiler-local/{id}/status', [EvenLocalRentalController::class, 'updateStatus'])->name('even_alquiler_local_update_status');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_eliminar'])->delete('alquiler-local/{id}', [EvenLocalRentalController::class, 'destroy'])->name('even_alquiler_local_destroy');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_pagos'])->get('alquiler-local/{id}/payments', [EvenLocalRentalController::class, 'payments'])->name('even_alquiler_local_payments');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_pagos'])->post('alquiler-local/{id}/payments/advance', [EvenLocalRentalController::class, 'formalizeAdvance'])->name('even_alquiler_local_formalize_advance');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_pagos'])->post('alquiler-local/{id}/payments', [EvenLocalRentalController::class, 'storePayment'])->name('even_alquiler_local_store_payment');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_listado'])->get('alquiler-local/{id}', [EvenLocalRentalController::class, 'show'])->name('even_alquiler_local_show');
+    Route::middleware(['middleware' => 'permission:even_alquiler_local_nuevo'])->post('alquiler-local/{id}/extras', [EvenLocalRentalController::class, 'storeExtra'])->name('even_alquiler_local_store_extra');
 
     Route::middleware(['middleware' => 'permission:even_evento_listado'])->get('events', [EvenEventController::class, 'index'])->name('even_eventos_list');
     Route::middleware(['middleware' => 'permission:even_evento_nuevo'])->get('events/create', [EvenEventController::class, 'create'])->name('even_eventos_create');

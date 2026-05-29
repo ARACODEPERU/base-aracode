@@ -30,6 +30,11 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'even_local_nuevo']));
         array_push($permissions, Permission::create(['name' => 'even_local_editar']));
         array_push($permissions, Permission::create(['name' => 'even_local_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_listado']));
+        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_nuevo']));
+        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_editar']));
+        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_eliminar']));
+        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_pagos']));
         array_push($permissions, Permission::create(['name' => 'even_evento_listado']));
         array_push($permissions, Permission::create(['name' => 'even_evento_nuevo']));
         array_push($permissions, Permission::create(['name' => 'even_evento_editar']));

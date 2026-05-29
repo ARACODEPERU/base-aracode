@@ -3,8 +3,10 @@
 namespace Modules\Socialevents\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Modules\Socialevents\Entities\EvenEvent;
 use Modules\Socialevents\Entities\EvenEventTicketClient;
+use Modules\Socialevents\Entities\EvenLocalRental;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionMatchReport;
@@ -16,6 +18,47 @@ class SocialeventsDashboardService
      * @return array<string, mixed>
      */
     public function build(): array
+    {
+        $user = Auth::user();
+        $canSports = $user && $user->can('even_ediciones_listado');
+        $canRentals = $user && $user->can('even_alquiler_local_listado');
+
+        $sportsModule = $canSports ? $this->buildSportsSection() : $this->emptySportsSection();
+        $rentalsModule = $canRentals ? $this->buildRentalSection() : $this->emptyRentalSection();
+
+        $payload = [
+            'modules' => [
+                'sports' => $sportsModule,
+                'rentals' => $rentalsModule,
+            ],
+            'event_types' => $this->filteredEventTypes(),
+            'active_module' => config('socialevents.dashboard_active_module', 'sports'),
+            'quick_links' => $this->quickLinks(),
+        ];
+
+        if ($canSports) {
+            $payload['metrics'] = $sportsModule['metrics'];
+            $payload['recent_editions'] = $sportsModule['recent_editions'];
+            $payload['matches_today_list'] = $sportsModule['matches_today_list'];
+            $payload['upcoming_matches'] = $sportsModule['upcoming_matches'];
+            $payload['integration'] = $sportsModule['integration'];
+        } else {
+            $payload['metrics'] = [];
+            $payload['recent_editions'] = [];
+            $payload['matches_today_list'] = [];
+            $payload['upcoming_matches'] = [];
+            $payload['integration'] = null;
+        }
+
+        $payload['rental_module'] = $rentalsModule;
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildSportsSection(): array
     {
         $activeEditionStatuses = ['pending', 'in_progress'];
 
@@ -58,31 +101,191 @@ class SocialeventsDashboardService
             ->when($activeEditionIds->isEmpty(), fn ($q) => $q->whereRaw('1 = 0'))
             ->count();
 
-        $metrics = [
-            'active_editions' => (clone $activeEditionsQuery)->count(),
-            'published_landings' => (clone $activeEditionsQuery)->where('landing_published', true)->count(),
-            'mobile_enabled_editions' => (clone $activeEditionsQuery)->where('mobile_enabled', true)->count(),
-            'total_events' => EvenEvent::query()->count(),
-            'total_teams' => EventTeam::query()->count(),
-            'matches_today' => $matchesToday,
-            'matches_needing_result' => $matchesNeedingResult,
-            'pending_protests' => $pendingProtests,
-            'tickets_sold_month' => EvenEventTicketClient::query()
-                ->where('created_at', '>=', Carbon::now()->startOfMonth())
-                ->count(),
-            'tickets_sold_total' => EvenEventTicketClient::query()->count(),
-        ];
+        $user = Auth::user();
 
         return [
-            'event_types' => config('socialevents.event_types', []),
-            'active_module' => config('socialevents.dashboard_active_module', 'sports'),
-            'metrics' => $metrics,
+            'visible' => true,
+            'metrics' => [
+                'active_editions' => (clone $activeEditionsQuery)->count(),
+                'published_landings' => (clone $activeEditionsQuery)->where('landing_published', true)->count(),
+                'mobile_enabled_editions' => (clone $activeEditionsQuery)->where('mobile_enabled', true)->count(),
+                'total_events' => $user?->can('even_evento_listado') ? EvenEvent::query()->count() : 0,
+                'total_teams' => $user?->can('even_equipos_listado') ? EventTeam::query()->count() : 0,
+                'matches_today' => $matchesToday,
+                'matches_needing_result' => $matchesNeedingResult,
+                'pending_protests' => $pendingProtests,
+                'tickets_sold_month' => $user?->can('even_ventas_listado')
+                    ? EvenEventTicketClient::query()->where('created_at', '>=', Carbon::now()->startOfMonth())->count()
+                    : 0,
+                'tickets_sold_total' => $user?->can('even_ventas_listado')
+                    ? EvenEventTicketClient::query()->count()
+                    : 0,
+            ],
             'recent_editions' => $this->recentEditions($activeEditionStatuses),
             'matches_today_list' => $this->matchesTodayList($activeEditionIds),
             'upcoming_matches' => $this->upcomingMatches($activeEditionIds),
             'integration' => $this->integrationSnapshot($activeEditionStatuses),
-            'quick_links' => $this->quickLinks(),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptySportsSection(): array
+    {
+        return [
+            'visible' => false,
+            'metrics' => [],
+            'recent_editions' => [],
+            'matches_today_list' => [],
+            'upcoming_matches' => [],
+            'integration' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildRentalSection(): array
+    {
+        $today = Carbon::today()->toDateString();
+        $startOfMonth = Carbon::now()->startOfMonth();
+
+        $activeQuery = EvenLocalRental::query()->where('reservation_status', '!=', 'cancelled');
+
+        $eventsToday = (clone $activeQuery)
+            ->where(function ($q) use ($today) {
+                $q->whereDate('event_date', $today)
+                    ->orWhereDate('event_end_date', $today);
+            })
+            ->count();
+
+        $pendingBalance = (clone $activeQuery)
+            ->where('balance_amount', '>', 0)
+            ->sum('balance_amount');
+
+        $advancePendingFormalization = EvenLocalRental::query()
+            ->where('reservation_status', '!=', 'cancelled')
+            ->where('paid_amount', '>', 0)
+            ->whereRaw(
+                'paid_amount > COALESCE((SELECT SUM(amount) FROM even_local_rental_payments WHERE rental_id = even_local_rentals.id), 0)'
+            )
+            ->count();
+
+        return [
+            'visible' => true,
+            'metrics' => [
+                'active_reservations' => (clone $activeQuery)->count(),
+                'events_today' => $eventsToday,
+                'in_occupation' => (clone $activeQuery)->where('reservation_status', 'in_occupation')->count(),
+                'pending_balance' => round((float) $pendingBalance, 2),
+                'reservations_month' => EvenLocalRental::query()
+                    ->where('created_at', '>=', $startOfMonth)
+                    ->count(),
+                'advance_pending_formalization' => $advancePendingFormalization,
+            ],
+            'recent_rentals' => $this->recentRentals(),
+            'upcoming_rentals' => $this->upcomingRentals(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyRentalSection(): array
+    {
+        return [
+            'visible' => false,
+            'metrics' => [],
+            'recent_rentals' => [],
+            'upcoming_rentals' => [],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function recentRentals(): array
+    {
+        return EvenLocalRental::query()
+            ->with(['local', 'customer'])
+            ->latest('created_at')
+            ->latest('id')
+            ->limit(6)
+            ->get()
+            ->map(fn (EvenLocalRental $rental) => $this->serializeRentalRow($rental))
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function upcomingRentals(): array
+    {
+        $today = Carbon::today()->toDateString();
+        $activeStatuses = ['pending', 'confirmed', 'in_occupation'];
+
+        return EvenLocalRental::query()
+            ->with(['local', 'customer'])
+            ->whereIn('reservation_status', $activeStatuses)
+            ->whereDate('event_date', '>=', $today)
+            ->orderBy('event_date')
+            ->orderBy('start_time')
+            ->limit(6)
+            ->get()
+            ->map(fn (EvenLocalRental $rental) => $this->serializeRentalRow($rental))
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeRentalRow(EvenLocalRental $rental): array
+    {
+        $startTime = $rental->start_time ? substr((string) $rental->start_time, 0, 5) : '';
+        $endTime = $rental->end_time ? substr((string) $rental->end_time, 0, 5) : '';
+        $eventDate = $rental->event_date?->format('d/m/Y') ?? '-';
+        $endDate = ($rental->event_end_date ?? $rental->event_date)?->format('d/m/Y') ?? $eventDate;
+
+        $schedule = $eventDate === $endDate
+            ? "{$eventDate} {$startTime} - {$endTime}"
+            : "{$eventDate} {$startTime} → {$endDate} {$endTime}";
+
+        return [
+            'id' => $rental->id,
+            'local_name' => $rental->local?->description ?? '-',
+            'customer_name' => $rental->customer?->full_name ?? '-',
+            'event_date' => $rental->event_date?->format('Y-m-d'),
+            'event_date_label' => $eventDate,
+            'schedule_label' => trim($schedule),
+            'total_price' => (float) $rental->total_price,
+            'paid_amount' => (float) $rental->paid_amount,
+            'balance_amount' => (float) $rental->balance_amount,
+            'reservation_status' => $rental->reservation_status,
+            'payment_status' => $rental->payment_status,
+            'show_url' => route('even_alquiler_local_show', $rental->id),
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function filteredEventTypes(): array
+    {
+        $user = Auth::user();
+
+        return collect(config('socialevents.event_types', []))
+            ->filter(function (array $type) use ($user) {
+                $permission = $type['permission'] ?? null;
+
+                if (! $permission) {
+                    return true;
+                }
+
+                return $user && $user->can($permission);
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -226,6 +429,16 @@ class SocialeventsDashboardService
                 'label' => 'Tickets vendidos',
                 'route' => 'even_tickets_listado',
                 'permission' => 'even_ventas_listado',
+            ],
+            [
+                'label' => 'Alquiler de local',
+                'route' => 'even_alquiler_local_index',
+                'permission' => 'even_alquiler_local_listado',
+            ],
+            [
+                'label' => 'Nueva reserva',
+                'route' => 'even_alquiler_local_create',
+                'permission' => 'even_alquiler_local_nuevo',
             ],
         ];
     }

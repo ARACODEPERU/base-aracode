@@ -102,7 +102,7 @@ const selectCity = (item) => {
                     v-model="form.names"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.names" class="mt-2" />
             </div>
@@ -113,7 +113,7 @@ const selectCity = (item) => {
                     v-model="form.address"
                     type="text"
                     class="block w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.address" class="mt-2" />
             </div>
@@ -125,18 +125,18 @@ const selectCity = (item) => {
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="address" value="Ciudad" />
                 <div class="relative">
-                    <TextInput 
-                    v-model="form.ubigeo_description" 
+                    <TextInput
+                    v-model="form.ubigeo_description"
                     @input="filterCities"
                     placeholder="Buscar Distrito"
-                    type="text" 
+                    type="text"
                     class="block w-full mt-1" />
                     <ul v-if="searchUbigeos && searchUbigeos.length > 0" class="list-disc list-inside absolute z-50 w-full bg-white border border-gray-300 rounded-md mt-1">
                         <li v-for="item in searchUbigeos" :key="item.id" class="px-4 cursor-pointer hover:bg-gray-100" @click="selectCity(item)">
                             {{ item.department_name+'-'+item.province_name+'-'+item.district_name }}
                         </li>
                     </ul>
-                </div>                
+                </div>
                 <div>
                     <InputError :message="form.errors.ubigeo" class="mt-2" />
                 </div>
@@ -148,7 +148,7 @@ const selectCity = (item) => {
                     v-model="form.maximum_capacity"
                     type="text"
                     class="w-full mt-1"
-                    
+
                 />
                 <InputError :message="form.errors.maximum_capacity" class="mt-2" />
             </div>
@@ -160,7 +160,7 @@ const selectCity = (item) => {
                 ></CropperImage>
                 <InputError :message="form.errors.image1" class="mt-2" />
             </div>
-            
+
             <div class="col-span-6">
                 <div class="flex items-center">
                     <input id="checked-checkbox-2" type="checkbox" v-model="form.status" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
@@ -182,7 +182,7 @@ const selectCity = (item) => {
                         </svg>
                         Actualizar
                     </PrimaryButton>
-                    <Link :href="route('even_local_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
+                    <Link :href="route('even_local_list')"  class="btn btn-success">Ir al Listado</Link>
                 </template>
             </Keypad>
         </template>
