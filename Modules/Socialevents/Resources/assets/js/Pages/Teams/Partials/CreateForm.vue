@@ -7,7 +7,7 @@
     import TextInput from '@/Components/TextInput.vue';
     import Keypad from '@/Components/Keypad.vue';
     import Swal2 from 'sweetalert2';
-    import { ref, watch, onMounted } from 'vue';
+    import { ref, computed } from 'vue';
     import { Select, TreeSelect } from 'ant-design-vue';
     import 'cropperjs/dist/cropper.css';
     import CropperImage from '@/Components/CropperImage.vue';
@@ -16,6 +16,7 @@
     import SearchClients from './SearchClients.vue';
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
     import { faWandMagicSparkles } from "@fortawesome/free-solid-svg-icons";
+    import { aiErrorMessage, extractAiImagePayload, toDataUrl } from '../../../utils/imageDataUrl.js';
 
     const props = defineProps({
         ubigeo: {
@@ -84,7 +85,11 @@
 
     const displayModalAI = ref(false);
     const aiGeneratedImage = ref(null);
+    const aiGeneratedMime = ref('image/png');
     const aiProcessing = ref(false);
+    const cropper = ref(null);
+
+    const aiImagePreviewSrc = computed(() => toDataUrl(aiGeneratedImage.value, aiGeneratedMime.value));
 
     const generateShieldWithAI = () => {
         if (!form.name) {
@@ -95,44 +100,34 @@
         aiProcessing.value = true;
         const prompt = `Crea un escudo o logo atractivo y profesional para el equipo de fútbol llamado "${form.name}". Debe ser en formato cuadrado, con colores vibrantes y elementos deportivos.`;
 
-        const url = import.meta.env.VITE_SOCKET_IO_SERVER + '/api/ai/generate-shield';
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        axios.post(url, {
+        axios.post(route('even_equipos_generate_shield'), {
             prompt: prompt,
-            csrfToken: csrfToken
         }, {
-            headers: {
-                'Content-Type': 'application/json'
-            },
             timeout: 0,
         }).then((result) => {
-            aiGeneratedImage.value = result.data.imageBase64;
+            const { raw, previewSrc } = extractAiImagePayload(result.data);
+            if (!raw || !previewSrc) {
+                Swal2.fire('La IA no devolvió una imagen válida.');
+                return;
+            }
+            aiGeneratedImage.value = raw;
+            aiGeneratedMime.value = result.data.mimeType ?? 'image/png';
             displayModalAI.value = true;
         }).catch((error) => {
-
-            let errorMessage = 'Error al generar la imagen.';
-            if (error.response?.data?.error?.message) {
-                const originalMessage = error.response.data.error.message;
-                // Traducir mensaje específico al español
-                if (originalMessage.includes('You exceeded your current quota')) {
-                    errorMessage = 'Has excedido tu cuota actual. Por favor, verifica tu plan y detalles de facturación. Para más información sobre este error, visita: https://ai.google.dev/gemini-api/docs/rate-limits. Para monitorear tu uso actual, visita: https://ai.dev/rate-limit.\n\nDetalles:\n* Cuota excedida para tokens de entrada en el nivel gratuito.\n* Cuota excedida para solicitudes en el nivel gratuito.\nPor favor, reintenta en unos segundos.';
-                } else {
-                    errorMessage = originalMessage;
-                }
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-            Swal2.fire(errorMessage);
+            Swal2.fire(aiErrorMessage(error));
         }).finally(() => {
             aiProcessing.value = false;
         });
     }
 
     const acceptAIGeneratedImage = () => {
-        // Asumiendo que CropperImage tiene un prop imgDefault o método para setear
-        // Por ahora, setear directamente en form.logo_path como base64
-        form.logo_path = aiGeneratedImage.value;
+        const dataUrl = toDataUrl(aiGeneratedImage.value, aiGeneratedMime.value);
+        if (!dataUrl) {
+            return;
+        }
+
+        form.logo_path = dataUrl;
+        cropper.value?.loadFromDataUrl(dataUrl);
         displayModalAI.value = false;
         aiGeneratedImage.value = null;
     }
@@ -257,7 +252,7 @@
             <div class="mt-3 text-center">
                 <h3 class="text-lg font-medium text-gray-900">Escudo Generado con IA</h3>
                 <div class="mt-4">
-                    <img v-if="aiGeneratedImage" :src="`data:image/png;base64,${aiGeneratedImage}`" class="mx-auto max-w-full h-auto rounded" />
+                    <img v-if="aiImagePreviewSrc" :src="aiImagePreviewSrc" class="mx-auto max-w-full h-auto rounded" />
                 </div>
                 <div class="flex justify-center mt-4 space-x-4">
                     <button @click="acceptAIGeneratedImage" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Aceptar</button>

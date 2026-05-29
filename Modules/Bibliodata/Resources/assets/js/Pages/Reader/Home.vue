@@ -1,16 +1,17 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import axios from 'axios';
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import ReaderLayout from '../../layouts/ReaderLayout.vue';
-import UserAvatar from '../../components/UserAvatar.vue';
-import ReaderIndexNode from './components/ReaderIndexNode.vue';
-import ReaderPageZoom from './components/ReaderPageZoom.vue';
 import ReaderAccessBlockedOverlay from './components/ReaderAccessBlockedOverlay.vue';
-import ReaderPracticalCasesPanel from './components/ReaderPracticalCasesPanel.vue';
+import ReaderIndexChapter from './components/ReaderIndexChapter.vue';
+import ReaderIndexLevelContent from './components/ReaderIndexLevelContent.vue';
+import ReaderExperienceChapter from './components/ReaderExperienceChapter.vue';
+import ReaderExperienceLevelContent from './components/ReaderExperienceLevelContent.vue';
+import UserAvatar from '../../components/UserAvatar.vue';
 import IconMenu from '@/Components/vristo/icon/icon-menu.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
-import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+import { CONTENT_STRUCTURE_LEVEL } from '../../composables/useBookContentLabels';
+import { useReaderPageLoader } from '../../composables/useReaderPageLoader';
 
 const props = defineProps({
     user: { type: Object, required: true },
@@ -24,20 +25,35 @@ const props = defineProps({
 });
 
 const mobileIndexOpen = ref(false);
-const expandedIds = reactive({});
-const pagesCache = reactive({});
-const selectedPageId = ref(null);
-const currentPage = ref(null);
-const pageLoading = ref(false);
-const pageError = ref(null);
-const pageZoom = ref(100);
 const isMobileView = ref(false);
 const isDesktopRailView = ref(false);
-const showAccessBlocked = ref(false);
-const previewPageId = ref(props.access?.previewPageId ?? null);
-const selectedPracticalCaseId = ref(null);
-const practicalCasesOpen = ref(false);
-const practicalCasesViewMode = ref('list');
+const selectedCaseId = ref(null);
+const chapterExperienceRef = ref(null);
+const levelExperienceRef = ref(null);
+
+const isLevelContent = computed(
+    () => props.book?.content_structure === CONTENT_STRUCTURE_LEVEL
+);
+
+const closeMobileIndex = () => {
+    mobileIndexOpen.value = false;
+};
+
+const loader = useReaderPageLoader(props, { onMobileIndexClose: closeMobileIndex });
+
+const {
+    expandedIds,
+    pagesCache,
+    selectedPageId,
+    currentPage,
+    pageLoading,
+    pageError,
+    pageZoom,
+    showAccessBlocked,
+    onToggleExpand,
+    onSelectPage: loadPage,
+    fetchPracticalCase,
+} = loader;
 
 const updateViewportState = () => {
     isMobileView.value = window.matchMedia('(max-width: 767px)').matches;
@@ -53,137 +69,17 @@ onUnmounted(() => {
     window.removeEventListener('resize', updateViewportState);
 });
 
-const sheetScalerStyle = computed(() => {
-    if (isMobileView.value) {
-        return {};
-    }
-    const scale = pageZoom.value / 100;
-    return {
-        transform: `scale(${scale})`,
-        transformOrigin: 'top center',
-    };
-});
-
-const practicalCases = computed(() => currentPage.value?.practical_cases ?? []);
-const showPracticalCasesPanel = computed(() => !!currentPage.value);
-const showPracticalCasesRail = computed(() => practicalCasesOpen.value && isDesktopRailView.value);
-const showPracticalCasesFloating = computed(() => practicalCasesOpen.value && !isDesktopRailView.value);
-
-const csrfHeaders = () => ({
-    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-    Accept: 'application/json',
-});
-
-const loadSectionPages = async (sectionId) => {
-    if (pagesCache[sectionId]?.items?.length) {
-        return;
-    }
-
-    pagesCache[sectionId] = { loading: true, items: [] };
-
-    try {
-        const { data } = await axios.get(route('bib_reader_section_pages', sectionId), {
-            params: { per_page: 200 },
-            headers: csrfHeaders(),
-        });
-        pagesCache[sectionId] = {
-            loading: false,
-            items: data.pages?.data ?? [],
-        };
-    } catch {
-        pagesCache[sectionId] = { loading: false, items: [], error: true };
-    }
-};
-
-const onToggleExpand = async (section) => {
-    const id = section.id;
-    if (expandedIds[id]) {
-        delete expandedIds[id];
-        return;
-    }
-    expandedIds[id] = true;
-    if (section.pages_count > 0) {
-        await loadSectionPages(id);
-    }
-};
-
 const onSelectPage = async (page) => {
-    if (
-        !props.access?.hasActiveSubscription &&
-        previewPageId.value &&
-        previewPageId.value !== page.id
-    ) {
-        showAccessBlocked.value = true;
-        selectedPageId.value = page.id;
-        mobileIndexOpen.value = false;
-        return;
-    }
-
-    selectedPageId.value = page.id;
-    mobileIndexOpen.value = false;
-    pageLoading.value = true;
-    pageError.value = null;
-    showAccessBlocked.value = false;
-
-    try {
-        const { data } = await axios.get(route('bib_reader_page_show', page.id), {
-            headers: csrfHeaders(),
-        });
-        if (data.success) {
-            currentPage.value = data.page;
-            selectedPracticalCaseId.value = data.page?.practical_cases?.[0]?.id ?? null;
-            practicalCasesOpen.value = false;
-            practicalCasesViewMode.value = 'list';
-            if (data.access?.previewPageId) {
-                previewPageId.value = data.access.previewPageId;
-            }
-            if (data.access?.hasActiveSubscription) {
-                previewPageId.value = null;
-            }
-        }
-    } catch (err) {
-        const payload = err.response?.data;
-        if (err.response?.status === 403 && payload?.code === 'subscription_required') {
-            showAccessBlocked.value = true;
-            if (payload.preview_page_id) {
-                previewPageId.value = payload.preview_page_id;
-            }
-        } else {
-            pageError.value = payload?.message || 'No se pudo cargar el contenido de la página.';
-            currentPage.value = null;
-            selectedPracticalCaseId.value = null;
-            practicalCasesOpen.value = false;
-            practicalCasesViewMode.value = 'list';
-        }
-    } finally {
-        pageLoading.value = false;
-    }
+    selectedCaseId.value = null;
+    await loadPage(page);
 };
 
-const onSelectPracticalCase = (caseId) => {
-    selectedPracticalCaseId.value = caseId;
-    practicalCasesViewMode.value = 'detail';
+const onSelectCase = async (payload) => {
+    await levelExperienceRef.value?.openCaseModal(payload);
 };
 
-const togglePracticalCases = () => {
-    if (!showPracticalCasesPanel.value) {
-        return;
-    }
-
-    if (!practicalCasesOpen.value) {
-        practicalCasesViewMode.value = 'list';
-    }
-
-    practicalCasesOpen.value = !practicalCasesOpen.value;
-};
-
-const closePracticalCases = () => {
-    practicalCasesOpen.value = false;
-    practicalCasesViewMode.value = 'list';
-};
-
-const backToPracticalCasesList = () => {
-    practicalCasesViewMode.value = 'list';
+const onCaseSelected = (caseId) => {
+    selectedCaseId.value = caseId;
 };
 </script>
 
@@ -191,7 +87,10 @@ const backToPracticalCasesList = () => {
     <ReaderLayout :book-title="book?.title ?? ''">
         <Head :title="book ? `Leer — ${book.title}` : 'Mi biblioteca'" />
 
-        <ReaderAccessBlockedOverlay v-if="showAccessBlocked" @close="showAccessBlocked = false" />
+        <ReaderAccessBlockedOverlay
+            v-if="showAccessBlocked"
+            @close="showAccessBlocked = false"
+        />
 
         <aside
             class="bib-reader-sidebar hidden flex-col overflow-hidden md:flex"
@@ -209,8 +108,19 @@ const backToPracticalCasesList = () => {
             </div>
             <nav class="flex-1 overflow-y-auto p-3">
                 <p v-if="!book" class="px-2 text-sm text-slate-500">No hay libro asignado.</p>
+                <ReaderIndexLevelContent
+                    v-else-if="isLevelContent"
+                    :sections="sections"
+                    :selected-page-id="selectedPageId"
+                    :selected-case-id="selectedCaseId"
+                    :expanded-ids="expandedIds"
+                    :pages-cache="pagesCache"
+                    @toggle-expand="onToggleExpand"
+                    @select-page="onSelectPage"
+                    @select-case="onSelectCase"
+                />
                 <ul v-else class="space-y-0.5">
-                    <ReaderIndexNode
+                    <ReaderIndexChapter
                         v-for="section in sections"
                         :key="section.id"
                         :section="section"
@@ -234,138 +144,51 @@ const backToPracticalCasesList = () => {
             Índice
         </button>
 
-        <main class="bib-reader-main relative">
-            <div v-if="!book" class="bib-reader-welcome">
-                <UserAvatar
-                    :size="150"
-                    :rounded="true"
-                    img-class="bib-reader-user-avatar mx-auto mb-5 h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-cyan-500/20"
-                />
-                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
-                    ¡Hola, {{ user.name }}!
-                </h2>
-                <p class="mt-4 text-slate-600 dark:text-slate-400">{{ welcomeMessage }}</p>
-            </div>
-
-            <div v-else-if="pageLoading" class="flex h-full items-center justify-center py-24">
-                <IconLoader class="h-10 w-10 animate-spin text-cyan-500" />
-            </div>
-
-            <div v-else-if="pageError" class="bib-reader-welcome">
-                <p class="text-red-500">{{ pageError }}</p>
-            </div>
-
-            <div v-else-if="currentPage" class="bib-reader-reading-layout" :class="{ 'bib-reader-reading-layout--with-rail': showPracticalCasesRail }">
-                <section class="bib-reader-reading-layout__sheet">
-                    <div class="bib-reader-page-stage">
-                        <div class="bib-reader-page-sheet-scaler" :style="sheetScalerStyle">
-                            <article class="bib-reader-page-sheet bib-reader-page-content">
-                                <header class="bib-reader-page-sheet__header">
-                                    <p v-if="currentPage.section_title" class="bib-reader-page-sheet__section">
-                                        {{ currentPage.section_title }}
-                                    </p>
-                                    <h2 class="bib-reader-page-sheet__title">
-                                        Página {{ currentPage.page_number }}
-                                    </h2>
-                                </header>
-                                <div class="bib-reader-page-sheet__body" v-html="currentPage.content" />
-                            </article>
-                        </div>
-                        <ReaderPageZoom v-model="pageZoom" />
-                    </div>
-                </section>
-
-                <aside v-if="showPracticalCasesRail" class="bib-reader-reading-layout__rail">
-                    <div class="bib-reader-reading-layout__rail-shell">
-                        <div class="bib-reader-reading-layout__rail-topbar">
-                            <button
-                                type="button"
-                                class="bib-reader-reading-layout__rail-close"
-                                aria-label="Cerrar casos prácticos"
-                                @click="closePracticalCases"
-                            >
-                                <IconX class="h-5 w-5" />
-                            </button>
-                        </div>
-                        <ReaderPracticalCasesPanel
-                            :cases="practicalCases"
-                            :selected-case-id="selectedPracticalCaseId"
-                            :view-mode="practicalCasesViewMode"
-                            @select-case="onSelectPracticalCase"
-                            @back-to-list="backToPracticalCasesList"
-                        />
-                    </div>
-                </aside>
-            </div>
-
-            <div v-else class="bib-reader-welcome">
-                <UserAvatar
-                    :size="150"
-                    :rounded="true"
-                    img-class="bib-reader-user-avatar mx-auto mb-5 h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-cyan-500/20"
-                />
-                <div
-                    v-if="book.coverUrl"
-                    class="mx-auto mb-6 h-36 w-28 overflow-hidden rounded-lg shadow-xl ring-1 ring-slate-200 dark:ring-slate-600"
-                >
-                    <img :src="book.coverUrl" :alt="book.title" class="h-full w-full object-cover" />
+        <template v-if="!book">
+            <main class="bib-reader-main relative">
+                <div class="bib-reader-welcome">
+                    <UserAvatar
+                        :size="150"
+                        :rounded="true"
+                        img-class="bib-reader-user-avatar mx-auto mb-5 h-20 w-20 rounded-full object-cover shadow-lg ring-4 ring-cyan-500/20"
+                    />
+                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                        ¡Hola, {{ user.name }}!
+                    </h2>
+                    <p class="mt-4 text-slate-600 dark:text-slate-400">{{ welcomeMessage }}</p>
                 </div>
-                <h2 class="text-3xl font-bold text-slate-800 dark:text-slate-100">
-                    ¡Hola, {{ user.name }}!
-                </h2>
-                <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">
-                    {{ welcomeMessage }}
-                </p>
-                <p v-if="book.author" class="mt-2 text-sm text-slate-500">Autor: {{ book.author }}</p>
-                <p class="mt-8 text-sm text-slate-400">
-                    Abre el <strong class="text-slate-600 dark:text-slate-300">índice</strong> y elige una página para leer.
-                </p>
-            </div>
-        </main>
+            </main>
+        </template>
 
-        <button
-            v-if="showPracticalCasesPanel && !practicalCasesOpen"
-            type="button"
-            class="bib-reader-cases-fab"
-            aria-label="Casos prácticos"
-            data-tooltip="Casos prácticos"
-            @click="togglePracticalCases"
-        >
-            <svg
-                class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-            >
-                <rect x="5" y="4" width="14" height="16" rx="2.5" stroke="currentColor" stroke-width="1.8" />
-                <path d="M8 9H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                <path d="M8 13H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                <path d="M8 17H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
-        </button>
+        <ReaderExperienceLevelContent
+            v-else-if="isLevelContent"
+            ref="levelExperienceRef"
+            :book="book"
+            :user="user"
+            :welcome-message="welcomeMessage"
+            :current-page="currentPage"
+            :page-loading="pageLoading"
+            :page-error="pageError"
+            :page-zoom="pageZoom"
+            :is-mobile-view="isMobileView"
+            :fetch-practical-case="fetchPracticalCase"
+            @update:page-zoom="pageZoom = $event"
+            @case-selected="onCaseSelected"
+        />
 
-        <Transition name="bib-reader-cases-float">
-            <div v-if="showPracticalCasesFloating" class="bib-reader-cases-float">
-                <div class="bib-reader-cases-float__topbar">
-                    <button
-                        type="button"
-                        class="bib-reader-cases-float__close"
-                        aria-label="Cerrar casos prácticos"
-                        @click="closePracticalCases"
-                    >
-                        <IconX class="h-5 w-5" />
-                    </button>
-                </div>
-                <ReaderPracticalCasesPanel
-                    :cases="practicalCases"
-                    :selected-case-id="selectedPracticalCaseId"
-                    :view-mode="practicalCasesViewMode"
-                    @select-case="onSelectPracticalCase"
-                    @back-to-list="backToPracticalCasesList"
-                />
-            </div>
-        </Transition>
+        <ReaderExperienceChapter
+            v-else
+            :book="book"
+            :user="user"
+            :welcome-message="welcomeMessage"
+            :current-page="currentPage"
+            :page-loading="pageLoading"
+            :page-error="pageError"
+            :page-zoom="pageZoom"
+            :is-mobile-view="isMobileView"
+            :is-desktop-rail-view="isDesktopRailView"
+            @update:page-zoom="pageZoom = $event"
+        />
     </ReaderLayout>
 </template>
 

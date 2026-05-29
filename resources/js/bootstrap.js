@@ -56,7 +56,8 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 // Configurar un timeout global de 20 segundos (20000 milisegundos)
 window.axios.defaults.timeout = 20000; // 20 segundos
 window.axios.interceptors.request.use((config) => {
-    if (isSocketIoRequest(config) && (!config.timeout || config.timeout === 0)) {
+    // timeout: 0 = sin límite (p. ej. generación de imágenes con IA)
+    if (isSocketIoRequest(config) && config.timeout == null) {
         config.timeout = 20000;
     }
 

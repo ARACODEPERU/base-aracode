@@ -165,12 +165,13 @@ const copyLandingUrl = async (edition) => {
 };
 
 const getPositionLabel = (position) => {
+    console.log('Position:', position);
     const labels = {
-        'first': '1°',
-        'second': '2°',
-        'third': '3°',
-        'fourth': '4°',
-        'fifth': '5°',
+        0: '1°',
+        1: '2°',
+        2: '3°',
+        3: '4°',
+        4: '5°',
     };
     return labels[position] || position;
 };
@@ -357,8 +358,8 @@ const getPositionLabel = (position) => {
                                                      {{ getPositionLabel(position) }}
                                                  </span>
                                                  <div class="flex flex-col">
-                                                     <span v-if="prize.money" class="text-sm font-semibold text-gray-800">S/ {{ prize.money }}</span>
-                                                     <span v-if="prize.gift" class="text-sm text-gray-600">{{ prize.gift }}</span>
+                                                     <span v-if="prize.money" class="text-sm font-semibold text-gray-700 dark:text-white">S/ {{ prize.money }}</span>
+                                                     <span v-if="prize.gift" class="text-sm text-gray-600 dark:text-gray-400">{{ prize.gift }}</span>
                                                  </div>
                                              </div>
                                              <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

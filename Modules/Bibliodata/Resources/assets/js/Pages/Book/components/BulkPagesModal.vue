@@ -11,6 +11,8 @@ const props = defineProps({
     bookPages: { type: Number, default: 0 },
     sectionPagesCount: { type: Number, default: 0 },
     processing: { type: Boolean, default: false },
+    pageLabelPlural: { type: String, default: 'Páginas' },
+    pageLabelSingular: { type: String, default: 'Página' },
 });
 
 const emit = defineEmits(['close', 'submit']);
@@ -52,10 +54,10 @@ const submit = () => {
 
 <template>
     <ModalSmall :show="show" :onClose="() => emit('close')">
-        <template #title>Generar páginas vacías</template>
+        <template #title>Generar {{ pageLabelPlural.toLowerCase() }} vacías</template>
         <template #content>
             <p class="text-sm text-gray-500 mb-4">
-                Se crearán páginas sin contenido. Máximo 2000 por operación. Puedes repetir para libros muy largos.
+                Se crearán {{ pageLabelPlural.toLowerCase() }} sin contenido. Máximo 2000 por operación. Puedes repetir para libros muy largos.
             </p>
 
             <div class="flex gap-2 mb-4">

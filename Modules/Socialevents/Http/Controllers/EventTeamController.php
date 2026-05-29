@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventTeam;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Modules\Socialevents\Services\TeamShieldAiService;
 
 class EventTeamController extends Controller
 {
@@ -201,8 +202,35 @@ class EventTeamController extends Controller
             }
         }
 
-        $team->logo_path = $logoPath;
-        $team->save();
+        if ($logoPath) {
+            $team->logo_path = $logoPath;
+            $team->save();
+        }
+
+        return to_route('even_equipos_listado');
+    }
+
+    public function generateShield(Request $request, TeamShieldAiService $shieldAiService)
+    {
+        $validated = $request->validate([
+            'prompt' => 'required|string|max:2000',
+        ]);
+
+        try {
+            $result = $shieldAiService->generate($validated['prompt']);
+
+            return response()->json([
+                'success' => true,
+                'imageBase64' => $result['imageBase64'],
+                'mimeType' => $result['mimeType'],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => ['message' => $e->getMessage()],
+            ], 422);
+        }
     }
 
     /**

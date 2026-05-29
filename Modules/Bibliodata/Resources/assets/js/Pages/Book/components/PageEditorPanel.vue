@@ -8,6 +8,11 @@ const props = defineProps({
     loading: { type: Boolean, default: false },
     pageLabel: { type: String, default: '' },
     imageUploadUrl: { type: String, default: '' },
+    emptyHint: {
+        type: String,
+        default: 'Expanda un capítulo y seleccione una página del árbol para editar su contenido.',
+    },
+    editorPlaceholder: { type: String, default: 'Escribe el contenido de la página...' },
 });
 
 const emit = defineEmits(['update:content']);
@@ -36,7 +41,7 @@ watch(localContent, (val) => {
         </div>
 
         <div v-if="!pageLabel && !loading" class="flex-1 flex items-center justify-center text-gray-400 text-sm p-8">
-            Expanda un capítulo y seleccione una página del árbol para editar su contenido.
+            {{ emptyHint }}
         </div>
 
         <div v-else-if="pageLabel" class="flex-1 p-4 overflow-hidden flex flex-col">
@@ -45,7 +50,7 @@ watch(localContent, (val) => {
                     :key="'page-editor-' + pageLabel"
                     v-model="localContent"
                     minHeight="450px"
-                    placeholder="Escribe el contenido de la página..."
+                    :placeholder="editorPlaceholder"
                     :imageUploadUrl="imageUploadUrl"
                 />
             </div>

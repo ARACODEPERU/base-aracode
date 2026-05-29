@@ -73,6 +73,14 @@ const statusLabel = (status) => {
     const map = { available: 'Disponible', restricted: 'Restringido', archived: 'Archivado' };
     return map[status] || status;
 };
+
+const structureLabel = (structure) => {
+    const map = {
+        chapter_subchapter: 'Capítulo → Sub-capítulo',
+        level_content: 'Nivel → Contenido',
+    };
+    return map[structure] || structure;
+};
 </script>
 
 <template>
@@ -150,6 +158,12 @@ const statusLabel = (status) => {
                             {{ book.author?.person?.formatted_name || book.author?.person?.full_name || 'Sin autor' }}
                         </p>
                         <p class="text-xs text-gray-400 mt-1">{{ book.category?.name }}</p>
+                        <span
+                            v-if="book.content_structure"
+                            class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                        >
+                            {{ structureLabel(book.content_structure) }}
+                        </span>
                         <p v-if="book.pages" class="text-xs text-gray-400">{{ book.pages }} pág. (ref.)</p>
                         <div class="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100 dark:border-zinc-700">
                             <Link

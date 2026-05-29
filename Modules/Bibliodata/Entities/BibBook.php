@@ -9,6 +9,10 @@ class BibBook extends Model
 {
     use HasFactory;
 
+    public const STRUCTURE_CHAPTER_SUBCHAPTER = 'chapter_subchapter';
+
+    public const STRUCTURE_LEVEL_CONTENT = 'level_content';
+
     protected $table = 'bib_books';
 
     protected $fillable = [
@@ -22,6 +26,7 @@ class BibBook extends Model
         'isbn',
         'pages',
         'status',
+        'content_structure',
     ];
 
     protected $casts = [
@@ -46,5 +51,20 @@ class BibBook extends Model
     public function sections()
     {
         return $this->hasMany(BibBookSection::class, 'book_id')->orderBy('order');
+    }
+
+    public function isLevelContent(): bool
+    {
+        return $this->content_structure === self::STRUCTURE_LEVEL_CONTENT;
+    }
+
+    public function hasSubSections(): bool
+    {
+        return $this->sections()->whereNotNull('parent_id')->exists();
+    }
+
+    public function canChangeContentStructure(): bool
+    {
+        return ! $this->hasSubSections();
     }
 }

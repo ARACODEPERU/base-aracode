@@ -1,10 +1,11 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, toRef, computed } from 'vue';
 import ModalSmall from '@/Components/ModalSmall.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+import { useBookContentLabels } from '../../../composables/useBookContentLabels';
 
 const props = defineProps({
     show: { type: Boolean, default: false },
@@ -12,11 +13,13 @@ const props = defineProps({
     isSubsection: { type: Boolean, default: false },
     initialTitle: { type: String, default: '' },
     saving: { type: Boolean, default: false },
+    contentStructure: { type: String, default: 'chapter_subchapter' },
 });
 
 const emit = defineEmits(['close', 'submit']);
 
 const title = ref('');
+const labels = useBookContentLabels(toRef(props, 'contentStructure'));
 
 watch(
     () => props.show,
@@ -27,15 +30,25 @@ watch(
     }
 );
 
-const modalTitle = () => {
-    if (props.mode === 'edit') return 'Editar título';
-    return props.isSubsection ? 'Nueva sub-sección' : 'Nuevo capítulo';
-};
+const modalTitle = computed(() => {
+    if (props.mode === 'edit') {
+        return `Editar ${props.isSubsection ? labels.childSectionLabel.value : labels.rootSectionLabel.value}`;
+    }
+    if (props.isSubsection) {
+        return `Nueva ${labels.childSectionLabel.value?.toLowerCase() ?? 'sub-sección'}`;
+    }
+    return `Nuevo ${labels.rootSectionLabel.value.toLowerCase()}`;
+});
 
-const placeholder = () => {
-    if (props.mode === 'edit') return 'Título del capítulo';
-    return props.isSubsection ? 'Ej: 1.1 Introducción' : 'Ej: Capítulo 1';
-};
+const placeholder = computed(() => {
+    if (props.mode === 'edit') {
+        return `Título del ${labels.rootSectionLabel.value.toLowerCase()}`;
+    }
+    if (props.isSubsection) {
+        return 'Ej: 1.1 Introducción';
+    }
+    return labels.isLevelContent.value ? 'Ej: Nivel 1' : 'Ej: Capítulo 1';
+});
 
 const submit = () => {
     const t = title.value?.trim();
@@ -46,26 +59,18 @@ const submit = () => {
 
 <template>
     <ModalSmall :show="show" :onClose="() => !saving && emit('close')">
-        <template #title>{{ modalTitle() }}</template>
+        <template #title>{{ modalTitle }}</template>
         <template #message>Los campos con * son obligatorios</template>
         <template #content>
-            <div class="space-y-4" :class="{ 'opacity-60 pointer-events-none': saving }">
-                <div>
-                    <InputLabel value="Título *" />
-                    <TextInput
-                        v-model="title"
-                        type="text"
-                        class="form-input w-full"
-                        :placeholder="placeholder()"
-                        @keyup.enter="submit"
-                    />
-                </div>
+            <div>
+                <InputLabel value="Título *" />
+                <TextInput v-model="title" type="text" class="w-full" :placeholder="placeholder" />
             </div>
         </template>
         <template #buttons>
-            <PrimaryButton type="button" :disabled="saving || !title.trim()" @click="submit">
-                <IconLoader v-if="saving" class="w-4 h-4 mr-2 animate-spin" />
-                {{ mode === 'edit' ? 'Guardar' : 'Agregar' }}
+            <PrimaryButton :disabled="saving || !title?.trim()" @click="submit">
+                <IconLoader v-if="saving" class="w-4 h-4 mr-2 animate-spin inline" />
+                Guardar
             </PrimaryButton>
         </template>
     </ModalSmall>

@@ -10,6 +10,8 @@ use Modules\Socialevents\Http\Controllers\Api\TeamApiController;
 use Modules\Socialevents\Http\Controllers\Api\PlayerApiController;
 use Modules\Socialevents\Http\Controllers\Api\MatchAdminController;
 use Modules\Socialevents\Http\Controllers\Api\EditionPublicController;
+use Modules\Socialevents\Http\Controllers\Api\TeamAdminController;
+use Modules\Socialevents\Http\Middleware\EnsureSocialeventsAdmin;
 
 /*
 |--------------------------------------------------------------------------
@@ -106,8 +108,8 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 		Route::get('team/sanctions', [TeamApiController::class, 'getTeamSanctions'])
 			->name('team.sanctions');
 
-		// Administración de partidos (solo admins)
-		Route::prefix('admin')->group(function () {
+		// Administración (solo admins)
+		Route::middleware([EnsureSocialeventsAdmin::class])->prefix('admin')->group(function () {
 			Route::put('matches/edition/{editionId}', [MatchAdminController::class, 'index'])
 				->name('admin.matches');
 
@@ -130,6 +132,49 @@ Route::prefix('socialevents')->name('api.')->group(function () {
             Route::put('matches/{matchId}/result', [MatchAdminController::class, 'saveMatchResult']);
             Route::put('matches/{matchId}/report', [MatchAdminController::class, 'closeMatchReport'])
                 ->name('admin.matches.report');
+
+			// Equipos y jugadores (admin móvil)
+			Route::get('teams/catalog', [TeamAdminController::class, 'catalog'])
+				->name('admin.teams.catalog');
+
+			Route::post('teams', [TeamAdminController::class, 'storeTeam'])
+				->name('admin.teams.store');
+
+			Route::get('editions/{editionId}/teams', [TeamAdminController::class, 'editionTeams'])
+				->name('admin.editions.teams');
+
+			Route::post('editions/{editionId}/teams', [TeamAdminController::class, 'assignTeam'])
+				->name('admin.editions.teams.assign');
+
+			Route::delete('editions/{editionId}/teams/{teamId}', [TeamAdminController::class, 'unassignTeam'])
+				->name('admin.editions.teams.unassign');
+
+			Route::get('editions/{editionId}/teams/{teamId}/players', [TeamAdminController::class, 'players'])
+				->name('admin.editions.teams.players');
+
+			Route::post('editions/{editionId}/teams/{teamId}/players/link', [TeamAdminController::class, 'linkPlayer'])
+				->name('admin.editions.teams.players.link');
+
+			Route::post('editions/{editionId}/teams/{teamId}/players', [TeamAdminController::class, 'createPlayer'])
+				->name('admin.editions.teams.players.create');
+
+			Route::put('editions/{editionId}/teams/{teamId}/players/{personId}', [TeamAdminController::class, 'updatePlayer'])
+				->name('admin.editions.teams.players.update');
+
+			Route::post('editions/{editionId}/teams/{teamId}/players/{personId}/photo', [TeamAdminController::class, 'uploadPlayerPhoto'])
+				->name('admin.editions.teams.players.photo');
+
+			Route::delete('editions/{editionId}/teams/{teamId}/players/{personId}', [TeamAdminController::class, 'deletePlayer'])
+				->name('admin.editions.teams.players.delete');
+
+			Route::post('persons/search', [TeamAdminController::class, 'searchPerson'])
+				->name('admin.persons.search');
+
+			Route::post('persons', [TeamAdminController::class, 'savePerson'])
+				->name('admin.persons.store');
+
+			Route::get('ubigeo', [TeamAdminController::class, 'ubigeo'])
+				->name('admin.ubigeo');
 		});
 	});
 });

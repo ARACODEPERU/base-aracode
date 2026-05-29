@@ -54,7 +54,7 @@ class BibBookController extends Controller
 
     public function store(Request $request)
     {
-        $this->validate($request, $this->metadataRules());
+        $this->validate($request, $this->metadataRules(true));
 
         $book = $this->persistMetadata($request, new BibBook());
 
@@ -79,7 +79,7 @@ class BibBookController extends Controller
     {
         $this->validate($request, array_merge(
             ['id' => 'required|integer|exists:bib_books,id'],
-            $this->metadataRules()
+            $this->metadataRules(false)
         ));
 
         $book = BibBook::findOrFail($request->id);
@@ -96,6 +96,32 @@ class BibBookController extends Controller
 
         return Inertia::render('Bibliodata::Book/ContentWorkspace', [
             'book' => $book,
+            'can_change_structure' => $book->canChangeContentStructure(),
+        ]);
+    }
+
+    public function updateContentStructure(Request $request, $id)
+    {
+        $book = BibBook::findOrFail($id);
+
+        $data = $request->validate([
+            'content_structure' => 'required|in:chapter_subchapter,level_content',
+        ]);
+
+        if (! $book->canChangeContentStructure()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede cambiar el formato: existen sub-capítulos. Elimínelos para continuar.',
+            ], 422);
+        }
+
+        $book->update(['content_structure' => $data['content_structure']]);
+        $book = $book->fresh(['author.person', 'category']);
+
+        return response()->json([
+            'success' => true,
+            'book' => $book,
+            'can_change_structure' => $book->canChangeContentStructure(),
         ]);
     }
 
@@ -136,9 +162,9 @@ class BibBookController extends Controller
         return response()->json(['url' => asset('storage/' . $path)]);
     }
 
-    private function metadataRules(): array
+    private function metadataRules(bool $isCreate = false): array
     {
-        return [
+        $rules = [
             'title' => 'required|string|max:255',
             'author_id' => 'required|integer|exists:bib_authors,id',
             'category_id' => 'required|integer|exists:bib_categories,id',
@@ -150,13 +176,19 @@ class BibBookController extends Controller
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'integer|exists:bib_tags,id',
         ];
+
+        if ($isCreate) {
+            $rules['content_structure'] = 'required|in:chapter_subchapter,level_content';
+        }
+
+        return $rules;
     }
 
     private function persistMetadata(Request $request, BibBook $book): BibBook
     {
         DB::beginTransaction();
         try {
-            $book->fill([
+            $fill = [
                 'title' => $request->title,
                 'code_name' => $request->code_name,
                 'description' => $request->description,
@@ -165,7 +197,13 @@ class BibBookController extends Controller
                 'isbn' => $request->isbn,
                 'pages' => $request->pages,
                 'status' => $request->status,
-            ]);
+            ];
+
+            if (! $book->exists && $request->filled('content_structure')) {
+                $fill['content_structure'] = $request->content_structure;
+            }
+
+            $book->fill($fill);
             $book->save();
 
             if ($request->has('tag_ids')) {

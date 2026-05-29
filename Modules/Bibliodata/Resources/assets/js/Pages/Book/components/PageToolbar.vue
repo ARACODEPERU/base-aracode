@@ -8,6 +8,7 @@ defineProps({
     saving: { type: Boolean, default: false },
     loading: { type: Boolean, default: false },
     practicalCasesCount: { type: Number, default: 0 },
+    selectPageHint: { type: String, default: 'Seleccione una página del árbol' },
 });
 
 defineEmits(['save', 'open-practical-cases']);
@@ -24,7 +25,7 @@ defineEmits(['save', 'open-practical-cases']);
             {{ pageLabel }}
         </p>
         <p v-else class="text-sm text-gray-400 dark:text-gray-500 flex-1 min-w-0 m-0">
-            Seleccione una página del árbol
+            {{ selectPageHint }}
         </p>
         <div v-if="hasPage" class="flex items-center gap-2 shrink-0">
             <button

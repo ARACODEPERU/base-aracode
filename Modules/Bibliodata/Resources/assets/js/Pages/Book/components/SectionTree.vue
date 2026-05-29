@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, toRef } from 'vue';
 import SectionTreeNode from './SectionTreeNode.vue';
+import { useBookContentLabels } from '../../../composables/useBookContentLabels';
 
 const props = defineProps({
     sections: { type: Array, default: () => [] },
@@ -9,7 +10,10 @@ const props = defineProps({
     sectionPagesCache: { type: Object, default: () => ({}) },
     loading: { type: Boolean, default: false },
     expandTrigger: { type: [Number, null], default: null },
+    contentStructure: { type: String, default: 'chapter_subchapter' },
 });
+
+const labels = useBookContentLabels(toRef(props, 'contentStructure'));
 
 const emit = defineEmits([
     'toggle-expand',
@@ -81,19 +85,19 @@ defineExpose({ ensureExpanded });
             <button
                 type="button"
                 class="btn btn-primary btn-sm text-xs py-1.5 px-2.5"
-                v-tippy="{ content: 'Nuevo capítulo', placement: 'bottom' }"
+                v-tippy="{ content: `Nuevo ${labels.rootSectionLabel.value.toLowerCase()}`, placement: 'bottom' }"
                 @click="emit('add-chapter')"
             >
-                + Capítulo
+                {{ labels.addRootButton.value }}
             </button>
         </div>
 
         <div v-if="loading" class="p-4 text-center text-sm text-gray-400 shrink-0">Cargando...</div>
 
         <div v-else-if="!sections.length" class="p-6 text-center shrink-0">
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Aún no hay capítulos</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ labels.emptyTreeMessage.value }}</p>
             <button type="button" class="btn btn-primary btn-sm" @click="emit('add-chapter')">
-                Crear primer capítulo
+                {{ labels.createFirstRoot.value }}
             </button>
         </div>
 
@@ -108,6 +112,7 @@ defineExpose({ ensureExpanded });
                     :key="sec.id"
                     :section="sec"
                     :depth="0"
+                    :content-structure="contentStructure"
                     :selected-page-id="selectedPageId"
                     :active-folder-ids="activeFolderIds"
                     :section-pages-cache="sectionPagesCache"

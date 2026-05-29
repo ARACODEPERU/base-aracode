@@ -166,11 +166,17 @@ class BibReaderAccessService
 
     public function buildSectionTree(int $bookId): array
     {
-        $sections = BibBookSection::where('book_id', $bookId)
+        $book = BibBook::findOrFail($bookId);
+
+        $query = BibBookSection::where('book_id', $bookId)
             ->whereNull('parent_id')
-            ->orderBy('order')
-            ->with(['children' => fn ($q) => $q->orderBy('order')])
-            ->get();
+            ->orderBy('order');
+
+        if (! $book->isLevelContent()) {
+            $query->with(['children' => fn ($q) => $q->orderBy('order')]);
+        }
+
+        $sections = $query->get();
 
         $sectionIds = $this->collectSectionIds($sections);
 

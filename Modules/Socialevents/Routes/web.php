@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/store', [EventTeamController::class, 'store'])->name('even_equipos_store');
     Route::middleware(['middleware' => 'permission:even_equipos_editar'])->get('teams/{id}/edit', [EventTeamController::class, 'edit'])->name('even_equipos_edit');
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/update', [EventTeamController::class, 'update'])->name('even_equipos_update');
+    Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->post('teams/generate-shield', [EventTeamController::class, 'generateShield'])->name('even_equipos_generate_shield');
     Route::middleware(['middleware' => 'permission:even_equipos_nuevo'])->delete('teams/{id}/destroy', [EventTeamController::class, 'destroy'])->name('even_equipos_destroy');
     Route::middleware(['middleware' => 'permission:even_ediciones_listado'])->get('editions', [EventEditionController::class, 'index'])->name('even_ediciones_listado');
     Route::middleware(['middleware' => 'permission:even_ediciones_nuevo'])->get('editions/create', [EventEditionController::class, 'create'])->name('even_ediciones_nuevo');

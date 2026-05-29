@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Bibliodata\Entities\BibBookPagePracticalCase;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Bibliodata\Entities\BibBook;
 use Modules\Bibliodata\Entities\BibBookPage;
 use Modules\Bibliodata\Entities\BibBookSection;
 use Modules\Bibliodata\Services\BibReaderAccessService;
@@ -46,6 +47,7 @@ class BibReaderController extends Controller
                 'description' => $book->description,
                 'coverUrl' => $book->cover_image ? asset('storage/' . $book->cover_image) : null,
                 'author' => $book->author?->display_name,
+                'content_structure' => $book->content_structure ?? BibBook::STRUCTURE_CHAPTER_SUBCHAPTER,
             ],
             'sections' => $this->readerAccess->buildSectionTree($book->id),
             'access' => $this->readerAccess->buildAccessPayload($user, $book),
@@ -74,13 +76,43 @@ class BibReaderController extends Controller
             ->orderBy('page_number')
             ->paginate($perPage);
 
-        $pages->getCollection()->transform(fn ($p) => [
-            'id' => $p->id,
-            'section_id' => $p->section_id,
-            'page_number' => $p->page_number,
-            'preview' => $this->pagePreview($p->content),
-            'has_content' => ! empty(trim(strip_tags($p->content ?? ''))),
-        ]);
+        $includeCases = $book->isLevelContent();
+        $casesByPage = collect();
+
+        if ($includeCases && $pages->total() > 0) {
+            $pageIds = $pages->getCollection()->pluck('id');
+            $casesByPage = BibBookPagePracticalCase::query()
+                ->whereIn('page_id', $pageIds)
+                ->where('status', true)
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get()
+                ->groupBy('page_id');
+        }
+
+        $pages->getCollection()->transform(function ($p) use ($includeCases, $casesByPage) {
+            $item = [
+                'id' => $p->id,
+                'section_id' => $p->section_id,
+                'page_number' => $p->page_number,
+                'preview' => $this->pagePreview($p->content),
+                'has_content' => ! empty(trim(strip_tags($p->content ?? ''))),
+            ];
+
+            if ($includeCases) {
+                $item['practical_cases'] = ($casesByPage[$p->id] ?? collect())
+                    ->map(fn (BibBookPagePracticalCase $case) => [
+                        'id' => $case->id,
+                        'page_id' => $case->page_id,
+                        'title' => $case->title,
+                        'type' => $case->type,
+                    ])
+                    ->values()
+                    ->all();
+            }
+
+            return $item;
+        });
 
         return response()->json([
             'success' => true,
@@ -137,6 +169,46 @@ class BibReaderController extends Controller
                 'id' => $book->id,
                 'title' => $book->title,
             ],
+            'access' => [
+                'hasActiveSubscription' => $access['has_subscription'],
+                'previewPageId' => $access['preview_page_id'] ?? $this->readerAccess->getPreviewPageId($user, $book->id),
+            ],
+        ]);
+    }
+
+    public function showPracticalCase(int $pageId, int $caseId)
+    {
+        $user = Auth::user();
+        $book = $this->readerAccess->resolveBookForReader($user);
+
+        if (! $book) {
+            return response()->json(['success' => false, 'message' => 'Libro no disponible'], 404);
+        }
+
+        $page = BibBookPage::findOrFail($pageId);
+        $this->readerAccess->assertPageBelongsToBook($page, $book);
+
+        $access = $this->readerAccess->evaluatePageAccess($user, $book, $page->id);
+
+        if (! $access['allowed']) {
+            return response()->json([
+                'success' => false,
+                'code' => 'subscription_required',
+                'message' => 'Necesitas una suscripción activa para continuar leyendo.',
+                'preview_page_id' => $access['preview_page_id'],
+            ], 403);
+        }
+
+        $practicalCase = BibBookPagePracticalCase::query()
+            ->where('page_id', $page->id)
+            ->where('id', $caseId)
+            ->where('status', true)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'case' => $this->formatPracticalCase($practicalCase),
+            'page_id' => $page->id,
             'access' => [
                 'hasActiveSubscription' => $access['has_subscription'],
                 'previewPageId' => $access['preview_page_id'] ?? $this->readerAccess->getPreviewPageId($user, $book->id),

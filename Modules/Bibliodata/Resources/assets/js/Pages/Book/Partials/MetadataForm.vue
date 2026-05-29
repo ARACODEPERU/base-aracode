@@ -7,6 +7,7 @@ import InputError from '@/Components/InputError.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+import { CONTENT_STRUCTURE_OPTIONS } from '../../../composables/useBookContentLabels';
 
 const props = defineProps({
     authors: { type: Array, default: () => [] },
@@ -28,7 +29,11 @@ const form = useForm({
     description: props.book?.description || '',
     cover_image: null,
     file_path: null,
+    content_structure: props.book?.content_structure || 'chapter_subchapter',
 });
+
+const structureOptions = CONTENT_STRUCTURE_OPTIONS;
+const isEditing = !!props.book?.id;
 
 const coverPreview = ref(
     props.book?.cover_image ? '/storage/' + props.book.cover_image : null
@@ -134,6 +139,30 @@ defineExpose({ form });
                         <option value="archived">Archivado</option>
                     </select>
                     <InputError :message="form.errors.status" />
+                </div>
+
+                <div class="col-span-6">
+                    <InputLabel value="Formato de contenido *" />
+                    <select
+                        v-model="form.content_structure"
+                        class="form-select w-full"
+                        :disabled="isEditing"
+                    >
+                        <option
+                            v-for="opt in structureOptions"
+                            :key="opt.value"
+                            :value="opt.value"
+                        >
+                            {{ opt.label }}
+                        </option>
+                    </select>
+                    <p v-if="isEditing" class="text-xs text-gray-400 mt-1">
+                        Para cambiar el formato, use <strong>Gestionar contenido</strong> (solo si no hay sub-capítulos).
+                    </p>
+                    <p v-else class="text-xs text-gray-400 mt-1">
+                        Define cómo se organizará el árbol de contenido del libro.
+                    </p>
+                    <InputError :message="form.errors.content_structure" />
                 </div>
 
                 <div class="col-span-6">

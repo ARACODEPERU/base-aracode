@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, toRef } from 'vue';
+import { useBookContentLabels } from '../../../composables/useBookContentLabels';
 import IconBook from '@/Components/vristo/icon/icon-book.vue';
 import IconOpenBook from '@/Components/vristo/icon/icon-open-book.vue';
 import IconFolderClassic from '@/Components/vristo/icon/icon-folder-classic.vue';
@@ -17,6 +18,7 @@ defineOptions({ name: 'SectionTreeNode' });
 const props = defineProps({
     section: { type: Object, required: true },
     depth: { type: Number, default: 0 },
+    contentStructure: { type: String, default: 'chapter_subchapter' },
     selectedPageId: { type: [Number, null], default: null },
     activeFolderIds: { type: Set, default: () => new Set() },
     sectionPagesCache: { type: Object, default: () => ({}) },
@@ -34,15 +36,20 @@ const emit = defineEmits([
     'bulk-pages',
 ]);
 
+const labels = useBookContentLabels(toRef(props, 'contentStructure'));
+
 const hasSubsections = computed(() => (props.section.children?.length ?? 0) > 0);
 const hasPages = computed(() => (props.section.pages_count ?? 0) > 0);
 const isExpandable = computed(() => hasSubsections.value || hasPages.value);
 const expanded = computed(() => props.isExpanded(props.section.id));
-const isChapter = computed(() => props.depth === 0);
+const isRootSection = computed(() => props.depth === 0);
 const showOpenIcon = computed(() => expanded.value && isExpandable.value);
+const showAddSubsection = computed(() => isRootSection.value && !labels.isLevelContent.value);
 
 const sectionAriaLabel = computed(() => {
-    const kind = isChapter.value ? 'Capítulo' : 'Sub-capítulo';
+    const kind = isRootSection.value
+        ? labels.rootSectionLabel.value
+        : labels.childSectionLabel.value;
     const action = expanded.value ? 'Colapsar' : 'Expandir';
     return `${action} ${kind}: ${props.section.title}`;
 });
@@ -69,11 +76,28 @@ const onToggle = () => {
     emit('toggle-expand', props.section);
 };
 
-const pageLabel = (page) => {
-    const n = page.page_number;
-    const preview = page.preview && page.preview !== '(vacío)' ? page.preview : null;
-    return preview ? `Página ${n} — ${preview}` : `Página ${n}`;
-};
+const pageLabel = (page) =>
+    labels.formatPageNumber(page.page_number, page.preview && page.preview !== '(vacío)' ? page.preview : null);
+
+const editSectionTip = computed(() =>
+    isRootSection.value
+        ? `Editar ${labels.rootSectionLabel.value.toLowerCase()}`
+        : `Editar ${labels.childSectionLabel.value?.toLowerCase() ?? 'sección'}`
+);
+
+const deleteSectionTip = computed(() =>
+    isRootSection.value
+        ? `Eliminar ${labels.rootSectionLabel.value.toLowerCase()}`
+        : `Eliminar ${labels.childSectionLabel.value?.toLowerCase() ?? 'sección'}`
+);
+
+const addPageTip = computed(() =>
+    labels.isLevelContent.value ? 'Añadir contenido' : 'Añadir una página'
+);
+
+const bulkPagesTip = computed(() =>
+    labels.isLevelContent.value ? 'Generar contenidos en lote' : 'Generar páginas en lote'
+);
 </script>
 
 <template>
@@ -102,7 +126,7 @@ const pageLabel = (page) => {
             <span v-else class="explorer-toggle explorer-toggle--spacer" aria-hidden="true" />
 
             <span class="explorer-icon shrink-0">
-                <template v-if="isChapter">
+                <template v-if="isRootSection">
                     <icon-open-book v-if="showOpenIcon" class="w-5 h-5 text-primary" />
                     <icon-book v-else class="w-5 h-5 text-primary" />
                 </template>
@@ -121,7 +145,7 @@ const pageLabel = (page) => {
 
             <div class="explorer-actions" @click.stop>
                 <button
-                    v-if="depth === 0"
+                    v-if="showAddSubsection"
                     type="button"
                     class="explorer-action-btn"
                     v-tippy="{ content: 'Añadir sub-sección', placement: 'bottom' }"
@@ -132,7 +156,7 @@ const pageLabel = (page) => {
                 <button
                     type="button"
                     class="explorer-action-btn"
-                    v-tippy="{ content: 'Añadir una página', placement: 'bottom' }"
+                    v-tippy="{ content: addPageTip, placement: 'bottom' }"
                     @click="emit('add-page', section)"
                 >
                     <span class="text-[11px] font-bold leading-none">P+</span>
@@ -140,7 +164,7 @@ const pageLabel = (page) => {
                 <button
                     type="button"
                     class="explorer-action-btn"
-                    v-tippy="{ content: 'Generar páginas en lote', placement: 'bottom' }"
+                    v-tippy="{ content: bulkPagesTip, placement: 'bottom' }"
                     @click="emit('bulk-pages', section)"
                 >
                     <span class="text-[11px] font-bold leading-none">···</span>
@@ -148,7 +172,7 @@ const pageLabel = (page) => {
                 <button
                     type="button"
                     class="explorer-action-btn"
-                    v-tippy="{ content: depth === 0 ? 'Editar capítulo' : 'Editar sub-sección', placement: 'bottom' }"
+                    v-tippy="{ content: editSectionTip, placement: 'bottom' }"
                     @click="emit('edit-section', section)"
                 >
                     <icon-pencil class="w-4 h-4" />
@@ -156,7 +180,7 @@ const pageLabel = (page) => {
                 <button
                     type="button"
                     class="explorer-action-btn explorer-action-btn--danger"
-                    v-tippy="{ content: depth === 0 ? 'Eliminar capítulo' : 'Eliminar sub-sección', placement: 'bottom' }"
+                    v-tippy="{ content: deleteSectionTip, placement: 'bottom' }"
                     @click="emit('delete-section', section)"
                 >
                     <icon-trash-lines class="w-4 h-4" />
@@ -170,6 +194,7 @@ const pageLabel = (page) => {
                 :key="'sec-' + child.id"
                 :section="child"
                 :depth="depth + 1"
+                :content-structure="contentStructure"
                 :selected-page-id="selectedPageId"
                 :active-folder-ids="activeFolderIds"
                 :section-pages-cache="sectionPagesCache"
@@ -191,7 +216,7 @@ const pageLabel = (page) => {
             >
                 <span class="explorer-toggle explorer-toggle--spacer" />
                 <IconLoader class="w-4 h-4 animate-spin text-gray-400" />
-                <span class="text-sm text-gray-400">Cargando páginas...</span>
+                <span class="text-sm text-gray-400">Cargando {{ labels.pageLabelPlural.value.toLowerCase() }}...</span>
             </li>
 
             <li
@@ -226,7 +251,7 @@ const pageLabel = (page) => {
                     @click="emit('load-more-pages', section)"
                 >
                     <IconLoader v-if="pagesLoading" class="w-3 h-3 animate-spin inline mr-1" />
-                    Cargar más páginas...
+                    Cargar más {{ labels.pageLabelPlural.value.toLowerCase() }}...
                 </button>
             </li>
         </template>

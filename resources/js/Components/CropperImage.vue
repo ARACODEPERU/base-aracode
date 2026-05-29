@@ -40,6 +40,8 @@
 import 'cropperjs/dist/cropper.css';
 import Cropper from 'cropperjs';
 
+const PLACEHOLDER_IMAGE = '/img/image-3@2x.jpg';
+
 export default {
   props: {
     aspectRatio: {
@@ -50,57 +52,104 @@ export default {
       type: Number,
       default: 2
     },
-    imgDefault:{
+    imgDefault: {
       type: String,
-      default: '/img/image-3@2x.jpg'
+      default: PLACEHOLDER_IMAGE
     }
   },
   data() {
     return {
       imageSrc: '',
-      isLoading: false
+      isLoading: false,
+      cropper: null,
     };
   },
+  mounted() {
+    if (this.shouldLoadDefault(this.imgDefault)) {
+      this.loadFromDataUrl(this.imgDefault);
+    }
+  },
+  watch: {
+    imgDefault(newValue) {
+      if (this.shouldLoadDefault(newValue)) {
+        this.loadFromDataUrl(newValue);
+      }
+    },
+  },
   methods: {
+    shouldLoadDefault(value) {
+      if (!value || typeof value !== 'string') {
+        return false;
+      }
+
+      return value !== PLACEHOLDER_IMAGE && !value.endsWith('image-3@2x.jpg');
+    },
     onChange(event) {
       const files = event.target.files;
       if (files && files.length > 0) {
         this.isLoading = true;
         const reader = new FileReader();
         reader.onload = () => {
-          this.imageSrc = reader.result;
-          this.isLoading = false;
-          this.initCropper();
+          this.loadFromDataUrl(reader.result);
         };
         reader.readAsDataURL(files[0]);
       }
     },
-    initCropper() {
-      const image = new Image();
-      image.src = this.imageSrc;
-      image.onload = () => {
-        this.cropper = new Cropper(this.$refs.image, {
-          aspectRatio: this.aspectRatio,
-          viewMode: this.viewMode,
-          crop : (event) => {
-            this.cropImage()
-          }
-        });
-      };
-    },
-    cropImage() {
-      const croppedCanvas = this.cropper.getCroppedCanvas();
-      if (croppedCanvas) {
-        this.$emit('onCrop',croppedCanvas.toDataURL());
+    loadFromDataUrl(dataUrl) {
+      if (!dataUrl) {
+        return;
       }
+
+      this.isLoading = true;
+      this.destroyCropper();
+      this.imageSrc = dataUrl;
+      this.isLoading = false;
+
+      this.$nextTick(() => {
+        this.initCropper();
+      });
     },
-    resetCropper() {
-      this.imageSrc = '';
+    destroyCropper() {
       if (this.cropper) {
         this.cropper.destroy();
         this.cropper = null;
       }
-    }
-  }
+    },
+    initCropper() {
+      if (!this.$refs.image) {
+        return;
+      }
+
+      this.destroyCropper();
+
+      this.cropper = new Cropper(this.$refs.image, {
+        aspectRatio: this.aspectRatio,
+        viewMode: this.viewMode,
+        crop: () => {
+          this.cropImage();
+        },
+      });
+    },
+    cropImage() {
+      if (!this.cropper) {
+        return;
+      }
+
+      const croppedCanvas = this.cropper.getCroppedCanvas();
+      if (croppedCanvas) {
+        this.$emit('onCrop', croppedCanvas.toDataURL());
+      }
+    },
+    resetCropper() {
+      this.imageSrc = '';
+      this.destroyCropper();
+      if (this.$refs.input) {
+        this.$refs.input.value = '';
+      }
+    },
+  },
+  beforeUnmount() {
+    this.destroyCropper();
+  },
 };
 </script>

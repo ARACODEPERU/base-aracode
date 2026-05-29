@@ -13,13 +13,17 @@ class BibBookSectionController extends Controller
 {
     public function tree($bookId)
     {
-        BibBook::findOrFail($bookId);
+        $book = BibBook::findOrFail($bookId);
 
-        $sections = BibBookSection::where('book_id', $bookId)
+        $query = BibBookSection::where('book_id', $bookId)
             ->whereNull('parent_id')
-            ->orderBy('order')
-            ->with(['children' => fn ($q) => $q->orderBy('order')])
-            ->get();
+            ->orderBy('order');
+
+        if (! $book->isLevelContent()) {
+            $query->with(['children' => fn ($q) => $q->orderBy('order')]);
+        }
+
+        $sections = $query->get();
 
         $sectionIds = $this->collectSectionIds($sections);
 
@@ -38,6 +42,8 @@ class BibBookSectionController extends Controller
             'success' => true,
             'sections' => $tree,
             'total_pages' => $totalPages,
+            'content_structure' => $book->content_structure,
+            'can_change_structure' => $book->canChangeContentStructure(),
         ]);
     }
 
@@ -48,6 +54,15 @@ class BibBookSectionController extends Controller
             'parent_id' => 'nullable|integer|exists:bib_book_sections,id',
             'title' => 'required|string|max:255',
         ]);
+
+        $book = BibBook::findOrFail($data['book_id']);
+
+        if ($book->isLevelContent() && ! empty($data['parent_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este libro usa formato Nivel → Contenido; no se permiten sub-secciones.',
+            ], 422);
+        }
 
         if (! empty($data['parent_id'])) {
             BibBookSection::where('book_id', $data['book_id'])->findOrFail($data['parent_id']);

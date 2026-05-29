@@ -9,6 +9,8 @@ $app = require dirname(__DIR__, 3).'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Entities\EventTeam;
+use Modules\Socialevents\Services\EditionTeamService;
 use Modules\Socialevents\Services\TournamentPublicDataService;
 use Modules\Socialevents\Services\TournamentStandingsService;
 
@@ -46,6 +48,13 @@ if ($standingsCount > 0) {
         echo "WARN: first position mismatch ({$a} vs {$b})\n";
     }
 }
+
+$editionTeams = app(EditionTeamService::class);
+$teamsInEdition = $editionTeams->listForEdition($id);
+$catalogCount = EventTeam::query()->count();
+
+echo "  edition teams: ".count($teamsInEdition)."\n";
+echo "  team catalog: {$catalogCount}\n";
 
 echo "OK: Gate smoke passed.\n";
 exit(0);

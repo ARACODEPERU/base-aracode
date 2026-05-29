@@ -40,6 +40,9 @@ Route::middleware(['auth', 'role:Lector'])->prefix('biblioteca')->group(function
     Route::get('paginas/{id}', [BibReaderController::class, 'showPage'])
         ->whereNumber('id')
         ->name('bib_reader_page_show');
+    Route::get('paginas/{pageId}/casos-practicos/{caseId}', [BibReaderController::class, 'showPracticalCase'])
+        ->whereNumber(['pageId', 'caseId'])
+        ->name('bib_reader_practical_case_show');
     Route::post('logout', [BibAuthController::class, 'destroy'])->name('bib_logout');
 });
 
@@ -123,6 +126,10 @@ Route::middleware(['auth', 'verified'])->prefix('bibliodata')->group(function ()
     Route::middleware(['middleware' => 'permission:bib_libros_editar'])
         ->get('books/{id}/content', [BibBookController::class, 'content'])
         ->name('bib_books_content');
+
+    Route::middleware(['middleware' => 'permission:bib_libros_editar'])
+        ->patch('books/{id}/content-structure', [BibBookController::class, 'updateContentStructure'])
+        ->name('bib_books_content_structure');
 
     Route::middleware(['middleware' => 'permission:bib_libros_editar'])
         ->get('books/{bookId}/sections/tree', [BibBookSectionController::class, 'tree'])

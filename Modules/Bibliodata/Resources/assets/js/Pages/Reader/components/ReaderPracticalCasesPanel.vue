@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import ReaderPracticalCaseContent from './ReaderPracticalCaseContent.vue';
 
 const props = defineProps({
     cases: { type: Array, default: () => [] },
@@ -29,13 +30,6 @@ const resolveTypeLabel = (type) => {
     return 'Documento';
 };
 
-const typeLabel = computed(() => {
-    if (!selectedCase.value) {
-        return '';
-    }
-
-    return resolveTypeLabel(selectedCase.value.type);
-});
 </script>
 
 <template>
@@ -75,43 +69,7 @@ const typeLabel = computed(() => {
                 </button>
             </div>
 
-            <div class="bib-reader-cases-panel__detail">
-                <div class="bib-reader-cases-panel__detail-head">
-                    <span class="bib-reader-cases-panel__detail-badge">{{ typeLabel }}</span>
-                    <h4 class="bib-reader-cases-panel__detail-title">{{ selectedCase.title }}</h4>
-                </div>
-
-                <div
-                    v-if="selectedCase.type === 'editor'"
-                    class="bib-reader-case-content"
-                    v-html="selectedCase.content_html"
-                />
-
-                <div v-else-if="selectedCase.type === 'image'" class="bib-reader-cases-panel__media-wrap">
-                    <img
-                        :src="selectedCase.file_url"
-                        :alt="selectedCase.title"
-                        class="bib-reader-cases-panel__media"
-                    />
-                </div>
-
-                <div v-else class="bib-reader-cases-panel__document">
-                    <p class="bib-reader-cases-panel__document-name">
-                        {{ selectedCase.file_name || 'Documento adjunto' }}
-                    </p>
-                    <p class="bib-reader-cases-panel__document-meta">
-                        {{ selectedCase.file_mime || 'Archivo disponible para consulta' }}
-                    </p>
-                    <a
-                        v-if="selectedCase.file_url"
-                        :href="selectedCase.file_url"
-                        target="_blank"
-                        class="bib-reader-cases-panel__document-link"
-                    >
-                        Abrir documento
-                    </a>
-                </div>
-            </div>
+            <ReaderPracticalCaseContent :case-item="selectedCase" />
         </div>
 
         <div v-else class="bib-reader-cases-panel__empty">

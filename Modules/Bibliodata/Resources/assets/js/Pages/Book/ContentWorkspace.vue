@@ -12,10 +12,21 @@ import BulkPagesModal from './components/BulkPagesModal.vue';
 import PracticalCasesWorkspace from './components/PracticalCasesWorkspace.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import {
+    useBookContentLabels,
+    CONTENT_STRUCTURE_OPTIONS,
+} from '../../composables/useBookContentLabels';
 
 const props = defineProps({
     book: { type: Object, required: true },
+    can_change_structure: { type: Boolean, default: true },
 });
+
+const bookContentStructure = ref(props.book.content_structure || 'chapter_subchapter');
+const canChangeStructure = ref(props.can_change_structure);
+const structureSaving = ref(false);
+const labels = useBookContentLabels(bookContentStructure);
+const structureOptions = CONTENT_STRUCTURE_OPTIONS;
 
 const sections = ref([]);
 const totalPages = ref(0);
@@ -65,8 +76,20 @@ const activeFolderIds = computed(() => {
 const pageLabel = computed(() => {
     if (!currentPage.value) return '';
     const title = selectedSection.value?.title || currentPage.value.section_title || '';
-    return title ? `${title} — Página ${currentPage.value.page_number}` : `Página ${currentPage.value.page_number}`;
+    return labels.formatPageHeader(title, currentPage.value.page_number);
 });
+
+const totalPagesLabel = computed(() => {
+    const n = totalPages.value;
+    const unit = labels.pageLabelPlural.value.toLowerCase();
+    return `${n} ${unit} en total`;
+});
+
+const structureSelectHint = computed(() =>
+    canChangeStructure.value
+        ? 'Cambie el formato mientras no existan sub-capítulos.'
+        : 'Elimine los sub-capítulos para poder cambiar el formato.'
+);
 
 const hasUnsavedChanges = () =>
     currentPage.value && pageContent.value !== (currentPage.value.content || '');
@@ -269,6 +292,12 @@ const loadTree = async () => {
         if (data.success) {
             sections.value = data.sections;
             totalPages.value = data.total_pages;
+            if (data.content_structure) {
+                bookContentStructure.value = data.content_structure;
+            }
+            if (typeof data.can_change_structure === 'boolean') {
+                canChangeStructure.value = data.can_change_structure;
+            }
         }
     } finally {
         treeLoading.value = false;
@@ -308,7 +337,9 @@ const onSectionModalSubmit = async (title) => {
                 await Swal.fire({
                     icon: 'success',
                     title: 'Enhorabuena',
-                    text: sectionModalParentId.value ? 'Sub-sección creada correctamente' : 'Capítulo creado correctamente',
+                    text: sectionModalParentId.value
+                        ? labels.subsectionCreatedMessage.value
+                        : labels.rootCreatedMessage.value,
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
@@ -435,7 +466,68 @@ const onPracticalCasesCountChanged = (count) => {
 };
 
 const addChapter = (parentId = null) => {
+    if (labels.isLevelContent.value && parentId) {
+        return;
+    }
     openSectionModal('create', { parentId });
+};
+
+const onContentStructureChange = async (event) => {
+    const newValue = event.target.value;
+    if (newValue === bookContentStructure.value) return;
+
+    if (!canChangeStructure.value) {
+        event.target.value = bookContentStructure.value;
+        return;
+    }
+
+    const opt = structureOptions.find((o) => o.value === newValue);
+    const result = await Swal.fire({
+        title: '¿Cambiar formato de contenido?',
+        html: `Se aplicará: <strong>${opt?.label ?? newValue}</strong>. Las secciones y contenidos existentes se mantienen.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Cambiar',
+        cancelButtonText: 'Cancelar',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+
+    if (!result.isConfirmed) {
+        event.target.value = bookContentStructure.value;
+        return;
+    }
+
+    structureSaving.value = true;
+    try {
+        const { data } = await axios.patch(
+            route('bib_books_content_structure', props.book.id),
+            { content_structure: newValue },
+            csrfHeaders()
+        );
+        if (data.success) {
+            bookContentStructure.value = data.book.content_structure;
+            canChangeStructure.value = data.can_change_structure;
+            await loadTree();
+            await Swal.fire({
+                icon: 'success',
+                title: 'Formato actualizado',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }
+    } catch (e) {
+        event.target.value = bookContentStructure.value;
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: e.response?.data?.message || 'No se pudo cambiar el formato',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    } finally {
+        structureSaving.value = false;
+    }
 };
 
 const editSection = (section) => {
@@ -601,8 +693,32 @@ onMounted(() => {
                     <h2 class="text-xl font-semibold text-gray-800 dark:text-neutral-200">{{ book.title }}</h2>
                     <p class="text-sm text-gray-500">
                         {{ book.author?.person?.formatted_name || book.author?.person?.full_name || 'Sin autor' }}
-                        · {{ totalPages }} página(s) en total
+                        · {{ totalPagesLabel }}
                     </p>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <label class="text-xs font-medium text-gray-600 dark:text-gray-400 shrink-0">
+                            Formato:
+                        </label>
+                        <select
+                            :value="bookContentStructure"
+                            class="form-select form-select-sm text-xs py-1 max-w-md"
+                            :disabled="!canChangeStructure || structureSaving"
+                            v-tippy="{ content: structureSelectHint, placement: 'bottom' }"
+                            @change="onContentStructureChange"
+                        >
+                            <option
+                                v-for="opt in structureOptions"
+                                :key="opt.value"
+                                :value="opt.value"
+                            >
+                                {{ opt.label }}
+                            </option>
+                        </select>
+                        <span
+                            v-if="structureSaving"
+                            class="text-xs text-gray-400"
+                        >Guardando...</span>
+                    </div>
                 </div>
                 <Keypad>
                     <template #botones>
@@ -625,6 +741,7 @@ onMounted(() => {
                     <SectionTree
                         ref="sectionTreeRef"
                         :sections="sections"
+                        :content-structure="bookContentStructure"
                         :selected-page-id="selectedPageId"
                         :active-folder-ids="activeFolderIds"
                         :section-pages-cache="sectionPagesCache"
@@ -649,6 +766,7 @@ onMounted(() => {
                         :saving="pageSaving"
                         :loading="pageLoading"
                         :practical-cases-count="currentPage?.practical_cases_count || 0"
+                        :select-page-hint="`Seleccione un ${labels.pageLabelSingular.value.toLowerCase()} del árbol`"
                         @save="saveCurrentPage"
                         @open-practical-cases="openPracticalCasesWorkspace"
                     />
@@ -657,6 +775,10 @@ onMounted(() => {
                         :loading="pageLoading"
                         :page-label="pageLabel"
                         :image-upload-url="route('bib_books_upload_image')"
+                        :empty-hint="labels.isLevelContent.value
+                            ? 'Expanda un nivel y seleccione un contenido del árbol para editar.'
+                            : 'Expanda un capítulo y seleccione una página del árbol para editar su contenido.'"
+                        :editor-placeholder="`Escribe el contenido del ${labels.pageLabelSingular.value.toLowerCase()}...`"
                     />
                 </main>
 
@@ -677,6 +799,7 @@ onMounted(() => {
             :is-subsection="sectionModalIsSubsection"
             :initial-title="sectionModalInitialTitle"
             :saving="sectionSaving"
+            :content-structure="bookContentStructure"
             @close="closeSectionModal"
             @submit="onSectionModalSubmit"
         />
@@ -686,6 +809,8 @@ onMounted(() => {
             :book-pages="book.pages || 0"
             :section-pages-count="selectedSectionPagesCount"
             :processing="bulkProcessing"
+            :page-label-plural="labels.pageLabelPlural.value"
+            :page-label-singular="labels.pageLabelSingular.value"
             @close="showBulkModal = false"
             @submit="bulkSubmit"
         />
