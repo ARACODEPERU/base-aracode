@@ -114,13 +114,16 @@
     const h3CoursesPopulares = ref(null);
     const h3ArticlesPopulares = ref(null);
 
+    const isDesktop = ref(typeof window !== 'undefined' && window.innerWidth >= 1024);
+
     onMounted(() => {
         nextTick(() => {
             btnMenuMycourses.value = document.getElementById("btnMenuMycourses");
             btnHeaderPerfilUser.value = document.getElementById("btnHeaderPerfilUser");
         });
         //console.log(userData.tour_completed)
-        if (!localStorage.getItem('tourShown') && !userData.tour_completed) {
+        // Solo mostrar el tour en desktop (>= 1024px), nunca en tablets o móviles
+        if (isDesktop.value && !localStorage.getItem('tourShown') && !userData.tour_completed) {
             open.value = true; // Mostrar el tour por primera vez
         }
 
@@ -172,11 +175,14 @@
     };
 
     const updateTourUser = () => {
+        localStorage.setItem('tourShown', 'true');
         axios({
             method: "POST",
             url: route('update_tour_user')
         }).then(() => {
-            localStorage.setItem('tourShown', 'true');
+            // Tour completado correctamente en backend
+        }).catch(() => {
+            // Si falla la llamada al backend, al menos ya se guardó en localStorage
         });
     }
 </script>
