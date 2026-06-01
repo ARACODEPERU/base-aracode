@@ -50,7 +50,36 @@ final class TournamentLandingPresenter
             'prizePlaces' => $prizePlaces,
             'hasPrizeSection' => count($prizePlaces) > 0,
             'accentColor' => self::sanitizeAccentColor($edition->accentColor()),
+            'showAppDownload' => self::showAppDownload($edition),
+            'appDownloadUrl' => self::appDownloadUrl($edition),
+            'appVersion' => config('socialevents.mobile_app_version', '1.0.0'),
         ];
+    }
+
+    public static function showAppDownload(EventEdition $edition): bool
+    {
+        return (bool) $edition->mobile_enabled && self::appDownloadUrl($edition) !== null;
+    }
+
+    public static function appDownloadUrl(EventEdition $edition): ?string
+    {
+        if (! $edition->mobile_enabled) {
+            return null;
+        }
+
+        $relativePath = config('socialevents.mobile_app_apk_path', 'downloads/aracode-torneos.apk');
+
+        if (! is_string($relativePath) || $relativePath === '') {
+            return null;
+        }
+
+        $absolutePath = public_path($relativePath);
+
+        if (! is_file($absolutePath)) {
+            return null;
+        }
+
+        return asset($relativePath);
     }
 
     public static function resolveHeroImage(EventEdition $edition): string

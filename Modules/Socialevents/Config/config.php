@@ -29,6 +29,12 @@ return [
     */
     'dashboard_active_module' => 'sports',
 
+    /*
+    | APK de la app móvil (Flutter) servido desde public/ para descarga directa en landing.
+    */
+    'mobile_app_apk_path' => 'downloads/aracode-torneos.apk',
+    'mobile_app_version' => '1.0.0',
+
     'event_types' => [
         [
             'id' => 'sports',

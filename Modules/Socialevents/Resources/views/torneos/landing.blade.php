@@ -11,6 +11,9 @@
     $prizePlaces = $prizePlaces ?? [];
     $hasPrizeSection = $hasPrizeSection ?? (count($prizePlaces) > 0);
     $accentColor = $accentColor ?? $edition->accentColor();
+    $showAppDownload = $showAppDownload ?? ($edition->mobile_enabled && !empty($appDownloadUrl));
+    $appDownloadUrl = $appDownloadUrl ?? null;
+    $appVersion = $appVersion ?? config('socialevents.mobile_app_version', '1.0.0');
     $heroStatValue = $prizeSummary ?? ($inscriptionLabel ?? '—');
 @endphp
 <!DOCTYPE html>
@@ -63,6 +66,9 @@
                 @endif
                 <a href="#fixture">Fixture</a>
                 <a href="#posiciones">Posiciones</a>
+                @if ($showAppDownload)
+                    <a href="#app">App</a>
+                @endif
                 <a href="#contacto">Contacto</a>
             </nav>
 
@@ -83,6 +89,9 @@
         @endif
         <a href="#fixture">Fixture</a>
         <a href="#posiciones">Posiciones</a>
+        @if ($showAppDownload)
+            <a href="#app">App</a>
+        @endif
         <a href="#contacto">Contacto</a>
     </nav>
 
@@ -138,7 +147,7 @@
                     <p class="se-section__sub">{{ $teamCount }} equipos compitiendo en esta edición</p>
                 </header>
 
-                <div class="se-teams-grid">
+                <div class="se-teams-grid" style="--grid-cols: {{ min($teamCount, 6) }}">
                     @foreach ($edition->equipos as $equipo)
                         <article class="se-team-card" data-se-reveal>
                             <div class="se-team-card__logo">
@@ -162,7 +171,7 @@
                         <h2 class="se-section__title">Premios <span>del torneo</span></h2>
                         <p class="se-section__sub">Reconocimientos configurados para esta edición</p>
                     </header>
-                    <div class="se-prizes-grid">
+                    <div class="se-prizes-grid" style="--grid-cols: {{ min(count($prizePlaces), 4) }}">
                         @foreach ($prizePlaces as $place)
                             <article class="se-prize-card" data-se-reveal>
                                 <div class="se-prize-card__place">{{ $place['title'] }}</div>
@@ -354,6 +363,46 @@
                 </aside>
             </div>
         </section>
+
+        @if ($showAppDownload)
+            <section id="app" class="se-section se-section--alt">
+                <div class="se-container">
+                    <header class="se-section__head" data-se-reveal>
+                        <h2 class="se-section__title">Descargar <span>aplicación</span></h2>
+                        <p class="se-section__sub">
+                            Sigue el torneo en tu celular: fixture, posiciones, goleadores y resultados en tiempo real.
+                        </p>
+                    </header>
+
+                    <div class="se-app-download" data-se-reveal>
+                        <div class="se-app-download__icon" aria-hidden="true">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="se-app-download__body">
+                            <h3>App móvil del torneo</h3>
+                            <p>
+                                Instala la aplicación Android para consultar esta edición sin entrar a la tienda.
+                                Descarga el instalador (.apk), ábrelo en tu dispositivo y acepta la instalación.
+                            </p>
+                            <ul class="se-app-download__steps">
+                                <li>Descarga el archivo APK</li>
+                                <li>Activa «Instalar apps desconocidas» si Android lo solicita</li>
+                                <li>Abre el instalador y confirma</li>
+                            </ul>
+                            <div class="se-app-download__actions">
+                                <a href="{{ $appDownloadUrl }}" class="se-btn se-btn--primary se-btn--lg" download>
+                                    <i class="fas fa-download" aria-hidden="true"></i>
+                                    Descargar APK v{{ $appVersion }}
+                                </a>
+                            </div>
+                            <p class="se-app-download__note">
+                                Versión {{ $appVersion }} · Solo Android · Publicación en tiendas próximamente
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endif
 
         <section id="contacto" class="se-section">
             <div class="se-container">
