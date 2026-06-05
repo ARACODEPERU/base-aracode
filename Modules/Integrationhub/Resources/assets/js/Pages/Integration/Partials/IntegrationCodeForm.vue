@@ -26,69 +26,32 @@ const selectedFieldMaps = computed(() => {
 
 const phpString = value => `"${String(value || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 
-const phpIdentifier = (value, fallback = 'valor') => {
-    const identifier = String(value || fallback)
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9_]+/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .replace(/_{2,}/g, '_');
-
-    const safeIdentifier = identifier || fallback;
-
-    return /^[a-z_]/.test(safeIdentifier) ? safeIdentifier : `_${safeIdentifier}`;
-};
-
-const integrationAlias = computed(() => phpIdentifier(props.integration.name, 'nombre_conexion'));
-
-const selectedEndpointAlias = computed(() => phpIdentifier(selectedEndpoint.value?.name, 'nombre_endpoint'));
-
 const buildFieldLine = (field, value) => {
     return `            ${phpString(field.field_key)} => ${value},`;
 };
 
-const usageVariablesCode = computed(() => {
-    const fields = selectedFieldMaps.value.filter(field => field.field_key);
-    const requiredFields = fields.filter(field => Boolean(field.is_required));
-    const optionalFields = fields.filter(field => !field.is_required);
-    const lines = [];
+const endpointName = computed(() => selectedEndpoint.value?.name || 'NombreEndpoint');
 
-    lines.push('            // Valores requeridos');
-    if (requiredFields.length) {
-        requiredFields.forEach(field => {
-            lines.push(buildFieldLine(field, `$request->input(${phpString(field.field_key)})`));
-        });
-    } else {
-        lines.push('            // No hay valores requeridos configurados para este endpoint.');
-    }
+const controllerCode = computed(() => {
+    const endpoint = phpString(endpointName.value);
 
-    lines.push('');
-    lines.push('            // Valores opcionales');
-    if (optionalFields.length) {
-        optionalFields.forEach(field => {
-            lines.push(buildFieldLine(field, 'null'));
-        });
-    } else {
-        lines.push('            // No hay valores opcionales configurados para este endpoint.');
-    }
+    const fields = selectedFieldMaps.value.filter(f => f.field_key);
+    const requiredFields = fields.filter(f => Boolean(f.is_required));
+    const optionalFields = fields.filter(f => !f.is_required);
 
-    lines.push('');
-    lines.push('            // Valores extra');
-    lines.push('            // "tracking_id" => $request->input("tracking_id"),');
-    lines.push('            // "metadata" => [');
-    lines.push('            //     "source" => "web",');
-    lines.push('            //     "tags" => ["nuevo", "cliente"],');
-    lines.push('            // ],');
+    const requiredLines = requiredFields.length
+        ? requiredFields.map(f => buildFieldLine(f, `$request->input(${phpString(f.field_key)})`)).join('\n')
+        : '            // No hay valores requeridos.';
 
-    return lines.join("\n");
-});
+    const optionalLines = optionalFields.length
+        ? optionalFields.map(f => `            // ${buildFieldLine(f, 'null')}`).join('\n')
+        : '            // No hay valores opcionales.';
 
-const controllerCode = computed(() => `<?php
+    return `<?php
 
 namespace App\\Http\\Controllers;
 
-use App\\Services\\Integrationhub;
+use Modules\\Integrationhub\\Http\\Controllers\\IntegrationhubController;
 use Illuminate\\Http\\JsonResponse;
 use Illuminate\\Http\\Request;
 
@@ -96,13 +59,31 @@ class ExampleIntegrationController extends Controller
 {
     public function send(Request $request): JsonResponse
     {
-        $result = Integrationhub::${integrationAlias.value}()->${selectedEndpointAlias.value}([
-${usageVariablesCode.value}
-        ]);
+        $hub = app(IntegrationhubController::class);
 
-        return response()->json($result);
+        return $hub->runEndpoint(
+            ${endpoint},
+            [
+                // Valores requeridos
+${requiredLines}
+
+                // Valores opcionales
+${optionalLines}
+            ],
+            // [                          // ← extra_params (opcional)
+            //     'path'  => [],
+            //     'query' => [],
+            //     'body'  => [
+            //         "campo_extra" => "valor",
+            //     ],
+            //     'headers' => [],
+            // ],
+            // true,                      // ← track_results (default true)
+            // 'batch_123',                // ← batch_id para agrupar ejecuciones (opcional)
+        );
     }
-}`);
+}`;
+});
 </script>
 
 <template>
@@ -127,7 +108,7 @@ ${usageVariablesCode.value}
 
         <template v-else>
             <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
-                Usa la clase <code>App\Services\Integrationhub</code>. El metodo es el nombre normalizado de la integracion y luego el endpoint; solo envia variables.
+                Usa <code>IntegrationhubController::runEndpoint()</code>. Solo pasas el nombre del endpoint y las variables como arrays — no necesitas construir objetos <code>Request</code> manualmente.
             </div>
 
             <div>
