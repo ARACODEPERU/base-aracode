@@ -15,8 +15,10 @@ use Modules\Integrationhub\Entities\IntegrationEndpoint;
 use Modules\Integrationhub\Entities\IntegrationFieldMap;
 use Modules\Integrationhub\Entities\IntegrationSchedule;
 use Modules\Integrationhub\Entities\IntegrationQuery;
+use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationExecLog;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 use App\Services\IntegrationhubCronExpression;
 use Illuminate\Support\Facades\Route;
 
@@ -793,6 +795,66 @@ class IntegrationhubController extends Controller
                 ->orderBy('id', 'desc')
                 ->limit((int) $request->input('limit', 200))
                 ->get(),
+        ]);
+    }
+
+    public function errorsPage()
+    {
+        return Inertia::render('Integrationhub::Integration/Errors');
+    }
+
+    public function errors(Request $request)
+    {
+        $query = IntegrationError::query();
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('message', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
+        }
+
+        $perPage = min((int) $request->input('per_page', 50), 100);
+
+        return response()->json([
+            'errors' => $query
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->paginate($perPage),
+        ]);
+    }
+
+    public function destroyError(int $id)
+    {
+        $error = IntegrationError::findOrFail($id);
+        $error->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Error eliminado correctamente.',
+        ]);
+    }
+
+    public function clearErrors(Request $request)
+    {
+        $query = IntegrationError::query();
+
+        if ($request->filled('before_date')) {
+            $query->where('created_at', '<=', Carbon::parse($request->input('before_date'))->endOfDay());
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Se eliminaron {$count} error(es) correctamente.",
         ]);
     }
 

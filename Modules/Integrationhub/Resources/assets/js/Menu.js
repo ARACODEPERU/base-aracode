@@ -1,6 +1,7 @@
 import {
     faLink,
     faPlus,
+    faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuIntegrationhub = {
@@ -23,6 +24,13 @@ const menuIntegrationhub = {
             text: "Nueva Integración",
             permissions: "integrationhub_crear",
             icom: faPlus,
+        },
+        {
+            status: false,
+            route: route("integrationhub_errores"),
+            text: "Errores de Integración",
+            permissions: "integrationhub_listado",
+            icom: faExclamationTriangle,
         },
     ],
 };

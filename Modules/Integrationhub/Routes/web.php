@@ -37,4 +37,8 @@ Route::middleware(['auth', 'verified'])->prefix('integrationhub')->group(functio
     Route::put('update-schedule/{id}', [IntegrationhubController::class, 'updateSchedule'])->name('integrationhub_update_schedule');
     Route::delete('destroy-schedule/{id}', [IntegrationhubController::class, 'destroySchedule'])->name('integrationhub_destroy_schedule');
     Route::get('logs/{id}', [IntegrationhubController::class, 'logs'])->name('integrationhub_logs');
+    Route::get('errores', [IntegrationhubController::class, 'errorsPage'])->name('integrationhub_errores');
+    Route::get('errors', [IntegrationhubController::class, 'errors'])->name('integrationhub_errors');
+    Route::delete('errors', [IntegrationhubController::class, 'clearErrors'])->name('integrationhub_errors_clear');
+    Route::delete('errors/{id}', [IntegrationhubController::class, 'destroyError'])->name('integrationhub_errors_destroy');
 });
