@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Modules\Integrationhub\Emails\BirthdayGreetingMail;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
+use Modules\Integrationhub\Entities\IntegrationFlowId;
 
 class ProcessBirthdayWhatsapp implements ShouldQueue
 {
@@ -49,8 +50,9 @@ class ProcessBirthdayWhatsapp implements ShouldQueue
             ], [], false);
 
             // 3. Iniciar flujo de WhatsApp de cumpleaños
+            $flowId = IntegrationFlowId::where('key', 'birthday_greeting')->value('flow_id') ?? '1780844285916';
             $hub->runEndpoint('Inicio_contacto_con_flow_id', [
-                'flow_id'    => '1780844285916',
+                'flow_id'    => $flowId,
                 'contact_id' => ltrim($this->phone, '+'),
             ], [], false);
         } catch (\Throwable $th) {

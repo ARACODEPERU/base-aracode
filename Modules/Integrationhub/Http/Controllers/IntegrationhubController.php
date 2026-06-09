@@ -17,6 +17,7 @@ use Modules\Integrationhub\Entities\IntegrationSchedule;
 use Modules\Integrationhub\Entities\IntegrationQuery;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationExecLog;
+use Modules\Integrationhub\Entities\IntegrationFlowId;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use App\Services\IntegrationhubCronExpression;
@@ -795,6 +796,56 @@ class IntegrationhubController extends Controller
                 ->orderBy('id', 'desc')
                 ->limit((int) $request->input('limit', 200))
                 ->get(),
+        ]);
+    }
+
+    public function flowIdsPage()
+    {
+        // Auto-crear el registro por defecto para Saludo de cumpleaños si no existe
+        IntegrationFlowId::firstOrCreate(
+            ['key' => 'birthday_greeting'],
+            [
+                'flow_id' => '1780844285916',
+                'label' => 'Saludo de cumpleaños',
+            ]
+        );
+
+        $flowIds = IntegrationFlowId::orderBy('key')->get();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'flow_ids' => $flowIds,
+            ]);
+        }
+
+        return Inertia::render('Integrationhub::Integration/FlowIds', [
+            'flowIds' => $flowIds,
+        ]);
+    }
+
+    public function updateFlowId(Request $request, string $key)
+    {
+        $validated = $request->validate([
+            'flow_id' => 'required|string|max:255',
+            'label' => 'nullable|string|max:255',
+        ]);
+
+        $flowId = IntegrationFlowId::where('key', $key)->first();
+
+        if (!$flowId) {
+            return response()->json([
+                'message' => 'No se encontró un ID de flujo con la clave especificada.',
+            ], 404);
+        }
+
+        $flowId->update([
+            'flow_id' => $validated['flow_id'],
+            'label' => $validated['label'] ?? $flowId->label,
+        ]);
+
+        return response()->json([
+            'message' => 'ID de flujo actualizado correctamente.',
+            'flow_id' => $flowId,
         ]);
     }
 
