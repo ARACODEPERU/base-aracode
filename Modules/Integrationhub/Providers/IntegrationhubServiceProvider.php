@@ -2,6 +2,7 @@
 
 namespace Modules\Integrationhub\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,7 +38,10 @@ class IntegrationhubServiceProvider extends ServiceProvider
      */
     protected function registerCommands(): void
     {
-        // $this->commands([]);
+        $this->commands([
+            \Modules\Integrationhub\Console\CarritoAbandonado::class,
+            \Modules\Integrationhub\Console\BirthdayWhatsappSend::class,
+        ]);
     }
 
     /**
@@ -45,10 +49,19 @@ class IntegrationhubServiceProvider extends ServiceProvider
      */
     protected function registerCommandSchedules(): void
     {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
+        $this->app->booted(function () {
+            $schedule = $this->app->make(Schedule::class);
+
+            // Ejecuta carrito abandonado cada 15 minutos
+            $schedule->command('integrationhub:carrito-abandonado')
+                     ->everyFifteenMinutes()
+                     ->timezone('America/Lima');
+
+            // Ejecuta envío de WhatsApp de cumpleaños a las 7:00 AM
+            $schedule->command('integrationhub:birthday-whatsapp-send')
+                     ->dailyAt('07:00')
+                     ->timezone('America/Lima');
+        });
     }
 
     /**
