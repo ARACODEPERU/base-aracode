@@ -72,10 +72,10 @@ ${optionalLines}
 
                 // // custom_fields (opcional) — campos adicionales para el endpoint
                 // 'custom_fields' => [
-                //     'var1' => 'no',
-                //     'var2' => 'tiene',
-                //     'var3' => 'correo',
-                //     'var4' => 'ni nombre',
+                //     'id_del_custom_field1' => 'no',                      //no he visto que funcione
+                //     'id_del_custom_field2' => 'tiene',
+                //     'id_del_custom_field3' => 'correo',
+                //     'id_del_custom_field4' => 'ni nombre',
                 // ],
             ],
             // [                          // ← extra_params (opcional)
