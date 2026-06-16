@@ -85,10 +85,42 @@ const formatDate = (dateString) => {
     });
 };
 
+const sensitivePatterns = [
+    'password', 'passwd', 'pwd',
+    'token', 'access_token', 'refresh_token',
+    'api_key', 'apikey', 'api-key',
+    'secret', 'client_secret',
+    'authorization',
+    'credential', 'bearer',
+    'private_key', 'privatekey',
+];
+
+const isSensitiveKey = (key) => {
+    const k = String(key || '').toLowerCase().trim();
+    return sensitivePatterns.some(p => k === p || k.includes(p));
+};
+
+const maskSensitiveData = (data) => {
+    if (!data || typeof data !== 'object') return data;
+    if (Array.isArray(data)) return data.map(maskSensitiveData);
+    const masked = {};
+    for (const [key, value] of Object.entries(data)) {
+        if (isSensitiveKey(key) && typeof value === 'string' && value.length > 0) {
+            masked[key] = 'x'.repeat(value.length);
+        } else if (typeof value === 'object' && value !== null) {
+            masked[key] = maskSensitiveData(value);
+        } else {
+            masked[key] = value;
+        }
+    }
+    return masked;
+};
+
 const formatJson = (data) => {
     if (!data) return '-';
     try {
-        return JSON.stringify(data, null, 2);
+        const masked = maskSensitiveData(data);
+        return JSON.stringify(masked, null, 2);
     } catch {
         return String(data);
     }

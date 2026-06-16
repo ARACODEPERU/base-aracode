@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->prefix('integrationhub')->group(functio
     Route::put('update/{id}', [IntegrationhubController::class, 'update'])->name('integrationhub_update');
     Route::middleware(['middleware' => 'permission:integrationhub_eliminar'])->delete('destroy/{id}', [IntegrationhubController::class, 'destroy'])->name('integrationhub_destroy');
     Route::middleware(['middleware' => 'permission:integrationhub_ejecutar'])->post('execute-by-name/{integration}/{endpoint}', [IntegrationhubController::class, 'executeByName'])->name('integrationhub_execute_by_name');
+    Route::middleware(['middleware' => 'permission:integrationhub_ejecutar'])->post('execute-by-endpoint/{endpoint}', [IntegrationhubController::class, 'executeByEndpointName'])->name('integrationhub_execute_by_endpoint');
     Route::middleware(['middleware' => 'permission:integrationhub_ejecutar'])->post('execute/{id}', [IntegrationhubController::class, 'execute'])->name('integrationhub_execute');
     Route::put('update-auth/{id}', [IntegrationhubController::class, 'updateAuth'])->name('integrationhub_update_auth');
     Route::delete('destroy-auth/{id}', [IntegrationhubController::class, 'destroyAuth'])->name('integrationhub_destroy_auth');
@@ -36,4 +37,11 @@ Route::middleware(['auth', 'verified'])->prefix('integrationhub')->group(functio
     Route::put('update-schedule/{id}', [IntegrationhubController::class, 'updateSchedule'])->name('integrationhub_update_schedule');
     Route::delete('destroy-schedule/{id}', [IntegrationhubController::class, 'destroySchedule'])->name('integrationhub_destroy_schedule');
     Route::get('logs/{id}', [IntegrationhubController::class, 'logs'])->name('integrationhub_logs');
+    Route::get('flow-ids', [IntegrationhubController::class, 'flowIdsPage'])->name('integrationhub_flow_ids');
+    Route::put('flow-ids/{key}', [IntegrationhubController::class, 'updateFlowId'])->name('integrationhub_flow_ids_update');
+
+    Route::get('errores', [IntegrationhubController::class, 'errorsPage'])->name('integrationhub_errores');
+    Route::get('errors', [IntegrationhubController::class, 'errors'])->name('integrationhub_errors');
+    Route::delete('errors', [IntegrationhubController::class, 'clearErrors'])->name('integrationhub_errors_clear');
+    Route::delete('errors/{id}', [IntegrationhubController::class, 'destroyError'])->name('integrationhub_errors_destroy');
 });

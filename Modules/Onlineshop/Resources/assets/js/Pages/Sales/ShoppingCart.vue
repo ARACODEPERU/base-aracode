@@ -50,6 +50,8 @@
         totalQuantity.value = totalQty;
     };
 
+    const priceLabel = (value) => Number(value || 0) <= 0 ? 'Gratis' : `S./ ${Number(value || 0).toFixed(2)}`;
+
 
     const removeItemShoppingCart = (id, key) => {
         store.removeFromCart(id);
@@ -154,8 +156,8 @@
                                         </button>
                                     </div>
                                     <div class="text-end md:order-4 md:w-32">
-                                        <p class="text-base font-bold text-gray-900 dark:text-white">S./ {{ item.price }}</p>
-                                        <p v-if="item.price_old" class="text-xs font-bold text-red-500 dark:text-red-300 line-through">S./ {{ item.price_old }}</p>
+                                        <p class="text-base font-bold text-gray-900 dark:text-white">{{ priceLabel(item.price) }}</p>
+                                        <p v-if="Number(item.price_old || 0) > 0" class="text-xs font-bold text-red-500 dark:text-red-300 line-through">{{ priceLabel(item.price_old) }}</p>
                                     </div>
                                 </div>
 
@@ -310,7 +312,7 @@
                             <div class="space-y-2">
                                 <dl class="flex items-center justify-between gap-4">
                                     <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Precio original</dt>
-                                    <dd class="text-base font-medium text-gray-900 dark:text-white">S./ {{ totalSale }}</dd>
+                                    <dd class="text-base font-medium text-gray-900 dark:text-white">{{ priceLabel(totalSale) }}</dd>
                                 </dl>
 
                                 <!-- <dl class="flex items-center justify-between gap-4">
@@ -331,7 +333,7 @@
 
                             <dl class="flex items-center justify-between gap-4 border-t border-gray-200 pt-2 dark:border-gray-700">
                                 <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
-                                <dd class="text-base font-bold text-gray-900 dark:text-white">S./ {{ totalSale }}</dd>
+                                <dd class="text-base font-bold text-gray-900 dark:text-white">{{ priceLabel(totalSale) }}</dd>
                             </dl>
                         </div>
 

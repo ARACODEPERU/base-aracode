@@ -139,7 +139,7 @@ class OnliSaleController extends Controller
 
     public function formMercadopago(Request $request)
     {
-        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
         $client = new PreferenceClient();
         $items = [];
         $msg = null;
@@ -193,8 +193,7 @@ class OnliSaleController extends Controller
 
         return Inertia::render('Onlineshop::Sales/MercadopagoForm', [
             'preference_id' => $preference_id,
-            'personInvoice' => $personInvoice,
-            'MERCADOPAGO_KEY' => config('services.mercadopago.key')
+            'personInvoice' => $personInvoice
         ]);
     }
 
@@ -295,8 +294,7 @@ class OnliSaleController extends Controller
             AcaCapRegistration::create([
                 'student_id'        => $student->id,
                 'course_id'         => $item->item_id,
-                'status'            => false,
-                'date_start'        => Carbon::now()->format('Y-m-d'),
+                'status'            => false
             ]);
         }
 
@@ -312,8 +310,7 @@ class OnliSaleController extends Controller
      */
     public function getPreference($id)
     {
-        //dd(env('MERCADOPAGO_TOKEN'));
-        MercadoPagoConfig::setAccessToken(env('MERCADOPAGO_TOKEN'));
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
         try {
             $client = new PreferenceClient();
             $preference = $client->get($id);

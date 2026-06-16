@@ -20,21 +20,26 @@ class IntegrationhubDatabaseSeeder extends Seeder
             ['description' => 'Centro de integraciónes', 'icon' => 'faPuzzlePiece']
         );
 
-        $permissions = [];
+        $permissions = [
+            'integrationhub_dashboard',
+            'integrationhub_listado',
+            'integrationhub_crear',
+            'integrationhub_editar',
+            'integrationhub_eliminar',
+            'integrationhub_ejecutar',
+        ];
 
-        array_push($permissions, Permission::create(['name' => 'integrationhub_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'integrationhub_listado']));
-        array_push($permissions, Permission::create(['name' => 'integrationhub_crear']));
-        array_push($permissions, Permission::create(['name' => 'integrationhub_editar']));
-        array_push($permissions, Permission::create(['name' => 'integrationhub_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'integrationhub_ejecutar']));
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::firstOrCreate(['name' => $permissionName]);
 
-        foreach ($permissions as $permission) {
-            $admin->givePermissionTo($permission->name);
-            DB::table('model_has_permissions')->insert([
+            if ($admin) {
+                $admin->givePermissionTo($permission->name);
+            }
+
+            DB::table('model_has_permissions')->updateOrInsert([
                 'permission_id' => $permission->id,
                 'model_type' => Modulo::class,
-                'model_id' => $modulo->identifier
+                'model_id' => $modulo->identifier,
             ]);
         }
     }

@@ -15,14 +15,30 @@ use Modules\Integrationhub\Entities\IntegrationEndpoint;
 use Modules\Integrationhub\Entities\IntegrationFieldMap;
 use Modules\Integrationhub\Entities\IntegrationSchedule;
 use Modules\Integrationhub\Entities\IntegrationQuery;
+use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationExecLog;
+use Modules\Integrationhub\Entities\IntegrationFlowId;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 use App\Services\IntegrationhubCronExpression;
 use Illuminate\Support\Facades\Route;
 
 class IntegrationhubController extends Controller
 {
     use ValidatesRequests;
+
+    /**
+     * Patrones de keys que se consideran sensibles para enmascarar en logs.
+     */
+    private const SENSITIVE_KEY_PATTERNS = [
+        'password', 'passwd', 'pwd',
+        'token', 'access_token', 'refresh_token',
+        'api_key', 'apikey', 'api-key',
+        'secret', 'client_secret',
+        'authorization',
+        'credential', 'bearer',
+        'private_key', 'privatekey',
+    ];
 
     public function index()
     {
@@ -473,12 +489,22 @@ class IntegrationhubController extends Controller
         }
 
         $startTime = microtime(true);
+
+        // Recopilar nombres de campos sensibles (auth)
+        $sensitiveKeys = $authFields
+            ->filter(fn ($auth) => in_array($auth->field_type, ['password', 'token', 'api_key', 'oauth', 'basic_auth']))
+            ->pluck('field_name')
+            ->values()
+            ->all();
+
+        // Enmascarar la URL para proteger query params sensibles
+        $maskedUrl = $this->maskUrlSensitiveParams($url, $sensitiveKeys);
+
         $logData = [
             'integration_id' => $id,
             'endpoint_id' => $endpoint->id,
             'batch_id' => $request->input('batch_id'),
             'executed_at' => now(),
-            'request_payload' => $body
         ];
 
         try {
@@ -534,14 +560,14 @@ class IntegrationhubController extends Controller
 
             $requestData = [
                 'method' => $endpoint->http_method,
-                'url' => $url,
+                'url' => $maskedUrl,
                 'headers' => $options['headers'] ?? [],
                 'query' => $queryParams,
                 'body_type' => $endpoint->body_type,
                 'body' => $body,
             ];
 
-            $logData['request_payload'] = $requestData;
+            $logData['request_payload'] = $this->maskSensitiveData($requestData, $sensitiveKeys);
 
             $response = $client->request($endpoint->http_method, $url, $options);
 
@@ -558,7 +584,7 @@ class IntegrationhubController extends Controller
 
             // Save success log
             $logData['status'] = $statusCode >= 200 && $statusCode < 300 ? 'success' : 'failed';
-            $logData['response_body'] = $responseBody;
+            $logData['response_body'] = $this->maskSensitiveData($responseBody, $sensitiveKeys);
             $logData['response_status_code'] = $statusCode;
             $logData['execution_time_ms'] = $executionTime;
 
@@ -594,7 +620,7 @@ class IntegrationhubController extends Controller
 
             // Save failed log
             $logData['status'] = 'failed';
-            $logData['response_body'] = $responseBody;
+            $logData['response_body'] = $this->maskSensitiveData($responseBody, $sensitiveKeys);
             $logData['response_status_code'] = $statusCode;
             $logData['execution_time_ms'] = $executionTime;
             $logData['error_message'] = $externalMessage;
@@ -667,6 +693,74 @@ class IntegrationhubController extends Controller
         return $this->execute($request, $integrationModel->id);
     }
 
+    public function executeByEndpointName(Request $request, string $endpoint)
+    {
+        $matchingEndpoints = IntegrationEndpoint::where('name', urldecode($endpoint))->get();
+
+        $decodedEndpoint = urldecode($endpoint);
+
+        if ($matchingEndpoints->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => "No existe el endpoint '{$decodedEndpoint}' en ninguna integración.",
+            ], 404);
+        }
+
+        if ($matchingEndpoints->count() > 1) {
+            return response()->json([
+                'success' => false,
+                'message' => "El endpoint '{$decodedEndpoint}' está duplicado en varias integraciones. Corrige los endpoints antes de ejecutar.",
+            ], 422);
+        }
+
+        $endpointModel = $matchingEndpoints->first();
+
+        $request->merge([
+            'endpoint_id' => $endpointModel->id,
+        ]);
+
+        return $this->execute($request, $endpointModel->integration_id);
+    }
+
+    /**
+     * Método helper para ejecutar un endpoint por nombre sin necesidad de
+     * construir un objeto Request manualmente.
+     *
+     * @param  string       $endpoint     Nombre exacto del endpoint en Integrationhub
+     * @param  array        $fieldValues  Variables obligatorias y opcionales del endpoint (field_values)
+     * @param  array        $extraParams  Parámetros extra opcionales (path, query, body, headers)
+     * @param  bool         $trackResults Si true, guarda el log de ejecución
+     * @param  string|null  $batchId      ID de lote opcional para agrupar ejecuciones
+     * @return \Illuminate\Http\JsonResponse
+     *
+     * @example
+     *   $resultado = $controller->runEndpoint('create_contact', [
+     *       'phone' => '5551234567',
+     *       'email' => 'user@example.com',
+     *   ]);
+     */
+    public function runEndpoint(
+        string $endpoint,
+        array  $fieldValues = [],
+        array  $extraParams = [],
+        bool   $trackResults = true,
+        ?string $batchId = null
+    ) {
+        $requestData = [
+            'field_values'  => $fieldValues,
+            'extra_params'  => $extraParams,
+            'track_results' => $trackResults,
+        ];
+
+        if ($batchId !== null) {
+            $requestData['batch_id'] = $batchId;
+        }
+
+        $request = Request::create('/', 'POST', $requestData);
+
+        return $this->executeByEndpointName($request, $endpoint);
+    }
+
     public function logs(Request $request, int $id)
     {
         Integration::findOrFail($id);
@@ -702,6 +796,116 @@ class IntegrationhubController extends Controller
                 ->orderBy('id', 'desc')
                 ->limit((int) $request->input('limit', 200))
                 ->get(),
+        ]);
+    }
+
+    public function flowIdsPage()
+    {
+        // Auto-crear el registro por defecto para Saludo de cumpleaños si no existe
+        IntegrationFlowId::firstOrCreate(
+            ['key' => 'birthday_greeting'],
+            [
+                'flow_id' => '1780844285916',
+                'label' => 'Saludo de cumpleaños',
+            ]
+        );
+
+        $flowIds = IntegrationFlowId::orderBy('key')->get();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'flow_ids' => $flowIds,
+            ]);
+        }
+
+        return Inertia::render('Integrationhub::Integration/FlowIds', [
+            'flowIds' => $flowIds,
+        ]);
+    }
+
+    public function updateFlowId(Request $request, string $key)
+    {
+        $validated = $request->validate([
+            'flow_id' => 'required|string|max:255',
+            'label' => 'nullable|string|max:255',
+        ]);
+
+        $flowId = IntegrationFlowId::where('key', $key)->first();
+
+        if (!$flowId) {
+            return response()->json([
+                'message' => 'No se encontró un ID de flujo con la clave especificada.',
+            ], 404);
+        }
+
+        $flowId->update([
+            'flow_id' => $validated['flow_id'],
+            'label' => $validated['label'] ?? $flowId->label,
+        ]);
+
+        return response()->json([
+            'message' => 'ID de flujo actualizado correctamente.',
+            'flow_id' => $flowId,
+        ]);
+    }
+
+    public function errorsPage()
+    {
+        return Inertia::render('Integrationhub::Integration/Errors');
+    }
+
+    public function errors(Request $request)
+    {
+        $query = IntegrationError::query();
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('message', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('date_from')) {
+            $query->where('created_at', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('created_at', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
+        }
+
+        $perPage = min((int) $request->input('per_page', 50), 100);
+
+        return response()->json([
+            'errors' => $query
+                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
+                ->paginate($perPage),
+        ]);
+    }
+
+    public function destroyError(int $id)
+    {
+        $error = IntegrationError::findOrFail($id);
+        $error->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Error eliminado correctamente.',
+        ]);
+    }
+
+    public function clearErrors(Request $request)
+    {
+        $query = IntegrationError::query();
+
+        if ($request->filled('before_date')) {
+            $query->where('created_at', '<=', Carbon::parse($request->input('before_date'))->endOfDay());
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Se eliminaron {$count} error(es) correctamente.",
         ]);
     }
 
@@ -1358,5 +1562,87 @@ class IntegrationhubController extends Controller
                 ]);
             }
         }
+    }
+
+    /**
+     * Enmascara valores sensibles en los parámetros query de una URL.
+     * Reemplaza el valor de cada parámetro sensible con 'x' por cada caracter.
+     */
+    private function maskUrlSensitiveParams(string $url, array $sensitiveKeys = []): string
+    {
+        $parts = parse_url($url);
+        if (empty($parts['query'])) {
+            return $url;
+        }
+
+        parse_str($parts['query'], $queryParams);
+        $masked = false;
+
+        foreach ($queryParams as $key => $value) {
+            if ($this->isSensitiveKey($key, $sensitiveKeys) && is_string($value) && $value !== '') {
+                $queryParams[$key] = str_repeat('x', strlen($value));
+                $masked = true;
+            }
+        }
+
+        if (!$masked) {
+            return $url;
+        }
+
+        $queryString = http_build_query($queryParams);
+        $baseUrl = $parts['scheme'] . '://' . ($parts['host'] ?? '') . ($parts['port'] ? ':' . $parts['port'] : '');
+        $baseUrl .= $parts['path'] ?? '';
+
+        return $baseUrl . '?' . $queryString;
+    }
+
+    /**
+     * Determina si un nombre de campo es sensible (password, token, api_key, etc.).
+     *
+     * @param  string        $key           Nombre del campo a evaluar
+     * @param  array         $sensitiveKeys Nombres de campos de auth conocidos como sensibles
+     * @return bool
+     */
+    private function isSensitiveKey(string $key, array $sensitiveKeys = []): bool
+    {
+        $keyLower = strtolower(trim((string) $key));
+
+        return in_array($keyLower, $sensitiveKeys, true)
+            || in_array($keyLower, self::SENSITIVE_KEY_PATTERNS, true)
+            || str_contains($keyLower, 'password')
+            || str_contains($keyLower, 'token')
+            || str_contains($keyLower, 'secret')
+            || str_contains($keyLower, 'api_key')
+            || str_contains($keyLower, 'apikey')
+            || str_contains($keyLower, 'authorization');
+    }
+
+    /**
+     * Enmascara valores sensibles (tokens, passwords, api_keys, etc.) en un array.
+     * Reemplaza cada valor por 'x' por cada caracter del original.
+     *
+     * @param  mixed   $data           Array u objeto a procesar
+     * @param  array   $sensitiveKeys  Nombres de campos de auth conocidos como sensibles
+     * @return mixed
+     */
+    private function maskSensitiveData(mixed $data, array $sensitiveKeys = []): mixed
+    {
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        $masked = [];
+
+        foreach ($data as $key => $value) {
+            if ($this->isSensitiveKey($key, $sensitiveKeys) && is_string($value) && $value !== '') {
+                $masked[$key] = str_repeat('x', strlen($value));
+            } elseif (is_array($value)) {
+                $masked[$key] = $this->maskSensitiveData($value, $sensitiveKeys);
+            } else {
+                $masked[$key] = $value;
+            }
+        }
+
+        return $masked;
     }
 }

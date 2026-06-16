@@ -3,12 +3,13 @@
 namespace Modules\Integrationhub\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\DispatchBirthdayBenefitIntegration;
 use App\Models\Person;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use Modules\Integrationhub\Entities\IntegrationEndpoint;
+use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 
 class BirthdayBenefitsController extends Controller
 {
@@ -24,29 +25,6 @@ class BirthdayBenefitsController extends Controller
         $trackResults = $request->has('track_results') ? $request->boolean('track_results') : true;
         $batchId = $trackResults ? (string) Str::uuid() : null;
 
-        foreach (['create_contact', 'start_flow_birthdays'] as $endpointName) {
-            $matchingEndpoints = IntegrationEndpoint::where('name', $endpointName)->get();
-
-            if ($matchingEndpoints->isEmpty()) {
-                return response()->json([
-                    'message' => "No existe el endpoint de Integrationhub {$endpointName}.",
-                ], 404);
-            }
-
-            if ($matchingEndpoints->count() > 1) {
-                return response()->json([
-                    'message' => "El endpoint {$endpointName} esta duplicado. Corrige los endpoints antes de ejecutar esta API.",
-                ], 422);
-            }
-        }
-
-        $today = now();
-        $people = Person::query()
-            ->whereNotNull('birthdate')
-            ->whereMonth('birthdate', $today->month)
-            ->whereDay('birthdate', $today->day)
-            ->get(['id']);
-
         $extraVariables = array_replace(
             $validated['extra_variables'] ?? [],
             $validated['variables'] ?? []
@@ -55,30 +33,73 @@ class BirthdayBenefitsController extends Controller
 
         if (empty($flowId)) {
             return response()->json([
-                'message' => 'Debes enviar flow_id para ejecutar start_flow_birthdays.',
+                'message' => 'Debes enviar flow_id para ejecutar los endpoints.',
             ], 422);
         }
 
         unset($extraVariables['flow_id']);
 
+        $today = now();
+        $people = Person::query()
+            ->whereNotNull('birthdate')
+            ->whereMonth('birthdate', $today->month)
+            ->whereDay('birthdate', $today->day)
+            ->get(['id']);
+
+        $hub = app(IntegrationhubController::class);
+        $cacheStore = Cache::store('database');
+        $results = [];
+        $skipped = 0;
+
         foreach ($people as $person) {
-            DispatchBirthdayBenefitIntegration::dispatch(
-                $person->id,
-                $flowId,
-                $extraVariables,
-                $trackResults,
-                $batchId
-            );
+            // Cache diario: evitar envíos duplicados por person_id + flow_id
+            $cacheKey = 'birthday_benefits_' . $person->id . '_' . $flowId;
+
+            if ($cacheStore->has($cacheKey)) {
+                $skipped++;
+                $results[] = [
+                    'person_id' => $person->id,
+                    'status' => 'skipped',
+                    'message' => 'Ya se procesó hoy para este flow_id.',
+                ];
+                continue;
+            }
+
+            // Marcar ANTES de ejecutar para evitar carrera
+            $cacheStore->put($cacheKey, true, Carbon::now()->endOfDay());
+
+            // 1. Crear contacto
+            $contactResult = $hub->runEndpoint('create_contact', array_replace($extraVariables, [
+                'contact_id' => (string) $person->id,
+                'flow_id' => $flowId,
+            ]), [], $trackResults, $batchId);
+            $contactData = $contactResult->getData(true);
+
+            // 2. Iniciar flow de cumpleaños
+            $flowResult = $hub->runEndpoint('start_flow_birthdays', array_replace($extraVariables, [
+                'contact_id' => (string) $person->id,
+                'flow_id' => $flowId,
+            ]), [], $trackResults, $batchId);
+            $flowData = $flowResult->getData(true);
+
+            $results[] = [
+                'person_id' => $person->id,
+                'status' => 'processed',
+                'create_contact' => $contactData,
+                'start_flow_birthdays' => $flowData,
+            ];
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Ejecuciones enviadas a la cola.',
+            'message' => 'Ejecuciones completadas.',
             'endpoints' => ['create_contact', 'start_flow_birthdays'],
             'birthday_date' => $today->toDateString(),
-            'queued' => $people->count(),
+            'processed' => $people->count() - $skipped,
+            'skipped' => $skipped,
             'track_results' => $trackResults,
             'batch_id' => $batchId,
+            'results' => $results,
             'results_location' => $trackResults ? 'Pestaña Historial, filtrando por batch_id.' : null,
         ]);
     }
