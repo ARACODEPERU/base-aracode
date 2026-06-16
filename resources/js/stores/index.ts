@@ -34,6 +34,7 @@ export const useAppStore = defineStore('app', {
         ],
         isShowMainLoader: true,
         semidark: false,
+        showThemeCustomizer: false,
         shoppingCart: [] as Array<{ id: number; name: string; price: number; quantity: number; entity: string; image: string }>
     }),
 
@@ -147,6 +148,15 @@ export const useAppStore = defineStore('app', {
             localStorage.removeItem("expandedSections");
             localStorage.removeItem("activeOption");
             localStorage.removeItem("activeSubOption");
+        },
+        openThemeCustomizer() {
+            this.showThemeCustomizer = true;
+        },
+        closeThemeCustomizer() {
+            this.showThemeCustomizer = false;
+        },
+        toggleThemeCustomizer() {
+            this.showThemeCustomizer = !this.showThemeCustomizer;
         },
     },
     getters: {},

@@ -19,8 +19,19 @@ class SocketIoBroadcaster
             'timeout' => (float) env('SOCKET_IO_BROADCAST_TIMEOUT', 20),
         ]);
 
-        $this->url = env('VITE_SOCKET_IO_SERVER', 'https://localhost:3000');
+        $this->url = rtrim((string) config('services.socket_io.internal_url', 'http://127.0.0.1:3000'), '/');
         $this->maxAttempts = (int) env('SOCKET_IO_BROADCAST_MAX_ATTEMPTS', 5);
+    }
+
+    protected function internalApiHeaders(): array
+    {
+        $key = (string) config('services.internal_api.key', '');
+
+        if ($key === '') {
+            return [];
+        }
+
+        return ['X-Internal-Api-Key' => $key];
     }
 
     public function broadcast(array $channels, $event, array $payload = [])
@@ -37,6 +48,7 @@ class SocketIoBroadcaster
         while ($this->maxAttempts <= 0 || $attempt <= $this->maxAttempts) {
             try {
                 $this->client->post("{$this->url}/api/crm/broadcast", [
+                    'headers' => $this->internalApiHeaders(),
                     'json' => [
                         'channel' => $channel,
                         'event' => $event,

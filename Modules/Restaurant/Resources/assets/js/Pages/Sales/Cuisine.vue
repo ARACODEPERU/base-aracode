@@ -1,33 +1,10 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link,useForm, router } from '@inertiajs/vue3';
-import Keypad from '@/Components/Keypad.vue';
+import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
+import Navigation from '@/Components/vristo/layout/Navigation.vue';
+import { Link, router } from '@inertiajs/vue3';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
-import DangerButton from '@/Components/DangerButton.vue';
 import ComandasGrid from './Partials/ComandasGrid.vue';
-
-import { 
-    ConfigProvider, 
-    Select,
-    Card, 
-    CardGrid, 
-    Tabs, 
-    TabPane, 
-    Popover, 
-    Table, 
-    Button, 
-    Flex, 
-    Tooltip, 
-    InputNumber,
-    Input,
-    Popconfirm,
-    message
- } from 'ant-design-vue';
-import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
-import InputLabel from '@/Components/InputLabel.vue';
-import InputError from '@/Components/InputError.vue';
-import { ref, watch, onMounted } from 'vue';
-import { faXmark, faPen, faDollarSign, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { ConfigProvider } from 'ant-design-vue';
 import esES from 'ant-design-vue/es/locale/es_ES';
 
 const props = defineProps({
@@ -37,47 +14,25 @@ const props = defineProps({
     }
 });
 
-
+const refreshKitchen = () => {
+    router.reload({ only: ['comandas'] });
+};
 </script>
 <template>
-    <AppLayout title="Vender">
-        <div class="max-w-screen-2xl  mx-auto p-4 md:p-6 2xl:p-10">
-            <!-- Breadcrumb Start -->
-            <nav class="flex px-4 py-3 border border-stroke text-gray-700 mb-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <Link :href="route('dashboard')" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg aria-hidden="true" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-                        Inicio
-                        </Link>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                        <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                        <!-- <a href="#" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Productos</a> -->
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Restaurante</span>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <Link :href="route('res_sales_list')" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Ventas</Link>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Comandas</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            
-            <div class="mt-5 md:mt-0 md:col-span-2">
-                <ConfigProvider :locale="esES">
-                   <ComandasGrid :comandas="comandas" /> 
-                </ConfigProvider>
+    <AppLayout title="Cocina">
+        <Navigation
+            :routeModule="route('res_dashboard')"
+            titleModule="Restaurante"
+            :data="[{ title: 'Ventas', route: route('res_sales_list') }, { title: 'Cocina' }]"
+        />
+        <div class="pt-5 space-y-8">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <h2 class="text-xl">Vista cocina</h2>
+                <PrimaryButton type="button" @click="refreshKitchen">Actualizar</PrimaryButton>
             </div>
+            <ConfigProvider :locale="esES">
+                <ComandasGrid :comandas="comandas" />
+            </ConfigProvider>
         </div>
-    </AppLayout> 
+    </AppLayout>
 </template>

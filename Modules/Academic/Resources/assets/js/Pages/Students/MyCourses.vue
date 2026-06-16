@@ -39,6 +39,21 @@ const config = {
     }
 };
 
+const themeBgColor = `#${config.bgColor}`;
+const themeTextColor = `#${config.textColor}`;
+const themeAccentColor = `#${config.accentColor}`;
+const themeSuccessColor = `#${config.successColor}`;
+const themeWarningColor = `#${config.warningColor}`;
+const themeErrorColor = `#${config.errorColor}`;
+const themeSidebarWidth = config.sidebarWidth;
+const themeHeaderHeight = config.headerHeight;
+const themeBorderRadius = config.borderRadius;
+const themeSpacing = config.spacing;
+const themeFontSizeSmall = config.fontSize.small;
+const themeFontSizeMedium = config.fontSize.medium;
+const themeFontSizeLarge = config.fontSize.large;
+const themeFontSizeXl = config.fontSize.xl;
+
 const isDarkMode = ref(store.theme === 'dark');
 
 // Escuchar cambios en el tema para actualizar la constante
@@ -1248,20 +1263,20 @@ function formatCommentTime(timestamp) {
 </template>
 <style>
     :root {
-        --bg-color: #{{ config.bgColor }};
-        --text-color: #{{ config.textColor }};
-        --accent-color: #{{ config.accentColor }};
-        --success-color: #{{ config.successColor }};
-        --warning-color: #{{ config.warningColor }};
-        --error-color: #{{ config.errorColor }};
-        --sidebar-width: {{ config.sidebarWidth }};
-        --header-height: {{ config.headerHeight }};
-        --border-radius: {{ config.borderRadius }};
-        --spacing: {{ config.spacing }};
-        --font-size-small: {{ config.fontSize.small }};
-        --font-size-medium: {{ config.fontSize.medium }};
-        --font-size-large: {{ config.fontSize.large }};
-        --font-size-xl: {{ config.fontSize.xl }};
+        --bg-color: v-bind(themeBgColor);
+        --text-color: v-bind(themeTextColor);
+        --accent-color: v-bind(themeAccentColor);
+        --success-color: v-bind(themeSuccessColor);
+        --warning-color: v-bind(themeWarningColor);
+        --error-color: v-bind(themeErrorColor);
+        --sidebar-width: v-bind(themeSidebarWidth);
+        --header-height: v-bind(themeHeaderHeight);
+        --border-radius: v-bind(themeBorderRadius);
+        --spacing: v-bind(themeSpacing);
+        --font-size-small: v-bind(themeFontSizeSmall);
+        --font-size-medium: v-bind(themeFontSizeMedium);
+        --font-size-large: v-bind(themeFontSizeLarge);
+        --font-size-xl: v-bind(themeFontSizeXl);
     }
     @media (max-width: 639px) {
         .ps__rail-y {

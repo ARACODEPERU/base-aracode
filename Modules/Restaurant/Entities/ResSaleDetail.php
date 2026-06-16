@@ -4,16 +4,13 @@ namespace Modules\Restaurant\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Restaurant\Database\factories\ResSaleDetailFactory;
 
 class ResSaleDetail extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'sale_id',
         'comanda_id',
@@ -28,8 +25,8 @@ class ResSaleDetail extends Model
         //return ResSaleDetailFactory::new();
     }
 
-    public function comanda(): HasOne
+    public function comanda(): BelongsTo
     {
-        return $this->hasOne(ResComanda::class, 'id', 'comanda_id');
+        return $this->belongsTo(ResComanda::class, 'comanda_id');
     }
 }

@@ -13,8 +13,7 @@ use Modules\Ai\Http\Controllers\AiController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-//Route::prefix('ai')->middleware('auth')->group(function () {
-Route::prefix('ai')->group(function () {
+Route::prefix('ai')->middleware('auth')->group(function () {
     Route::get('/', [AiController::class, 'index'])->name('ai.index');
     Route::post('/consulta', [AiController::class, 'consulta'])->name('ai.consulta');
     Route::post('/censurar', [AiController::class, 'censurar'])->name('ai.censurar');

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Company;
+use App\Support\ActiveModulesResolver;
 use Illuminate\Support\Str;
 
 class AuthenticatedSessionController extends Controller
@@ -49,6 +50,7 @@ class AuthenticatedSessionController extends Controller
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             'socialNetworks' => $socialNetworks,
+            'activeModules' => ActiveModulesResolver::forLogin(),
         ]);
     }
 

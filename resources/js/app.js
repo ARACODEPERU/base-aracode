@@ -21,6 +21,7 @@ import HeightTransition from '@/Components/vristo/transitions/HeightTransition.v
 import Popper from 'vue3-popper';
 import * as Maska from 'maska';
 import VueKonva from 'vue-konva';
+import { setCsrfToken } from '@/utils/csrf';
 
 const appName =
     window.document.getElementsByTagName("title")[0]?.innerText || "Laravel";
@@ -88,17 +89,21 @@ createInertiaApp({
         app.mixin({
             mounted() {
                 router.on("error", (error) => {
-                    //console.log(error);
                     if (error.response && error.response.status === 401) {
-                        router.visit(buildLoginRedirectUrl(), { replace: true });
-                    }
-                    if (error.response && error.response.status === 419) {
                         router.visit(buildLoginRedirectUrl(), { replace: true });
                     }
                 });
             },
         });
         appSetting.init();
+
+        router.on('success', (event) => {
+            const token = event.detail?.page?.props?.csrf_token ?? event.page?.props?.csrf_token;
+            setCsrfToken(token);
+        });
+
+        setCsrfToken(props.initialPage?.props?.csrf_token);
+
         return app.mount(el);
     },
     progress: {

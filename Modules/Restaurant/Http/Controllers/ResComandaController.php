@@ -39,7 +39,8 @@ class ResComandaController extends Controller
         $comandas = $comandas->paginate($this->RPTABLE)->onEachSide(2);
 
         return Inertia::render('Restaurant::Comandas/List', [
-            'comandas' => $comandas
+            'comandas' => $comandas,
+            'filters' => request()->all('search'),
         ]);
     }
 
@@ -61,58 +62,39 @@ class ResComandaController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate(
-            $request,
-            [
-                'name'          => 'required',
-                'description'   => 'required',
-                'image'         => 'required',
-                'price'         => 'required',
-                'category_id'   => 'required',
-                'presentation_id' => 'required'
-            ]
-        );
-
-        $comanda = ResComanda::create([
-            'name'          => $request->get('name'),
-            'description'   => $request->get('description'),
-            'price'         => $request->get('price'),
-            'category_id'   => $request->get('category_id'),
-            'presentation_id' => $request->get('presentation_id'),
-            'status' => $request->get('status') ?? false
+        $this->validate($request, [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'image' => 'required',
+            'price' => 'required|numeric|min:0',
+            'category_id' => 'required|integer',
+            'presentation_id' => 'required|integer',
         ]);
 
-        $path = null;
-        $destination = 'uploads/comandas';
-        $base64Image = $request->get('image');
+        DB::beginTransaction();
+        try {
+            $comanda = ResComanda::create([
+                'name' => $request->get('name'),
+                'description' => $request->get('description'),
+                'price' => $request->get('price'),
+                'category_id' => $request->get('category_id'),
+                'presentation_id' => $request->get('presentation_id'),
+                'status' => $request->boolean('status'),
+            ]);
 
-        if ($base64Image) {
-            $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
-            if (PHP_OS == 'WINNT') {
-                $tempFile = tempnam(sys_get_temp_dir(), 'img');
-            } else {
-                $tempFile = tempnam('/var/www/html/img_temp', 'img');
+            $path = $this->storeComandaImage($request, $comanda->id);
+            if ($path) {
+                $comanda->image = $path;
+                $comanda->save();
             }
-            file_put_contents($tempFile, $fileData);
-            $mime = mime_content_type($tempFile);
 
-            $name = uniqid('', true) . '.' . str_replace('image/', '', $mime);
-            $file = new UploadedFile(realpath($tempFile), $name, $mime, null, true);
-
-
-            if ($file) {
-                // $original_name = strtolower(trim($file->getClientOriginalName()));
-                // $file_name = time() . rand(100, 999) . $original_name;
-                $original_name = strtolower(trim($file->getClientOriginalName()));
-                $original_name = str_replace(" ", "_", $original_name);
-                $extension = $file->getClientOriginalExtension();
-                $file_name = $comanda->id . '.' . $extension;
-                $path = Storage::disk('public')->putFileAs($destination, $file, $file_name);
-            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Error al guardar la comanda: ' . $e->getMessage()]);
         }
 
-        $comanda->image = $path;
-        $comanda->save();
+        return redirect()->route('res_comandas_list')->with('success', 'Comanda registrada correctamente');
     }
 
     public function edit($id)
@@ -143,48 +125,67 @@ class ResComandaController extends Controller
      */
     public function update(Request $request)
     {
-        $this->validate(
-            $request,
-            [
-                'name'          => 'required',
-                'description'   => 'required',
-                'price'         => 'required',
-                'category_id'   => 'required',
-                'presentation_id' => 'required'
-            ]
-        );
-
-        $comanda = ResComanda::find($request->get('id'));
-
-        $comanda->update([
-            'name'          => $request->get('name'),
-            'description'   => $request->get('description'),
-            'price'         => $request->get('price'),
-            'category_id'   => $request->get('category_id'),
-            'presentation_id' => $request->get('presentation_id'),
-            'status' => $request->get('status') ?? false
+        $this->validate($request, [
+            'id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'category_id' => 'required|integer',
+            'presentation_id' => 'required|integer',
         ]);
 
-        $path = null;
+        DB::beginTransaction();
+        try {
+            $comanda = ResComanda::findOrFail($request->get('id'));
 
-        $destination = 'uploads/comandas';
-        $file = $request->file('image');
-        if ($file) {
-            $original_name = strtolower(trim($file->getClientOriginalName()));
-            $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
-            $file_name = $comanda->id . '.' . $extension;
-            $path = $request->file('image')->storeAs(
-                $destination,
-                $file_name,
-                'public'
-            );
+            $comanda->update([
+                'name' => $request->get('name'),
+                'description' => $request->get('description'),
+                'price' => $request->get('price'),
+                'category_id' => $request->get('category_id'),
+                'presentation_id' => $request->get('presentation_id'),
+                'status' => $request->boolean('status'),
+            ]);
 
-            $comanda->image = $path;
+            $path = $this->storeComandaImage($request, $comanda->id);
+            if ($path) {
+                $comanda->image = $path;
+                $comanda->save();
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Error al actualizar la comanda: ' . $e->getMessage()]);
         }
 
+        return redirect()->route('res_comandas_list')->with('success', 'Comanda actualizada correctamente');
+    }
 
-        $comanda->save();
+    protected function storeComandaImage(Request $request, int $comandaId): ?string
+    {
+        $destination = 'uploads/comandas';
+        $file = $request->file('image');
+
+        if ($file) {
+            $extension = $file->getClientOriginalExtension() ?: 'jpg';
+            $fileName = $comandaId . '.' . $extension;
+            return Storage::disk('public')->putFileAs($destination, $file, $fileName);
+        }
+
+        $base64Image = $request->get('image');
+        if (!$base64Image || !is_string($base64Image) || !str_starts_with($base64Image, 'data:image')) {
+            return null;
+        }
+
+        $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
+        $tempFile = tempnam(sys_get_temp_dir(), 'img');
+        file_put_contents($tempFile, $fileData);
+        $mime = mime_content_type($tempFile);
+        $extension = str_replace('image/', '', $mime) ?: 'jpg';
+        $uploaded = new UploadedFile(realpath($tempFile), uniqid('comanda_', true) . '.' . $extension, $mime, null, true);
+
+        return Storage::disk('public')->putFileAs($destination, $uploaded, $comandaId . '.' . $extension);
     }
 
     /**
@@ -207,7 +208,7 @@ class ResComandaController extends Controller
             // Si todo ha sido exitoso, confirmamos la transacción.
             DB::commit();
 
-            $message =  'Comanda eliminada correctamente';
+            $message = 'Comanda eliminada correctamente';
             $success = true;
         } catch (\Exception $e) {
             // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\InternalJobTokenController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
@@ -77,6 +77,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('csrf-token', fn () => response()->json(['token' => csrf_token()]))->name('csrf.token');
+    Route::post('internal/job-token', [InternalJobTokenController::class, 'store'])->name('internal.job_token');
     Route::resource('clients', ClientController::class);
     Route::resource('users', UserController::class);
     Route::resource('establishments', LocalSaleController::class);
@@ -166,7 +168,8 @@ Route::middleware('auth')->group(function () {
     Route::post('parameters/store', [ParametersController::class, 'store'])->name('parameters_store');
     Route::get('parameters/{id}/edit', [ParametersController::class, 'edit'])->name('parameters_edit');
     Route::put('parameters/update/{id}', [ParametersController::class, 'update'])->name('parameters_update');
-    Route::get('parameters/{id}/{val}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value');
+    Route::post('parameters/{id}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value');
+    Route::get('parameters/{id}/{val}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value_legacy');
 
     // //////////////actualizar informacion de personas
     Route::get('person/update_information', function () {

@@ -15,6 +15,7 @@
 
     import IconUser from '@/Components/vristo/icon/icon-user.vue';
     import IconLogout from '@/Components/vristo/icon/icon-logout.vue';
+    import IconSettings from '@/Components/vristo/icon/icon-settings.vue';
 
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
 
@@ -34,6 +35,13 @@
     const logout = () => {
         router.post(route('logout'));
         store.clearSidebar()
+    }
+
+    const openThemeCustomizer = (closeDropdown) => {
+        store.openThemeCustomizer();
+        if (typeof closeDropdown === 'function') {
+            closeDropdown();
+        }
     }
 
 
@@ -248,6 +256,16 @@
                                             <icon-user class="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
                                             Perfil
                                         </Link>
+                                    </li>
+                                    <li>
+                                        <button
+                                            type="button"
+                                            class="dark:hover:text-white"
+                                            @click="openThemeCustomizer(close)"
+                                        >
+                                            <icon-settings class="w-4.5 h-4.5 ltr:mr-2 rtl:ml-2 shrink-0" />
+                                            Apariencia
+                                        </button>
                                     </li>
 
                                     <li class="border-t border-white-light dark:border-white-light/10">

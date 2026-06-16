@@ -11,9 +11,6 @@ class ResSale extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'sale_date',
         'sale_hour',
@@ -31,6 +28,12 @@ class ResSale extends Model
         'type_name_document'
     ];
 
+    protected $casts = [
+        'payments' => 'array',
+        'total' => 'decimal:2',
+        'total_discount' => 'decimal:2',
+    ];
+
     protected static function newFactory(): ResSaleFactory
     {
         //return ResSaleFactory::new();
@@ -45,21 +48,15 @@ class ResSale extends Model
 
             if ($lastSale) {
                 $lastCorrelative = $lastSale->correlative;
-
-                // Extraer el número actual de correlative
                 $lastNumber = (int) substr($lastCorrelative, 2);
-
-                // Incrementar el número
                 $newNumber = $lastNumber + 1;
-
-                // Generar el nuevo correlative con formato RV000000X
                 $model->correlative = 'RV' . str_pad($newNumber, 10, '0', STR_PAD_LEFT);
             } else {
-                // Si no hay registros anteriores, usar RV0000001
                 $model->correlative = 'RV0000000001';
             }
         });
     }
+
     public function details(): HasMany
     {
         return $this->hasMany(ResSaleDetail::class, 'sale_id');

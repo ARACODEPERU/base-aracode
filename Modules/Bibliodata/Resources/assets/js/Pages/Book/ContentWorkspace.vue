@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Keypad from '@/Components/Keypad.vue';
@@ -12,6 +12,7 @@ import BulkPagesModal from './components/BulkPagesModal.vue';
 import PracticalCasesWorkspace from './components/PracticalCasesWorkspace.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { setCsrfToken, withCsrfPayload } from '@/utils/csrf';
 import {
     useBookContentLabels,
     CONTENT_STRUCTURE_OPTIONS,
@@ -21,6 +22,16 @@ const props = defineProps({
     book: { type: Object, required: true },
     can_change_structure: { type: Boolean, default: true },
 });
+
+const page = usePage();
+
+watch(
+    () => page.props.csrf_token,
+    (token) => {
+        if (token) setCsrfToken(token);
+    },
+    { immediate: true }
+);
 
 const bookContentStructure = ref(props.book.content_structure || 'chapter_subchapter');
 const canChangeStructure = ref(props.can_change_structure);
@@ -114,12 +125,6 @@ const confirmDiscardOrSave = async () => {
     }
     return true;
 };
-
-const csrfHeaders = () => ({
-    headers: {
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-    },
-});
 
 const findSectionById = (list, id) => {
     for (const s of list) {
@@ -236,7 +241,6 @@ const loadSectionPages = async (sectionId, page = 1) => {
     try {
         const { data } = await axios.get(route('bib_books_pages_index', sectionId), {
             params: { page, per_page: 50 },
-            ...csrfHeaders(),
         });
         if (!data.success) return;
         const paginated = data.pages;
@@ -328,8 +332,7 @@ const onSectionModalSubmit = async (title) => {
                     book_id: props.book.id,
                     parent_id: sectionModalParentId.value,
                     title,
-                },
-                csrfHeaders()
+                }
             );
             if (data.success) {
                 showSectionModal.value = false;
@@ -347,8 +350,7 @@ const onSectionModalSubmit = async (title) => {
         } else {
             const { data } = await axios.patch(
                 route('bib_books_sections_update', sectionModalEditId.value),
-                { title },
-                csrfHeaders()
+                { title }
             );
             if (data.success) {
                 showSectionModal.value = false;
@@ -378,7 +380,7 @@ const onSectionModalSubmit = async (title) => {
 const loadPageById = async (pageId) => {
     pageLoading.value = true;
     try {
-        const { data } = await axios.get(route('bib_books_pages_show', pageId), csrfHeaders());
+        const { data } = await axios.get(route('bib_books_pages_show', pageId));
         if (data.success && data.page) {
             currentPage.value = data.page;
             pageContent.value = data.page.content || '';
@@ -420,8 +422,7 @@ const saveCurrentPage = async () => {
     try {
         const { data } = await axios.patch(
             route('bib_books_pages_update', currentPage.value.id),
-            { content: pageContent.value },
-            csrfHeaders()
+            { content: pageContent.value }
         );
         if (data.success) {
             currentPage.value = data.page;
@@ -502,8 +503,7 @@ const onContentStructureChange = async (event) => {
     try {
         const { data } = await axios.patch(
             route('bib_books_content_structure', props.book.id),
-            { content_structure: newValue },
-            csrfHeaders()
+            { content_structure: newValue }
         );
         if (data.success) {
             bookContentStructure.value = data.book.content_structure;
@@ -547,7 +547,7 @@ const deleteSection = (section) => {
     }).then(async (result) => {
         if (!result.isConfirmed) return;
         try {
-            await axios.delete(route('bib_books_sections_destroy', section.id), csrfHeaders());
+            await axios.delete(route('bib_books_sections_destroy', section.id));
             const pagesRemoved = countPagesInBranch(section);
             removeSectionLocal(section.id);
             totalPages.value = Math.max(0, totalPages.value - pagesRemoved);
@@ -583,7 +583,7 @@ const addSinglePage = async (section) => {
     if (!target) return;
     pageLoading.value = true;
     try {
-        const { data } = await axios.post(route('bib_books_pages_store', target.id), { content: '' }, csrfHeaders());
+        const { data } = await axios.post(route('bib_books_pages_store', target.id), withCsrfPayload({ content: '' }));
         if (data.success) {
             bumpSectionPageCount(target.id, 1);
             expandTrigger.value = null;
@@ -608,6 +608,17 @@ const addSinglePage = async (section) => {
                 page_number: data.page.page_number,
             });
         }
+    } catch (e) {
+        const status = e.response?.status;
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: status === 419
+                ? 'La sesión expiró. Recargue la página e intente de nuevo.'
+                : (e.response?.data?.message || 'No se pudo crear la página'),
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
     } finally {
         pageLoading.value = false;
     }
@@ -624,8 +635,7 @@ const bulkSubmit = async (payload) => {
     try {
         const { data } = await axios.post(
             route('bib_books_pages_bulk', selectedSection.value.id),
-            payload,
-            csrfHeaders()
+            payload
         );
         if (data.success) {
             showBulkModal.value = false;

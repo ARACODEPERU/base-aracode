@@ -20,9 +20,11 @@ use Modules\CRM\Http\Controllers\CrmMessagesController;
 //     Route::get('crm', fn (Request $request) => $request->user())->name('crm');
 // });
 
-////////apis sin hacer login para el servidor nodejs
-Route::post('contacts/mass/mailing/post', [CrmContactsController::class, 'sendMassMessage'])
-    ->name('crm_contacts_send_mail_post');
+////////apis internas para el servidor nodejs (requieren X-Internal-Api-Key)
+Route::middleware(['internal.api'])->group(function () {
+    Route::post('contacts/mass/mailing/post', [CrmContactsController::class, 'sendMassMessage'])
+        ->name('crm_contacts_send_mail_post');
 
-Route::post('chat/frequently/questions/store', [CrmMessagesController::class, 'frequentlyQuestionsStore'])
-    ->name('crm_chat_frequently_questions_store');
+    Route::post('chat/frequently/questions/store', [CrmMessagesController::class, 'frequentlyQuestionsStore'])
+        ->name('crm_chat_frequently_questions_store');
+});

@@ -23,7 +23,12 @@ class AiController extends Controller
 
     public function consulta(Request $request): string
     {
-        $userId = Auth::id() ?? $request->input('user_id');
+        $userId = Auth::id();
+
+        if ($userId === null) {
+            abort(401);
+        }
+
         $message = $request->input('message');
 
         return $this->send_prompt($userId, $message);
@@ -31,7 +36,11 @@ class AiController extends Controller
 
     public function censurar(Request $request): string
     {
-        $userId = Auth::id() ?? $request->input('user_id');
+        $userId = Auth::id();
+
+        if ($userId === null) {
+            abort(401);
+        }
 
         return app(OpenAiAssistantService::class)->censorText($userId, $request->input('message'));
     }

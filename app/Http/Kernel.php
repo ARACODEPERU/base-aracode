@@ -72,6 +72,7 @@ class Kernel extends HttpKernel
         'invalid_updated_information' => \App\Http\Middleware\RedirectIfInvalidUserData::class,
         'user_activity_log' => \App\Http\Middleware\UserActivityLogMiddleware::class,
         'localhost.only' => \App\Http\Middleware\EnsureLocalhostRequest::class,
+        'internal.api' => \App\Http\Middleware\ValidateInternalApiSecret::class,
         'socialevents.admin' => \Modules\Socialevents\Http\Middleware\EnsureSocialeventsAdmin::class,
     ];
 }

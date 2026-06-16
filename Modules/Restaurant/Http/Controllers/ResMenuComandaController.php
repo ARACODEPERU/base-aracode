@@ -33,17 +33,23 @@ class ResMenuComandaController extends Controller
 
     public function storeComandas(Request $request, $id)
     {
+        ResMenu::findOrFail($id);
+
         ResMenuComanda::where('menu_id', $id)->delete();
-        $comandas = $request->get('comandas');
+        $comandas = $request->get('comandas', []);
+
         if (count($comandas) > 0) {
             foreach ($comandas as $key) {
-                ResMenuComanda::firstOrCreate(
-                    [
-                        'menu_id' => $id,
-                        'comanda_id' => $key
-                    ]
-                );
+                ResMenuComanda::firstOrCreate([
+                    'menu_id' => $id,
+                    'comanda_id' => $key,
+                ]);
             }
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comandas asignadas correctamente',
+        ]);
     }
 }

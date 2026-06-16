@@ -1,443 +1,716 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link,useForm, router } from '@inertiajs/vue3';
-import Keypad from '@/Components/Keypad.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import DangerButton from '@/Components/DangerButton.vue';
-import { 
-    ConfigProvider, 
-    Select,
-    Card, 
-    CardGrid, 
-    Tabs, 
-    TabPane, 
-    Popover, 
-    Table, 
-    Button, 
-    Flex, 
-    Tooltip, 
-    InputNumber,
-    Input,
-    Popconfirm,
-    message
- } from 'ant-design-vue';
-import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
+import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
+import Navigation from '@/Components/vristo/layout/Navigation.vue';
+import { Link, useForm, router } from '@inertiajs/vue3';
+import { ConfigProvider, Select, Input, message } from 'ant-design-vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
-import { ref, watch, onMounted } from 'vue';
-import { faXmark, faPen, faDollarSign, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { ref, computed, onMounted } from 'vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+    faCartShopping,
+    faMagnifyingGlass,
+    faMinus,
+    faPlus,
+    faTrashCan,
+    faUser,
+    faCreditCard,
+    faCircleCheck,
+    faListUl,
+    faFileInvoice,
+} from '@fortawesome/free-solid-svg-icons';
 import esES from 'ant-design-vue/es/locale/es_ES';
+import { withCsrfPayload } from '@/utils/csrf';
+import Swal from 'sweetalert2';
+import SearchClients from 'Modules/Sales/Resources/assets/js/Pages/Documents/Partials/SearchClients.vue';
 
 const props = defineProps({
-    paymentMethods: {
-        type: Object,
-        default: () => ({}),
-    },
-    clients: {
-        type: Object,
-        default: () => ({}),
-    },
-    comandas: {
-        type: Object,
-        default: () => ({}),
-    }
+    paymentMethods: { type: Object, default: () => ({}) },
+    clientDefault: { type: Object, default: () => ({}) },
+    documentTypes: { type: Object, default: () => ({}) },
+    saleDocumentTypes: { type: Array, default: () => [] },
+    departments: { type: Object, default: () => ({}) },
+    comandas: { type: Object, default: () => ({}) },
 });
 
-const activeKey = ref('0');
-const comandasData= ref([]);
+const assetBase = assetUrl;
+const searchQuery = ref('');
+const activeCategoryIndex = ref(0);
+const activeSubcategoryIndex = ref(null);
+const comandasData = ref([]);
 
-const filterOption = (input, option) => {
-    const inputValueLower = input.toLowerCase();
-    const optionTitleLower = option.label.toLowerCase();
-    return optionTitleLower.includes(inputValueLower);
+const displayModalClient = ref(false);
+const saleDocumentTypesId = ref(null);
+const documentType = ref('80');
+
+const selectedDocumentLabel = computed(() => {
+    const found = props.saleDocumentTypes.find((dt) => dt.sunat_id === documentType.value);
+    return found?.description ?? 'Nota de venta';
+});
+
+const selectedClient = ref({
+    id: props.clientDefault?.id ?? null,
+    full_name: props.clientDefault?.full_name ?? 'Cliente genérico',
+    number: props.clientDefault?.number ?? '',
+    document_type_id: props.clientDefault?.document_type_id ?? null,
+});
+
+const clientHasValidRuc = computed(() => {
+    const docTypeId = String(selectedClient.value?.document_type_id ?? '');
+    const number = String(selectedClient.value?.number ?? '').trim();
+    return docTypeId === '6' && /^\d{11}$/.test(number);
+});
+
+const isFactura = computed(() => documentType.value === '01');
+
+const clientLabel = computed(() => {
+    const name = selectedClient.value?.full_name ?? 'Cliente genérico';
+    const number = selectedClient.value?.number;
+    return number ? `${number} - ${name}` : name;
+});
+
+const openModalClient = () => {
+    const docType = props.saleDocumentTypes.find((dt) => dt.sunat_id === documentType.value);
+    saleDocumentTypesId.value = docType?.id ?? null;
+    displayModalClient.value = true;
 };
 
-const getComandas = (comandas) => {
-    comandasData.value = []
-    let arrayData = [];
-    if(comandas && comandas.length > 0){
-        for(let i = 0; i < comandas.length; i++){
-            arrayData.push({
-                id: comandas[i].id,
-                name: comandas[i].name,
-                description: comandas[i].description,
-                image: comandas[i].image,
-                price: comandas[i].price,
-                presentation: comandas[i].presentation
-            });
-        }
-    }
-    comandasData.value = arrayData;
-}
+const closeModalClient = () => {
+    saleDocumentTypesId.value = null;
+    displayModalClient.value = false;
+};
 
-watch(activeKey, (value) => {
-    let array =  props.comandas[value];
-    comandasData.value = array.comandas;
+const onClientSelected = (data) => {
+    selectedClient.value = {
+        id: data.id,
+        full_name: data.full_name,
+        number: data.number ?? '',
+        document_type_id: data.document_type_id ?? null,
+    };
+    form.client_id = data.id;
+    closeModalClient();
+};
+
+const resetToDefaultClient = () => {
+    selectedClient.value = {
+        id: props.clientDefault?.id ?? null,
+        full_name: props.clientDefault?.full_name ?? 'Cliente genérico',
+        number: props.clientDefault?.number ?? '',
+        document_type_id: props.clientDefault?.document_type_id ?? null,
+    };
+    form.client_id = props.clientDefault?.id ?? null;
+};
+
+const categories = computed(() => props.comandas ?? []);
+
+const activeCategory = computed(() => categories.value[activeCategoryIndex.value] ?? null);
+
+const subcategories = computed(() => activeCategory.value?.subcategories ?? []);
+
+const loadComandas = (list) => {
+    comandasData.value = (list ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        image: c.image,
+        price: c.price,
+        presentation: c.presentation?.description ?? '',
+    }));
+};
+
+const selectCategory = (index) => {
+    activeCategoryIndex.value = index;
+    activeSubcategoryIndex.value = null;
+    const cat = categories.value[index];
+    if (cat?.subcategories?.length) {
+        loadComandas([]);
+    } else {
+        loadComandas(cat?.comandas ?? []);
+    }
+};
+
+const selectSubcategory = (index) => {
+    activeSubcategoryIndex.value = index;
+    loadComandas(subcategories.value[index]?.comandas ?? []);
+};
+
+const filteredProducts = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase();
+    if (!q) return comandasData.value;
+    return comandasData.value.filter(
+        (c) =>
+            c.name.toLowerCase().includes(q) ||
+            c.description?.toLowerCase().includes(q) ||
+            c.presentation?.toLowerCase().includes(q)
+    );
 });
 
 onMounted(() => {
-    comandasData.value = props.comandas[0].comandas
+    if (categories.value.length) {
+        selectCategory(0);
+    }
+    if (
+        props.saleDocumentTypes.length &&
+        !props.saleDocumentTypes.some((dt) => dt.sunat_id === documentType.value)
+    ) {
+        documentType.value = props.saleDocumentTypes[0].sunat_id;
+    }
 });
-
-const xhttp =  assetUrl;
-
-const columns = [
-    {
-        title: 'operation',
-        dataIndex: 'operation',
-    },
-    {
-        title: 'Nombre',
-        dataIndex: 'name',
-        key: 'name'
-    },
-    {
-        title: 'Precio',
-        dataIndex: 'price',
-        key: 'price'
-    },
-    {
-        title: 'Cantidad',
-        dataIndex: 'quantity',
-        key: 'quantity'
-    },
-    {
-        title: 'Total',
-        dataIndex: 'total',
-        key: 'total'
-    },
-    
-]
 
 const form = useForm({
-    client_id: 1,
+    client_id: props.clientDefault?.id ?? null,
     total: 0,
     comandas: [],
-    payments: [{
-        type:1,
-        reference: null,
-        amount: 0
-    }]
+    payments: [{ type: props.paymentMethods?.[0]?.id ?? 1, reference: null, amount: 0 }],
 });
 
-const addComanda = (comanda) => {
-    form.comandas.push({
-        id: comanda.id,
-        name: comanda.name,
-        description: comanda.description,
-        image: comanda.image,
-        presentation: comanda.presentation.description,
-        price: comanda.price,
-        quantity: 1,
-        total: comanda.price,
-        editable: false
-    });
+const cartCount = computed(() =>
+    form.comandas.reduce((sum, item) => sum + Number(item.quantity), 0)
+);
 
-    form.total = form.comandas.reduce((acc, item) => acc + parseFloat(item.total), 0).toFixed(2);
-    form.payments[0].amount = form.total;
-}
+const paymentsTotal = computed(() =>
+    form.payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0).toFixed(2)
+);
 
-const calculateTotals = (index) => {
-    let Obj = form.comandas[index];
-    let c = parseFloat(Obj.quantity) ?? 0;
-    let p = parseFloat(Obj.price) ?? 0;
+const paymentBalanced = computed(
+    () => parseFloat(paymentsTotal.value) === parseFloat(form.total || 0)
+);
 
-    let st = c*p;
-    if (isNaN(st)) {
-        st = 0;
+const recalcTotal = () => {
+    form.total = form.comandas
+        .reduce((acc, item) => acc + parseFloat(item.total), 0)
+        .toFixed(2);
+    if (form.payments.length === 1) {
+        form.payments[0].amount = form.total;
     }
-    form.comandas[index].total = st.toFixed(2);
-    form.total = form.comandas.reduce((acc, item) => acc + parseFloat(item.total), 0).toFixed(2);
-    form.payments[0].amount = form.total;
-}
-
-const removeItem = (index) => {
-    let t = parseFloat(form.comandas[index].total);
-    form.total = parseFloat(form.total) - t;
-    form.comandas.splice(index,1);
-    form.payments[0].amount = form.total;
-}
-
-const boxStyle = {
-    marginTop: '10px',
-    width: '100%',
-    padding: '4px',
-    borderRadius: '6px',
-    border: '1px solid #E5E7EB',
 };
 
-const addPayments = () => {
-    form.payments.push({
-        type:1,
-        reference: null,
-        amount:0
+const addComanda = (comanda) => {
+    const existing = form.comandas.find((item) => item.id === comanda.id);
+    if (existing) {
+        existing.quantity = Number(existing.quantity) + 1;
+        existing.total = (existing.quantity * parseFloat(existing.price)).toFixed(2);
+    } else {
+        form.comandas.push({
+            id: comanda.id,
+            name: comanda.name,
+            description: comanda.description,
+            image: comanda.image,
+            presentation: comanda.presentation,
+            price: comanda.price,
+            quantity: 1,
+            total: parseFloat(comanda.price).toFixed(2),
+        });
+    }
+    recalcTotal();
+};
+
+const changeQuantity = (index, delta) => {
+    const item = form.comandas[index];
+    const next = Number(item.quantity) + delta;
+    if (next < 1) {
+        removeItem(index);
+        return;
+    }
+    item.quantity = next;
+    item.total = (next * parseFloat(item.price)).toFixed(2);
+    recalcTotal();
+};
+
+const removeItem = (index) => {
+    form.comandas.splice(index, 1);
+    recalcTotal();
+};
+
+const clearCart = () => {
+    if (!form.comandas.length) return;
+    Swal.fire({
+        title: '¿Vaciar pedido?',
+        text: 'Se quitarán todos los platos del carrito.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, vaciar',
+        cancelButtonText: 'Cancelar',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            form.comandas = [];
+            recalcTotal();
+        }
     });
-}
+};
+
+const addPayment = () => {
+    form.payments.push({
+        type: props.paymentMethods?.[0]?.id ?? 1,
+        reference: null,
+        amount: 0,
+    });
+};
 
 const removePayment = (index) => {
-    if(form.payments.length > 1){
-        form.payments.splice(index,1);
+    if (form.payments.length > 1) {
+        form.payments.splice(index, 1);
     }
 };
 
 const saveSale = () => {
-    form.processing = true;
-    return axios.post(route('res_sales_store', form)).then((res) => {
-        if (!res.data.success) {
-            message.error(res.data.message);
-        }else{
-            message.success(res.data.message);
-        }
-        form.processing = false;
-        form.reset();
-    });
-}
+    if (!form.client_id) {
+        message.error('Seleccione un cliente');
+        return;
+    }
+    if (!form.comandas.length) {
+        message.error('Agregue al menos un plato al pedido');
+        return;
+    }
+    if (!paymentBalanced.value) {
+        message.error('El total de pagos debe coincidir con el total de la venta');
+        return;
+    }
+    if (isFactura.value && !clientHasValidRuc.value) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Cliente con RUC requerido',
+            text: 'Para factura electrónica debe seleccionar un cliente registrado con RUC de 11 dígitos. Use el botón de cliente para buscarlo o crearlo.',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        return;
+    }
 
-const cancelSale = () => {
-    message.info('Confirmación pendiente');
-}
+    form.processing = true;
+    const payload = {
+        client_id: form.client_id,
+        document_type_id: documentType.value,
+        total: parseFloat(form.total),
+        comandas: form.comandas.map((item) => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+        })),
+        payments: form.payments,
+    };
+
+    axios
+        .post(route('res_sales_store'), withCsrfPayload(payload))
+        .then((res) => {
+            if (!res.data.success) {
+                message.error(res.data.message);
+                return;
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Venta registrada',
+                text: res.data.message,
+                timer: 2000,
+                showConfirmButton: false,
+            });
+            router.visit(route('res_sales_list'));
+        })
+        .catch((error) => {
+            message.error(error.response?.data?.message || 'Error al registrar la venta');
+        })
+        .finally(() => {
+            form.processing = false;
+        });
+};
+
+const formatMoney = (value) => `S/ ${Number(value || 0).toFixed(2)}`;
 </script>
+
 <template>
     <AppLayout title="Vender">
-        <div class="max-w-screen-2xl  mx-auto p-4 md:p-6 2xl:p-10">
-            <!-- Breadcrumb Start -->
-            <nav class="flex px-4 py-3 border border-stroke text-gray-700 mb-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <Link :href="route('dashboard')" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg aria-hidden="true" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-                        Inicio
-                        </Link>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                        <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                        <!-- <a href="#" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Productos</a> -->
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Restaurante</span>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Vender</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            
-            <div class="mt-5 md:mt-0 md:col-span-2">
-                <ConfigProvider :locale="esES">
-                    <div class="px-4 py-5 bg-white sm:rounded-tl-md sm:rounded-tr-md sm:p-6 shadow dark:bg-gray-800 ">
-                        <div class="grid grid-cols-6">
-                            <div class="col-span-6 sm:col-span-2">
-                                <div class="card-container p-2 border-r">
-                                    <Tabs v-model:activeKey="activeKey" type="card">
-                                        
-                                        <TabPane v-for="(item, index) in comandas" :key="index.toString()" :tab="item.description">
-                                            <Card v-if="item.subcategories && item.subcategories.length > 0">
-                                                <CardGrid v-for="(subcategory, cc) in item.subcategories"
-                                                    style="width: 50%; text-align: center; cursor: pointer"
-                                                    @click="getComandas(subcategory.comandas)"
-                                                >
-                                                {{ subcategory.description }}
-                                                </CardGrid>
-                                            </Card>
-                                            <Card v-if="comandasData && comandasData.length > 0">
-                                                <CardGrid v-for="(comanda, ii) in comandasData"
-                                                    style="width: 25%; text-align: center;padding: 4px;border-radius: 0px;cursor: pointer"
-                                                    @click="addComanda(comanda)"
-                                                >
-                                                    <Popover :title="comanda.name" placement="right">
-                                                        <template #content>
-                                                            <small>{{ comanda.description }}</small>
-                                                            <p>{{ comanda.presentation.description }}</p>
-                                                            <p><strong>Precio S/. {{ comanda.price }}</strong></p>
-                                                        </template>
-                                                        <img class="w-20 h-20" :src="xhttp + 'storage/' + comanda.image" />
-                                                    </Popover>
-                                                </CardGrid>
-                                            </Card>
-                                        </TabPane>
-                                    </Tabs>
-                                </div>
-                            </div>
-                            <div class="col-span-6 sm:col-span-4">
-                                <div class="p-4">
-                                    <InputLabel for="client_id" value="Cliente *" class="mb-1" />
-                                    <Select
-                                        id="client_id"
-                                        show-search
-                                        placeholder="Seleccione un cliente"
-                                        v-model:value="form.client_id"
-                                        style="width: 100%"
-                                        :options="clients.map((obj) => ({value: obj.id, label: obj.full_name}))"
-                                        :filter-option="filterOption"
-                                    >
-                                        <template #suffixIcon>
-                                            <font-awesome-icon :icon="faFaceSmile" />
-                                        </template>
-                                    </Select>
-                                    <InputError :message="form.errors.client_id" class="mt-2" />
-                                </div>
-                                <div class="p-4">
-                                    
-                                    <Table 
-                                        :columns="columns" 
-                                        :data-source="form.comandas"
-                                        :pagination="false"
-                                        bordered
-                                    >
-                                        <template #bodyCell="{ column, record, index }">
-                                            <template v-if="column.key === 'name'">
-                                                <Popover :title="record.name" placement="right">
-                                                    <template #content>
-                                                        <p>
-                                                            <img class="w-40 h-40" :src="xhttp + 'storage/' + record.image" />
-                                                        </p>
-                                                        <small>{{ record.description }}</small>
-                                                        <p>{{ record.presentation }}</p>
-                                                    </template>
-                                                    <p style="cursor: pointer;">{{ record.name }}</p>
-                                                </Popover>
-                                            </template>
-                                            <template  v-if="column.key === 'quantity'">
-                                                <template v-if="record.editable">
-                                                    <InputNumber v-model:value="record.quantity"
-                                                        @change="calculateTotals(index)" 
-                                                        :id="'small-input'+column.key" 
-                                                    />
-                                                </template>
-                                                <template v-else>
-                                                    {{ record.quantity }}
-                                                </template>
-                                            </template>
-                                            <template v-else-if="column.dataIndex === 'operation'">
-                                                <div class="editable-row-operations">
-                                                    <span v-if="record.editable">
-                                                        <Tooltip placement="topLeft" title="Cancelar Edición">
-                                                            <Button @click="record.editable = false" type="dashed" shape="circle">
-                                                                <font-awesome-icon :icon="faXmark" />
-                                                            </Button>
-                                                        </Tooltip>
-                                                    </span>
-                                                    <span v-else>
-                                                        <Tooltip placement="topLeft" title="Editar Cantidad">
-                                                            <Button @click="record.editable = true" type="primary" shape="circle">
-                                                                <font-awesome-icon :icon="faPen" />
-                                                            </Button>
-                                                        </Tooltip>
-                                                        <Tooltip placement="bottomLeft" title="Quitar Comanda">
-                                                            <Button @click="removeItem(index)" danger shape="circle" class="ml-1">
-                                                                <font-awesome-icon :icon="faXmark" />
-                                                            </Button>
-                                                        </Tooltip>
-                                                    </span>
-                                                </div>
-                                            </template>
-                                        </template>
-                                        <template #footer>
-                                            <Flex :justify="'flex-end'" :align="'center'">
-                                                <strong>TOTAL: {{ form.total }}</strong>
-                                            </Flex>
-                                        </template>
-                                    </Table>
-                                    <Flex :justify="'flex-start'" :align="'center'" class="mt-6">
-                                        <Button @click="addPayments()" type="link">Agregar Pagos</Button>
-                                    </Flex>
-                                    <template v-for="(met, ky) in form.payments">
-                                        <Flex :style="{ ...boxStyle }" :justify="'space-between'" :align="'center'">
-                                            <DangerButton @click="removePayment(ky)" class="mr-1">
-                                                <font-awesome-icon :icon="faTimes" />
-                                            </DangerButton>
-                                            <Select
-                                                class="mr-1"
-                                                v-model:value="met.type"
-                                                style="width: 220px"
-                                                :options="paymentMethods.map((obj) => ({value: obj.id, label: obj.description}))"
-                                            />
-                                            <Input v-model:value="met.reference" style="width: 220px;margin-right: 4px;" placeholder="Referencia" />
-                                            <Input v-model:value="met.amount" style="width: 120px; text-align: right;" />
-                                        </Flex>
-                                    </template>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                
-                    <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md dark:bg-gray-700">
-                        <Keypad>
-                            <template #botones>
-                                <Popconfirm title="Por favor, verifique los datos antes de confirmar." 
-                                    @confirm="saveSale" 
-                                    @cancel="cancelSale">
-                                    <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing" type="button">
-                                        <font-awesome-icon class="mr-1" :icon="faDollarSign" />
-                                        Cobrar
-                                    </PrimaryButton>
-                                </Popconfirm>
-                                <Link :href="route('res_sales_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
-                            </template>
-                        </Keypad>
-                    </div>
-                </ConfigProvider>
-            </div>
-        </div>
+        <Navigation
+            :routeModule="route('res_dashboard')"
+            titleModule="Restaurante"
+            :data="[{ title: 'Vender' }]"
+        />
 
+        <ConfigProvider :locale="esES">
+            <div class="pt-5 space-y-4">
+                <!-- Encabezado -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                            <FontAwesomeIcon :icon="faCartShopping" class="text-primary" />
+                            Punto de venta
+                        </h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                            Toque un plato para agregarlo al pedido
+                        </p>
+                    </div>
+                    <Link
+                        :href="route('res_sales_list')"
+                        class="btn btn-outline-primary btn-sm gap-2"
+                    >
+                        <FontAwesomeIcon :icon="faListUl" />
+                        Ver ventas
+                    </Link>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+                    <!-- Catálogo -->
+                    <div class="xl:col-span-7 space-y-4">
+                        <div class="panel p-0 overflow-hidden">
+                            <!-- Búsqueda -->
+                            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="relative">
+                                    <FontAwesomeIcon
+                                        :icon="faMagnifyingGlass"
+                                        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
+                                    />
+                                    <input
+                                        v-model="searchQuery"
+                                        type="text"
+                                        placeholder="Buscar plato..."
+                                        class="form-input pl-10 w-full"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Categorías -->
+                            <div
+                                v-if="categories.length"
+                                class="px-4 pt-3 flex gap-2 overflow-x-auto no-scrollbar border-b border-gray-200 dark:border-gray-700 pb-0"
+                            >
+                                <button
+                                    v-for="(cat, idx) in categories"
+                                    :key="cat.id"
+                                    type="button"
+                                    class="shrink-0 px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors"
+                                    :class="
+                                        activeCategoryIndex === idx
+                                            ? 'border-primary text-primary bg-primary/5'
+                                            : 'border-transparent text-gray-500 hover:text-gray-800 dark:hover:text-white'
+                                    "
+                                    @click="selectCategory(idx)"
+                                >
+                                    {{ cat.description }}
+                                </button>
+                            </div>
+
+                            <!-- Subcategorías -->
+                            <div
+                                v-if="subcategories.length"
+                                class="px-4 py-3 flex flex-wrap gap-2 bg-gray-50 dark:bg-gray-800/50"
+                            >
+                                <button
+                                    v-for="(sub, idx) in subcategories"
+                                    :key="sub.id"
+                                    type="button"
+                                    class="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors"
+                                    :class="
+                                        activeSubcategoryIndex === idx
+                                            ? 'bg-primary text-white border-primary'
+                                            : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary'
+                                    "
+                                    @click="selectSubcategory(idx)"
+                                >
+                                    {{ sub.description }}
+                                </button>
+                                <p
+                                    v-if="activeSubcategoryIndex === null"
+                                    class="text-xs text-amber-600 dark:text-amber-400 self-center"
+                                >
+                                    Seleccione una subcategoría
+                                </p>
+                            </div>
+
+                            <!-- Grid de productos -->
+                            <div class="p-4 min-h-[320px]">
+                                <div
+                                    v-if="subcategories.length && activeSubcategoryIndex === null"
+                                    class="flex flex-col items-center justify-center py-16 text-gray-400"
+                                >
+                                    <FontAwesomeIcon :icon="faCartShopping" class="text-4xl mb-3 opacity-40" />
+                                    <p>Elija una subcategoría para ver los platos</p>
+                                </div>
+                                <div
+                                    v-else-if="filteredProducts.length === 0"
+                                    class="flex flex-col items-center justify-center py-16 text-gray-400"
+                                >
+                                    <FontAwesomeIcon :icon="faMagnifyingGlass" class="text-4xl mb-3 opacity-40" />
+                                    <p>No hay platos en esta categoría</p>
+                                </div>
+                                <div
+                                    v-else
+                                    class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                                >
+                                    <button
+                                        v-for="comanda in filteredProducts"
+                                        :key="comanda.id"
+                                        type="button"
+                                        class="group text-left rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:border-primary hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                        @click="addComanda(comanda)"
+                                    >
+                                        <div class="aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                                            <img
+                                                :src="assetBase + 'storage/' + comanda.image"
+                                                :alt="comanda.name"
+                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                            />
+                                        </div>
+                                        <div class="p-2.5">
+                                            <p class="font-medium text-sm text-gray-800 dark:text-white line-clamp-1">
+                                                {{ comanda.name }}
+                                            </p>
+                                            <p
+                                                v-if="comanda.presentation"
+                                                class="text-xs text-gray-400 line-clamp-1 mt-0.5"
+                                            >
+                                                {{ comanda.presentation }}
+                                            </p>
+                                            <p class="text-sm font-bold text-primary mt-1">
+                                                {{ formatMoney(comanda.price) }}
+                                            </p>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carrito / Cobro -->
+                    <div class="xl:col-span-5">
+                        <div class="panel p-0 xl:sticky xl:top-4 flex flex-col">
+                            <!-- Tipo de comprobante -->
+                            <div class="shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
+                                <InputLabel class="flex items-center gap-1.5">
+                                    <FontAwesomeIcon :icon="faFileInvoice" class="text-gray-400 text-xs" />
+                                    Tipo de comprobante
+                                </InputLabel>
+                                <select v-model="documentType" class="form-select w-full">
+                                    <option
+                                        v-for="dt in saleDocumentTypes"
+                                        :key="dt.id"
+                                        :value="dt.sunat_id"
+                                    >
+                                        {{ dt.description }}
+                                    </option>
+                                </select>
+                                <p class="text-xs text-gray-400">
+                                    Comprobante seleccionado: {{ selectedDocumentLabel }}
+                                </p>
+                            </div>
+
+                            <!-- Cliente -->
+                            <div class="shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
+                                <InputLabel class="flex items-center gap-1.5">
+                                    <FontAwesomeIcon :icon="faUser" class="text-gray-400 text-xs" />
+                                    Cliente
+                                </InputLabel>
+                                <div class="flex gap-2">
+                                    <button
+                                        type="button"
+                                        class="flex-1 min-w-0 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-primary hover:text-primary transition-colors text-left text-sm"
+                                        title="Buscar, crear o editar cliente"
+                                        @click="openModalClient"
+                                    >
+                                        <FontAwesomeIcon :icon="faUser" class="shrink-0 text-primary" />
+                                        <span class="truncate">{{ clientLabel }}</span>
+                                    </button>
+                                    <button
+                                        v-if="form.client_id !== clientDefault?.id"
+                                        type="button"
+                                        class="shrink-0 px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-600 text-gray-500 hover:border-primary hover:text-primary transition-colors"
+                                        title="Restablecer cliente genérico"
+                                        @click="resetToDefaultClient"
+                                    >
+                                        Genérico
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-400">
+                                    Por defecto: cliente genérico. Use el botón para buscar en BD, SUNAT o RENIEC.
+                                </p>
+                                <p
+                                    v-if="isFactura && !clientHasValidRuc"
+                                    class="text-xs text-red-500 dark:text-red-400"
+                                >
+                                    Factura electrónica: el cliente debe tener RUC de 11 dígitos.
+                                </p>
+                                <InputError :message="form.errors.client_id" class="mt-1" />
+                            </div>
+
+                            <!-- Lista del pedido -->
+                            <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-semibold text-gray-800 dark:text-white">
+                                        Pedido
+                                        <span
+                                            v-if="cartCount"
+                                            class="ml-1 text-xs font-normal bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                                        >
+                                            {{ cartCount }} {{ cartCount === 1 ? 'ítem' : 'ítems' }}
+                                        </span>
+                                    </h3>
+                                    <button
+                                        v-if="form.comandas.length"
+                                        type="button"
+                                        class="text-xs text-red-500 hover:text-red-700"
+                                        @click="clearCart"
+                                    >
+                                        Vaciar
+                                    </button>
+                                </div>
+                                <div class="overflow-hidden max-h-[calc(100vh-9rem)]">
+                                    <div
+                                        v-if="!form.comandas.length"
+                                        class="flex flex-col items-center justify-center py-10 text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl"
+                                    >
+                                        <FontAwesomeIcon :icon="faCartShopping" class="text-3xl mb-2 opacity-30" />
+                                        <p class="text-sm">El pedido está vacío</p>
+                                        <p class="text-xs mt-1">Agregue platos desde el catálogo</p>
+                                    </div>
+
+                                    <div
+                                        v-for="(item, index) in form.comandas"
+                                        :key="item.id"
+                                        class="flex gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700"
+                                    >
+                                        <img
+                                            :src="assetBase + 'storage/' + item.image"
+                                            :alt="item.name"
+                                            class="w-14 h-14 rounded-lg object-cover shrink-0"
+                                        />
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-medium text-sm text-gray-800 dark:text-white truncate">
+                                                {{ item.name }}
+                                            </p>
+                                            <p class="text-xs text-gray-400">{{ formatMoney(item.price) }} c/u</p>
+                                            <div class="flex items-center gap-2 mt-2">
+                                                <button
+                                                    type="button"
+                                                    class="w-7 h-7 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                                    @click="changeQuantity(index, -1)"
+                                                >
+                                                    <FontAwesomeIcon :icon="faMinus" class="text-xs" />
+                                                </button>
+                                                <span class="w-8 text-center font-semibold text-sm">{{ item.quantity }}</span>
+                                                <button
+                                                    type="button"
+                                                    class="w-7 h-7 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                                    @click="changeQuantity(index, 1)"
+                                                >
+                                                    <FontAwesomeIcon :icon="faPlus" class="text-xs" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="ml-auto w-7 h-7 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center"
+                                                    @click="removeItem(index)"
+                                                >
+                                                    <FontAwesomeIcon :icon="faTrashCan" class="text-xs" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p class="font-bold text-sm text-gray-800 dark:text-white shrink-0 self-start mt-1">
+                                            {{ formatMoney(item.total) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pagos -->
+                            <div class="shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 space-y-3 bg-gray-50/50 dark:bg-gray-800/30">
+                                <div class="flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-300">
+                                        <FontAwesomeIcon :icon="faCreditCard" class="text-xs" />
+                                        Pago
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="text-xs text-primary hover:underline"
+                                        @click="addPayment"
+                                    >
+                                        + Dividir pago
+                                    </button>
+                                </div>
+
+                                <div
+                                    v-for="(met, ky) in form.payments"
+                                    :key="ky"
+                                    class="flex flex-wrap gap-2 items-center"
+                                >
+                                    <Select
+                                        v-model:value="met.type"
+                                        class="flex-1 min-w-[120px]"
+                                        :options="paymentMethods.map((m) => ({ value: m.id, label: m.description }))"
+                                    />
+                                    <Input
+                                        v-model:value="met.reference"
+                                        placeholder="Ref."
+                                        class="w-24"
+                                    />
+                                    <Input
+                                        v-model:value="met.amount"
+                                        class="w-28 text-right"
+                                        placeholder="0.00"
+                                    />
+                                    <button
+                                        v-if="form.payments.length > 1"
+                                        type="button"
+                                        class="text-red-500 hover:text-red-700 px-1"
+                                        @click="removePayment(ky)"
+                                    >
+                                        <FontAwesomeIcon :icon="faTrashCan" class="text-sm" />
+                                    </button>
+                                </div>
+
+                                <p
+                                    v-if="form.comandas.length && !paymentBalanced"
+                                    class="text-xs text-amber-600 dark:text-amber-400"
+                                >
+                                    Pagos: {{ formatMoney(paymentsTotal) }} — falta cuadrar con {{ formatMoney(form.total) }}
+                                </p>
+                            </div>
+
+                            <!-- Total y cobrar -->
+                            <div class="shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 space-y-3 bg-white dark:bg-gray-900">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-500 dark:text-gray-400">Total a cobrar</span>
+                                    <span class="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {{ formatMoney(form.total) }}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary w-full py-3 text-sm font-semibold gap-2 flex items-center justify-center"
+                                    :class="{ 'opacity-50 cursor-not-allowed': form.processing || !form.comandas.length || (isFactura && !clientHasValidRuc) }"
+                                    :disabled="form.processing || !form.comandas.length || (isFactura && !clientHasValidRuc)"
+                                    @click="saveSale"
+                                >
+                                    <FontAwesomeIcon :icon="faCircleCheck" />
+                                    {{ form.processing ? 'Procesando...' : 'Cobrar' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ConfigProvider>
+
+        <SearchClients
+            :display="displayModalClient"
+            :close-modal-client="closeModalClient"
+            :client-default="clientDefault"
+            :document-types="documentTypes"
+            :sale-document-types="saleDocumentTypesId"
+            :ubigeo="departments"
+            @client-id="onClientSelected"
+        />
     </AppLayout>
 </template>
 
 <style scoped>
-    .card-container {
-        margin-bottom: 16px;
-    }
-    .card-container p {
-        margin: 0;
-        margin-bottom: 16px;
-    }
-    .card-container > .ant-tabs-card .ant-tabs-content {
-        height: 120px;
-        margin-top: -16px;
-        
-    }
-    .card-container > .ant-tabs-card .ant-tabs-content > .ant-tabs-tabpane {
-        /* padding: 16px; */
-        background: #fff;
-    }
-    .card-container > .ant-tabs-card > .ant-tabs-nav::before {
-        display: none;
-    }
-    .card-container > .ant-tabs-card .ant-tabs-tab,
-    [data-theme='compact'] .card-container > .ant-tabs-card .ant-tabs-tab {
-        background: transparent;
-        border-color: transparent;
-    }
-    .card-container > .ant-tabs-card .ant-tabs-tab-active,
-    [data-theme='compact'] .card-container > .ant-tabs-card .ant-tabs-tab-active {
-        background: #fff;
-        border-color: #fff;
-    }
-    #components-tabs-demo-card-top .code-box-demo {
-        padding: 24px;
-        overflow: hidden;
-        background: #f5f5f5;
-    }
-    [data-theme='compact'] .card-container > .ant-tabs-card .ant-tabs-content {
-        height: 120px;
-        margin-top: -8px;
-    }
-    [data-theme='dark'] .card-container > .ant-tabs-card .ant-tabs-tab {
-        background: transparent;
-        border-color: transparent;
-    }
-    [data-theme='dark'] #components-tabs-demo-card-top .code-box-demo {
-        background: #000;
-    }
-    [data-theme='dark'] .card-container > .ant-tabs-card .ant-tabs-content > .ant-tabs-tabpane {
-        background: #141414;
-    }
-    [data-theme='dark'] .card-container > .ant-tabs-card .ant-tabs-tab-active {
-        background: #141414;
-        border-color: #141414;
-    }
-
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
 </style>

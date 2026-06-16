@@ -54,7 +54,7 @@ const MenuData = ref([
     menuCMS,
     menuHealth,
     menuAcademic,
-    // menuRestaurant,
+    menuRestaurant,
     menuSocialevents,
     menuCRM,
     // menuCiglesia,
