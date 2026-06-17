@@ -1,7 +1,9 @@
 <script setup>
-    import { Link, useForm, router } from '@inertiajs/vue3';
+    import { router } from '@inertiajs/vue3';
     import { Dropdown, ListGroup, ListGroupItem, Radio } from 'flowbite-vue'
     import { onBeforeMount, ref } from 'vue';
+    import Swal from 'sweetalert2';
+    import { withCsrfPayload } from '@/utils/csrf';
 
     const props = defineProps({
         comandas: {
@@ -12,18 +14,53 @@
     const xassetUrl = assetUrl;
 
     const salesData = ref([]);
+    const savingIndex = ref(null);
 
     const closeEditions = (id, index) => {
         axios.get(route('res_sales_find_reset', id)).then((res) => {
-            salesData.value[index].details = res.data.sale.details   
+            salesData.value[index].details = res.data.sale.details
         }).then(() => {
             salesData.value[index].edit = !salesData.value[index].edit
         });
     }
 
+    const saveKitchenStatus = (saleId, index) => {
+        savingIndex.value = index;
+        const details = salesData.value[index].details.map((detail) => ({
+            id: detail.id,
+            preparation_status: detail.preparation_status || 'pendiente',
+        }));
+
+        axios.patch(route('res_sales_kitchen_update', saleId), withCsrfPayload({ details }))
+            .then((res) => {
+                if (!res.data.success) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: res.data.message });
+                    return;
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Guardado',
+                    text: res.data.message,
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+                salesData.value[index].edit = false;
+                router.reload({ only: ['comandas'] });
+            })
+            .catch((error) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.response?.data?.message || 'No se pudo guardar el estado',
+                });
+            })
+            .finally(() => {
+                savingIndex.value = null;
+            });
+    }
 
     onBeforeMount(() => {
-        for(let i = 0; i < props.comandas.length; i++){
+        for (let i = 0; i < props.comandas.length; i++) {
             salesData.value.push({
                 id: props.comandas[i].id,
                 edit: false,
@@ -35,7 +72,7 @@
 </script>
 <template>
     <div v-if="comandas.length > 0" class="grid grid-cols-6 ">
-        <div v-for="(sale, index) in comandas" class="col-span-6 md:col-span-3 lg:col-span-2">
+        <div v-for="(sale, index) in comandas" :key="sale.id" class="col-span-6 md:col-span-3 lg:col-span-2">
             <div class="w-full max-w-md p-4 bg-white border border-gray-200 rounded-lg shadow sm:p-8 dark:bg-gray-800 dark:border-gray-700">
                 <div class="flex items-center justify-between mb-4">
                     <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">{{ sale.correlative }}</h5>
@@ -44,18 +81,15 @@
                             <ListGroupItem @click="salesData[index].edit = !salesData[index].edit">
                                 Comandas
                             </ListGroupItem>
-                            <ListGroupItem>
-                                Cancelar
-                            </ListGroupItem>
                         </ListGroup>
                     </Dropdown>
                 </div>
                 <div class="flow-root">
                     <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <li v-for="(detail, key) in sale.details" class="py-3 sm:py-4">
+                        <li v-for="(detail, key) in sale.details" :key="detail.id" class="py-3 sm:py-4">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <img class="w-8 h-8 rounded-full" :src="xassetUrl+'storage/'+detail.comanda.image" alt="Neil image">
+                                    <img class="w-8 h-8 rounded-full" :src="xassetUrl+'storage/'+detail.comanda.image" :alt="detail.comanda.name">
                                 </div>
                                 <div class="flex-1 min-w-0 ms-4">
                                     <p class="text-sm font-medium text-gray-900 truncate dark:text-white">
@@ -69,13 +103,13 @@
                                     {{ detail.quantity }}
                                 </div>
                             </div>
-                            <div class="mt-2">
+                            <div v-if="salesData[index]?.edit" class="mt-2">
                                 <ul class="items-center w-full text-sm font-medium text-gray-900 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                     <li class="w-full !m-0 pl-3 flex border-gray-200 rounded-t-lg dark:border-gray-600">
                                         <Radio
                                             v-model="salesData[index].details[key].preparation_status"
                                             label="Pendiente"
-                                            name="radio-horizontal"
+                                            :name="'status-'+sale.id+'-'+detail.id"
                                             value="pendiente"
                                         />
                                     </li>
@@ -83,18 +117,33 @@
                                         <Radio
                                             v-model="salesData[index].details[key].preparation_status"
                                             label="Listo"
-                                            name="radio-horizontal"
+                                            :name="'status-'+sale.id+'-'+detail.id"
                                             value="listo"
                                         />
                                     </li>
                                 </ul>
                             </div>
+                            <div v-else class="mt-2 text-xs">
+                                <span
+                                    class="px-2 py-1 rounded"
+                                    :class="detail.preparation_status === 'listo' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                >
+                                    {{ detail.preparation_status === 'listo' ? 'Listo' : 'Pendiente' }}
+                                </span>
+                            </div>
                         </li>
                     </ul>
                 </div>
-                <div v-if="salesData[index].edit" class="flex items-center justify-between">
-                    <a href="#" @click="closeEditions(sale.id, index)" class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">Cerrar Edición</a>
-                    <a href="#" class="text-purple-700 hover:text-white border border-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-4 py-2 text-center me-2 mb-2 dark:border-purple-400 dark:text-purple-400 dark:hover:text-white dark:hover:bg-purple-500 dark:focus:ring-purple-900">Guardar</a>
+                <div v-if="salesData[index].edit" class="flex items-center justify-between mt-4">
+                    <a href="#" @click.prevent="closeEditions(sale.id, index)" class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 text-center me-2 mb-2 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">Cerrar</a>
+                    <a
+                        href="#"
+                        @click.prevent="saveKitchenStatus(sale.id, index)"
+                        class="text-purple-700 hover:text-white border border-purple-700 hover:bg-purple-800 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-4 py-2 text-center me-2 mb-2 dark:border-purple-400 dark:text-purple-400 dark:hover:text-white dark:hover:bg-purple-500 dark:focus:ring-purple-900"
+                        :class="{ 'opacity-50 pointer-events-none': savingIndex === index }"
+                    >
+                        {{ savingIndex === index ? 'Guardando...' : 'Guardar' }}
+                    </a>
                 </div>
             </div>
         </div>

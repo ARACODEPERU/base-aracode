@@ -2,6 +2,7 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import AracodeEditor from '@elmerrodriguez/editor-aracode';
 import '@editor-aracode-styles';
+import { getCsrfToken } from '@/utils/csrf';
 
 const props = defineProps({
     modelValue: { type: String, default: '' },
@@ -24,6 +25,7 @@ function parseHeight(value) {
 }
 
 function buildOptions() {
+    const csrfToken = getCsrfToken();
     const options = {
         value: props.modelValue || '',
         placeholder: props.placeholder,
@@ -31,12 +33,12 @@ function buildOptions() {
         readOnly: props.readonly,
         locale: 'es',
         imageUploadUrl: props.imageUploadUrl || null,
-        imageUploadHeaders: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-        },
-        imageUploadParams: {
-            '_token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-        },
+        imageUploadHeaders: csrfToken ? {
+            'X-CSRF-TOKEN': csrfToken,
+        } : {},
+        imageUploadParams: csrfToken ? {
+            '_token': csrfToken,
+        } : {},
     };
 
     if (props.toolbar) {

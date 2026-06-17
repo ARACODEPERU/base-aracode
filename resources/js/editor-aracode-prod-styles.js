@@ -3,3 +3,4 @@
  * En dev: editor-aracode-dev-styles.js desde EditorAracode.vue.
  */
 import '@elmerrodriguez/editor-aracode/style.css';
+import '@elmerrodriguez/editor-aracode/theme-dark.css';

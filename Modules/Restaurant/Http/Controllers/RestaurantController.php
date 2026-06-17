@@ -3,65 +3,47 @@
 namespace Modules\Restaurant\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Carbon\Carbon;
+use Inertia\Inertia;
+use Modules\Restaurant\Entities\ResComanda;
+use Modules\Restaurant\Entities\ResMenu;
+use Modules\Restaurant\Entities\ResSale;
+use Modules\Restaurant\Services\ResRecipeConsumptionService;
+use Modules\Restaurant\Services\ResSupplyStockService;
 
 class RestaurantController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(
+        protected ResSupplyStockService $stockService,
+        protected ResRecipeConsumptionService $consumptionService
+    ) {}
+
     public function index()
     {
-        return view('restaurant::index');
-    }
+        $today = Carbon::today()->toDateString();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('restaurant::create');
-    }
+        $salesToday = ResSale::whereDate('sale_date', $today)
+            ->whereNotIn('queue_status', ['99'])
+            ->get(['id', 'total']);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request): RedirectResponse
-    {
-        //
-    }
+        $pendingKitchen = ResSale::whereIn('queue_status', ['01', '02'])->count();
 
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        return view('restaurant::show');
-    }
+        $activeComandas = ResComanda::where('status', true)->count();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
-    {
-        return view('restaurant::edit');
-    }
+        $activeMenus = ResMenu::where('status', true)->count();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id): RedirectResponse
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        //
+        return Inertia::render('Restaurant::Dashboard', [
+            'metrics' => [
+                'sales_today_count' => $salesToday->count(),
+                'sales_today_total' => round($salesToday->sum('total'), 2),
+                'pending_kitchen' => $pendingKitchen,
+                'active_comandas' => $activeComandas,
+                'active_menus' => $activeMenus,
+                'low_stock_count' => $this->stockService->getLowStockCount(),
+                'out_of_stock_count' => $this->stockService->getOutOfStockCount(),
+                'comandas_without_recipe' => $this->consumptionService->countComandasWithoutRecipe(),
+            ],
+            'critical_supplies' => $this->consumptionService->getTopCriticalSupplies(5),
+        ]);
     }
 }

@@ -6,6 +6,7 @@
 
 import axios from 'axios';
 import io from 'socket.io-client';
+import { applyCsrfToAxiosConfig, setCsrfToken } from './utils/csrf.js';
 
 const socketIoHost = import.meta.env.VITE_SOCKET_IO_SERVER ?? 'https://localhost:3000';
 const socketIoRetryDelays = [30000, 60000, 100000];
@@ -26,6 +27,20 @@ const isSocketIoRequest = (config) => {
 };
 
 const getSocketIoRetryDelay = (retryCount) => socketIoRetryDelays[Math.min(retryCount, socketIoRetryDelays.length - 1)];
+
+let pendingJobTokenPromise = null;
+
+const fetchSocketJobToken = () => {
+    if (!pendingJobTokenPromise) {
+        pendingJobTokenPromise = axios.post('/internal/job-token')
+            .then(({ data }) => data.token)
+            .finally(() => {
+                pendingJobTokenPromise = null;
+            });
+    }
+
+    return pendingJobTokenPromise;
+};
 
 const waitForSocketIoRetry = (retryCount) => new Promise((resolve) => {
     setTimeout(resolve, getSocketIoRetryDelay(retryCount));
@@ -52,10 +67,32 @@ const buildLoginRedirectUrl = () => {
 window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.withCredentials = true;
+window.axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+window.axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 
 // Configurar un timeout global de 20 segundos (20000 milisegundos)
 window.axios.defaults.timeout = 20000; // 20 segundos
-window.axios.interceptors.request.use((config) => {
+window.axios.interceptors.request.use(async (config) => {
+    applyCsrfToAxiosConfig(config);
+
+    if (typeof config.url === 'string' && config.url.includes('/internal/job-token')) {
+        return config;
+    }
+
+    const method = config.method?.toLowerCase();
+    if ((method === 'post' || method === 'put' || method === 'patch') && isSocketIoRequest(config)) {
+        const jobToken = await fetchSocketJobToken();
+        config.headers = config.headers ?? {};
+        config.headers['X-Job-Token'] = jobToken;
+
+        if (config.data instanceof FormData) {
+            config.data.append('jobToken', jobToken);
+        } else if (config.data && typeof config.data === 'object' && !(config.data instanceof URLSearchParams)) {
+            config.data = { ...config.data, jobToken };
+        }
+    }
+
     // timeout: 0 = sin límite (p. ej. generación de imágenes con IA)
     if (isSocketIoRequest(config) && config.timeout == null) {
         config.timeout = 20000;
@@ -72,10 +109,22 @@ window.axios.interceptors.response.use(
     (error) => {
       if (error.response && error.response.status === 401) {
         window.location.replace(buildLoginRedirectUrl());
+        return Promise.reject(error);
       }
-      if (error.response && error.response.status === 419) {
-        window.location.replace(buildLoginRedirectUrl());
+
+      if (error.response?.status === 419 && error.config && !error.config.__csrfRetried) {
+        error.config.__csrfRetried = true;
+        return axios.get('/csrf-token')
+          .then(({ data }) => {
+            if (data?.token) {
+              setCsrfToken(data.token);
+            }
+            applyCsrfToAxiosConfig(error.config);
+            return axios(error.config);
+          })
+          .catch(() => Promise.reject(error));
       }
+
       if (isSocketIoRequest(error.config)) {
         const retryCount = error.config.__socketIoRetryCount ?? 0;
         error.config.__socketIoRetryCount = retryCount + 1;

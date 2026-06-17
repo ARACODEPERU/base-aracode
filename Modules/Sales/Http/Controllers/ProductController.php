@@ -395,7 +395,7 @@ class ProductController extends Controller
                     ->where('product_establishment_prices.local_id', $local_id);
             }, 'local_prices')
             ->leftJoin('kardexes', 't1.id', '=', 'kardexes.product_id')
-            ->whereRaw("JSON_CONTAINS(sizes, '{\"size\": \"$size\"}')")
+            ->whereRaw('JSON_CONTAINS(sizes, ?)', [json_encode(['size' => $size], JSON_THROW_ON_ERROR)])
             //->where('kardexes.local_id', '=', $local_id)
             ->where(function ($query) use ($local_id) {
                 $query->where('t1.is_product', '=', false)

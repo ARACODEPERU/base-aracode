@@ -17,7 +17,8 @@ const reportsData = [
     {
         title: 'Inventario',
         items: [
-            { url: route('inventory_report_products'), label: 'Reporte de todos los productos(todos los locales)', target:'_blank'}
+            { url: route('inventory_report_products'), label: 'Reporte de todos los productos(todos los locales)', target:'_blank'},
+            { url: route('inventory_kardex_report'), label: 'Reporte de kardex (movimientos de inventario)'},
         ]
     },
     // {

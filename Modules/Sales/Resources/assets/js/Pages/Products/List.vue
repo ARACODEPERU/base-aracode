@@ -24,6 +24,7 @@
     } from 'ant-design-vue';
     import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import Facturador3ImportModal from './Facturador3ImportModal.vue';
 
     const props = defineProps({
         products: {
@@ -329,6 +330,16 @@
       });
     }
 
+    const displayModalFacturador3 = ref(false);
+
+    const openModalFacturador3 = () => {
+      displayModalFacturador3.value = true;
+    };
+
+    const closeModalFacturador3 = () => {
+      displayModalFacturador3.value = false;
+    };
+
     const displayModalImport = ref(false);
 
     const openModalImport = () => {
@@ -426,6 +437,7 @@
                         <button v-can="'productos_salida'" @click="openModalEntradaSalida(0)" type="button" class="mr-1 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Salidas</button>
                         <button v-can="'productos_entrada'" @click="openModalEntradaSalida(1)" type="button" class="mr-1 inline-block px-6 py-2.5 bg-blue-700 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-800 hover:shadow-lg  focus:bg-green-600 focus:shadow-lg focus:outline-none  focus:ring-0 focus:ring-blue-300 active:shadow-lg dark:bg-blue-600 dark:hover:bg-blue-700 transition duration-150 ease-in-out">Entradas</button>
                         <button v-can="'sale_productos_importar'" @click="openModalImport()" type="button" class="mr-1 inline-block px-6 py-2.5 bg-green-700 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-800 hover:shadow-lg focus:ring-green-300  focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 transition duration-150 ease-in-out" >Importar</button>
+                        <button v-can="'sale_importar_facturador3'" @click="openModalFacturador3()" type="button" class="mr-1 inline-block px-6 py-2.5 bg-amber-700 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-amber-800 transition duration-150 ease-in-out">Facturador3</button>
                         <Link v-can="'productos_nuevo'" :href="route('products.create')" class="flex items-center justify-center inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
                             Nuevo
                         </Link>
@@ -979,6 +991,12 @@
             </DangerButton>
           </template>
         </ModalSmall>
+
+        <Facturador3ImportModal
+            :show="displayModalFacturador3"
+            :establishments="establishments"
+            @close="closeModalFacturador3"
+        />
       </ConfigProvider>
     </AppLayout>
 </template>

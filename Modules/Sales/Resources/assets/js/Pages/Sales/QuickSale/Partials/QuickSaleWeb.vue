@@ -77,6 +77,9 @@ const getItemTotal = (item) => Math.max(0, (Number(item?.price ?? 0) - getItemDi
                             S/ {{ getProductPrice(product) }}
                         </div>
                         <div class="text-base text-gray-700 dark:text-gray-300 line-clamp-2 min-h-[3rem]">{{ product.description }}</div>
+                        <div v-if="product.presentations == 1 || product.presentations === true" class="text-xs text-primary font-medium mt-1">
+                            Con tallas
+                        </div>
                         <div class="text-xs text-gray-400 mt-2 line-clamp-1">{{ product.interne }}</div>
                     </div>
                 </div>
@@ -92,11 +95,12 @@ const getItemTotal = (item) => Math.max(0, (Number(item?.price ?? 0) - getItemDi
                 <h3 class="text-lg font-bold mb-4">Carrito ({{ cart.length }})</h3>
 
                 <div class="max-h-[38vh] overflow-y-auto space-y-3 mb-4">
-                    <div v-for="item in cart" :key="item.id"
+                    <div v-for="item in cart" :key="item.lineKey ?? item.id"
                         class="p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg space-y-3">
                         <div class="flex justify-between items-start gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium text-gray-900 dark:text-white text-sm truncate">{{ item.description }}</div>
+                                <div v-if="item.size" class="text-xs text-primary font-medium">Talla: {{ item.size }}</div>
                                 <div class="text-xs text-gray-500 dark:text-zinc-400">
                                     S/ {{ Number(item.price).toFixed(2) }} c/u
                                 </div>

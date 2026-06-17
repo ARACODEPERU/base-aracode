@@ -2,21 +2,15 @@
     <div>
         <div
             class="fixed inset-0 bg-[black]/60 z-[51] px-4 hidden transition-[display]"
-            :class="{ '!block': showCustomizer }"
-            @click="showCustomizer = false"
+            :class="{ '!block': store.showThemeCustomizer }"
+            @click="store.closeThemeCustomizer()"
         ></div>
 
         <nav
-            class="bg-white fixed ltr:-right-[400px] rtl:-left-[400px] top-0 bottom-0 w-full max-w-[400px] shadow-[5px_0_25px_0_rgba(94,92,154,0.1)] transition-[right] duration-300 z-[51] dark:bg-[#0e1726] p-4"
-            :class="{ 'ltr:!right-0 rtl:!left-0': showCustomizer }"
+            class="bg-white fixed ltr:right-0 rtl:left-0 top-0 bottom-0 w-full max-w-[400px] shadow-[-5px_0_25px_0_rgba(94,92,154,0.1)] transition-[transform] duration-300 z-[52] dark:bg-[#0e1726] p-4 ltr:translate-x-full rtl:-translate-x-full"
+            :class="{ '!translate-x-0': store.showThemeCustomizer }"
+            aria-label="Personalizar interfaz"
         >
-            <a
-                href="javascript:;"
-                class="bg-primary ltr:rounded-tl-full rtl:rounded-tr-full ltr:rounded-bl-full rtl:rounded-br-full absolute ltr:-left-12 rtl:-right-12 top-0 bottom-0 my-auto w-12 h-10 flex justify-center items-center text-white cursor-pointer"
-                @click="showCustomizer = !showCustomizer"
-            >
-                <icon-settings class="animate-[spin_3s_linear_infinite] w-5 h-5" />
-            </a>
             <perfect-scrollbar
                 :options="{
                     swipeEasing: true,
@@ -26,19 +20,20 @@
             >
                 <div>
                     <div class="text-center relative pb-5">
-                        <a
-                            href="javascript:;"
+                        <button
+                            type="button"
                             class="absolute top-0 ltr:right-0 rtl:left-0 opacity-30 hover:opacity-100 dark:text-white"
-                            @click="showCustomizer = false"
+                            aria-label="Cerrar personalizador"
+                            @click="store.closeThemeCustomizer()"
                         >
                             <icon-x class="w-5 h-5" />
-                        </a>
-                        <h4 class="mb-1 dark:text-white">PERSONALIZADOR DE PLANTILLAS</h4>
-                        <p class="text-white-dark">Establezca las preferencias que se almacenarán en cookies para su demostración de vista previa en vivo.</p>
+                        </button>
+                        <h4 class="mb-1 dark:text-white">Personalizar interfaz</h4>
+                        <p class="text-white-dark text-sm">Ajusta el aspecto y comportamiento del panel. Tus preferencias se guardan en este navegador.</p>
                     </div>
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
-                        <h5 class="mb-1 text-base dark:text-white leading-none">Color Scheme</h5>
-                        <p class="text-white-dark text-xs">Overall light or dark presentation.</p>
+                        <h5 class="mb-1 text-base dark:text-white leading-none">Tema de color</h5>
+                        <p class="text-white-dark text-xs">Modo claro, oscuro o según el sistema.</p>
                         <div class="grid grid-cols-3 gap-2 mt-3">
                             <button
                                 type="button"
@@ -47,7 +42,7 @@
                                 @click="store.toggleTheme('light')"
                             >
                                 <icon-sun class="w-5 h-5 shrink-0 ltr:mr-2 rtl:ml-2" />
-                                Light
+                                Claro
                             </button>
                             <button
                                 type="button"
@@ -56,7 +51,7 @@
                                 @click="store.toggleTheme('dark')"
                             >
                                 <icon-moon class="w-5 h-5 shrink-0 ltr:mr-2 rtl:ml-2" />
-                                Dark
+                                Oscuro
                             </button>
                             <button
                                 type="button"
@@ -65,14 +60,14 @@
                                 @click="store.toggleTheme('system')"
                             >
                                 <icon-laptop class="w-5 h-5 shrink-0 ltr:mr-2 rtl:ml-2" />
-                                System
+                                Sistema
                             </button>
                         </div>
                     </div>
 
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
-                        <h5 class="mb-1 text-base dark:text-white leading-none">Navigation Position</h5>
-                        <p class="text-white-dark text-xs">Select the primary navigation paradigm for your app.</p>
+                        <h5 class="mb-1 text-base dark:text-white leading-none">Menú de navegación</h5>
+                        <p class="text-white-dark text-xs">Disposición del menú principal.</p>
                         <div class="grid grid-cols-3 gap-2 mt-3">
                             <button
                                 type="button"
@@ -96,19 +91,19 @@
                                 :class="[store.menu === 'collapsible-vertical' ? 'btn-primary' : 'btn-outline-primary']"
                                 @click="store.toggleMenu('collapsible-vertical')"
                             >
-                                Collapsible
+                                Colapsable
                             </button>
                         </div>
                         <div class="mt-5 text-primary">
                             <label class="inline-flex mb-0">
                                 <input v-model="store.semidark" type="checkbox" class="form-checkbox" @change="store.toggleSemidark(store.semidark)" />
-                                <span>Semi Dark (Sidebar & Header)</span>
+                                <span>Semi oscuro (barra y menú lateral)</span>
                             </label>
                         </div>
                     </div>
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
-                        <h5 class="mb-1 text-base dark:text-white leading-none">Layout Style</h5>
-                        <p class="text-white-dark text-xs">Select the primary layout style for your app.</p>
+                        <h5 class="mb-1 text-base dark:text-white leading-none">Ancho del contenido</h5>
+                        <p class="text-white-dark text-xs">Contenedor centrado o a ancho completo.</p>
                         <div class="flex gap-2 mt-3">
                             <button
                                 type="button"
@@ -116,7 +111,7 @@
                                 :class="[store.layout === 'boxed-layout' ? 'btn-primary' : 'btn-outline-primary']"
                                 @click="store.toggleLayout('boxed-layout')"
                             >
-                                Box
+                                Centrado
                             </button>
                             <button
                                 type="button"
@@ -124,13 +119,13 @@
                                 :class="[store.layout === 'full' ? 'btn-primary' : 'btn-outline-primary']"
                                 @click="store.toggleLayout('full')"
                             >
-                                Full
+                                Completo
                             </button>
                         </div>
                     </div>
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
-                        <h5 class="mb-1 text-base dark:text-white leading-none">Direction</h5>
-                        <p class="text-white-dark text-xs">Select the direction for your app.</p>
+                        <h5 class="mb-1 text-base dark:text-white leading-none">Dirección del texto</h5>
+                        <p class="text-white-dark text-xs">Izquierda a derecha o derecha a izquierda.</p>
                         <div class="flex gap-2 mt-3">
                             <button
                                 type="button"
@@ -152,9 +147,9 @@
                     </div>
 
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
-                        <h5 class="mb-1 text-base dark:text-white leading-none">Navbar Type</h5>
-                        <p class="text-white-dark text-xs">Sticky or Floating.</p>
-                        <div class="mt-3 flex items-center gap-3 text-primary">
+                        <h5 class="mb-1 text-base dark:text-white leading-none">Barra superior</h5>
+                        <p class="text-white-dark text-xs">Fija, flotante o estática.</p>
+                        <div class="mt-3 flex flex-wrap items-center gap-3 text-primary">
                             <label class="inline-flex mb-0">
                                 <input
                                     :checked="store.navbar === 'navbar-sticky'"
@@ -163,7 +158,7 @@
                                     class="form-radio"
                                     @change="store.toggleNavbar('navbar-sticky')"
                                 />
-                                <span>Sticky</span>
+                                <span>Fija</span>
                             </label>
                             <label class="inline-flex mb-0">
                                 <input
@@ -173,7 +168,7 @@
                                     class="form-radio"
                                     @change="store.toggleNavbar('navbar-floating')"
                                 />
-                                <span>Floating</span>
+                                <span>Flotante</span>
                             </label>
                             <label class="inline-flex mb-0">
                                 <input
@@ -183,26 +178,26 @@
                                     class="form-radio"
                                     @change="store.toggleNavbar('navbar-static')"
                                 />
-                                <span>Static</span>
+                                <span>Estática</span>
                             </label>
                         </div>
                     </div>
 
                     <div class="border border-dashed border-[#e0e6ed] dark:border-[#1b2e4b] rounded-md mb-3 p-3">
-                        <h5 class="mb-1 text-base dark:text-white leading-none">Router Transition</h5>
-                        <p class="text-white-dark text-xs">Animation of main content.</p>
+                        <h5 class="mb-1 text-base dark:text-white leading-none">Transición de páginas</h5>
+                        <p class="text-white-dark text-xs">Animación al cambiar de vista.</p>
                         <div class="mt-3">
                             <select v-model="store.animation" class="form-select border-primary text-primary" @change="store.toggleAnimation()">
-                                <option value="">None</option>
-                                <option value="animate__fadeIn">Fade</option>
-                                <option value="animate__fadeInDown">Fade Down</option>
-                                <option value="animate__fadeInUp">Fade Up</option>
-                                <option value="animate__fadeInLeft">Fade Left</option>
-                                <option value="animate__fadeInRight">Fade Right</option>
-                                <option value="animate__slideInDown">Slide Down</option>
-                                <option value="animate__slideInLeft">Slide Left</option>
-                                <option value="animate__slideInRight">Slide Right</option>
-                                <option value="animate__zoomIn">Zoom In</option>
+                                <option value="">Ninguna</option>
+                                <option value="animate__fadeIn">Desvanecer</option>
+                                <option value="animate__fadeInDown">Desvanecer abajo</option>
+                                <option value="animate__fadeInUp">Desvanecer arriba</option>
+                                <option value="animate__fadeInLeft">Desvanecer izquierda</option>
+                                <option value="animate__fadeInRight">Desvanecer derecha</option>
+                                <option value="animate__slideInDown">Deslizar abajo</option>
+                                <option value="animate__slideInLeft">Deslizar izquierda</option>
+                                <option value="animate__slideInRight">Deslizar derecha</option>
+                                <option value="animate__zoomIn">Zoom</option>
                             </select>
                         </div>
                     </div>
@@ -213,13 +208,26 @@
 </template>
 
 <script lang="ts" setup>
-    import { ref } from 'vue';
+    import { onMounted, onUnmounted } from 'vue';
     import { useAppStore } from '@/stores/index';
-    import IconSettings from '@/Components/vristo/icon/icon-settings.vue';
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconSun from '@/Components/vristo/icon/icon-sun.vue';
     import IconMoon from '@/Components/vristo/icon/icon-moon.vue';
     import IconLaptop from '@/Components/vristo/icon/icon-laptop.vue';
+
     const store = useAppStore();
-    const showCustomizer = ref(false);
+
+    const onEscape = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && store.showThemeCustomizer) {
+            store.closeThemeCustomizer();
+        }
+    };
+
+    onMounted(() => {
+        document.addEventListener('keydown', onEscape);
+    });
+
+    onUnmounted(() => {
+        document.removeEventListener('keydown', onEscape);
+    });
 </script>

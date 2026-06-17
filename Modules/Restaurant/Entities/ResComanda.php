@@ -42,4 +42,9 @@ class ResComanda extends Model
     {
         return $this->belongsToMany(ResMenu::class, 'res_menu_comandas', 'comanda_id', 'menu_id');
     }
+
+    public function recipe()
+    {
+        return $this->hasOne(ResRecipe::class, 'comanda_id');
+    }
 }

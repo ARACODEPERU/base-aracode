@@ -36,19 +36,25 @@ class TeamShieldAiService
      */
     private function trySocketServer(string $prompt): ?array
     {
-        $baseUrl = rtrim((string) env('VITE_SOCKET_IO_SERVER', 'https://localhost:3000'), '/');
+        $baseUrl = rtrim((string) config('services.socket_io.internal_url', 'http://127.0.0.1:3000'), '/');
+        $internalKey = (string) config('services.internal_api.key', '');
 
         try {
             $client = new Client([
-                'verify' => false,
+                'verify' => app()->environment('production'),
                 'timeout' => 120,
                 'connect_timeout' => 10,
             ]);
 
+            $headers = [];
+            if ($internalKey !== '') {
+                $headers['X-Internal-Api-Key'] = $internalKey;
+            }
+
             $response = $client->post("{$baseUrl}/api/ai/generate-shield", [
+                'headers' => $headers,
                 'json' => [
                     'prompt' => $prompt,
-                    'csrfToken' => csrf_token(),
                 ],
             ]);
 

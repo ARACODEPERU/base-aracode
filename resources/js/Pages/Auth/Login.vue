@@ -1,7 +1,5 @@
 <script setup>
-    import { computed, reactive, ref, watch } from 'vue';
-    import { useI18n } from 'vue-i18n';
-    import appSetting from '@/app-setting';
+    import { computed, ref } from 'vue';
     import { useAppStore } from '@/stores/index';
     import AuthLayout from '@/Layouts/Vristo/AuthLayout.vue';
     import IconMail from '@/Components/vristo/icon/icon-mail.vue';
@@ -9,31 +7,162 @@
     import IconInstagram from '@/Components/vristo/icon/icon-instagram.vue';
     import IconFacebookCircle from '@/Components/vristo/icon/icon-facebook-circle.vue';
     import IconTwitter from '@/Components/vristo/icon/icon-twitter.vue';
-    import IconGoogle from '@/Components/vristo/icon/icon-google.vue';
+    import IconYoutube from '@/Components/vristo/icon/icon-youtube.vue';
     import IconSun from '@/Components/vristo/icon/icon-sun.vue';
     import IconMoon from '@/Components/vristo/icon/icon-moon.vue';
-    import { Link, router, useForm, Head, usePage } from '@inertiajs/vue3';
+    import { Link, useForm, Head, usePage } from '@inertiajs/vue3';
     import Checkbox from '@/Components/vristo/inputs/Checkbox.vue';
     import InputError from '@/Components/InputError.vue';
     import SpinnerLoading from '@/Components/SpinnerLoading.vue';
+    import { useAracodeLoginAnimations } from '@/composables/useAracodeLoginAnimations';
+    import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+    import {
+        faBriefcase,
+        faPuzzlePiece,
+        faGraduationCap,
+        faCalendarDays,
+        faChurch,
+        faBook,
+        faCoins,
+        faShieldHalved,
+        faPlug,
+        faCube,
+        faChartLine,
+        faCloud,
+        faLock,
+        faUsers,
+        faBolt,
+    } from '@fortawesome/free-solid-svg-icons';
+
+    const props = defineProps({
+        activeModules: {
+            type: Array,
+            default: () => [],
+        },
+        socialNetworks: {
+            type: Array,
+            default: () => [],
+        },
+        status: String,
+    });
 
     const store = useAppStore();
     const page = usePage();
     const company = page.props.company;
-    const socialNetworks = page.props.socialNetworks;
-    // multi language
-    const i18n = reactive(useI18n());
-    const changeLanguage = (item) => {
-        i18n.locale = item.code;
-        appSetting.toggleLanguage(item);
-    };
+    const loginRoot = ref(null);
 
-    // dark mode toggle function
+    useAracodeLoginAnimations(loginRoot);
+
     const toggleTheme = (checked) => {
         store.toggleTheme(checked ? 'dark' : 'light');
     };
 
     const baseUrl = assetUrl;
+
+    const benefits = [
+        {
+            icon: faChartLine,
+            title: 'Gestión integral',
+            text: 'Centraliza ventas, academico, eventos y más en una sola plataforma.',
+        },
+        {
+            icon: faCloud,
+            title: 'Facturación electrónica',
+            text: 'Emisión de comprobantes SUNAT con trazabilidad y reportes.',
+        },
+        {
+            icon: faLock,
+            title: 'Seguridad por roles',
+            text: 'Accesos controlados con permisos granulares por usuario.',
+        },
+        {
+            icon: faUsers,
+            title: 'Multi-módulo',
+            text: 'Activa solo lo que tu empresa necesita, sin complejidad extra.',
+        },
+    ];
+
+    const moduleIconMap = {
+        faBriefcase,
+        faPuzzlePiece,
+        faGraduationCap,
+        faCalendarDays,
+        faChurch,
+        faBook,
+        faCoins,
+        faShieldHalved,
+        faPlug,
+        faCube,
+    };
+
+    const resolveModuleIcon = (module) => {
+        if (module?.icon && moduleIconMap[module.icon]) {
+            return moduleIconMap[module.icon];
+        }
+
+        const desc = (module?.description || '').toLowerCase();
+
+        if (desc.includes('academ')) return faGraduationCap;
+        if (desc.includes('evento')) return faCalendarDays;
+        if (desc.includes('iglesia') || desc.includes('comunidad')) return faChurch;
+        if (desc.includes('biblio')) return faBook;
+        if (desc.includes('cobrar') || desc.includes('cobran')) return faCoins;
+        if (desc.includes('seguridad') || desc.includes('configur')) return faShieldHalved;
+        if (desc.includes('integr')) return faPlug;
+        if (desc.includes('comercial')) return faBriefcase;
+
+        return faCube;
+    };
+
+    const defaultCompanyAssets = {
+        logo: '/img/logo176x32.png',
+        logo_dark: '/img/logo176x32Dark.jpeg',
+        logo_negative: '/img/logo176x32_negativo.png',
+    };
+
+    const resolveCompanyAsset = (path, fallbackPath = null) => {
+        const resolvedPath = path || fallbackPath;
+
+        if (!resolvedPath) {
+            return null;
+        }
+
+        if (resolvedPath.startsWith('http://') || resolvedPath.startsWith('https://')) {
+            return resolvedPath;
+        }
+
+        if (resolvedPath.startsWith('/img/')) {
+            return `${baseUrl}${resolvedPath.replace(/^\//, '')}`;
+        }
+
+        if (resolvedPath.startsWith('/')) {
+            return `${baseUrl}${resolvedPath.replace(/^\//, '')}`;
+        }
+
+        return `${baseUrl}storage/${resolvedPath}`;
+    };
+
+    const companyLogoUrl = computed(() => {
+        if (store.isDarkMode) {
+            return (
+                resolveCompanyAsset(company?.logo_degative, defaultCompanyAssets.logo_dark)
+                || resolveCompanyAsset(company?.isotipo_dark)
+                || `${baseUrl}themes/vristo/images/auth/logo-white.svg`
+            );
+        }
+
+        return (
+            resolveCompanyAsset(company?.logo, defaultCompanyAssets.logo)
+            || resolveCompanyAsset(company?.logo_document, defaultCompanyAssets.logo)
+            || `${baseUrl}themes/vristo/images/logo.svg`
+        );
+    });
+
+    const companyLogoWrapClass = computed(() => (
+        store.isDarkMode ? 'aracode-login__logo-wrap aracode-login__logo-wrap--dark' : 'aracode-login__logo-wrap aracode-login__logo-wrap--light'
+    ));
+
+    const companyName = computed(() => company?.tradename || company?.business_name || company?.name || 'ARACODE');
 
     const redirectTo = computed(() => {
         const queryString = page.url?.split('?')[1] ?? '';
@@ -53,159 +182,706 @@
         form.post(route('login'), {
             onFinish: () => {
                 form.reset('password');
-                //store.clearSidebar();
             },
         });
-    }
+    };
 </script>
+
 <template>
     <AuthLayout>
         <Head title="Acceso" />
-        <div class="flex items-center justify-center min-h-screen px-4 py-8" :style="{ background: store.isDarkMode ? 'linear-gradient(to bottom right, #1e293b, #334155, #0f172a)' : 'linear-gradient(to bottom right, #e0f2fe, #dbeafe, #e8eaf6)', transition: 'background 2s ease' }">
-            <div class="w-full max-w-4xl">
-                <div class="flex flex-col lg:flex-row bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
-                    <!-- Left Side - Branding -->
-                    <div class="lg:w-1/2 bg-gray-50 dark:bg-gray-800 p-8 flex items-center justify-center">
-                        <div class="text-center text-gray-800 dark:text-white">
-                            <div class="mb-6">
-                                <img v-if="company.logo_negative == '/img/logo176x32_negativo.png'" :src="`${baseUrl}/img/logo176x32_negativo.png`" alt="Logo" class="h-16" />
-                                <img v-else :src="`${baseUrl}storage/${company.logo}`" alt="Logo" class="h-16" />
-                            </div>
-                            <h1 class="text-3xl font-bold mb-4">Bienvenido</h1>
-                            <p class="text-blue-700 dark:text-blue-300">Ingresa tus credenciales para acceder a tu cuenta</p>
+
+        <div
+            ref="loginRoot"
+            class="aracode-login"
+            :class="store.isDarkMode ? 'aracode-login--dark' : 'aracode-login--light'"
+        >
+            <div class="aracode-login__bg" data-login-bg aria-hidden="true">
+                <div class="aracode-login__grid" />
+            </div>
+
+            <div class="aracode-login__shell">
+                <!-- Panel informativo -->
+                <section class="aracode-login__info" data-login-enter>
+                    <div class="aracode-login__brand">
+                        <div :class="companyLogoWrapClass">
+                            <img
+                                :src="companyLogoUrl"
+                                :alt="companyName"
+                                class="aracode-login__logo"
+                            />
                         </div>
+                        <p class="aracode-login__badge">
+                            <FontAwesomeIcon :icon="faBolt" class="mr-1" />
+                            Plataforma empresarial ARACODE
+                        </p>
+                        <h1 class="aracode-login__title">
+                            Bienvenido a <span>{{ companyName }}</span>
+                        </h1>
+                        <p class="aracode-login__subtitle">
+                            Accede a tu ecosistema digital: operaciones, reportes y módulos activos en un solo lugar.
+                        </p>
                     </div>
 
-                    <!-- Right Side - Form -->
-                     <div class="lg:w-1/2 p-8 relative">
-                        <!-- Dark Mode Toggle -->
-                        <div class="absolute top-4 right-4 flex items-center space-x-2">
-                            <IconSun class="w-5 h-5 text-yellow-500 opacity-100 dark:opacity-0 transition-opacity duration-300" />
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" :checked="store.isDarkMode" @change="toggleTheme($event.target.checked)" />
-                                <div class="w-14 h-7 bg-gradient-to-r from-cyan-200 to-blue-300 dark:from-gray-600 dark:to-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 dark:peer-focus:ring-cyan-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-1 after:left-1 after:bg-gradient-to-r after:from-yellow-300 after:to-orange-400 after:rounded-full after:h-5 after:w-5 after:transition-all after:duration-500 after:shadow-lg peer-checked:after:from-indigo-400 peer-checked:after:to-purple-500 hover:shadow-xl hover:scale-105 transition-transform duration-200"></div>
+                    <ul class="aracode-login__benefits">
+                        <li
+                            v-for="(benefit, index) in benefits"
+                            :key="benefit.title"
+                            class="aracode-login__benefit"
+                            data-login-enter
+                            :style="{ animationDelay: `${index * 80}ms` }"
+                        >
+                            <span class="aracode-login__benefit-icon">
+                                <FontAwesomeIcon :icon="benefit.icon" />
+                            </span>
+                            <div>
+                                <strong>{{ benefit.title }}</strong>
+                                <p>{{ benefit.text }}</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div v-if="activeModules.length" class="aracode-login__modules" data-login-enter>
+                        <h2 class="aracode-login__modules-title">Módulos activos en tu empresa</h2>
+                        <ul class="aracode-login__modules-grid">
+                            <li
+                                v-for="module in activeModules"
+                                :key="module.identifier"
+                                class="aracode-login__module-card"
+                                data-login-module
+                            >
+                                <span class="aracode-login__module-icon">
+                                    <FontAwesomeIcon :icon="resolveModuleIcon(module)" />
+                                </span>
+                                <div class="aracode-login__module-text">
+                                    <strong>{{ module.description }}</strong>
+                                    <small>{{ module.identifier }}</small>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Panel formulario -->
+                <section class="aracode-login__form-panel" data-login-enter>
+                    <div class="aracode-login__form-top">
+                        <p class="aracode-login__form-label">Acceso seguro</p>
+                        <div class="aracode-login__theme-toggle">
+                            <IconSun class="w-4 h-4 text-amber-400" />
+                            <label class="aracode-login__switch">
+                                <input
+                                    type="checkbox"
+                                    class="sr-only"
+                                    :checked="store.isDarkMode"
+                                    @change="toggleTheme($event.target.checked)"
+                                />
+                                <span class="aracode-login__switch-track" />
                             </label>
-                            <IconMoon class="w-5 h-5 text-gray-400 opacity-0 dark:opacity-100 transition-opacity duration-300" />
-                        </div>
-                        <div class="max-w-md mx-auto">
-                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Iniciar Sesión</h2>
-
-                            <form class="space-y-4" @submit.prevent="submit" novalidate>
-                                <!-- Email -->
-                                <div>
-                                    <label for="Email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo Electrónico</label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <IconMail class="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            v-model="form.email"
-                                            id="Email"
-                                            type="email"
-                                            placeholder="tu@email.com"
-                                            class="block w-full pl-10 pr-3 py-2 form-input"
-                                            tabindex="1"
-                                            @input="(e) => form.email = e.target.value.trim()"
-                                        />
-                                    </div>
-                                    <InputError class="mt-1 text-sm" :message="form.errors.email" />
-                                </div>
-
-                                <!-- Password -->
-                                <div>
-                                    <div class="flex justify-between items-center mb-1">
-                                        <label for="Password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
-                                        <Link :href="route('password.request')" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition">¿Olvidaste tu contraseña?</Link>
-                                    </div>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <IconLockDots class="h-5 w-5 text-gray-400" />
-                                        </div>
-                                        <input
-                                            v-model="form.password"
-                                            id="Password"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            class="block w-full pl-10 pr-3 py-2 form-input"
-                                            tabindex="2"
-                                            @input="(e) => form.password = e.target.value.trim()"
-                                        />
-                                    </div>
-                                    <InputError class="mt-1 text-sm" :message="form.errors.password" />
-                                </div>
-
-                                <!-- Remember Me -->
-                                <div class="flex items-center">
-                                    <Checkbox v-model:checked="form.remember" />
-                                    <label class="ml-2 text-sm text-gray-700 dark:text-gray-300">Recordarme</label>
-                                </div>
-
-                                <!-- Submit -->
-                                <button
-                                    type="submit"
-                                    class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 transition transform hover:scale-105 shadow-lg"
-                                    :disabled="form.processing"
-                                >
-                                    <span v-if="form.processing" class="inline-flex items-center">
-                                        <SpinnerLoading class="w-4 h-4 mr-3" />
-                                        Iniciando...
-                                    </span>
-                                    <span v-else>Iniciar Sesión</span>
-                                </button>
-                            </form>
-
-                            <!-- Divider -->
-                            <div class="mt-6 mb-4 relative">
-                                <div class="absolute inset-0 flex items-center">
-                                    <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                                </div>
-                                <div class="relative flex justify-center text-sm">
-                                    <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">O continúa con</span>
-                                </div>
-                            </div>
-
-                            <!-- Social -->
-                            <ul class="flex justify-center gap-4 mb-6">
-                                <li v-for="network in socialNetworks" :key="network.id">
-                                    <a v-if="network.route"
-                                        :href="network.route"
-                                        class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-                                    >
-                                        <template v-if="network.id === 'instagram'">
-                                            <IconInstagram class="h-5 w-5" />
-                                        </template>
-                                        <template v-else-if="network.id === 'facebook'">
-                                            <IconFacebookCircle class="h-5 w-5" />
-                                        </template>
-                                        <template v-else-if="network.id === 'x-twiter'">
-                                            <IconTwitter class="h-5 w-5" :fill="true" />
-                                        </template>
-                                        <template v-else-if="network.id === 'youtube'">
-                                            <svg class="h-5 w-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
-                                                <path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/>
-                                            </svg>
-                                        </template>
-                                        <template v-else-if="network.id === 'linkedin'">
-                                            <span class="text-xs font-bold">IN</span>
-                                        </template>
-                                        <template v-else-if="network.id === 'tiktok'">
-                                            <span class="text-xs font-bold">TK</span>
-                                        </template>
-                                        <template v-else>
-                                            <span class="text-xs font-bold">{{ network.id.substring(0, 2).toUpperCase() }}</span>
-                                        </template>
-                                    </a>
-                                </li>
-                            </ul>
-
-                            <!-- Footer -->
-                            <p class="text-center text-sm text-gray-600 dark:text-gray-400">
-                                © {{ new Date().getFullYear() }} ARACODE. Todos los derechos reservados.
-                            </p>
+                            <IconMoon class="w-4 h-4 text-indigo-300" />
                         </div>
                     </div>
-                </div>
+
+                    <h2 class="aracode-login__form-title">Iniciar sesión</h2>
+                    <p class="aracode-login__form-desc">Ingresa tus credenciales corporativas</p>
+
+                    <div v-if="status" class="aracode-login__status">{{ status }}</div>
+
+                    <form class="aracode-login__form" @submit.prevent="submit" novalidate>
+                        <div class="aracode-login__field">
+                            <label for="Email">Correo electrónico</label>
+                            <div class="aracode-login__input-wrap">
+                                <IconMail class="aracode-login__input-icon" />
+                                <input
+                                    id="Email"
+                                    v-model="form.email"
+                                    type="email"
+                                    placeholder="tu@empresa.com"
+                                    autocomplete="username"
+                                    @input="(e) => form.email = e.target.value.trim()"
+                                />
+                            </div>
+                            <InputError :message="form.errors.email" />
+                        </div>
+
+                        <div class="aracode-login__field">
+                            <div class="aracode-login__field-head">
+                                <label for="Password">Contraseña</label>
+                                <Link :href="route('password.request')" class="aracode-login__link">
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
+                            </div>
+                            <div class="aracode-login__input-wrap">
+                                <IconLockDots class="aracode-login__input-icon" />
+                                <input
+                                    id="Password"
+                                    v-model="form.password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    autocomplete="current-password"
+                                    @input="(e) => form.password = e.target.value.trim()"
+                                />
+                            </div>
+                            <InputError :message="form.errors.password" />
+                        </div>
+
+                        <label class="aracode-login__remember">
+                            <Checkbox v-model:checked="form.remember" />
+                            <span>Recordarme en este equipo</span>
+                        </label>
+
+                        <button type="submit" class="aracode-login__submit" :disabled="form.processing">
+                            <span v-if="form.processing" class="aracode-login__submit-loading">
+                                <SpinnerLoading :display="true" class="aracode-login__submit-spinner" />
+                                <span>Iniciando...</span>
+                            </span>
+                            <span v-else>Entrar al sistema</span>
+                        </button>
+                    </form>
+
+                    <div v-if="socialNetworks?.length" class="aracode-login__social">
+                        <p>Síguenos</p>
+                        <ul>
+                            <li v-for="network in socialNetworks" :key="network.id">
+                                <a
+                                    v-if="network.route"
+                                    :href="network.route"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    :aria-label="network.id"
+                                >
+                                    <IconInstagram v-if="network.id === 'instagram'" class="h-4 w-4" />
+                                    <IconFacebookCircle v-else-if="network.id === 'facebook'" class="h-4 w-4" />
+                                    <IconTwitter v-else-if="network.id === 'x-twiter'" class="h-4 w-4" :fill="true" />
+                                    <IconYoutube v-else-if="network.id === 'youtube'" class="h-4 w-4" />
+                                    <span v-else class="text-xs font-bold">{{ network.id.substring(0, 2).toUpperCase() }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <p class="aracode-login__footer">
+                        © {{ new Date().getFullYear() }} {{ companyName }} · ARACODE
+                    </p>
+                </section>
             </div>
         </div>
     </AuthLayout>
 </template>
+
+<style scoped>
+.aracode-login {
+    --login-accent: #06b6d4;
+    --login-accent-2: #6366f1;
+    --login-glow: rgba(6, 182, 212, 0.35);
+    --login-surface: rgba(255, 255, 255, 0.72);
+    --login-border: rgba(148, 163, 184, 0.35);
+    --login-text: #0f172a;
+    --login-muted: #64748b;
+
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    overflow: hidden;
+    color: var(--login-text);
+    background: linear-gradient(135deg, #ecfeff 0%, #e0e7ff 45%, #f0f9ff 100%);
+}
+
+.aracode-login--dark {
+    --login-accent: #22d3ee;
+    --login-accent-2: #818cf8;
+    --login-glow: rgba(34, 211, 238, 0.28);
+    --login-surface: rgba(15, 23, 42, 0.78);
+    --login-border: rgba(148, 163, 184, 0.18);
+    --login-text: #f8fafc;
+    --login-muted: #94a3b8;
+
+    background: linear-gradient(135deg, #020617 0%, #0f172a 40%, #1e1b4b 100%);
+}
+
+.aracode-login__bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.aracode-login__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(99, 102, 241, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.08) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at center, black 30%, transparent 85%);
+}
+
+.aracode-login--dark .aracode-login__grid {
+    background-image:
+        linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+}
+
+.aracode-login__shell {
+    position: relative;
+    z-index: 1;
+    width: min(1120px, 100%);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+    .aracode-login__shell {
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 1.5rem;
+    }
+}
+
+.aracode-login__info,
+.aracode-login__form-panel {
+    border: 1px solid var(--login-border);
+    border-radius: 1.5rem;
+    backdrop-filter: blur(18px);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+}
+
+.aracode-login__info {
+    background: var(--login-surface);
+    padding: 1.75rem;
+}
+
+.aracode-login__form-panel {
+    background: var(--login-surface);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.aracode-login__logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    max-width: 100%;
+}
+
+.aracode-login__logo-wrap--light {
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--login-border);
+}
+
+.aracode-login__logo-wrap--dark {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.aracode-login__logo {
+    max-height: 4rem;
+    max-width: min(280px, 100%);
+    width: auto;
+    object-fit: contain;
+}
+
+.aracode-login__logo-wrap--dark .aracode-login__logo {
+    max-height: 4.5rem;
+    filter: drop-shadow(0 8px 24px rgba(34, 211, 238, 0.15));
+}
+
+.aracode-login__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--login-accent);
+    margin-bottom: 0.75rem;
+}
+
+.aracode-login__title {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+}
+
+.aracode-login__title span {
+    background: linear-gradient(90deg, var(--login-accent), var(--login-accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.aracode-login__subtitle {
+    color: var(--login-muted);
+    line-height: 1.6;
+    max-width: 38rem;
+}
+
+.aracode-login__benefits {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .aracode-login__benefits {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.aracode-login__benefit {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--login-border);
+    background: rgba(255, 255, 255, 0.45);
+}
+
+.aracode-login--dark .aracode-login__benefit {
+    background: rgba(2, 6, 23, 0.35);
+}
+
+.aracode-login__benefit-icon {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.65rem;
+    display: grid;
+    place-items: center;
+    color: white;
+    background: linear-gradient(135deg, var(--login-accent), var(--login-accent-2));
+    box-shadow: 0 8px 20px var(--login-glow);
+}
+
+.aracode-login__benefit strong {
+    display: block;
+    font-size: 0.92rem;
+    margin-bottom: 0.15rem;
+}
+
+.aracode-login__benefit p {
+    font-size: 0.82rem;
+    color: var(--login-muted);
+    line-height: 1.45;
+}
+
+.aracode-login__modules {
+    margin-top: 1.5rem;
+}
+
+.aracode-login__modules-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.aracode-login__modules-grid {
+    display: grid;
+    gap: 0.55rem;
+}
+
+@media (min-width: 640px) {
+    .aracode-login__modules-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.aracode-login__module-card {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--login-border);
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.aracode-login--dark .aracode-login__module-card {
+    background: rgba(2, 6, 23, 0.4);
+}
+
+.aracode-login__module-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.55rem;
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+    color: var(--login-accent);
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.aracode-login__module-text strong {
+    display: block;
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+.aracode-login__module-text small {
+    color: var(--login-muted);
+    font-size: 0.72rem;
+}
+
+.aracode-login__form-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.aracode-login__form-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--login-accent);
+}
+
+.aracode-login__theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.aracode-login__switch {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+.aracode-login__switch-track {
+    width: 2.75rem;
+    height: 1.4rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #bae6fd, #c7d2fe);
+    transition: background 0.3s ease;
+    position: relative;
+}
+
+.aracode-login--dark .aracode-login__switch-track {
+    background: linear-gradient(90deg, #334155, #4338ca);
+}
+
+.aracode-login__switch-track::after {
+    content: '';
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.aracode-login__switch input:checked + .aracode-login__switch-track::after {
+    transform: translateX(1.35rem);
+}
+
+.aracode-login__form-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+}
+
+.aracode-login__form-desc {
+    color: var(--login-muted);
+    margin-bottom: 1.25rem;
+}
+
+.aracode-login__status {
+    margin-bottom: 1rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 0.65rem;
+    font-size: 0.85rem;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #047857;
+}
+
+.aracode-login--dark .aracode-login__status {
+    color: #6ee7b7;
+}
+
+.aracode-login__form {
+    display: grid;
+    gap: 1rem;
+}
+
+.aracode-login__field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.aracode-login__field-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.aracode-login__input-wrap {
+    position: relative;
+}
+
+.aracode-login__input-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--login-muted);
+    pointer-events: none;
+}
+
+.aracode-login__input-wrap input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--login-border);
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--login-text);
+    padding: 0.7rem 0.85rem 0.7rem 2.5rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aracode-login--dark .aracode-login__input-wrap input {
+    background: rgba(2, 6, 23, 0.45);
+}
+
+.aracode-login__input-wrap input:focus {
+    outline: none;
+    border-color: var(--login-accent);
+    box-shadow: 0 0 0 3px var(--login-glow);
+}
+
+.aracode-login__link {
+    font-size: 0.8rem;
+    color: var(--login-accent-2);
+}
+
+.aracode-login__remember {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--login-muted);
+}
+
+.aracode-login__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: none;
+    border-radius: 0.85rem;
+    padding: 0.85rem 1rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(90deg, var(--login-accent), var(--login-accent-2));
+    box-shadow: 0 12px 30px var(--login-glow);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.aracode-login__submit-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    line-height: 1;
+}
+
+.aracode-login__submit-spinner {
+    width: 1rem;
+    height: 1rem;
+    margin: 0 !important;
+    flex-shrink: 0;
+    display: block;
+}
+
+.aracode-login__submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.aracode-login__submit:disabled {
+    opacity: 0.75;
+    cursor: wait;
+}
+
+.aracode-login__social {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--login-border);
+}
+
+.aracode-login__social p {
+    font-size: 0.78rem;
+    color: var(--login-muted);
+    margin-bottom: 0.5rem;
+}
+
+.aracode-login__social ul {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.aracode-login__social a {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--login-border);
+    color: var(--login-muted);
+    transition: all 0.2s ease;
+}
+
+.aracode-login__social a:hover {
+    color: var(--login-accent);
+    border-color: var(--login-accent);
+}
+
+.aracode-login__footer {
+    margin-top: auto;
+    padding-top: 1.25rem;
+    font-size: 0.78rem;
+    color: var(--login-muted);
+    text-align: center;
+}
+</style>
+
+<style>
+.aracode-login-orb {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.9), transparent 70%);
+    pointer-events: none;
+}
+
+.aracode-login-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    pointer-events: none;
+}
+
+.aracode-login--dark .aracode-login-ring {
+    border-color: rgba(34, 211, 238, 0.2);
+}
+</style>

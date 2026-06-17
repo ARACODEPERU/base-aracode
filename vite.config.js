@@ -36,6 +36,11 @@ function resolveEditorCssBundle(root) {
 }
 
 function resolveEditorDarkCss(root) {
+    const distDark = path.join(root, "dist/theme-dark.css");
+    if (fs.existsSync(distDark)) {
+        return distDark;
+    }
+
     const darkCss = path.join(root, "src/styles/themes/dark.css");
     if (fs.existsSync(darkCss)) {
         return darkCss;
@@ -91,6 +96,7 @@ export default defineConfig(({ command }) => {
                       }
                     : {
                           "@elmerrodriguez/editor-aracode/style.css": editorBundleCss,
+                          "@elmerrodriguez/editor-aracode/theme-dark.css": editorDarkCss,
                       }),
             },
         },

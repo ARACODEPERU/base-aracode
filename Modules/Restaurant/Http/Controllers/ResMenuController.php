@@ -34,7 +34,8 @@ class ResMenuController extends Controller
         $menus = $menus->paginate($this->RPTABLE)->onEachSide(2);
 
         return Inertia::render('Restaurant::Menus/List', [
-            'menus' => $menus
+            'menus' => $menus,
+            'filters' => request()->all('search'),
         ]);
     }
 
@@ -60,10 +61,12 @@ class ResMenuController extends Controller
         );
 
         ResMenu::create([
-            'name'          => $request->get('name'),
-            'description'   => $request->get('description'),
-            'status' => $request->get('status') ?? false
+            'name' => $request->get('name'),
+            'description' => $request->get('description'),
+            'status' => $request->boolean('status'),
         ]);
+
+        return redirect()->route('res_menu_list')->with('success', 'Carta del día registrada correctamente');
     }
 
     /**
@@ -102,11 +105,13 @@ class ResMenuController extends Controller
             ]
         );
 
-        ResMenu::find($id)->update([
-            'name'          => $request->get('name'),
-            'description'   => $request->get('description'),
-            'status' => $request->get('status') ?? false
+        ResMenu::findOrFail($id)->update([
+            'name' => $request->get('name'),
+            'description' => $request->get('description'),
+            'status' => $request->boolean('status'),
         ]);
+
+        return redirect()->route('res_menu_list')->with('success', 'Carta del día actualizada correctamente');
     }
 
     /**
@@ -129,7 +134,7 @@ class ResMenuController extends Controller
             // Si todo ha sido exitoso, confirmamos la transacción.
             DB::commit();
 
-            $message =  'Comanda eliminada correctamente';
+            $message = 'Carta del día eliminada correctamente';
             $success = true;
         } catch (\Exception $e) {
             // Si ocurre alguna excepción durante la transacción, hacemos rollback para deshacer cualquier cambio.

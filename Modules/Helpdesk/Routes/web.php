@@ -11,7 +11,6 @@
 |
 */
 
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\BoardController;
 use Modules\Helpdesk\Http\Controllers\HelpLevelController;
@@ -26,11 +25,4 @@ Route::middleware('auth')->prefix('helpdesk')->group(function () {
     Route::middleware(['middleware' => 'permission:help_incidentes'])->get('incidents/list', 'HelpIncidentController@index')->name('helpdesk_incidents');
     Route::post('incidents/store',  'HelpIncidentController@store')->name('helpdesk_incidents_store');
     Route::put('incidents/update/{id}',  'HelpIncidentController@update')->name('helpdesk_incidents_update');
-
-
-
-    Route::get('tokens', function () {
-        $token = User::find(12)->api_token;
-        echo $token;
-    });
 });

@@ -22,22 +22,28 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Sales\Entities\SalePhysicalDocument;
+use Modules\Sales\Services\SaleStockService;
 
 class SalePhysicalDocumentController extends Controller
 {
     private $ubl;
+
     private $igv;
+
     private $top;
+
     private $icbper;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly SaleStockService $stockService
+    ) {
         $this->ubl = Parameter::where('parameter_code', 'P000003')->value('value_default');
         $this->igv = Parameter::where('parameter_code', 'P000001')->value('value_default');
         $this->top = Parameter::where('parameter_code', 'P000002')->value('value_default');
         $this->icbper = Parameter::where('parameter_code', 'P000004')->value('value_default');
     }
-    /** 
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -249,44 +255,14 @@ class SalePhysicalDocumentController extends Controller
                     }
 
                     if ($produc['is_product']) {
-                        $k = Kardex::create([
-                            'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                            'motion' => 'sale',
-                            'product_id' => $product_id,
-                            'local_id' => $local_id,
-                            'quantity' => $produc['quantity'] * (-1),
-                            'document_id' => $sale->id,
-                            'document_entity' => SalePhysicalDocument::class,
-                            'description' => 'Venta'
-                        ]);
-                        $product = Product::find($product_id);
-                        if ($product->presentations) {
-                            KardexSize::create([
-                                'kardex_id' => $k->id,
-                                'product_id' => $product_id,
-                                'local_id' => $local_id,
-                                'size'      => $produc['size'],
-                                'quantity'  => ($produc['quantity'] * (-1))
-                            ]);
-                            $tallas = $product->sizes;
-                            $n_tallas = [];
-                            foreach (json_decode($tallas, true) as $k => $talla) {
-                                if ($talla['size'] == $produc['size']) {
-                                    $n_tallas[$k] = array(
-                                        'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] - $produc['quantity'])
-                                    );
-                                } else {
-                                    $n_tallas[$k] = array(
-                                        'size' => $talla['size'],
-                                        'quantity' => $talla['quantity']
-                                    );
-                                }
-                            }
-                            $product->update([
-                                'sizes' => json_encode($n_tallas)
-                            ]);
-                        }
+                        $this->stockService->recordOutboundByProductId(
+                            $product_id,
+                            (float) $produc['quantity'],
+                            $sale->id,
+                            SalePhysicalDocument::class,
+                            $local_id,
+                            $produc['size'] ?? null
+                        );
 
                         SaleProduct::create([
                             'sale_id' => $tk->id,
@@ -299,8 +275,6 @@ class SalePhysicalDocumentController extends Controller
                             'quantity' => $produc['quantity'],
                             'total' => $produc['total']
                         ]);
-
-                        Product::find($product_id)->decrement('stock', $produc['quantity']);
                     }
                     //fin parte de codigo actualiza el kardex
 
@@ -362,55 +336,13 @@ class SalePhysicalDocumentController extends Controller
             $sal_pros = SaleProduct::where('sale_id', $sal->id)->get();
 
             foreach ($sal_pros as $sal_pro) {
-                $product = Product::find($sal_pro->product_id);
-
-                if ($product->is_product) {
-
-
-                    $k = Kardex::create([
-                        'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                        'motion' => 'sale',
-                        'product_id' => $sal_pro->product_id,
-                        'local_id' => $sal->local_id,
-                        'quantity' => $sal_pro->quantity,
-                        'document_id' => $dos->id,
-                        'document_entity' => SalePhysicalDocument::class,
-                        'description' => 'Venta Anulada'
-                    ]);
-
-
-
-                    if ($product->presentations) {
-                        //dd($sal_pro->product);
-                        KardexSize::create([
-                            'kardex_id' => $k->id,
-                            'product_id' => $product->id,
-                            'local_id' => $sal->local_id,
-                            //'size'      => json_decode($sal_pro->product)['size'],
-                            'size'      => json_decode($sal_pro->saleProduct)->size,
-                            'quantity'  => $sal_pro->quantity
-                        ]);
-                        $tallas = $product->sizes;
-                        $n_tallas = [];
-                        foreach (json_decode($tallas, true) as $k => $talla) {
-                            if ($talla['size'] == json_decode($sal_pro->saleProduct)->size) {
-                                $n_tallas[$k] = array(
-                                    'size' => $talla['size'],
-                                    'quantity' => ($talla['quantity'] + $sal_pro->quantity)
-                                );
-                            } else {
-                                $n_tallas[$k] = array(
-                                    'size' => $talla['size'],
-                                    'quantity' => $talla['quantity']
-                                );
-                            }
-                        }
-                        $product->update([
-                            'sizes' => json_encode($n_tallas)
-                        ]);
-                    }
-                    Product::find($sal_pro->product_id)->decrement('stock', $sal_pro->quantity);
-                }
+                $this->stockService->reverseSaleProductLine(
+                    $sal_pro,
+                    $sal->local_id,
+                    $dos->id,
+                    SalePhysicalDocument::class,
+                    'Venta Anulada'
+                );
             }
 
             DB::commit();

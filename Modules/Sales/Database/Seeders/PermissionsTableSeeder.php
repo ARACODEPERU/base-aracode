@@ -74,6 +74,7 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissions, Permission::create(['name' => 'sale_servicios_editar']));
         array_push($permissions, Permission::create(['name' => 'sale_servicios_eliminar']));
         array_push($permissions, Permission::create(['name' => 'sale_productos_importar']));
+        array_push($permissions, Permission::create(['name' => 'sale_importar_facturador3']));
         array_push($permissions, Permission::create(['name' => 'sale_aplicar_descuento']));
         array_push($permissions, Permission::create(['name' => 'sale_registar_producto_alvender']));
         array_push($permissions, Permission::create(['name' => 'sale_enventas_buscar_por_presentacion']));

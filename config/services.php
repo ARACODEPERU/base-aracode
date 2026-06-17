@@ -34,5 +34,14 @@ return [
     'mercadopago' => [
         'key' => env('MERCADOPAGO_KEY'),
         'token' => env('MERCADOPAGO_TOKEN')
-    ]
+    ],
+
+    'internal_api' => [
+        'key' => env('INTERNAL_API_KEY'),
+    ],
+
+    'socket_io' => [
+        'public_url' => env('VITE_SOCKET_IO_SERVER', 'http://localhost:3000'),
+        'internal_url' => env('SOCKET_IO_INTERNAL_URL', env('VITE_SOCKET_IO_SERVER', 'http://127.0.0.1:3000')),
+    ],
 ];
