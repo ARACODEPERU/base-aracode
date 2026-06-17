@@ -21,7 +21,6 @@ return new class extends Migration
             $table->integer('notification_count')->default(0);
             $table->timestamps();
 
-            $table->index('client_id');
             $table->index('phone');
             $table->index('email');
             $table->index('created_at');
