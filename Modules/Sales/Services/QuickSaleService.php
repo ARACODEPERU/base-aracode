@@ -3,7 +3,6 @@
 namespace Modules\Sales\Services;
 
 use App\Helpers\NumberLetter;
-use App\Models\Kardex;
 use App\Models\Parameter;
 use App\Models\Person;
 use App\Models\PettyCash;
@@ -32,7 +31,8 @@ class QuickSaleService
     private string $electronicDiscountMode;
 
     public function __construct(
-        private readonly QuickSaleItemCalculator $calculator
+        private readonly QuickSaleItemCalculator $calculator,
+        private readonly SaleStockService $stockService,
     ) {
         $this->ubl = (string) Parameter::where('parameter_code', 'P000003')->value('value_default');
         $this->igv = (float) Parameter::where('parameter_code', 'P000001')->value('value_default');
@@ -344,6 +344,7 @@ class QuickSaleService
             'discount' => $discount,
             'quantity' => $qty,
             'total' => $lineTotal,
+            'size' => $productData['size'] ?? null,
         ];
 
         $productData = json_decode($productJson, true) ?? $productData;
@@ -417,7 +418,15 @@ class QuickSaleService
 
         $product = Product::find($line['product_id']);
         if ($product) {
-            $this->applyProductStockOut($product, $line['qty'], $documentId, $localId, null);
+            $size = $line['product_data']['size'] ?? null;
+            $this->stockService->recordOutbound(
+                $product,
+                $line['qty'],
+                $documentId,
+                SaleDocument::class,
+                $localId,
+                $size
+            );
         }
     }
 
@@ -455,31 +464,6 @@ class QuickSaleService
             'time_opening' => date('H:i:s'),
             'income' => 0,
         ]);
-    }
-
-    private function applyProductStockOut(
-        Product $product,
-        float $quantity,
-        int $documentId,
-        int $localId,
-        ?string $size
-    ): void {
-        if (! $product->is_product) {
-            return;
-        }
-
-        Kardex::create([
-            'date_of_issue' => Carbon::now()->format('Y-m-d'),
-            'motion' => 'sale',
-            'product_id' => $product->id,
-            'local_id' => $localId,
-            'quantity' => $quantity * (-1),
-            'document_id' => $documentId,
-            'document_entity' => SaleDocument::class,
-            'description' => 'Venta rápida',
-        ]);
-
-        $product->decrement('stock', $quantity);
     }
 
     /**

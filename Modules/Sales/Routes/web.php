@@ -16,6 +16,7 @@ use App\Http\Controllers\LocalSaleController;
 use Illuminate\Support\Facades\Route;
 use Modules\Sales\Http\Controllers\AccountsReceivableController;
 use Modules\Sales\Http\Controllers\AccountsReceivableDashboardController;
+use Modules\Sales\Http\Controllers\Facturador3ImportController;
 use Modules\Sales\Http\Controllers\InvoiceReportsController;
 use Modules\Sales\Http\Controllers\PettyCashController;
 use Modules\Sales\Http\Controllers\ProductController;
@@ -98,6 +99,11 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
 
     Route::get('reports/inventory/report/products', [ReportController::class, 'inventoryReportProducts'])->name('inventory_report_products');
     Route::post('reports/inventory/report/products/data', [ReportController::class, 'inventoryReportProductsData'])->name('inventory_report_products_data');
+    Route::get('reports/inventory/kardex', [ReportController::class, 'inventoryKardexReport'])->name('inventory_kardex_report');
+    Route::post('reports/inventory/kardex/data', [ReportController::class, 'inventoryKardexReportData'])->name('inventory_kardex_report_data');
+    Route::post('reports/inventory/kardex/sizes', [ReportController::class, 'inventoryKardexReportSizes'])->name('inventory_kardex_report_sizes');
+    Route::post('reports/inventory/kardex/export', [ReportController::class, 'inventoryKardexReportExport'])->name('inventory_kardex_report_export');
+    Route::get('reports/inventory/kardex/export/{id}/status', [ReportController::class, 'inventoryKardexExportStatus'])->name('inventory_kardex_export_status');
 
     Route::get('reports/inventoryindate', [ReportController::class, 'inventory_report_export'])->name('inventory_report');
 
@@ -114,6 +120,16 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
     Route::post('data/payment/method/motals', [ReportController::class, 'dataPaymentMethodTotals'])->name('data_payment_method_totals');
 
     Route::post('import/product/data', [ProductController::class, 'import'])->name('import_product_data');
+
+    Route::middleware(['permission:sale_importar_facturador3'])->group(function () {
+        Route::post('import/facturador3/preview', [Facturador3ImportController::class, 'preview'])->name('facturador3_import_preview');
+        Route::post('import/facturador3/search', [Facturador3ImportController::class, 'search'])->name('facturador3_import_search');
+        Route::post('import/facturador3/map', [Facturador3ImportController::class, 'saveEstablishmentMap'])->name('facturador3_import_save_map');
+        Route::post('import/facturador3/exclusions', [Facturador3ImportController::class, 'saveExclusions'])->name('facturador3_import_save_exclusions');
+        Route::delete('import/facturador3/exclusions', [Facturador3ImportController::class, 'removeExclusion'])->name('facturador3_import_remove_exclusion');
+        Route::post('import/facturador3/process', [Facturador3ImportController::class, 'process'])->name('facturador3_import_process');
+        Route::get('import/facturador3/status/{id}', [Facturador3ImportController::class, 'status'])->name('facturador3_import_status');
+    });
     // ////reports//////////
     Route::get('reports/product/sellers/dates', [ReportController::class, 'reportProductSellersDates'])->name('report_product_sellers_dates');
     Route::post('reports/product/sellers/table', [ReportController::class, 'reportProductSellersTable'])->name('report_product_sellers_table');

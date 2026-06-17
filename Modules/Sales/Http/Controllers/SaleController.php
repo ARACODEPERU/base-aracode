@@ -3,8 +3,6 @@
 namespace Modules\Sales\Http\Controllers;
 
 use App\Models\Company;
-use App\Models\Kardex;
-use App\Models\KardexSize;
 use App\Models\LocalSale;
 use App\Models\PaymentMethod;
 use App\Models\Person;
@@ -27,10 +25,16 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
 use Modules\Sales\Support\SalesA4Template;
 use Modules\Health\Entities\HealPatientCharge;
+use Modules\Sales\Services\SaleStockService;
 
 class SaleController extends Controller
 {
     use ValidatesRequests;
+
+    public function __construct(
+        private readonly SaleStockService $stockService
+    ) {
+    }
     /**
      * Display a listing of the resource.
      *
@@ -195,49 +199,14 @@ class SaleController extends Controller
 
 
                     if ($product->is_product) {
-
-                        $k = Kardex::create([
-                            'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                            'motion' => 'sale',
-                            'product_id' => $produc['id'],
-                            'local_id' => $local_id,
-                            'quantity' => - ($produc['quantity']),
-                            'document_id' => $document->id,
-                            'document_entity' => SaleDocument::class,
-                            'description' => 'Venta'
-                        ]);
-
-
-
-                        if ($product->presentations) {
-                            KardexSize::create([
-                                'kardex_id' => $k->id,
-                                'product_id' => $produc['id'],
-                                'local_id' => $local_id,
-                                'size'      => $produc['size'],
-                                'quantity'  => (-$produc['quantity'])
-                            ]);
-                            $tallas = $product->sizes;
-                            $n_tallas = [];
-                            foreach (json_decode($tallas, true) as $k => $talla) {
-                                if ($talla['size'] == $produc['size']) {
-                                    $n_tallas[$k] = array(
-                                        'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] - $produc['quantity'])
-                                    );
-                                } else {
-                                    $n_tallas[$k] = array(
-                                        'size' => $talla['size'],
-                                        'quantity' => $talla['quantity']
-                                    );
-                                }
-                            }
-                            $product->update([
-                                'sizes' => json_encode($n_tallas)
-                            ]);
-                        }
-
-                        Product::find($produc['id'])->decrement('stock', $produc['quantity']);
+                        $this->stockService->recordOutbound(
+                            $product,
+                            (float) $produc['quantity'],
+                            $document->id,
+                            SaleDocument::class,
+                            $local_id,
+                            $produc['size'] ?? null
+                        );
                     }
                 }
 
@@ -291,58 +260,13 @@ class SaleController extends Controller
                 $products = SaleProduct::where('sale_id', $sale->id)->get();
 
                 foreach ($products as $item) {
-                    if($item->entity_name_product == Product::class){
-                        if (json_decode($item->product)->is_product == 1) {
-                            $k = Kardex::create([
-                                'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                                'motion' => 'sale',
-                                'product_id' => $item->product_id,
-                                'local_id' => $sale->local_id,
-                                'quantity' => $item->quantity,
-                                'document_id' => $document->id,
-                                'document_entity' => SaleDocument::class,
-                                'description' => 'Anulacion de Venta'
-                            ]);
-
-                            $product = Product::find($item->product_id);
-
-                            if ($product->presentations) {
-
-                                KardexSize::create([
-                                    'kardex_id' => $k->id,
-                                    'product_id' => $item->product_id,
-                                    'local_id' => $sale->local_id,
-                                    'size'      => json_decode($item->saleProduct)->size,
-                                    'quantity'  => $item->quantity
-                                ]);
-
-
-                                $tallas = json_decode($product->sizes, true);
-                                $n_tallas = [];
-                                foreach ($tallas as &$size) {
-                                    // Si el tamaño es igual a 22
-                                    if ($size["size"] == json_decode($item->saleProduct)->size) {
-
-                                        // Obtiene la cantidad actual
-                                        $currentQuantity = intval($size["quantity"]); // Convierte a entero
-
-                                        // Suma 1 a la cantidad actual
-                                        $newQuantity = $currentQuantity + $item->quantity;
-
-                                        // Actualiza la cantidad
-                                        $size["quantity"] = $newQuantity;
-                                    }
-                                }
-
-                                $n_tallas = $tallas;
-
-
-                                $product->update([
-                                    'sizes' => json_encode($n_tallas)
-                                ]);
-                            }
-                            //Product::find($produc->product_id)->increment('stock', $produc->quantity);
-                        }
+                    if ($document) {
+                        $this->stockService->reverseSaleProductLine(
+                            $item,
+                            $sale->local_id,
+                            $document->id,
+                            SaleDocument::class
+                        );
                     }
                 }
                 return $sale;

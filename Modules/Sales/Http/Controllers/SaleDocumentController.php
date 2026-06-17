@@ -36,6 +36,7 @@ use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SaleSummary;
 use Modules\Sales\Entities\SaleSummaryDetail;
 use Modules\Sales\Services\QuickSaleItemCalculator;
+use Modules\Sales\Services\SaleStockService;
 use Modules\Sales\Support\ElectronicDiscountMode;
 
 class SaleDocumentController extends Controller
@@ -57,8 +58,10 @@ class SaleDocumentController extends Controller
 
     private string $electronicDiscountMode;
 
-    public function __construct(private readonly QuickSaleItemCalculator $calculator)
-    {
+    public function __construct(
+        private readonly QuickSaleItemCalculator $calculator,
+        private readonly SaleStockService $stockService,
+    ) {
         $this->ubl = Parameter::where('parameter_code', 'P000003')->value('value_default');
         $this->igv = Parameter::where('parameter_code', 'P000001')->value('value_default');
         $this->top = Parameter::where('parameter_code', 'P000002')->value('value_default');
@@ -443,46 +446,14 @@ class SaleDocumentController extends Controller
                     ]);
 
                     if ($produc['is_product']) {
-                        $k = Kardex::create([
-                            'date_of_issue' => Carbon::now()->format('Y-m-d'),
-                            'motion' => 'sale',
-                            'product_id' => $product_id,
-                            'local_id' => $local_id,
-                            'quantity' => $produc['quantity'] * (-1),
-                            'document_id' => $document->id,
-                            'document_entity' => SaleDocument::class,
-                            'description' => 'Venta',
-                        ]);
-                        $product = Product::find($product_id);
-                        if ($product->presentations) {
-                            KardexSize::create([
-                                'kardex_id' => $k->id,
-                                'product_id' => $product_id,
-                                'local_id' => $local_id,
-                                'size' => $produc['size'],
-                                'quantity' => ($produc['quantity'] * (-1)),
-                            ]);
-                            $tallas = $product->sizes;
-                            $n_tallas = [];
-                            foreach (json_decode($tallas, true) as $k => $talla) {
-                                if ($talla['size'] == $produc['size']) {
-                                    $n_tallas[$k] = [
-                                        'size' => $talla['size'],
-                                        'quantity' => ($talla['quantity'] - $produc['quantity']),
-                                    ];
-                                } else {
-                                    $n_tallas[$k] = [
-                                        'size' => $talla['size'],
-                                        'quantity' => $talla['quantity'],
-                                    ];
-                                }
-                            }
-                            $product->update([
-                                'sizes' => json_encode($n_tallas),
-                            ]);
-                        }
-
-                        Product::find($product_id)->decrement('stock', $produc['quantity']);
+                        $this->stockService->recordOutboundByProductId(
+                            $product_id,
+                            (float) $produc['quantity'],
+                            $document->id,
+                            SaleDocument::class,
+                            $local_id,
+                            $produc['size'] ?? null
+                        );
                     }
                     // fin parte de codigo actualiza el kardex
 

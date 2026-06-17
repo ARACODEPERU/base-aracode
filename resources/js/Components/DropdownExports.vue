@@ -46,12 +46,24 @@
     const fileName = ref(''); // Nombre del archivo descargado
     const errorMessage = ref(null); // Mensaje de error si la exportación falla
     const displayModalExportStatus = ref(false); // Controla la visibilidad del ModalStatus
+    const progressPercent = ref(0);
 
     let pollingInterval = null; // Para controlar el intervalo de polling
     let currentJobId = null; // Para guardar el ID del job actual
 
     const mensajeExporting = ref([]); // Array para registrar mensajes de progreso/estado
 
+    const buildProgressLabel = (jobStatus) => {
+        const progress = jobStatus.progress || 0;
+        const processed = jobStatus.processed_rows;
+        const total = jobStatus.total_rows;
+
+        if (processed != null && total != null && total > 0) {
+            return `Generando documento: ${processed} de ${total} registros (${progress}%)`;
+        }
+
+        return `Exportación en curso. Estado: ${jobStatus.status} (${progress}%)`;
+    };
 
     // Función principal para iniciar la exportación
     const generateExcelStudents = async () => {
@@ -60,6 +72,7 @@
         downloadUrl.value = null;
         fileName.value = '';
         errorMessage.value = null;
+        progressPercent.value = 0;
         currentJobId = null;
         mensajeExporting.value = []; // Limpiar mensajes anteriores
         displayModalExportStatus.value = true; // Mostrar el modal al iniciar
@@ -114,22 +127,20 @@
                 // Asegúrate de que esta ruta exista en tu backend y devuelva el estado del job
                 const response = await axios.get(route(statusBase, currentJobId));
                 const jobStatus = response.data;
+                progressPercent.value = jobStatus.progress || 0;
 
-                // Actualizar el estado de progreso para el mensaje de "Cargando..."
-                // Puedes añadir jobStatus.progress a los mensajes si quieres
                 if (jobStatus.status === 'pending' || jobStatus.status === 'processing') {
-                    // Aquí podrías actualizar un mensaje de progreso más específico si lo necesitas
-                    // Por ejemplo, modificar el último mensaje en mensajeExporting o añadir uno nuevo.
-                    // Para mantenerlo simple y evitar spam de mensajes:
+                    const progressLabel = buildProgressLabel(jobStatus);
+
                     if (mensajeExporting.value.length > 0) {
                         const lastMsg = mensajeExporting.value[mensajeExporting.value.length - 1];
-                        if (lastMsg.label.startsWith('Exportación en curso') || lastMsg.label.startsWith('Exportación iniciada')) {
-                            lastMsg.label = `Exportación en curso. Estado: ${jobStatus.status} (${jobStatus.progress || 0}%)`;
+                        if (lastMsg.label.startsWith('Exportación en curso') || lastMsg.label.startsWith('Exportación iniciada') || lastMsg.label.startsWith('Generando documento')) {
+                            lastMsg.label = progressLabel;
                         } else {
-                            mensajeExporting.value.push({ success: true, label: `Exportación en curso. Estado: ${jobStatus.status} (${jobStatus.progress || 0}%)` });
+                            mensajeExporting.value.push({ success: true, label: progressLabel });
                         }
                     } else {
-                        mensajeExporting.value.push({ success: true, label: `Exportación en curso. Estado: ${jobStatus.status} (${jobStatus.progress || 0}%)` });
+                        mensajeExporting.value.push({ success: true, label: progressLabel });
                     }
                 }
 
@@ -138,6 +149,7 @@
                     downloadUrl.value = jobStatus.download_url; // La URL de descarga del archivo Excel
                     fileName.value = jobStatus.file_name;
                     isExporting.value = false; // Detener el indicador de carga
+                    progressPercent.value = 100;
 
                     // Añadir mensaje de éxito final al registro
                     mensajeExporting.value.push({ success: true, label: '¡Exportación completada! Archivo listo para descargar.', path: downloadUrl.value });
@@ -147,6 +159,7 @@
                 } else if (jobStatus.status === 'failed') {
                     errorMessage.value = jobStatus.error_message || 'La exportación falló por un error desconocido.';
                     isExporting.value = false; // Detener el indicador de carga
+                    progressPercent.value = 0;
 
                     // Añadir mensaje de error final al registro
                     mensajeExporting.value.push({ success: false, label: `Exportación fallida: ${errorMessage.value}` });
@@ -285,6 +298,18 @@
     <ModalStatus :show="displayModalExportStatus" :onClose="closeModalExportStatus">
         <template #title>Estado de Exportación</template>
         <template #content>
+            <div v-if="isExporting || progressPercent > 0" class="mb-4">
+                <div class="flex justify-between text-xs text-[#9CA3AF] mb-1">
+                    <span>Progreso</span>
+                    <span>{{ progressPercent }}%</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-gray-800 overflow-hidden">
+                    <div
+                        class="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                        :style="{ width: progressPercent + '%' }"
+                    />
+                </div>
+            </div>
             <div v-if="mensajeExporting.length == 0">
                 <span class="mr-2">Iniciando</span>
                 <span class="animate-[ping_1.5s_0.5s_ease-in-out_infinite]">.</span>

@@ -8,6 +8,7 @@ import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import SearchClients from '../../Documents/Partials/SearchClients.vue';
 import QuickSaleTouch from './Partials/QuickSaleTouch.vue';
 import QuickSaleWeb from './Partials/QuickSaleWeb.vue';
+import QuickSaleSizeModal from './Partials/QuickSaleSizeModal.vue';
 
 const props = defineProps({
     products: { type: Array, default: () => [] },
@@ -62,8 +63,25 @@ const PRODUCT_ENTITY_CLASS = 'App\\Models\\Product';
 /** Copia plana del producto (evita proxies de Vue y pérdida de campos al serializar). */
 const snapshotProduct = (product) => JSON.parse(JSON.stringify(product ?? {}));
 
+const hasPresentations = (product) => product?.presentations == 1 || product?.presentations === true;
+
+const parseProductSizes = (product) => {
+    try {
+        const raw = product?.local_sizes ?? product?.sizes;
+        if (!raw) return [];
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
+const cartLineKey = (productId, size = null) => (size ? `${productId}-${size}` : String(productId));
+
 const cart = ref([]);
 const saving = ref(false);
+const sizeModalOpen = ref(false);
+const sizeModalProduct = ref(null);
 
 const getItemDiscount = (item) => {
     const discount = Number(item?.discount ?? 0);
@@ -81,28 +99,75 @@ const total = computed(() =>
     cart.value.reduce((sum, item) => sum + getItemTotal(item), 0)
 );
 
-const buildCartLine = (product, qty) => {
+const buildCartLine = (product, qty, size = null) => {
     const price = getProductPrice(product);
+    const productSnapshot = snapshotProduct(product);
+    if (size) {
+        productSnapshot.size = size;
+    }
     return {
+        lineKey: cartLineKey(product.id, size),
         id: product.id,
+        size,
         qty,
         price,
         discount: 0,
         description: product.description,
         interne: product.interne,
         entity_name_product: product.entity_name_product ?? PRODUCT_ENTITY_CLASS,
-        product: snapshotProduct(product),
+        product: productSnapshot,
     };
 };
 
-const addToCart = (product) => {
-    const existing = cart.value.find(i => i.id === product.id);
+const addToCartWithSize = (product, size = null) => {
+    const key = cartLineKey(product.id, size);
+    const existing = cart.value.find((i) => (i.lineKey ?? cartLineKey(i.id, i.size)) === key);
     if (existing) {
         existing.qty++;
         existing.product = snapshotProduct(product);
+        if (size) {
+            existing.product.size = size;
+            existing.size = size;
+        }
     } else {
-        cart.value.push(buildCartLine(product, 1));
+        cart.value.push(buildCartLine(product, 1, size));
     }
+};
+
+const openSizeModal = (product) => {
+    const sizes = parseProductSizes(product).filter((item) => Number(item.quantity) > 0);
+    if (!sizes.length) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin stock',
+            text: 'No hay tallas con stock disponible para este producto.',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        return;
+    }
+    sizeModalProduct.value = product;
+    sizeModalOpen.value = true;
+};
+
+const closeSizeModal = () => {
+    sizeModalOpen.value = false;
+    sizeModalProduct.value = null;
+};
+
+const onSizeConfirmed = ({ size }) => {
+    if (sizeModalProduct.value && size) {
+        addToCartWithSize(sizeModalProduct.value, size);
+    }
+    closeSizeModal();
+};
+
+const addToCart = (product) => {
+    if (hasPresentations(product)) {
+        openSizeModal(product);
+        return;
+    }
+    addToCartWithSize(product);
 };
 
 const getProductPrice = (product) => {
@@ -118,7 +183,8 @@ const getProductPrice = (product) => {
 };
 
 const updateQty = (item, change) => {
-    const idx = cart.value.findIndex(i => i.id === item.id);
+    const key = item.lineKey ?? cartLineKey(item.id, item.size);
+    const idx = cart.value.findIndex((i) => (i.lineKey ?? cartLineKey(i.id, i.size)) === key);
     if (idx >= 0) {
         cart.value[idx].qty += change;
         if (cart.value[idx].qty <= 0) {
@@ -128,7 +194,8 @@ const updateQty = (item, change) => {
 };
 
 const updateDiscount = (item, value) => {
-    const idx = cart.value.findIndex(i => i.id === item.id);
+    const key = item.lineKey ?? cartLineKey(item.id, item.size);
+    const idx = cart.value.findIndex((i) => (i.lineKey ?? cartLineKey(i.id, i.size)) === key);
     if (idx < 0) return;
 
     const raw = Number(value);
@@ -137,7 +204,8 @@ const updateDiscount = (item, value) => {
 };
 
 const removeItem = (item) => {
-    const idx = cart.value.findIndex(i => i.id === item.id);
+    const key = item.lineKey ?? cartLineKey(item.id, item.size);
+    const idx = cart.value.findIndex((i) => (i.lineKey ?? cartLineKey(i.id, i.size)) === key);
     if (idx >= 0) cart.value.splice(idx, 1);
 };
 
@@ -474,6 +542,13 @@ const closeMobileMenu = () => {
                 :sale-document-types="saleDocumentTypesId"
                 :ubigeo="departments"
                 @client-id="onClientSelected"
+            />
+
+            <QuickSaleSizeModal
+                :show="sizeModalOpen"
+                :product="sizeModalProduct"
+                @close="closeSizeModal"
+                @confirm="onSizeConfirmed"
             />
         </div>
     </AppLayout>

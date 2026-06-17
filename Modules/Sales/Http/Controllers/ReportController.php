@@ -2,7 +2,10 @@
 
 namespace Modules\Sales\Http\Controllers;
 
+use App\Models\ExcelExportJob;
 use App\Models\Expense;
+use App\Models\Kardex;
+use App\Models\KardexSize;
 use App\Models\LocalSale;
 use App\Models\PaymentMethod;
 use App\Models\PettyCash;
@@ -12,7 +15,10 @@ use App\Models\SaleDocument;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Modules\Sales\Jobs\ExportInventoryKardexExcel;
+use Modules\Sales\Services\InventoryKardexQueryService;
 use Inertia\Inertia;
 use PDF;
 use Illuminate\Routing\Controller;
@@ -254,6 +260,122 @@ class ReportController extends Controller
         return Inertia::render('Sales::Reports/InventoryReportProducts', [
             'locals' => LocalSale::all()
         ]);
+    }
+
+    public function inventoryKardexReport()
+    {
+        return Inertia::render('Sales::Reports/InventoryKardexReport', [
+            'locals' => LocalSale::orderBy('description')->get(['id', 'description']),
+            'products' => Product::where('is_product', true)
+                ->orderBy('description')
+                ->get(['id', 'interne', 'description', 'presentations']),
+        ]);
+    }
+
+    public function inventoryKardexReportData(Request $request, InventoryKardexQueryService $queryService)
+    {
+        $filters = $queryService->normalizeFilters($request->all());
+
+        $rows = $queryService->buildQuery($filters)
+            ->limit(1000)
+            ->get()
+            ->map(fn ($row) => $queryService->mapRow($row));
+
+        $positive = $rows->where('quantity', '>', 0)->sum('quantity');
+        $negative = abs($rows->where('quantity', '<', 0)->sum('quantity'));
+
+        return response()->json([
+            'rows' => $rows->values(),
+            'summary' => [
+                'total_movements' => $rows->count(),
+                'net_quantity' => round($rows->sum('quantity'), 2),
+                'entries_in' => round($positive, 2),
+                'entries_out' => round($negative, 2),
+            ],
+        ]);
+    }
+
+    public function inventoryKardexReportExport(Request $request, InventoryKardexQueryService $queryService)
+    {
+        $filters = $queryService->normalizeFilters($request->all());
+
+        $excelExportJob = ExcelExportJob::create([
+            'user_id' => Auth::id(),
+            'report_type' => 'inventory_kardex',
+            'status' => 'pending',
+            'filters' => $filters,
+        ]);
+
+        ExportInventoryKardexExcel::dispatch(
+            $filters,
+            $excelExportJob->id,
+            Auth::id()
+        )->onQueue('exports');
+
+        return response()->json([
+            'message' => 'La exportación se ha iniciado. Se le notificará cuando esté lista para descargar.',
+            'job_id' => $excelExportJob->id,
+        ], 202);
+    }
+
+    public function inventoryKardexExportStatus($id)
+    {
+        $excelExportJob = ExcelExportJob::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->where('report_type', 'inventory_kardex')
+            ->first();
+
+        if (! $excelExportJob) {
+            return response()->json(['message' => 'Estado de exportación no encontrado o no autorizado.'], 404);
+        }
+
+        $exportMeta = $excelExportJob->filters['_export_meta'] ?? [];
+
+        return response()->json([
+            'id' => $excelExportJob->id,
+            'status' => $excelExportJob->status,
+            'progress' => $excelExportJob->progress,
+            'file_name' => $excelExportJob->file_name,
+            'download_url' => $excelExportJob->download_url,
+            'error_message' => $excelExportJob->error_message,
+            'processed_rows' => $exportMeta['processed_rows'] ?? null,
+            'total_rows' => $exportMeta['total_rows'] ?? null,
+        ]);
+    }
+
+    public function inventoryKardexReportSizes(Request $request)
+    {
+        $productId = (int) $request->input('product_id', 0);
+        $localId = (int) $request->input('local_id', 0);
+
+        if ($productId <= 0) {
+            return response()->json(['sizes' => []]);
+        }
+
+        $product = Product::where('id', $productId)->where('is_product', true)->first();
+        if (! $product || ! $product->presentations) {
+            return response()->json(['sizes' => []]);
+        }
+
+        $query = KardexSize::query()
+            ->where('product_id', $productId)
+            ->select('size')
+            ->distinct();
+
+        if ($localId > 0) {
+            $query->where('local_id', $localId);
+        }
+
+        $sizes = $query->orderBy('size')->pluck('size')->values();
+
+        if ($sizes->isEmpty() && $product->sizes) {
+            $decoded = json_decode($product->sizes, true);
+            if (is_array($decoded)) {
+                $sizes = collect($decoded)->pluck('size')->filter()->unique()->sort()->values();
+            }
+        }
+
+        return response()->json(['sizes' => $sizes]);
     }
 
 

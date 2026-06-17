@@ -84,6 +84,9 @@ const openCartCheckout = () => {
                         S/ {{ getProductPrice(product) }}
                     </div>
                     <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ product.description }}</div>
+                    <div v-if="product.presentations == 1 || product.presentations === true" class="text-xs text-primary font-medium mt-1">
+                        Con tallas
+                    </div>
                     <div class="text-xs text-gray-400 mt-2 line-clamp-1">{{ product.interne }}</div>
                 </div>
             </div>
@@ -123,11 +126,12 @@ const openCartCheckout = () => {
 
                 <div class="p-4 space-y-4">
                     <div v-show="!cashPanelOpen" class="max-h-[34vh] overflow-y-auto space-y-2">
-                        <div v-for="item in cart" :key="item.id"
+                        <div v-for="item in cart" :key="item.lineKey ?? item.id"
                             class="p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg text-sm space-y-2">
                             <div class="flex justify-between items-start gap-2">
                                 <div class="flex-1 min-w-0">
                                     <div class="font-medium truncate">{{ item.description }}</div>
+                                    <div v-if="item.size" class="text-xs text-primary font-medium">Talla: {{ item.size }}</div>
                                     <div class="text-xs text-gray-500 dark:text-zinc-400">
                                         S/ {{ Number(item.price).toFixed(2) }} × {{ item.qty }}
                                     </div>
