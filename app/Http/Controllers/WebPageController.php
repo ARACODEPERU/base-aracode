@@ -34,6 +34,8 @@ use Modules\Academic\Entities\AcaCourseLanding;
 use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudentCoursesInterest;
 use Modules\CMS\Entities\CmsLanding;
+use Modules\Socialevents\Entities\EvenEvent;
+use App\Models\Parameter;
 use Spatie\Permission\Models\Role;
 
 class WebPageController extends Controller
@@ -54,8 +56,26 @@ class WebPageController extends Controller
             ->get();
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $pagina = Parameter::where('parameter_code', 'P000028')->value('value_default');
+
+        if ($pagina === '2') {
+            $eventos = EvenEvent::whereHas('editions', function ($q) {
+                $q->where('landing_published', true);
+            })->with(['editions' => function ($q) {
+                $q->where('landing_published', true)->orderBy('start_date', 'desc');
+            }])->withCount(['editions as editions_count' => function ($q) {
+                $q->where('landing_published', true);
+            }])->get();
+
+            $eventos->each(function ($evento) {
+                $evento->editions->loadCount('equipos');
+            });
+
+            return view('pages.torneos', compact('eventos'));
+        }
+
         return view('pages.home');
     }
 

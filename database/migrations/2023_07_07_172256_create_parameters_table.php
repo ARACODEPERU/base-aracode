@@ -163,13 +163,13 @@ return new class extends Migration
                 'control_type' => 'tx',
                 'json_query_data' => null,
                 'value_default' => '
-    &lt;script async src=&quot;https://www.googletagmanager.com/gtag/js?id=G-EKDSRLYXFM&quot;&gt;&lt;/script&gt;
-    &lt;script&gt;
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag(&#039;js&#039;, new Date());
-    gtag(&#039;config&#039;, &#039;G-EKDSRLYXFM&#039;);
-    &lt;/script&gt;',
+                    &lt;script async src=&quot;https://www.googletagmanager.com/gtag/js?id=G-EKDSRLYXFM&quot;&gt;&lt;/script&gt;
+                    &lt;script&gt;
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){dataLayer.push(arguments);}
+                    gtag(&#039;js&#039;, new Date());
+                    gtag(&#039;config&#039;, &#039;G-EKDSRLYXFM&#039;);
+                    &lt;/script&gt;',
             ],
             [
                 'parameter_code' => 'P000023',
@@ -197,6 +197,13 @@ return new class extends Migration
                 'description' => 'Modulos activos',
                 'control_type' => 'chq',
                 'json_query_data' => 'SELECT * FROM modulos',
+                'value_default' => '1',
+            ],
+            [
+                'parameter_code' => 'P000028',
+                'description' => 'Pagina web principal',
+                'control_type' => 'sa',
+                'json_query_data' => '[{"value": "1","label":"Aracode Principal"},{"value": "2","label":"Aracode torneos"}]',
                 'value_default' => '1',
             ],
         ];

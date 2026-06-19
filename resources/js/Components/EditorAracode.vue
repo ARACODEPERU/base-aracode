@@ -33,6 +33,7 @@ function buildOptions() {
         readOnly: props.readonly,
         locale: 'es',
         imageUploadUrl: props.imageUploadUrl || null,
+        pasteImageUpload: true,
         imageUploadHeaders: csrfToken ? {
             'X-CSRF-TOKEN': csrfToken,
         } : {},

@@ -58,4 +58,9 @@ class EvenEvent extends Model
     {
         return $this->belongsTo(EvenCategory::class, 'category_id');
     }
+
+    public function editions(): HasMany
+    {
+        return $this->hasMany(EventEdition::class, 'event_id', 'id');
+    }
 }
