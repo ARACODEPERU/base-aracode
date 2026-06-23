@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { Image } from 'ant-design-vue';
 
 const props = defineProps({
     caseItem: { type: Object, required: true },
@@ -17,7 +18,7 @@ const typeLabel = computed(() => {
 </script>
 
 <template>
-    <div class="bib-reader-cases-panel__detail">
+    <div class="py-4 px-6">
         <div class="bib-reader-cases-panel__detail-head">
             <span class="bib-reader-cases-panel__detail-badge">{{ typeLabel }}</span>
             <h4 class="bib-reader-cases-panel__detail-title">{{ caseItem.title }}</h4>
@@ -30,7 +31,7 @@ const typeLabel = computed(() => {
         />
 
         <div v-else-if="caseItem.type === 'image'" class="bib-reader-cases-panel__media-wrap">
-            <img
+            <Image
                 :src="caseItem.file_url"
                 :alt="caseItem.title"
                 class="bib-reader-cases-panel__media"
