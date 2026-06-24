@@ -286,19 +286,6 @@ class AcaExamController extends Controller
             })->toJson();
     }
 
-    public function markStudentExamAsQualified($id)
-    {
-        $studentExam = AcaStudentExam::findOrFail($id);
-        $studentExam->status = 'calificado';
-        $studentExam->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'El examen fue marcado como calificado.',
-            'status' => $studentExam->status,
-        ]);
-    }
-
     public function questionAnswerPanelModule($cId, $mId, $eId)
     {
         $exam = AcaExam::with([
@@ -377,7 +364,7 @@ class AcaExamController extends Controller
 
         // 4. Buscar o crear el intento del estudiante - SOLO si el examen está disponible
         $canRetry = false;
-        $maxAttempts = $exam->attempts ?? 1;
+        $maxAttempts = $exam->attempts ?? 0;
 
         // Solo procesar intentos si el examen está disponible por fecha
         if ($isAvailable) {
@@ -393,7 +380,8 @@ class AcaExamController extends Controller
                 $isFinished = in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado']);
                 $attemptsUsed = $examStudent->attempts_used ?? 1;
 
-                if ($isFinished && $attemptsUsed < $maxAttempts) {
+                $hasAttemptsLeft = $maxAttempts === 0 || $attemptsUsed < $maxAttempts;
+                if ($isFinished && $hasAttemptsLeft) {
                     // NO resetear automáticamente - el estudiante debe solicitarlo manualmente
                     $canRetry = true;
                     $examStudent->attempts_used = $attemptsUsed;
@@ -615,10 +603,11 @@ class AcaExamController extends Controller
         }
 
         // Verificar intentos disponibles
-        $maxAttempts = $exam->attempts ?? 1;
+        $maxAttempts = $exam->attempts ?? 0;
         $attemptsUsed = $examStudent->attempts_used ?? 1;
 
-        if ($attemptsUsed >= $maxAttempts) {
+        $hasAttemptsLeft = $maxAttempts === 0 || $attemptsUsed < $maxAttempts;
+        if (! $hasAttemptsLeft) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes intentos disponibles',

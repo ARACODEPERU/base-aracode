@@ -49,6 +49,7 @@
     const displayModuleModal = ref(false);
     const viewTaskModal = ref(false);
     const displayModuleExamModal = ref(false);
+    const displayMockExamModal = ref(false);
 
     // Variables computadas para estadísticas
     const selectedModule = computed(() => {
@@ -125,7 +126,8 @@
         answer_key_pdf: null,
         status: 1,
         attempts: 1,
-        file_resolved_name: null
+        file_resolved_name: null,
+        is_mock: false
     });
 
     const baseUrl = assetUrl;
@@ -250,6 +252,82 @@
         moduleExamForm.reset();
     };
 
+    // Funciones para gestión de simulacros por módulo
+    const openModalModuleMockExam = (module = null) => {
+
+        if (!module) {
+            Swal2.fire({
+                icon: 'warning',
+                title: 'Advertencia',
+                text: 'Debes seleccionar un módulo primero'
+            });
+            return;
+        }
+
+        moduleExamForm.reset();
+        moduleExamForm.course_id = props.course.id;
+        moduleExamForm.module_id = module.id;
+        moduleExamForm.module_description = module.description;
+        moduleExamForm.is_mock = true;
+
+        // Si ya existe un simulacro para este módulo, cargar los datos
+        if (module.mock_exam) {
+            moduleExamForm.id = module.mock_exam.id;
+            moduleExamForm.description = module.mock_exam.description;
+            moduleExamForm.date_start = module.mock_exam.date_start;
+            moduleExamForm.date_end = module.mock_exam.date_end;
+            moduleExamForm.duration_minutes = module.mock_exam.duration_minutes;
+            moduleExamForm.answer_key_pdf = module.mock_exam.answer_key_pdf;
+            moduleExamForm.status = module.mock_exam.status;
+            moduleExamForm.attempts = module.mock_exam.attempts;
+            moduleExamForm.file_resolved_name = module.mock_exam.file_resolved_name;
+        } else {
+            // Resetear los controles de duración cuando es nuevo
+            durationHours.value = 0;
+            durationMinutes.value = 0;
+            moduleExamForm.status = 0;
+        }
+
+        displayMockExamModal.value = true;
+    };
+
+    const closeModalMockExam = () => {
+        displayMockExamModal.value = false;
+        moduleExamForm.reset();
+    };
+
+    const saveMockExam = () => {
+        // Asegurar que la duración esté en minutos enteros antes de enviar
+        updateDurationMinutes();
+
+        // Si no hay duración, mostrar advertencia
+        if (!moduleExamForm.duration_minutes || moduleExamForm.duration_minutes <= 0) {
+            Swal2.fire({
+                title: 'Advertencia',
+                text: 'Por favor, establece una duración válida para el simulacro',
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        moduleExamForm.post(route('aca_course_module_exam_update_create'), {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => {
+                closeModalMockExam();
+                Swal2.fire({
+                    title: '¡Enhorabuena!',
+                    text: 'Simulacro registrado correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+        })
+    };
+
     const saveModuleExam = () => {
         // Asegurar que la duración esté en minutos enteros antes de enviar
         updateDurationMinutes();
@@ -265,6 +343,8 @@
             });
             return;
         }
+
+        moduleExamForm.is_mock = false;
 
         moduleExamForm.post(route('aca_course_module_exam_update_create'), {
             preserveScroll: true,
@@ -1291,7 +1371,7 @@
                                                     <span class="bg-blue-100 dark:bg-gray-800 text-blue-700 dark:text-blue-600 px-2.5 py-1 rounded-full text-xs font-medium">
                                                         Posición {{ module.position || 0 }}
                                                     </span>
-                                                    <!-- Indicador de Examen -->
+                                                    <!-- Indicador de Examen Regular -->
                                                     <Link
                                                         v-if="module.exam"
                                                         v-tippy="{ content: 'Panel preguntas y respuesta' , placement: 'bottom' }"
@@ -1301,11 +1381,23 @@
                                                         <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                                         </svg>
-                                                        Examen Activo
+                                                        Examen
                                                     </Link>
                                                     <span v-else class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2.5 py-1 rounded-full text-xs font-medium">
                                                         Sin Examen
                                                     </span>
+                                                    <!-- Indicador de Simulacro -->
+                                                    <Link
+                                                        v-if="module.mock_exam"
+                                                        v-tippy="{ content: 'Panel preguntas y respuesta del simulacro' , placement: 'bottom' }"
+                                                        :href="route('aca_course_module_exam_view_details', [props.course.id, module.id, module.mock_exam.id])"
+                                                        class="btn btn-warning btn-sm rounded-xl shadow-lg transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]"
+                                                    >
+                                                        <svg class="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        Simulacro
+                                                    </Link>
                                                 </div>
                                             </div>
                                         </div>
@@ -1335,6 +1427,21 @@
                                                 </svg>
                                                 <svg v-else class="w-4 h-4 opacity-75" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
                                                     <path d="M128 64C92.7 64 64 92.7 64 128L64 512C64 547.3 92.7 576 128 576L308 576C285.3 544.5 272 505.8 272 464C272 363.4 349.4 280.8 448 272.7L448 234.6C448 217.6 441.3 201.3 429.3 189.3L322.7 82.7C310.7 70.7 294.5 64 277.5 64L128 64zM389.5 240L296 240C282.7 240 272 229.3 272 216L272 122.5L389.5 240zM464 608C543.5 608 608 543.5 608 464C608 384.5 543.5 320 464 320C384.5 320 320 384.5 320 464C320 543.5 384.5 608 464 608zM464 508C475 508 484 517 484 528C484 539 475 548 464 548C453 548 444 539 444 528C444 517 453 508 464 508zM464 408C452.4 408 442.7 416.2 440.5 427.2C438.7 435.9 430.3 441.5 421.6 439.7C412.9 437.9 407.3 429.5 409.1 420.8C414.3 395.2 436.9 376 464 376C494.9 376 520 401.1 520 432C520 451.8 508.3 469.8 490.2 477.9L479.8 482.5C478.6 490.2 472 496 464 496C455.2 496 448 488.8 448 480C448 468.8 454.6 458.7 464.8 454.1L477.2 448.6C483.8 445.7 488 439.2 488 432C488 418.7 477.3 408 464 408z"/>
+                                                </svg>
+                                            </button>
+                                            <button
+                                                @click.stop="openModalModuleMockExam(module)"
+                                                class="p-1.5 rounded-lg transition-all duration-300"
+                                                :class="module.mock_exam
+                                                ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-200 dark:shadow-amber-900/30'
+                                                : 'bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white shadow-orange-200 dark:shadow-orange-900/30'"
+                                                v-tippy="{
+                                                    content: module.mock_exam ? 'Configurar simulacro existente' : 'Crear nuevo simulacro para este módulo',
+                                                    placement: 'right'
+                                                }"
+                                            >
+                                                <svg class="w-4 h-4 opacity-75" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
+                                                    <path d="M256 0C256 68.4 200.4 124 132 132C132 200.4 76.4 256 8 256C76.4 256 132 311.6 132 380C200.4 380 256 435.6 256 504C256 435.6 311.6 380 380 380C380 311.6 435.6 256 504 256C435.6 256 380 200.4 380 132C311.6 132 256 68.4 256 0z"/>
                                                 </svg>
                                             </button>
                                             <button
@@ -2260,6 +2367,171 @@
                         {{ moduleExamForm.processing ? 'Guardando...' : (moduleExamForm.id ? 'Actualizar Examen' : 'Crear Examen') }}
                     </button>
                 </div>
+            </template>
+                </ModalLarge>
+
+        <!-- Modal de Crear/Editar Simulacro por Módulo -->
+        <ModalLarge
+            :show="displayMockExamModal"
+            :onClose="closeModalMockExam"
+            :icon="'/img/examen.png'"
+        >
+            <template #title>
+                {{ moduleExamForm.module_description }}
+            </template>
+            <template #message>
+                {{ moduleExamForm.id ? 'Configurar Simulacro' : 'Crear Simulacro' }} del Módulo
+            </template>
+            <template #content>
+                <div class="space-y-6">
+                    <!-- Información del Módulo con indicador de Simulacro -->
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-amber-900 dark:text-amber-100">Curso: {{ props.course.description }}</p>
+                                <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                    <span class="inline-flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 640 512">
+                                            <path d="M256 0C256 68.4 200.4 124 132 132C132 200.4 76.4 256 8 256C76.4 256 132 311.6 132 380C200.4 380 256 435.6 256 504C256 435.6 311.6 380 380 380C380 311.6 435.6 256 504 256C435.6 256 380 200.4 380 132C311.6 132 256 68.4 256 0z"/>
+                                        </svg>
+                                        Esto es un SIMULACRO — la nota no afecta el promedio del curso
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario del Simulacro -->
+                    <div class="space-y-5">
+                        <!-- Descripción del Simulacro -->
+                        <div>
+                            <InputLabel value="Descripción del Simulacro" />
+                            <textarea
+                                v-model="moduleExamForm.description"
+                                class="form-textarea"
+                                rows="3"
+                                placeholder="Ej: Simulacro del módulo de introducción..."
+                                required
+                            ></textarea>
+                            <InputError :message="moduleExamForm.errors.description" class="mt-2" />
+                        </div>
+
+                        <!-- Duración Máxima y Archivo PDF -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Duración Máxima -->
+                            <div>
+                                <InputLabel value="Duración Máxima" />
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1">
+                                            <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Horas</label>
+                                            <select
+                                                v-model="durationHours"
+                                                class="form-select"
+                                            >
+                                                <option v-for="h in 12" :key="h-1" :value="h-1">{{ h-1 }}</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1 block">Minutos</label>
+                                            <select
+                                                v-model="durationMinutes"
+                                                @change="updateDurationMinutes"
+                                                class="form-select"
+                                            >
+                                                <option v-for="m in [0,5,10,15,20,25,30,35,40,45,50,55]" :key="m" :value="m">{{ m }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        Duración total: {{ formatDuration(moduleExamForm.duration_minutes) }}
+                                    </p>
+                                </div>
+                                <InputError :message="moduleExamForm.errors.duration_minutes" class="mt-2" />
+                            </div>
+
+                            <!-- Archivo PDF -->
+                            <div>
+                                <InputLabel value="Clave de respuestas (PDF)" />
+                                <input
+                                    type="file"
+                                    @input="moduleExamForm.answer_key_pdf = $event.target.files[0]"
+                                    class="form-input file:py-2 file:px-4 file:border-0 file:font-semibold p-0 file:bg-primary/90 ltr:file:mr-5 rtl:file:ml-5 file:text-white file:hover:bg-primary"
+                                    accept="application/pdf"
+                                />
+                                <p v-if="moduleExamForm.answer_key_pdf" class="text-xs text-gray-500 mt-1">
+                                    Archivo actual: {{ moduleExamForm.answer_key_pdf }}
+                                </p>
+                                <InputError :message="moduleExamForm.errors.answer_key_pdf" class="mt-2" />
+                            </div>
+                        </div>
+
+                        <!-- Fechas y Estado -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Fecha de Inicio -->
+                            <div>
+                                <InputLabel value="Fecha de Inicio" />
+                                <flatPickr
+                                    v-model="moduleExamForm.date_start"
+                                    :config="dateTime"
+                                    class="form-input"
+                                    placeholder="Seleccionar fecha..."
+                                />
+                                <InputError :message="moduleExamForm.errors.date_start" class="mt-2" />
+                            </div>
+
+                            <!-- Fecha de Fin -->
+                            <div>
+                                <InputLabel value="Fecha de Fin" />
+                                <flatPickr
+                                    v-model="moduleExamForm.date_end"
+                                    :config="dateTime"
+                                    class="form-input"
+                                    placeholder="Seleccionar fecha..."
+                                />
+                                <InputError :message="moduleExamForm.errors.date_end" class="mt-2" />
+                            </div>
+
+                            <!-- Estado -->
+                            <div>
+                                <InputLabel value="Estado" />
+                                <select v-model="moduleExamForm.status" class="form-select">
+                                    <option :value="1">Activo</option>
+                                    <option :value="0">Inactivo</option>
+                                </select>
+                                <InputError :message="moduleExamForm.errors.status" class="mt-2" />
+                            </div>
+                        </div>
+
+                        <!-- Intentos permitidos -->
+                        <div>
+                            <InputLabel value="Intentos Permitidos" />
+                            <select v-model="moduleExamForm.attempts" class="form-select">
+                                <option :value="1">1 intento</option>
+                                <option :value="2">2 intentos</option>
+                                <option :value="3">3 intentos</option>
+                                <option :value="4">4 intentos</option>
+                                <option :value="0">Ilimitado</option>
+                            </select>
+                            <InputError :message="moduleExamForm.errors.attempts" class="mt-2" />
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template #buttons>
+                <SecondaryButton @click="closeModalMockExam" class="mr-2">
+                    Cancelar
+                </SecondaryButton>
+                <PrimaryButton @click="saveMockExam">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ moduleExamForm.id ? 'Actualizar Simulacro' : 'Crear Simulacro' }}
+                </PrimaryButton>
             </template>
         </ModalLarge>
 

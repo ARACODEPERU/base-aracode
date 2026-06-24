@@ -40,7 +40,7 @@ class AcaGradeManagementController extends Controller
 
         $courseId = $request->input('course_id');
 
-        $course = AcaCourse::with(['modules'])->findOrFail($courseId);
+        $course = AcaCourse::with(['modules.mockExam'])->findOrFail($courseId);
 
         // Obtener estudiantes registrados en el curso con filtro de fechas
         $query = AcaCapRegistration::with(['student.person'])
@@ -65,6 +65,7 @@ class AcaGradeManagementController extends Controller
             return [
                 'id' => $module->id,
                 'description' => $module->description,
+                'has_mock_exam' => $module->mockExam !== null,
             ];
         });
 
@@ -96,19 +97,32 @@ class AcaGradeManagementController extends Controller
                 $finalAverage = $savedGrade->final_average;
             } else {
                 // Si no existen calificaciones guardadas, calcular desde las tablas originales
-                // Obtener exámenes del estudiante para este curso
+                // Obtener exámenes del estudiante para este curso (excluyendo simulacros)
                 $studentExams = AcaStudentExam::whereHas('exam', function ($query) use ($courseId) {
-                    $query->where('course_id', $courseId);
+                    $query->where('course_id', $courseId)
+                          ->where('is_mock', false);
                 })->where('student_id', $reg->student->id)->get();
+
+                // Obtener exámenes simulacro del estudiante para este curso (con preguntas para calcular nota máxima)
+                $studentMockExams = AcaStudentExam::with('exam.questions')
+                    ->whereHas('exam', function ($query) use ($courseId) {
+                        $query->where('course_id', $courseId)
+                              ->where('is_mock', true);
+                    })->where('student_id', $reg->student->id)->get();
 
                 // Obtener participaciones del estudiante para este curso
                 $studentParticipations = AcaStudentParticipation::where('course_id', $courseId)
                     ->where('student_id', $reg->student->id)
                     ->get();
 
-                $studentModules = $modules->map(function ($module) use ($studentExams, $studentParticipations) {
+                $studentModules = $modules->map(function ($module) use ($studentExams, $studentMockExams, $studentParticipations) {
                     // Buscar examen del estudiante para este módulo
                     $exam = $studentExams->first(function ($se) use ($module) {
+                        return $se->exam && $se->exam->module_id == $module['id'];
+                    });
+
+                    // Buscar simulacro del estudiante para este módulo
+                    $mockExam = $studentMockExams->first(function ($se) use ($module) {
                         return $se->exam && $se->exam->module_id == $module['id'];
                     });
 
@@ -124,6 +138,17 @@ class AcaGradeManagementController extends Controller
                     // Obtener valores de A y P y Examen
                     $ayP = $participationScore; // Ahora A y P es un solo campo
                     $examVal = $exam ? (float) $exam->punctuation : null;
+                    $mockExamVal = $mockExam ? (float) $mockExam->punctuation : null;
+
+                    // Determinar si aprobó el simulacro (50% de la nota máxima + 1)
+                    // Fórmula: floor(puntaje_total / 2) + 1
+                    // Ej: max 20 → 11, max 25 → 13, max 10 → 6
+                    $mockPassed = null;
+                    if ($mockExamVal !== null) {
+                        $maxScore = $mockExam->exam->questions->sum('score');
+                        $minPassingGrade = $maxScore > 0 ? (int) floor($maxScore / 2) + 1 : 0;
+                        $mockPassed = $mockExamVal >= $minPassingGrade;
+                    }
 
                     // Verificar si los campos son válidos (no null)
                     $ayPValid = $ayP !== null;
@@ -150,6 +175,8 @@ class AcaGradeManagementController extends Controller
                         'exam_score' => $examValid ? $examVal : null,
                         'attendance_score' => 0,
                         'participation_score' => $ayPValid ? $ayP : null,
+                        'mock_exam_score' => $mockExamVal,
+                        'mock_passed' => $mockPassed,
                         'average' => $average,
                     ];
                 })->toArray();

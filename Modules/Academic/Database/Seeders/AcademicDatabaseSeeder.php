@@ -16,6 +16,7 @@ class AcademicDatabaseSeeder extends Seeder
     {
         $this->call([
             PermissionTableSeeder::class,
+            ParametersTableSeeder::class,
         ]);
     }
 }

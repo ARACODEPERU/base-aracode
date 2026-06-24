@@ -14,6 +14,7 @@ class AcaCourseLanding extends Model
         'course_id',
         'url_slug',
         'whatsapp_link',
+        'flow_id',
         'payment_facilities_link',
         'corporate_contact_link',
         'banner_start_date',

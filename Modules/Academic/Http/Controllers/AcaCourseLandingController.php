@@ -76,6 +76,7 @@ class AcaCourseLandingController extends Controller
             [
                 'url_slug' => 'required|string|max:500|unique:aca_course_landings,url_slug,'.$courseId.',course_id',
                 'whatsapp_link' => 'nullable|string|max:500',
+                'flow_id' => 'nullable|string|max:255',
                 'payment_facilities_link' => 'nullable|string|max:500',
                 'corporate_contact_link' => 'nullable|string|max:500',
                 'is_published' => 'boolean',
@@ -92,11 +93,12 @@ class AcaCourseLandingController extends Controller
         $slug = trim($slug, '-');
 
         $landing->update([
-            'url_slug' => $slug,
-            'whatsapp_link' => $request->whatsapp_link ?? '',
-            'payment_facilities_link' => $request->payment_facilities_link ?? '',
-            'corporate_contact_link' => $request->corporate_contact_link ?? '',
-            'is_published' => $request->is_published ?? false,
+                'url_slug' => $slug,
+                'whatsapp_link' => $request->whatsapp_link ?? '',
+                'flow_id' => $request->flow_id ?? '',
+                'payment_facilities_link' => $request->payment_facilities_link ?? '',
+                'corporate_contact_link' => $request->corporate_contact_link ?? '',
+                'is_published' => $request->is_published ?? false,
         ]);
     }
 
@@ -376,14 +378,15 @@ class AcaCourseLandingController extends Controller
         );
         //dd($request->all());
         $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
-        //modificando el precio en onliItem para que se pueda cobrar bien en el carrito
-        $onliItem = OnliItem::where('item_id', $courseId)->first();
 
-        if ($onliItem) {
-            $onliItem->update([
-                'price' => $request->input('items.0.price_now'),
-            ]);
-        }
+                //modificando el precio en onliItem para que se pueda cobrar bien en el carrito
+                $onliItem = OnliItem::where('item_id', $courseId)->first();
+
+                if ($onliItem) {
+                    $onliItem->update([
+                        'price' => $request->input('items.0.price_now'),
+                    ]);
+                }
 
         $defaultItems = [
             [

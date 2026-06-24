@@ -36,9 +36,20 @@ class AcaModule extends Model
         return $this->belongsTo(AcaTeacher::class, 'teacher_id');
     }
 
+    /**
+     * Relación con el examen regular del módulo (no simulacro)
+     */
     public function exam(): HasOne
     {
-        return $this->hasOne(AcaExam::class, 'module_id');
+        return $this->hasOne(AcaExam::class, 'module_id')->where('is_mock', false);
+    }
+
+    /**
+     * Relación con el examen simulacro del módulo
+     */
+    public function mockExam(): HasOne
+    {
+        return $this->hasOne(AcaExam::class, 'module_id')->where('is_mock', true);
     }
 
 }

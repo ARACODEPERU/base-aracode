@@ -13,6 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Intervention\Image\Facades\Image;
@@ -88,7 +89,13 @@ class AcaCertificateController extends Controller
     public function index()
     {
         $certificates = AcaCertificateParameter::with(['course'])
-            ->orderBy('created_at', 'desc')
+            ->leftJoin('aca_courses', 'aca_certificates_parameters.course_id', '=', 'aca_courses.id')
+            ->select('aca_certificates_parameters.*')
+            ->orderByRaw("COALESCE(aca_courses.description, 'General') asc")
+            ->orderBy('aca_certificates_parameters.course_id')
+            ->orderByDesc('aca_certificates_parameters.state')
+            ->orderBy('aca_certificates_parameters.for_module')
+            ->orderBy('aca_certificates_parameters.created_at', 'desc')
             ->paginate(10);
 
         // Formatear la fecha antes de devolver los datos
@@ -194,7 +201,9 @@ class AcaCertificateController extends Controller
             }
         }
 
-        $certificate = AcaCertificateParameter::create([
+        $layoutDefaults = $this->defaultCertificateLayout($imgWidth, $imgHeight, $backImgWidth, $backImgHeight);
+
+        $certificate = AcaCertificateParameter::create(array_merge($layoutDefaults, [
             'course_id' => $request->get('course_id') ?? null,
             'certificate_img' => $path,
             'certificate_img_width' => $imgWidth,
@@ -212,9 +221,123 @@ class AcaCertificateController extends Controller
             'back_content_type' => $request->get('back_content_type'),
             'back_content_type_module' => $request->get('back_content_type_module'),
             'has_reverse' => $request->get('has_reverse') ? true : false,
-        ]);
+        ]));
+
+        if ($certificate->for_module) {
+            AcaCertificateModuleConfig::create([
+                'certificate_id' => $certificate->id,
+                'fontfamily_module_description' => 'Poppins-Light.ttf',
+                'font_align_module_description' => 'center',
+                'font_vertical_module_description' => 'top',
+                'position_module_description_x' => (int) round(($imgWidth ?: 1550) / 2),
+                'position_module_description_y' => (int) round(($imgHeight ?: 1096) * 0.56),
+                'font_size_module_description' => 22,
+                'max_width_module_description' => (int) round(($imgWidth ?: 1550) * 0.70),
+                'text_align_module_description' => 'center',
+                'color_module_description' => '#000000',
+                'visible_module_description' => true,
+            ]);
+        }
 
         return redirect()->route('aca_certificate_edit', $certificate->id);
+    }
+
+    private function defaultCertificateLayout(?int $width, ?int $height, ?int $backWidth = null, ?int $backHeight = null): array
+    {
+        $width = $width ?: 1550;
+        $height = $height ?: 1096;
+        $backWidth = $backWidth ?: $width;
+        $backHeight = $backHeight ?: $height;
+
+        $centerX = (int) round($width / 2);
+        $backCenterX = (int) round($backWidth / 2);
+        $frontQrSize = 150;
+        $backQrSize = 150;
+
+        return [
+            'fontfamily_date' => 'Poppins-Light.ttf',
+            'font_align_date' => 'center',
+            'font_vertical_align_date' => 'top',
+            'position_date_x' => $centerX,
+            'position_date_y' => (int) round($height * 0.18),
+            'font_size_date' => 28,
+            'color_date' => '#000000',
+            'visible_date' => true,
+            'fontfamily_names' => 'Poppins-Light.ttf',
+            'font_align_names' => 'center',
+            'font_vertical_align_names' => 'top',
+            'position_names_x' => $centerX,
+            'position_names_y' => (int) round($height * 0.30),
+            'font_size_names' => 42,
+            'color_names' => '#000000',
+            'visible_names' => true,
+            'fontfamily_title' => 'Poppins-Light.ttf',
+            'font_align_title' => 'center',
+            'font_vertical_align_title' => 'top',
+            'position_title_x' => $centerX,
+            'position_title_y' => (int) round($height * 0.42),
+            'font_size_title' => 32,
+            'max_width_title' => (int) round($width * 0.68),
+            'color_title' => '#000000',
+            'visible_title' => true,
+            'position_qr_x' => 0,
+            'position_qr_y' => (int) round($height * 0.72),
+            'size_qr' => $frontQrSize,
+            'font_align_qr' => 'top-center',
+            'visible_image_qr' => true,
+            'fontfamily_description' => 'Poppins-Light.ttf',
+            'font_align_description' => 'center',
+            'font_vertical_align_description' => 'top',
+            'position_description_x' => $centerX,
+            'position_description_y' => (int) round($height * 0.56),
+            'font_size_description' => 22,
+            'max_width_description' => (int) round($width * 0.70),
+            'text_align_description' => 'center',
+            'content_type' => 'description',
+            'color_description' => '#000000',
+            'visible_description' => true,
+            'interspace_description' => 6,
+            'back_fontfamily_date' => 'Poppins-Light.ttf',
+            'back_font_align_date' => 'center',
+            'back_font_vertical_align_date' => 'top',
+            'back_position_date_x' => $backCenterX,
+            'back_position_date_y' => (int) round($backHeight * 0.16),
+            'back_font_size_date' => 24,
+            'back_color_date' => '#000000',
+            'back_visible_date' => true,
+            'back_fontfamily_names' => 'Poppins-Light.ttf',
+            'back_font_align_names' => 'center',
+            'back_font_vertical_align_names' => 'top',
+            'back_position_names_x' => $backCenterX,
+            'back_position_names_y' => (int) round($backHeight * 0.28),
+            'back_font_size_names' => 34,
+            'back_color_names' => '#000000',
+            'back_visible_names' => true,
+            'back_fontfamily_title' => 'Poppins-Light.ttf',
+            'back_font_align_title' => 'center',
+            'back_font_vertical_align_title' => 'top',
+            'back_position_title_x' => $backCenterX,
+            'back_position_title_y' => (int) round($backHeight * 0.40),
+            'back_font_size_title' => 28,
+            'back_max_width_title' => (int) round($backWidth * 0.68),
+            'back_color_title' => '#000000',
+            'back_visible_title' => true,
+            'back_fontfamily_description' => 'Poppins-Light.ttf',
+            'back_font_align_description' => 'center',
+            'back_font_vertical_align_description' => 'top',
+            'back_position_description_x' => $backCenterX,
+            'back_position_description_y' => (int) round($backHeight * 0.52),
+            'back_font_size_description' => 20,
+            'back_max_width_description' => (int) round($backWidth * 0.70),
+            'back_text_align_description' => 'center',
+            'back_color_description' => '#000000',
+            'back_visible_description' => true,
+            'back_position_qr_x' => (int) round(($backWidth - $backQrSize) / 2),
+            'back_position_qr_y' => (int) round($backHeight * 0.72),
+            'back_size_qr' => $backQrSize,
+            'back_font_align_qr' => 'top-left',
+            'back_visible_qr' => true,
+        ];
     }
 
     public function edit($id)
@@ -226,6 +349,40 @@ class AcaCertificateController extends Controller
         return Inertia::render('Academic::Certificates/Edit', [
             'certificate' => $certificate,
             'gradeConfig' => $gradeConfig,
+        ]);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (! Hash::check($request->password, Auth::user()->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La contraseña es incorrecta.',
+            ], 422);
+        }
+
+        $certificate = AcaCertificateParameter::findOrFail($id);
+
+        foreach ([
+            $certificate->certificate_img,
+            $certificate->back_certificate_img,
+            $certificate->certificate_img_finished,
+            $certificate->back_certificate_img_finished,
+        ] as $path) {
+            if ($path) {
+                Storage::disk('public')->delete(ltrim(str_replace('\\', '/', $path), '/'));
+            }
+        }
+
+        $certificate->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Certificado eliminado correctamente.',
         ]);
     }
 
@@ -480,6 +637,7 @@ class AcaCertificateController extends Controller
                 $acaCertificate->font_size_description = $request->get('font_size_description');
                 $acaCertificate->max_width_description = $request->get('max_width_description');
                 $acaCertificate->text_align_description = $request->get('text_align_description');
+                $acaCertificate->content_type = $request->get('content_type');
                 $acaCertificate->interspace_description = $request->get('interspace_description') ?? null;
                 $acaCertificate->color_description = $request->get('color_description');
                 $acaCertificate->visible_description = $request->get('visible_description');
@@ -688,6 +846,13 @@ class AcaCertificateController extends Controller
 
         $fullPath = null;
 
+        if ($request->get('render_preview_client')) {
+            return response()->json([
+                'success' => true,
+                'image' => null,
+            ]);
+        }
+
         // Generar imagen para anverso (cases 1-5, 11) y reverso (cases 6-9, 12, 13, 14, 15)
         $generateForFront = in_array($request->get('action_type'), [1, 2, 3, 4, 5, 11]);
         $generateForBack = in_array($request->get('action_type'), [6, 7, 8, 9, 12, 13, 14, 15]);
@@ -762,35 +927,37 @@ class AcaCertificateController extends Controller
         ]);
     }
 
-    public function generateCertificateStudent($id)
+    public function generateCertificateStudent(Request $request, $id)
     {
         $xcer = AcaCertificate::find($id);
 
-        $student = AcaStudent::where('id', $xcer->student_id)->first();
+        if (! $xcer) {
+            return response()->json(['message' => 'Certificado no encontrado.'], 404);
+        }
+
+        $student = AcaStudent::with('person')->where('id', $xcer->student_id)->first();
+
+        if (! $student) {
+            return response()->json(['message' => 'Estudiante no encontrado.'], 404);
+        }
 
         $student_id = $student->id;
         $course_id = $xcer->course_id;
 
         $autoCertificate = new CertificateImage;
 
-        $certificateParameter = AcaCertificateParameter::where('course_id', $course_id)
-            ->where('for_module', false)
-            ->where('state', true)
-            ->first();
+        $certificateParameter = $this->resolveCertificateParameter($course_id, false);
 
         $certificate_id = null;
 
         if ($certificateParameter) {
             $certificate_id = $certificateParameter->id;
         } else {
-            $certificateParameter = AcaCertificateParameter::whereNull('course_id')
-                ->where('for_module', false)
-                ->where('state', true)
-                ->first();
-            if (!$certificateParameter) {
-                return response()->json(['message' => 'Falta configuración del administrador.'], 404);
-            }
-            $certificate_id = $certificateParameter->id;
+            return response()->json(['message' => 'Falta configuración del administrador.'], 404);
+        }
+
+        if ($request->boolean('preview')) {
+            return response()->json($this->certificatePreviewPayload($xcer, $student, $certificateParameter));
         }
 
         if ($certificate_id) {
@@ -837,6 +1004,290 @@ class AcaCertificateController extends Controller
      * @param  int  $module_id  ID del módulo
      * @return response Descarga la imagen del certificado
      */
+    private function certificatePreviewPayload(AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter): array
+    {
+        $course = AcaCourse::with([
+            'modules' => function ($query) {
+                $query->orderBy('position');
+            },
+            'modules.themes' => function ($query) {
+                $query->orderBy('position');
+            },
+        ])->find($certificate->course_id);
+
+        $sides = [
+            $this->certificateSidePayload($certificate, $student, $parameter, $course, 'front'),
+        ];
+
+        if ($parameter->has_reverse && $parameter->back_certificate_img) {
+            $sides[] = $this->certificateSidePayload($certificate, $student, $parameter, $course, 'back');
+        }
+
+        return [
+            'success' => true,
+            'file_name' => 'certificado_'.$student->id.'_'.$certificate->course_id,
+            'download_url' => route('aca_image_download', ['id' => $certificate->id]),
+            'sides' => $sides,
+        ];
+    }
+
+    private function resolveCertificateParameter(?int $courseId, bool $forModule = false): ?AcaCertificateParameter
+    {
+        $baseQuery = AcaCertificateParameter::where('for_module', $forModule);
+
+        if ($courseId) {
+            $certificate = (clone $baseQuery)
+                ->where('course_id', $courseId)
+                ->where('state', true)
+                ->latest('id')
+                ->first();
+
+            if ($certificate) {
+                return $certificate;
+            }
+        }
+
+        $certificate = (clone $baseQuery)
+            ->whereNull('course_id')
+            ->where('state', true)
+            ->latest('id')
+            ->first();
+
+        if ($certificate) {
+            return $certificate;
+        }
+
+        return null;
+    }
+
+    private function certificateSidePayload(AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter, ?AcaCourse $course, string $side): array
+    {
+        $isBack = $side === 'back';
+        $imagePath = $isBack ? $parameter->back_certificate_img : $parameter->certificate_img;
+        $imageSize = $this->certificateImageSize($imagePath);
+        $configuredWidth = (int) ($isBack ? $parameter->back_certificate_img_width : $parameter->certificate_img_width);
+        $configuredHeight = (int) ($isBack ? $parameter->back_certificate_img_height : $parameter->certificate_img_height);
+        $width = $configuredWidth > 0 ? $configuredWidth : (int) ($imageSize['width'] ?? 1550);
+        $height = $configuredHeight > 0 ? $configuredHeight : (int) ($imageSize['height'] ?? 1096);
+
+        return [
+            'key' => $side,
+            'label' => $isBack ? 'Reverso' : 'Anverso',
+            'width' => $width,
+            'height' => $height,
+            'base_image' => $this->certificateStorageUrl($imagePath),
+            'texts' => $this->certificateTextItems($certificate, $student, $parameter, $course, $side),
+            'contents' => $this->certificateContentItems($parameter, $course, $side),
+            'qr' => $this->certificateQrItem($certificate, $student, $parameter, $side),
+        ];
+    }
+
+    private function certificateTextItems(AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter, ?AcaCourse $course, string $side): array
+    {
+        $texts = [];
+        $studentName = $student->person->full_name ?? '';
+        $courseTitle = $course->certificate_title ?? $course->description ?? 'Curso';
+
+        $this->pushCertificateText($texts, $parameter, $side, 'date', 'Lima, '.$this->certificateDateText($certificate, $student));
+        $this->pushCertificateText($texts, $parameter, $side, 'names', $studentName);
+        $this->pushCertificateText($texts, $parameter, $side, 'title', $courseTitle, (int) ($this->certificateField($parameter, $side, 'max_width_title') ?? 800));
+
+        if ($side === 'front') {
+            if (($parameter->content_type ?? 'description') !== 'table') {
+                $this->pushCertificateText($texts, $parameter, $side, 'description', $course->certificate_description ?? '', (int) ($parameter->max_width_description ?? 800), true);
+            }
+        } elseif ($parameter->back_content_show_manual) {
+            $this->pushCertificateText($texts, $parameter, $side, 'description', $parameter->back_description ?? '', (int) ($parameter->back_max_width_description ?? 800), true);
+        }
+
+        return $texts;
+    }
+
+    private function pushCertificateText(array &$texts, AcaCertificateParameter $parameter, string $side, string $field, ?string $text, ?int $width = null, bool $multiline = false): void
+    {
+        if (! $text || ! $this->certificateField($parameter, $side, 'visible_'.$field)) {
+            return;
+        }
+
+        $fontSize = (int) ($this->certificateField($parameter, $side, 'font_size_'.$field) ?? 18);
+
+        $texts[] = [
+            'id' => $side.'-'.$field,
+            'text' => $text,
+            'x' => (float) ($this->certificateField($parameter, $side, 'position_'.$field.'_x') ?? 0),
+            'y' => (float) ($this->certificateField($parameter, $side, 'position_'.$field.'_y') ?? 0),
+            'font_size' => $fontSize,
+            'font_family' => $this->certificateFontFamily($this->certificateField($parameter, $side, 'fontfamily_'.$field)),
+            'color' => $this->certificateField($parameter, $side, 'color_'.$field) ?? '#000000',
+            'align' => $this->certificateField($parameter, $side, 'font_align_'.$field) ?? 'left',
+            'vertical_align' => $this->certificateField($parameter, $side, 'font_vertical_align_'.$field) ?? 'top',
+            'width' => $width,
+            'line_height' => $multiline ? 1.25 : 1,
+        ];
+    }
+
+    private function certificateContentItems(AcaCertificateParameter $parameter, ?AcaCourse $course, string $side): array
+    {
+        if (! $course) {
+            return [];
+        }
+
+        $items = [];
+
+        if ($side === 'front' && ($parameter->content_type ?? 'description') === 'table' && $parameter->visible_description) {
+            $items[] = $this->courseTablePayload(
+                'front-course-table',
+                $course,
+                (float) ($parameter->position_description_x ?? 0),
+                (float) ($parameter->position_description_y ?? 0),
+                (int) ($parameter->max_width_description ?? 800),
+                (int) ($parameter->font_size_description ?? 14),
+                $parameter->color_description ?? '#000000',
+                $this->certificateFontFamily($parameter->fontfamily_description),
+                'table'
+            );
+        }
+
+        if ($side === 'back' && ! $parameter->for_module && $parameter->back_visible_course) {
+            $items[] = $this->courseTablePayload(
+                'back-course-content',
+                $course,
+                (float) ($parameter->back_position_course_x ?? 0),
+                (float) ($parameter->back_position_course_y ?? 0),
+                (int) ($parameter->back_max_width_course ?? 800),
+                (int) ($parameter->back_font_size_course ?? 14),
+                $parameter->back_color_course ?? '#000000',
+                $this->certificateFontFamily($parameter->back_fontfamily_course),
+                $parameter->back_content_type ?? 'list'
+            );
+        }
+
+        return $items;
+    }
+
+    private function courseTablePayload(string $id, AcaCourse $course, float $x, float $y, int $width, int $fontSize, string $color, string $fontFamily, string $type): array
+    {
+        return [
+            'id' => $id,
+            'type' => $type,
+            'x' => $x,
+            'y' => $y,
+            'width' => $width,
+            'font_size' => $fontSize,
+            'color' => $color,
+            'font_family' => $fontFamily,
+            'modules' => $course->modules->map(function ($module) {
+                return [
+                    'title' => $module->description ?? '',
+                    'themes' => $module->themes->pluck('description')->filter()->values()->all(),
+                ];
+            })->values()->all(),
+        ];
+    }
+
+    private function certificateQrItem(AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter, string $side): ?array
+    {
+        $validationUrl = route('certificado_validar', [
+            'dni' => $student?->person?->number ?: 0,
+            'course_id' => $certificate->course_id ?: 0,
+        ]);
+
+        if ($side === 'front') {
+            if (! $parameter->visible_image_qr || ! $parameter->size_qr) {
+                return null;
+            }
+
+            return [
+                'text' => $validationUrl,
+                'x' => (float) ($parameter->position_qr_x ?? 0),
+                'y' => (float) ($parameter->position_qr_y ?? 0),
+                'size' => (float) ($parameter->size_qr ?? 120),
+                'align' => $parameter->font_align_qr ?? 'top-left',
+            ];
+        }
+
+        if (! $parameter->back_visible_qr || ! $parameter->back_size_qr) {
+            return null;
+        }
+
+        return [
+            'text' => $validationUrl,
+            'x' => (float) ($parameter->back_position_qr_x ?? 0),
+            'y' => (float) ($parameter->back_position_qr_y ?? 0),
+            'size' => (float) ($parameter->back_size_qr ?? 120),
+            'align' => 'top-left',
+        ];
+    }
+
+    private function certificateImageSize(?string $path): array
+    {
+        if (! $path) {
+            return [];
+        }
+
+        $normalizedPath = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
+        $fullPath = public_path('storage'.DIRECTORY_SEPARATOR.$normalizedPath);
+
+        if (! file_exists($fullPath)) {
+            return [];
+        }
+
+        $size = getimagesize($fullPath);
+
+        if (! $size) {
+            return [];
+        }
+
+        return [
+            'width' => $size[0],
+            'height' => $size[1],
+        ];
+    }
+
+    private function certificateStorageUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $normalizedPath = ltrim(str_replace('\\', '/', $path), '/');
+
+        return asset('storage/'.$normalizedPath);
+    }
+
+    private function certificateField(AcaCertificateParameter $parameter, string $side, string $field)
+    {
+        if ($side === 'back') {
+            $backField = str_starts_with($field, 'back_') ? $field : 'back_'.$field;
+
+            return $parameter->{$backField} ?? null;
+        }
+
+        return $parameter->{$field} ?? null;
+    }
+
+    private function certificateDateText(AcaCertificate $certificate, AcaStudent $student): string
+    {
+        $register = AcaCapRegistration::where('student_id', $student->id)
+            ->where('course_id', $certificate->course_id)
+            ->first();
+
+        if ($register && $register->certificate_date) {
+            return Carbon::parse($register->certificate_date)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+        }
+
+        return Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+    }
+
+    private function certificateFontFamily(?string $font): string
+    {
+        if (! $font) {
+            return 'Arial';
+        }
+
+        return str_replace(['-', '_'], ' ', str_replace(['.ttf', '.otf'], '', $font));
+    }
+
     public function downloadModuleCertificate($module_id)
     {
         // 1. Obtener estudiante actual

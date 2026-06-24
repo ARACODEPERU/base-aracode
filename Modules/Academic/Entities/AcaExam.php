@@ -24,6 +24,7 @@ class AcaExam extends Model
         'date_start',
         'date_end',
         'status',
+        'is_mock',
         'attempts',
         'duration_minutes',
         'file_resolved_name',
@@ -48,5 +49,21 @@ class AcaExam extends Model
     public function student_exams(): HasMany
     {
         return $this->hasMany(AcaStudentExam::class, 'exam_id');
+    }
+
+    /**
+     * Scope para filtrar solo exámenes regulares (no simulacros)
+     */
+    public function scopeRegular($query)
+    {
+        return $query->where('is_mock', false);
+    }
+
+    /**
+     * Scope para filtrar solo simulacros
+     */
+    public function scopeMock($query)
+    {
+        return $query->where('is_mock', true);
     }
 }

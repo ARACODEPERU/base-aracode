@@ -30,7 +30,6 @@ class AcaTeacher extends Model
     {
         return $this->hasMany(AcaTeacherCourse::class, 'teacher_id');
     }
-
     public function resumes()
     {
         return $this->hasMany(AcaTeachingResume::class, 'teacher_id', 'id');

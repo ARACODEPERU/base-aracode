@@ -23,7 +23,8 @@ class AcaModuleController extends Controller
             ->with('teachers.teacher.person')
             ->with([
                 'modules.themes.contents.exam.questions.answers',
-                'modules.exam'
+                'modules.exam',
+                'modules.mockExam'
             ])
             ->first();
 
@@ -144,12 +145,16 @@ class AcaModuleController extends Controller
             'date_start'       => 'required|date',
             'date_end'         => 'required|date|after_or_equal:date_start',
             'duration_minutes' => 'required|numeric|min:1',
-            'attempts'         => 'required|numeric|min:1',
+            'attempts'         => 'required|numeric|min:0',
             'status'           => 'required',
+            'is_mock'          => 'nullable|boolean',
             'answer_key_pdf'   => 'nullable|file|mimes:pdf|max:10240', // Max 10MB
         ]);
 
-        // 2. Preparar los datos básicos para la persistencia
+        // 2. Determinar si es simulacro
+        $isMock = $request->boolean('is_mock');
+
+        // 3. Preparar los datos básicos para la persistencia
         $data = [
             'description'      => $request->get('description'),
             'date_start'       => $request->get('date_start'),
@@ -157,9 +162,10 @@ class AcaModuleController extends Controller
             'duration_minutes' => (int) $request->get('duration_minutes'),
             'attempts'         => (int) $request->get('attempts'),
             'status'           => $request->get('status'),
+            'is_mock'          => $isMock,
         ];
 
-        // 3. Lógica de subida de archivo personalizada
+        // 4. Lógica de subida de archivo personalizada
         if ($request->hasFile('answer_key_pdf')) {
             $file = $request->file('answer_key_pdf');
 
@@ -180,11 +186,12 @@ class AcaModuleController extends Controller
             $data['file_resolved_path'] = $path;
         }
 
-        // 4. Update or Create basado en curso y módulo
+        // 5. Update or Create basado en curso, módulo y tipo (regular o mock)
         AcaExam::updateOrCreate(
             [
                 'course_id' => $request->course_id,
                 'module_id' => $request->module_id,
+                'is_mock' => $isMock,
             ],
             $data
         );

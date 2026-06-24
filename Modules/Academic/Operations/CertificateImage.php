@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Modules\Academic\Entities\AcaCapRegistration;
-use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaCertificateGradeConfig;
 use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaCourse;
@@ -151,9 +150,52 @@ class CertificateImage
             }
         } else {
             // Para el anverso, usar generación HTML
-            $descriptionText = $course = AcaCourse::find($this->course_id)->certificate_description ?? $textDefault;
+            $course = AcaCourse::find($this->course_id ?: $this->certificates_param->course_id);
+            $descriptionText = $course->certificate_description ?? $textDefault;
+            $frontContentType = $this->getField('content_type') ?? 'description';
 
-            if ($descriptionText && $this->getField('visible_description')) {
+            if ($this->getField('visible_description') && $frontContentType === 'table') {
+                $htmlGenerator = new CertificateGeneratorHtml;
+
+                $descContentWidth = (int) ($this->getField('max_width_description') ?? 800);
+                $descContentHeight = $this->certificates_param->certificate_img_height ?? 1550;
+                $contentData = $course
+                    ? $htmlGenerator->prepareCourseContent($course, false)
+                    : $htmlGenerator->getExampleData('table');
+
+                $viewData = array_merge($contentData, [
+                    'canvasWidth' => $descContentWidth,
+                    'canvasHeight' => $descContentHeight,
+                    'posX' => 10,
+                    'posY' => 10,
+                    'maxWidth' => $descContentWidth,
+                    'fontFamily' => $this->getField('fontfamily_description') ?? 'arial.ttf',
+                    'fontSize' => (int) ($this->getField('font_size_description') ?? 14),
+                    'color' => $this->getField('color_description') ?? '#000000',
+                    'lineHeight' => (int) ($this->getField('font_size_description') ?? 14) + ((int) ($this->getField('interspace_description') ?? 4)),
+                    'textAlign' => $this->getField('text_align_description') ?? 'left',
+                    'showCourseContent' => true,
+                    'showModuleContent' => false,
+                    'moduleName' => '',
+                    'showExamGrade' => false,
+                    'showThemes' => true,
+                    'examGrade' => [],
+                    'examFontFamily' => 'arial.ttf',
+                    'examFontSize' => (int) ($this->getField('font_size_description') ?? 14),
+                    'examColor' => $this->getField('color_description') ?? '#000000',
+                ]);
+
+                $htmlPath = $htmlGenerator->generateFromView('content-table', $viewData, $descContentWidth, $descContentHeight);
+
+                if ($htmlPath && File::exists($htmlPath)) {
+                    $htmlImage = Image::make($htmlPath);
+                    $img->insert($htmlImage, 'top-left',
+                        (int) ($this->getField('position_description_x') ?? 50),
+                        (int) ($this->getField('position_description_y') ?? 300)
+                    );
+                    File::delete($htmlPath);
+                }
+            } elseif ($descriptionText && $this->getField('visible_description')) {
                 $htmlGenerator = new CertificateGeneratorHtml;
 
                 // Dimensiones
@@ -440,14 +482,9 @@ class CertificateImage
 
         // QR solo para anverso
         if ($type === 'front') {
-            $certificate = AcaCertificate::where('course_id', $course_id)
-                ->where('student_id', $student_id)
-                ->first();
-
-            $certificate_id = $certificate ? $certificate->id : '1';
             $generator = new QrCodeGenerator(300);
             $dir = public_path().DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'tmp_qr';
-            $cadenaqr = route('aca_image_download', ['id' => $certificate_id]);
+            $cadenaqr = $this->certificateValidationUrl($student_id, $course_id);
 
             $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10).'.png', 8, 2);
             $qr = Image::make($qr_path);
@@ -467,11 +504,9 @@ class CertificateImage
 
         // QR del reverso (cuando type es back)
         if ($this->type === 'back' && $this->getField('back_visible_qr')) {
-            $certificate = null;
-            $certificate_id = $certificate ? $certificate->id : '1';
             $generator = new QrCodeGenerator(300);
             $dir = public_path().DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'tmp_qr';
-            $cadenaqr = route('aca_image_download', ['id' => $certificate_id]);
+            $cadenaqr = $this->certificateValidationUrl($student_id, $course_id);
 
             $qr_path = $generator->generateQR($cadenaqr, $dir, Str::random(10).'.png', 8, 2);
             $qr = Image::make($qr_path);
@@ -546,6 +581,21 @@ class CertificateImage
         return $this->certificates_param->{$field} ?? null;
     }
 
+    private function certificateValidationUrl($student_id, $course_id): string
+    {
+        $dni = 0;
+
+        if ($student_id) {
+            $student = AcaStudent::with('person')->find($student_id);
+            $dni = $student?->person?->number ?: 0;
+        }
+
+        return route('certificado_validar', [
+            'dni' => $dni,
+            'course_id' => $course_id ?: 0,
+        ]);
+    }
+
     /**
      * Obtiene las notas de examen por módulo para el estudiante
      *
@@ -563,7 +613,10 @@ class CertificateImage
         $index = 0;
 
         foreach ($modules as $module) {
-            $exam = AcaExam::where('module_id', $module->id)->first();
+            // Solo exámenes regulares (no simulacros)
+            $exam = AcaExam::where('module_id', $module->id)
+                ->where('is_mock', false)
+                ->first();
             if ($exam) {
                 $studentExam = AcaStudentExam::where('exam_id', $exam->id)
                     ->where('student_id', $this->student_id)

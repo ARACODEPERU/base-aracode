@@ -134,6 +134,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('students/send/accessmail/{personId}', [AcaStudentController::class, 'sendAccessMail'])
         ->name('aca_students_send_access_mail');
 
+    Route::middleware(['auth', 'permission:aca_estudiante_nuevo'])
+        ->get('students/send/password-recovery/{personId}', [AcaStudentController::class, 'sendPasswordRecoveryMail'])
+        ->name('aca_students_send_password_recovery_mail');
+
     Route::middleware(['middleware' => 'permission:aca_estudiante_editar'])
         ->get('students/edit/{id}', 'AcaStudentController@edit')
         ->name('aca_students_edit');
@@ -314,6 +318,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('dashboard/courses/registration/student/genero', 'AcademicController@getStudentsCourses')
         ->name('aca_student_registration_courses');
 
+    Route::post('update_tour_user', [AcademicController::class, 'updateTourUser'])
+        ->name('update_tour_user');
+
     // //subscriptions/////
     Route::middleware(['middleware' => 'permission:aca_suscripciones'])
         ->get('subscriptions/list', 'AcaSubscriptionTypeController@index')
@@ -367,6 +374,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
 
     Route::get('certificate/{id}/edit', [AcaCertificateController::class, 'edit'])
         ->name('aca_certificate_edit');
+
+    Route::delete('certificate/{id}/destroy', [AcaCertificateController::class, 'destroy'])
+        ->name('aca_certificate_destroy');
 
     Route::post('certificate/update/info', [AcaCertificateController::class, 'updateInfo'])
         ->name('aca_certificate_update_info');
@@ -446,9 +456,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->name('aca_student_exam_review_exams');
 
     Route::get('student/review/exams/table', [AcaExamController::class, 'getAlumnsExam'])->name('aca_student_exam_review_exams_table');
-    Route::middleware(['middleware' => 'permission:aca_cursos_revisar_examenes'])
-        ->post('student/review/exams/{id}/mark-qualified', [AcaExamController::class, 'markStudentExamAsQualified'])
-        ->name('aca_student_exam_mark_qualified');
     Route::post('student/grade/exam/response/store', [AcaExamAnswerController::class, 'gradeExamResponse'])->name('aca_student_grade_exam_response_store');
     // //////////////verificar datos///////////////////////////
     Route::post('buy/course/mercadopago', [MercadopagoController::class, 'createPreference'])->name('academic_create_preference_course');
@@ -722,3 +729,11 @@ Route::middleware(['auth'])->put('mercadopago/{id}/academic', [MercadopagoContro
 
 Route::middleware(['auth'])->get('thank/purchasing/{id}', [MercadopagoController::class, 'thankYou'])->name('web_gracias_por_comprar');
 Route::get('/certificado-validar/{dni?}/{course_id?}', [AcaCertificateController::class, 'certificado_validar'])->name('certificado_validar');
+
+Route::get('academic/student/password-recovery/{personId}', [AcaStudentController::class, 'passwordRecoveryForm'])
+    ->middleware(['guest', 'signed'])
+    ->name('aca_students_password_recovery_form');
+
+Route::post('academic/student/password-recovery/{personId}', [AcaStudentController::class, 'updateRecoveredPassword'])
+    ->middleware(['guest', 'signed'])
+    ->name('aca_students_password_recovery_update');

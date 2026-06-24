@@ -1518,7 +1518,6 @@ onMounted(async () => {
                                                 <option value="left">Izquierda</option>
                                                 <option value="center">Centro</option>
                                                 <option value="right">Derecha</option>
-                                                <option value="justify">Justificado</option>
                                             </select>
                                         </div>
                                         <div class="col-span-2">

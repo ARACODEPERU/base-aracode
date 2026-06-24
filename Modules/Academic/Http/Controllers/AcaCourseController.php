@@ -408,7 +408,7 @@ class AcaCourseController extends Controller
             'date_start' => 'required|date',
             'date_end' => 'required|date|after_or_equal:date_start',
             'duration_minutes' => 'required|numeric|min:1',
-            'attempts' => 'required|numeric|min:1',
+            'attempts' => 'required|numeric|min:0',
             'status' => 'required',
             'answer_key_pdf' => 'nullable|file|mimes:pdf|max:10240',
         ]);

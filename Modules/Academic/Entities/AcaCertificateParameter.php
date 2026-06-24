@@ -52,6 +52,7 @@ class AcaCertificateParameter extends Model
         'font_size_description',
         'max_width_description',
         'text_align_description',
+        'content_type',
         'color_description',
         'visible_description',
         'interspace_description',

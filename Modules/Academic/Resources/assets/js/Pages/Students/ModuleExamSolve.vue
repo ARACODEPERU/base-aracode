@@ -10,6 +10,7 @@
     import IconArrowLeft from '@/Components/vristo/icon/icon-arrow-left.vue';
     import IconArrowRight from '@/Components/vristo/icon/icon-arrow-right.vue';
     import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+    import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
 
     const props = defineProps({
         exam: { type: Object, default: () => ({}) },
@@ -28,12 +29,22 @@
     const isSubmitting = ref(false);
     const showReviewScreen = ref(false);
     const questionFilter = ref('all');
+    const showSuccessModal = ref(false);
 
     // Computed
-    const maxAttempts = computed(() => props.exam?.max_attempts || 1);
-    const attemptsUsed = computed(() => props.exam?.attempts_used || 1);
-    const canRetry = computed(() => props.exam?.can_retry || false);
-    const hasAttemptsLeft = computed(() => attemptsUsed.value < maxAttempts.value);
+    const maxAttempts = computed(() => props.exam?.max_attempts ?? 1);
+    const attemptsUsed = computed(() => props.exam?.attempts_used ?? 1);
+    const canRetry = computed(() => props.exam?.can_retry ?? false);
+    const isUnlimited = computed(() => maxAttempts.value === 0);
+    const hasAttemptsLeft = computed(() => isUnlimited.value || attemptsUsed.value < maxAttempts.value);
+    const attemptsLeftText = computed(() => {
+        if (isUnlimited.value) return '∞';
+        return maxAttempts.value - attemptsUsed.value;
+    });
+    const attemptsDisplayText = computed(() => {
+        if (isUnlimited.value) return 'Ilimitados';
+        return `${attemptsUsed.value} / ${maxAttempts.value}`;
+    });
 
     // Computed
     const currentQuestion = computed(() => props.exam.questions[currentQuestionIndex.value]);
@@ -42,6 +53,89 @@
     const savedCount = computed(() => Object.values(answers.value).filter(a => a.saved).length);
     const markedCount = computed(() => Object.values(answers.value).filter(a => a.marked).length);
     const progressPercent = computed(() => totalQuestions.value > 0 ? Math.round((savedCount.value / totalQuestions.value) * 100) : 0);
+
+    // Calcular puntaje máximo total del examen (suma de scores de todas las preguntas)
+    const totalMaxScore = computed(() => props.exam?.questions?.reduce((sum, q) => sum + (parseFloat(q.score) || 0), 0) || 0);
+
+    // Calcular nota mínima aprobatoria
+    // Fórmula: floor(puntaje_total / 2) + 1
+    // Ej: max 20 → 11, max 25 → 13, max 10 → 6
+    const minPassingGrade = computed(() => {
+        if (props.exam?.is_mock) {
+            // Para simulacros: cálculo dinámico según el puntaje total de preguntas
+            return Math.floor(totalMaxScore.value / 2) + 1;
+        }
+        // Para exámenes regulares: estándar de 11 (max 20)
+        return 11;
+    });
+
+    // Porcentaje de puntaje obtenido respecto al máximo
+    const scorePercentage = computed(() => {
+        if (!totalMaxScore.value) return 0;
+        return (props.examStudent?.punctuation / totalMaxScore.value) * 100;
+    });
+
+    // Datos del modal de éxito según el rango de porcentaje
+    const successLevel = computed(() => {
+        const pct = scorePercentage.value;
+        if (pct >= 100) {
+            return {
+                icon: '🏆',
+                title: '¡EXCELENTE!',
+                message: 'Estás preparado para certificarte. ¡Adelante!',
+                color: 'from-yellow-400 via-amber-500 to-orange-600',
+                emoji: '👑',
+            };
+        }
+        if (pct >= 90) {
+            return {
+                icon: '🎯',
+                title: '¡CASI PERFECTO!',
+                message: 'Felicidades, te falta muy poco para ser un especialista certificado.',
+                color: 'from-emerald-400 via-green-500 to-teal-600',
+                emoji: '💪',
+            };
+        }
+        if (pct >= 80) {
+            return {
+                icon: '⭐',
+                title: '¡MUY BIEN!',
+                message: 'Felicitaciones, estás muy cerca de la excelencia. ¡Sigue así!',
+                color: 'from-blue-400 via-blue-500 to-indigo-600',
+                emoji: '🔥',
+            };
+        }
+        if (pct >= 70) {
+            return {
+                icon: '🌟',
+                title: '¡FELICIDADES!',
+                message: 'Felicitaciones, ya estás casi listo para brindar el examen de Certificación.',
+                color: 'from-purple-400 via-purple-500 to-pink-600',
+                emoji: '📚',
+            };
+        }
+        if (pct >= 60) {
+            return {
+                icon: '💡',
+                title: '¡BIEN HECHO!',
+                message: 'Felicitaciones, estás a punto de convertirte en un experto. ¡Sigue preparándote!',
+                color: 'from-sky-400 via-cyan-500 to-blue-600',
+                emoji: '📖',
+            };
+        }
+        // Aprobó pero con menos del 60%
+        return {
+            icon: '✅',
+            title: '¡APROBASTE!',                message: 'Felicitaciones, aprobaste pero debes seguir estudiando para tener más dominio sobre el tema.',
+            color: 'from-amber-400 via-yellow-500 to-orange-600',
+            emoji: '📝',
+        };
+    });
+
+    // Abrir modal de éxito
+    const openSuccessModal = () => {
+        showSuccessModal.value = true;
+    };
 
     const isCurrentQuestionMarked = computed(() => {
         if (!currentQuestion.value) return false;
@@ -340,6 +434,10 @@
         }, {
             onFinish: () => {
                 examFinish.value = true;
+                // Abrir modal si es simulacro aprobado (funciona también en reintentos)
+                if (props.exam?.is_mock && props.examStudent?.punctuation >= minPassingGrade.value && props.examStudent.status !== 'revision_pendiente') {
+                    setTimeout(() => openSuccessModal(), 400);
+                }
             }
         });
     };
@@ -348,7 +446,7 @@
     const retryExam = async () => {
         const result = await Swal2.fire({
             title: '¿Reintentar examen?',
-            text: `Esto reiniciará todas tus respuestas. Has usado ${attemptsUsed.value} de ${maxAttempts.value} intentos.`,
+            text: `Esto reiniciará todas tus respuestas. Has usado ${attemptsUsed.value} de ${isUnlimited.value ? '∞' : maxAttempts.value} intentos.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, reintentar',
@@ -529,11 +627,17 @@
     onMounted(() => {
         if (props.examStudent.finished_at || props.examStudent.status === 'terminado' || props.examStudent.status === 'revision_pendiente' || props.examStudent.status === 'calificado') {
             examFinish.value = true;
+            // Abrir modal si es simulacro aprobado
+            if (props.exam?.is_mock && props.examStudent?.punctuation >= minPassingGrade.value && props.examStudent.status !== 'revision_pendiente') {
+                setTimeout(() => openSuccessModal(), 400);
+            }
         } else {
             showStartWarningModal();
         }
     });
-    onUnmounted(() => stopTimer());
+    onUnmounted(() => {
+        stopTimer();
+    });
 </script>
 <template>
     <AppLayout :title="exam.description">
@@ -576,17 +680,127 @@
 
         <!-- Examen -->
         <template v-else>
+            <!-- 🎉 Modal de Celebración - Simulacro Aprobado -->
+            <TransitionRoot appear :show="showSuccessModal" as="template">
+                <Dialog as="div" @close="showSuccessModal = false" class="relative z-50">
+                    <TransitionChild as="template" enter="duration-500 ease-out" enter-from="opacity-0" enter-to="opacity-100" leave="duration-300 ease-in" leave-from="opacity-100" leave-to="opacity-0">
+                        <DialogOverlay class="fixed inset-0 bg-[black]/70 backdrop-blur-sm" />
+                    </TransitionChild>
+
+                    <div class="fixed inset-0 overflow-y-auto">
+                        <div class="flex min-h-full items-center justify-center p-4">
+                            <TransitionChild
+                                as="template"
+                                enter="duration-500 ease-out"
+                                enter-from="opacity-0 scale-50"
+                                enter-to="opacity-100 scale-100"
+                                leave="duration-300 ease-in"
+                                leave-from="opacity-100 scale-100"
+                                leave-to="opacity-0 scale-50"
+                            >
+                                <DialogPanel class="relative w-full max-w-lg transform overflow-hidden rounded-3xl shadow-2xl transition-all">
+                                    <!-- Gradiente de fondo según nivel -->
+                                    <div :class="'relative overflow-hidden bg-gradient-to-br ' + successLevel.color">
+                                        <!-- Decoraciones -->
+                                        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                                            <svg class="absolute -top-8 -right-8 w-40 h-40 text-white/10" fill="currentColor" viewBox="0 0 640 512">
+                                                <path d="M256 0C256 68.4 200.4 124 132 132C132 200.4 76.4 256 8 256C76.4 256 132 311.6 132 380C200.4 380 256 435.6 256 504C256 435.6 311.6 380 380 380C380 311.6 435.6 256 504 256C435.6 256 380 200.4 380 132C311.6 132 256 68.4 256 0z"/>
+                                            </svg>
+                                            <svg class="absolute -bottom-10 -left-10 w-48 h-48 text-white/10" fill="currentColor" viewBox="0 0 640 512">
+                                                <path d="M256 0C256 68.4 200.4 124 132 132C132 200.4 76.4 256 8 256C76.4 256 132 311.6 132 380C200.4 380 256 435.6 256 504C256 435.6 311.6 380 380 380C380 311.6 435.6 256 504 256C435.6 256 380 200.4 380 132C311.6 132 256 68.4 256 0z"/>
+                                            </svg>
+                                            <div class="absolute top-4 right-8 w-2 h-2 bg-white/30 rounded-full"></div>
+                                            <div class="absolute bottom-6 left-12 w-3 h-3 bg-white/20 rounded-full"></div>
+                                            <div class="absolute top-12 left-8 w-1.5 h-1.5 bg-white/25 rounded-full"></div>
+                                        </div>
+
+                                        <div class="relative p-8 text-center">
+                                            <!-- Botón cerrar -->
+                                            <button @click="showSuccessModal = false" class="absolute top-3 right-3 text-white/60 hover:text-white transition-colors">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
+
+                                            <!-- Icono grande animado -->
+                                            <div class="flex justify-center mb-6">
+                                                <span class="text-7xl md:text-8xl animate-bounce" style="animation-duration: 1.2s">{{ successLevel.icon }}</span>
+                                            </div>
+
+                                            <!-- Título -->
+                                            <h2 class="text-3xl md:text-4xl font-black text-white mb-3 drop-shadow-lg tracking-wide">
+                                                {{ successLevel.title }}
+                                            </h2>
+
+                                            <!-- Línea decorativa -->
+                                            <div class="flex items-center justify-center gap-2 mb-4">
+                                                <div class="h-0.5 w-12 bg-white/40 rounded-full"></div>
+                                                <div class="w-2 h-2 bg-white/60 rounded-full"></div>
+                                                <div class="h-0.5 w-12 bg-white/40 rounded-full"></div>
+                                            </div>
+
+                                            <!-- Mensaje personalizado -->
+                                            <p class="text-lg md:text-xl text-white/90 font-semibold leading-relaxed mb-6">
+                                                {{ successLevel.message }}
+                                            </p>
+
+                                            <!-- Detalle del puntaje -->
+                                            <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-5 mb-6 border border-white/20">
+                                                <div class="flex items-center justify-center gap-6">
+                                                    <div class="text-center">
+                                                        <p class="text-xs text-white/70 uppercase tracking-wider font-medium">Tu puntaje</p>
+                                                        <p class="text-4xl md:text-5xl font-black text-white drop-shadow-lg">{{ props.examStudent.punctuation }}</p>
+                                                    </div>
+                                                    <div class="w-px h-14 bg-white/20"></div>
+                                                    <div class="text-center">
+                                                        <p class="text-xs text-white/70 uppercase tracking-wider font-medium">Máximo</p>
+                                                        <p class="text-4xl md:text-5xl font-black text-white/80 drop-shadow-lg">{{ totalMaxScore }}</p>
+                                                    </div>
+                                                    <div class="w-px h-14 bg-white/20"></div>
+                                                    <div class="text-center">
+                                                        <p class="text-xs text-white/70 uppercase tracking-wider font-medium">Rendimiento</p>
+                                                        <p class="text-3xl md:text-4xl font-black text-white drop-shadow-lg">{{ Math.round(scorePercentage) }}%</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Emoji motivacional -->
+                                            <div class="text-5xl mb-4">
+                                                {{ successLevel.emoji }}
+                                            </div>
+
+                                            <!-- Nota -->
+                                            <p class="text-sm text-white/60 italic">
+                                                * Este simulacro no afecta tu promedio final del curso.
+                                            </p>
+
+                                            <!-- Botón Cerrar -->
+                                            <button
+                                                @click="showSuccessModal = false"
+                                                class="mt-6 px-8 py-3 bg-white/20 hover:bg-white/30 text-white font-bold rounded-xl transition-all duration-300 border border-white/30 hover:border-white/50 backdrop-blur-sm shadow-lg hover:shadow-xl"
+                                            >
+                                                Ver resultados
+                                            </button>
+                                        </div>
+                                    </div>
+                                </DialogPanel>
+                            </TransitionChild>
+                        </div>
+                    </div>
+                </Dialog>
+            </TransitionRoot>
+
             <div v-if="examFinish" class="pt-5 max-w-4xl mx-auto px-4">
                 <div class="panel overflow-hidden p-0">
 
                     <div :class="[
                         'p-6 text-white flex items-center justify-between rounded-t-2xl',
-                        props.examStudent.status === 'revision_pendiente' ? 'bg-primary' : (props.examStudent.punctuation >= 11 ? 'bg-success' : 'bg-danger')
+                        props.examStudent.status === 'revision_pendiente' ? 'bg-primary' : (props.examStudent.punctuation >= minPassingGrade ? 'bg-success' : 'bg-danger')
                     ]">
                         <div>
                             <h2 class="text-2xl font-bold flex items-center gap-3">
                                 <i v-if="props.examStudent.status === 'revision_pendiente'" class="fas fa-hourglass-half"></i>
-                                <i v-else-if="props.examStudent.punctuation >= 11" class="fas fa-trophy"></i>
+                                <i v-else-if="props.examStudent.punctuation >= minPassingGrade" class="fas fa-trophy"></i>
                                 <i v-else class="fas fa-redo"></i>
                                 {{ props.examStudent.status === 'revision_pendiente' ? 'Examen en Revisión' : 'Examen Finalizado' }}
                             </h2>
@@ -651,10 +865,11 @@
                                 <div>
                                     <p class="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
                                         <i class="fas fa-redo mr-2"></i>
-                                        Intentos: {{ attemptsUsed }} / {{ maxAttempts }}
+                                        Intentos: {{ attemptsDisplayText }}
                                     </p>
                                     <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                                        Te quedan {{ maxAttempts - attemptsUsed }} intento(s) disponible(s)
+                                        <template v-if="isUnlimited">Tienes intentos ilimitados</template>
+                                        <template v-else>Te quedan {{ attemptsLeftText }} intento(s) disponible(s)</template>
                                     </p>
                                 </div>
                                 <button
@@ -676,7 +891,7 @@
                                 Ver mis Respuestas (PDF)
                             </a>
 
-                            <a v-if="props.examStudent.punctuation >= 11 && props.examStudent.status === 'terminado'"
+                            <a v-if="props.examStudent.punctuation >= minPassingGrade && props.examStudent.status === 'terminado'"
                             :href="props.exam.file_resolved_path"
                             target="_blank"
                             class="btn btn-success flex items-center justify-center gap-2 px-6">
@@ -822,8 +1037,20 @@
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4 mb-4">
                         <div class="flex items-center justify-between flex-wrap gap-3">
                             <div>
-                                <h1 class="text-lg font-bold text-gray-900 dark:text-white">{{ exam.description }}</h1>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">{{ exam.description }}</h1>
+                                    <span v-if="exam.is_mock"
+                                        class="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 640 512">
+                                            <path d="M256 0C256 68.4 200.4 124 132 132C132 200.4 76.4 256 8 256C76.4 256 132 311.6 132 380C200.4 380 256 435.6 256 504C256 435.6 311.6 380 380 380C380 311.6 435.6 256 504 256C435.6 256 380 200.4 380 132C311.6 132 256 68.4 256 0z"/>
+                                        </svg>
+                                        SIMULACRO
+                                    </span>
+                                </div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Módulo: {{ exam.module.description }}</p>
+                                <p v-if="exam.is_mock" class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                    * Esta es una prueba práctica. La nota no afecta tu promedio final.
+                                </p>
                             </div>
                             <div class="flex items-center gap-4">
                                 <div class="text-center">
