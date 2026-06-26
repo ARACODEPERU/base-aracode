@@ -71,7 +71,7 @@ class AcaExamQuestionController extends Controller
 
         $this->validate($request, [
             'exam_id' => 'required',
-            'description' => 'required|string|max:1200',
+            'description' => 'required|string|max:5200',
             'score' => 'required',
             'type_answers' => 'required',
         ]);
