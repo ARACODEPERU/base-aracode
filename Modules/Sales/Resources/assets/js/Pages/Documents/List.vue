@@ -364,7 +364,7 @@
             title: 'Acciones'
         },
         { data: null, render: '#document', title: 'Nmr. Documento' },
-        { data: null, render: '#created',title: 'Fecha Registrado' },
+        { data: null, render: '#created_date',title: 'Fecha Registrado' },
         { data: 'invoice_broadcast_date', title: 'Fecha Emitido' },
         { data: 'invoice_due_date', title: 'Fecha de vencimiento' },
         { data: 'full_name', title: 'Cliente' },
@@ -506,8 +506,8 @@
                             </p>
                         </div>
                     </template>
-                    <template #created="props">
-                        {{ formatDate(props.rowData.document.created_at) }}
+                    <template #created_date="props">
+                        {{ formatDate(props.rowData.created_date) }}
                     </template>
                     <template #status="props">
                         <div>
