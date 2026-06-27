@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Academic\Entities\AcaExamAnswer;
+use Modules\Academic\Entities\AcaExamQuestion;
 use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudentExam;
 
@@ -37,8 +38,36 @@ class AcaExamAnswerController extends Controller
         $id = $request->get('id');
         $question_id = $request->get('question_id');
         $description = $request->get('description');
-        $score = $request->get('score');
-        $correct = $request->get('correct');
+        $score = (int) $request->get('score');
+        $correct = (int) $request->get('correct');
+
+        if ($correct && $question_id) {
+            $question = AcaExamQuestion::find($question_id);
+            if ($question && ($question->type_answers === 'Alternativas' || $question->type_answers === 'Varias respuestas')) {
+                if ($question->type_answers === 'Alternativas' && $score > $question->score) {
+                    return response()->json([
+                        'title' => 'Error',
+                        'message' => "El puntaje de la respuesta ({$score}) no puede superar los {$question->score} pts de la pregunta",
+                        'answer' => null
+                    ], 422);
+                }
+                if ($question->type_answers === 'Varias respuestas') {
+                    $existingSum = AcaExamAnswer::where('question_id', $question_id)
+                        ->where('correct', true)
+                        ->when($id, fn($q) => $q->where('id', '!=', $id))
+                        ->sum('score');
+                    $total = $existingSum + $score;
+                    if ($total > $question->score) {
+                        return response()->json([
+                            'title' => 'Error',
+                            'message' => "La suma de puntajes de respuestas correctas ({$total}) excede los {$question->score} pts de la pregunta",
+                            'answer' => null
+                        ], 422);
+                    }
+                }
+            }
+        }
+
         $answer = [];
         $title = 'Enhorabuena';
 

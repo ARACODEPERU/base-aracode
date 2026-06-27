@@ -788,7 +788,8 @@
         description: null,
         correct: 0,
         score: 0,
-        type_answers: null
+        type_answers: null,
+        question_score: 1,
     });
 
     const dateTime = ref({
@@ -950,10 +951,28 @@
         answersActive.value = item.id;
         formAnswer.question_id = item.id;
         formAnswer.type_answers = item.type_answers;
+        formAnswer.question_score = item.score;
     }
 
     const saveAnswer = () => {
         if(formAnswer.question_id){
+            if (formAnswer.correct && (formAnswer.type_answers === 'Alternativas' || formAnswer.type_answers === 'Varias respuestas')) {
+                if (formAnswer.type_answers === 'Alternativas') {
+                    if (Number(formAnswer.score) > Number(formAnswer.question_score)) {
+                        Swal2.fire({ title: 'Error', text: `El puntaje de la respuesta (${formAnswer.score}) no puede superar los ${formAnswer.question_score} pts de la pregunta`, icon: 'error', padding: '2em' });
+                        return;
+                    }
+                } else {
+                    const existingCorrectSum = (answersData.value || [])
+                        .filter(a => a.correct && (!formAnswer.id || a.id !== formAnswer.id))
+                        .reduce((sum, a) => sum + Number(a.score || 0), 0);
+                    const totalCorrectScore = existingCorrectSum + Number(formAnswer.score);
+                    if (totalCorrectScore > Number(formAnswer.question_score)) {
+                        Swal2.fire({ title: 'Error', text: `La suma de puntajes de respuestas correctas (${totalCorrectScore}) excede los ${formAnswer.question_score} pts de la pregunta`, icon: 'error', padding: '2em' });
+                        return;
+                    }
+                }
+            }
             formAnswer.processing = true;
             axios({
                 method: 'POST',
