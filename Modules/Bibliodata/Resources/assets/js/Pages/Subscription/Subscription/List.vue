@@ -60,6 +60,15 @@ const subscriberName = (sub) => {
     return sub.organization?.name || '—';
 };
 
+const formatDate = (date) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString('es-PE', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+    });
+};
+
 const cancelSub = (id) => {
     bibSwal({
         title: '¿Cancelar suscripción?',
@@ -175,8 +184,8 @@ const cancelSub = (id) => {
                             </td>
                             <td>{{ sub.plan?.name }}</td>
                             <td>{{ sub.book?.title || '—' }}</td>
-                            <td>{{ sub.starts_at }}</td>
-                            <td>{{ sub.ends_at || 'Vitalicia' }}</td>
+                            <td>{{ formatDate(sub.starts_at) }}</td>
+                            <td>{{ formatDate(sub.ends_at) || 'Vitalicia' }}</td>
                             <td>
                                 <span class="badge" :class="statusBadge(sub)">{{ statusLabel(sub) }}</span>
                             </td>

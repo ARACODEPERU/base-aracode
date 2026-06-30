@@ -35,7 +35,7 @@ class RolesController extends Controller
             $roles->latest();
         }
 
-        $roles = $roles->paginate(5)->onEachSide(2)->appends(request()->query());
+        $roles = $roles->paginate(10)->onEachSide(2)->appends(request()->query());
 
         return Inertia::render('Security::Roles/List', [
             'roles' => $roles,
