@@ -145,7 +145,7 @@
             answerForm.reset();
             answerForm.question_description = selectedQuestion.value.description;
             answerForm.question_id = selectedQuestion.value.id;
-            answerForm.score = selectedQuestion.value.score;
+            answerForm.score = selectedQuestion.value.type_answers === 'Varias respuestas' ? 0 : selectedQuestion.value.score;
             answerForm.correct = selectedQuestion.value.type_answers === 'Escribir' || selectedQuestion.value.type_answers === 'Subir Archivo' ? 0 : 0;
         }
         showAnswerModal.value = true;
@@ -182,10 +182,28 @@
             }
             answerForm.score = selectedQuestion.value.score;
             answerForm.correct = 0;
-        } else if (answerForm.correct) {
-            answerForm.score = selectedQuestion.value.score;
         } else {
-            answerForm.score = 0;
+            if (answerForm.correct && selectedQuestion.value.type_answers === 'Alternativas') {
+                if (Number(answerForm.score) > Number(selectedQuestion.value.score)) {
+                    Swal2.fire({ title: 'Error', text: `El puntaje de la respuesta (${answerForm.score}) no puede superar los ${selectedQuestion.value.score} pts de la pregunta`, icon: 'error', padding: '2em' });
+                    return;
+                }
+            }
+            if (answerForm.correct && selectedQuestion.value.type_answers === 'Varias respuestas') {
+                const existingCorrectSum = (selectedQuestion.value.answers || [])
+                    .filter(a => a.correct && (!answerForm.id || a.id !== answerForm.id))
+                    .reduce((sum, a) => sum + Number(a.score || 0), 0);
+                const totalCorrectScore = existingCorrectSum + Number(answerForm.score);
+                if (totalCorrectScore > Number(selectedQuestion.value.score)) {
+                    Swal2.fire({ title: 'Error', text: `La suma de puntajes de respuestas correctas (${totalCorrectScore}) excede los ${selectedQuestion.value.score} pts de la pregunta`, icon: 'error', padding: '2em' });
+                    return;
+                }
+            }
+            if (answerForm.correct && selectedQuestion.value.type_answers !== 'Varias respuestas') {
+                answerForm.score = selectedQuestion.value.score;
+            } else if (!answerForm.correct) {
+                answerForm.score = 0;
+            }
         }
 
         answerForm.processing = true;

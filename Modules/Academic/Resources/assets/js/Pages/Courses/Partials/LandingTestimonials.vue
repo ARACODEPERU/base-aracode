@@ -14,6 +14,7 @@ import IconMessage2 from '@/Components/vristo/icon/icon-message-2.vue';
 import IconInbox from '@/Components/vristo/icon/icon-inbox.vue';
 import IconUser from '@/Components/vristo/icon/icon-user.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
+import LandingCopyModal from './LandingCopyModal.vue';
 
 const props = defineProps({
     course: {
@@ -202,6 +203,31 @@ const confirmDelete = (index) => {
     });
 };
 
+const showCopyModal = ref(false);
+
+const handleCopiedTestimonials = (data) => {
+    if (!data) return;
+
+    formTestimonials.name = data.name || 'Testimonios';
+    formTestimonials.title = data.title || '';
+    formTestimonials.description = data.description || '';
+    formTestimonials.items = (data.items || []).map((item) => ({
+        name: item.name || '',
+        presentation: item.presentation || '',
+        description: item.description || '',
+        image: item.image || null,
+        image_preview: item.image ? '/storage/' + item.image : null,
+    }));
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Datos copiados',
+        text: 'La información de Testimonios se ha cargado desde la landing seleccionada. Revisa los datos y guarda los cambios.',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+};
+
 const saveTestimonialsSettings = () => {
     formTestimonials.post(route('aca_courses_landing_update_testimonials'), {
         forceFormData: true,
@@ -282,6 +308,21 @@ const saveTestimonialsSettings = () => {
                     ></textarea>
                     <InputError :message="formTestimonials.errors.description" class="mt-2" />
                 </div>
+            </div>
+
+            <!-- Botón Copiar de otra landing -->
+            <div class="flex justify-start mt-4">
+                <button
+                    type="button"
+                    @click="showCopyModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    Copiar Info de otra Landing
+                </button>
             </div>
         </div>
 
@@ -393,6 +434,16 @@ const saveTestimonialsSettings = () => {
             </button>
         </div>
     </div>
+
+    <!-- Modal Copiar Info -->
+    <LandingCopyModal
+        :show="showCopyModal"
+        :course-id="course.id"
+        section="testimonials"
+        section-label="Testimonios"
+        @close="showCopyModal = false"
+        @copied="handleCopiedTestimonials"
+    />
 
     <!-- Modal -->
     <ModalLarge :show="showModal" :onClose="closeModal" :icon="'/img/testimonial-icon.png'">

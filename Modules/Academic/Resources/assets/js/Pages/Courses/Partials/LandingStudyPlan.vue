@@ -10,6 +10,7 @@ import ModalLarge from '@/Components/ModalLarge.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
 import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
+import LandingCopyModal from './LandingCopyModal.vue';
 
 const props = defineProps({
     course: {
@@ -157,6 +158,35 @@ const confirmDelete = (index) => {
     });
 };
 
+const showCopyModal = ref(false);
+
+const handleCopiedStudyPlan = (data) => {
+    if (!data) return;
+
+    formStudyPlan.name = data.name || 'Plan de Estudios';
+    formStudyPlan.title = data.title || '';
+    formStudyPlan.description = data.description || '';
+    formStudyPlan.items = (data.items || []).map((item) => ({
+        number: item.number || 1,
+        title: item.title || '',
+        description: item.description || '',
+    }));
+
+    // Si hay imagen, preservar la ruta
+    if (data.image) {
+        formStudyPlan.image = data.image;
+        formStudyPlan.image_preview = '/storage/' + data.image;
+    }
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Datos copiados',
+        text: 'La información del Plan de Estudios se ha cargado desde la landing seleccionada. Revisa los datos y guarda los cambios.',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+};
+
 const saveStudyPlanSettings = () => {
     formStudyPlan.post(route('aca_courses_landing_update_study_plan'),{
         forceFormData: true,
@@ -238,6 +268,21 @@ const saveStudyPlanSettings = () => {
                         placeholder="Descripción de la sección..."
                     ></textarea>
                     <InputError :message="formStudyPlan.errors.description" class="mt-2" />
+                </div>
+
+                <!-- Botón Copiar de otra landing -->
+                <div class="md:col-span-2 flex justify-start">
+                    <button
+                        type="button"
+                        @click="showCopyModal = true"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    >
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        Copiar Info de otra Landing
+                    </button>
                 </div>
 
                 <div class="md:col-span-2">
@@ -381,6 +426,16 @@ const saveStudyPlanSettings = () => {
             </button>
         </div>
     </div>
+
+    <!-- Modal Copiar Info -->
+    <LandingCopyModal
+        :show="showCopyModal"
+        :course-id="course.id"
+        section="study_plan"
+        section-label="Plan de Estudios"
+        @close="showCopyModal = false"
+        @copied="handleCopiedStudyPlan"
+    />
 
     <!-- Modal -->
     <ModalLarge :show="showModal" :onClose="closeModal" :icon="null">

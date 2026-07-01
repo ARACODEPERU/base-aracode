@@ -7,6 +7,7 @@ import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import InputError from '@/Components/InputError.vue';
 import IconSave from "@/Components/vristo/icon/icon-save.vue";
 import IconUsers from '@/Components/vristo/icon/icon-users.vue';
+import LandingCopyModal from './LandingCopyModal.vue';
 
 const props = defineProps({
     course: {
@@ -80,9 +81,44 @@ const formStaff = useForm({
     teachers: [],
 });
 
+const showCopyModal = ref(false);
+
 const availableTeachers = computed(() => {
     return tempTeachers.value;
 });
+
+const handleCopiedStaff = (data) => {
+    if (!data) return;
+
+    // Copiar datos principales
+    formStaff.name = data.name || 'Nuestro Staff';
+    formStaff.title = data.title || '';
+    formStaff.description = data.description || '';
+
+    // Copiar docentes seleccionados
+    if (data.teachers && data.teachers.length > 0) {
+        data.teachers.forEach((copiedTeacher) => {
+            const match = tempTeachers.value.find(
+                (t) => t.teacher_id === copiedTeacher.teacher_id
+            );
+            if (match) {
+                match.selected = copiedTeacher.selected || false;
+                match.teacher_names =
+                    copiedTeacher.teacher_names || match.original_name;
+                match.teacher_ocupation =
+                    copiedTeacher.teacher_ocupation || match.original_occupation;
+            }
+        });
+    }
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Datos copiados',
+        text: 'La información de Nuestro Staff se ha cargado desde la landing seleccionada. Revisa los datos y guarda los cambios.',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+};
 
 const toggleTeacher = (teacherId) => {
     const index = tempTeachers.value.findIndex(t => t.teacher_id === teacherId);
@@ -189,6 +225,21 @@ const saveStaffSettings = () => {
                     <InputError :message="formStaff.errors.description" class="mt-2" />
                 </div>
             </div>
+
+            <!-- Botón Copiar de otra landing -->
+            <div class="flex justify-start mt-4">
+                <button
+                    type="button"
+                    @click="showCopyModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    Copiar Info de otra Landing
+                </button>
+            </div>
         </div>
 
         <!-- Docentes Disponibles -->
@@ -281,4 +332,14 @@ const saveStaffSettings = () => {
             </button>
         </div>
     </div>
+
+    <!-- Modal Copiar Info -->
+    <LandingCopyModal
+        :show="showCopyModal"
+        :course-id="course.id"
+        section="staff"
+        section-label="Nuestro Staff"
+        @close="showCopyModal = false"
+        @copied="handleCopiedStaff"
+    />
 </template>

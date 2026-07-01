@@ -191,6 +191,12 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::put('courses/{courseId}/landing/faq', 'AcaCourseLandingController@updateFaq')
         ->name('aca_courses_landing_update_faq');
 
+    Route::get('courses/landing/with-landing/{excludeCourseId}', [AcaCourseLandingController::class, 'getCoursesWithLanding'])
+        ->name('aca_courses_landing_with_landing');
+
+    Route::get('courses/{courseId}/landing/section/{section}', [AcaCourseLandingController::class, 'getSectionData'])
+        ->name('aca_courses_landing_get_section');
+
     Route::put('courses/{courseId}/landing', 'AcaCourseLandingController@update')
         ->name('aca_courses_landing_update');
 

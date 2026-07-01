@@ -290,7 +290,9 @@ class AcaCourseLandingController extends Controller
 
         $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
 
-        $path = null;
+        $existingImage = $landing->study_plan_section['image'] ?? null;
+
+        $path = $existingImage;
         $destination = 'uploads/landing/study_plan';
         $file = $request->file('image');
         if ($file) {
@@ -303,7 +305,8 @@ class AcaCourseLandingController extends Controller
                 $file_name,
                 'public'
             );
-
+        } elseif ($request->input('image') && is_string($request->input('image'))) {
+            $path = $request->input('image');
         }
 
 
@@ -462,6 +465,51 @@ class AcaCourseLandingController extends Controller
         $landing->update([
             'faq_section' => $faqUpdate,
         ]);
+    }
+
+    public function getCoursesWithLanding($excludeCourseId)
+    {
+        $courses = AcaCourse::whereHas('landing', function ($q) {
+                $q->whereNotNull('url_slug');
+            })
+            ->where('id', '!=', $excludeCourseId)
+            ->select('id', 'description')
+            ->orderBy('description')
+            ->get()
+            ->map(function ($course) {
+                return [
+                    'id' => $course->id,
+                    'description' => $course->description,
+                ];
+            });
+
+        return response()->json($courses);
+    }
+
+    public function getSectionData($courseId, $section)
+    {
+        $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
+
+        $sectionMap = [
+            'staff' => 'staff_section',
+            'testimonials' => 'testimonials_section',
+            'study_plan' => 'study_plan_section',
+            'faq' => 'faq_section',
+        ];
+
+        $column = $sectionMap[$section] ?? null;
+
+        if (! $column) {
+            return response()->json(['error' => 'Sección no válida'], 400);
+        }
+
+        $data = $landing->$column;
+
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+        }
+
+        return response()->json($data);
     }
 
     public function show($slug)
