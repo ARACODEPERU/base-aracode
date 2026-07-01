@@ -12,9 +12,6 @@ const props = defineProps({
 const emit = defineEmits(['update:pageZoom']);
 
 const sheetScalerStyle = computed(() => {
-    if (props.isMobileView) {
-        return {};
-    }
     const scale = props.pageZoom / 100;
     return {
         transform: `scale(${scale})`,

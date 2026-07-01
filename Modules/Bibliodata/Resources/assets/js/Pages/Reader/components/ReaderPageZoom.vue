@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps({
     modelValue: { type: Number, default: 100 },
@@ -32,13 +32,6 @@ onUnmounted(() => {
     window.removeEventListener('resize', updateMobile);
 });
 
-watch(isMobile, (mobile) => {
-    if (mobile) {
-        panelOpen.value = false;
-        emit('update:modelValue', 100);
-    }
-});
-
 const togglePanel = () => {
     panelOpen.value = !panelOpen.value;
 };
@@ -50,7 +43,7 @@ const stepZoom = (delta) => {
 </script>
 
 <template>
-    <div v-if="!isMobile" class="bib-page-zoom">
+    <div class="bib-page-zoom">
         <div class="bib-page-zoom__bar">
             <Transition name="bib-zoom-panel">
                 <div v-if="panelOpen" class="bib-page-zoom__panel" role="group" aria-label="Zoom de la página">

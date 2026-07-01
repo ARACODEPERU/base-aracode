@@ -95,12 +95,10 @@ class SaleDocumentController extends Controller
 
     public function tableDocument()
     {
-        $sales = (new Sale)->newQuery();
-
-        // $isAdmin = Auth::user()->hasRole('admin');
         $hasFullAccess = Auth::user()->hasAnyRole(['admin', 'Contabilidad']);
 
-        $sales = $sales->join('people', 'client_id', 'people.id')
+        $sales = (new Sale)->newQuery()
+            ->join('people', 'client_id', 'people.id')
             ->join('sale_documents', 'sale_documents.sale_id', 'sales.id')
             ->join('series', 'sale_documents.serie_id', 'series.id')
             ->select(
@@ -108,17 +106,8 @@ class SaleDocumentController extends Controller
                 'sales.client_id',
                 'sale_documents.id AS document_id',
                 'people.full_name',
-                'total',
-                'advancement',
-                'total_discount',
-                'payments',
-                'sales.created_at',
-                'sales.local_id',
                 'sale_documents.overall_total',
                 'sale_documents.invoice_status',
-                'sale_documents.invoice_response_description',
-                'sale_documents.invoice_response_code',
-                'sale_documents.invoice_notes',
                 'sale_documents.status',
                 'series.description AS serie',
                 'sale_documents.number',
@@ -133,17 +122,20 @@ class SaleDocumentController extends Controller
                 'sale_documents.client_email',
                 'sale_documents.invoice_broadcast_date',
                 'sale_documents.invoice_due_date',
-                'sale_documents.reason_cancellation',
-                'sale_documents.invoice_type_operation'
+                'sale_documents.invoice_response_description',
+                'sale_documents.invoice_response_code',
+                'sale_documents.invoice_notes',
+                'sale_documents.invoice_type_operation',
+                'sale_documents.created_at AS created_date'
             )
             ->whereIn('series.document_type_id', [1, 2])
-            ->when(! $hasFullAccess, function ($q) {
-                return $q->where('sales.user_id', Auth::id());
-            })
+            ->when(!$hasFullAccess, fn($q) => $q->where('sales.user_id', Auth::id()))
             ->with(['document.items', 'document.note'])
-            ->orderBy('sale_documents.invoice_broadcast_date', 'DESC');
+            ->orderBy('sale_documents.created_at', 'DESC');
 
-        return DataTables::of($sales)->toJson();
+        return DataTables::of($sales)
+            ->addColumn('created_date', fn($sale) => $sale->created_date)
+            ->toJson();
     }
 
     /**

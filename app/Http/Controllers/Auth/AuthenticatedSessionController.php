@@ -61,6 +61,15 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = Auth::user();
+        if ($user->hasRole('Lector') && $user->roles()->count() === 1) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => __('No tienes permiso para acceder a este panel. Usa el acceso de Biblioteca.'),
+            ]);
+        }
+
         $request->session()->regenerate();
 
         $redirectTo = $this->resolveSafeRedirectTo($request->input('redirect_to'));
