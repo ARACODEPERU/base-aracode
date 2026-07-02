@@ -10,6 +10,7 @@ import ModalLarge from '@/Components/ModalLarge.vue';
 import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
 import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
 import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
+import LandingCopyModal from './LandingCopyModal.vue';
 
 const props = defineProps({
     course: {
@@ -128,6 +129,30 @@ const removeFaqItem = (index) => {
     });
 };
 
+const showCopyModal = ref(false);
+
+const handleCopiedFaq = (data) => {
+    if (!data) return;
+
+    formFaq.name = data.name || 'Preguntas Frecuentes';
+    formFaq.title = data.title || '';
+    formFaq.description = data.description || '';
+    formFaq.items = (data.items || []).map((item) => ({
+        question: item.question || '',
+        answer: item.answer || '',
+        sort: item.sort || 1,
+        visible: item.visible !== undefined ? item.visible : true,
+    }));
+
+    Swal.fire({
+        icon: 'success',
+        title: 'Datos copiados',
+        text: 'La información de Preguntas Frecuentes se ha cargado desde la landing seleccionada. Revisa los datos y guarda los cambios.',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+};
+
 const saveFaqSettings = () => {
     formFaq.put(route('aca_courses_landing_update_faq', props.course.id), {
         errorBag: 'saveFaqSettings',
@@ -209,6 +234,21 @@ const saveFaqSettings = () => {
                     ></textarea>
                     <InputError :message="formFaq.errors.description" class="mt-2" />
                 </div>
+            </div>
+
+            <!-- Botón Copiar de otra landing -->
+            <div class="flex justify-start mt-4">
+                <button
+                    type="button"
+                    @click="showCopyModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                    <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    Copiar Info de otra Landing
+                </button>
             </div>
         </div>
 
@@ -315,6 +355,16 @@ const saveFaqSettings = () => {
             </button>
         </div>
     </div>
+
+    <!-- Modal Copiar Info -->
+    <LandingCopyModal
+        :show="showCopyModal"
+        :course-id="course.id"
+        section="faq"
+        section-label="Preguntas Frecuentes"
+        @close="showCopyModal = false"
+        @copied="handleCopiedFaq"
+    />
 
     <!-- Modal Large para Crear/Editar Pregunta -->
     <ModalLarge :show="showModal" :onClose="() => showModal = false" :icon="null">
