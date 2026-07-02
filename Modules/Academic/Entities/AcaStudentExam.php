@@ -29,6 +29,7 @@ class AcaStudentExam extends Model
 
     protected $casts = [
         'details' => 'array',
+        'punctuation' => 'decimal:2',
     ];
 
     public function student(): BelongsTo

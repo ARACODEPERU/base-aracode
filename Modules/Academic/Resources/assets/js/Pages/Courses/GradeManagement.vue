@@ -397,30 +397,30 @@
                             <strong>Certificados:</strong> Los alumnos que aprueben con promedio final mayor o igual a 11 podrán descargar su certificado.
                         </p>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full mb-6">
-                            <thead>
+                    <div class="overflow-auto" style="position: sticky; bottom: 0; max-height: calc(100vh - 320px);">
+                        <table class="w-full">
+                            <thead class="bg-white dark:bg-gray-800" style="position: sticky; top: 0; z-index: 30;">
                                 <!-- Fila de títulos de módulos -->
                                 <tr>
-                                    <th class="pl-4 pr-2 py-3 sticky left-0 z-20 min-w-[220px] border-r" rowspan="2">
+                                    <th class="pl-4 pr-2 py-3 sticky left-0 z-20 min-w-[220px] border-r bg-white dark:bg-gray-800" rowspan="2">
                                         Nombre del Estudiante
                                     </th>
                                     <th v-for="module in modulesData" :key="module.id" :colspan="module.has_mock_exam ? 4 : 3"
-                                        class="px-1 py-3 text-center border-r"
+                                        class="px-1 py-3 text-center border-r bg-white dark:bg-gray-800"
                                         :class="module.has_mock_exam ? 'min-w-[360px]' : 'min-w-[280px]'">
                                         {{ module.description }}
                                     </th>
-                                    <th class="pl-2 pr-4 py-3 text-center sticky right-0 z-20 min-w-[100px] border-l" rowspan="2">
+                                    <th class="pl-2 pr-4 py-3 text-center sticky right-0 z-20 min-w-[100px] border-l bg-white dark:bg-gray-800" rowspan="2">
                                         Promedio Final
                                     </th>
                                 </tr>
                                 <!-- Fila de headers: A y P, E, Sim, Prom -->
                                 <tr>
                                     <template v-for="module in modulesData" :key="'h-'+module.id">
-                                        <th class="px-1 py-1 text-center text-[10px] border-l">A y P (40%)</th>
-                                        <th class="px-1 py-1 text-center text-[10px] border-l">E (60%)</th>
-                                        <th v-if="module.has_mock_exam" class="px-1 py-1 text-center text-[10px] border-l bg-green-50 dark:bg-green-900/20">Simulacro</th>
-                                        <th class="px-1 py-1 text-center text-[10px] font-bold border-l">Prom</th>
+                                        <th class="px-1 py-1 text-center text-[10px] border-l bg-white dark:bg-gray-800">A y P (40%)</th>
+                                        <th class="px-1 py-1 text-center text-[10px] border-l bg-white dark:bg-gray-800">E (60%)</th>
+                                        <th v-if="module.has_mock_exam" class="px-1 py-1 text-center text-[10px] border-l bg-white dark:bg-gray-800">Simulacro</th>
+                                        <th class="px-1 py-1 text-center text-[10px] font-bold border-l bg-white dark:bg-gray-800">Prom</th>
                                     </template>
                                 </tr>
                             </thead>

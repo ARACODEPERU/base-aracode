@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCertificate;
+use Modules\Academic\Entities\AcaContent;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentGrade;
@@ -69,8 +70,14 @@ class AcaGradeManagementController extends Controller
             ];
         });
 
+        // Obtener IDs de contenidos válidos (videoconferencias Zoom) para filtrar participaciones
+        // Solo se consideran participaciones cuyo content_id corresponda a un contenido activo (is_file=3)
+        $validContentIds = AcaContent::whereHas('theme.module', function ($q) use ($courseId) {
+            $q->where('course_id', $courseId);
+        })->where('is_file', 3)->pluck('id');
+
         // Preparar datos de estudiantes con estructura para notas
-        $students = $registrations->map(function ($reg) use ($certificates, $modules, $courseId) {
+        $students = $registrations->map(function ($reg) use ($certificates, $modules, $courseId, $validContentIds) {
             $hasCertificate = $certificates->contains('student_id', $reg->student->id);
 
             // Verificar si existen calificaciones guardadas para este estudiante
@@ -111,8 +118,14 @@ class AcaGradeManagementController extends Controller
                     })->where('student_id', $reg->student->id)->get();
 
                 // Obtener participaciones del estudiante para este curso
+                // Solo se incluyen aquellas cuyo content_id corresponda a contenidos válidos (videoconferencias is_file=3)
+                // o que no tengan content_id (participaciones generales)
                 $studentParticipations = AcaStudentParticipation::where('course_id', $courseId)
                     ->where('student_id', $reg->student->id)
+                    ->where(function ($q) use ($validContentIds) {
+                        $q->whereIn('content_id', $validContentIds)
+                          ->orWhereNull('content_id');
+                    })
                     ->get();
 
                 $studentModules = $modules->map(function ($module) use ($studentExams, $studentMockExams, $studentParticipations) {
