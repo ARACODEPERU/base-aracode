@@ -575,7 +575,7 @@ class AcaCourseController extends Controller
             'course_id' => 'nullable|exists:aca_courses,id',
             'module_id' => 'nullable|exists:aca_modules,id',
             'theme_id' => 'nullable|exists:aca_themes,id',
-            'content_id' => 'nullable|exists:aca_contents,id',
+            'content_id' => 'required|exists:aca_contents,id',
             'participation_score' => 'nullable|numeric|min:0|max:20',
             'teacher_comment' => 'nullable|string',
         ]);
@@ -641,7 +641,7 @@ class AcaCourseController extends Controller
             'participations.*.course_id' => 'nullable|exists:aca_courses,id',
             'participations.*.module_id' => 'nullable|exists:aca_modules,id',
             'participations.*.theme_id' => 'nullable|exists:aca_themes,id',
-            'participations.*.content_id' => 'nullable|exists:aca_contents,id',
+            'participations.*.content_id' => 'required|exists:aca_contents,id',
             'participations.*.participation_score' => 'nullable|numeric|min:0|max:20',
             'participations.*.teacher_comment' => 'nullable|string',
         ]);

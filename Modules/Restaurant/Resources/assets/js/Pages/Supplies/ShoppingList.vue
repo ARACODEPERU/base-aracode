@@ -30,11 +30,11 @@ const printList = () => {
                 <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
                     <div class="w-full p-4 border-b border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700 no-print">
                         <div class="grid grid-cols-3">
-                            <div class="col-span-3 sm:col-span-2">
+                            <div class="col-span-3 sm:col-span-1">
                                 <h2 class="text-lg font-semibold text-black dark:text-white">Lista para el mercado</h2>
                                 <p class="text-sm text-gray-500 mt-1">Insumos con stock bajo o agotado</p>
                             </div>
-                            <div class="col-span-3 sm:col-span-1">
+                            <div class="col-span-3 sm:col-span-2">
                                 <Keypad>
                                     <template #botones>
                                         <button

@@ -414,7 +414,7 @@ import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
                                 Contenido
                             </label>
                             <select v-model="selectedContent" :disabled="!selectedTheme" class="form-select w-full">
-                                <option :value="null">Seleccionar contenido (opcional)</option>
+                                <option :value="null">Seleccionar contenido</option>
                                 <option v-for="content in contents" :key="content.id" :value="content.id">
                                     {{ content.description }}
                                 </option>
@@ -425,9 +425,9 @@ import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
                         <div class="flex items-end">
                             <button
                                 @click="searchStudents"
-                                :disabled="!selectedModule || loading"
+                                :disabled="!selectedModule || !selectedContent || loading"
                                 class="btn btn-primary w-full"
-                                :class="{ 'opacity-50': !selectedModule || loading }"
+                                :class="{ 'opacity-50': !selectedModule || !selectedContent || loading }"
                             >
                                 <font-awesome-icon :icon="faSearch" class="w-4 h-4 mr-2" />
                                 {{ loading ? 'Buscando...' : 'Buscar' }}
@@ -457,9 +457,9 @@ import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
                             </div>
                             <button
                                 @click="saveAllParticipations"
-                                :disabled="savingAll || filteredStudents.length === 0"
+                                :disabled="!selectedContent || savingAll || filteredStudents.length === 0"
                                 class="btn btn-success"
-                                :class="{ 'opacity-50': savingAll || filteredStudents.length === 0 }"
+                                :class="{ 'opacity-50': !selectedContent || savingAll || filteredStudents.length === 0 }"
                             >
                                 <IconLoader v-if="savingAll" class="animate-spin w-4 h-4 mr-2" />
                                 <font-awesome-icon v-else :icon="faSave" class="w-4 h-4 mr-2" />
@@ -536,7 +536,7 @@ import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
                                             @click="saveParticipation(student)"
                                             class="btn btn-success btn-sm"
                                             title="Guardar"
-                                            :disabled="isSaving(student.id)"
+                                            :disabled="!selectedContent || isSaving(student.id)"
                                         >
                                             <IconLoader v-if="isSaving(student.id)" class="w-4 h-4" />
                                             <font-awesome-icon v-else :icon="faCheck" class="w-4 h-4" />
