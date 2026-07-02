@@ -31,8 +31,12 @@ Route::middleware(['auth', 'verified'])->prefix('onlineshop')->group(function ()
     Route::post('dashboard/total/sales', [OnlineshopController::class, 'getTotalSales'])->name('onlineshop_dashboard_total_sales');
     Route::middleware(['middleware' => 'permission:onli_pedidos_nuevo'])->get('sales/create', [OnliSaleController::class, 'create'])->name('onlineshop_sales_create');
     Route::middleware(['middleware' => 'permission:onli_pedidos_nuevo'])->post('sales/store', [OnliSaleController::class, 'saveFinishSale'])->name('onlineshop_sales_store');
+    Route::middleware(['middleware' => 'permission:onli_pedidos'])->get('payment-problems', 'OnliPaymentProblemController@index')->name('onlineshop_payment_problems');
+    Route::middleware(['middleware' => 'permission:onli_pedidos'])->post('payment-problems/clean', 'OnliPaymentProblemController@cleanOldRecords')->name('onlineshop_payment_problems_clean');
 
 });
+
+use Modules\Onlineshop\Http\Controllers\OnliPaymentProblemController;
 
 Route::get('mercadopago/preference/{id}', 'OnliSaleController@getPreference')->name('onlineshop_mercadopago_preference');
 Route::post('client/account/store', 'OnliSaleController@store')->name('onlineshop_client_account_store');

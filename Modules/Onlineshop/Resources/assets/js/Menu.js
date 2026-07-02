@@ -1,7 +1,8 @@
 import {
     faCube,
     faGlobe,
-    faCircleDollarToSlot
+    faCircleDollarToSlot,
+    faTriangleExclamation
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuOnlineshop = {
@@ -45,6 +46,25 @@ const menuOnlineshop = {
                         <li>➕ <span>Crear pedido.</span></li>
                         <li>✉️ <span>Enviar correo con comprobante de venta.</span></li>
                         <li>🛒 <span>Ventas Especiales.</span></li>
+                    </ul>`,
+                placement: 'right'
+            }
+        },
+        {
+            route: route('onlineshop_payment_problems'),
+            status: false,
+            text: 'Problemas de Pago',
+            permissions: 'onli_pedidos',
+            icom: faTriangleExclamation,
+            info: {
+                title: "Problemas de Pago y Carritos Abandonados",
+                content: `<p class="text-sm text-gray-500 mb-3">
+                       Gestión de pagos inconclusos y carritos abandonados
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🔴 <span>Pagos aprobados sin completar registro.</span></li>
+                        <li>🟡 <span>Carritos abandonados (sin pago).</span></li>
+                        <li>🗑️ <span>Limpiar registros antiguos (+30 días).</span></li>
                     </ul>`,
                 placement: 'right'
             }
