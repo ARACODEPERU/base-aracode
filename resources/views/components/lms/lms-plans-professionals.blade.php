@@ -34,8 +34,8 @@
                                     <div class="text-center"
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <h2 class="fs-40 mb-0">PROFESIONAL</h2>
-                                        <h3 class="id-color mb-4">S/ 300.00 | Mensual</h3>
-                                        <h4>S/ 3,000.00 | Anual</h4>
+                                        <h3 class="id-color mb-4">S/ 329.00 | Mensual</h3>
+                                        <h4>S/ 3,290.00 | Anual</h4>
                                     </div>
 
                                     <div class="border-white-bottom-op-2 mb-4"
@@ -80,8 +80,8 @@
                                     <div class="text-center"
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <h2 class="fs-40 mb-0">ACADÉMICO</h2>
-                                        <h3 class="id-color mb-4">S/ 420.00 | Mensual</h3>
-                                        <h4>S/ 4,200.00 | Anual</h4>
+                                        <h3 class="id-color mb-4">S/ 449.00 | Mensual</h3>
+                                        <h4>S/ 4,490.00 | Anual</h4>
                                     </div>
 
                                     <div class="border-white-bottom-op-2 mb-4"
