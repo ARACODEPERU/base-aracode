@@ -458,10 +458,6 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
         height: auto;
         padding: 12mm 10mm 16mm;
     }
-
-    .bib-reader-page-stage {
-        overflow-x: hidden;
-    }
 }
 
 .bib-reader-welcome {
