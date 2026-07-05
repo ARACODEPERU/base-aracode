@@ -33,8 +33,8 @@
                                     <div class="text-center"
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <h2 class="fs-40 mb-0">EMPRESARIAL</h2>
-                                        <h3 class="id-color mb-4">S/ 520.00 | Mensual</h3>
-                                        <h4>S/ 5,200.00 | Anual</h4>
+                                        <h3 class="id-color mb-4">S/ 599.00 | Mensual</h3>
+                                        <h4>S/ 5,990.00 | Anual</h4>
                                     </div>
 
                                     <div class="border-white-bottom-op-2 mb-4"
@@ -83,8 +83,8 @@
                                     <div class="text-center"
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <h2 class="fs-40 mb-0">CORPORATIVO</h2>
-                                        <h3 class="id-color mb-4">S/ 650.00 | Mensual</h3>
-                                        <h4>S/ 6,500.00 | Anual</h4>
+                                        <h3 class="id-color mb-4">S/ 799.00 | Mensual</h3>
+                                        <h4>S/ 7,990.00 | Anual</h4>
                                     </div>
 
                                     <div class="border-white-bottom-op-2 mb-4"

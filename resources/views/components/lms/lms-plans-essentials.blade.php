@@ -33,8 +33,8 @@
                                     <div class="text-center"
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <h2 class="fs-40 mb-0">INICIAL</h2>
-                                        <h3 class="id-color mb-4">S/ 120.00 | Mensual</h3>
-                                        <h4>S/ 1,200.00 | Anual</h4>
+                                        <h3 class="id-color mb-4">S/ 149.00 | Mensual</h3>
+                                        <h4>S/ 1,490.00 | Anual</h4>
                                     </div>
 
                                     <div class="border-white-bottom-op-2 mb-4"
@@ -72,8 +72,8 @@
                                     <div class="text-center"
                                         style="background-size: cover; background-repeat: no-repeat;">
                                         <h2 class="fs-40 mb-0">EMPRENDEDOR</h2>
-                                        <h3 class="id-color mb-4">S/ 200.00 | Mensual</h3>
-                                        <h4>S/ 2,000.00 | Anual</h4>
+                                        <h3 class="id-color mb-4">S/ 229.00 | Mensual</h3>
+                                        <h4>S/ 2,290.00 | Anual</h4>
                                     </div>
 
                                     <div class="border-white-bottom-op-2 mb-4"
