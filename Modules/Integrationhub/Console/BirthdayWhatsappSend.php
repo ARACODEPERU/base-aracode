@@ -69,20 +69,21 @@ class BirthdayWhatsappSend extends Command
         $today = now();
 
         $people = Person::query()
-            ->with('country')
+            ->with(['country', 'user.roles'])
             ->whereNotNull('birthdate')
             ->whereNotNull('telephone')
             ->whereMonth('birthdate', $today->month)
             ->whereDay('birthdate', $today->day)
-            ->get(['telephone', 'email', 'short_name', 'country_id']);
+            ->get(['id', 'telephone', 'email', 'short_name', 'country_id']);
 
         $count = $people->count();
         $this->info("Se encontraron {$count} persona(s) que cumplen años hoy.");
 
         foreach ($people as $person) {
+            $role = $person->user?->roles->pluck('name')->first();
             $formattedPhone = $this->formatPhoneWithCountryCode($person->telephone, $person->country);
-            ProcessBirthdayWhatsapp::dispatch($formattedPhone, $person->email, $person->short_name);
-            $this->line("  → Job encolado para teléfono: {$person->telephone} → {$formattedPhone}");
+            ProcessBirthdayWhatsapp::dispatch($formattedPhone, $person->email, $person->short_name, $role);
+            $this->line("  → Job encolado para teléfono: {$person->telephone} → {$formattedPhone} (rol: {$role})");
         }
 
         $this->info("{$count} job(s) enviados al queue:work correctamente.");

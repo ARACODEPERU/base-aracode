@@ -810,6 +810,15 @@ class IntegrationhubController extends Controller
             ]
         );
 
+        // Auto-crear el registro para Saludo de cumpleaños de Docentes si no existe
+        IntegrationFlowId::firstOrCreate(
+            ['key' => 'birthday_greeting_teacher'],
+            [
+                'flow_id' => '1780844285916',
+                'label' => 'Saludo de cumpleaños para Docentes',
+            ]
+        );
+
         $flowIds = IntegrationFlowId::orderBy('key')->get();
 
         if (request()->wantsJson()) {

@@ -70,13 +70,14 @@ class Person extends Model
     {
         return $this->hasOne(AcaStudent::class, 'person_id');
     }
-    public function author()
-    {
-        return $this->hasOne(\Modules\Bibliodata\Entities\BibAuthor::class, 'person_id');
-    }
     public function resumes(): HasMany
     {
         return $this->hasMany(AcaTeachingResume::class, 'person_id');
+    }
+
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'person_id');
     }
 
     public function country(): HasOne

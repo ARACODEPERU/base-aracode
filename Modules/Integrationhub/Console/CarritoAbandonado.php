@@ -47,11 +47,11 @@ class CarritoAbandonado extends Command
 
             $phone = ($record->phone_country ? ltrim($record->phone_country, '+') : '') . $record->phone;
 
-           //Activar esto y mas adelante pasar el id de plantilla
-            // ProcessCarritoAbandonado::dispatch(
-            //     $record->id,
-            //     $phone
-            // );
+          //Activar esto y mas adelante pasar el id de plantilla
+            ProcessCarritoAbandonado::dispatch(
+                $record->id,
+                $phone
+            );
 
             $this->info("Job encolado para {$recipientEmail} (registro {$record->id}).");
         }
