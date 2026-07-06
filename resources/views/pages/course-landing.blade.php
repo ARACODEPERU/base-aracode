@@ -1087,7 +1087,7 @@ document.addEventListener('keydown', function(event) {
             const countrySelect = document.getElementById('countryPhoneSelect');
             const prefix = countrySelect.value;
             const phoneValue = formData.get('phone');
-            // Concatenar sin punto: +51943781600
+            // Concatenar sin punto: +51943555555
             formData.set('phone', prefix + phoneValue);
 
             var submitButton = document.getElementById('submitPageContactButton');
