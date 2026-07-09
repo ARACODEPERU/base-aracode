@@ -6,6 +6,8 @@
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import { router } from '@inertiajs/vue3';
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
+    import IconView from '@/Components/IconView.vue';
+    import IconDelete from '@/Components/IconDelete.vue';
 
     const props = defineProps({
         items: {
@@ -64,6 +66,48 @@
             return `+${item.phone_country} ${item.phone}`;
         }
         return item.phone || '-';
+    };
+
+    const deleteItem = (item) => {
+        const typeLabel = item.type === 'abandoned_cart' ? 'carrito abandonado' : 'registro de pago';
+        Swal.fire({
+            title: '¿Eliminar este registro?',
+            html: `Se eliminará el ${typeLabel} de <strong>${item.clie_full_name || item.email || '—'}</strong>. Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                axios.delete(route('onlineshop_payment_problems_destroy', { id: item.id }), {
+                    data: { type: item.type }
+                })
+                    .then((response) => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eliminado',
+                            text: response.data.message,
+                            padding: '2em',
+                            customClass: 'sweet-alerts',
+                        }).then(() => {
+                            router.reload({ preserveScroll: true });
+                        });
+                    })
+                    .catch((error) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.response?.data?.message || 'No se pudo eliminar el registro.',
+                            padding: '2em',
+                            customClass: 'sweet-alerts',
+                        });
+                    });
+            }
+        });
     };
 
     const cleanOldRecords = () => {
@@ -184,9 +228,10 @@
                                         <span class="text-sm whitespace-nowrap">{{ item.created_at }}</span>
                                     </td>
                                     <td class="text-center">
-                                        <button @click="openModalDetails(item)" class="btn btn-outline-primary px-3 py-1 text-xs">
-                                            <i class="fa fa-eye mr-1"></i> Ver
-                                        </button>
+                                        <div class="flex items-center justify-center gap-1">
+                                            <IconView @click="openModalDetails(item)" />
+                                            <IconDelete @click="deleteItem(item)" />
+                                        </div>
                                     </td>
                                 </tr>
                             </template>
