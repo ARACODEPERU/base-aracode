@@ -33,6 +33,7 @@ Route::middleware(['auth', 'verified'])->prefix('onlineshop')->group(function ()
     Route::middleware(['middleware' => 'permission:onli_pedidos_nuevo'])->post('sales/store', [OnliSaleController::class, 'saveFinishSale'])->name('onlineshop_sales_store');
     Route::middleware(['middleware' => 'permission:onli_pedidos'])->get('payment-problems', 'OnliPaymentProblemController@index')->name('onlineshop_payment_problems');
     Route::middleware(['middleware' => 'permission:onli_pedidos'])->post('payment-problems/clean', 'OnliPaymentProblemController@cleanOldRecords')->name('onlineshop_payment_problems_clean');
+    Route::middleware(['middleware' => 'permission:onli_pedidos'])->delete('payment-problems/destroy/{id}', 'OnliPaymentProblemController@destroy')->name('onlineshop_payment_problems_destroy');
 
 });
 
