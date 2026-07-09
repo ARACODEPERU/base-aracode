@@ -18,11 +18,11 @@ const typeLabel = computed(() => {
 </script>
 
 <template>
-    <div class="py-4 px-6">
-        <div class="bib-reader-cases-panel__detail-head">
+    <div class="py-3 px-4 sm:py-4 sm:px-6">
+        <!-- <div class="bib-reader-cases-panel__detail-head">
             <span class="bib-reader-cases-panel__detail-badge">{{ typeLabel }}</span>
             <h4 class="bib-reader-cases-panel__detail-title">{{ caseItem.title }}</h4>
-        </div>
+        </div> -->
 
         <div
             v-if="caseItem.type === 'editor'"

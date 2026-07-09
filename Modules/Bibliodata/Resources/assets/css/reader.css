@@ -458,6 +458,15 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
         height: auto;
         padding: 12mm 10mm 16mm;
     }
+
+    .bib-reader-case-content [style] {
+        text-align: left !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        float: none !important;
+    }
 }
 
 .bib-reader-welcome {

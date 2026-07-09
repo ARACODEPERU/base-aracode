@@ -58,7 +58,7 @@ const emit = defineEmits(['close']);
                                 <IconX class="h-5 w-5" />
                             </button>
 
-                            <div class="bib-reader-case-modal__header border-b border-slate-200 px-6 py-4 dark:border-zinc-700">
+                            <div class="bib-reader-case-modal__header border-b border-slate-200 px-4 sm:px-6 py-4 dark:border-zinc-700">
                                 <p class="text-xs font-medium uppercase tracking-wide text-cyan-600">
                                     Caso práctico
                                 </p>
@@ -67,7 +67,7 @@ const emit = defineEmits(['close']);
                                 </h3>
                             </div>
 
-                            <div class="bib-reader-case-modal__body max-h-[min(70vh,640px)] overflow-y-auto p-6">
+                            <div class="bib-reader-case-modal__body max-h-[min(70vh,640px)] overflow-y-auto p-4 sm:p-6">
                                 <div v-if="loading" class="flex justify-center py-12">
                                     <IconLoader class="h-10 w-10 animate-spin text-cyan-500" />
                                 </div>
