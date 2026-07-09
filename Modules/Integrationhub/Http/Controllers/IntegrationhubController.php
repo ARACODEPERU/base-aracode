@@ -96,32 +96,7 @@ class IntegrationhubController extends Controller
             'schedules.endpoint',
         ])->findOrFail($id);
 
-        $recentLogIds = $integration->logs()
-            ->orderBy('executed_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit(10)
-            ->pluck('id');
-
-        $recentBatchIds = $integration->logs()
-            ->whereNotNull('batch_id')
-            ->orderBy('executed_at', 'desc')
-            ->orderBy('id', 'desc')
-            ->limit(5)
-            ->pluck('batch_id')
-            ->unique()
-            ->values();
-
-        $integration->setRelation(
-            'logs',
-            $integration->logs()
-                ->where(function ($query) use ($recentLogIds, $recentBatchIds) {
-                    $query->whereIn('id', $recentLogIds)
-                        ->orWhereIn('batch_id', $recentBatchIds);
-                })
-                ->orderBy('executed_at', 'desc')
-                ->orderBy('id', 'desc')
-                ->get()
-        );
+        $integration->setRelation('logs', []);
 
         return Inertia::render('Integrationhub::Integration/Edit', [
             'integration' => $integration,
@@ -790,12 +765,21 @@ class IntegrationhubController extends Controller
             });
         }
 
+        if ($request->filled('date_from')) {
+            $query->where('executed_at', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('executed_at', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
+        }
+
+        $perPage = min((int) $request->input('per_page', 25), 100);
+
         return response()->json([
             'logs' => $query
                 ->orderBy('executed_at', 'desc')
                 ->orderBy('id', 'desc')
-                ->limit((int) $request->input('limit', 200))
-                ->get(),
+                ->paginate($perPage),
         ]);
     }
 
@@ -807,6 +791,15 @@ class IntegrationhubController extends Controller
             [
                 'flow_id' => '1780844285916',
                 'label' => 'Saludo de cumpleaños',
+            ]
+        );
+
+        // Auto-crear el registro para Saludo de cumpleaños de Docentes si no existe
+        IntegrationFlowId::firstOrCreate(
+            ['key' => 'birthday_greeting_teacher'],
+            [
+                'flow_id' => '1780844285916',
+                'label' => 'Saludo de cumpleaños para Docentes',
             ]
         );
 
@@ -1497,7 +1490,7 @@ class IntegrationhubController extends Controller
             ->whereNull('batch_id')
             ->orderBy('executed_at', 'desc')
             ->orderBy('id', 'desc')
-            ->limit(10)
+            ->limit(300)
             ->pluck('id');
 
         $integration->logs()

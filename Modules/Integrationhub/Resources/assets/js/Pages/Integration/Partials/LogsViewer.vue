@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Swal2 from 'sweetalert2';
 import axios from 'axios';
 import ModalLarge from '@/Components/ModalLarge.vue';
@@ -23,10 +23,18 @@ const statusFilter = ref('all');
 const batchFilter = ref('all');
 const searchText = ref('');
 const batchSearch = ref('');
+const dateFrom = ref('');
+const dateTo = ref('');
 const loadingLogs = ref(false);
 const currentLogs = ref([...props.logs]);
 const selectedLog = ref(null);
 const showLogModal = ref(false);
+
+// Paginación
+const currentPage = ref(1);
+const perPage = ref(25);
+const totalLogs = ref(0);
+const lastPage = ref(1);
 
 const filteredLogs = computed(() => {
     let logs = [...currentLogs.value];
@@ -44,6 +52,38 @@ const filteredLogs = computed(() => {
 
 const batchOptions = computed(() => {
     return [...new Set(currentLogs.value.map(log => log.batch_id).filter(Boolean))];
+});
+
+const fromRecord = computed(() => {
+    if (totalLogs.value === 0) return 0;
+    return (currentPage.value - 1) * perPage.value + 1;
+});
+
+const toRecord = computed(() => {
+    return Math.min(currentPage.value * perPage.value, totalLogs.value);
+});
+
+const paginationRange = computed(() => {
+    const range = [];
+    const delta = 2;
+    const left = Math.max(1, currentPage.value - delta);
+    const right = Math.min(lastPage.value, currentPage.value + delta);
+
+    if (left > 1) {
+        range.push(1);
+        if (left > 2) range.push('...');
+    }
+
+    for (let i = left; i <= right; i++) {
+        range.push(i);
+    }
+
+    if (right < lastPage.value) {
+        if (right < lastPage.value - 1) range.push('...');
+        range.push(lastPage.value);
+    }
+
+    return range;
 });
 
 const statusColors = {
@@ -136,8 +176,9 @@ const closeLogModal = () => {
     selectedLog.value = null;
 };
 
-const fetchLogs = async () => {
+const fetchLogs = async (page = 1) => {
     loadingLogs.value = true;
+    currentPage.value = page;
 
     try {
         const response = await axios.get(route('integrationhub_logs', props.integrationId), {
@@ -145,11 +186,18 @@ const fetchLogs = async () => {
                 status: statusFilter.value,
                 batch_id: batchSearch.value || (batchFilter.value !== 'all' ? batchFilter.value : null),
                 search: searchText.value || null,
-                limit: 300,
+                date_from: dateFrom.value || null,
+                date_to: dateTo.value || null,
+                page: page,
+                per_page: perPage.value,
             },
         });
 
-        currentLogs.value = response.data.logs || [];
+        const paginated = response.data.logs;
+        currentLogs.value = paginated.data || [];
+        totalLogs.value = paginated.total || 0;
+        lastPage.value = paginated.last_page || 1;
+        currentPage.value = paginated.current_page || page;
     } catch (error) {
         Swal2.fire({
             title: 'Error',
@@ -163,13 +211,25 @@ const fetchLogs = async () => {
     }
 };
 
+const goToPage = (page) => {
+    if (page < 1 || page > lastPage.value || loadingLogs.value) return;
+    fetchLogs(page);
+};
+
 const clearFilters = () => {
     statusFilter.value = 'all';
     batchFilter.value = 'all';
     searchText.value = '';
     batchSearch.value = '';
-    currentLogs.value = [...props.logs];
+    dateFrom.value = '';
+    dateTo.value = '';
+    fetchLogs(1);
 };
+
+// Cargar la primera página al montar el componente
+onMounted(() => {
+    fetchLogs(1);
+});
 </script>
 
 <template>
@@ -200,6 +260,14 @@ const clearFilters = () => {
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Buscar:</label>
                 <input v-model="searchText" type="text" class="form-input ml-2 w-56" placeholder="Endpoint, error o lote" />
             </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Desde:</label>
+                <input v-model="dateFrom" type="date" class="form-input ml-2" />
+            </div>
+            <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Hasta:</label>
+                <input v-model="dateTo" type="date" class="form-input ml-2" />
+            </div>
             <button
                 type="button"
                 @click="fetchLogs"
@@ -216,7 +284,12 @@ const clearFilters = () => {
                 Limpiar
             </button>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-                Últimas {{ filteredLogs.length }} prueba(s)
+                <template v-if="totalLogs > 0">
+                    Mostrando {{ fromRecord }}-{{ toRecord }} de {{ totalLogs }} registro(s)
+                </template>
+                <template v-else>
+                    {{ filteredLogs.length }} registro(s)
+                </template>
             </div>
         </div>
 
@@ -285,6 +358,79 @@ const clearFilters = () => {
                     </tr>
                 </tbody>
             </table>
+
+            <!-- Paginación -->
+            <div v-if="lastPage > 1" class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 dark:border-zinc-600">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                    Página {{ currentPage }} de {{ lastPage }}
+                </div>
+                <div class="flex items-center gap-1">
+                    <button
+                        @click="goToPage(1)"
+                        :disabled="currentPage === 1 || loadingLogs"
+                        class="px-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        title="Primera página"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button
+                        @click="goToPage(currentPage - 1)"
+                        :disabled="currentPage === 1 || loadingLogs"
+                        class="px-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        title="Página anterior"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <template v-for="(item, idx) in paginationRange" :key="idx">
+                        <span v-if="item === '...'" class="px-2 text-gray-400 dark:text-gray-500 text-xs">…</span>
+                        <button
+                            v-else
+                            @click="goToPage(item)"
+                            :class="[
+                                item === currentPage
+                                    ? 'bg-primary text-white border-primary'
+                                    : 'border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700',
+                            ]"
+                            class="px-3 py-1.5 text-xs font-medium rounded-md border transition disabled:opacity-40"
+                            :disabled="loadingLogs"
+                        >
+                            {{ item }}
+                        </button>
+                    </template>
+
+                    <button
+                        @click="goToPage(currentPage + 1)"
+                        :disabled="currentPage === lastPage || loadingLogs"
+                        class="px-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        title="Página siguiente"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    <button
+                        @click="goToPage(lastPage)"
+                        :disabled="currentPage === lastPage || loadingLogs"
+                        class="px-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-zinc-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                        title="Última página"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                <select v-model.number="perPage" @change="fetchLogs(1)" class="form-select text-xs py-1.5 w-20" :disabled="loadingLogs">
+                    <option :value="10">10/pág</option>
+                    <option :value="25">25/pág</option>
+                    <option :value="50">50/pág</option>
+                    <option :value="100">100/pág</option>
+                </select>
+            </div>
         </div>
 
         <!-- Modal de detalles del log -->

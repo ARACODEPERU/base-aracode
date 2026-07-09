@@ -33,13 +33,14 @@ class ProcessCarritoAbandonado implements ShouldQueue
             $hub->runEndpoint('create_contact', [
                 'phone' => $this->phone,
                 'email' => 'nohay@correo.com',
-                'first_name' => "Usuario",
-                'custom_fields' => [
-                '691589' => 'no',               //var1
-                '990426' => 'tiene',            //var2
-                '91972' => 'correo',            //var3
-                '412686' => 'ni nombre',        //var4
-            ],
+                'first_name' => "Usuario Abandonó carrito",
+                'actions' => [
+                    [
+                        'action' => 'set_field_value',
+                        'field_name' => 'Abandono Carrito',
+                        'value' => now()->toDateTimeString(),
+                    ],
+                ],
             ], [], true);
 
             // $hub->runEndpoint(
