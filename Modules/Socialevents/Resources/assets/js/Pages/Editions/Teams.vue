@@ -103,6 +103,23 @@
 
     const captureRef = ref(null);
 
+    const downloadPdfRoster = async (team) => {
+        try {
+            const response = await axios.get(route('even_ediciones_equipos_pdf_roster', [team.edition_id, team.team_id]));
+            if (response.data.url) {
+                window.open(response.data.url, '_blank');
+            }
+        } catch (error) {
+            Swal2.fire({
+                title: 'Error',
+                text: 'No se pudo generar la ficha.',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }
+    }
+
     const exportImage = async () => {
         // 1. Esperamos a que Vue termine de renderizar cualquier cambio
         await nextTick()
@@ -243,6 +260,16 @@
                                                             <path fill="currentColor" d="M320 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 5.4c0 45-23.6 86.6-62.1 109.8l-4.6 2.8C131.4 184.7 96 247.1 96 314.6L96 384c0 17.7 14.3 32 32 32s32-14.3 32-32l0-69.4c0-16.7 3.3-33 9.4-48L359.2 500.2c11.1 13.7 31.3 15.8 45 4.7s15.8-31.3 4.7-45L295.2 320 400 320 438.4 371.2c10.6 14.1 30.7 17 44.8 6.4s17-30.7 6.4-44.8l-43.2-57.6C437.3 263.1 423.1 256 408 256l-89 0-62.9-75.5c40.3-36 63.9-87.9 63.9-143.1l0-5.4zM104 144a56 56 0 1 0 0-112 56 56 0 1 0 0 112z"/>
                                                         </svg>
                                                     </Link>
+                                                    <button
+                                                        v-can="'even_ediciones_equipos'"
+                                                        @click="downloadPdfRoster(team)"
+                                                        v-tippy="{content: 'Imprimir Ficha', placement: 'bottom'}"
+                                                        class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
+                                                    >
+                                                        <svg class="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
+                                                            <path d="M128 0C92.7 0 64 28.7 64 64l0 96 64 0 0-96 226.7 0L384 93.3l0 66.7 64 0 0-80c0-17-6.7-33.3-18.7-45.3L354.7 18.7C342.7 6.7 326.5 0 309.3 0L128 0zM384 352l0-32 0-32 0-160L256 128l0 96c0 17.7-14.3 32-32 32l-96 0 0 96 0 32 0 32 256 0zm-256 96l256 0c35.3 0 64-28.7 64-64l0-128c0-35.3-28.7-64-64-64l-64 0 0-64L128 0 64 0C28.7 0 0 28.7 0 64L0 384c0 35.3 28.7 64 64 64l64 0z"/>
+                                                        </svg>
+                                                    </button>
                                                     <button v-can="'even_ediciones_equipos_eliminar'" @click="destroyTeam(team.edition_id, team.team_id)" class="no-export text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors" v-tippy="{ content: 'Eliminar equipo', placement: 'bottom'}" type="button">
                                                         <iconTrashLines class="w-5 h-5" />
                                                     </button>

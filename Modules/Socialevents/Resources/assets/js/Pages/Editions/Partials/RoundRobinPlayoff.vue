@@ -65,6 +65,23 @@
 
     const xhttp =  assetUrl;
 
+    const downloadPdfSheet = async (match) => {
+        try {
+            const response = await axios.get(route('even_ediciones_fixtures_pdf_sheet', [match.edition_id, match.id]));
+            if (response.data.url) {
+                window.open(response.data.url, '_blank');
+            }
+        } catch (error) {
+            Swal2.fire({
+                title: 'Error',
+                text: 'No se pudo generar la ficha de partido.',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }
+    }
+
     const displayModalTeams = ref(false);
 
     const openModalTeams = () => {
@@ -877,6 +894,16 @@
                                 >
                                     <svg class="w-7 h-7 text-[#067A21]" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
                                         <path d="M64.1 128C64.1 92.7 92.8 64 128.1 64L277.6 64C294.6 64 310.9 70.7 322.9 82.7L429.3 189.3C441.3 201.3 448 217.6 448 234.6L448 332.1L316 464.1L273.9 464.1L257.8 410.5C253.1 394.8 238.7 384.1 222.3 384.1C211 384.1 200.4 389.2 193.4 398L133.3 473C125 483.3 126.7 498.5 137 506.7C147.3 514.9 162.5 513.3 170.7 502.9L217.8 444.1L233 494.8C236 505 245.4 511.9 256 511.9L287.5 511.9C286.6 515 285.8 518.2 285.2 521.4L274.3 575.9L128.1 575.9C92.8 575.9 64.1 547.2 64.1 511.9L64.1 127.9zM272.1 122.5L272.1 216C272.1 229.3 282.8 240 296.1 240L389.6 240L272.1 122.5zM332.3 530.9C334.8 518.5 340.9 507.1 349.8 498.2L468.7 379.3L548.7 459.3L429.8 578.2C420.9 587.1 409.5 593.2 397.1 595.7L337.5 607.6C336.6 607.8 335.6 607.9 334.6 607.9C326.6 607.9 320 601.4 320 593.3C320 592.3 320.1 591.4 320.3 590.4L332.2 530.8zM600.1 407.9L571.3 436.7L491.3 356.7L520.1 327.9C542.2 305.8 578 305.8 600.1 327.9C622.2 350 622.2 385.8 600.1 407.9z"/>
+                                    </svg>
+                                </button>
+                                <button
+                                    v-can="'even_ediciones_fixtures'"
+                                    @click="downloadPdfSheet(match)"
+                                    v-tippy="{content: 'Ficha Partido', placement: 'bottom'}"
+                                    class="p-1 hover:bg-gray-200 rounded-lg transition dark:hover:bg-zinc-700 no-export"
+                                >
+                                    <svg class="w-7 h-7 text-orange-500" fill="currentColor" viewBox="0 0 512 512">
+                                        <path d="M128 0C92.7 0 64 28.7 64 64l0 96 64 0 0-96 226.7 0L384 93.3l0 66.7 64 0 0-80c0-17-6.7-33.3-18.7-45.3L354.7 18.7C342.7 6.7 326.5 0 309.3 0L128 0zM384 352l0-32 0-32 0-160L256 128l0 96c0 17.7-14.3 32-32 32l-96 0 0 96 0 32 0 32 256 0zm-256 96l256 0c35.3 0 64-28.7 64-64l0-128c0-35.3-28.7-64-64-64l-64 0 0-64L128 0 64 0C28.7 0 0 28.7 0 64L0 384c0 35.3 28.7 64 64 64l64 0z"/>
                                     </svg>
                                 </button>
 
