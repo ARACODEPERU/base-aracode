@@ -622,6 +622,72 @@ class AccountsReceivableController extends Controller
         ]);
     }
 
+    public function getFeeDocumentData($id)
+    {
+        $payments = PaymentMethod::all();
+        $saleDocumentTypes = DB::table('sale_document_types')->whereIn('sunat_id', ['01', '03'])->get();
+        $standardIdentityDocument = DB::table('identity_document_type')->get();
+
+        $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
+            ->join('departments', 'provinces.department_id', 'departments.id')
+            ->select(
+                'districts.id AS district_id',
+                'districts.name AS district_name',
+                'provinces.name AS province_name',
+                'departments.name AS department_name',
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS city_name")
+            )
+            ->get();
+
+        $sale_note = Sale::with('saleProduct')
+            ->with('client')
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $installment = $this->getNextPendingInstallment($id);
+        $description = null;
+        $feeItem = [];
+        $msg = 'Esta venta no tiene cuotas pendientes por pagar.';
+
+        if ($installment) {
+            $msg = null;
+            $isLast = $this->isLastInstallment($id, $installment->installment_number);
+            $description = $this->buildInstallmentDescription($installment->installment_number, $sale_note);
+            $nextPaymentDate = $isLast ? null : $this->getNextInstallmentDate($id, $installment->installment_number);
+            $totalQuotas = SalePaymentSchedule::where('sale_id', $id)->count();
+
+            $feeItem = [
+                'description' => $description,
+                'installment_id' => $installment->id,
+                'installment_number' => $installment->installment_number,
+                'total_installments' => $totalQuotas,
+                'amount_to_pay' => $installment->amount_to_pay,
+                'amount_paid' => $installment->amount_paid,
+                'remaining_amount' => $installment->remaining_amount,
+                'payment_date' => $installment->payment_date,
+                'next_payment_date' => $nextPaymentDate,
+                'is_last_installment' => $isLast,
+            ];
+        }
+
+        $student = AcaStudent::where('person_id', $sale_note->client->id)->first();
+
+        return response()->json([
+            'payments' => $payments,
+            'saleDocumentTypes' => $saleDocumentTypes,
+            'saleNote' => $sale_note,
+            'feeItem' => $feeItem,
+            'taxes' => [
+                'igv' => $this->igv,
+                'icbper' => $this->icbper,
+            ],
+            'standardIdentityDocument' => $standardIdentityDocument,
+            'departments' => $ubigeo,
+            'student' => $student,
+            'message' => $msg,
+        ]);
+    }
+
     private function getNextPendingInstallment($saleId)
     {
         return SalePaymentSchedule::where('sale_id', $saleId)
@@ -990,8 +1056,7 @@ class AccountsReceivableController extends Controller
 
             return response()->json($res);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()]);
-            // Devuelve una respuesta de error
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 

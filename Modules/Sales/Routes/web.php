@@ -266,6 +266,10 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         ->name('acco_sales_special_rates_quota_create');
 
     Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
+        ->get('accountsreceivable/special/rates/quota/{id}/data', [AccountsReceivableController::class, 'getFeeDocumentData'])
+        ->name('acco_sales_special_rates_quota_data');
+
+    Route::middleware(['middleware' => 'permission:acco_pagos_cuotas_especiales_nuevo'])
         ->put('accountsreceivable/special/rates/quota/{id}/store', [AccountsReceivableController::class, 'storeSpacePayments'])
         ->name('acco_sales_special_rates_quota_store');
 

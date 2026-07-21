@@ -57,6 +57,8 @@
         }
     });
 
+    const emit = defineEmits(['saved', 'close']);
+
 
     const series = ref([]);
 
@@ -375,17 +377,34 @@
                                 padding: '2em',
                                 customClass: 'sweet-alerts',
                             }).then(() => {
-                                closeMyPopup();
+                                emit('saved');
                             });
                         }
                     } else if (result.isDenied) {
-                        closeMyPopup();
+                        emit('saved');
                     } else if (result.isDismissed) {
-                        closeMyPopup();
+                        emit('saved');
                     }
                 });
             }).catch(function (error) {
-                setFormError(error);
+                form.processing = false;
+                let errorMsg = 'Error al guardar el documento.';
+                if (error.response && error.response.data && error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                } else if (error.response && error.response.data && error.response.data.errors) {
+                    let errors = error.response.data.errors;
+                    let firstKey = Object.keys(errors)[0];
+                    if (firstKey) {
+                        errorMsg = errors[firstKey][0] || errorMsg;
+                    }
+                }
+                Swal2.fire({
+                    title: 'Error',
+                    text: errorMsg,
+                    icon: 'error',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
             });
         }else{
             Swal2.fire({
@@ -583,7 +602,7 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 }).then(() => {
-                    closeMyPopup();
+                    emit('saved');
                 });
 
             }
@@ -622,17 +641,7 @@
     });
 
     const closeMyPopup = () => {
-        //alert(props.fromId)
-        if (window.opener) {
-            // Enviar mensaje a la ventana principal
-            if(props.fromId == 'v1'){
-                window.opener.postMessage("refresh-payment-all", "*");
-            }else if(props.fromId == 'v2'){
-                window.opener.postMessage("refresh-payment-students", "*");
-            }
-
-        }
-        window.close();
+        emit('close');
     }
 </script>
 
@@ -651,7 +660,7 @@
             </div>
         </div>
     </div>
-    <div v-else class="px-16 py-8">
+    <div v-else class="px-4 py-4">
         <div class="flex xl:flex-row flex-col">
             <div class="panel px-0 flex-1 py-6 ltr:xl:mr-6 rtl:xl:ml-6">
                 <div class="px-4">

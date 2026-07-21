@@ -20,6 +20,7 @@
     import iconMail from '@/Components/vristo/icon/icon-mail.vue';
     import iconLink from '@/Components/vristo/icon/icon-link.vue';
     import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+    import CreateFeeDocument from './CreateFeeDocument.vue';
 
     const props = defineProps({
         sales: {
@@ -118,15 +119,52 @@
         return `${day}-${month}-${year} ${hours}:${minutes}`;
     }
 
-    const openDialogCreateFeeDocument = (sale) => {
-        let fromId = 'v1';
+    const displayModalFeeDocument = ref(false);
+    const feeDocumentData = ref(null);
+    const feeDocumentLoading = ref(false);
+    const feeDocumentSaleId = ref(null);
 
+    const openDialogCreateFeeDocument = (sale) => {
         if (Number(sale.advancement) >= Number(sale.total)) {
             showMessage('El documento ya fue pagado en su totalidad', 'success');
             return;
         }
 
-        router.visit(route('acco_sales_special_rates_quota_create', [sale.id, fromId]));
+        feeDocumentLoading.value = true;
+        feeDocumentSaleId.value = sale.id;
+        displayModalFeeDocument.value = true;
+
+        axios.get(route('acco_sales_special_rates_quota_data', sale.id)).then((res) => {
+            feeDocumentData.value = res.data;
+            feeDocumentLoading.value = false;
+        }).catch((err) => {
+            feeDocumentLoading.value = false;
+            displayModalFeeDocument.value = false;
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los datos del formulario.',
+                icon: 'error',
+            });
+        });
+    };
+
+    const closeModalFeeDocument = () => {
+        displayModalFeeDocument.value = false;
+        feeDocumentData.value = null;
+    };
+
+    const onFeeDocumentSaved = () => {
+        closeModalFeeDocument();
+        refreshList();
+    };
+
+    const refreshList = () => {
+        router.visit(route('acco_sales_special_rates'), {
+            only: ['sales'],
+            replace: true,
+            preserveScroll: true,
+            preserveState: true
+        });
     };
 
     const displayModalCronograma = ref(false);
@@ -140,16 +178,7 @@
     }
 
     onMounted(() => {
-        window.addEventListener("message", (event) => {
-            if (event.data === "refresh-payment-all") {
-                router.visit(route('acco_sales_special_rates'), {
-                    only: ['sales'], // opcional
-                    replace: true,
-                    preserveScroll: true,
-                    preserveState: true
-                });
-            }
-        });
+        // El refresco de la lista se maneja via callback onFeeDocumentSaved
     });
 
     const displayModalDocuments = ref(false);
@@ -1159,5 +1188,41 @@
                 </div>
             </template>
         </ModalStatus>
+        <!-- Modal Registrar Pago -->
+        <ModalLargeX :show="displayModalFeeDocument" :onClose="closeModalFeeDocument">
+            <template #title>
+                Registrar Pago
+            </template>
+            <template #message>
+                Complete los datos para generar la boleta o factura
+            </template>
+            <template #content>
+                <div v-if="feeDocumentLoading" class="flex justify-center items-center py-20">
+                    <div class="text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                        <p class="text-gray-500">Cargando datos...</p>
+                    </div>
+                </div>
+                <div v-else-if="feeDocumentData && !feeDocumentData.message">
+                    <CreateFeeDocument
+                        :saleNote="feeDocumentData.saleNote"
+                        :payments="feeDocumentData.payments"
+                        :saleDocumentTypes="feeDocumentData.saleDocumentTypes"
+                        :taxes="feeDocumentData.taxes"
+                        :standardIdentityDocument="feeDocumentData.standardIdentityDocument"
+                        :departments="feeDocumentData.departments"
+                        :student="feeDocumentData.student"
+                        :feeItem="feeDocumentData.feeItem"
+                        :message="feeDocumentData.message"
+                        :fromId="'v1'"
+                        @saved="onFeeDocumentSaved"
+                        @close="closeModalFeeDocument"
+                    />
+                </div>
+                <div v-else class="text-center py-10">
+                    <p class="text-gray-500 text-lg">{{ feeDocumentData?.message || 'No hay cuotas pendientes.' }}</p>
+                </div>
+            </template>
+        </ModalLargeX>
     </AppLayout>
 </template>
