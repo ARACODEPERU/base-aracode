@@ -98,6 +98,9 @@ Route::middleware(['auth', 'verified'])->prefix('bibliodata')->group(function ()
         ->delete('authors/destroy/{id}', [BibAuthorController::class, 'destroy'])
         ->name('bib_authors_destroy');
 
+    Route::post('search/person', [\Modules\Bibliodata\Http\Controllers\BibPersonController::class, 'searchByNumberType'])
+        ->name('bib_search_person');
+
     Route::middleware(['middleware' => 'permission:bib_libros_listado'])
         ->get('books', [BibBookController::class, 'index'])
         ->name('bib_books');

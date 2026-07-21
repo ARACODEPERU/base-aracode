@@ -4,11 +4,13 @@ namespace Modules\Socialevents\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\District;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EvenLocal;
 use Modules\Socialevents\Entities\EventEdition;
@@ -484,5 +486,38 @@ class EventEditionMatchController extends Controller
                 $match->save();
             }
         });
+    }
+
+    public function printMatchSheet($editionId, $matchId)
+    {
+        $edition = EventEdition::with('evento')->findOrFail($editionId);
+        $match = EventEditionMatch::with(['equipolocal.manager', 'equipovisitante.manager'])->findOrFail($matchId);
+
+        $data = [
+            'event_name'      => $edition->evento->title,
+            'edition_name'    => $edition->name,
+            'local_team'      => $match->equipolocal?->name ?? 'TBD',
+            'visitor_team'    => $match->equipovisitante?->name ?? 'TBD',
+            'local_manager'   => $match->equipolocal?->manager?->formatted_name ?? 'Sin asignar',
+            'visitor_manager'  => $match->equipovisitante?->manager?->formatted_name ?? 'Sin asignar',
+            'match_date'      => $match->match_date ? $match->match_date->format('d/m/Y H:i') : null,
+            'location'        => $match->location,
+        ];
+
+        $pdf = Pdf::loadView('socialevents::teams.pdf.match_sheet', [
+            'data' => $data
+        ]);
+
+        Storage::disk('public')->deleteDirectory('temp_pdfs');
+        Storage::disk('public')->makeDirectory('temp_pdfs');
+
+        $fileName = 'ficha_partido_' . $match->id . '_' . date('Ymd') . '.pdf';
+        $filePath = 'temp_pdfs/' . $fileName;
+
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        return response()->json([
+            'url' => asset('storage/' . $filePath)
+        ]);
     }
 }

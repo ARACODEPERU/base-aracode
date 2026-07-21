@@ -3,10 +3,12 @@
 namespace Modules\Socialevents\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeam;
@@ -115,6 +117,36 @@ class EventEditionTeamController extends Controller
         return response()->json([
             'success' => $success,
             'message' => $message
+        ]);
+    }
+
+    public function printTeamRoster($editionId, $teamId)
+    {
+        $edition = EventEdition::with('evento')->findOrFail($editionId);
+        $editionTeam = EventEditionTeam::with('equipo.manager')->where('edition_id', $editionId)->where('team_id', $teamId)->firstOrFail();
+        $team = $editionTeam->equipo;
+
+        $data = [
+            'event_name'   => $edition->evento->title,
+            'edition_name' => $edition->name,
+            'team_name'    => $team->name,
+            'manager_name' => $team->manager?->formatted_name ?? 'Sin asignar',
+        ];
+
+        $pdf = Pdf::loadView('socialevents::teams.pdf.team_roster', [
+            'data' => $data
+        ]);
+
+        Storage::disk('public')->deleteDirectory('temp_pdfs');
+        Storage::disk('public')->makeDirectory('temp_pdfs');
+
+        $fileName = 'ficha_inscripcion_' . $team->id . '_' . date('Ymd') . '.pdf';
+        $filePath = 'temp_pdfs/' . $fileName;
+
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        return response()->json([
+            'url' => asset('storage/' . $filePath)
         ]);
     }
 }

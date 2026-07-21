@@ -69,6 +69,9 @@
                 @if ($showAppDownload)
                     <a href="#app">App</a>
                 @endif
+                @if ($edition->path_database_file)
+                    <a href="{{ asset('storage/' . $edition->path_database_file) }}" target="_blank">Bases</a>
+                @endif
                 <a href="#contacto">Contacto</a>
             </nav>
 
@@ -92,6 +95,9 @@
         @if ($showAppDownload)
             <a href="#app">App</a>
         @endif
+        @if ($edition->path_database_file)
+            <a href="{{ asset('storage/' . $edition->path_database_file) }}" target="_blank">Bases</a>
+        @endif
         <a href="#contacto">Contacto</a>
     </nav>
 
@@ -112,6 +118,11 @@
                     <div class="se-hero__cta" data-se-hero>
                         <a href="#fixture" class="se-btn se-btn--primary se-btn--lg">Ver fixture</a>
                         <a href="#posiciones" class="se-btn se-btn--ghost se-btn--lg">Tabla de posiciones</a>
+                        @if ($edition->path_database_file)
+                            <a href="{{ asset('storage/' . $edition->path_database_file) }}" target="_blank" class="se-btn se-btn--ghost se-btn--lg">
+                                <i class="fas fa-download" aria-hidden="true" style="margin-right:0.4rem"></i>Descargar Bases
+                            </a>
+                        @endif
                     </div>
                 </div>
 
