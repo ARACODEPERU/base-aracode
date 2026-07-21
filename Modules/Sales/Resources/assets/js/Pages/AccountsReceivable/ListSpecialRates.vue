@@ -120,128 +120,13 @@
 
     const openDialogCreateFeeDocument = (sale) => {
         let fromId = 'v1';
-        let url = route('acco_sales_special_rates_quota_create', [sale.id, fromId]);
 
         if (Number(sale.advancement) >= Number(sale.total)) {
             showMessage('El documento ya fue pagado en su totalidad', 'success');
             return;
         }
 
-        // Usamos el total disponible de la pantalla
-        let screenWidth = window.screen.availWidth;
-        let screenHeight = window.screen.availHeight;
-
-        // Ponemos 0 en top y left para que pegue a la esquina superior izquierda
-        const w = window.open(
-            "",
-            "feeWindow",
-            `width=${screenWidth},height=${screenHeight},top=0,left=0,resizable=yes,scrollbars=yes`
-        );
-
-        // 2. Mostrar loader temporal
-        w.document.write(`
-            <html>
-                <head>
-                    <title>Cargando...</title>
-                    <style>
-                        body {
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            flex-direction: column;
-                            height: 100vh;
-                            margin: 0;
-                            background: #f7f7f7;
-                            font-family: sans-serif;
-                            text-align: center;
-                        }
-
-                        .loader-con {
-                            position: relative;
-                            width: 100%;            /* Ocupar todo el ancho */
-                            max-width: 600px;       /* Para que no exceda demasiado */
-                            height: 120px;
-                            overflow: hidden;
-                        }
-
-                        .pfile {
-                            position: absolute;
-                            bottom: 25px;
-                            width: 50px;            /* Más grande para mejor visibilidad */
-                            height: 60px;
-                            background: linear-gradient(90deg, #b324db, #ac8dcb);
-                            border-radius: 4px;
-                            transform-origin: center;
-                            animation: flyRight 3s ease-in-out infinite;
-                            opacity: 0;
-                        }
-
-                        .pfile::before {
-                            content: "";
-                            position: absolute;
-                            top: 8px;
-                            left: 8px;
-                            width: 30px;
-                            height: 5px;
-                            background-color: #ffffff;
-                            border-radius: 2px;
-                        }
-
-                        .pfile::after {
-                            content: "";
-                            position: absolute;
-                            top: 18px;
-                            left: 8px;
-                            width: 20px;
-                            height: 5px;
-                            background-color: #ffffff;
-                            border-radius: 2px;
-                        }
-
-                        @keyframes flyRight {
-                            0% {
-                                left: -15%;          /* Más atrás */
-                                transform: scale(0.3);
-                                opacity: 0;
-                            }
-                            50% {
-                                left: 40%;
-                                transform: scale(1.3);
-                                opacity: 1;
-                            }
-                            100% {
-                                left: 110%;          /* Más adelante */
-                                transform: scale(0.3);
-                                opacity: 0;
-                            }
-                        }
-
-                        .pfile {
-                            animation-delay: calc(var(--i) * 0.5s);
-                        }
-                    </style>
-                </head>
-
-                <body>
-                    <div class="loader-con">
-                        <div style="--i: 0;" class="pfile"></div>
-                        <div style="--i: 1;" class="pfile"></div>
-                        <div style="--i: 2;" class="pfile"></div>
-                        <div style="--i: 3;" class="pfile"></div>
-                        <div style="--i: 4;" class="pfile"></div>
-                        <div style="--i: 5;" class="pfile"></div>
-                    </div>
-
-                    <p style="margin-top: 20px; color: #555; font-size: 18px;">
-                        Cargando contenido...
-                    </p>
-                </body>
-            </html>
-
-        `);
-
-        // 3. Cargar la URL real
-        w.location.href = url;
+        router.visit(route('acco_sales_special_rates_quota_create', [sale.id, fromId]));
     };
 
     const displayModalCronograma = ref(false);
@@ -716,7 +601,7 @@
                     <div class="w-full p-4">
                         <div class="grid grid-cols-3">
                             <div class="col-span-3 sm:col-span-1">
-                                <form  class="grid sm:grid-cols-2 gap-6">
+                                <form @submit.prevent="form.get(route('acco_sales_special_rates'))" class="grid sm:grid-cols-2 gap-6">
                                     <div class="w-full">
                                         <flat-pickr v-model="form.issue_date" class="form-input" :config="basic"></flat-pickr>
                                     </div>
