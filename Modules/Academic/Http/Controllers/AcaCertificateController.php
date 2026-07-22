@@ -28,6 +28,7 @@ use Modules\Academic\Entities\AcaModule;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentSubscription;
+use Modules\Academic\Entities\AcaTheme;
 use Modules\Academic\Operations\CertificateImage;
 
 class AcaCertificateController extends Controller
@@ -1310,6 +1311,22 @@ class AcaCertificateController extends Controller
         // 2.1. Verificar que el módulo permite descarga de certificados
         if (! $module->allow_certificate_download) {
             return back()->with('error', 'Este módulo no permite la descarga de certificados');
+        }
+
+        // 2.2. Verificar que el estudiante completó todos los contenidos del módulo
+        $themes = AcaTheme::with(['contents', 'student_history' => function ($q) use ($user) {
+            $q->where('person_id', $user->person_id);
+        }])->where('module_id', $module_id)->get();
+
+        foreach ($themes as $theme) {
+            $totalContents = $theme->contents->reject(fn($c) => $c->is_file == 4)->count();
+            if ($totalContents > 0) {
+                $viewedContents = $theme->student_history->unique('content_id')->count();
+                $progress = round(($viewedContents / $totalContents) * 100);
+                if ($progress < 100) {
+                    return back()->with('error', 'Debes completar todos los contenidos del módulo para descargar el certificado');
+                }
+            }
         }
 
         // 3. Buscar certificado primero para determinar si requiere examen

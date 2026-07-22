@@ -240,10 +240,19 @@
         window.open(route('aca_student_exam_download_pdf', studentExam.value.id), '_blank');
     };
 
+    // Progreso general del módulo (promedio de todos los temas)
+    const moduleProgress = computed(() => {
+        const themes = props.module.themes || [];
+        if (themes.length === 0) return 100;
+        const total = themes.reduce((sum, t) => sum + (t.progress || 0), 0);
+        return Math.round(total / themes.length);
+    });
+
     // Verificar si puede descargar certificado del módulo
 
     const canDownloadCertificate = () => {
         if (!props.module.allow_certificate_download) return false;
+        if (moduleProgress.value < 100) return false;
         if (!props.certificateRequiresExam) return true;
         return studentExam.value &&
                studentExam.value.punctuation >= 11 &&
@@ -955,7 +964,11 @@
                                                 <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/>
                                             </svg>
                                             Descargar Certificado
-                                        </button>                                   </div>
+                                        </button>
+                                   </div>
+                                   <div v-else-if="module.allow_certificate_download && moduleProgress < 100" class="mt-2 text-center text-xs text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg py-2 px-3">
+                                        Completa el {{ moduleProgress }}% del contenido para descargar el certificado
+                                   </div>
                         </div>
                     </div>
                 </div>
