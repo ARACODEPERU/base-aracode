@@ -405,6 +405,15 @@
 
                             <div class="relative h-48 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-700 dark:via-gray-700 dark:to-gray-700 flex items-center justify-center overflow-hidden">
                                 <div class="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent dark:from-gray-600/20"></div>
+                                <!-- Badge "Módulo" para certificados de módulo -->
+                                <div v-if="certificate.module" class="absolute top-3 right-3 z-20">
+                                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white bg-green-500 shadow-md">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                        </svg>
+                                        Módulo
+                                    </span>
+                                </div>
                                 <div class="relative z-10 text-center px-4">
                                     <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                                         <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -401,6 +401,7 @@ class OnliItemController extends Controller
         ->leftJoin('aca_teachers', 'aca_teachers.id', '=', 'aca_courses.teacher_id')
         ->leftJoin('people', 'people.id', '=', 'aca_teachers.person_id')
         ->leftJoin('users', 'users.person_id', '=', 'people.id')
+        ->leftJoin('aca_course_landings', 'aca_course_landings.course_id', '=', 'aca_courses.id')
         ->whereIn('onli_items.id', $ids)
         ->select(
             'onli_items.id as id',
@@ -413,7 +414,9 @@ class OnliItemController extends Controller
             'people.names as teacher',
             'aca_teachers.id as teacher_id',
             'users.avatar as avatar',
-            'onli_items.description as description'
+            'onli_items.description as description',
+            'aca_course_landings.url_slug as url_slug',
+            'aca_course_landings.is_published as landing_published'
         )
         ->get();
 

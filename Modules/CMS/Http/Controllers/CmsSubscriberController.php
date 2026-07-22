@@ -12,8 +12,14 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificacionDescarga_brochure;
 use Inertia\Inertia;
 use App\Models\ExcelExportJob;
+use App\Models\User;
 use Modules\CMS\Jobs\ExportCmsSubscribersExcel;
 use Carbon\Carbon;
+use Spatie\Permission\Models\Role;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
+use Modules\Integrationhub\Entities\IntegrationError;
+use Modules\Integrationhub\Jobs\ProcessWhatsappFlow;
 
 class CmsSubscriberController extends Controller
 {
@@ -65,24 +71,99 @@ class CmsSubscriberController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        $country_phone = $request->get('country_phone');
+
+        // Limpiar y validar teléfono según el país
+        $countryCode = ltrim((string) $country_phone, '+');
+        $phoneRaw = preg_replace('/[^0-9]/', '', (string) $request->get('phone') ?? '');
+
+        // Si el número ya contiene el código de país al inicio, quitarlo para evitar duplicación
+        while (str_starts_with($phoneRaw, $countryCode)) {
+            $phoneRaw = substr($phoneRaw, strlen($countryCode));
+        }
+
+        if ($countryCode === '51') {
+            // Perú: debe empezar con 9 y tener exactamente 9 dígitos
+            $firstNine = strpos($phoneRaw, '9');
+            if ($firstNine === false) {
+                return response()->json(['errors' => ['phone' => ['El teléfono peruano debe empezar con el dígito 9.']]], 422);
+            }
+            $phoneBody = substr($phoneRaw, $firstNine);
+            if (strlen($phoneBody) !== 9) {
+                return response()->json(['errors' => ['phone' => ['El teléfono peruano debe tener exactamente 9 dígitos. no debes agregar el código']]], 422);
+            }
+        } else {
+            // Otros países: usar el número limpio (ya sin código repetido)
+            $phoneBody = $phoneRaw;
+        }
+
+        $cleanPhone = $countryCode . $phoneBody;
 
         $Subscriber = CmsSubscriber::create([
             'full_name'     => $request->get('full_name') ?? null,
             'email'         => $request->get('email'),
-            'phone'         => $request->get('phone') ?? null,
+            'phone'         => $cleanPhone,
             'client_ip'     => $request->ip(),
             'read'          => 0,
             'subject'       => $request->get('subject') ?? null,
             'message'       => $request->get('message') ?? null,
+            'utm_source'    => $request->get('utm_source'),
+            'utm_medium'    => $request->get('utm_medium'),
+            'utm_campaign'  => $request->get('utm_campaign'),
+            'utm_term'      => $request->get('utm_term'),
+            'utm_content'   => $request->get('utm_content'),
+            'gclid'         => $request->get('gclid'),
+            'referer'       => $request->get('referer'),
+            'landing_url'   => $request->get('landing_url'),
+            'traffic_source'=> $request->get('traffic_source'),
         ]);
 
-        try {
-            //Correo a Ronald
-        Mail::to(env("MAIL_ADMIN"))
-        ->send(new NotificacionDescarga_brochure($Subscriber));
+        // Solo enviar a WhatsApp si hay un flow_id definido
+        $flowId = $request->get('flow_id');
 
-        } catch (\Throwable $th) {
-            //throw $th;
+        if (!empty($flowId)) {
+            try {
+                $cacheKey = 'integrationhub_whatsapp_' . $cleanPhone . '_' . $flowId;
+
+                $cacheStore = Cache::store('database');
+
+                if (!$cacheStore->has($cacheKey)) {
+                    // Marcar ANTES de ejecutar para evitar carrera
+                    $cacheStore->put($cacheKey, true, Carbon::now()->endOfDay());
+
+                    // Encolar la ejecución de los endpoints al queue:work
+                    // Solo se envía la primera palabra del nombre (primer nombre)
+                    $firstName = explode(' ', trim($request->get('full_name')))[0];
+                    ProcessWhatsappFlow::dispatch(
+                        $firstName,
+                        $cleanPhone,
+                        $request->get('email'),
+                        $flowId
+                    );
+                }
+            } catch (\Throwable $th) {
+                IntegrationError::create([
+                    'message' => (string) $th,
+                    'source' => 'CmsSubscriberController::apiStore - WhatsApp flow -> curso'. $request->get('subject'),
+                ]);
+            }
+        }
+
+        try {
+            $users = User::role(['Ventas'])->get();
+
+            foreach ($users as $user) {
+                try {
+                    Mail::to($user->email)
+                    ->queue(new NotificacionDescarga_brochure($Subscriber));
+                } catch (\Throwable $th) {
+
+                }
+            }
+            Mail::to('jsuclupe@globalcpaperu.com')
+            ->queue(new NotificacionDescarga_brochure($Subscriber));
+        } catch (\Throwable $th2) {
+
         }
 
         return response()->json([

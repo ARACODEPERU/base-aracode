@@ -32,7 +32,9 @@ class OnliSale extends Model
         'response_credit_card',
         'response_refunds',
         'nota_sale_id',
-        'email_sent'
+        'email_sent',
+        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+        'gclid', 'referer', 'landing_url', 'traffic_source'
     ];
 
     protected static function newFactory()

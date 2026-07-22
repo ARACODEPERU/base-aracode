@@ -317,7 +317,16 @@ class MercadopagoController extends Controller
                     'clie_full_name' => $person->full_name,
                     'phone' => $person->telephone,
                     'email' => $person->email,
-                    'nota_sale_id' => $sale_note->id
+                    'nota_sale_id' => $sale_note->id,
+                    'utm_source'     => session('traffic_tracking.utm_source'),
+                    'utm_medium'     => session('traffic_tracking.utm_medium'),
+                    'utm_campaign'   => session('traffic_tracking.utm_campaign'),
+                    'utm_term'       => session('traffic_tracking.utm_term'),
+                    'utm_content'    => session('traffic_tracking.utm_content'),
+                    'gclid'          => session('traffic_tracking.gclid'),
+                    'referer'        => session('traffic_tracking.referer'),
+                    'landing_url'    => session('traffic_tracking.landing_url'),
+                    'traffic_source' => session('traffic_tracking.traffic_source'),
                 ]);
 
                 $studentSubscribed = AcaStudentSubscription::where('student_id', $student->id)
