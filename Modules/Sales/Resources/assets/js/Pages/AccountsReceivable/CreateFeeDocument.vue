@@ -57,6 +57,8 @@
         }
     });
 
+    const emit = defineEmits(['saved', 'close']);
+
 
     const series = ref([]);
 
@@ -336,57 +338,7 @@
 
             }
 
-            axios.put(route('acco_sales_special_rates_quota_store', form.sale_id), form ).then((res) => {
-                form.sale_documenttype_id = 2,
-                form.type_operation = props.type_operation,
-                form.serie = null
-                form.items = [];
-                form.total_discount = 0;
-                form.total_igv = 0;
-                form.total = 0;
-                form.total_taxed = 0;
-                form.payments = [{
-                    type:1,
-                    reference: null,
-                    amount:0
-                }];
-                form.processing =  false;
-                form.forma_pago = 'Contado;'
-                Swal2.fire({
-                    title: 'Comprobante creado con éxito',
-                    text: "¿deseas enviar a sunat?",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Enviar Ahora',
-                    cancelButtonText: 'Cerrar',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        if(res.data.invoice_type_doc == '01'){
-                            sendSunatDocumentCreated(res.data)
-                        }else{
-                            Swal2.fire({
-                                title: 'Información Importante',
-                                text: "Las boletas se envian mediante un resumen",
-                                icon: 'info',
-                                padding: '2em',
-                                customClass: 'sweet-alerts',
-                            }).then(() => {
-                                closeMyPopup();
-                            });
-                        }
-                    } else if (result.isDenied) {
-                        closeMyPopup();
-                    } else if (result.isDismissed) {
-                        closeMyPopup();
-                    }
-                });
-            }).catch(function (error) {
-                setFormError(error);
-            });
+            executeSaveDocument();
         }else{
             Swal2.fire({
                 title: 'Información Importante',
@@ -397,6 +349,141 @@
             });
             form.processing = false
             return;
+        }
+    }
+
+    const executeSaveDocument = () => {
+        axios.put(route('acco_sales_special_rates_quota_store', form.sale_id), form ).then((res) => {
+            // Verificar si necesita inscripción de alumno
+            if (res.data && res.data.needs_registration) {
+                handleNeedsRegistration(res.data);
+                return;
+            }
+
+            // Éxito normal - documento creado
+            form.sale_documenttype_id = 2,
+            form.type_operation = props.type_operation,
+            form.serie = null
+            form.items = [];
+            form.total_discount = 0;
+            form.total_igv = 0;
+            form.total = 0;
+            form.total_taxed = 0;
+            form.payments = [{
+                type:1,
+                reference: null,
+                amount:0
+            }];
+            form.processing =  false;
+            form.forma_pago = 'Contado;'
+            Swal2.fire({
+                title: 'Comprobante creado con éxito',
+                text: "¿deseas enviar a sunat?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Enviar Ahora',
+                cancelButtonText: 'Cerrar',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if(res.data.invoice_type_doc == '01'){
+                        sendSunatDocumentCreated(res.data)
+                    }else{
+                        Swal2.fire({
+                            title: 'Información Importante',
+                            text: "Las boletas se envian mediante un resumen",
+                            icon: 'info',
+                            padding: '2em',
+                            customClass: 'sweet-alerts',
+                        }).then(() => {
+                            emit('saved');
+                        });
+                    }
+                } else if (result.isDenied) {
+                    emit('saved');
+                } else if (result.isDismissed) {
+                    emit('saved');
+                }
+            });
+        }).catch(function (error) {
+            form.processing = false;
+            let errorMsg = 'Error al guardar el documento.';
+            if (error.response && error.response.data && error.response.data.message) {
+                errorMsg = error.response.data.message;
+            } else if (error.response && error.response.data && error.response.data.errors) {
+                let errors = error.response.data.errors;
+                let firstKey = Object.keys(errors)[0];
+                if (firstKey) {
+                    errorMsg = errors[firstKey][0] || errorMsg;
+                }
+            }
+            Swal2.fire({
+                title: 'Error',
+                text: errorMsg,
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        });
+    }
+
+    const handleNeedsRegistration = (data) => {
+        const missingNames = data.missing_registrations.map(r => r.course_name).join(', ');
+        const courseWord = data.missing_registrations.length > 1 ? 'los cursos' : 'el curso';
+
+        Swal2.fire({
+            title: 'Alumno no inscrito',
+            html: `El alumno no está inscrito en ${courseWord}: <strong>${missingNames}</strong>.<br><br>¿Desea registrarlo para generar la boleta?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, registrar',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                registerAndRetry(data);
+            } else {
+                form.processing = false;
+            }
+        });
+    }
+
+    const registerAndRetry = async (data) => {
+        try {
+            // Registrar cada curso faltante
+            for (const missing of data.missing_registrations) {
+                await axios.post(route('acco_sales_special_rates_auto_register'), {
+                    student_id: data.student_id,
+                    course_id: missing.course_id,
+                    sale_id: data.sale_id,
+                    amount_to_pay: missing.amount_to_pay,
+                    is_last_installment: data.is_last_installment,
+                    next_payment_date: data.next_payment_date,
+                });
+            }
+
+            // Reintentar el pago
+            executeSaveDocument();
+
+        } catch (error) {
+            form.processing = false;
+            let errorMsg = 'Error al registrar al alumno en el curso.';
+            if (error.response && error.response.data && error.response.data.message) {
+                errorMsg = error.response.data.message;
+            }
+            Swal2.fire({
+                title: 'Error',
+                text: errorMsg,
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
         }
     }
 
@@ -583,7 +670,7 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 }).then(() => {
-                    closeMyPopup();
+                    emit('saved');
                 });
 
             }
@@ -622,17 +709,7 @@
     });
 
     const closeMyPopup = () => {
-        //alert(props.fromId)
-        if (window.opener) {
-            // Enviar mensaje a la ventana principal
-            if(props.fromId == 'v1'){
-                window.opener.postMessage("refresh-payment-all", "*");
-            }else if(props.fromId == 'v2'){
-                window.opener.postMessage("refresh-payment-students", "*");
-            }
-
-        }
-        window.close();
+        emit('close');
     }
 </script>
 
@@ -651,7 +728,7 @@
             </div>
         </div>
     </div>
-    <div v-else class="px-16 py-8">
+    <div v-else class="px-4 py-4">
         <div class="flex xl:flex-row flex-col">
             <div class="panel px-0 flex-1 py-6 ltr:xl:mr-6 rtl:xl:ml-6">
                 <div class="px-4">

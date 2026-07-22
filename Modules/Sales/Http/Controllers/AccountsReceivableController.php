@@ -622,6 +622,72 @@ class AccountsReceivableController extends Controller
         ]);
     }
 
+    public function getFeeDocumentData($id)
+    {
+        $payments = PaymentMethod::all();
+        $saleDocumentTypes = DB::table('sale_document_types')->whereIn('sunat_id', ['01', '03'])->get();
+        $standardIdentityDocument = DB::table('identity_document_type')->get();
+
+        $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
+            ->join('departments', 'provinces.department_id', 'departments.id')
+            ->select(
+                'districts.id AS district_id',
+                'districts.name AS district_name',
+                'provinces.name AS province_name',
+                'departments.name AS department_name',
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS city_name")
+            )
+            ->get();
+
+        $sale_note = Sale::with('saleProduct')
+            ->with('client')
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $installment = $this->getNextPendingInstallment($id);
+        $description = null;
+        $feeItem = [];
+        $msg = 'Esta venta no tiene cuotas pendientes por pagar.';
+
+        if ($installment) {
+            $msg = null;
+            $isLast = $this->isLastInstallment($id, $installment->installment_number);
+            $description = $this->buildInstallmentDescription($installment->installment_number, $sale_note);
+            $nextPaymentDate = $isLast ? null : $this->getNextInstallmentDate($id, $installment->installment_number);
+            $totalQuotas = SalePaymentSchedule::where('sale_id', $id)->count();
+
+            $feeItem = [
+                'description' => $description,
+                'installment_id' => $installment->id,
+                'installment_number' => $installment->installment_number,
+                'total_installments' => $totalQuotas,
+                'amount_to_pay' => $installment->amount_to_pay,
+                'amount_paid' => $installment->amount_paid,
+                'remaining_amount' => $installment->remaining_amount,
+                'payment_date' => $installment->payment_date,
+                'next_payment_date' => $nextPaymentDate,
+                'is_last_installment' => $isLast,
+            ];
+        }
+
+        $student = AcaStudent::where('person_id', $sale_note->client->id)->first();
+
+        return response()->json([
+            'payments' => $payments,
+            'saleDocumentTypes' => $saleDocumentTypes,
+            'saleNote' => $sale_note,
+            'feeItem' => $feeItem,
+            'taxes' => [
+                'igv' => $this->igv,
+                'icbper' => $this->icbper,
+            ],
+            'standardIdentityDocument' => $standardIdentityDocument,
+            'departments' => $ubigeo,
+            'student' => $student,
+            'message' => $msg,
+        ]);
+    }
+
     private function getNextPendingInstallment($saleId)
     {
         return SalePaymentSchedule::where('sale_id', $saleId)
@@ -804,7 +870,22 @@ class AccountsReceivableController extends Controller
                 $forceUnlimited = $request->get('force_unlimited') ?? false;
                 $nextPaymentDate = $request->get('next_payment_date');
 
-                $this->updateRegistrosEstudiante($sale, $student_id, $request->get('total'), $document, $forceUnlimited, $nextPaymentDate);
+                $registrationResult = $this->updateRegistrosEstudiante($sale, $student_id, $request->get('total'), $document, $forceUnlimited, $nextPaymentDate);
+
+                if ($registrationResult['needs_registration']) {
+                    // Eliminar el documento creado ya que no se puede completar
+                    $document->delete();
+                    throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                        response()->json([
+                            'needs_registration' => true,
+                            'missing_registrations' => $registrationResult['missing_registrations'],
+                            'student_id' => $student_id,
+                            'sale_id' => $sale->id,
+                            'is_last_installment' => $request->get('is_last_installment', false),
+                            'next_payment_date' => $nextPaymentDate,
+                        ])
+                    );
+                }
 
                 // /obtenemos los productos o servicios para insertar en los
                 // /detalles de la venta y el documento
@@ -989,16 +1070,58 @@ class AccountsReceivableController extends Controller
             });
 
             return response()->json($res);
+        } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
+            return $e->getResponse();
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()]);
-            // Devuelve una respuesta de error
+            return response()->json(['message' => $e->getMessage()], 500);
         }
+    }
+
+    public function autoRegisterStudent(Request $request)
+    {
+        $request->validate([
+            'student_id' => 'required|integer',
+            'course_id' => 'required|integer',
+            'sale_id' => 'required|integer',
+            'amount_to_pay' => 'required|numeric',
+        ]);
+
+        $student = AcaStudent::findOrFail($request->get('student_id'));
+        $course = AcaCourse::findOrFail($request->get('course_id'));
+
+        $isLastInstallment = $request->get('is_last_installment', false);
+        $nextPaymentDate = $request->get('next_payment_date');
+
+        $registration = AcaCapRegistration::updateOrCreate(
+            [
+                'student_id' => $student->id,
+                'course_id' => $course->id,
+            ],
+            [
+                'status' => true,
+                'sale_note_id' => $request->get('sale_id'),
+                'modality_id' => 3,
+                'unlimited' => $isLastInstallment,
+                'date_start' => Carbon::now()->format('Y-m-d'),
+                'date_end' => $isLastInstallment ? null : $nextPaymentDate,
+                'payment_installments' => true,
+                'amount_paid' => $request->get('amount_to_pay'),
+                'advancement' => 0,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'registration' => $registration,
+            'course_name' => $course->description,
+        ]);
     }
 
     public function updateRegistrosEstudiante($sale, $student_id, $price_sale, $document, $forceUnlimited = false, $nextPaymentDate = null)
     {
         $products = $sale->saleProduct;
-        $total = $price_sale; // monto que llega desde el request (lo que está pagando el alumno)
+        $total = $price_sale;
+        $missingRegistrations = [];
 
         foreach ($products as $product) {
 
@@ -1012,31 +1135,32 @@ class AccountsReceivableController extends Controller
                     ->first();
 
                 if (! $registration) {
-                    throw new \Exception("No existe registro del alumno para el curso ID: {$product->product_id}");
+                    $course = AcaCourse::find($product->product_id);
+                    $missingRegistrations[] = [
+                        'course_id' => $product->product_id,
+                        'course_name' => $course ? $course->description : "Curso ID: {$product->product_id}",
+                        'amount_to_pay' => $product->price ?? 0,
+                    ];
+                    continue;
                 }
 
-                $toPay = $registration->amount_paid - ($registration->advancement ?? 0); // lo que falta pagar
+                $toPay = $registration->amount_paid - ($registration->advancement ?? 0);
 
-                // Validar si se paga todo o parcialmente
                 if ($forceUnlimited || $total >= $toPay) {
-                    // Cancela todo lo que falta
                     $registration->advancement = $registration->amount_paid;
                     $total -= $toPay;
                     $registration->unlimited = true;
                     $registration->date_start = null;
                     $registration->date_end = null;
                 } else {
-                    // Pago parcial
                     $registration->advancement = ($registration->advancement ?? 0) + $total;
                     $total = 0;
                     $registration->unlimited = false;
                     $registration->date_end = $nextPaymentDate;
                 }
 
-                // Registrar documento
                 $registration->sale_note_id = $sale->id;
                 $registration->document_id = $document->id;
-
                 $registration->save();
             }
 
@@ -1056,28 +1180,16 @@ class AccountsReceivableController extends Controller
 
                 $toPay = $studentSubscription->amount_paid - ($studentSubscription->advancement ?? 0);
 
-                // Pago total o parcial
                 if ($forceUnlimited || $total >= $toPay) {
-
-                    // Cancela la suscripción completa
                     $adv = $studentSubscription->amount_paid;
                     $total -= $toPay;
-
-                    // Calcular fecha de finalización según periodo
                     $dateStart = Carbon::parse($studentSubscription->date_start);
                     $dateEnd = $this->calculateDateEnd($studentSubscription->subscription->period, $dateStart);
-
                 } else {
-
-                    // Pago parcial
                     $adv = ($studentSubscription->advancement ?? 0) + $total;
                     $total = 0;
-
-                    // La fecha de fin será la próxima fecha de pago
                     $dateEnd = $nextPaymentDate;
                 }
-
-                // Actualización
 
                 $studentSubscription = AcaStudentSubscription::where('student_id', $student_id)
                     ->where('subscription_id', $product->product_id)
@@ -1087,11 +1199,18 @@ class AccountsReceivableController extends Controller
                         'status' => true,
                         'xdocument_id' => $document->id,
                     ]);
-
             }
 
-        } // END FOREACH
+        }
 
+        if (count($missingRegistrations) > 0) {
+            return [
+                'needs_registration' => true,
+                'missing_registrations' => $missingRegistrations,
+            ];
+        }
+
+        return ['needs_registration' => false];
     }
 
     public function paymentDestinationsStore($payments, $schedule_id, $document_id, $sale_id)

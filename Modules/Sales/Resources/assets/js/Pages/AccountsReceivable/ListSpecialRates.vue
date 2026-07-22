@@ -20,6 +20,7 @@
     import iconMail from '@/Components/vristo/icon/icon-mail.vue';
     import iconLink from '@/Components/vristo/icon/icon-link.vue';
     import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
+    import CreateFeeDocument from './CreateFeeDocument.vue';
 
     const props = defineProps({
         sales: {
@@ -118,130 +119,52 @@
         return `${day}-${month}-${year} ${hours}:${minutes}`;
     }
 
-    const openDialogCreateFeeDocument = (sale) => {
-        let fromId = 'v1';
-        let url = route('acco_sales_special_rates_quota_create', [sale.id, fromId]);
+    const displayModalFeeDocument = ref(false);
+    const feeDocumentData = ref(null);
+    const feeDocumentLoading = ref(false);
+    const feeDocumentSaleId = ref(null);
 
+    const openDialogCreateFeeDocument = (sale) => {
         if (Number(sale.advancement) >= Number(sale.total)) {
             showMessage('El documento ya fue pagado en su totalidad', 'success');
             return;
         }
 
-        // Usamos el total disponible de la pantalla
-        let screenWidth = window.screen.availWidth;
-        let screenHeight = window.screen.availHeight;
+        feeDocumentLoading.value = true;
+        feeDocumentSaleId.value = sale.id;
+        displayModalFeeDocument.value = true;
 
-        // Ponemos 0 en top y left para que pegue a la esquina superior izquierda
-        const w = window.open(
-            "",
-            "feeWindow",
-            `width=${screenWidth},height=${screenHeight},top=0,left=0,resizable=yes,scrollbars=yes`
-        );
+        axios.get(route('acco_sales_special_rates_quota_data', sale.id)).then((res) => {
+            feeDocumentData.value = res.data;
+            feeDocumentLoading.value = false;
+        }).catch((err) => {
+            feeDocumentLoading.value = false;
+            displayModalFeeDocument.value = false;
+            Swal.fire({
+                title: 'Error',
+                text: 'No se pudieron cargar los datos del formulario.',
+                icon: 'error',
+            });
+        });
+    };
 
-        // 2. Mostrar loader temporal
-        w.document.write(`
-            <html>
-                <head>
-                    <title>Cargando...</title>
-                    <style>
-                        body {
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            flex-direction: column;
-                            height: 100vh;
-                            margin: 0;
-                            background: #f7f7f7;
-                            font-family: sans-serif;
-                            text-align: center;
-                        }
+    const closeModalFeeDocument = () => {
+        displayModalFeeDocument.value = false;
+        feeDocumentData.value = null;
+    };
 
-                        .loader-con {
-                            position: relative;
-                            width: 100%;            /* Ocupar todo el ancho */
-                            max-width: 600px;       /* Para que no exceda demasiado */
-                            height: 120px;
-                            overflow: hidden;
-                        }
+    const onFeeDocumentSaved = () => {
+        closeModalFeeDocument();
+        refreshList();
+    };
 
-                        .pfile {
-                            position: absolute;
-                            bottom: 25px;
-                            width: 50px;            /* Más grande para mejor visibilidad */
-                            height: 60px;
-                            background: linear-gradient(90deg, #b324db, #ac8dcb);
-                            border-radius: 4px;
-                            transform-origin: center;
-                            animation: flyRight 3s ease-in-out infinite;
-                            opacity: 0;
-                        }
-
-                        .pfile::before {
-                            content: "";
-                            position: absolute;
-                            top: 8px;
-                            left: 8px;
-                            width: 30px;
-                            height: 5px;
-                            background-color: #ffffff;
-                            border-radius: 2px;
-                        }
-
-                        .pfile::after {
-                            content: "";
-                            position: absolute;
-                            top: 18px;
-                            left: 8px;
-                            width: 20px;
-                            height: 5px;
-                            background-color: #ffffff;
-                            border-radius: 2px;
-                        }
-
-                        @keyframes flyRight {
-                            0% {
-                                left: -15%;          /* Más atrás */
-                                transform: scale(0.3);
-                                opacity: 0;
-                            }
-                            50% {
-                                left: 40%;
-                                transform: scale(1.3);
-                                opacity: 1;
-                            }
-                            100% {
-                                left: 110%;          /* Más adelante */
-                                transform: scale(0.3);
-                                opacity: 0;
-                            }
-                        }
-
-                        .pfile {
-                            animation-delay: calc(var(--i) * 0.5s);
-                        }
-                    </style>
-                </head>
-
-                <body>
-                    <div class="loader-con">
-                        <div style="--i: 0;" class="pfile"></div>
-                        <div style="--i: 1;" class="pfile"></div>
-                        <div style="--i: 2;" class="pfile"></div>
-                        <div style="--i: 3;" class="pfile"></div>
-                        <div style="--i: 4;" class="pfile"></div>
-                        <div style="--i: 5;" class="pfile"></div>
-                    </div>
-
-                    <p style="margin-top: 20px; color: #555; font-size: 18px;">
-                        Cargando contenido...
-                    </p>
-                </body>
-            </html>
-
-        `);
-
-        // 3. Cargar la URL real
-        w.location.href = url;
+    const refreshList = () => {
+        router.visit(route('acco_sales_special_rates'), {
+            only: ['sales'],
+            replace: true,
+            preserveScroll: true,
+            preserveState: true
+        });
     };
 
     const displayModalCronograma = ref(false);
@@ -255,16 +178,7 @@
     }
 
     onMounted(() => {
-        window.addEventListener("message", (event) => {
-            if (event.data === "refresh-payment-all") {
-                router.visit(route('acco_sales_special_rates'), {
-                    only: ['sales'], // opcional
-                    replace: true,
-                    preserveScroll: true,
-                    preserveState: true
-                });
-            }
-        });
+        // El refresco de la lista se maneja via callback onFeeDocumentSaved
     });
 
     const displayModalDocuments = ref(false);
@@ -716,7 +630,7 @@
                     <div class="w-full p-4">
                         <div class="grid grid-cols-3">
                             <div class="col-span-3 sm:col-span-1">
-                                <form  class="grid sm:grid-cols-2 gap-6">
+                                <form @submit.prevent="form.get(route('acco_sales_special_rates'))" class="grid sm:grid-cols-2 gap-6">
                                     <div class="w-full">
                                         <flat-pickr v-model="form.issue_date" class="form-input" :config="basic"></flat-pickr>
                                     </div>
@@ -724,7 +638,7 @@
                                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                             <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
                                         </div>
-                                        <input v-model="form.search" type="text" id="table-search-users" class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar por Descripción">
+                                        <input v-model="form.search" @keyup.enter="form.get(route('acco_sales_special_rates'))" type="text" id="table-search-users" class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Buscar por Descripción">
                                     </div>
                                 </form>
                             </div>
@@ -1274,5 +1188,41 @@
                 </div>
             </template>
         </ModalStatus>
+        <!-- Modal Registrar Pago -->
+        <ModalLargeX :show="displayModalFeeDocument" :onClose="closeModalFeeDocument">
+            <template #title>
+                Registrar Pago
+            </template>
+            <template #message>
+                Complete los datos para generar la boleta o factura
+            </template>
+            <template #content>
+                <div v-if="feeDocumentLoading" class="flex justify-center items-center py-20">
+                    <div class="text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                        <p class="text-gray-500">Cargando datos...</p>
+                    </div>
+                </div>
+                <div v-else-if="feeDocumentData && !feeDocumentData.message">
+                    <CreateFeeDocument
+                        :saleNote="feeDocumentData.saleNote"
+                        :payments="feeDocumentData.payments"
+                        :saleDocumentTypes="feeDocumentData.saleDocumentTypes"
+                        :taxes="feeDocumentData.taxes"
+                        :standardIdentityDocument="feeDocumentData.standardIdentityDocument"
+                        :departments="feeDocumentData.departments"
+                        :student="feeDocumentData.student"
+                        :feeItem="feeDocumentData.feeItem"
+                        :message="feeDocumentData.message"
+                        :fromId="'v1'"
+                        @saved="onFeeDocumentSaved"
+                        @close="closeModalFeeDocument"
+                    />
+                </div>
+                <div v-else class="text-center py-10">
+                    <p class="text-gray-500 text-lg">{{ feeDocumentData?.message || 'No hay cuotas pendientes.' }}</p>
+                </div>
+            </template>
+        </ModalLargeX>
     </AppLayout>
 </template>
