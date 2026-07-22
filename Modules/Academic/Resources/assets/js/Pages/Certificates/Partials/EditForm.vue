@@ -43,6 +43,7 @@
         render_preview_client: true,
         course_id: null,
         for_module: props.certificate.for_module == 1 ? true : false,
+        require_exam_to_download: props.certificate.require_exam_to_download == 1 ? true : false,
         certificate_img: props.certificate.certificate_img_finished ?? props.certificate.certificate_img,
         certificate_img_preview: null,
         fontfamily_date: props.certificate.fontfamily_date,
@@ -2160,6 +2161,15 @@
                         </label>
                         <p class="text-xs text-gray-400 mt-1">Al descargar desde un módulo, mostrará el nombre del módulo</p>
                     </div>
+
+                    <!-- Solo descargar al aprobar examen -->
+                    <div class="col-span-2 mb-4" v-if="form.for_module">
+                        <label class="flex items-center cursor-pointer">
+                            <input v-model="form.require_exam_to_download" type="checkbox" class="form-checkbox text-primary" />
+                            <span class="ltr:ml-2 rtl:mr-2 text-white-dark font-medium">Solo se podra descargar al aprobar examen con nota >= 11</span>
+                        </label>
+                    </div>
+
                     <div class="col-span-2">
                         <label class="flex items-center cursor-pointer">
                             <input v-model="form.state" type="checkbox" class="form-checkbox" />

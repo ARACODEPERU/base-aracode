@@ -31,6 +31,10 @@
             type: Object,
             default: null,
         },
+        certificateRequiresExam: {
+            type: Boolean,
+            default: true,
+        },
     });
 
     const themeSelected = ref([]);
@@ -239,8 +243,9 @@
     // Verificar si puede descargar certificado del módulo
 
     const canDownloadCertificate = () => {
-        return (props.module.allow_certificate_download === true || props.module.allow_certificate_download == 1) &&
-               studentExam.value &&
+        if (!props.module.allow_certificate_download) return false;
+        if (!props.certificateRequiresExam) return true;
+        return studentExam.value &&
                studentExam.value.punctuation >= 11 &&
                (studentExam.value.status === 'completado' || studentExam.value.status === 'revision_pendiente' || studentExam.value.status === 'calificado');
     };

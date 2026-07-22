@@ -211,6 +211,7 @@ class AcaCertificateController extends Controller
             'name_certificate' => $request->get('name_certificate'),
             'state' => true,
             'for_module' => $request->get('for_module') ? true : false,
+            'require_exam_to_download' => $request->get('require_exam_to_download') ? true : false,
             'back_certificate_img' => $backPath,
             'back_certificate_img_width' => $backImgWidth,
             'back_certificate_img_height' => $backImgHeight,
@@ -838,6 +839,7 @@ class AcaCertificateController extends Controller
                 }
                 $acaCertificate->state = $request->get('state') ? true : false;
                 $acaCertificate->for_module = $request->get('for_module') ? true : false;
+                $acaCertificate->require_exam_to_download = $request->get('require_exam_to_download') ? true : false;
                 $acaCertificate->has_reverse = $request->get('has_reverse') ? true : false;
                 break;
         }
@@ -1310,32 +1312,33 @@ class AcaCertificateController extends Controller
             return back()->with('error', 'Este módulo no permite la descarga de certificados');
         }
 
-        // 3. Buscar examen del estudiante para este módulo
-        $exam = AcaExam::where('module_id', $module_id)->first();
-
-        if (! $exam) {
-            return back()->with('error', 'No tienes examen para este módulo');
-        }
-
-        // 4. Verificar examen aprobado (nota >= 11 y estado completado)
-        $studentExam = AcaStudentExam::where('exam_id', $exam->id)
-            ->where('student_id', $student->id)
-            ->where('punctuation', '>=', 11)
-            ->whereIn('status', ['calificado', 'completado', 'revision_pendiente'])
-            ->first();
-
-        if (! $studentExam) {
-            return back()->with('error', 'No tienes examen aprobado para descargar el certificado');
-        }
-
-        // 5. Buscar certificado: primero específico del curso, luego genérico
+        // 3. Buscar certificado primero para determinar si requiere examen
         $certificate = $this->findModuleCertificate($module->course_id);
 
         if (! $certificate) {
             return back()->with('error', 'No hay certificado configurado para módulos');
         }
 
-        // 6. Generar certificados (anverso y reverso si está configurado)
+        // 4. Verificar examen aprobado solo si el certificado lo requiere
+        if ($certificate->require_exam_to_download) {
+            $exam = AcaExam::where('module_id', $module_id)->first();
+
+            if (! $exam) {
+                return back()->with('error', 'No tienes examen para este módulo');
+            }
+
+            $studentExam = AcaStudentExam::where('exam_id', $exam->id)
+                ->where('student_id', $student->id)
+                ->where('punctuation', '>=', 11)
+                ->whereIn('status', ['calificado', 'completado', 'revision_pendiente'])
+                ->first();
+
+            if (! $studentExam) {
+                return back()->with('error', 'No tienes examen aprobado para descargar el certificado');
+            }
+        }
+
+        // 5. Generar certificados (anverso y reverso si está configurado)
         return $this->generateModuleCertificates($certificate, $student, $module);
     }
 

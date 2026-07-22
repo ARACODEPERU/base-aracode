@@ -905,11 +905,22 @@ class AcaStudentController extends Controller
             abort(403, 'No tienes acceso a este curso.');
         }
 
+        // Verificar si el certificado de módulo requiere examen
+        $certificateRequiresExam = AcaCertificateParameter::where('for_module', true)
+            ->where(function ($q) use ($module) {
+                $q->where('course_id', $module->course_id)
+                    ->orWhereNull('course_id');
+            })
+            ->where('state', true)
+            ->orderByRaw('course_id IS NOT NULL DESC')
+            ->value('require_exam_to_download');
+
         return Inertia::render('Academic::Students/Themes', [
             'course' => $course,
             'module' => $module,
             'previousModule' => $previousModule,
-            'nextModule' => $nextModule
+            'nextModule' => $nextModule,
+            'certificateRequiresExam' => (bool) $certificateRequiresExam,
         ]);
     }
 

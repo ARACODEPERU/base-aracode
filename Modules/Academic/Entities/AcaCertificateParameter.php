@@ -61,6 +61,7 @@ class AcaCertificateParameter extends Model
         'certificate_img_finished',
         'back_certificate_img_finished',
         'for_module',
+        'require_exam_to_download',
         'back_certificate_img',
         'back_certificate_img_width',
         'back_certificate_img_height',
