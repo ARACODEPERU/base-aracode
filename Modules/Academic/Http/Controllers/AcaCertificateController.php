@@ -27,6 +27,8 @@ use Modules\Academic\Entities\AcaExam;
 use Modules\Academic\Entities\AcaModule;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentExam;
+use Modules\Academic\Entities\AcaStudentGrade;
+use Modules\Academic\Entities\AcaStudentGradeDetail;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Entities\AcaTheme;
 use Modules\Academic\Operations\CertificateImage;
@@ -845,6 +847,11 @@ class AcaCertificateController extends Controller
                 break;
         }
 
+        // Siempre actualizar has_reverse independientemente del action_type
+        if ($request->has('has_reverse')) {
+            $acaCertificate->has_reverse = $request->boolean('has_reverse');
+        }
+
         $acaCertificate->save();
 
         $fullPath = null;
@@ -1087,7 +1094,7 @@ class AcaCertificateController extends Controller
             'height' => $height,
             'base_image' => $this->certificateStorageUrl($imagePath),
             'texts' => $this->certificateTextItems($certificate, $student, $parameter, $course, $side, $module),
-            'contents' => $this->certificateContentItems($parameter, $course, $side),
+            'contents' => $this->certificateContentItems($parameter, $course, $side, $student, $certificate),
             'qr' => $this->certificateQrItem($certificate, $student, $parameter, $side),
         ];
     }
@@ -1119,7 +1126,94 @@ class AcaCertificateController extends Controller
             $this->pushCertificateText($texts, $parameter, $side, 'description', $parameter->back_description ?? '', (int) ($parameter->back_max_width_description ?? 800), true);
         }
 
+        // Nota Final (PROMEDIO FINAL) en el reverso
+        if ($side === 'back') {
+            $this->addGradeTextItem($texts, $certificate, $student, $parameter);
+        }
+
         return $texts;
+    }
+
+    private function addGradeTextItem(array &$texts, AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter): void
+    {
+        $gradeConfig = AcaCertificateGradeConfig::where('certificate_id', $parameter->id)->first();
+
+        if (! $gradeConfig || ! $gradeConfig->back_visible_grade) {
+            return;
+        }
+
+        $register = AcaCapRegistration::where('student_id', $student->id)
+            ->where('course_id', $certificate->course_id)
+            ->first();
+
+        if (! $register) {
+            return;
+        }
+
+        $studentGrade = AcaStudentGrade::where('registration_id', $register->id)->first();
+
+        if (! $studentGrade || $studentGrade->final_average === null) {
+            return;
+        }
+
+        $label = 'Promedio Final: ';
+        $gradeDisplay = number_format($studentGrade->final_average, 2);
+        $fontSize = (int) ($gradeConfig->back_font_size_grade ?? 14);
+
+        if ($studentGrade->final_average < 11) {
+            $textColor = '#FF0000';
+        } else {
+            $textColor = $gradeConfig->back_color_grade ?? '#000000';
+        }
+
+        $posX = (float) ($gradeConfig->back_position_grade_x ?? 0);
+        $posY = (float) ($gradeConfig->back_position_grade_y ?? 0);
+
+        // Anchura estimada del label + separación
+        $labelWidth = strlen($label) * $fontSize * 0.65;
+        $spacing = 8;
+
+        $rectWidth = (int) ($gradeConfig->back_rectangle_width ?? 100);
+        $rectHeight = (int) ($gradeConfig->back_rectangle_height ?? 100);
+        $rectColor = $gradeConfig->back_rectangle_color ?? '#000000';
+        $avgDim = ($rectWidth + $rectHeight) / 2;
+        $rectStrokeWidth = max(1, round($avgDim * 0.03));
+
+        // Posición del rectángulo: justo a la derecha del label, centrado verticalmente
+        $rectX = $posX + $labelWidth + $spacing;
+        $rectY = $posY + ($fontSize / 2) - ($rectHeight / 2);
+
+        // Item 1: label "Promedio Final: " (sin recuadro)
+        $texts[] = [
+            'id' => 'back-grade-label',
+            'text' => $label,
+            'x' => $posX,
+            'y' => $posY,
+            'font_size' => $fontSize,
+            'font_family' => $this->certificateFontFamily($gradeConfig->back_fontfamily_grade),
+            'color' => $textColor,
+            'align' => 'left',
+            'width' => null,
+            'line_height' => 1,
+        ];
+
+        // Item 2: valor de la nota dentro del recuadro
+        $texts[] = [
+            'id' => 'back-grade-value',
+            'text' => $gradeDisplay,
+            'x' => $rectX + ($rectWidth / 2),
+            'y' => $rectY + ($rectHeight / 2),
+            'font_size' => $fontSize,
+            'font_family' => $this->certificateFontFamily($gradeConfig->back_fontfamily_grade),
+            'color' => $textColor,
+            'align' => 'center',
+            'width' => $rectWidth,
+            'line_height' => 1,
+            'rect_width' => $rectWidth,
+            'rect_height' => $rectHeight,
+            'rect_color' => $rectColor,
+            'rect_stroke_width' => $rectStrokeWidth,
+        ];
     }
 
     private function pushCertificateText(array &$texts, AcaCertificateParameter $parameter, string $side, string $field, ?string $text, ?int $width = null, bool $multiline = false): void
@@ -1145,7 +1239,7 @@ class AcaCertificateController extends Controller
         ];
     }
 
-    private function certificateContentItems(AcaCertificateParameter $parameter, ?AcaCourse $course, string $side): array
+    private function certificateContentItems(AcaCertificateParameter $parameter, ?AcaCourse $course, string $side, ?AcaStudent $student = null, ?AcaCertificate $certificate = null): array
     {
         if (! $course) {
             return [];
@@ -1168,6 +1262,7 @@ class AcaCertificateController extends Controller
         }
 
         if ($side === 'back' && ! $parameter->for_module && $parameter->back_visible_course) {
+            $moduleGrades = $this->getStudentModuleGrades($student, $certificate);
             $items[] = $this->courseTablePayload(
                 'back-course-content',
                 $course,
@@ -1177,14 +1272,15 @@ class AcaCertificateController extends Controller
                 (int) ($parameter->back_font_size_course ?? 14),
                 $parameter->back_color_course ?? '#000000',
                 $this->certificateFontFamily($parameter->back_fontfamily_course),
-                $parameter->back_content_type ?? 'list'
+                $parameter->back_content_type ?? 'list',
+                $moduleGrades
             );
         }
 
         return $items;
     }
 
-    private function courseTablePayload(string $id, AcaCourse $course, float $x, float $y, int $width, int $fontSize, string $color, string $fontFamily, string $type): array
+    private function courseTablePayload(string $id, AcaCourse $course, float $x, float $y, int $width, int $fontSize, string $color, string $fontFamily, string $type, array $moduleGrades = []): array
     {
         return [
             'id' => $id,
@@ -1195,13 +1291,42 @@ class AcaCertificateController extends Controller
             'font_size' => $fontSize,
             'color' => $color,
             'font_family' => $fontFamily,
-            'modules' => $course->modules->map(function ($module) {
+            'modules' => $course->modules->map(function ($module) use ($moduleGrades) {
+                $grade = $moduleGrades[$module->id] ?? null;
                 return [
                     'title' => $module->description ?? '',
                     'themes' => $module->themes->pluck('description')->filter()->values()->all(),
+                    'grade' => $grade !== null ? (int) ceil($grade) : null,
                 ];
             })->values()->all(),
         ];
+    }
+
+    private function getStudentModuleGrades(?AcaStudent $student, ?AcaCertificate $certificate): array
+    {
+        if (! $student || ! $certificate) {
+            return [];
+        }
+
+        $grade = AcaStudentGrade::where('student_id', $student->id)
+            ->where('course_id', $certificate->course_id)
+            ->first();
+
+        if (! $grade) {
+            return [];
+        }
+
+        $details = AcaStudentGradeDetail::where('grade_id', $grade->id)
+            ->whereNotNull('average')
+            ->get()
+            ->keyBy('module_id');
+
+        $result = [];
+        foreach ($details as $moduleId => $detail) {
+            $result[$moduleId] = (float) $detail->average;
+        }
+
+        return $result;
     }
 
     private function certificateQrItem(AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter, string $side): ?array

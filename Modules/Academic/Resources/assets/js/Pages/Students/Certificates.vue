@@ -220,11 +220,32 @@
             opacity: 0.96,
         };
 
-        if (item.width !== null && item.width !== undefined && item.width !== '') {
+        // Si tiene rectángulo, centrar el texto dentro del recuadro
+        if (item.rect_width && item.rect_height) {
+            config.x = Number(item.x || 0) - item.rect_width / 2;
+            config.y = Number(item.y || 0) - item.rect_height / 2;
+            config.width = item.rect_width;
+            config.height = item.rect_height;
+            config.align = 'center';
+            config.verticalAlign = 'middle';
+        } else if (item.width !== null && item.width !== undefined && item.width !== '') {
             config.width = Number(item.width);
         }
 
         return config;
+    };
+
+    const rectConfig = (item) => {
+        if (!item.rect_width || !item.rect_height) return null;
+        return {
+            x: Number(item.x || 0) - item.rect_width / 2,
+            y: Number(item.y || 0) - item.rect_height / 2,
+            width: item.rect_width,
+            height: item.rect_height,
+            stroke: item.rect_color || item.color || '#000000',
+            strokeWidth: Number(item.rect_stroke_width || 1),
+            fill: 'transparent',
+        };
     };
 
     const qrAnchorToPosition = (align, x, y, size) => {
@@ -261,6 +282,12 @@
     });
 
     const contentRows = (item) => {
+        if (item.type === 'table') {
+            return (item.modules || []).map((module) => ({
+                module: module.title || 'Modulo',
+                grade: module.grade !== null && module.grade !== undefined ? String(module.grade) : '-',
+            }));
+        }
         return (item.modules || []).map((module, index) => ({
             module: `${index + 1}. ${module.title || 'Modulo'}`,
             content: (module.themes || []).join(', '),
@@ -269,6 +296,9 @@
 
     const rowHeight = (item, row) => {
         const fontSize = Number(item.font_size || 14);
+        if (item.type === 'table') {
+            return Math.max(fontSize * 2.2, 34);
+        }
         const contentLength = Math.max((row.content || '').length, 1);
         const lines = Math.max(1, Math.ceil(contentLength / 72));
         return Math.max(fontSize * (lines + 1.2), 34);
@@ -526,22 +556,24 @@
                                     v-if="baseImage"
                                     :config="{ image: baseImage, x: 0, y: 0, width: activeSide.width, height: activeSide.height }"
                                 />
-                                <v-text
-                                    v-for="item in activeSide.texts"
-                                    :key="item.id"
-                                    :config="textConfig(item)"
-                                />
+                                <template v-for="item in activeSide.texts" :key="item.id">
+                                    <v-rect
+                                        v-if="item.rect_width"
+                                        :config="rectConfig(item)"
+                                    />
+                                    <v-text :config="textConfig(item)" />
+                                </template>
                                 <template v-for="item in activeSide.contents" :key="item.id">
                                     <v-group v-if="item.type === 'table'" :config="{ x: item.x, y: item.y }">
                                         <v-rect :config="{ x: 0, y: 0, width: item.width, height: tableHeight(item), stroke: item.color || '#111827', strokeWidth: 1 }" />
                                         <v-rect :config="{ x: 0, y: 0, width: item.width, height: 34, fill: 'rgba(243, 244, 246, 0.92)', stroke: item.color || '#111827', strokeWidth: 1 }" />
-                                        <v-line :config="{ points: [item.width * 0.34, 0, item.width * 0.34, tableHeight(item)], stroke: item.color || '#111827', strokeWidth: 1 }" />
-                                        <v-text :config="{ x: 8, y: 9, text: 'MODULO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.34 - 16 }" />
-                                        <v-text :config="{ x: item.width * 0.34 + 8, y: 9, text: 'CONTENIDO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.66 - 16 }" />
+                                        <v-line :config="{ points: [item.width * 0.70, 0, item.width * 0.70, tableHeight(item)], stroke: item.color || '#111827', strokeWidth: 1 }" />
+                                        <v-text :config="{ x: 8, y: 9, text: 'MODULO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.70 - 16 }" />
+                                        <v-text :config="{ x: item.width * 0.70 + 8, y: 9, text: 'NOTA', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.30 - 16, align: 'center' }" />
                                         <template v-for="(row, rowIndex) in contentRows(item)" :key="`${item.id}-${rowIndex}`">
                                             <v-line :config="{ points: [0, rowY(item, rowIndex), item.width, rowY(item, rowIndex)], stroke: item.color || '#111827', strokeWidth: 1 }" />
-                                            <v-text :config="{ x: 8, y: rowY(item, rowIndex) + 8, text: row.module, fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fill: item.color || '#000000', width: item.width * 0.34 - 16 }" />
-                                            <v-text :config="{ x: item.width * 0.34 + 8, y: rowY(item, rowIndex) + 8, text: row.content, fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fill: item.color || '#000000', width: item.width * 0.66 - 16, lineHeight: 1.2 }" />
+                                            <v-text :config="{ x: 8, y: rowY(item, rowIndex) + 8, text: row.module, fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fill: item.color || '#000000', width: item.width * 0.70 - 16 }" />
+                                            <v-text :config="{ x: item.width * 0.70 + 8, y: rowY(item, rowIndex) + 8, text: row.grade, fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fill: item.color || '#000000', width: item.width * 0.30 - 16, align: 'center' }" />
                                         </template>
                                     </v-group>
                                     <v-text
