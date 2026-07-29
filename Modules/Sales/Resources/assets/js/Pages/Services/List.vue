@@ -315,6 +315,9 @@
                           Código
                       </th>
                       <th class="">
+                          Código SUNAT
+                      </th>
+                      <th class="">
                           Descripción
                       </th>
                     </tr>
@@ -353,6 +356,9 @@
                         </td>
                         <td class="text-right text-sm">
                             {{ product.interne }}
+                        </td>
+                        <td class="text-center text-sm">
+                            {{ product.usine }}
                         </td>
                         <td class="text-sm">
                             {{ product.description }}

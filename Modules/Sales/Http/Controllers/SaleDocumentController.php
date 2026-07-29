@@ -354,7 +354,6 @@ class SaleDocumentController extends Controller
 
                         // creamos el nuevo producto o servicio
                         $new_product = Product::create([
-                            'usine' => $randomNumberPadded,
                             'interne' => $randomNumberPadded,
                             'description' => $produc['description'],
                             'image' => $path,
