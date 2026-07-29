@@ -362,6 +362,7 @@
           imageAlt: 'Cargando',
           showConfirmButton: false,
           allowOutsideClick: false,
+          backdrop: true,
           padding: '2em',
           customClass: 'sweet-alerts',
         });

@@ -307,6 +307,7 @@ const cancelDocument = (index, item) => {
                 customClass: "sweet-alerts",
                 showLoaderOnConfirm: true,
                 allowOutsideClick: false,
+                backdrop: true,
                 allowEscapeKey: false,
                 preConfirm: async (input) => {
                     let textarea =

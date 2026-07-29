@@ -235,6 +235,7 @@ const openSwal2Certificate = () => {
         cancelButtonText: 'Cancelar',
         showLoaderOnConfirm: true,
         allowOutsideClick: false,
+        backdrop: true,
         allowEscapeKey: false,
         padding: '2em',
         customClass: 'sweet-alerts',

@@ -530,6 +530,7 @@ const prepareSalesReview = (chargeIds = null) => {
                 title: 'Preparando Sales',
                 text: 'Estamos llevando los cobros al documento de venta.',
                 allowOutsideClick: false,
+                backdrop: true,
                 didOpen: () => Swal.showLoading(),
                 customClass: 'sweet-alerts',
                 padding: '2em',

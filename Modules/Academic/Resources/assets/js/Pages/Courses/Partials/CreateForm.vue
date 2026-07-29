@@ -36,6 +36,7 @@ const props = defineProps({
 const form = useForm({
     status: true,
     description: null,
+    usine: '',
     course_date: null,
     category_id: null,
     image: null,
@@ -140,6 +141,17 @@ const handleImageCompressed = (file) => {
                     type="text"
                 />
                 <InputError :message="form.errors.description" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="usine" value="Código SUNAT" />
+                <TextInput
+                    id="usine"
+                    v-model="form.usine"
+                    type="text"
+                    placeholder="Según catálogo de SUNAT"
+                />
+                <p class="text-xs text-gray-500 mt-1">Código UCE. Consulte el catálogo de SUNAT Peru</p>
+                <InputError :message="form.errors.usine" class="mt-2" />
             </div>
             <div class="col-span-6">
                 <InputLabel for="file_input" value="Imagen *" />

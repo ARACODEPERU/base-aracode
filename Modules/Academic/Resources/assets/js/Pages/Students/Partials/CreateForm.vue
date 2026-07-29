@@ -167,6 +167,7 @@ const openSwal2Search = () => {
         cancelButtonText: 'Cancelar',
         showLoaderOnConfirm: true,
         allowOutsideClick: false,
+        backdrop: true,
         allowEscapeKey: false,
         icon: "question",
         padding: '2em',
@@ -216,6 +217,7 @@ const openSwal2Search = () => {
 
             Swal2.fire({
                 allowOutsideClick: false,
+                backdrop: true,
                 title: person.full_name,
                 imageUrl: person.image ? getImage(person.image) : null,
                 text: `Ya fue registrado con el DNI ${person.number}`,

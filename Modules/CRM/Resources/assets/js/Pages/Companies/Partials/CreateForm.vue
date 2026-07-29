@@ -178,6 +178,7 @@ const openSwal2Search = () => {
         cancelButtonText: 'Cancelar',
         showLoaderOnConfirm: true,
         allowOutsideClick: false,
+        backdrop: true,
         allowEscapeKey: false,
         icon: "question",
         padding: '2em',
@@ -202,6 +203,7 @@ const openSwal2Search = () => {
         if (result.isConfirmed) {
             Swal2.fire({
                 allowOutsideClick: false,
+                backdrop: true,
                 title: result.value.data.person.full_name,
                 imageUrl: result.value.data.person.image ? getImage(result.value.data.person.image) : null,
                 text: `Ya fue registrado con el RUC ` + result.value.data.person.number,

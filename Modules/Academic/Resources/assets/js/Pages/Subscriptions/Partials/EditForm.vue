@@ -26,6 +26,7 @@ const props = defineProps({
 
 const form = useForm({
     title: props.subscription.title,
+    usine: props.subscription.usine || '',
     description: props.subscription.description,
     details: props.subscription.details,
     prices: props.subscription.prices,
@@ -96,6 +97,17 @@ const removePrice = (indexToRemove) => {
 
                 />
                 <InputError :message="form.errors.title" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="usine" value="Código SUNAT" />
+                <TextInput
+                    id="usine"
+                    v-model="form.usine"
+                    type="text"
+                    placeholder="Según catálogo de SUNAT"
+                />
+                <p class="text-xs text-gray-500 mt-1">Código UCE. Consulte el catálogo de SUNAT Peru</p>
+                <InputError :message="form.errors.usine" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel for="period" value="Periodo *" />

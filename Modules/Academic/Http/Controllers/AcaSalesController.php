@@ -275,13 +275,18 @@ class AcaSalesController extends Controller
                     $total_tax = $igv + $icbper;
 
                     $originId = $produc['originId'] ?? null;
+                    $classEntity = null;
+                    $dataEntity = null;
 
                     if ($produc['mode'] == 1) {
                         $classEntity = Product::class;
+                        $dataEntity = Product::find($product_id);
                     } else if ($produc['mode'] == 2) {
                         $classEntity = AcaCourse::class;
+                        $dataEntity = AcaCourse::find($product_id);
                     } else if ($produc['mode'] == 3) {
                         $classEntity = AcaCourse::class;
+                        $dataEntity = AcaCourse::find($product_id);
                         AcaCapRegistration::where('id', $originId)->update([
                             'sale_note_id' => $sale->id,
                             'document_id' => $document->id,
@@ -289,6 +294,7 @@ class AcaSalesController extends Controller
                         ]);
                     } else if ($produc['mode'] == 4) {
                         $classEntity = AcaSubscriptionType::class;
+                        $dataEntity = AcaSubscriptionType::find($product_id);
 
                         AcaStudentSubscription::where('student_id', $student_id)
                             ->where('subscription_id', $product_id)
@@ -313,7 +319,7 @@ class AcaSalesController extends Controller
                         $classEntity = AcaCourse::class;
 
                         $genericProduct = Product::firstOrCreate(
-                            ['usine' => '11211'],
+                            ['usine' => '86101600'],
                             [
                                 'interne' => '11211',
                                 'description' => 'Curso en plataforma Virtual',
@@ -328,6 +334,7 @@ class AcaSalesController extends Controller
                             ]
                         );
                         $product_id = $genericProduct->usine;
+                        $dataEntity = $genericProduct;
                     }
 
                     //se inserta los datos al detalle del documento
@@ -358,7 +365,7 @@ class AcaSalesController extends Controller
                     SaleProduct::create([
                         'sale_id' => $sale->id,
                         'product_id' => $product_id,
-                        'product' => json_encode(Product::find($product_id)),
+                        'product' => json_encode($dataEntity),
                         'saleProduct' => json_encode($produc),
                         'price' => $produc['amount'],
                         'discount' => $produc['discount'],

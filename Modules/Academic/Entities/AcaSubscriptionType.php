@@ -15,6 +15,7 @@ class AcaSubscriptionType extends Model
      */
     protected $fillable = [
         'title',
+        'usine',
         'description',
         'details',
         'prices',

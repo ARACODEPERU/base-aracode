@@ -285,12 +285,14 @@ const addBrand = () => {
                     <InputError :message="form.errors.local_id" class="mt-2" />
                 </div>
                 <div class="col-span-6 sm:col-span-2">
-                    <InputLabel for="usine" value="Código Fabrica" />
+                    <InputLabel for="usine" value="Código SUNAT" />
                     <Input
                         id="usine"
                         v-model:value="form.usine"
                         type="text"
+                        placeholder="Según catálogo de SUNAT"
                     />
+                    <p class="text-xs text-gray-500 mt-1">Código UCE. Consulte el catálogo de SUNAT Peru</p>
                     <InputError :message="form.errors.usine" class="mt-2" />
                 </div>
                 <div class="col-span-6 sm:col-span-2">

@@ -31,10 +31,6 @@
             type: Object,
             default: null,
         },
-        certificateRequiresExam: {
-            type: Boolean,
-            default: true,
-        },
     });
 
     const themeSelected = ref([]);
@@ -240,23 +236,33 @@
         window.open(route('aca_student_exam_download_pdf', studentExam.value.id), '_blank');
     };
 
-    // Progreso general del módulo (promedio de todos los temas)
+    // Progreso general del módulo (solo temas con contenido real)
     const moduleProgress = computed(() => {
-        const themes = props.module.themes || [];
+        const themes = (props.module.themes || []).filter(t => {
+            const realContents = (t.contents || []).filter(c => c.is_file != 4);
+            return realContents.length > 0;
+        });
         if (themes.length === 0) return 100;
         const total = themes.reduce((sum, t) => sum + (t.progress || 0), 0);
         return Math.round(total / themes.length);
     });
 
-    // Verificar si puede descargar certificado del módulo
+    // Existe examen para el módulo y el estudiante lo aprobó
+    const hasPassedExam = computed(() => {
+        const exam = props.module.exam;
+        if (!exam || !exam.student_exams || exam.student_exams.length === 0) return false;
+        const se = exam.student_exams[0];
+        return se.punctuation >= 11 && (se.status === 'completado' || se.status === 'revision_pendiente' || se.status === 'calificado');
+    });
 
+    const hasExam = computed(() => !!props.module.exam);
+
+    // Verificar si puede descargar certificado del módulo
     const canDownloadCertificate = () => {
         if (!props.module.allow_certificate_download) return false;
-        if (moduleProgress.value < 100) return false;
-        if (!props.certificateRequiresExam) return true;
-        return studentExam.value &&
-               studentExam.value.punctuation >= 11 &&
-               (studentExam.value.status === 'completado' || studentExam.value.status === 'revision_pendiente' || studentExam.value.status === 'calificado');
+        if (hasPassedExam.value) return true;
+        if (!hasExam.value && moduleProgress.value >= 100) return true;
+        return false;
     };
 
     // Descargar certificado del módulo
@@ -966,7 +972,7 @@
                                             Descargar Certificado
                                         </button>
                                    </div>
-                                   <div v-else-if="module.allow_certificate_download && moduleProgress < 100" class="mt-2 text-center text-xs text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg py-2 px-3">
+                                   <div v-else-if="module.allow_certificate_download && !hasPassedExam && !hasExam && moduleProgress < 100" class="mt-2 text-center text-xs text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg py-2 px-3">
                                         Completa el {{ moduleProgress }}% del contenido para descargar el certificado
                                    </div>
                         </div>

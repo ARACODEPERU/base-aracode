@@ -33,6 +33,7 @@ const openSearchModal = () => {
         cancelButtonText: 'Cancelar',
         showLoaderOnConfirm: true,
         allowOutsideClick: false,
+        backdrop: true,
         icon: 'question',
         padding: '2em',
         customClass: 'sweet-alerts',

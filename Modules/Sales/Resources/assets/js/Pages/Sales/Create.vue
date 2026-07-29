@@ -105,7 +105,8 @@
           imageHeight: 120,
           imageAlt: 'Cargando',
           showConfirmButton: false,
-          allowOutsideClick: false
+          allowOutsideClick: false,
+          backdrop: true
         });
         if(form.total>0){
             axios.post(route('sales.store'), form ).then((res) => {

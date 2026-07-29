@@ -237,7 +237,8 @@
           imageHeight: 120,
           imageAlt: 'Cargando',
           showConfirmButton: false,
-          allowOutsideClick: false
+          allowOutsideClick: false,
+          backdrop: true
         });
 
         displayModalImport.value = false;

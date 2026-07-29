@@ -302,6 +302,7 @@
                     customClass: 'sweet-alerts',
                     showLoaderOnConfirm: true,
                     allowOutsideClick: false,
+                    backdrop: true,
                     allowEscapeKey: false,
                     preConfirm: async (input) => {
                         let textarea = document.getElementById("ctnTextareaReason").value;

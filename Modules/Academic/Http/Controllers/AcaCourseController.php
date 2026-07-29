@@ -139,6 +139,7 @@ class AcaCourseController extends Controller
         $courseNew = AcaCourse::create([
             'status' => $request->get('status') ? true : false,
             'description' => $request->get('description'),
+            'usine' => $request->get('usine'),
             'course_day' => date('d', $timestamp),
             'course_month' => date('m', $timestamp),
             'course_year' => date('Y', $timestamp),
@@ -262,6 +263,7 @@ class AcaCourseController extends Controller
         // dd($request->get('category_id'));
         $course->status = $request->get('status') ? true : false;
         $course->description = $request->get('description');
+        $course->usine = $request->get('usine');
         $course->course_day = date('d', $timestamp);
         $course->course_month = date('m', $timestamp);
         $course->course_year = date('Y', $timestamp);

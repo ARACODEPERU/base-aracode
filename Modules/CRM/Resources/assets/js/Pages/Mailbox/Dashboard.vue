@@ -72,6 +72,7 @@
                 icon: 'warning',
                 confirmButtonText: 'Ir a mi perfil',
                 allowOutsideClick: false, // No permite cerrar al hacer clic fuera
+                backdrop: true,
                 allowEscapeKey: false,     // No permite cerrar con la tecla Esc
                 padding: '2em',
                 customClass: 'sweet-alerts',

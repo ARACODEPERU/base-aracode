@@ -461,6 +461,7 @@
             footer: 'Se define una fecha de pago inicial. El usuario podrá liquidar el total o reagendar una nueva fecha para cancelar el saldo pendiente. Si no se realiza ningún abono antes de esa fecha, los accesos a los cursos de pago serán bloqueados automáticamente.',
             focusConfirm: false,
             allowOutsideClick: false, // ❌ No se cierra al hacer clic fuera
+            backdrop: true,
             allowEscapeKey: false,    // ❌ No se cierra con la tecla Esc
             allowEnterKey: true,      // ✅ Permite presionar Enter para confirmar
             preConfirm: () => {
@@ -592,6 +593,7 @@
             cancelButtonText: 'Cancelar',
             showLoaderOnConfirm: true,
             allowOutsideClick: false,
+            backdrop: true,
             allowEscapeKey: false,
             icon: "question",
             padding: '2em',
@@ -639,6 +641,7 @@
 
                 Swal2.fire({
                     allowOutsideClick: false,
+                    backdrop: true,
                     title: person.full_name,
                     imageUrl: person.image ? getImage(person.image) : null,
                     text: `Ya fue registrado con el DNI ${person.number}`,

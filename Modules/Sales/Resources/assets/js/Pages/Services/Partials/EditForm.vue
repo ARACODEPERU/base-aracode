@@ -59,8 +59,10 @@
                     v-model="form.usine"
                     type="text"
                     class="block w-full mt-1"
+                    placeholder="Según catálogo de SUNAT"
                     autofocus
                 />
+                <p class="text-xs text-gray-500 mt-1">Código UCE. Consulte el catálogo de SUNAT Peru</p>
                 <InputError :message="form.errors.usine" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-2">

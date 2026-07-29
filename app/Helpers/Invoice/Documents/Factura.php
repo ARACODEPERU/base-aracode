@@ -252,7 +252,7 @@ class Factura
         }
 
 
-
+        //dd($document);
         $details = $document->items;
         $items = [];
         foreach ($details as $detail) {
@@ -271,6 +271,14 @@ class Factura
                 ->setMtoValorVenta($detail->mto_value_sale)
                 ->setMtoValorUnitario($detail->mto_value_unit)
                 ->setMtoPrecioUnitario($detail->mto_price_unit);
+            $productTmp = SaleProduct::where('sale_id', $document->sale_id)->where('product_id', $detail->product_id)->first();
+
+            if ($productTmp && $productTmp->product) {
+                $prodData = json_decode($productTmp->product);
+                if (!empty($prodData->usine)) {
+                    $item->setCodProdSunat($prodData->usine);
+                }
+            }
 
             if ($this->hasPersistedItemDiscount($detail)) {
                 $item->setDescuento((float) $detail->mto_discount);

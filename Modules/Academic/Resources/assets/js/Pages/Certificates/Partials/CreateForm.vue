@@ -21,7 +21,6 @@
     const form = useForm({
         course_id: null,
         for_module: false,
-        require_exam_to_download: false,
         certificate_img: null,
         certificate_img_preview: null,
         has_back: false,
@@ -278,18 +277,6 @@
                             <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Certificado para módulos</span>
                         </label>
                         <p class="text-xs text-gray-500 mt-1">Al descargar desde un módulo, mostrará el nombre del módulo</p>
-                    </div>
-
-                    <!-- Solo descargar al aprobar examen -->
-                    <div class="col-span-2" v-if="form.for_module">
-                        <label class="flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                v-model="form.require_exam_to_download"
-                                class="form-checkbox text-primary"
-                            />
-                            <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Solo se podra descargar al aprobar examen con nota >= 11</span>
-                        </label>
                     </div>
 
                     <!-- Imagen Anverso -->

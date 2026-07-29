@@ -97,6 +97,7 @@ const checkAndForcePinChange = () => {
         showCancelButton: false,
         showCloseButton: false,
         allowOutsideClick: false,
+        backdrop: true,
         allowEscapeKey: false,
         confirmButtonText: 'Cambiar PIN',
         customClass: {

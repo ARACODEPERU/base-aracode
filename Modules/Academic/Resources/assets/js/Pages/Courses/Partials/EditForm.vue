@@ -48,6 +48,7 @@ const form = useForm({
     id: props.course.id,
     status: props.course.status == 1 ? true : false,
     description: props.course.description,
+    usine: props.course.usine || '',
     course_date: props.course.course_year+'-'+props.course.course_month+'-'+props.course.course_day,
     category_id: props.course.category_id,
     image: null,
@@ -151,6 +152,17 @@ const handleImageCompressed = (file) => {
                     type="text"
                 />
                 <InputError :message="form.errors.description" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="usine" value="Código SUNAT" />
+                <TextInput
+                    id="usine"
+                    v-model="form.usine"
+                    type="text"
+                    placeholder="Según catálogo de SUNAT"
+                />
+                <p class="text-xs text-gray-500 mt-1">Código UCE. Consulte el catálogo de SUNAT Peru</p>
+                <InputError :message="form.errors.usine" class="mt-2" />
             </div>
             <div class="col-span-6">
                 <InputLabel for="file_input" value="Imagen *" />

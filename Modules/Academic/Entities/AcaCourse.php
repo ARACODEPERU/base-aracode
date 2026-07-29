@@ -16,6 +16,7 @@ class AcaCourse extends Model
     protected $fillable = [
         'status',
         'description',
+        'usine',
         'course_day',
         'course_month',
         'course_year',

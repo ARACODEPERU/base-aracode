@@ -614,6 +614,7 @@
             confirmButtonText: '¡Entendido, comenzar!',
             confirmButtonColor: '#3b82f6',
             allowOutsideClick: false,
+            backdrop: true,
             allowEscapeKey: false,
             padding: '1.5rem',
             customClass: 'sweet-alerts',

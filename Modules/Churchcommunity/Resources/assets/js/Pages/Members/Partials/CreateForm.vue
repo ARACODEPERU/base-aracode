@@ -233,6 +233,7 @@
                     confirmButtonText: "Continuar",
                     denyButtonText: `Cancelar`,
                     allowOutsideClick: false, // 👈 no cerrar al hacer clic fuera
+                    backdrop: true,
                     allowEscapeKey: false,    // 👈 no cerrar con la tecla ESC
                     allowEnterKey: false
                 }).then((result) => {
@@ -244,6 +245,7 @@
                             padding: '2em',
                             customClass: 'sweet-alerts',
                             allowOutsideClick: false, // 👈 no cerrar al hacer clic fuera
+                            backdrop: true,
                             allowEscapeKey: false,    // 👈 no cerrar con la tecla ESC
                             allowEnterKey: false
                         }).then(() => {
