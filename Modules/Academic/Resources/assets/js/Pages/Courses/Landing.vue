@@ -16,6 +16,7 @@ import LandingStudyPlan from './Partials/LandingStudyPlan.vue';
 import LandingProblem from './Partials/LandingProblem.vue';
 import LandingInvestment from './Partials/LandingInvestment.vue';
 import LandingFaq from './Partials/LandingFaq.vue';
+import LandingUtmLinks from './Partials/LandingUtmLinks.vue';
 import * as fasIcons from '@fortawesome/free-solid-svg-icons';
 
 const props = defineProps({
@@ -54,6 +55,7 @@ const tabs = [
     { id: 'problem', label: 'El Problema', icon: 'fa-exclamation-triangle' },
     { id: 'investment', label: 'Inversión', icon: 'fa-microscope' },
     { id: 'faq', label: 'Preguntas Frecuentes', icon: 'fa-question-circle' },
+    { id: 'utm_links', label: 'Enlaces UTM', icon: 'fa-link' },
 ];
 
 const form = useForm({
@@ -300,7 +302,7 @@ const formatIconForVue = (iconName) => {
 
                 <!-- Tabs Navigation -->
                 <div class="p-4 bg-gray-50 dark:bg-gray-800/50">
-                    <nav class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2">
+                    <nav class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-2">
                         <button
                             v-for="tab in tabs"
                             :key="tab.id"
@@ -398,6 +400,14 @@ const formatIconForVue = (iconName) => {
                     <!-- FAQ Section -->
                     <div v-show="activeTab === 'faq'">
                         <LandingFaq
+                            :course="course"
+                            :landing="landing"
+                        />
+                    </div>
+
+                    <!-- UTM Links Section -->
+                    <div v-show="activeTab === 'utm_links'">
+                        <LandingUtmLinks
                             :course="course"
                             :landing="landing"
                         />

@@ -507,6 +507,26 @@
                                     {{ course.description }}
                                 </h4>
 
+                                <!-- Advertencias de certificado -->
+                                <div class="flex flex-wrap gap-1.5 mb-2">
+                                    <span v-if="!course.certificate_title"
+                                          v-tippy="{ content: 'El título del certificado está vacío', placement: 'top' }"
+                                          class="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 px-2 py-1 rounded-full cursor-help">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                        Título certificado vacío
+                                    </span>
+                                    <span v-if="!course.certificate_description"
+                                          v-tippy="{ content: 'La descripción del certificado está vacía', placement: 'top' }"
+                                          class="inline-flex items-center gap-1 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 px-2 py-1 rounded-full cursor-help">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                        Descripción certificado vacía
+                                    </span>
+                                </div>
+
                                 <div class="flex flex-wrap gap-1.5 mb-3">
                                     <span v-if="course.category" class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
                                         {{ course.category.description }}

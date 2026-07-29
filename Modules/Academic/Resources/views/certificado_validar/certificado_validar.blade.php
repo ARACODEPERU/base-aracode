@@ -79,6 +79,7 @@
                 }
                 </style>
                 <br><hr>
+                @if(is_array($certificates) || $certificates instanceof \Illuminate\Support\Collection)
                 <div class="overflow-x-auto relative shadow-md sm:rounded-lg">
                     <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -105,11 +106,85 @@
                         </tbody>
                     </table>
                 </div>
+                @endif
         @endif
+
+        {{-- Validación de certificado de módulo --}}
+        @if ($module)
+            <hr>
+            <div class="mt-4">
+                @if (!$person)
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
+                        <p class="text-red-600 dark:text-red-400 font-medium">No se encontró la persona con el número de documento proporcionado.</p>
+                    </div>
+                @elseif (!$isEnrolled)
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
+                        <p class="text-red-600 dark:text-red-400 font-medium">La persona no está inscrita en este curso.</p>
+                    </div>
+                @else
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
+                            <h3 class="text-white font-bold text-lg">Certificado de Módulo - Verificación</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-center gap-4 mb-6">
+                                @if($person->image)
+                                    <img src="{{ asset('storage/'.$person->image) }}" alt="{{ $person->full_name }}" class="w-16 h-16 rounded-full object-cover border-2 border-gray-200">
+                                @else
+                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($person->full_name) }}&size=64&rounded=true" alt="{{ $person->full_name }}" class="w-16 h-16 rounded-full">
+                                @endif
+                                <div>
+                                    <h4 class="text-xl font-bold text-gray-900 dark:text-white">{{ $person->full_name }}</h4>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">DNI: {{ $person->number }}</p>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Curso</p>
+                                <p class="font-semibold text-gray-900 dark:text-white">{{ $module->course->description ?? 'N/A' }}</p>
+                            </div>
+
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Módulo</p>
+                                <p class="font-semibold text-gray-900 dark:text-white">{{ $module->description ?? 'N/A' }}</p>
+                            </div>
+
+                            @if($moduleThemes->count() > 0)
+                                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Contenido del Módulo</p>
+                                    <div class="space-y-3">
+                                        @foreach($moduleThemes as $index => $theme)
+                                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                                <h5 class="font-medium text-gray-900 dark:text-white mb-2">
+                                                    <span class="text-blue-500">{{ $index + 1 }}.</span> {{ $theme['description'] }}
+                                                </h5>
+                                                @if($theme['contents']->count() > 0)
+                                                    <ul class="ml-6 space-y-1">
+                                                        @foreach($theme['contents'] as $content)
+                                                            <li class="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
+                                                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                                </svg>
+                                                                {{ $content['description'] }}
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <hr>
-        @if ($course != "")
+        @if ($course != "" && !empty($certificates) && is_iterable($certificates) && $certificates->count() > 0)
         <div class="card group p-5"><p class="">
-            {!! $certificate->curriculum_plan ?? 'No existe Registro, Verifica el curso y el número del Alumno.' !!}
+            {!! $certificates->last()->curriculum_plan ?? 'No existe Registro, Verifica el curso y el número del Alumno.' !!}
           </p>
         </div>
         @endif

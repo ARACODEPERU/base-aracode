@@ -57,6 +57,7 @@
         position_names_x: props.certificate.position_names_x,
         position_names_y: props.certificate.position_names_y,
         font_size_names: props.certificate.font_size_names,
+        max_width_names: props.certificate.max_width_names || 600,
         fontfamily_title: props.certificate.fontfamily_title,
         font_align_title: props.certificate.font_align_title,
         font_vertical_align_title: props.certificate.font_vertical_align_title,
@@ -133,6 +134,7 @@
         back_position_names_x: props.certificate.back_position_names_x,
         back_position_names_y: props.certificate.back_position_names_y,
         back_font_size_names: props.certificate.back_font_size_names,
+        back_max_width_names: props.certificate.back_max_width_names || 600,
         back_color_names: props.certificate.back_color_names ?? '#000000',
         back_visible_names: props.certificate.back_visible_names == 1 ? true : false,
 
@@ -235,6 +237,77 @@
     const stageScale = ref(1);
     const transformerRef = ref(null);
     const selectedNode = ref(null);
+
+    // Crosshair guía central
+    const crosshairVisible = ref(true);
+    let crosshairInterval = null;
+    const cursorX = ref(0);
+    const cursorY = ref(0);
+    const showCursorCoords = ref(false);
+
+    const centerCrossX = computed(() => canvasWidth.value / 2);
+    const centerCrossY = computed(() => canvasHeight.value / 2);
+
+    const onStageMouseMove = (e) => {
+        const stage = e.target.getStage();
+        const pointer = stage.getPointerPosition();
+        if (!pointer) return;
+        // Convertir coordenadas del stage a coordenadas del canvas (sin escala)
+        cursorX.value = Math.round(pointer.x / stageScale.value);
+        cursorY.value = Math.round(pointer.y / stageScale.value);
+        showCursorCoords.value = true;
+    };
+
+    const onStageMouseLeave = () => {
+        showCursorCoords.value = false;
+    };
+
+    onMounted(() => {
+        crosshairInterval = setInterval(() => {
+            crosshairVisible.value = !crosshairVisible.value;
+        }, 600);
+    });
+
+    onUnmounted(() => {
+        if (crosshairInterval) clearInterval(crosshairInterval);
+        if (selectedCrosshairInterval) clearInterval(selectedCrosshairInterval);
+    });
+
+    // Crosshair del componente seleccionado
+    const selectedCrosshairVisible = ref(false);
+    const selectedCrosshairX = ref(0);
+    const selectedCrosshairY = ref(0);
+    const selectedCrosshairWidth = ref(0);
+    const selectedCrosshairHeight = ref(0);
+    let selectedCrosshairInterval = null;
+
+    const updateSelectedCrosshair = () => {
+        const node = selectedNode.value;
+        if (!node) {
+            selectedCrosshairVisible.value = false;
+            if (selectedCrosshairInterval) {
+                clearInterval(selectedCrosshairInterval);
+                selectedCrosshairInterval = null;
+            }
+            return;
+        }
+
+        // Obtener posición y dimensiones del nodo seleccionado
+        const box = node.getAbsoluteTransform().decompose();
+        selectedCrosshairX.value = box.x;
+        selectedCrosshairY.value = box.y;
+        selectedCrosshairWidth.value = node.width() * box.scaleX;
+        selectedCrosshairHeight.value = node.height() * box.scaleY;
+        selectedCrosshairVisible.value = true;
+
+        // Iniciar parpadeo cada 400ms
+        if (selectedCrosshairInterval) clearInterval(selectedCrosshairInterval);
+        let visible = true;
+        selectedCrosshairInterval = setInterval(() => {
+            visible = !visible;
+            selectedCrosshairVisible.value = visible;
+        }, 400);
+    };
 
     const frontTemplateUrl = computed(() => getImage(props.certificate.certificate_img));
     const backTemplateUrl = computed(() => {
@@ -368,6 +441,8 @@
                     family: 'back_fontfamily_names',
                     color: 'back_color_names',
                     align: 'back_font_align_names',
+                    width: 'back_max_width_names',
+                    defaultWidth: 600,
                     visible: form.back_visible_names,
                     action: 7,
                 },
@@ -469,6 +544,8 @@
                 family: 'fontfamily_names',
                 color: 'color_names',
                 align: 'font_align_names',
+                width: 'max_width_names',
+                defaultWidth: 600,
                 visible: form.visible_names,
                 action: 2,
             },
@@ -620,6 +697,7 @@
             transformer.moveToTop();
             transformer.forceUpdate();
             transformer.getLayer()?.batchDraw();
+            updateSelectedCrosshair();
         });
     };
 
@@ -646,6 +724,11 @@
         if (event.target !== event.target.getStage()) return;
 
         selectedNode.value = null;
+        selectedCrosshairVisible.value = false;
+        if (selectedCrosshairInterval) {
+            clearInterval(selectedCrosshairInterval);
+            selectedCrosshairInterval = null;
+        }
         const transformer = transformerRef.value?.getNode?.();
         transformer?.nodes([]);
         transformer?.getLayer()?.batchDraw();
@@ -1035,6 +1118,14 @@
                                                 id="font_size_names"
                                                 v-model="form.font_size_names"
                                                 placeholder="22, 23, etc..."
+                                            />
+                                        </div>
+                                        <div class="col-span-2">
+                                            <InputLabel for="max_width_names">Ancho máximo (px)</InputLabel>
+                                            <TextInput
+                                                id="max_width_names"
+                                                v-model="form.max_width_names"
+                                                placeholder="600"
                                             />
                                         </div>
                                         <div class="col-span-2">
@@ -1612,6 +1703,10 @@
                                                 <div class="col-span-2">
                                                     <InputLabel for="back_font_size_names">Tamaño de fuente</InputLabel>
                                                     <TextInput id="back_font_size_names" v-model="form.back_font_size_names" placeholder="22, 23, etc..." />
+                                                </div>
+                                                <div class="col-span-2">
+                                                    <InputLabel for="back_max_width_names">Ancho máximo (px)</InputLabel>
+                                                    <TextInput id="back_max_width_names" v-model="form.back_max_width_names" placeholder="600" />
                                                 </div>
                                                 <div class="col-span-2">
                                                     <InputLabel for="back_font_align_names">A. horizontal</InputLabel>
@@ -2233,7 +2328,7 @@
                             <div class="mb-2 text-xs text-gray-500 dark:text-gray-400">
                                 Arrastra para mover. Selecciona un texto o QR y usa las esquinas para cambiar su tamaÃ±o antes de guardar.
                             </div>
-                            <v-stage :config="stageConfig" @mousedown="clearSelection" @touchstart="clearSelection">
+                            <v-stage :config="stageConfig" @mousedown="clearSelection" @touchstart="clearSelection" @mousemove="onStageMouseMove" @mouseleave="onStageMouseLeave">
                                 <v-layer :config="layerConfig">
                                     <v-image
                                         v-if="activeBaseImage"
@@ -2242,6 +2337,67 @@
                                     <v-rect
                                         :config="{ x: 0, y: 0, width: canvasWidth, height: canvasHeight, stroke: '#000000', strokeWidth: 1, listening: false }"
                                     />
+                                    <!-- Crosshair guía central (parpadea cada 600ms) -->
+                                    <template v-if="activeBaseImage">
+                                        <v-line
+                                            :config="{
+                                                points: [centerCrossX, 0, centerCrossX, canvasHeight],
+                                                stroke: '#9CA3AF',
+                                                strokeWidth: 1,
+                                                dash: [6, 4],
+                                                opacity: crosshairVisible ? 0.8 : 0,
+                                                listening: false
+                                            }"
+                                        />
+                                        <v-line
+                                            :config="{
+                                                points: [0, centerCrossY, canvasWidth, centerCrossY],
+                                                stroke: '#9CA3AF',
+                                                strokeWidth: 1,
+                                                dash: [6, 4],
+                                                opacity: crosshairVisible ? 0.8 : 0,
+                                                listening: false
+                                            }"
+                                        />
+                                        <!-- Coordenadas del cursor -->
+                                        <v-tag
+                                            v-if="showCursorCoords"
+                                            :config="{
+                                                x: cursorX + 12,
+                                                y: cursorY - 24,
+                                                text: `X: ${cursorX}  Y: ${cursorY}`,
+                                                fontSize: 12,
+                                                fontFamily: 'monospace',
+                                                fill: '#374151',
+                                                padding: 4,
+                                                listening: false
+                                            }"
+                                        />
+                                        <v-rect
+                                            v-if="showCursorCoords"
+                                            :config="{
+                                                x: cursorX + 10,
+                                                y: cursorY - 26,
+                                                width: 130,
+                                                height: 20,
+                                                fill: 'rgba(255,255,255,0.85)',
+                                                cornerRadius: 3,
+                                                listening: false
+                                            }"
+                                        />
+                                        <v-text
+                                            v-if="showCursorCoords"
+                                            :config="{
+                                                x: cursorX + 14,
+                                                y: cursorY - 22,
+                                                text: `X: ${cursorX}  Y: ${cursorY}`,
+                                                fontSize: 12,
+                                                fontFamily: 'monospace',
+                                                fill: '#374151',
+                                                listening: false
+                                            }"
+                                        />
+                                    </template>
                                     <v-image
                                         v-if="previewQr"
                                         :config="previewQr.config"
@@ -2264,6 +2420,48 @@
                                         @transformend="(event) => onTextTransformEnd(item, event)"
                                     />
                                     <v-transformer ref="transformerRef" :config="transformerConfig" />
+                                    <!-- Crosshair del componente seleccionado -->
+                                    <template v-if="selectedCrosshairVisible && selectedNode">
+                                        <!-- Línea vertical -->
+                                        <v-line
+                                            :config="{
+                                                points: [
+                                                    selectedCrosshairX + selectedCrosshairWidth / 2, selectedCrosshairY,
+                                                    selectedCrosshairX + selectedCrosshairWidth / 2, selectedCrosshairY + selectedCrosshairHeight
+                                                ],
+                                                stroke: '#3B82F6',
+                                                strokeWidth: 1,
+                                                dash: [4, 4],
+                                                opacity: 0.9,
+                                                listening: false
+                                            }"
+                                        />
+                                        <!-- Línea horizontal -->
+                                        <v-line
+                                            :config="{
+                                                points: [
+                                                    selectedCrosshairX, selectedCrosshairY + selectedCrosshairHeight / 2,
+                                                    selectedCrosshairX + selectedCrosshairWidth, selectedCrosshairY + selectedCrosshairHeight / 2
+                                                ],
+                                                stroke: '#3B82F6',
+                                                strokeWidth: 1,
+                                                dash: [4, 4],
+                                                opacity: 0.9,
+                                                listening: false
+                                            }"
+                                        />
+                                        <!-- Punto central -->
+                                        <v-circle
+                                            :config="{
+                                                x: selectedCrosshairX + selectedCrosshairWidth / 2,
+                                                y: selectedCrosshairY + selectedCrosshairHeight / 2,
+                                                radius: 4,
+                                                fill: '#3B82F6',
+                                                opacity: 0.9,
+                                                listening: false
+                                            }"
+                                        />
+                                    </template>
                                 </v-layer>
                             </v-stage>
                         </div>

@@ -14,6 +14,43 @@
     import iconExcel from '@/Components/vristo/icon/icon-excel.vue';
     import { onUnmounted, ref } from 'vue';
 
+    const trafficColors = {
+        facebook: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-400',
+        google: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-400',
+        cpc: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-400',
+        social: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-400',
+        organic: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-400',
+        email: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-pink-400',
+        direct: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-400',
+    };
+
+    const trafficIcons = {
+        facebook: 'fa-brands fa-facebook',
+        google: 'fa-brands fa-google',
+        cpc: 'fa-solid fa-dollar-sign',
+        social: 'fa-solid fa-share-nodes',
+        organic: 'fa-solid fa-magnifying-glass',
+        email: 'fa-solid fa-envelope',
+        direct: 'fa-solid fa-link',
+    };
+
+    const trafficLabels = {
+        facebook: 'Facebook',
+        google: 'Google',
+        cpc: 'CPC/Pago',
+        social: 'Social',
+        organic: 'Orgánico',
+        email: 'Email',
+        direct: 'Directo',
+    };
+
+    const formatDateTime = (dateTimeString) => {
+        const date = new Date(dateTimeString);
+        const formattedDate = date.toISOString().slice(0, 10);
+        const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `${formattedDate} ${formattedTime}`;
+    };
+
 
     const props = defineProps({
         subscribers: {
@@ -205,6 +242,9 @@
                                         <th>
                                             Acción realizada
                                         </th>
+                                        <th>
+                                            Origen
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -229,6 +269,32 @@
                                         </td>
                                         <td >
                                             {{ subscriber.message }}
+                                        </td>
+                                        <td>
+                                            <template v-if="subscriber.traffic_source">
+                                                <span
+                                                    :class="[trafficColors[subscriber.traffic_source] || trafficColors.direct, 'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border']"
+                                                    v-tippy="{
+                                                        content: [
+                                                            subscriber.utm_source ? 'Source: ' + subscriber.utm_source : '',
+                                                            subscriber.utm_medium ? 'Medium: ' + subscriber.utm_medium : '',
+                                                            subscriber.utm_campaign ? 'Campaign: ' + subscriber.utm_campaign : '',
+                                                            subscriber.gclid ? 'GCLID: ' + subscriber.gclid : '',
+                                                            subscriber.referer ? 'Referer: ' + subscriber.referer : '',
+                                                            subscriber.landing_url ? 'URL: ' + subscriber.landing_url : '',
+                                                        ].filter(Boolean).join('<br>'),
+                                                        allowHTML: true,
+                                                        placement: 'left'
+                                                    }"
+                                                >
+                                                    <i :class="trafficIcons[subscriber.traffic_source] || trafficIcons.direct" class="text-xs"></i>
+                                                    {{ trafficLabels[subscriber.traffic_source] || subscriber.traffic_source }}
+                                                </span>
+                                                <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 max-w-[120px] truncate" v-if="subscriber.utm_campaign">
+                                                    {{ subscriber.utm_campaign }}
+                                                </div>
+                                            </template>
+                                            <span v-else class="text-gray-400 text-xs">—</span>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -265,11 +331,3 @@
         </ModalStatus>
     </AppLayout>
 </template>
-<script>
-function formatDateTime(dateTimeString) {
-  const date = new Date(dateTimeString);
-  const formattedDate = date.toISOString().slice(0, 10);
-  const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${formattedDate} ${formattedTime}`;
-}
-</script>

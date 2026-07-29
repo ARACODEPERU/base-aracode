@@ -276,7 +276,16 @@ class OnliSaleController extends Controller
             'identification_type'           => $request->get('document_type'),
             'identification_number'         => $request->get('number'),
             'response_status'               => 'pendiente',
-            'installments'                  => 'not'
+            'installments'                  => 'not',
+            'utm_source'     => $request->get('utm_source'),
+            'utm_medium'     => $request->get('utm_medium'),
+            'utm_campaign'   => $request->get('utm_campaign'),
+            'utm_term'       => $request->get('utm_term'),
+            'utm_content'    => $request->get('utm_content'),
+            'gclid'          => $request->get('gclid'),
+            'referer'        => $request->get('referer'),
+            'landing_url'    => $request->get('landing_url'),
+            'traffic_source' => $request->get('traffic_source'),
         ]);
 
         foreach ($ids as $id) {
@@ -495,6 +504,15 @@ class OnliSaleController extends Controller
                     'email_sent'                    => false,
                     'installments'                  => $request->get('aplasos') ? 'yes' : 'not',
                     'total'                         => $request->get('total'),
+                    'utm_source'     => $request->get('utm_source'),
+                    'utm_medium'     => $request->get('utm_medium'),
+                    'utm_campaign'   => $request->get('utm_campaign'),
+                    'utm_term'       => $request->get('utm_term'),
+                    'utm_content'    => $request->get('utm_content'),
+                    'gclid'          => $request->get('gclid'),
+                    'referer'        => $request->get('referer'),
+                    'landing_url'    => $request->get('landing_url'),
+                    'traffic_source' => $request->get('traffic_source'),
                 ]);
 
                 $courses = $request->get('courses');

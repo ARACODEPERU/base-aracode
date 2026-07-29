@@ -28,6 +28,7 @@ class AcaCertificateParameter extends Model
         'position_names_x',
         'position_names_y',
         'font_size_names',
+        'max_width_names',
         'color_names',
         'visible_names',
         'fontfamily_title',
@@ -87,6 +88,7 @@ class AcaCertificateParameter extends Model
         'back_position_names_x',
         'back_position_names_y',
         'back_font_size_names',
+        'back_max_width_names',
         'back_color_names',
         'back_visible_names',
         // Configuración reverso - título
