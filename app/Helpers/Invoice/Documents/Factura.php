@@ -271,6 +271,7 @@ class Factura
                 ->setMtoValorVenta($detail->mto_value_sale)
                 ->setMtoValorUnitario($detail->mto_value_unit)
                 ->setMtoPrecioUnitario($detail->mto_price_unit);
+
             $productTmp = SaleProduct::where('sale_id', $document->sale_id)->where('product_id', $detail->product_id)->first();
 
             if ($productTmp && $productTmp->product) {
