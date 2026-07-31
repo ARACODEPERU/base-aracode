@@ -15,6 +15,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaCategoryCourse;
 use Modules\Onlineshop\Entities\OnliItemSpecification;
+use Modules\Academic\Entities\AcaCourseLanding;
 
 class OnliItemController extends Controller
 {
