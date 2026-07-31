@@ -65,6 +65,7 @@
     const searchResults = ref([]); // resultados múltiples
 
     const modalNewSearchClient = () => {
+        searchLoading.value = true;
         form.clearErrors();
         searchResults.value = [];
         axios.post(route('search_person_number'), form).then((res) => {
@@ -100,6 +101,8 @@
         }).catch(error => {
             setErrorFormSearch(error.response.data.errors);
             form.processing = false;
+        }).finally(() => {
+            searchLoading.value = false;
         });
     }
 
@@ -224,6 +227,7 @@
         emit('clientId', persona.value);
     }
 
+    const searchLoading = ref(false);
     const apiesLoading = ref(false);
 
     const searchApispe = () => {
@@ -387,7 +391,10 @@
                     <span v-if="form.document_type == 6">SUNAT</span>
                     <span v-else-if="form.document_type == 1">RENIEC</span>
                 </button>
-                <RedButton @click="modalNewSearchClient()" >Buscar</RedButton>
+                <RedButton @click="modalNewSearchClient()">
+                    <icon-loader v-if="searchLoading" class="w-4 h-4 animate-spin mr-1" />
+                    Buscar
+                </RedButton>
                 <PrimaryButton @click="saveNewSearchClient()" >
                     Guardar
                 </PrimaryButton>

@@ -10,6 +10,7 @@
     import TextInput from '@/Components/TextInput.vue';
     import { faShareFromSquare } from "@fortawesome/free-solid-svg-icons";
     import Swal2 from 'sweetalert2';
+    import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
 
     const props = defineProps({
         clientDefault: {
@@ -54,7 +55,10 @@
     const disabledBtnSelect = ref(true);
     const person = ref({});
 
+    const searchLoading = ref(false);
+
     const modalNewSearchClient = () => {
+        searchLoading.value = true;
         axios.post(route('search_person_number'), form).then((res) => {
             if (res.data.status) {
                 form.id = res.data.person.id;
@@ -73,6 +77,8 @@
                 disabledBtnSelect.value = true;
             }
 
+        }).finally(() => {
+            searchLoading.value = false;
         });
     }
 
@@ -196,7 +202,10 @@
                 </div>
             </template>
             <template #buttons>
-                <RedButton @click="modalNewSearchClient()" class="mr-2">Buscar</RedButton>
+                <RedButton @click="modalNewSearchClient()" class="mr-2">
+                    <icon-loader v-if="searchLoading" class="w-4 h-4 animate-spin mr-1" />
+                    Buscar
+                </RedButton>
                 <PrimaryButton @click="saveNewSearchClient()" class="mr-2">
                     Guardar
                 </PrimaryButton>

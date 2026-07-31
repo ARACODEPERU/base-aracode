@@ -62,6 +62,7 @@
     const person = ref({});
 
     const modalNewSearchClient = () => {
+        searchLoading.value = true;
         axios.post(route('search_person_number'), form).then((res) => {
             if (res.data.status) {
                 form.id = res.data.person.id;
@@ -87,10 +88,13 @@
                 disabledBtnSelect.value = true;
             }
 
+        }).finally(() => {
+            searchLoading.value = false;
         });
     }
 
     const emit = defineEmits(['clientId']);
+    const searchLoading = ref(false);
     const disabledBtnStore = ref(false);
 
     const saveNewSearchClient = () => {
@@ -306,7 +310,10 @@
                     <span v-if="form.document_type == 6">SUNAT</span>
                     <span v-else-if="form.document_type == 1">RENIEC</span>
                 </button>
-                <RedButton @click="modalNewSearchClient()" >Buscar</RedButton>
+                <RedButton @click="modalNewSearchClient()">
+                    <icon-loader v-if="searchLoading" class="w-4 h-4 animate-spin mr-1" />
+                    Buscar
+                </RedButton>
                 <PrimaryButton @click="saveNewSearchClient()"
                     :disabled="disabledBtnStore"
                 >
