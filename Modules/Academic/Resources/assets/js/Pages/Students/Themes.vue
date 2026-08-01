@@ -1701,7 +1701,7 @@
                                         <v-rect :config="{ x: 0, y: 0, width: item.width, height: tableHeight(item), stroke: item.color || '#111827', strokeWidth: 1 }" />
                                         <v-rect :config="{ x: 0, y: 0, width: item.width, height: 34, fill: 'rgba(243, 244, 246, 0.92)', stroke: item.color || '#111827', strokeWidth: 1 }" />
                                         <v-line :config="{ points: [item.width * 0.34, 0, item.width * 0.34, tableHeight(item)], stroke: item.color || '#111827', strokeWidth: 1 }" />
-                                        <v-text :config="{ x: 8, y: 9, text: 'MODULO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.34 - 16 }" />
+                                        <v-text :config="{ x: 8, y: 9, text: 'MÓDULO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.34 - 16 }" />
                                         <v-text :config="{ x: item.width * 0.34 + 8, y: 9, text: 'CONTENIDO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.66 - 16 }" />
                                         <template v-for="(row, rowIndex) in contentRows(item)" :key="`${item.id}-${rowIndex}`">
                                             <v-line :config="{ points: [0, rowY(item, rowIndex), item.width, rowY(item, rowIndex)], stroke: item.color || '#111827', strokeWidth: 1 }" />

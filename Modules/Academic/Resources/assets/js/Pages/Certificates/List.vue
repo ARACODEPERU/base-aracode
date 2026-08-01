@@ -239,7 +239,7 @@
                                                 <span class="certificate-course-popup" role="tooltip">
                                                     {{ courseTooltip(certificate) }}
                                                     <span v-if="certificate.for_module" class="certificate-module-badge">
-                                                        MODULO
+                                                        MÓDULO
                                                     </span>
                                                 </span>
                                             </span>

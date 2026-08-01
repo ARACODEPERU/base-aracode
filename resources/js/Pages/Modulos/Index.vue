@@ -47,11 +47,11 @@
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
-                router.visit(route('modulos.index'), { 
+                router.visit(route('modulos.index'), {
                   replace: false,
                   preserveState: true,
                   preserveScroll: true,
-                  method: 'get' 
+                  method: 'get'
                 });
             }
         });
@@ -70,7 +70,7 @@
 
                     <div class="grid grid-cols-3">
                         <div class="col-span-3 sm:col-span-1">
-                            <h4>MODULOS DEL SISTEMA</h4>
+                            <h4>MÓDULOS DEL SISTEMA</h4>
                         </div>
                         <div class="col-span-3 sm:col-span-2">
                             <Keypad>
@@ -87,7 +87,7 @@
                     <table>
                         <thead>
                             <tr>
-                                
+
                                 <th class="text-center w-16">Acción</th>
                                 <th class="text-center w-40">Código</th>
                                 <th>Nombre</th>
@@ -97,7 +97,7 @@
                         <tbody>
                             <template v-for="modulo in modulos" :key="modulo.id">
                                 <tr>
-                                   
+
                                     <td class="p-3 border-b border-[#ebedf2] dark:border-[#191e3a] text-center text-white-dark">
                                         <div class="flex gap-4 items-center justify-center">
                                             <div>
@@ -132,7 +132,7 @@
                                         {{ modulo.status ? 'Activo' : 'Inactivo' }}
                                     </span>
                                     </td>
-                                
+
                                 </tr>
                             </template>
                         </tbody>

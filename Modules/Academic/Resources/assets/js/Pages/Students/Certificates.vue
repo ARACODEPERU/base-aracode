@@ -435,14 +435,17 @@
 
                             <div class="relative h-48 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-700 dark:via-gray-700 dark:to-gray-700 flex items-center justify-center overflow-hidden">
                                 <div class="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent dark:from-gray-600/20"></div>
-                                <!-- Badge "Módulo" para certificados de módulo -->
-                                <div v-if="certificate.module" class="absolute top-3 right-3 z-20">
-                                    <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white bg-green-500 shadow-md">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <!-- Franja oblicua "Módulo" para certificados de módulo (de abajo-izquierda hacia arriba-derecha). El texto gira con la franja (-rotate-45) para seguir su inclinación -->
+                                <div
+                                    v-if="certificate.module"
+                                    class="absolute left-0 bottom-0 z-20 origin-bottom-left -rotate-45 pointer-events-none select-none"
+                                >
+                                    <div class="flex items-center justify-center gap-2 w-72 py-2 bg-gradient-to-r from-green-600/70 via-green-500/80 to-emerald-600/70 text-white backdrop-blur-[2px] shadow-lg">
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                         </svg>
-                                        Módulo
-                                    </span>
+                                        <span class="text-sm font-bold uppercase tracking-widest whitespace-nowrap">Módulo</span>
+                                    </div>
                                 </div>
                                 <div class="relative z-10 text-center px-4">
                                     <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -568,7 +571,7 @@
                                         <v-rect :config="{ x: 0, y: 0, width: item.width, height: tableHeight(item), stroke: item.color || '#111827', strokeWidth: 1 }" />
                                         <v-rect :config="{ x: 0, y: 0, width: item.width, height: 34, fill: 'rgba(243, 244, 246, 0.92)', stroke: item.color || '#111827', strokeWidth: 1 }" />
                                         <v-line :config="{ points: [item.width * 0.70, 0, item.width * 0.70, tableHeight(item)], stroke: item.color || '#111827', strokeWidth: 1 }" />
-                                        <v-text :config="{ x: 8, y: 9, text: 'MODULO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.70 - 16 }" />
+                                        <v-text :config="{ x: 8, y: 9, text: 'MÓDULO', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.70 - 16 }" />
                                         <v-text :config="{ x: item.width * 0.70 + 8, y: 9, text: 'NOTA', fontSize: item.font_size, fontFamily: item.font_family || 'Arial', fontStyle: 'bold', fill: item.color || '#000000', width: item.width * 0.30 - 16, align: 'center' }" />
                                         <template v-for="(row, rowIndex) in contentRows(item)" :key="`${item.id}-${rowIndex}`">
                                             <v-line :config="{ points: [0, rowY(item, rowIndex), item.width, rowY(item, rowIndex)], stroke: item.color || '#111827', strokeWidth: 1 }" />

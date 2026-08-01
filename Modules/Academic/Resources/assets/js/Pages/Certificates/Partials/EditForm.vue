@@ -566,7 +566,7 @@
             {
                 id: 'front-description',
                 text: form.content_type === 'table'
-                    ? 'MODULO                         CONTENIDO\nModulo 1: Fundamentos       Introduccion, entorno, routing\nModulo 2: APIs RESTful       API, autenticacion, validacion\nModulo 3: Vue.js Integrado   Componentes, estado, consumo de API'
+                    ? 'MÓDULO                         CONTENIDO\nMódulo 1: Fundamentos       Introduccion, entorno, routing\nMódulo 2: APIs RESTful       API, autenticacion, validacion\nMódulo 3: Vue.js Integrado   Componentes, estado, consumo de API'
                     : 'Curso de Desarrollo Web Avanzado con Laravel y Vue.js - 120 horas academicas. Texto de ejemplo para ubicar la descripcion dentro del certificado.',
                 x: 'position_description_x',
                 y: 'position_description_y',
