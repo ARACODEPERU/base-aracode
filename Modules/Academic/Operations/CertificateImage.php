@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Modules\Academic\Entities\AcaCapRegistration;
+use Modules\Academic\Entities\AcaCertificate;
 use Modules\Academic\Entities\AcaCertificateGradeConfig;
 use Modules\Academic\Entities\AcaCertificateParameter;
 use Modules\Academic\Entities\AcaCourse;
@@ -648,7 +649,20 @@ class CertificateImage
             return Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
         }
 
-        // Buscar el registro del estudiante en el curso
+        // La fecha de obtención es el created_at del certificado en aca_certificates
+        $certificate = AcaCertificate::where('student_id', $this->student_id)
+            ->where('course_id', $this->course_id)
+            ->where('module_id', $this->module_id)
+            ->latest('id')
+            ->first();
+
+        if ($certificate && $certificate->created_at) {
+            return Carbon::parse($certificate->created_at)
+                ->locale('es')
+                ->isoFormat('D [de] MMMM [de] YYYY');
+        }
+
+        // Fallback: fecha de entrega del registro de matrícula
         $register = AcaCapRegistration::where('student_id', $this->student_id)
             ->where('course_id', $this->course_id)
             ->first();
@@ -659,7 +673,7 @@ class CertificateImage
                 ->isoFormat('D [de] MMMM [de] YYYY');
         }
 
-        // Fallback: fecha actual formateada
+        // Fallback final: fecha actual formateada
         return Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
     }
 

@@ -1412,6 +1412,11 @@ class AcaCertificateController extends Controller
 
     private function certificateDateText(AcaCertificate $certificate, AcaStudent $student): string
     {
+        // La fecha de obtención es el created_at del certificado en aca_certificates
+        if ($certificate->created_at) {
+            return Carbon::parse($certificate->created_at)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+        }
+
         $register = AcaCapRegistration::where('student_id', $student->id)
             ->where('course_id', $certificate->course_id)
             ->first();
@@ -1589,7 +1594,7 @@ class AcaCertificateController extends Controller
         $courseTitle = $module->certificate_title
             ?? (($course->certificate_title ?? $course->description ?? 'Curso').' - Módulo: '.($module->description ?? ''));
 
-        $this->pushModuleCertificateText($texts, $parameter, $side, 'date', 'Lima, '.$this->moduleCertificateDateText($student, $course));
+        $this->pushModuleCertificateText($texts, $parameter, $side, 'date', 'Lima, '.$this->moduleCertificateDateText($student, $course, $module->id));
         $this->pushModuleCertificateText($texts, $parameter, $side, 'names', $studentName, (int) ($this->certificateField($parameter, $side, 'max_width_names') ?? 600));
         $this->pushModuleCertificateText($texts, $parameter, $side, 'title', $courseTitle, (int) ($this->certificateField($parameter, $side, 'max_width_title') ?? 800));
 
@@ -1738,10 +1743,22 @@ class AcaCertificateController extends Controller
 
     /**
      * Obtiene la fecha del certificado de módulo
+     * Usa el created_at del certificado en aca_certificates (fecha de obtención)
      */
-    private function moduleCertificateDateText(AcaStudent $student, ?AcaCourse $course): string
+    private function moduleCertificateDateText(AcaStudent $student, ?AcaCourse $course, ?int $moduleId = null): string
     {
         if ($course) {
+            // La fecha de obtención es el created_at del certificado en aca_certificates
+            $certificate = AcaCertificate::where('student_id', $student->id)
+                ->where('course_id', $course->id)
+                ->where('module_id', $moduleId)
+                ->latest('id')
+                ->first();
+
+            if ($certificate && $certificate->created_at) {
+                return Carbon::parse($certificate->created_at)->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+            }
+
             $register = AcaCapRegistration::where('student_id', $student->id)
                 ->where('course_id', $course->id)
                 ->first();
@@ -1752,7 +1769,6 @@ class AcaCertificateController extends Controller
         }
 
         return Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
-
     }
 
     /**
