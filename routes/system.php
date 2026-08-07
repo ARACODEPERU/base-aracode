@@ -11,7 +11,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('bank/account/destroy/{id}', [BankAccountController::class, 'destroy'])
         ->name('bank-account-destroy');
     ///users///
-    Route::get('datatables/users', [UserController::class, 'getUsers'])->name('users-tables-list');
+    Route::middleware(['permission:usuarios'])
+        ->get('datatables/users', [UserController::class, 'getUsers'])->name('users-tables-list');
 });
 
 Route::get('complaints-book', [ComplaintsBookController::class, 'createdByClient'])->name('complaints_book');
