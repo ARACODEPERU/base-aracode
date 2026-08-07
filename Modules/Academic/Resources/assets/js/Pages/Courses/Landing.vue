@@ -40,6 +40,10 @@ const props = defineProps({
         type: Array,
         default: () => ([]),
     },
+    utmStats: {
+        type: Object,
+        default: () => ({ subscribers: [], sales: [] }),
+    },
 });
 
 const activeTab = ref('banner');
@@ -407,10 +411,11 @@ const formatIconForVue = (iconName) => {
 
                     <!-- UTM Links Section -->
                     <div v-show="activeTab === 'utm_links'">
-                        <LandingUtmLinks
-                            :course="course"
-                            :landing="landing"
-                        />
+                    <LandingUtmLinks
+                        :course="course"
+                        :landing="landing"
+                        :utm-stats="utmStats"
+                    />
                     </div>
                 </div>
             </div>

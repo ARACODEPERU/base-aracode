@@ -7,11 +7,14 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCourseLanding;
 use Modules\Academic\Entities\AcaTeacher;
+use Modules\CMS\Entities\CmsSubscriber;
 use Modules\Onlineshop\Entities\OnliItem;
+use Modules\Onlineshop\Entities\OnliSale;
 
 class AcaCourseLandingController extends Controller
 {
@@ -66,6 +69,7 @@ class AcaCourseLandingController extends Controller
             'languageOptions' => AcaCourseLanding::getLanguageOptions(),
             'teachers' => $teachers,
             'people' => $people,
+            'utmStats' => $this->getUtmStatsData($courseId),
         ]);
     }
 
@@ -465,6 +469,103 @@ class AcaCourseLandingController extends Controller
         $landing->update([
             'faq_section' => $faqUpdate,
         ]);
+    }
+
+    /**
+     * Estadísticas de atribución UTM para la landing de un curso:
+     * suscriptores/leads (por utm_campaign o asunto del curso) y ventas (onli_sales del curso),
+     * agrupados por origen (traffic_source).
+     */
+    private function getUtmStatsData($courseId, $start = null, $end = null)
+    {
+        $course = AcaCourse::findOrFail($courseId);
+        $landing = AcaCourseLanding::where('course_id', $courseId)->first();
+
+        $utmConfig = $landing ? ($landing->utm_config ?? []) : [];
+        $campaign = ! empty($utmConfig['campaign'])
+            ? $utmConfig['campaign']
+            : 'curso_' . str_replace('-', '_', $landing->url_slug ?? '');
+
+        $subscribers = CmsSubscriber::where(function ($q) use ($campaign, $course) {
+                $q->where('utm_campaign', $campaign)
+                    ->orWhere('subject', $course->description);
+            })
+            ->when($start && $end, function ($q) use ($start, $end) {
+                $q->whereDate('created_at', '>=', $start)
+                    ->whereDate('created_at', '<=', $end);
+            })
+            ->select('traffic_source', DB::raw('COUNT(*) as total'))
+            ->groupBy('traffic_source')
+            ->orderByDesc('total')
+            ->get();
+
+        $sales = OnliSale::whereHas('details', function ($q) use ($courseId) {
+                $q->where('entitie', AcaCourse::class)
+                    ->where('item_id', $courseId);
+            })
+            ->when($start && $end, function ($q) use ($start, $end) {
+                $q->whereDate('created_at', '>=', $start)
+                    ->whereDate('created_at', '<=', $end);
+            })
+            ->select('traffic_source', DB::raw('COUNT(*) as total'))
+            ->groupBy('traffic_source')
+            ->orderByDesc('total')
+            ->get();
+
+        return [
+            'subscribers' => $subscribers,
+            'sales' => $sales,
+        ];
+    }
+
+    public function getUtmStats(Request $request, $courseId)
+    {
+        $dates = $request->get('dates');
+
+        $start = null;
+        $end = null;
+
+        if ($dates) {
+            if (str_contains($dates, ' to ') || str_contains($dates, ' a ')) {
+                $separator = str_contains($dates, ' to ') ? ' to ' : ' a ';
+                [$start, $end] = explode($separator, $dates);
+            } else {
+                $start = $end = $dates;
+            }
+        }
+
+        return response()->json($this->getUtmStatsData($courseId, $start, $end));
+    }
+
+    /**
+     * Guarda la configuración de enlaces UTM (nombre de campaña y term/content por canal).
+     */
+    public function updateUtmConfig(Request $request, $courseId)
+    {
+        $this->validate(
+            $request,
+            [
+                'campaign' => 'nullable|string|max:255',
+                'channels' => 'nullable|array',
+                'channels.*.id' => 'required|string|max:100',
+                'channels.*.term' => 'nullable|string|max:500',
+                'channels.*.content' => 'nullable|string|max:500',
+                'channels.*.active' => 'nullable|boolean',
+            ]
+        );
+
+        $landing = AcaCourseLanding::where('course_id', $courseId)->firstOrFail();
+
+        $campaign = $request->campaign ?: ('curso_' . str_replace('-', '_', $landing->url_slug ?? ''));
+
+        $landing->update([
+            'utm_config' => [
+                'campaign' => $campaign,
+                'channels' => $request->channels ?? [],
+            ],
+        ]);
+
+        return response()->json(['success' => true]);
     }
 
     public function getCoursesWithLanding($excludeCourseId)

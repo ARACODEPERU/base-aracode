@@ -19,6 +19,8 @@ class OnliCarritoAbandonado extends Model
         'notification_sent_at',
         'notification_count',
         'paid',
+        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+        'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source',
     ];
 
     protected $casts = [

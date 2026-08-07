@@ -153,26 +153,31 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
     Route::get('saledocuments/download/{id}/{type}/{file}/{format?}', [SaleDocumentController::class, 'printDocument'])->name('saledocuments_download');
     Route::post('saledocuments/update/head', [SaleDocumentController::class, 'updateHead'])->name('saledocuments_update_head');
 
-    Route::post('saledocuments/cancellation/send', [SaleDocumentController::class, 'cancelDocument'])->name('saledocuments_cancel_document');
+    Route::middleware(['permission:invo_documento_anular'])
+        ->post('saledocuments/cancellation/send', [SaleDocumentController::class, 'cancelDocument'])->name('saledocuments_cancel_document');
 
     Route::get('saledocuments/table', [SaleDocumentController::class, 'tableDocument'])->name('saledocuments_table_document');
 
     // //rutas de resumen diario
-    Route::get('salesummary/list', [SaleSummaryController::class, 'index'])->name('salesummaries_list');
-    Route::get('salesummary/search/{date}', [SaleSummaryController::class, 'searchDocuments'])->name('salesummaries_search_date');
-    Route::post('salesummary/store', [SaleSummaryController::class, 'store'])->name('salesummaries_store_date');
-    Route::get('salesummary/check/{id}/{ticket}', [SaleSummaryController::class, 'checkSummary'])->name('salesummaries_store_check');
-    Route::get('salesummary/destroy/{id}', [SaleSummaryController::class, 'destroySummary'])->name('salesummaries_destroy');
-    Route::get('salesummary/download/{id}/{type}', [SaleSummaryController::class, 'downloadFile'])->name('salesummaries_download');
-    Route::get('salesummary/retry/{id}', [SaleSummaryController::class, 'retrySummary'])->name('salesummaries_retry');
+    Route::middleware(['permission:invo_resumenes_lista'])->group(function () {
+        Route::get('salesummary/list', [SaleSummaryController::class, 'index'])->name('salesummaries_list');
+        Route::get('salesummary/search/{date}', [SaleSummaryController::class, 'searchDocuments'])->name('salesummaries_search_date');
+        Route::post('salesummary/store', [SaleSummaryController::class, 'store'])->name('salesummaries_store_date');
+        Route::get('salesummary/check/{id}/{ticket}', [SaleSummaryController::class, 'checkSummary'])->name('salesummaries_store_check');
+        Route::get('salesummary/destroy/{id}', [SaleSummaryController::class, 'destroySummary'])->name('salesummaries_destroy');
+        Route::get('salesummary/download/{id}/{type}', [SaleSummaryController::class, 'downloadFile'])->name('salesummaries_download');
+        Route::get('salesummary/retry/{id}', [SaleSummaryController::class, 'retrySummary'])->name('salesummaries_retry');
+    });
 
     // //rutas de comunicacion de baja
-    Route::get('lowcommunication/list', [SaleLowCommunicationController::class, 'index'])->name('low_communication_list');
-    Route::get('lowcommunication/search/{date}', [SaleLowCommunicationController::class, 'searchDocuments'])->name('low_communication_search_date');
-    Route::post('lowcommunication/store', [SaleLowCommunicationController::class, 'store'])->name('low_communication_store');
-    Route::get('lowcommunication/check/{id}/{ticket}', [SaleLowCommunicationController::class, 'check'])->name('low_communication_check');
-    Route::get('lowcommunication/destroy/{id}', [SaleLowCommunicationController::class, 'destroy'])->name('low_communication_destroy');
-    Route::get('lowcommunication/download/{id}/{type}', [SaleLowCommunicationController::class, 'downloadFile'])->name('low_communication_download');
+    Route::middleware(['permission:invo_comunicacion_baja'])->group(function () {
+        Route::get('lowcommunication/list', [SaleLowCommunicationController::class, 'index'])->name('low_communication_list');
+        Route::get('lowcommunication/search/{date}', [SaleLowCommunicationController::class, 'searchDocuments'])->name('low_communication_search_date');
+        Route::post('lowcommunication/store', [SaleLowCommunicationController::class, 'store'])->name('low_communication_store');
+        Route::get('lowcommunication/check/{id}/{ticket}', [SaleLowCommunicationController::class, 'check'])->name('low_communication_check');
+        Route::get('lowcommunication/destroy/{id}', [SaleLowCommunicationController::class, 'destroy'])->name('low_communication_destroy');
+        Route::get('lowcommunication/download/{id}/{type}', [SaleLowCommunicationController::class, 'downloadFile'])->name('low_communication_download');
+    });
     // //rutas de notas de credito
     Route::get('creditnote/list', [SaleCreditNotesController::class, 'index'])->name('sale_credit_notes_list');
     Route::get('creditnote/table', [SaleCreditNotesController::class, 'tableDocument'])->name('sale_credit_notes_table');
@@ -212,9 +217,12 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
 
     // /////documentos fisico o de otra plataforma
     Route::get('physicaldocument/list', [SalePhysicalDocumentController::class, 'index'])->name('sale_physical_document_list');
-    Route::get('physicaldocument/create', [SalePhysicalDocumentController::class, 'create'])->name('sale_physical_document_create');
-    Route::post('physicaldocument/store', [SalePhysicalDocumentController::class, 'store'])->name('sale_physical_document_store');
-    Route::delete('physicaldocument/destroy/{id}', [SalePhysicalDocumentController::class, 'destroy'])->name('sale_physical_document_destroy');
+    Route::middleware(['permission:sale_documento_fisico_nuevo'])->group(function () {
+        Route::get('physicaldocument/create', [SalePhysicalDocumentController::class, 'create'])->name('sale_physical_document_create');
+        Route::post('physicaldocument/store', [SalePhysicalDocumentController::class, 'store'])->name('sale_physical_document_store');
+    });
+    Route::middleware(['permission:sale_documento_fisico_eliminar'])
+        ->delete('physicaldocument/destroy/{id}', [SalePhysicalDocumentController::class, 'destroy'])->name('sale_physical_document_destroy');
 
     Route::get('services/list', [ServicesController::class, 'index'])->name('sales_services');
     Route::get('services/{id}/edit', [ServicesController::class, 'edit'])->name('sales_services_edit');

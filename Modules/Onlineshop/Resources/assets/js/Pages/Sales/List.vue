@@ -12,33 +12,48 @@
     import textWriting from '@/Components/loader/text-writing.vue';
 
     const trafficColors = {
-        facebook: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-400',
-        google: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-400',
+        facebook_ads: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-400',
+        google_ads: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-400',
         cpc: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-400',
         social: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-400',
         organic: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-400',
         email: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400 border-pink-400',
+        referrer: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400 border-cyan-400',
         direct: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 border-gray-400',
     };
 
     const trafficIcons = {
-        facebook: 'fa-brands fa-facebook',
-        google: 'fa-brands fa-google',
+        facebook_ads: 'fa-brands fa-facebook',
+        google_ads: 'fa-brands fa-google',
         cpc: 'fa-solid fa-dollar-sign',
         social: 'fa-solid fa-share-nodes',
         organic: 'fa-solid fa-magnifying-glass',
         email: 'fa-solid fa-envelope',
+        referrer: 'fa-solid fa-arrow-up-right-from-square',
         direct: 'fa-solid fa-link',
     };
 
     const trafficLabels = {
-        facebook: 'Facebook',
-        google: 'Google',
-        cpc: 'CPC/Pago',
+        facebook_ads: 'Facebook Ads',
+        google_ads: 'Google Ads',
+        cpc: 'CPC',
         social: 'Social',
         organic: 'Orgánico',
         email: 'Email',
-        direct: 'Directo',
+        referrer: 'Otra página',
+        direct: 'Orgánico',
+    };
+
+    const getHost = (url) => {
+        if (!url) return '';
+        try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+    };
+
+    const getOrigenLabel = (item) => {
+        if (item.traffic_source === 'referrer') {
+            return getHost(item.referer) || trafficLabels.referrer;
+        }
+        return trafficLabels[item.traffic_source] || (item.traffic_source ? item.traffic_source : trafficLabels.organic);
     };
 
     const props = defineProps({
@@ -371,30 +386,31 @@
                                            <span v-else class="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">Error en la transacción</span>
                                         </td>
                                         <td>
-                                            <template v-if="item.traffic_source">
-                                                <span
-                                                    :class="[trafficColors[item.traffic_source] || trafficColors.direct, 'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border']"
-                                                    v-tippy="{
-                                                        content: [
-                                                            item.utm_source ? 'Source: ' + item.utm_source : '',
-                                                            item.utm_medium ? 'Medium: ' + item.utm_medium : '',
-                                                            item.utm_campaign ? 'Campaign: ' + item.utm_campaign : '',
-                                                            item.gclid ? 'GCLID: ' + item.gclid : '',
-                                                            item.referer ? 'Referer: ' + item.referer : '',
-                                                            item.landing_url ? 'URL: ' + item.landing_url : '',
-                                                        ].filter(Boolean).join('<br>'),
-                                                        allowHTML: true,
-                                                        placement: 'left'
-                                                    }"
-                                                >
-                                                    <i :class="trafficIcons[item.traffic_source] || trafficIcons.direct" class="text-xs"></i>
-                                                    {{ trafficLabels[item.traffic_source] || item.traffic_source }}
-                                                </span>
-                                                <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 max-w-[120px] truncate" v-if="item.utm_campaign">
-                                                    {{ item.utm_campaign }}
-                                                </div>
-                                            </template>
-                                            <span v-else class="text-gray-400 text-xs">—</span>
+                                            <span
+                                                :class="[trafficColors[item.traffic_source] || trafficColors.organic, 'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border']"
+                                                v-tippy="{
+                                                    content: [
+                                                        item.utm_source ? 'Source: ' + item.utm_source : '',
+                                                        item.utm_medium ? 'Medium: ' + item.utm_medium : '',
+                                                        item.utm_campaign ? 'Campaign: ' + item.utm_campaign : '',
+                                                        item.utm_term ? 'Term: ' + item.utm_term : '',
+                                                        item.utm_content ? 'Content: ' + item.utm_content : '',
+                                                        item.utm_id ? 'UTM ID: ' + item.utm_id : '',
+                                                        item.fbclid ? 'FBCLID: ' + item.fbclid : '',
+                                                        item.gclid ? 'GCLID: ' + item.gclid : '',
+                                                        item.referer ? 'Referer: ' + item.referer : '',
+                                                        item.landing_url ? 'URL: ' + item.landing_url : '',
+                                                    ].filter(Boolean).join('<br>'),
+                                                    allowHTML: true,
+                                                    placement: 'left'
+                                                }"
+                                            >
+                                                <i :class="trafficIcons[item.traffic_source] || trafficIcons.organic" class="text-xs"></i>
+                                                {{ getOrigenLabel(item) }}
+                                            </span>
+                                            <div class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 max-w-[120px] truncate" v-if="item.utm_campaign">
+                                                {{ item.utm_campaign }}
+                                            </div>
                                         </td>
                                     </tr>
                                 </template>

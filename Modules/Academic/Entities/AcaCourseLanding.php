@@ -31,6 +31,7 @@ class AcaCourseLanding extends Model
         'problem_section',
         'investment_section',
         'faq_section',
+        'utm_config',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ class AcaCourseLanding extends Model
         'problem_section' => 'array',
         'investment_section' => 'array',
         'faq_section' => 'array',
+        'utm_config' => 'array',
     ];
 
     public function course(): BelongsTo

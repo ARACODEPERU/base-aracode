@@ -108,7 +108,18 @@ class StudentSubscription
                 'response_payer' => json_encode($response),
                 'response_payment_method_id' => $response['payment_method_id'],
                 'mercado_payment_id' => $payment->id,
-                'mercado_payment' => json_encode($payment)
+                'mercado_payment' => json_encode($payment),
+                'utm_source'     => $response['utm_source'] ?? null,
+                'utm_medium'     => $response['utm_medium'] ?? null,
+                'utm_campaign'   => $response['utm_campaign'] ?? null,
+                'utm_term'       => $response['utm_term'] ?? null,
+                'utm_content'    => $response['utm_content'] ?? null,
+                'utm_id'         => $response['utm_id'] ?? null,
+                'fbclid'         => $response['fbclid'] ?? null,
+                'gclid'          => $response['gclid'] ?? null,
+                'referer'        => $response['referer'] ?? null,
+                'landing_url'    => $response['landing_url'] ?? null,
+                'traffic_source' => $response['traffic_source'] ?? null,
             ]);
 
 

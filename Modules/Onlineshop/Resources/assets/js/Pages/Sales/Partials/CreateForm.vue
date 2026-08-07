@@ -435,7 +435,6 @@
             footer: 'Se define una fecha de pago inicial. El usuario podrá liquidar el total o reagendar una nueva fecha para cancelar el saldo pendiente.',
             focusConfirm: false,
             allowOutsideClick: false, // ❌ No se cierra al hacer clic fuera
-            backdrop: true,
             allowEscapeKey: false,    // ❌ No se cierra con la tecla Esc
             allowEnterKey: true,      // ✅ Permite presionar Enter para confirmar
             preConfirm: () => {

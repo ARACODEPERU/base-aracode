@@ -31,6 +31,7 @@ const props = defineProps({
 let mp;
 
 onMounted(async () => {
+    console.log('MercadoPago public key:', props.publicKey);
     // Carga el SDK de MercadoPago
     await loadMercadoPago();
 
@@ -67,6 +68,10 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
             },
             onSubmit: (cardFormData) => {
                 cardFormData.personInvoice = props.personInvoice
+                // Adjuntar datos de tráfico (UTM, fbclid, gclid, referrer, origen) capturados en localStorage
+                let _tt = {};
+                try { _tt = JSON.parse(localStorage.getItem('traffic_tracking') || '{}') || {}; } catch (e) {}
+                Object.assign(cardFormData, _tt);
                 return axios({
                         method: 'PUT',
                         url: route("aca_mercadopago_processpayment", props.subscription.id),
@@ -88,7 +93,7 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                             });
                         }
                     }).catch((error) => {
-                        alert(error.message || "Error al procesar el pago.");
+                        alert(error.response?.data?.error || error.message || "Error al procesar el pago.");
                         router.visit(route('academic_step_verification',props.subscription.id), {
                             method: 'get',
                         });

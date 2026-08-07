@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('utm_term')->nullable()->after('utm_campaign');
             $table->string('utm_content')->nullable()->after('utm_term');
             $table->string('gclid')->nullable()->after('utm_content');
-            $table->string('referer')->nullable()->after('gclid');
-            $table->string('landing_url')->nullable()->after('referer');
+            $table->text('referer')->nullable()->after('gclid');
+            $table->text('landing_url')->nullable()->after('referer');
             $table->string('traffic_source')->nullable()->after('landing_url');
         });
     }

@@ -55,6 +55,17 @@ class ExportCmsSubscribersExcel implements ShouldQueue
             'Teléfono',
             'Asunto',
             'Mensaje',
+            'Origen',
+            'UTM Source',
+            'UTM Medium',
+            'UTM Campaign',
+            'UTM Term',
+            'UTM Content',
+            'UTM ID',
+            'FBCLID',
+            'GCLID',
+            'Referer',
+            'Landing URL',
         ];
 
         $sheet->fromArray($headers, NULL, 'A1');
@@ -89,6 +100,17 @@ class ExportCmsSubscribersExcel implements ShouldQueue
                     $subscriber->phone,
                     $subscriber->subject,
                     $subscriber->message,
+                    $this->getOrigenLabel($subscriber),
+                    $subscriber->utm_source,
+                    $subscriber->utm_medium,
+                    $subscriber->utm_campaign,
+                    $subscriber->utm_term,
+                    $subscriber->utm_content,
+                    $subscriber->utm_id,
+                    $subscriber->fbclid,
+                    $subscriber->gclid,
+                    $subscriber->referer,
+                    $subscriber->landing_url,
                 ];
                 $sheet->fromArray($rowData, NULL, 'A' . $currentRow);
                 $currentRow++;
@@ -111,6 +133,34 @@ class ExportCmsSubscribersExcel implements ShouldQueue
         ]);
 
         Log::info("Excel export completed for user {$this->userId}. File: {$fileName}");
+    }
+
+    /**
+     * Devuelve la etiqueta de origen legible (misma lógica que la columna Origen del listado).
+     */
+    private function getOrigenLabel($subscriber): string
+    {
+        $map = [
+            'facebook_ads' => 'Facebook Ads',
+            'google_ads'   => 'Google Ads',
+            'cpc'          => 'CPC',
+            'social'       => 'Social',
+            'organic'      => 'Orgánico',
+            'email'        => 'Email',
+            'direct'       => 'Orgánico',
+        ];
+
+        $source = $subscriber->traffic_source;
+
+        if ($source === 'referrer') {
+            $host = parse_url((string) $subscriber->referer, PHP_URL_HOST);
+            if ($host) {
+                return (string) preg_replace('/^www\./', '', $host);
+            }
+            return 'Otra página';
+        }
+
+        return $map[$source] ?? ($source ?: 'Orgánico');
     }
 
     public function failed(\Throwable $exception)

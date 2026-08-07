@@ -458,7 +458,7 @@
                                             <a @click="opemModalDetails(props.rowData)" href="javascript:;">Detalles</a>
                                         </li>
                                         <li v-if="props.rowData.status == 1 && props.rowData.invoice_type_doc == '03'">
-                                            <a @click="cancelDocument(index, props.rowData)" href="javascript:;">Anular</a>
+                                            <a @click="cancelDocument(index, props.rowData)" v-can="'invo_documento_anular'" href="javascript:;">Anular</a>
                                         </li>
                                         <li>
                                             <a @click="downloadDocument(props.rowData.document_id,props.rowData.invoice_type_doc,'PDF')" href="javascript:;">PDF A4</a>

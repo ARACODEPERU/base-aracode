@@ -33,8 +33,8 @@ class OnliSale extends Model
         'response_refunds',
         'nota_sale_id',
         'email_sent',
-        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-        'gclid', 'referer', 'landing_url', 'traffic_source'
+        'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+        'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source'
     ];
 
     protected static function newFactory()

@@ -84,7 +84,7 @@
                     <div class="flex gap-3">
                         <Keypad>
                             <template #botones>
-                                <Link :href="route('users.create')" class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Nuevo</Link>
+                                <Link v-can="'usuarios_nuevo'" :href="route('users.create')" class="inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Nuevo</Link>
                             </template>
                         </Keypad>
                     </div>
@@ -94,10 +94,10 @@
                 <DataTable ref="usersTable" :ajax="route('users-tables-list')" :columns="columns" :options="options">
                     <template #action="props">
                         <div class="flex gap-4 items-center justify-center">
-                            <Link :href="route('users.edit', props.rowData.id)" class="btn btn-sm btn-outline-primary">
+                            <Link v-can="'usuarios_editar'" :href="route('users.edit', props.rowData.id)" class="btn btn-sm btn-outline-primary">
                                 <font-awesome-icon :icon="faPencilAlt" />
                             </Link>
-                            <button @click="destroy(props.rowData.id)" type="button" class="btn btn-sm btn-outline-danger" >
+                            <button v-can="'usuarios_eliminar'" @click="destroy(props.rowData.id)" type="button" class="btn btn-sm btn-outline-danger" >
                                 <font-awesome-icon :icon="faTrashAlt" />
                             </button>
                         </div>

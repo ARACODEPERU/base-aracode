@@ -93,6 +93,10 @@
                 onSubmit: (cardFormData) => {
                     cardFormData.products = itemsCart.value;
                     cardFormData.personInvoice = props.personInvoice
+                    // Adjuntar datos de tráfico (UTM, fbclid, gclid, referrer, origen) capturados en localStorage
+                    let _tt = {};
+                    try { _tt = JSON.parse(localStorage.getItem('traffic_tracking') || '{}') || {}; } catch (e) {}
+                    Object.assign(cardFormData, _tt);
                     return axios({
                             method: 'POST',
                             url: route("academic_processpayment_courses_mercadopago"),
