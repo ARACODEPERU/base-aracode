@@ -4,10 +4,10 @@
     import { ref, onMounted  } from 'vue';
     import { usePage } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
-    import axios from 'axios';
     import Swal2 from "sweetalert2";
     import shortVideos from "../../Components/shortVideos.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import CertificatePreviewModal from './Partials/CertificatePreviewModal.vue';
 
     const page = usePage();
     const store = useAppStore();
@@ -224,31 +224,27 @@
         }
     };
 
-    const downloadCourseCertificate = async (course) => {
-        try {
-            const response = await axios.get(route('aca_student_course_certificate_find', course.id));
-            
-            if (response.data.success && response.data.certificate_id) {
-                window.open(route('aca_image_download', response.data.certificate_id), '_blank');
-            } else {
-                Swal2.fire({
-                    title: 'Certificado no disponible',
-                    text: 'No se encontró el certificado para este curso',
-                    icon: 'warning',
-                    padding: '2em',
-                    customClass: 'sweet-alerts',
-                });
-            }
-        } catch (error) {
-            console.error('Error:', error);
+    const certificateModalOpen = ref(false);
+    const activeCertificateId = ref(null);
+
+    const downloadCourseCertificate = (course) => {
+        if (!course.certificate_id) {
             Swal2.fire({
-                title: 'Error',
-                text: 'No se pudo descargar el certificado',
-                icon: 'error',
+                title: 'Certificado no disponible',
+                text: 'No se encontró el certificado para este curso',
+                icon: 'warning',
                 padding: '2em',
                 customClass: 'sweet-alerts',
             });
+            return;
         }
+        activeCertificateId.value = course.certificate_id;
+        certificateModalOpen.value = true;
+    };
+
+    const closeCertificatePreview = () => {
+        certificateModalOpen.value = false;
+        activeCertificateId.value = null;
     };
 </script>
 
@@ -453,6 +449,11 @@
             </div>
         </div>
 
+        <CertificatePreviewModal
+            v-if="certificateModalOpen"
+            :certificate-id="activeCertificateId"
+            @close="closeCertificatePreview"
+        />
     </AppLayout>
 </template>
 <style>

@@ -486,36 +486,108 @@ class AcaCourseLandingController extends Controller
             ? $utmConfig['campaign']
             : 'curso_' . str_replace('-', '_', $landing->url_slug ?? '');
 
-        $subscribers = CmsSubscriber::where(function ($q) use ($campaign, $course) {
-                $q->where('utm_campaign', $campaign)
+        $subscriberScope = function ($q) use ($campaign, $course, $start, $end) {
+            $q->where(function ($w) use ($campaign, $course) {
+                $w->where('utm_campaign', $campaign)
                     ->orWhere('subject', $course->description);
-            })
-            ->when($start && $end, function ($q) use ($start, $end) {
+            });
+
+            if ($start && $end) {
                 $q->whereDate('created_at', '>=', $start)
                     ->whereDate('created_at', '<=', $end);
-            })
+            }
+        };
+
+        $salesScope = function ($q) use ($courseId, $start, $end) {
+            $q->whereHas('details', function ($w) use ($courseId) {
+                $w->where('entitie', AcaCourse::class)
+                    ->where('item_id', $courseId);
+            });
+
+            if ($start && $end) {
+                $q->whereDate('created_at', '>=', $start)
+                    ->whereDate('created_at', '<=', $end);
+            }
+        };
+
+        $subscribers = CmsSubscriber::where($subscriberScope)
             ->select('traffic_source', DB::raw('COUNT(*) as total'))
             ->groupBy('traffic_source')
             ->orderByDesc('total')
             ->get();
 
-        $sales = OnliSale::whereHas('details', function ($q) use ($courseId) {
-                $q->where('entitie', AcaCourse::class)
-                    ->where('item_id', $courseId);
-            })
-            ->when($start && $end, function ($q) use ($start, $end) {
-                $q->whereDate('created_at', '>=', $start)
-                    ->whereDate('created_at', '<=', $end);
-            })
+        $sales = OnliSale::where($salesScope)
             ->select('traffic_source', DB::raw('COUNT(*) as total'))
             ->groupBy('traffic_source')
             ->orderByDesc('total')
             ->get();
+
+        // Desglose del tráfico social por canal (utm_source + utm_medium)
+        $socialSubscribers = CmsSubscriber::where($subscriberScope)
+            ->where('traffic_source', 'social')
+            ->select('utm_source', 'utm_medium', DB::raw('COUNT(*) as total'))
+            ->groupBy('utm_source', 'utm_medium')
+            ->orderByDesc('total')
+            ->get();
+
+        $socialSales = OnliSale::where($salesScope)
+            ->where('traffic_source', 'social')
+            ->select('utm_source', 'utm_medium', DB::raw('COUNT(*) as total'))
+            ->groupBy('utm_source', 'utm_medium')
+            ->orderByDesc('total')
+            ->get();
+
+        // Desglose de "Otra página" por dominio de origen (referer)
+        $referrerSubscribers = $this->groupByRefererHost(
+            CmsSubscriber::where($subscriberScope)
+                ->where('traffic_source', 'referrer')
+                ->whereNotNull('referer')
+                ->where('referer', '!=', '')
+                ->select('referer')
+                ->get()
+        );
+
+        $referrerSales = $this->groupByRefererHost(
+            OnliSale::where($salesScope)
+                ->where('traffic_source', 'referrer')
+                ->whereNotNull('referer')
+                ->where('referer', '!=', '')
+                ->select('referer')
+                ->get()
+        );
 
         return [
             'subscribers' => $subscribers,
             'sales' => $sales,
+            'social_detail' => [
+                'subscribers' => $socialSubscribers,
+                'sales' => $socialSales,
+            ],
+            'referrer_detail' => [
+                'subscribers' => $referrerSubscribers,
+                'sales' => $referrerSales,
+            ],
         ];
+    }
+
+    /**
+     * Agrupa filas de referer (URL completa) por dominio de origen, ordenado de mayor a menor.
+     */
+    private function groupByRefererHost($rows)
+    {
+        $hosts = [];
+
+        foreach ($rows as $row) {
+            $host = $row->referer ? parse_url($row->referer, PHP_URL_HOST) : null;
+            $host = $host ?: (str_contains($row->referer ?? '', '.') ? $row->referer : 'Desconocido');
+            $hosts[$host] = ($hosts[$host] ?? 0) + 1;
+        }
+
+        arsort($hosts);
+
+        return collect($hosts)
+            ->map(fn ($total, $host) => ['host' => $host, 'total' => $total])
+            ->values();
     }
 
     public function getUtmStats(Request $request, $courseId)

@@ -145,6 +145,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('students/send/password-recovery/{personId}', [AcaStudentController::class, 'sendPasswordRecoveryMail'])
         ->name('aca_students_send_password_recovery_mail');
 
+    Route::middleware(['auth', 'permission:aca_estudiante_nuevo'])
+        ->post('students/set-password/{personId}', [AcaStudentController::class, 'setStudentPassword'])
+        ->name('aca_students_set_password');
+
     Route::middleware(['middleware' => 'permission:aca_estudiante_editar'])
         ->get('students/edit/{id}', 'AcaStudentController@edit')
         ->name('aca_students_edit');
@@ -657,9 +661,6 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
 
     Route::get('student/certificates/all', [AcaCertificateController::class, 'studentCertificates'])
         ->name('aca_student_certificates_all');
-
-    Route::get('student/certificate/course/{courseId}/find', [AcaCertificateController::class, 'findStudentCertificate'])
-        ->name('aca_student_course_certificate_find');
 
     Route::middleware(['middleware' => 'permission:aca_asistencia_crear_link'])
         ->post('attendance/link/store', [AcaAttendanceController::class, 'storeLink'])

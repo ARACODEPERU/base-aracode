@@ -1996,25 +1996,4 @@ class AcaCertificateController extends Controller
         ]);
     }
 
-    public function findStudentCertificate($courseId)
-    {
-        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
-
-        if (! $student) {
-            return response()->json(['success' => false]);
-        }
-
-        $certificate = AcaCertificate::where('student_id', $student->id)
-            ->where('course_id', $courseId)
-            ->first();
-
-        if ($certificate) {
-            return response()->json([
-                'success' => true,
-                'certificate_id' => $certificate->id,
-            ]);
-        }
-
-        return response()->json(['success' => false]);
-    }
 }

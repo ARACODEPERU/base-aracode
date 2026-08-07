@@ -1,6 +1,6 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
-    import { useForm, router, Link  } from '@inertiajs/vue3';
+    import { useForm, router, Link, usePage  } from '@inertiajs/vue3';
     import Pagination from '@/Components/Pagination.vue';
     import Keypad from '@/Components/Keypad.vue';
     import Swal2 from 'sweetalert2';
@@ -319,10 +319,27 @@
         });
     }
 
-    const sendPasswordRecoveryMail = (personId) => {
+    const page = usePage();
+
+    const canChangeStudentPassword = () => {
+        const roles = page.props.auth?.roles || [];
+        return roles.includes('Administrador') || roles.includes('admin');
+    };
+
+    const escapeHtml = (value) => {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+        }[char]));
+    };
+
+    const sendRecoveryMail = (personId) => {
         Swal2.fire({
-            title: 'Enviar recuperacion de contraseña',
-            text: 'Se enviara un correo con el enlace para que el estudiante cambie su contraseña.',
+            title: 'Enviar correo de recuperación',
+            text: 'Se enviará un correo con el enlace para que el estudiante cambie su contraseña.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -346,11 +363,140 @@
             if (result.isConfirmed) {
                 Swal2.fire({
                     title: 'Enhorabuena',
-                    text: 'Correo de recuperacion enviado correctamente',
+                    text: 'Correo de recuperación enviado correctamente',
                     icon: 'success',
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
+            }
+        });
+    };
+
+    const setStudentPasswordNow = (person) => {
+        if (!canChangeStudentPassword()) {
+            Swal2.fire({
+                title: 'Acción restringida',
+                text: 'Solo un Administrador puede cambiar la contraseña de un estudiante.',
+                icon: 'warning',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f59e0b',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            return;
+        }
+
+        // Paso 1: nueva contraseña + confirmación
+        Swal2.fire({
+            title: 'Poner nueva contraseña',
+            html: `
+                <div class="text-sm text-gray-500 mb-3">
+                    Establece la nueva contraseña para <strong>${escapeHtml(person.formatted_name || person.full_name || '')}</strong>
+                </div>
+                <input type="password" id="swal-new-pass" class="swal2-input" placeholder="Nueva contraseña" autocomplete="new-password" />
+                <input type="password" id="swal-confirm-pass" class="swal2-input" placeholder="Repetir contraseña" autocomplete="new-password" />
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cancelar',
+            focusConfirm: false,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            backdrop: true,
+            preConfirm: () => {
+                const password = document.getElementById('swal-new-pass')?.value;
+                const confirmation = document.getElementById('swal-confirm-pass')?.value;
+
+                if (!password) {
+                    Swal2.showValidationMessage('Debes ingresar la nueva contraseña');
+                    return false;
+                }
+                if (!confirmation) {
+                    Swal2.showValidationMessage('Debes repetir la contraseña');
+                    return false;
+                }
+                if (password !== confirmation) {
+                    Swal2.showValidationMessage('Las contraseñas no coinciden');
+                    return false;
+                }
+
+                return { password, password_confirmation: confirmation };
+            },
+            allowOutsideClick: () => !Swal2.isLoading()
+        }).then((result) => {
+            if (!result.isConfirmed || !result.value) return;
+
+            // Paso 2: validar la contraseña del usuario actual
+            Swal2.fire({
+                title: 'Validar acción',
+                text: 'Ingresa tu contraseña actual para confirmar el cambio.',
+                icon: 'warning',
+                input: 'password',
+                inputAttributes: { autocomplete: 'current-password' },
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Confirmar cambio',
+                cancelButtonText: 'Cancelar',
+                showLoaderOnConfirm: true,
+                padding: '2em',
+                customClass: 'sweet-alerts',
+                backdrop: true,
+                preConfirm: (adminPassword) => {
+                    return axios.post(route('aca_students_set_password', person.id), {
+                        password: result.value.password,
+                        password_confirmation: result.value.password_confirmation,
+                        admin_password: adminPassword,
+                    }).then((res) => {
+                        if (!res.data.success) {
+                            Swal2.showValidationMessage(res.data.message);
+                        }
+                        return res;
+                    }).catch((err) => {
+                        const message = err.response?.data?.message || err.response?.data?.errors?.admin_password?.[0] || 'No se pudo cambiar la contraseña.';
+                        Swal2.showValidationMessage(message);
+                    });
+                },
+                allowOutsideClick: () => !Swal2.isLoading()
+            }).then((finalResult) => {
+                if (finalResult.isConfirmed) {
+                    Swal2.fire({
+                        title: 'Enhorabuena',
+                        text: 'Contraseña del estudiante actualizada correctamente',
+                        icon: 'success',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                }
+            });
+        });
+    };
+
+    const sendPasswordRecoveryMail = (person) => {
+        // Modal de elección amigable
+        Swal2.fire({
+            title: 'Recuperar Contraseña',
+            text: `¿Qué deseas hacer con la cuenta de ${person.formatted_name || person.full_name || 'el estudiante'}?`,
+            icon: 'question',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            denyButtonColor: '#f59e0b',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '📧 Enviar correo de recuperación',
+            denyButtonText: '🔑 Poner nueva contraseña ahora',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: { popup: 'sweet-alerts swal2-recovery-choice' },
+            backdrop: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                sendRecoveryMail(person.id);
+            } else if (result.isDenied) {
+                setStudentPasswordNow(person);
             }
         });
     }
@@ -506,7 +652,7 @@
                                                     <button v-can="'aca_estudiante_enviar_correo_acceso'" @click="sendAccessMail(student.person.id, student.person.email)" v-tippy="{ content: 'Enviar correo de Acceso', placement: 'bottom'}" class="btn btn-outline-info p-0 h-6 w-6 rounded-full ltr:ml-2 rtl:mr-2">
                                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M64 112c0-26.5 21.5-48 48-48l416 0c26.5 0 48 21.5 48 48l0 81.4c-24.4-11.2-51.4-17.4-80-17.4-87.7 0-161.7 58.8-184.7 139.2-7.1-1.3-14.1-4.2-20.1-8.8l-208-156C71.1 141.3 64 127.1 64 112zM304 368c0 28.6 6.2 55.6 17.4 80L128 448c-35.3 0-64-28.7-64-64l0-188 198.4 148.8c12.6 9.4 26.9 15.4 41.7 17.9 0 1.8-.1 3.5-.1 5.3zm48 0a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm201.4-60.9c-7.1-5.2-17.2-3.6-22.4 3.5l-53 72.9-26.8-26.8c-6.2-6.2-16.4-6.2-22.6 0s-6.2 16.4 0 22.6l40 40c3.3 3.3 7.9 5 12.6 4.6s8.9-2.8 11.7-6.5l64-88c5.2-7.1 3.6-17.2-3.5-22.3z"/></svg>
                                                     </button>
-                                                    <button @click="sendPasswordRecoveryMail(student.person.id)" v-tippy="{ content: 'Enviar recuperacion de contraseña', placement: 'bottom'}" class="btn btn-outline-warning p-0 h-6 w-6 rounded-full ltr:ml-2 rtl:mr-2">
+                                                    <button @click="sendPasswordRecoveryMail(student.person)" v-tippy="{ content: 'Recuperar Contraseña', placement: 'bottom'}" class="btn btn-outline-warning p-0 h-6 w-6 rounded-full ltr:ml-2 rtl:mr-2">
                                                         <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                                                             <path fill="currentColor" d="M336 352c97.2 0 176-78.8 176-176S433.2 0 336 0S160 78.8 160 176c0 18.7 2.9 36.8 8.3 53.7L7 391c-4.5 4.5-7 10.6-7 17v80c0 13.3 10.7 24 24 24h80c13.3 0 24-10.7 24-24v-40h40c13.3 0 24-10.7 24-24v-40h40c6.4 0 12.5-2.5 17-7l33.3-33.3c16.9 5.4 35 8.3 53.7 8.3zM376 96a40 40 0 1 1 0 80 40 40 0 1 1 0-80z"/>
                                                         </svg>
@@ -631,3 +777,37 @@
         </ModalStatus>
     </AppLayout>
 </template>
+
+<style>
+    /* Modal de elección "Recuperar Contraseña": ancho amplio con los 3 botones en fila */
+    .swal2-recovery-choice.swal2-popup {
+        width: 48rem;
+        max-width: 94vw;
+    }
+
+    .swal2-recovery-choice .swal2-actions {
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    /* Cuando la ventana es angosta: botones apilados uno encima del otro */
+    @media (max-width: 767px) {
+        .swal2-recovery-choice.swal2-popup {
+            width: 94vw;
+        }
+
+        .swal2-recovery-choice .swal2-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+
+        .swal2-recovery-choice .swal2-actions .swal2-styled {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+    }
+</style>

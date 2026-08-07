@@ -42,7 +42,10 @@ const baseChannels = [
     { id: 'linkedin_video', label: 'LinkedIn Video', icon: 'fa-brands fa-linkedin', color: '#0A66C2', utm_source: 'linkedin', utm_medium: 'video', origen: 'Social' },
     { id: 'linkedin_live', label: 'LinkedIn Live', icon: 'fa-brands fa-linkedin', color: '#0A66C2', utm_source: 'linkedin', utm_medium: 'live', origen: 'Social' },
     // WhatsApp
-    { id: 'whatsapp', label: 'WhatsApp', icon: 'fa-brands fa-whatsapp', color: '#25D366', utm_source: 'whatsapp', utm_medium: 'social', origen: 'Social' },
+    { id: 'whatsapp', label: 'WhatsApp', icon: 'fa-brands fa-whatsapp', color: '#25D366', utm_source: 'whatsapp', utm_medium: 'whatsapp', origen: 'WhatsApp' },
+    { id: 'whatsapp_canal', label: 'WhatsApp Canal', icon: 'fa-brands fa-whatsapp', color: '#25D366', utm_source: 'whatsapp', utm_medium: 'canal', origen: 'WhatsApp' },
+    { id: 'whatsapp_estado', label: 'WhatsApp Estado', icon: 'fa-brands fa-whatsapp', color: '#25D366', utm_source: 'whatsapp', utm_medium: 'estado', origen: 'WhatsApp' },
+    { id: 'whatsapp_mensaje', label: 'WhatsApp Mensaje', icon: 'fa-brands fa-whatsapp', color: '#25D366', utm_source: 'whatsapp', utm_medium: 'mensaje', origen: 'WhatsApp' },
     // TikTok
     { id: 'tiktok_video', label: 'TikTok Video', icon: 'fa-brands fa-tiktok', color: '#000000', utm_source: 'tiktok', utm_medium: 'video', origen: 'Social' },
     { id: 'tiktok_live', label: 'TikTok Live', icon: 'fa-brands fa-tiktok', color: '#000000', utm_source: 'tiktok', utm_medium: 'live', origen: 'Social' },
@@ -160,6 +163,75 @@ const conversionRate = computed(() =>
 const knownKeys = originRows.map((r) => r.key);
 const countOthers = (list) => totalOf(list) - knownKeys.reduce((acc, k) => acc + countFor(list, k), 0);
 
+// ---------- Desglose de Social y Otra página (dashboard) ----------
+const channelByKey = Object.fromEntries(baseChannels.map((c) => [`${c.utm_source}_${c.utm_medium}`, c]));
+// Alias de datos históricos (antes WhatsApp usaba utm_medium=social)
+channelByKey['whatsapp_social'] = channelByKey['whatsapp_whatsapp'] || baseChannels.find((c) => c.id === 'whatsapp');
+
+const capitalize = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+
+const channelMeta = (key) => {
+    const ch = channelByKey[key];
+    if (ch) return { label: ch.label, icon: ch.icon, color: ch.color };
+    const [s, m] = key.split('_');
+    return {
+        label: [s, m].filter(Boolean).map(capitalize).join(' / ') || 'Social',
+        icon: 'fa-solid fa-share-nodes',
+        color: '#6B7280',
+    };
+};
+
+const socialChannels = computed(() => {
+    const map = {};
+    const push = (rows, kind) => {
+        (rows || []).forEach((r) => {
+            const key = `${r.utm_source || ''}_${r.utm_medium || ''}`;
+            if (!map[key]) map[key] = { key, ...channelMeta(key), subscribers: 0, sales: 0 };
+            map[key][kind] += Number(r.total || 0);
+        });
+    };
+    push(stats.value.social_detail?.subscribers, 'subscribers');
+    push(stats.value.social_detail?.sales, 'sales');
+    return Object.values(map)
+        .filter((c) => c.subscribers > 0 || c.sales > 0)
+        .sort((a, b) => (b.subscribers + b.sales) - (a.subscribers + a.sales));
+});
+
+const referrers = computed(() => {
+    const map = {};
+    const push = (rows, kind) => {
+        (rows || []).forEach((r) => {
+            const host = r.host || 'Desconocido';
+            if (!map[host]) map[host] = { host, subscribers: 0, sales: 0 };
+            map[host][kind] += Number(r.total || 0);
+        });
+    };
+    push(stats.value.referrer_detail?.subscribers, 'subscribers');
+    push(stats.value.referrer_detail?.sales, 'sales');
+    return Object.values(map)
+        .filter((r) => r.subscribers > 0 || r.sales > 0)
+        .sort((a, b) => (b.subscribers + b.sales) - (a.subscribers + a.sales));
+});
+
+const expandedOrigin = ref(null);
+const referrerLimit = ref(5);
+const visibleReferrers = computed(() => referrers.value.slice(0, referrerLimit.value));
+
+const hasBreakdown = (key) =>
+    (key === 'social' && socialChannels.value.length > 0) ||
+    (key === 'referrer' && referrers.value.length > 0);
+
+const toggleOrigin = (key) => {
+    if (!hasBreakdown(key)) return;
+    const willOpen = expandedOrigin.value !== key;
+    expandedOrigin.value = willOpen ? key : null;
+    if (willOpen && key === 'referrer') {
+        referrerLimit.value = 5;
+    }
+};
+
+const showMoreReferrers = () => { referrerLimit.value = referrers.value.length; };
+
 const loadStats = () => {
     loadingStats.value = true;
     axios.get(route('aca_courses_landing_utm_stats', props.course.id), {
@@ -229,7 +301,10 @@ const copyAllUrls = async () => {
         <!-- MINI-DASHBOARD -->
         <div class="mb-6">
             <div class="flex items-center justify-between flex-wrap gap-3 mb-2">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Resumen de conversión por canal</h3>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                    Resumen de conversión por canal
+                    <span class="text-sm font-normal text-gray-500 dark:text-gray-400">(solo se muestra las descargas de brochure y compras en linea)</span>
+                </h3>
                 <div class="flex items-center gap-2">
                     <div class="relative">
                         <FlatPickr v-model="dates" :config="configFlatPickr" class="form-input w-56" placeholder="Rango de fechas" @on-change="loadStats" />
@@ -280,18 +355,64 @@ const copyAllUrls = async () => {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        <tr v-for="row in originRows" :key="row.key" class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
-                            <td class="px-4 py-2 text-gray-700 dark:text-gray-300">
-                                <i :class="trafficIcons[row.key] || 'fa-solid fa-link'" class="w-4 text-gray-400 mr-2"></i>
-                                {{ row.label }}
-                            </td>
-                            <td class="px-4 py-2 text-right font-medium text-gray-900 dark:text-white" :class="{ 'text-blue-600 dark:text-blue-400': countFor(stats.subscribers, row.key) > 0 }">
-                                {{ countFor(stats.subscribers, row.key) }}
-                            </td>
-                            <td class="px-4 py-2 text-right font-medium text-gray-900 dark:text-white" :class="{ 'text-emerald-600 dark:text-emerald-400': countFor(stats.sales, row.key) > 0 }">
-                                {{ countFor(stats.sales, row.key) }}
-                            </td>
-                        </tr>
+                        <template v-for="row in originRows" :key="row.key">
+                            <tr
+                                @click="toggleOrigin(row.key)"
+                                :class="[
+                                    hasBreakdown(row.key) ? 'cursor-pointer' : '',
+                                    expandedOrigin === row.key ? 'bg-blue-50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/40',
+                                    'transition-colors'
+                                ]"
+                            >
+                                <td class="px-4 py-2 text-gray-700 dark:text-gray-300">
+                                    <i :class="trafficIcons[row.key] || 'fa-solid fa-link'" class="w-4 text-gray-400 mr-2"></i>
+                                    {{ row.label }}
+                                    <svg v-if="hasBreakdown(row.key)" class="w-3.5 h-3.5 inline-block ml-1 text-gray-400 transition-transform duration-200" :class="expandedOrigin === row.key ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </td>
+                                <td class="px-4 py-2 text-right font-medium text-gray-900 dark:text-white" :class="{ 'text-blue-600 dark:text-blue-400': countFor(stats.subscribers, row.key) > 0 }">
+                                    {{ countFor(stats.subscribers, row.key) }}
+                                </td>
+                                <td class="px-4 py-2 text-right font-medium text-gray-900 dark:text-white" :class="{ 'text-emerald-600 dark:text-emerald-400': countFor(stats.sales, row.key) > 0 }">
+                                    {{ countFor(stats.sales, row.key) }}
+                                </td>
+                            </tr>
+
+                            <!-- Desglose del tráfico Social por canal -->
+                            <template v-if="row.key === 'social' && expandedOrigin === 'social'">
+                                <tr v-for="ch in socialChannels" :key="'soc-' + ch.key" class="bg-blue-50/60 dark:bg-blue-900/10">
+                                    <td class="px-4 py-1.5 pl-9 text-sm text-gray-600 dark:text-gray-300">
+                                        <i :class="ch.icon" :style="{ color: ch.color }" class="w-4 mr-2"></i>
+                                        {{ ch.label }}
+                                    </td>
+                                    <td class="px-4 py-1.5 text-right text-sm font-medium text-gray-900 dark:text-white" :class="{ 'text-blue-600 dark:text-blue-400': ch.subscribers > 0 }">{{ ch.subscribers }}</td>
+                                    <td class="px-4 py-1.5 text-right text-sm font-medium text-gray-900 dark:text-white" :class="{ 'text-emerald-600 dark:text-emerald-400': ch.sales > 0 }">{{ ch.sales }}</td>
+                                </tr>
+                            </template>
+
+                            <!-- Desglose de Otra página: top 5 + Ver más -->
+                            <template v-if="row.key === 'referrer' && expandedOrigin === 'referrer'">
+                                <tr v-for="ref in visibleReferrers" :key="'ref-' + ref.host" class="bg-blue-50/60 dark:bg-blue-900/10">
+                                    <td class="px-4 py-1.5 pl-9 text-sm text-gray-600 dark:text-gray-300">
+                                        <i class="fa-solid fa-arrow-up-right-from-square w-4 text-gray-400 mr-2"></i>
+                                        {{ ref.host }}
+                                    </td>
+                                    <td class="px-4 py-1.5 text-right text-sm font-medium text-gray-900 dark:text-white">{{ ref.subscribers }}</td>
+                                    <td class="px-4 py-1.5 text-right text-sm font-medium text-gray-900 dark:text-white">{{ ref.sales }}</td>
+                                </tr>
+                                <tr v-if="referrers.length > referrerLimit">
+                                    <td colspan="3" class="px-4 py-2 text-center">
+                                        <button @click.stop="showMoreReferrers" class="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                            </svg>
+                                            Ver más... ({{ referrers.length - referrerLimit }} más)
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </template>
                         <tr v-if="countOthers(stats.subscribers) > 0 || countOthers(stats.sales) > 0" class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
                             <td class="px-4 py-2 text-gray-700 dark:text-gray-300">
                                 <i class="fa-solid fa-ellipsis w-4 text-gray-400 mr-2"></i>

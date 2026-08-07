@@ -516,11 +516,15 @@ class AcaStudentController extends Controller
                 });
             });
             $course->auto_certificate = $course->auto_certificate ?? false;
+            $course->certificate_id = null;
             $course->certificate_exists = false;
             if ($course->auto_certificate && $student_id) {
-                $course->certificate_exists = AcaCertificate::where('student_id', $student_id)
+                $cert = AcaCertificate::where('student_id', $student_id)
                     ->where('course_id', $course->id)
-                    ->exists();
+                    ->whereNull('module_id')
+                    ->first();
+                $course->certificate_exists = $cert !== null;
+                $course->certificate_id = $cert?->id;
             }
             return $course;
         });
@@ -534,6 +538,10 @@ class AcaStudentController extends Controller
             ) {
                 $this->checkAndCreateCertificate($user->id, $course->id);
                 $course->certificate_exists = true;
+                $course->certificate_id = AcaCertificate::where('student_id', $student_id)
+                    ->where('course_id', $course->id)
+                    ->whereNull('module_id')
+                    ->value('id');
             }
         }
 
@@ -604,12 +612,16 @@ class AcaStudentController extends Controller
                 // Verificar si el curso tiene auto_certificate
                 $course->auto_certificate = $course->auto_certificate ?? false;
 
-                // Verificar si existe certificado (para auto_certificate)
+                // Verificar si existe certificado (solo de curso, no de módulo)
+                $course->certificate_id = null;
                 $course->certificate_exists = false;
-                if ($course->auto_certificate) {
-                    $course->certificate_exists = AcaCertificate::where('student_id', $student_id)
-                        ->where('course_id', $course->id)
-                        ->exists();
+                $cert = AcaCertificate::where('student_id', $student_id)
+                    ->where('course_id', $course->id)
+                    ->whereNull('module_id')
+                    ->first();
+                if ($cert) {
+                    $course->certificate_exists = true;
+                    $course->certificate_id = $cert->id;
                 }
 
                 // Obtener nota del estudiante (solo si no es auto_certificate)
@@ -1779,6 +1791,62 @@ class AcaStudentController extends Controller
                 'message' => 'Error al enviar correo: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Cambia la contraseña de un estudiante directamente desde el panel.
+     * Solo roles Administrador/admin. Requiere confirmar la contraseña del usuario actual.
+     */
+    public function setStudentPassword(Request $request, $personId)
+    {
+        $currentUser = Auth::user();
+
+        if (! $currentUser->hasAnyRole(['Administrador', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo un Administrador puede cambiar la contraseña de un estudiante.',
+            ], 403);
+        }
+
+        $this->validate(
+            $request,
+            [
+                'password' => 'required|string',
+                'password_confirmation' => 'required|same:password',
+                'admin_password' => 'required|string',
+            ],
+            [
+                'password.required' => 'La nueva contraseña es obligatoria.',
+                'password_confirmation.required' => 'Debes repetir la contraseña.',
+                'password_confirmation.same' => 'Las contraseñas no coinciden.',
+                'admin_password.required' => 'Debes ingresar tu contraseña para validar la acción.',
+            ]
+        );
+
+        if (! Hash::check($request->get('admin_password'), $currentUser->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La contraseña actual ingresada no es correcta.',
+            ], 422);
+        }
+
+        $studentUser = User::where('person_id', $personId)->first();
+
+        if (! $studentUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El estudiante no tiene un usuario registrado.',
+            ], 422);
+        }
+
+        $studentUser->update([
+            'password' => Hash::make($request->get('password')),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Contraseña del estudiante actualizada correctamente.',
+        ]);
     }
 
     public function passwordRecoveryForm(Request $request, $personId)
