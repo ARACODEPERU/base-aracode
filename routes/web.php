@@ -80,7 +80,21 @@ Route::middleware('auth')->group(function () {
     Route::get('csrf-token', fn () => response()->json(['token' => csrf_token()]))->name('csrf.token');
     Route::post('internal/job-token', [InternalJobTokenController::class, 'store'])->name('internal.job_token');
     Route::resource('clients', ClientController::class);
-    Route::resource('users', UserController::class);
+
+    // Gestión de usuarios (protegida por permisos)
+    Route::middleware(['permission:usuarios'])
+        ->get('users', [UserController::class, 'index'])->name('users.index');
+    Route::middleware(['permission:usuarios_nuevo'])
+        ->get('users/create', [UserController::class, 'create'])->name('users.create');
+    Route::middleware(['permission:usuarios_nuevo'])
+        ->post('users', [UserController::class, 'store'])->name('users.store');
+    Route::middleware(['permission:usuarios_editar'])
+        ->get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::middleware(['permission:usuarios_editar'])
+        ->put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::middleware(['permission:usuarios_eliminar'])
+        ->delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
     Route::resource('establishments', LocalSaleController::class);
     Route::resource('modulos', ModuloController::class);
     Route::get('modulos/permissions/{id}/add', [ModuloController::class, 'permissions'])->name('modulos_permissions');
