@@ -636,6 +636,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->name('aca_student_exam_module_finish');
 
     Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
+        ->post('student/module/exam/solve/start/{id}', [AcaExamController::class, 'moduleStartExam'])
+        ->name('aca_student_module_exam_start');
+
+    Route::middleware(['middleware' => 'permission:aca_cursos_examen_resolver'])
         ->post('student/module/exam/solve/retry/{id}', [AcaExamController::class, 'retryExam'])
         ->name('aca_student_module_exam_retry');
 

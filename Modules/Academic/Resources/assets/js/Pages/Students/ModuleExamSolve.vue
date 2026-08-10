@@ -574,6 +574,10 @@
         }
 
         const startTime = new Date(props.examStudent.started_at).getTime();
+        if (isNaN(startTime)) {
+            return props.exam.duration_minutes * 60;
+        }
+
         const durationMs = props.exam.duration_minutes * 60 * 1000;
         const endTime = startTime + durationMs;
         const now = new Date().getTime();
@@ -583,8 +587,21 @@
     };
 
     // Inicializar estado del examen
-    const initExam = () => {
+    const initExam = async () => {
         if (!props.isSuccess) return;
+
+        // El cronómetro inicia recién aquí (al presionar "Entendido, comenzar"),
+        // no al abrir la página: se registra started_at en el servidor una sola vez.
+        if (!props.examStudent?.started_at) {
+            try {
+                const { data } = await axios.post(route('aca_student_module_exam_start', props.examStudent.id));
+                if (data.success && data.started_at) {
+                    props.examStudent.started_at = data.started_at;
+                }
+            } catch (error) {
+                console.error('Error al iniciar el examen:', error);
+            }
+        }
 
         loadSavedAnswers();
         timeRemaining.value = calculateTimeRemaining();
@@ -621,7 +638,7 @@
         });
 
         if (result.isConfirmed) {
-            initExam();
+            await initExam();
         }
     };
 

@@ -876,6 +876,25 @@ class AcaStudentController extends Controller
         ])
         ->findOrFail($id);
 
+        // Serializar fechas en ISO 8601 con zona horaria (-05:00) para que `new Date()`
+        // en el frontend calcule instantes correctos sin importar la zona del navegador.
+        if ($module->exam) {
+            $module->exam->date_start_iso = Carbon::parse($module->exam->date_start)->toIso8601String();
+            $module->exam->date_end_iso = Carbon::parse($module->exam->date_end)->toIso8601String();
+            $module->exam->student_exams->each(function ($se) {
+                $se->started_at = $se->started_at ? Carbon::parse($se->started_at)->toIso8601String() : null;
+                $se->finished_at = $se->finished_at ? Carbon::parse($se->finished_at)->toIso8601String() : null;
+            });
+        }
+        if ($module->mock_exam) {
+            $module->mock_exam->date_start_iso = Carbon::parse($module->mock_exam->date_start)->toIso8601String();
+            $module->mock_exam->date_end_iso = Carbon::parse($module->mock_exam->date_end)->toIso8601String();
+            $module->mock_exam->student_exams->each(function ($se) {
+                $se->started_at = $se->started_at ? Carbon::parse($se->started_at)->toIso8601String() : null;
+                $se->finished_at = $se->finished_at ? Carbon::parse($se->finished_at)->toIso8601String() : null;
+            });
+        }
+
         // Calcular progreso por tema
         $module->themes->each(function ($theme) {
             $totalContents = $theme->contents->reject(fn($c) => $c->is_file == 4)->count();

@@ -335,10 +335,6 @@ class AcaExamController extends Controller
         $now = now();
         $isAvailable = $now->between($exam->date_start, $exam->date_end);
 
-        // 3. Agregar fechas al array del examen para el frontend
-        $examArray['date_start_formatted'] = Carbon::parse($exam->date_start)->format('d/m/Y H:i');
-        $examArray['date_end_formatted'] = Carbon::parse($exam->date_end)->format('d/m/Y H:i');
-
         // 4. Preparar preguntas (Shuffle y mapeo de datos necesarios para el Front)
         $shuffledQuestions = $exam->questions->map(function ($question) {
             // Barajamos las respuestas
@@ -361,6 +357,8 @@ class AcaExamController extends Controller
 
         $examArray = $exam->toArray();
         $examArray['questions'] = $shuffledQuestions;
+        $examArray['date_start_formatted'] = Carbon::parse($exam->date_start)->format('d/m/Y H:i');
+        $examArray['date_end_formatted'] = Carbon::parse($exam->date_end)->format('d/m/Y H:i');
 
         // 4. Buscar o crear el intento del estudiante - SOLO si el examen está disponible
         $canRetry = false;
@@ -387,23 +385,20 @@ class AcaExamController extends Controller
                     $examStudent->attempts_used = $attemptsUsed;
                 }
             } else {
-                // Crear nuevo intento SOLO si está disponible
+                // Crear nuevo intento SOLO si está disponible.
+                // started_at se deja en NULL: el cronómetro inicia cuando el estudiante
+                // presiona "Entendido, comenzar" (ruta aca_student_module_exam_start).
                 $examStudent = AcaStudentExam::create([
                     'exam_id' => $exam->id,
                     'student_id' => $student->id,
                     'date_start' => now(),
-                    'started_at' => now(),
+                    'started_at' => null,
                     'status' => 'pendiente',
                     'punctuation' => 0,
                     'details' => [],
                     'attempts_used' => 1,
                 ]);
                 $canRetry = true;
-            }
-
-            // Asegurar que started_at existe (por si es un registro viejo que no lo tenía)
-            if (! $examStudent->started_at) {
-                $examStudent->started_at = $examStudent->created_at;
             }
 
             // Agregar información de intentos al objeto del examen
@@ -448,7 +443,11 @@ class AcaExamController extends Controller
             // Convertimos a array para evitar que el Accessor del modelo interfiera
             $examStudentData = $examStudent->toArray();
             $examStudentData['details'] = $detailsByQuestion;
-            $examStudentData['started_at'] = Carbon::parse($examStudent->started_at)->toDateTimeString();
+            // Serializar en ISO 8601 con zona horaria (-05:00) para que `new Date()`
+            // calcule el instante correcto en el navegador sin importar su zona horaria.
+            $examStudentData['started_at'] = $examStudent->started_at
+                ? Carbon::parse($examStudent->started_at)->toIso8601String()
+                : null;
         }
 
         // dd($examStudentData);
@@ -549,6 +548,43 @@ class AcaExamController extends Controller
         ]);
     }
 
+    /**
+     * Iniciar el cronómetro del examen (idempotente).
+     * Se ejecuta cuando el estudiante presiona "Entendido, comenzar".
+     */
+    public function moduleStartExam(Request $request, $id)
+    {
+        $student = AcaStudent::where('person_id', Auth::user()->person_id)->first();
+        $examStudent = AcaStudentExam::where('exam_id', $id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if (! $examStudent) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el intento del examen.',
+            ], 404);
+        }
+
+        if (in_array($examStudent->status, ['terminado', 'revision_pendiente', 'completado', 'calificado'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El examen ya ha sido finalizado.',
+            ], 400);
+        }
+
+        // No reiniciar el reloj si el examen ya estaba en curso (p. ej. al recargar la página)
+        if (! $examStudent->started_at) {
+            $examStudent->started_at = now();
+            $examStudent->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'started_at' => Carbon::parse($examStudent->started_at)->toIso8601String(),
+        ]);
+    }
+
     public function moduleStoreFinish(Request $request)
     {
         // dd($request->all());
@@ -561,9 +597,13 @@ class AcaExamController extends Controller
         }
 
         // 1. Calcular tiempos
-        $startedAt = Carbon::parse($examStudent->started_at);
-        $timeSpent = $startedAt->diffInSeconds(now());
         $maxSeconds = $exam->duration_minutes * 60;
+        if (! $examStudent->started_at) {
+            // Por seguridad, si no hay started_at evitar Carbon::parse(null)
+            $timeSpent = 0;
+        } else {
+            $timeSpent = Carbon::parse($examStudent->started_at)->diffInSeconds(now());
+        }
 
         // 2. Verificar calificación manual
         $details = $examStudent->details ?? [];
@@ -581,7 +621,10 @@ class AcaExamController extends Controller
         $examStudent->time_spent_seconds = $timeSpent;
         $examStudent->is_timed_out = $timeSpent > ($maxSeconds + 30);
         $examStudent->save();
-        // return to_route('aca_student_module_exam_solve', $exam->id);
+
+        // Redirigir para que Inertia recargue la vista con los datos frescos
+        // (puntaje, estado, tiempos) y no quede información obsoleta del primer load.
+        return to_route('aca_student_module_exam_solve', $exam->id);
     }
 
     /**
@@ -615,8 +658,9 @@ class AcaExamController extends Controller
         }
 
         // Resetear el examen para un nuevo intento
+        // started_at en NULL: el cronómetro iniciará al presionar "Entendido, comenzar"
         $examStudent->details = [];
-        $examStudent->started_at = now();
+        $examStudent->started_at = null;
         $examStudent->status = 'pendiente';
         $examStudent->punctuation = 0;
         $examStudent->attempts_used = $attemptsUsed + 1;

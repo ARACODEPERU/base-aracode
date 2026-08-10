@@ -87,8 +87,8 @@
         if (!moduleExam.value || !moduleExam.value.date_start || !moduleExam.value.date_end) return false;
 
         const now = new Date();
-        const startDate = new Date(moduleExam.value.date_start);
-        const endDate = new Date(moduleExam.value.date_end);
+        const startDate = new Date(moduleExam.value.date_start_iso || moduleExam.value.date_start);
+        const endDate = new Date(moduleExam.value.date_end_iso || moduleExam.value.date_end);
 
         return now >= startDate && now <= endDate;
     });
@@ -98,7 +98,7 @@
         if (!moduleExam.value || !moduleExam.value.date_start) return false;
 
         const now = new Date();
-        const startDate = new Date(moduleExam.value.date_start);
+        const startDate = new Date(moduleExam.value.date_start_iso || moduleExam.value.date_start);
 
         return now < startDate;
     });
@@ -142,6 +142,8 @@
         if (!studentExam.value?.started_at) return 0;
 
         const startTime = new Date(studentExam.value.started_at).getTime();
+        if (isNaN(startTime)) return 0;
+
         const now = new Date().getTime();
 
         return Math.floor((now - startTime) / 1000);
