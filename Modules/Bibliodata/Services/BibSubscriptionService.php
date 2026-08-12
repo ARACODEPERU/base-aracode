@@ -316,15 +316,13 @@ class BibSubscriptionService
         $today = Carbon::today();
 
         $individual = BibSubscription::query()
-            ->with('plan')
+            ->with('plan.books')
             ->where('subscriber_type', 'individual')
             ->where('user_id', $user->id)
             ->whereIn('status', ['active', 'pending'])
-            ->when($bookId, fn ($q) => $q->where('book_id', $bookId))
             ->get()
-            ->first(fn ($sub) => $this->resolveStatus($sub) === 'active'
-                && $sub->starts_at->lte($today)
-                && ($sub->ends_at === null || $sub->ends_at->gte($today)));
+            ->first(fn (BibSubscription $sub) => $this->isSubscriptionActiveNow($sub, $today)
+                && $this->subscriptionCoversBook($sub, $bookId));
 
         if ($individual) {
             return $individual;
@@ -337,16 +335,54 @@ class BibSubscriptionService
         }
 
         return BibSubscription::query()
-            ->with('plan')
+            ->with('plan.books')
             ->where('subscriber_type', 'organization')
             ->whereIn('organization_id', $orgIds)
             ->whereIn('status', ['active', 'pending'])
-            ->when($bookId, fn ($q) => $q->where('book_id', $bookId))
             ->whereHas('beneficiaries', fn ($q) => $q->where('users.id', $user->id))
             ->get()
-            ->first(fn ($sub) => $this->resolveStatus($sub) === 'active'
-                && $sub->starts_at->lte($today)
-                && ($sub->ends_at === null || $sub->ends_at->gte($today)));
+            ->first(fn (BibSubscription $sub) => $this->isSubscriptionActiveNow($sub, $today)
+                && $this->subscriptionCoversBook($sub, $bookId));
+    }
+
+    /**
+     * ¿La suscripción está vigente hoy?
+     */
+    private function isSubscriptionActiveNow(BibSubscription $subscription, Carbon $today): bool
+    {
+        return $this->resolveStatus($subscription) === 'active'
+            && $subscription->starts_at?->lte($today)
+            && ($subscription->ends_at === null || $subscription->ends_at->gte($today));
+    }
+
+    /**
+     * ¿La suscripción cubre el libro solicitado?
+     *
+     * Sin $bookId (vista general de la biblioteca) cualquier suscripción activa es válida.
+     * Con $bookId se respeta el alcance del plan: single_book (book_id directo),
+     * limited_books (libros asignados al plan) y all_books (todos los libros).
+     */
+    private function subscriptionCoversBook(BibSubscription $subscription, ?int $bookId): bool
+    {
+        if ($bookId === null) {
+            return true;
+        }
+
+        if ($subscription->book_id && (int) $subscription->book_id === (int) $bookId) {
+            return true;
+        }
+
+        $plan = $subscription->plan;
+
+        if (! $plan) {
+            return false;
+        }
+
+        return match ($plan->scope_type) {
+            'all_books' => true,
+            'limited_books' => $plan->books->contains('id', (int) $bookId),
+            default => false,
+        };
     }
 
     private function validateSubscriber(string $type, ?int $userId, ?int $organizationId): void
