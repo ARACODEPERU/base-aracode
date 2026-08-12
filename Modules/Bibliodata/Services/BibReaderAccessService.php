@@ -26,6 +26,11 @@ class BibReaderAccessService
         return $user->hasRole($this->readerRoleName());
     }
 
+    public function isAdmin(User $user): bool
+    {
+        return $user->hasRole('admin');
+    }
+
     /**
      * @throws ValidationException
      */
@@ -95,6 +100,15 @@ class BibReaderAccessService
      */
     public function evaluatePageAccess(User $user, BibBook $book, int $pageId): array
     {
+        if ($this->isAdmin($user)) {
+            return [
+                'allowed' => true,
+                'has_subscription' => true,
+                'reason' => null,
+                'preview_page_id' => null,
+            ];
+        }
+
         $subscription = $this->getActiveSubscription($user, $book->id);
 
         if ($subscription) {
@@ -138,6 +152,13 @@ class BibReaderAccessService
 
     public function buildAccessPayload(User $user, ?BibBook $book): array
     {
+        if ($this->isAdmin($user)) {
+            return [
+                'hasActiveSubscription' => true,
+                'previewPageId' => null,
+            ];
+        }
+
         if (! $book) {
             return [
                 'hasActiveSubscription' => false,

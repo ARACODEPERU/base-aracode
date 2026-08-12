@@ -167,7 +167,7 @@ const submit = () => {
                 <select v-model="form.plan_id" class="form-select w-full" required>
                     <option value="">Seleccionar plan...</option>
                     <option v-for="plan in plans" :key="plan.id" :value="plan.id">
-                        {{ plan.name }} — {{ plan.books?.[0]?.title || 'Sin libro' }}
+                        {{ plan.name }} — {{ plan.scope_type === 'all_books' ? 'Todos los libros' : (plan.books?.map((b) => b.title).join(', ') || 'Sin libro') }}
                     </option>
                 </select>
                 <InputError :message="form.errors.plan_id" class="mt-1" />

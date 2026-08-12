@@ -114,7 +114,7 @@ const deletePlan = (id) => {
                             </td>
                             <td class="font-medium">{{ plan.name }}</td>
                             <td>{{ plan.code }}</td>
-                            <td>{{ plan.books?.[0]?.title || '—' }}</td>
+                            <td>{{ plan.scope_type === 'all_books' ? 'Todos los libros' : (plan.books?.map((b) => b.title).join(', ') || '—') }}</td>
                             <td>{{ durationLabel(plan) }}</td>
                             <td>
                                 <span

@@ -113,7 +113,7 @@ class BibSubscriptionPlanController extends Controller
             'includes_ai_chatbot' => 'boolean',
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
-            'book_ids' => 'required|array|min:1',
+            'book_ids' => 'required_unless:scope_type,all_books|array',
             'book_ids.*' => 'integer|exists:bib_books,id',
             'id' => 'nullable|integer|exists:bib_subscription_plans,id',
         ]);

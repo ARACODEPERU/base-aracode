@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import FormSection from '@/Components/FormSection.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -37,6 +37,15 @@ const selectedBookId = computed({
 
 const showDurationValue = computed(() => form.duration_type !== 'lifetime');
 
+watch(
+    () => form.scope_type,
+    (scope) => {
+        if (scope === 'all_books') {
+            form.book_ids = [];
+        }
+    }
+);
+
 const submit = () => {
     if (form.id) {
         form.post(route('bib_subscription_plans_update'), { preserveScroll: true });
@@ -52,7 +61,7 @@ const submit = () => {
             {{ form.id ? 'Editar plan' : 'Nuevo plan de suscripción' }}
         </template>
         <template #description>
-            Define el libro incluido, la duración y las opciones del plan. Los campos marcados son obligatorios.
+            Define el alcance de libros, la duración y las opciones del plan. Los campos marcados son obligatorios.
         </template>
 
         <template #form>
@@ -72,6 +81,15 @@ const submit = () => {
                 <InputError :message="form.errors.description" class="mt-1" />
             </div>
             <div class="col-span-6 sm:col-span-3">
+                <InputLabel value="Alcance *" />
+                <select v-model="form.scope_type" class="form-select w-full">
+                    <option value="single_book">Un libro</option>
+                    <option value="limited_books">Varios libros</option>
+                    <option value="all_books">Todos los libros</option>
+                </select>
+                <InputError :message="form.errors.scope_type" class="mt-1" />
+            </div>
+            <div v-if="form.scope_type === 'single_book'" class="col-span-6 sm:col-span-3">
                 <InputLabel value="Libro incluido *" />
                 <select v-model="selectedBookId" class="form-select w-full" required>
                     <option value="">Seleccionar libro...</option>
@@ -80,7 +98,29 @@ const submit = () => {
                     </option>
                 </select>
                 <InputError :message="form.errors.book_ids || form.errors.book_id" class="mt-1" />
-                <p class="mt-1 text-xs text-gray-500">Alcance multi-libro y todos los libros: próximamente.</p>
+            </div>
+            <div v-else-if="form.scope_type === 'limited_books'" class="col-span-6 sm:col-span-6">
+                <InputLabel value="Libros incluidos *" />
+                <div class="max-h-52 overflow-y-auto rounded-md border border-slate-300 p-3 space-y-2 dark:border-slate-600">
+                    <label
+                        v-for="book in books"
+                        :key="book.id"
+                        class="flex items-start gap-2 cursor-pointer"
+                    >
+                        <input v-model="form.book_ids" type="checkbox" :value="book.id" class="form-checkbox mt-0.5" />
+                        <span class="text-sm">
+                            {{ book.title }}{{ book.code_name ? ` (${book.code_name})` : '' }}
+                        </span>
+                    </label>
+                    <p v-if="!books.length" class="text-sm text-gray-500">No hay libros disponibles.</p>
+                </div>
+                <InputError :message="form.errors.book_ids" class="mt-1" />
+            </div>
+            <div v-else class="col-span-6 sm:col-span-3">
+                <InputLabel value="Libros" />
+                <p class="rounded-md bg-slate-100 px-3 py-2 text-sm text-gray-600 dark:bg-slate-700 dark:text-gray-300">
+                    Acceso a todos los libros de la biblioteca. No requiere seleccionar libros.
+                </p>
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <InputLabel value="Duración" />
