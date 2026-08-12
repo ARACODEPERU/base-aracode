@@ -79,12 +79,22 @@ const cancelSub = (id) => {
         cancelButtonText: 'Volver',
         showLoaderOnConfirm: true,
         preConfirm: () =>
-            axios.post(route('bib_subscriptions_cancel', id)).then((res) => {
-                if (res.data && !res.data.success) {
-                    Swal.showValidationMessage(res.data.message || 'Error');
-                }
-                return res;
-            }),
+            axios
+                .post(route('bib_subscriptions_cancel', id))
+                .then((res) => {
+                    if (res.data && !res.data.success) {
+                        Swal.showValidationMessage(res.data.message || 'Error');
+                    }
+                    return res;
+                })
+                .catch((error) => {
+                    const message =
+                        error?.response?.data?.message ||
+                        error?.response?.data?.error ||
+                        'No se pudo cancelar la suscripción. Verifica que tengas permisos e inténtalo de nuevo.';
+                    Swal.showValidationMessage(message);
+                }),
+        allowOutsideClick: () => !Swal.isLoading(),
     }).then((result) => {
         if (result.isConfirmed) {
             router.visit(route('bib_subscriptions'), {
@@ -167,6 +177,7 @@ const cancelSub = (id) => {
                                     </Link>
                                     <button
                                         v-if="sub.status !== 'cancelled'"
+                                        v-can="'bib_suscripciones_cancelar'"
                                         type="button"
                                         v-tippy="{ content: 'Cancelar suscripción', placement: 'bottom' }"
                                         class="text-danger hover:underline"
