@@ -168,7 +168,9 @@ const submit = () => {
                 <select v-model="form.plan_id" class="form-select w-full" required>
                     <option value="">Seleccionar plan...</option>
                     <option v-for="plan in plans" :key="plan.id" :value="plan.id">
+
                         {{ plan.name }} — {{ planBookLabel(plan) }}
+
                     </option>
                 </select>
                 <InputError :message="form.errors.plan_id" class="mt-1" />

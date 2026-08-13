@@ -115,7 +115,9 @@ const deletePlan = (id) => {
                             </td>
                             <td class="font-medium">{{ plan.name }}</td>
                             <td>{{ plan.code }}</td>
+
                             <td>{{ planBookLabel(plan) }}</td>
+
                             <td>{{ durationLabel(plan) }}</td>
                             <td>
                                 <span

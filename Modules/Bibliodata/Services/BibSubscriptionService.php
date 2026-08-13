@@ -342,13 +342,15 @@ class BibSubscriptionService
         $today = Carbon::today();
 
         $individual = BibSubscription::query()
-            ->with('plan')
+            ->with('plan.books')
             ->where('subscriber_type', 'individual')
             ->where('user_id', $user->id)
             ->whereIn('status', ['active', 'pending'])
             ->get()
+
             ->first(fn ($sub) => $this->subscriptionMatchesBook($sub, $bookId)
                 && $this->isActiveInPeriod($sub, $today));
+
 
         if ($individual) {
             return $individual;
@@ -361,12 +363,13 @@ class BibSubscriptionService
         }
 
         return BibSubscription::query()
-            ->with('plan')
+            ->with('plan.books')
             ->where('subscriber_type', 'organization')
             ->whereIn('organization_id', $orgIds)
             ->whereIn('status', ['active', 'pending'])
             ->whereHas('beneficiaries', fn ($q) => $q->where('users.id', $user->id))
             ->get()
+
             ->first(fn ($sub) => $this->subscriptionMatchesBook($sub, $bookId)
                 && $this->isActiveInPeriod($sub, $today));
     }
@@ -385,6 +388,7 @@ class BibSubscriptionService
         return $this->resolveStatus($subscription) === 'active'
             && $subscription->starts_at->lte($today)
             && ($subscription->ends_at === null || $subscription->ends_at->gte($today));
+
     }
 
     private function validateSubscriber(string $type, ?int $userId, ?int $organizationId): void
