@@ -1,238 +1,1049 @@
-.dark .ant-dropdown-menu{
-    background-color: #233042 !important;
-    border: 1px solid #0e1a2c !important;
-}
-.dark .ant-steps-item-title {
-    color: aqua !important;
+/* ============================================================================
+   ANT DESIGN VUE 4.2.6 - Tema Vristo / Aracode
+   ----------------------------------------------------------------------------
+   Unico objetivo: que los componentes antd se vean consistentes con los inputs
+   `.form-input` de Tailwind (solo color, borde, radius, sombra, tipografia y
+   spacing). NO se modifica la estructura interna de los componentes.
+
+   Tokens de referencia (`.form-input`):
+     - alto ............ 38px
+     - radio ........... 6px
+     - fuente .......... 14px / peso 600 / line-height 20px
+     - padding ......... 8px 16px
+     - borde (claro) ... #e0e6ed   | foco/hover: #4361ee
+     - dark: bg #121e32 | borde #17263c | texto #888ea8 | foco #4361ee
+     - disabled claro .. bg #f3f4f6, texto #6b7280
+     - disabled dark ... bg #1b2e4b, texto #9ca3af
+
+   Nota tecnica (importante):
+   antd inyecta su CSS-in-JS en runtime al final del <head>, envuelto en
+   `:where(.css-<hash>)` (hashPriority 'low'), por lo que sus selectores entran
+   DESPUES de este bundle. Se usa `!important` UNICAMENTE en las propiedades que
+   compiten directamente con los estilos oficiales (alto, line-height, padding,
+   color de superficie), para garantizar la victoria en cascada. Nunca se toca
+   posicionamiento interno: se respeta `top:50%`, `margin-top`, `display:flex`
+   y `flex-wrap` que antd ya define correctamente.
+   ============================================================================ */
+
+/* ============================================================================
+   1) SELECT (a-select)
+   ----------------------------------------------------------------------------
+   Causa raiz corregida: el texto se pegaba arriba porque se forzo `height` en
+   el selector (38px) sin ajustar el `line-height` interno (quedaba en 30px de
+   antd). En antd el centrado vertical del single se logra con line-height
+   = (alto - 2px de borde). Ahora line-height acompaña al alto, el input de
+   busqueda usa el mismo alto y el multiple conserva `height:auto` para poder
+   envolver sus tags.
+   ============================================================================ */
+
+/* ---------- 1.1 Superficie del selector (single y multiple) ---------- */
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.ant-select-multiple .ant-select-selector {
+    background-color: #ffffff !important;
+    border-color: #e0e6ed !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
 }
 
-.dark .ant-select-selector{
+/* ---------- 1.2 Single ---------- */
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+    height: 38px !important;
+    padding: 0 16px !important;
+    align-items: center;
+}
+
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selection-item,
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selection-placeholder {
+    line-height: 36px !important; /* 38px - 2px de borde: centrado perfecto */
+    font-weight: 600 !important;
+    color: #0e1726 !important;
+}
+
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selection-placeholder {
+    color: #6b7280 !important;
+}
+
+/* Linea base interna que antd usa para alinear el texto (debe seguir al alto) */
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selector:after {
+    line-height: 36px !important;
+}
+
+/* Input de busqueda del single (show-search): mismo alto para quedar centrado */
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selection-search {
+    inset-inline-start: 16px;
+    inset-inline-end: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selection-search-input {
+    height: 36px !important;
+    line-height: 36px !important;
+}
+
+/* Con flecha: dejar espacio a la derecha para el icono */
+.ant-select-single:not(.ant-select-customize-input).ant-select-show-arrow .ant-select-selection-item,
+.ant-select-single:not(.ant-select-customize-input).ant-select-show-arrow .ant-select-selection-placeholder,
+.ant-select-single:not(.ant-select-customize-input).ant-select-allow-clear .ant-select-selection-item,
+.ant-select-single:not(.ant-select-customize-input).ant-select-allow-clear .ant-select-selection-placeholder {
+    padding-inline-end: 28px !important;
+}
+
+/* ---------- 1.3 Multiple ---------- */
+.ant-select-multiple .ant-select-selector {
+    min-height: 38px !important;
+    height: auto !important; /* los tags envuelven en varias filas */
+    padding: 4px 8px !important;
+}
+
+/* No permitir que la flecha / clear tapen el ultimo tag */
+.ant-select-multiple.ant-select-show-arrow .ant-select-selector,
+.ant-select-multiple.ant-select-allow-clear .ant-select-selector {
+    padding-inline-end: 28px !important;
+}
+
+.ant-select-multiple .ant-select-selection-item {
+    display: flex;
+    align-items: center;
+    background-color: #f4f6f8 !important;
+    border-color: #e0e6ed !important;
+    color: #0e1726 !important;
+    font-weight: 500 !important;
+}
+
+.ant-select-multiple .ant-select-selection-placeholder {
+    inset-inline-start: 8px !important;
+    color: #6b7280 !important;
+    font-weight: 600 !important;
+}
+
+.ant-select-multiple .ant-select-selection-item-remove {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* ---------- 1.4 Estados (hover / foco / disabled) ---------- */
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: #4361ee !important;
+}
+
+.ant-select-focused .ant-select-selector {
+    border-color: #4361ee !important;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.12) !important;
+}
+
+.ant-select-disabled .ant-select-selector {
+    background-color: #f3f4f6 !important;
+}
+
+.ant-select-disabled .ant-select-selection-item,
+.ant-select-disabled .ant-select-selection-placeholder {
+    color: #6b7280 !important;
+}
+
+/* ---------- 1.5 Iconos (flecha / clear / remove) ---------- */
+.ant-select-arrow {
+    color: #888ea8 !important;
+    inset-inline-end: 16px !important;
+}
+
+/* `.ant-select-suffix` es la clase del icono (DownOutlined / SearchOutlined)
+   que vive dentro de `.ant-select-arrow`. */
+.ant-select-suffix {
+    color: #888ea8 !important;
+}
+
+.ant-select-clear {
+    inset-inline-end: 16px !important;
+    background-color: #ffffff !important;
+    color: #888ea8 !important;
+}
+
+.ant-select-clear:hover {
+    color: #4361ee !important;
+}
+
+/* ---------- 1.6 Dropdown / lista de opciones ---------- */
+.ant-select-dropdown {
+    background-color: #ffffff !important;
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 24px rgba(2, 6, 23, 0.08) !important;
+    padding: 4px !important;
+}
+
+.ant-select-item {
+    color: #0e1726 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+}
+
+.ant-select-item-option-active {
+    background-color: #eef2ff !important;
+}
+
+.ant-select-item-option-selected {
+    background-color: #eef2ff !important;
+    color: #4361ee !important;
+}
+
+.ant-select-item-option-selected .ant-select-item-option-state {
+    color: #4361ee !important;
+}
+
+.ant-select-item-empty {
+    color: #888ea8 !important;
+}
+
+/* ---------- 1.7 Select: tema oscuro ---------- */
+.dark .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.dark .ant-select-multiple .ant-select-selector {
+    background-color: #121e32 !important;
+    border-color: #17263c !important;
+}
+
+.dark .ant-select-single:not(.ant-select-customize-input) .ant-select-selection-item {
+    color: #888ea8 !important;
+}
+
+.dark .ant-select-single:not(.ant-select-customize-input) .ant-select-selection-placeholder {
+    color: #888ea8 !important;
+}
+
+.dark .ant-select-multiple .ant-select-selection-item {
     background-color: #1b2e4b !important;
-    border: 1px solid #0e1a2c !important;
+    border-color: #253b5c !important;
+    color: #bfc5db !important;
 }
 
-.dark .ant-select-selection-placeholder {
-    color: #888ea8 !important;
-}
-.dark .ant-select-selection-item {
-    color: #888ea8 !important;
-}
-.dark .ant-select-clear{
-    background-color: #1e3453 !important;
-}
-.dark .anticon-close-circle{
-    background-color: #1e3453 !important;
+.dark .ant-select-multiple .ant-select-selection-placeholder {
     color: #888ea8 !important;
 }
 
-.dark .ant-cascader-menus{
-    background-color: #1b2e4b;
-    border-color: #253b5c;
-    color: #888ea8;
-}
-
+.dark .ant-select-arrow,
 .dark .ant-select-suffix {
     color: #888ea8 !important;
 }
-.dark .anticon-right{
+
+.dark .ant-select-clear {
+    background-color: #121e32 !important;
     color: #888ea8 !important;
 }
-.dark .ant-input {
+
+.dark .ant-select-clear:hover {
+    color: #bfc5db !important;
+}
+
+.dark .ant-select-disabled .ant-select-selector {
+    background-color: #1b2e4b !important;
+}
+
+.dark .ant-select-disabled .ant-select-selection-item,
+.dark .ant-select-disabled .ant-select-selection-placeholder {
+    color: #9ca3af !important;
+}
+
+.dark .ant-select-dropdown {
     background-color: #1b2e4b !important;
     border-color: #253b5c !important;
-    color: #888ea8 !important;
-}
-.dark .ant-picker {
-    background-color: #1b2e4b !important;
-    border-color: #253b5c !important;
-    color: #888ea8 !important;
 }
 
-/* Reglas para el placeholder */
-.dark .ant-input::placeholder { /* Para la mayoría de los navegadores modernos */
-    color: #888ea8 !important; /* O el color que desees para el placeholder */
-    opacity: 1 !important; /* Asegura que no tenga transparencia predeterminada del navegador */
-}
-
-.dark .ant-input::-webkit-input-placeholder { /* Para navegadores basados en Webkit (Chrome, Safari, Edge anterior) */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-input::-moz-placeholder { /* Para Firefox */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-input:-ms-input-placeholder { /* Para Internet Explorer */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-input::ms-input-placeholder { /* Para Microsoft Edge (versiones más nuevas, aunque ::placeholder es suficiente) */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-select-dropdown{
-    background-color: #1b2e4b !important;
-    border-color: #253b5c !important;
+.dark .ant-select-item {
     color: #bfc5db !important;
 }
 
-.dark .rc-virtual-list{
-    color: #bfc5db !important;
-}
-.dark .rc-virtual-list-holder {
-    color: #bfc5db !important;
-}
-.dark .ant-select-item-option-content{
-    color: #bfc5db !important;
-}
-.dark .ant-select-item-option:hover{
+.dark .ant-select-item-option-active {
     background-color: #253d63 !important;
     color: #bfc5db !important;
 }
-.dark .ant-select-item-option-selected{
-    background-color: #0f1d33 !important;
+
+.dark .ant-select-item-option-selected {
+    background-color: #294064 !important;
+    color: #ffffff !important;
+}
+
+.dark .ant-select-item-option-selected .ant-select-item-option-state {
+    color: #ffffff !important;
+}
+
+.dark .ant-select-item-empty {
+    color: #888ea8 !important;
+}
+
+.dark .ant-select-selection-item-remove {
+    color: #dcdde6 !important;
+}
+
+.dark .anticon-close-circle {
+    background-color: transparent !important;
+    color: #888ea8 !important;
+}
+
+/* Compatibilidad con el componente legacy `.ara-ant-select` (tag mas alto) */
+.ara-ant-select .ant-select-selection-item {
+    height: 30px !important;
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================================================
+   2) INPUT / TEXTAREA (a-input, a-textarea, Input.Search, Password)
+   ============================================================================ */
+.ant-input {
+    height: 38px !important;
+    padding: 0 16px !important;
+    background-color: #ffffff !important;
+    border-color: #e0e6ed !important;
+    border-radius: 6px !important;
+    color: #0e1726 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 36px !important;
+}
+
+.ant-input::placeholder {
+    color: #6b7280 !important;
+    opacity: 1 !important;
+}
+
+.ant-input:hover {
+    border-color: #4361ee !important;
+}
+
+.ant-input:focus,
+.ant-input-focused {
+    border-color: #4361ee !important;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.12) !important;
+}
+
+.ant-input-disabled,
+.ant-input[disabled] {
+    background-color: #f3f4f6 !important;
+    color: #6b7280 !important;
+}
+
+textarea.ant-input {
+    height: auto !important;
+    line-height: 1.5 !important;
+    padding: 8px 16px !important;
+}
+
+/* Wrapper con prefijo / sufijo (Input.Password, Input con icono) */
+.ant-input-affix-wrapper {
+    height: 38px !important;
+    padding: 0 16px !important;
+    background-color: #ffffff !important;
+    border-color: #e0e6ed !important;
+    border-radius: 6px !important;
+    line-height: 36px !important;
+}
+
+.ant-input-affix-wrapper:hover {
+    border-color: #4361ee !important;
+}
+
+.ant-input-affix-wrapper-focused,
+.ant-input-affix-wrapper:focus {
+    border-color: #4361ee !important;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.12) !important;
+}
+
+.ant-input-affix-wrapper .ant-input {
+    height: auto !important;
+    padding: 0 !important;
+    line-height: 36px !important;
+}
+
+/* Boton de Input.Search alineado al alto del input */
+.ant-input-search .ant-input-search-button {
+    height: 38px !important;
+    line-height: 38px;
+}
+
+/* ---------- Input / Textarea: tema oscuro ---------- */
+.dark .ant-input,
+.dark .ant-input-affix-wrapper {
+    background-color: #121e32 !important;
+    border-color: #17263c !important;
+    color: #888ea8 !important;
+}
+
+.dark .ant-input::placeholder {
+    color: #888ea8 !important;
+}
+
+.dark .ant-input-disabled,
+.dark .ant-input[disabled] {
+    background-color: #1b2e4b !important;
+    color: #9ca3af !important;
+}
+
+/* ============================================================================
+   3) INPUT NUMBER (a-input-number)
+   ============================================================================ */
+.ant-input-number {
+    height: 38px !important;
+    background-color: #ffffff !important;
+    border-color: #e0e6ed !important;
+    border-radius: 6px !important;
+}
+
+.ant-input-number:hover {
+    border-color: #4361ee !important;
+}
+
+.ant-input-number-focused {
+    border-color: #4361ee !important;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.12) !important;
+}
+
+.ant-input-number-input {
+    height: 36px !important;
+    line-height: 36px !important;
+    padding: 0 16px !important;
+    color: #0e1726 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+.ant-input-number-handler-wrap {
+    border-inline-start: 1px solid #e0e6ed !important;
+}
+
+/* ---------- InputNumber: tema oscuro ---------- */
+.dark .ant-input-number {
+    background-color: #121e32 !important;
+    border-color: #17263c !important;
+}
+
+.dark .ant-input-number-input {
+    background-color: transparent !important;
+    color: #888ea8 !important;
+}
+
+.dark .ant-input-number-handler-wrap {
+    border-inline-start-color: #17263c !important;
+}
+
+/* ============================================================================
+   4) DATE PICKER / RANGE PICKER / TIME PICKER (a-date-picker, etc.)
+   ============================================================================ */
+.ant-picker {
+    height: 38px !important;
+    padding: 0 16px !important;
+    background-color: #ffffff !important;
+    border-color: #e0e6ed !important;
+    border-radius: 6px !important;
+    color: #0e1726 !important;
+    font-size: 14px !important;
+}
+
+.ant-picker:hover {
+    border-color: #4361ee !important;
+}
+
+.ant-picker-focused,
+.ant-picker:focus {
+    border-color: #4361ee !important;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.12) !important;
+}
+
+.ant-picker-input > input {
+    height: 36px !important;
+    line-height: 36px !important;
+    color: #0e1726 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+.ant-picker-input > input::placeholder {
+    color: #6b7280 !important;
+    opacity: 1 !important;
+}
+
+.ant-picker-suffix {
+    color: #888ea8 !important;
+}
+
+.ant-picker-clear {
+    background-color: #ffffff !important;
+    color: #888ea8 !important;
+}
+
+/* ---------- Panel del picker ---------- */
+.ant-picker-dropdown .ant-picker-panel-container {
+    background-color: #ffffff !important;
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 24px rgba(2, 6, 23, 0.08) !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+    background-color: #4361ee !important;
+}
+
+.ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+    border-color: #4361ee !important;
+}
+
+/* ---------- Picker: tema oscuro ---------- */
+.dark .ant-picker {
+    background-color: #121e32 !important;
+    border-color: #17263c !important;
+    color: #888ea8 !important;
+}
+
+.dark .ant-picker-input > input {
+    background-color: transparent !important;
+    color: #888ea8 !important;
+}
+
+.dark .ant-picker-input > input::placeholder {
+    color: #888ea8 !important;
+}
+
+.dark .ant-picker-suffix,
+.dark .ant-picker-clear {
+    color: #888ea8 !important;
+}
+
+.dark .ant-picker-clear {
+    background-color: #121e32 !important;
+}
+
+.dark .ant-picker-dropdown .ant-picker-panel-container {
+    background-color: #1b2e4b !important;
+    border-color: #253b5c !important;
+}
+
+.dark .ant-picker-header,
+.dark .ant-picker-content,
+.dark .ant-picker-footer {
+    background-color: transparent !important;
+}
+
+.dark .ant-picker-header-view button,
+.dark .ant-picker-content th,
+.dark .ant-picker-cell,
+.dark .ant-picker-cell-inner {
     color: #bfc5db !important;
 }
+
+.dark .ant-picker-cell:hover .ant-picker-cell-inner {
+    background-color: #253d63 !important;
+}
+
+.dark .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+    border-color: #4361ee !important;
+}
+
+/* ============================================================================
+   5) AUTOCOMPLETE (a-auto-complete)
+   Usa la misma estructura del Select (`.ant-select` + `.ant-select-dropdown`),
+   por lo que hereda automaticamente las secciones 1.2, 1.4 y 1.6.
+   ============================================================================ */
+
+/* ============================================================================
+   6) TREESELECT (a-tree-select)
+   Comparte el dropdown del Select; solo se ajusta el arbol interno.
+   ============================================================================ */
+.ant-select-tree {
+    background-color: transparent !important;
+}
+
+.ant-select-tree .ant-select-tree-node-content-wrapper {
+    color: #0e1726 !important;
+    border-radius: 6px !important;
+}
+
+.ant-select-tree .ant-select-tree-node-content-wrapper:hover {
+    background-color: #eef2ff !important;
+}
+
+.ant-select-tree .ant-select-tree-node-selected {
+    background-color: #eef2ff !important;
+}
+
+/* ---------- TreeSelect: tema oscuro ---------- */
+.dark .ant-select-tree {
+    background-color: transparent !important;
+}
+
+.dark .ant-select-tree .ant-select-tree-node-content-wrapper {
+    color: #bfc5db !important;
+}
+
+.dark .ant-select-tree .ant-select-tree-node-content-wrapper:hover {
+    background-color: #253d63 !important;
+}
+
+.dark .ant-select-tree .ant-select-tree-node-selected {
+    background-color: #294064 !important;
+    color: #ffffff !important;
+}
+
+.dark .ant-select-tree-switcher-icon {
+    color: #888ea8 !important;
+}
+
+/* ============================================================================
+   7) CASCADER (a-cascader)
+   ============================================================================ */
+.ant-cascader-dropdown {
+    background-color: #ffffff !important;
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 24px rgba(2, 6, 23, 0.08) !important;
+}
+
+.ant-cascader-menu {
+    background-color: transparent !important;
+}
+
+.ant-cascader-menu-item {
+    color: #0e1726 !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+}
+
+.ant-cascader-menu-item:hover,
+.ant-cascader-menu-item-active {
+    background-color: #eef2ff !important;
+}
+
+.ant-cascader-menu-item-expand-icon,
+.ant-cascader-menu-item-loading-icon {
+    color: #888ea8 !important;
+}
+
+/* ---------- Cascader: tema oscuro ---------- */
+.dark .ant-cascader-dropdown {
+    background-color: #1b2e4b !important;
+    border-color: #253b5c !important;
+}
+
+.dark .ant-cascader-menu-item {
+    color: #bfc5db !important;
+}
+
+.dark .ant-cascader-menu-item:hover,
+.dark .ant-cascader-menu-item-active {
+    background-color: #253d63 !important;
+}
+
+/* ============================================================================
+   8) CHECKBOX (a-checkbox)
+   ============================================================================ */
+.ant-checkbox-wrapper:hover .ant-checkbox-inner,
+.ant-checkbox:hover .ant-checkbox-inner,
+.ant-checkbox-input:focus + .ant-checkbox-inner {
+    border-color: #4361ee !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner,
+.ant-checkbox-indeterminate .ant-checkbox-inner {
+    background-color: #4361ee !important;
+    border-color: #4361ee !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner::after {
+    border-color: #ffffff !important;
+}
+
+/* ============================================================================
+   9) RADIO (a-radio / a-radio-group)
+   ============================================================================ */
+.ant-radio:hover .ant-radio-inner,
+.ant-radio-wrapper:hover .ant-radio,
+.ant-radio-input:focus + .ant-radio-inner {
+    border-color: #4361ee !important;
+}
+
+.ant-radio-checked .ant-radio-inner {
+    border-color: #4361ee !important;
+}
+
+.ant-radio-checked .ant-radio-inner::after {
+    background-color: #4361ee !important;
+}
+
+/* ============================================================================
+   10) SWITCH (a-switch)
+   ============================================================================ */
+.ant-switch {
+    background-color: #888ea8 !important;
+}
+
+.ant-switch:hover:not(.ant-switch-disabled) {
+    background-color: #888ea8 !important;
+}
+
+.ant-switch-checked {
+    background-color: #4361ee !important;
+}
+
+.ant-switch-checked:hover:not(.ant-switch-disabled) {
+    background-color: #4361ee !important;
+}
+
+/* ============================================================================
+   11) BOTON (a-button)
+   Solo centrado vertical del contenido; colores por defecto de antd.
+   ============================================================================ */
+.ant-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ant-btn-icon-only {
+    justify-content: center;
+}
+
+/* ============================================================================
+   12) TABS (a-tabs)
+   ============================================================================ */
+.ant-tabs-tab {
+    color: #888ea8 !important;
+}
+
+.ant-tabs-tab:hover {
+    color: #4361ee !important;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #4361ee !important;
+    font-weight: 600 !important;
+}
+
+.ant-tabs-ink-bar {
+    background-color: #4361ee !important;
+}
+
+.ant-tabs-top > .ant-tabs-nav::before,
+.ant-tabs-bottom > .ant-tabs-nav::before,
+.ant-tabs-top > div > .ant-tabs-nav::before,
+.ant-tabs-bottom > div > .ant-tabs-nav::before {
+    border-bottom: 1px solid #e0e6ed !important;
+}
+
+/* ---------- Tabs: tema oscuro ---------- */
+.dark .ant-tabs-top > .ant-tabs-nav::before,
+.dark .ant-tabs-bottom > .ant-tabs-nav::before,
+.dark .ant-tabs-top > div > .ant-tabs-nav::before,
+.dark .ant-tabs-bottom > div > .ant-tabs-nav::before {
+    border-bottom-color: #253b5c !important;
+}
+
+/* ============================================================================
+   13) PAGINATION (a-pagination)
+   ============================================================================ */
+.ant-pagination-item {
+    border-radius: 6px !important;
+    border-color: #e0e6ed !important;
+    background-color: #ffffff !important;
+}
+
+.ant-pagination-item a {
+    color: #0e1726 !important;
+}
+
+.ant-pagination-item:hover {
+    border-color: #4361ee !important;
+}
+
+.ant-pagination-item:hover a {
+    color: #4361ee !important;
+}
+
+.ant-pagination-item-active {
+    border-color: #4361ee !important;
+    background-color: #4361ee !important;
+}
+
+.ant-pagination-item-active a {
+    color: #ffffff !important;
+}
+
+.ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination-next .ant-pagination-item-link {
+    border-radius: 6px !important;
+    border-color: #e0e6ed !important;
+    color: #0e1726 !important;
+    background-color: #ffffff !important;
+}
+
+.ant-pagination-prev:hover .ant-pagination-item-link,
+.ant-pagination-next:hover .ant-pagination-item-link {
+    border-color: #4361ee !important;
+    color: #4361ee !important;
+}
+
+/* ---------- Pagination: tema oscuro ---------- */
+.dark .ant-pagination-item,
+.dark .ant-pagination-prev .ant-pagination-item-link,
+.dark .ant-pagination-next .ant-pagination-item-link {
+    background-color: #121e32 !important;
+    border-color: #17263c !important;
+}
+
+.dark .ant-pagination-item a,
+.dark .ant-pagination-prev .ant-pagination-item-link,
+.dark .ant-pagination-next .ant-pagination-item-link {
+    color: #888ea8 !important;
+}
+
+.dark .ant-pagination-item-active {
+    border-color: #4361ee !important;
+    background-color: #4361ee !important;
+}
+
+.dark .ant-pagination-item-active a {
+    color: #ffffff !important;
+}
+
+/* ============================================================================
+   14) MODAL / DRAWER
+   ============================================================================ */
+.ant-modal-content,
+.ant-drawer-content {
+    background-color: #ffffff !important;
+    border-radius: 16px !important;
+}
+
+.ant-modal-header,
+.ant-drawer-header {
+    background-color: transparent !important;
+    border-bottom: 1px solid #e0e6ed !important;
+}
+
+.ant-modal-title,
+.ant-drawer-title {
+    color: #0e1726 !important;
+    font-weight: 700 !important;
+}
+
+.ant-modal-close,
+.ant-drawer-close {
+    color: #888ea8 !important;
+}
+
+.ant-modal-footer,
+.ant-drawer-footer {
+    border-top: 1px solid #e0e6ed !important;
+}
+
+.ant-modal-mask {
+    background-color: rgba(6, 8, 24, 0.6) !important;
+}
+
+/* ---------- Modal / Drawer: tema oscuro ---------- */
+.dark .ant-modal-content,
+.dark .ant-drawer-content {
+    background-color: #0e1726 !important;
+}
+
+.dark .ant-modal-header,
+.dark .ant-drawer-header {
+    border-bottom-color: #253b5c !important;
+}
+
+.dark .ant-modal-title,
+.dark .ant-drawer-title {
+    color: #ffffff !important;
+}
+
+.dark .ant-modal-footer,
+.dark .ant-drawer-footer {
+    border-top-color: #253b5c !important;
+}
+
+/* ============================================================================
+   15) TABLE (a-table)
+   ============================================================================ */
+.ant-table {
+    background-color: transparent !important;
+    color: #0e1726 !important;
+    font-size: 14px !important;
+}
+
+.ant-table-container {
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+}
+
+.ant-table-thead > tr > th {
+    background-color: #f6f8fa !important;
+    color: #0e1726 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid #e0e6ed !important;
+}
+
+.ant-table-tbody > tr > td {
+    border-bottom: 1px solid #f0f1f3 !important;
+}
+
+.ant-table-tbody > tr.ant-table-row:hover > td {
+    background-color: #f6f8fa !important;
+}
+
+.ant-table-placeholder {
+    color: #888ea8 !important;
+}
+
+/* ---------- Table: tema oscuro ---------- */
+.dark .ant-table {
+    color: #bfc5db !important;
+}
+
+.dark .ant-table-container {
+    border-color: #253b5c !important;
+}
+
+.dark .ant-table-thead > tr > th {
+    background-color: #1b2e4b !important;
+    color: #bfc5db !important;
+    border-bottom-color: #253b5c !important;
+}
+
+.dark .ant-table-tbody > tr > td {
+    border-bottom-color: #253b5c !important;
+}
+
+.dark .ant-table-tbody > tr.ant-table-row:hover > td {
+    background-color: #1b2e4b !important;
+}
+
+/* ============================================================================
+   16) DROPDOWN / MENU (a-dropdown, Menu de navegacion)
+   ============================================================================ */
+.ant-dropdown-menu {
+    background-color: #ffffff !important;
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 24px rgba(2, 6, 23, 0.08) !important;
+}
+
+.ant-dropdown-menu-item {
+    color: #0e1726 !important;
+    border-radius: 6px !important;
+}
+
+.ant-dropdown-menu-item:hover {
+    background-color: #eef2ff !important;
+}
+
+.ant-dropdown-menu-item-divider {
+    background-color: #e0e6ed !important;
+}
+
+/* ---------- Dropdown / Menu: tema oscuro ---------- */
+.dark .ant-dropdown-menu {
+    background-color: #233042 !important;
+    border-color: #0e1a2c !important;
+}
+
+.dark .ant-dropdown-menu-item {
+    color: #bfc5db !important;
+}
+
+.dark .ant-dropdown-menu-item:hover {
+    background-color: #253d63 !important;
+}
+
+.dark .ant-dropdown-menu-item-divider {
+    background-color: #17263c !important;
+}
+
 .dark .ant-dropdown-menu-title-content {
     color: #bfc5db !important;
 }
 
+/* ============================================================================
+   17) POPOVER / TOOLTIP
+   ============================================================================ */
+.ant-popover-inner {
+    background-color: #ffffff !important;
+    border: 1px solid #e0e6ed !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 24px rgba(2, 6, 23, 0.08) !important;
+}
 
-.dark .ant-select-tree-list-holder-inner{
-    background-color: #1b2e4b !important;
+.ant-popover-title {
+    color: #0e1726 !important;
+    border-bottom: 1px solid #e0e6ed !important;
+}
+
+.ant-popover-inner-content {
+    color: #0e1726 !important;
+}
+
+/* ---------- Popover / Tooltip: tema oscuro ---------- */
+.dark .ant-popover-inner {
+    background-color: #0e1726 !important;
+    border-color: #253b5c !important;
+}
+
+.dark .ant-popover-title {
+    color: #ffffff !important;
+    border-bottom-color: #253b5c !important;
+}
+
+.dark .ant-popover-inner-content {
     color: #bfc5db !important;
 }
-.dark .ant-select-tree-node-content-wrapper:hover{
-    background-color: #294064 !important;
-    color: #b5c4fa !important;
-}
-.dark .ant-select-tree-node-selected {
-    background-color: #4a5c77 !important;
-    color: #dcdde6 !important;
-}
-.ant-btn {
-    display: flex;
-    align-items: center; /* Centra verticalmente */
-}
-.ant-btn-icon-only{
-    justify-content: center;
+
+.dark .ant-tooltip-inner {
+    background-color: #233042 !important;
+    border: 1px solid #0e1a2c !important;
+    color: #bfc5db !important;
 }
 
-.dark .ant-btn {
-    background-color: #4a5c77 !important;
-    border-color: #253b5c !important;
-    color: #dcdde6 !important;
+.dark .ant-tooltip-arrow-content,
+.dark .ant-tooltip-arrow::before {
+    background-color: #233042 !important;
 }
 
-.ant-select-selector {
-    height: 38px !important;
-}
-.ant-cascader-menu {
-    padding-right: 26px !important;
-}
-.ant-cascader-menu-item {
-    width: 100% !important;
-}
-.ant-cascader-menu-item-content {
-    width: 100% !important;
-    padding-right: 10px !important;
-}
-.ant-select-selection-item {
-    line-height: 36px !important;
-}
-.ant-select-clear {
-    top: 44% !important;
-    width: 20px !important;
-    height: 20px !important;
+/* ============================================================================
+   18) FORM (a-form)
+   Solo color de etiquetas y errores; no se toca el layout.
+   ============================================================================ */
+.ant-form-item-label > label {
+    color: #0e1726 !important;
 }
 
-/* css personalizado de aracode */
-
-.ara-ant-select .ant-select-selector {
-    min-height: 38px !important;
-    height: auto !important;
+.ant-form-item-explain-error {
+    color: #e7515a !important;
 }
 
-.ara-ant-select .ant-select-selection-item {
-    align-items: center !important;
-    height: 34px !important;
-}
-.ara-ant-select .ant-select-selection-item-remove{
-    display: flex !important;              /* ✅ que sea un hijo flex */
-    align-items: center !important;        /* ✅ centra el ícono verticalmente */
-    justify-content: center !important;
-}
-.dark .ant-select-selection-item-remove{
-    color: #dcdde6 !important;
-}
-
-.ant-picker-range {
-    height: 38px !important;
-}
-/* Reglas para el placeholder */
-.dark .ant-picker-input > input::placeholder { /* Para la mayoría de los navegadores modernos */
-    color: #888ea8 !important; /* O el color que desees para el placeholder */
-    opacity: 1 !important; /* Asegura que no tenga transparencia predeterminada del navegador */
-}
-
-.dark .ant-picker-input > input::-webkit-input-placeholder { /* Para navegadores basados en Webkit (Chrome, Safari, Edge anterior) */
+/* ---------- Form: tema oscuro ---------- */
+.dark .ant-form-item-label > label {
     color: #888ea8 !important;
-    opacity: 1 !important;
 }
 
-.dark .ant-picker-input > input::-moz-placeholder { /* Para Firefox */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-picker-input > input:-ms-input-placeholder { /* Para Internet Explorer */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-picker-input > input::ms-input-placeholder { /* Para Microsoft Edge (versiones más nuevas, aunque ::placeholder es suficiente) */
-    color: #888ea8 !important;
-    opacity: 1 !important;
-}
-
-.dark .ant-picker-panels{
-    background-color: #294064 !important;
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-header-super-prev-btn{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-header-prev-btn{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-header-next-btn{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-header-super-next-btn{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-month-btn{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-year-btn{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-content > thead > tr > td, th{
-    color: #b5c4fa !important;
-}
-.dark .ant-picker-content > tbody > tr > td, th{
-    color: #b5c4fa !important;
-}
-.dark .ant-input-number-input{
-    border-color: #253b5c !important;
-    height: 38px !important;
-    background-color: #294064 !important;
-    color: #b5c4fa !important;
-}
-.dark .ant-avatar-circle{
+/* ============================================================================
+   19) MISC (steps / avatar / alert / tag)
+   ============================================================================ */
+.dark .ant-avatar-circle {
     border-color: #253b5c !important;
 }
+
+.dark .ant-alert-message,
+.dark .ant-alert-description {
+    color: #bfc5db !important;
+}
+
+/* ============================================================================
+   NOTAS FINALES
+   - Upload, Mentions, Drawer, List, etc. heredan superficie/colores de los
+     bloques anteriores o conservan los estilos por defecto de antd, que son
+     compatibles con el tema claro y no rompen el layout.
+   - No se anade ninguna regla global sobre `input`, `button`, `svg` ni
+     selectores comodin `[class*="ant-"]`: el bundle ya no contiene tales
+     reglas y el unico conflicto real de layout era el de la seccion 1.
+   ============================================================================ */

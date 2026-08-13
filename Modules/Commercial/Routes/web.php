@@ -6,6 +6,9 @@ use Modules\Commercial\Http\Controllers\CommercialContractController;
 use Modules\Commercial\Http\Controllers\CommercialContractPaymentController;
 use Modules\Commercial\Http\Controllers\CommercialContractServiceController;
 use Modules\Commercial\Http\Controllers\CommercialController;
+use Modules\Commercial\Http\Controllers\CommercialNegotiationController;
+use Modules\Commercial\Http\Controllers\CommercialNegotiationProcessController;
+use Modules\Commercial\Http\Controllers\CommercialNegotiationPublicController;
 
 Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function () {
     Route::get('dashboard', [CommercialController::class, 'index'])
@@ -102,3 +105,97 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->post('contracts/{id}/payments/store', [CommercialContractPaymentController::class, 'store'])
         ->name('comm_contracts_payments_store');
 });
+
+Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function () {
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_listado'])
+        ->get('negotiations', [CommercialNegotiationController::class, 'index'])
+        ->name('comm_negotiations');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_nuevo'])
+        ->get('negotiations/create', [CommercialNegotiationController::class, 'create'])
+        ->name('comm_negotiations_create');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_nuevo'])
+        ->post('negotiations/store', [CommercialNegotiationController::class, 'store'])
+        ->name('comm_negotiations_store');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_editar'])
+        ->get('negotiations/edit/{id}', [CommercialNegotiationController::class, 'edit'])
+        ->name('comm_negotiations_edit');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_editar'])
+        ->post('negotiations/update/{id}', [CommercialNegotiationController::class, 'update'])
+        ->name('comm_negotiations_update');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_eliminar'])
+        ->delete('negotiations/destroy/{id}', [CommercialNegotiationController::class, 'destroy'])
+        ->name('comm_negotiations_destroy');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_listado'])
+        ->get('negotiations/show/{id}', [CommercialNegotiationController::class, 'show'])
+        ->name('comm_negotiations_show');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->get('negotiations/process/{id}', [CommercialNegotiationProcessController::class, 'index'])
+        ->name('comm_negotiations_process');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/person', [CommercialNegotiationProcessController::class, 'processPerson'])
+        ->name('comm_negotiations_process_person');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/user', [CommercialNegotiationProcessController::class, 'processUser'])
+        ->name('comm_negotiations_process_user');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/student', [CommercialNegotiationProcessController::class, 'processStudent'])
+        ->name('comm_negotiations_process_student');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/registrations', [CommercialNegotiationProcessController::class, 'processRegistrations'])
+        ->name('comm_negotiations_process_registrations');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/subscriptions', [CommercialNegotiationProcessController::class, 'processSubscriptions'])
+        ->name('comm_negotiations_process_subscriptions');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/document', [CommercialNegotiationProcessController::class, 'processDocument'])
+        ->name('comm_negotiations_process_document');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/email', [CommercialNegotiationProcessController::class, 'processEmail'])
+        ->name('comm_negotiations_process_email');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/complete', [CommercialNegotiationProcessController::class, 'complete'])
+        ->name('comm_negotiations_process_complete');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/approve/{id}', [CommercialNegotiationController::class, 'approve'])
+        ->name('comm_negotiations_approve');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/reject/{id}', [CommercialNegotiationController::class, 'reject'])
+        ->name('comm_negotiations_reject');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_editar'])
+        ->post('negotiations/cancel/{id}', [CommercialNegotiationController::class, 'cancel'])
+        ->name('comm_negotiations_cancel');
+});
+
+Route::get('negotiations/public/{token}', [CommercialNegotiationPublicController::class, 'show'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_show');
+
+Route::post('negotiations/public/{token}', [CommercialNegotiationPublicController::class, 'store'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_store');
+
+Route::post('negotiations/public/{token}/search', [CommercialNegotiationPublicController::class, 'searchPerson'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_search');
+
+Route::post('negotiations/public/{token}/validate-ruc', [CommercialNegotiationPublicController::class, 'validateRuc'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_validate_ruc');

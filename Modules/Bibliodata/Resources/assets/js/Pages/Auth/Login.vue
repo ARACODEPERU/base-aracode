@@ -61,6 +61,9 @@ const features = [
                     <p class="bib-auth-hero-desc">
                         Disfruta de una lectura fluida, con un entorno visual dinámico y elegante.
                     </p>
+                    <p class="mt-4 text-sm text-slate-300 dark:text-slate-400">
+                        Explora todos los libros de tu biblioteca digital y retoma tu lectura donde la dejaste.
+                    </p>
                     <ul class="mt-10 space-y-3">
                         <li
                             v-for="(item, idx) in features"
@@ -87,10 +90,10 @@ const features = [
 
                 <div class="bib-auth-form" data-bib-auth-enter>
                     <header class="bib-auth-form-header">
-                        <div v-if="branding.coverUrl" class="bib-auth-cover">
+                        <div v-if="branding.coverUrl" class="bib-auth-brand-img">
                             <img
                                 :src="branding.coverUrl"
-                                :alt="branding.appName"
+                                :alt="`${branding.appName} — biblioteca digital`"
                                 class="h-full w-full object-cover"
                             />
                         </div>

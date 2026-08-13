@@ -4,6 +4,8 @@ namespace Modules\Bibliodata\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Modules\Bibliodata\Repositories\BookProgressRepository;
+use Modules\Bibliodata\Services\ReadingCacheService;
 
 class BibliodataServiceProvider extends ServiceProvider
 {
@@ -30,6 +32,15 @@ class BibliodataServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->register(RouteServiceProvider::class);
+
+        $this->app->singleton(ReadingCacheService::class, function () {
+            return new ReadingCacheService(
+                repositories: ['book' => new BookProgressRepository()],
+                ttl: (int) config('bibliodata.reading.cache_ttl', 43200),
+                persistIntervalSeconds: (int) config('bibliodata.reading.persist_interval_seconds', 300),
+                persistProgressDelta: (float) config('bibliodata.reading.persist_progress_delta', 5),
+            );
+        });
     }
 
     /**

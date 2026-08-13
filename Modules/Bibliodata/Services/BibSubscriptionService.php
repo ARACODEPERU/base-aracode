@@ -59,6 +59,10 @@ class BibSubscriptionService
                 'book_ids' => 'Debe seleccionar al menos un libro.',
             ]);
         }
+
+        if ($scopeType === 'all_books') {
+            return;
+        }
     }
 
     public function computeEndsAt(BibSubscriptionPlan $plan, Carbon $startsAt): ?Carbon
@@ -111,7 +115,9 @@ class BibSubscriptionService
 
             $this->validateSubscriber($data['subscriber_type'], $data['user_id'] ?? null, $data['organization_id'] ?? null);
 
-            $bookId = $plan->books->first()?->id;
+            $bookId = $plan->scope_type === 'all_books'
+                ? null
+                : $plan->books->first()?->id;
 
             $subscription = BibSubscription::create([
                 'plan_id' => $plan->id,
@@ -167,7 +173,9 @@ class BibSubscriptionService
 
             $this->validateSubscriber($subscriberType, $userId, $organizationId);
 
-            $bookId = $plan->books->first()?->id ?? $subscription->book_id;
+            $bookId = $plan->scope_type === 'all_books'
+                ? null
+                : ($plan->books->first()?->id ?? $subscription->book_id);
 
             $subscription->update([
                 'plan_id' => $plan->id,
@@ -235,11 +243,13 @@ class BibSubscriptionService
             ? BibSubscription::with('beneficiaries')->find($subscriptionId)?->beneficiaries->pluck('id')->all() ?? []
             : [];
 
-        return $organization->members->map(function (User $user) use ($bookId, $currentBeneficiaryIds) {
+        return $organization->members->map(function (User $user) use ($plan, $bookId, $currentBeneficiaryIds) {
             $person = $user->person;
-            $hasIndividual = $bookId
-                ? $this->userHasActiveIndividualSubscriptionForBook((int) $user->id, (int) $bookId)
-                : false;
+            $hasIndividual = $plan->scope_type === 'all_books'
+                ? $this->userHasAnyActiveIndividualSubscription((int) $user->id)
+                : ($bookId
+                    ? $this->userHasActiveIndividualSubscriptionForBook((int) $user->id, (int) $bookId)
+                    : false);
 
             return [
                 'id' => $user->id,
@@ -297,19 +307,35 @@ class BibSubscriptionService
         $today = Carbon::today();
 
         return BibSubscription::query()
+            ->with('plan')
             ->where('subscriber_type', 'individual')
             ->where('user_id', $userId)
-            ->where('book_id', $bookId)
             ->whereIn('status', ['active', 'pending'])
             ->when($excludeSubscriptionId, fn ($q) => $q->where('id', '!=', $excludeSubscriptionId))
             ->get()
-            ->contains(fn (BibSubscription $sub) => $this->resolveStatus($sub) === 'active'
-                && $sub->starts_at->lte($today)
-                && ($sub->ends_at === null || $sub->ends_at->gte($today)));
+            ->contains(fn (BibSubscription $sub) => $this->isActiveInPeriod($sub, $today)
+                && ($sub->plan?->scope_type === 'all_books' || (int) $sub->book_id === $bookId));
+    }
+
+    public function userHasAnyActiveIndividualSubscription(int $userId, ?int $excludeSubscriptionId = null): bool
+    {
+        $today = Carbon::today();
+
+        return BibSubscription::query()
+            ->with('plan')
+            ->where('subscriber_type', 'individual')
+            ->where('user_id', $userId)
+            ->whereIn('status', ['active', 'pending'])
+            ->when($excludeSubscriptionId, fn ($q) => $q->where('id', '!=', $excludeSubscriptionId))
+            ->get()
+            ->contains(fn (BibSubscription $sub) => $this->isActiveInPeriod($sub, $today));
     }
 
     /**
      * Resolver suscripción activa del usuario para un libro.
+     *
+     * Un plan con scope all_books cubre cualquier libro; un plan single_book
+     * cubre únicamente el libro asignado.
      */
     public function getActiveSubscriptionForUser(User $user, ?int $bookId = null): ?BibSubscription
     {
@@ -320,11 +346,9 @@ class BibSubscriptionService
             ->where('subscriber_type', 'individual')
             ->where('user_id', $user->id)
             ->whereIn('status', ['active', 'pending'])
-            ->when($bookId, fn ($q) => $q->where('book_id', $bookId))
             ->get()
-            ->first(fn ($sub) => $this->resolveStatus($sub) === 'active'
-                && $sub->starts_at->lte($today)
-                && ($sub->ends_at === null || $sub->ends_at->gte($today)));
+            ->first(fn ($sub) => $this->subscriptionMatchesBook($sub, $bookId)
+                && $this->isActiveInPeriod($sub, $today));
 
         if ($individual) {
             return $individual;
@@ -341,12 +365,26 @@ class BibSubscriptionService
             ->where('subscriber_type', 'organization')
             ->whereIn('organization_id', $orgIds)
             ->whereIn('status', ['active', 'pending'])
-            ->when($bookId, fn ($q) => $q->where('book_id', $bookId))
             ->whereHas('beneficiaries', fn ($q) => $q->where('users.id', $user->id))
             ->get()
-            ->first(fn ($sub) => $this->resolveStatus($sub) === 'active'
-                && $sub->starts_at->lte($today)
-                && ($sub->ends_at === null || $sub->ends_at->gte($today)));
+            ->first(fn ($sub) => $this->subscriptionMatchesBook($sub, $bookId)
+                && $this->isActiveInPeriod($sub, $today));
+    }
+
+    private function subscriptionMatchesBook(BibSubscription $subscription, ?int $bookId): bool
+    {
+        if ($subscription->plan?->scope_type === 'all_books') {
+            return true;
+        }
+
+        return $bookId === null || (int) $subscription->book_id === $bookId;
+    }
+
+    private function isActiveInPeriod(BibSubscription $subscription, Carbon $today): bool
+    {
+        return $this->resolveStatus($subscription) === 'active'
+            && $subscription->starts_at->lte($today)
+            && ($subscription->ends_at === null || $subscription->ends_at->gte($today));
     }
 
     private function validateSubscriber(string $type, ?int $userId, ?int $organizationId): void

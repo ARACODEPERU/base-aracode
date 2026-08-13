@@ -438,6 +438,17 @@ html.bib-auth-smooth-theme .bib-reader-auth .bib-auth-feature {
         0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
+.bib-auth-brand-img {
+    margin: 0 auto 1rem;
+    height: 6.5rem;
+    width: 10rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
 .bib-auth-avatar {
     margin: 0 auto 1rem;
     display: flex;

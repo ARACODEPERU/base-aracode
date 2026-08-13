@@ -9,6 +9,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import OrganizationBeneficiariesModal from './OrganizationBeneficiariesModal.vue';
 import { bibSwal } from '../../../../utils/bibSwal.js';
+import { planBookLabel } from '../../../../utils/bibPlan.js';
 
 const props = defineProps({
     subscription: { type: Object, default: null },
@@ -167,7 +168,7 @@ const submit = () => {
                 <select v-model="form.plan_id" class="form-select w-full" required>
                     <option value="">Seleccionar plan...</option>
                     <option v-for="plan in plans" :key="plan.id" :value="plan.id">
-                        {{ plan.name }} — {{ plan.books?.[0]?.title || 'Sin libro' }}
+                        {{ plan.name }} — {{ planBookLabel(plan) }}
                     </option>
                 </select>
                 <InputError :message="form.errors.plan_id" class="mt-1" />

@@ -10,6 +10,7 @@ import Pagination from '@/Components/Pagination.vue';
 import { useForm as useSearchForm } from '@inertiajs/vue3';
 import IconEdit from '@/Components/vristo/icon/icon-edit.vue';
 import IconTrash from '@/Components/vristo/icon/icon-trash.vue';
+import { planBookLabel } from '../../../utils/bibPlan.js';
 
 const props = defineProps({
     plans: { type: Object, default: () => ({}) },
@@ -114,7 +115,7 @@ const deletePlan = (id) => {
                             </td>
                             <td class="font-medium">{{ plan.name }}</td>
                             <td>{{ plan.code }}</td>
-                            <td>{{ plan.books?.[0]?.title || '—' }}</td>
+                            <td>{{ planBookLabel(plan) }}</td>
                             <td>{{ durationLabel(plan) }}</td>
                             <td>
                                 <span

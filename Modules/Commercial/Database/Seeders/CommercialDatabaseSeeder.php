@@ -33,6 +33,11 @@ class CommercialDatabaseSeeder extends Seeder
             'comm_contratos_editar',
             'comm_contratos_eliminar',
             'comm_contratos_cronograma',
+            'comm_negociaciones_listado',
+            'comm_negociaciones_nuevo',
+            'comm_negociaciones_editar',
+            'comm_negociaciones_eliminar',
+            'comm_negociaciones_verificar',
         ];
 
         foreach ($permissions as $permissionName) {

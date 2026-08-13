@@ -183,7 +183,7 @@ const cancelSub = (id) => {
                                 </span>
                             </td>
                             <td>{{ sub.plan?.name }}</td>
-                            <td>{{ sub.book?.title || '—' }}</td>
+                            <td>{{ sub.book?.title || (sub.plan?.scope_type === 'all_books' ? 'Acceso a todos los libros' : '—') }}</td>
                             <td>{{ formatDate(sub.starts_at) }}</td>
                             <td>{{ formatDate(sub.ends_at) || 'Vitalicia' }}</td>
                             <td>

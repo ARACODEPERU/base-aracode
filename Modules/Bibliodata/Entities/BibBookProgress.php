@@ -10,11 +10,25 @@ class BibBookProgress extends Model
 {
     use HasFactory;
 
+    protected $table = 'bib_book_progress';
+
     /**
      * The attributes that are mass assignable.
      */
-    protected $fillable = [];
-    
+    protected $fillable = [
+        'user_id',
+        'book_id',
+        'section_id',
+        'page_id',
+        'progress',
+        'last_viewed_at',
+    ];
+
+    protected $casts = [
+        'progress' => 'float',
+        'last_viewed_at' => 'datetime',
+    ];
+
     protected static function newFactory(): BibBookProgressFactory
     {
         //return BibBookProgressFactory::new();

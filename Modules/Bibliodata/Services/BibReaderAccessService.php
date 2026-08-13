@@ -43,6 +43,40 @@ class BibReaderAccessService
         return $this->subscriptionService->getActiveSubscriptionForUser($user, $bookId);
     }
 
+    /**
+     * El usuario tiene un plan activo con acceso a todos los libros.
+     */
+    public function canAccessAllBooks(User $user): bool
+    {
+        $subscription = $this->getActiveSubscription($user);
+
+        return $subscription?->plan?->scope_type === 'all_books';
+    }
+
+    /**
+     * El usuario puede leer el libro dado (plan all-books o libro asignado).
+     */
+    public function canAccessBook(User $user, BibBook $book): bool
+    {
+        if ($this->canAccessAllBooks($user)) {
+            return $book->status === 'available';
+        }
+
+        $resolved = $this->resolveBookForReader($user);
+
+        return $resolved !== null && (int) $resolved->id === (int) $book->id;
+    }
+
+    /**
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     */
+    public function authorizeBookForReader(User $user, BibBook $book): void
+    {
+        if (! $this->canAccessBook($user, $book)) {
+            abort(404);
+        }
+    }
+
     public function resolveBookForReader(User $user): ?BibBook
     {
         $subscription = $this->getActiveSubscription($user);

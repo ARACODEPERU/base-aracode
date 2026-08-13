@@ -13,11 +13,13 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Bibliodata\Entities\BibBook;
 use Modules\Bibliodata\Services\BibReaderAccessService;
+use Modules\Bibliodata\Services\ReadingCacheService;
 
 class BibAuthController extends Controller
 {
     public function __construct(
-        protected BibReaderAccessService $readerAccess
+        protected BibReaderAccessService $readerAccess,
+        protected ReadingCacheService $readingCache,
     ) {}
 
     public function create(): Response
@@ -29,17 +31,10 @@ class BibAuthController extends Controller
             'coverUrl' => null,
         ];
 
-        $book = BibBook::query()
-            ->where('status', 'available')
-            ->whereNotNull('cover_image')
-            ->latest('id')
-            ->first(['title', 'cover_image']);
+        $imagePath = $config['image'] ?? null;
 
-        if ($book) {
-            if (empty($config['app_name'])) {
-                $branding['appName'] = $book->title;
-            }
-            $branding['coverUrl'] = asset('storage/' . $book->cover_image);
+        if ($imagePath) {
+            $branding['coverUrl'] = asset($imagePath);
         }
 
         return Inertia::render('Bibliodata::Auth/Login', [
@@ -72,6 +67,12 @@ class BibAuthController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        $userId = (int) Auth::id();
+
+        if ($userId) {
+            $this->readingCache->flushUser($userId);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

@@ -1,12 +1,14 @@
 <script setup>
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import axios from 'axios';
 import ReaderLayout from '../../layouts/ReaderLayout.vue';
 import ReaderAccessBlockedOverlay from './components/ReaderAccessBlockedOverlay.vue';
 import ReaderIndexChapter from './components/ReaderIndexChapter.vue';
 import ReaderIndexLevelContent from './components/ReaderIndexLevelContent.vue';
 import ReaderExperienceChapter from './components/ReaderExperienceChapter.vue';
 import ReaderExperienceLevelContent from './components/ReaderExperienceLevelContent.vue';
+import ReaderBookSwitcher from './components/ReaderBookSwitcher.vue';
 import UserAvatar from '../../components/UserAvatar.vue';
 import IconMenu from '@/Components/vristo/icon/icon-menu.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
@@ -16,6 +18,9 @@ import { useReaderPageLoader } from '../../composables/useReaderPageLoader';
 const props = defineProps({
     user: { type: Object, required: true },
     book: { type: Object, default: null },
+    books: { type: Array, default: () => [] },
+    canAccessAllBooks: { type: Boolean, default: false },
+    openedBooks: { type: Array, default: () => [] },
     sections: { type: Array, default: () => [] },
     access: {
         type: Object,
@@ -63,10 +68,13 @@ const updateViewportState = () => {
 onMounted(() => {
     updateViewportState();
     window.addEventListener('resize', updateViewportState);
+    window.addEventListener('pagehide', syncProgressOnExit);
 });
 
 onUnmounted(() => {
     window.removeEventListener('resize', updateViewportState);
+    window.removeEventListener('pagehide', syncProgressOnExit);
+    clearTimeout(progressTimer);
 });
 
 const onSelectPage = async (page) => {
@@ -81,6 +89,110 @@ const onSelectCase = async (payload) => {
 const onCaseSelected = (caseId) => {
     selectedCaseId.value = caseId;
 };
+
+const csrfHeaders = () => ({
+    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+    Accept: 'application/json',
+});
+
+let progressTimer = null;
+
+const currentProgressPayload = () => {
+    const page = currentPage.value;
+    if (!page || !props.book) {
+        return null;
+    }
+    return {
+        book_id: props.book.id,
+        current_page: page.id,
+        chapter: page.section_id ?? null,
+        progress: page.progress?.percent ?? 0,
+    };
+};
+
+const postCurrentProgress = async () => {
+    const payload = currentProgressPayload();
+    if (!payload) {
+        return;
+    }
+    try {
+        await axios.post(route('bib_reader_progress'), payload, { headers: csrfHeaders() });
+    } catch {
+        /* el siguiente cambio de página reintentará */
+    }
+};
+
+watch(
+    () => currentPage.value?.id,
+    () => {
+        if (!currentPage.value || !props.book) {
+            return;
+        }
+        clearTimeout(progressTimer);
+        progressTimer = setTimeout(() => postCurrentProgress(), 2500);
+    }
+);
+
+const markBookOpened = async (bookId) => {
+    try {
+        await axios.post(route('bib_reader_book_opened', { id: bookId }), null, { headers: csrfHeaders() });
+    } catch {
+        /* no bloquea la lectura */
+    }
+};
+
+watch(
+    () => props.book?.id,
+    (id) => {
+        if (id) {
+            markBookOpened(id);
+        }
+    },
+    { immediate: true }
+);
+
+const syncProgressOnExit = () => {
+    if (!props.book) {
+        return;
+    }
+    clearTimeout(progressTimer);
+    const data = new URLSearchParams({ book_id: String(props.book.id) });
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (token) {
+        data.append('_token', token);
+    }
+    if (typeof navigator.sendBeacon === 'function') {
+        navigator.sendBeacon(route('bib_reader_progress_sync'), data);
+    }
+};
+
+const flushCurrentBook = async () => {
+    clearTimeout(progressTimer);
+    if (!props.book) {
+        return;
+    }
+    await postCurrentProgress();
+    try {
+        await axios.post(route('bib_reader_progress_sync'), { book_id: props.book.id }, { headers: csrfHeaders() });
+    } catch {
+        /* no bloquea la navegación */
+    }
+};
+
+const goToBook = (id) => {
+    if (Number(id) === Number(props.book?.id)) {
+        return;
+    }
+    flushCurrentBook().finally(() => {
+        router.get(route('bib_reader_book_open', { id }));
+    });
+};
+
+const goToShelf = () => {
+    flushCurrentBook().finally(() => {
+        router.get(route('bib_reader_home'));
+    });
+};
 </script>
 
 <template>
@@ -93,6 +205,7 @@ const onCaseSelected = (caseId) => {
         />
 
         <aside
+            v-if="book"
             class="bib-reader-sidebar hidden flex-col overflow-hidden md:flex"
             :class="{ '!flex': mobileIndexOpen }"
         >
@@ -107,9 +220,8 @@ const onCaseSelected = (caseId) => {
                 </button>
             </div>
             <nav class="flex-1 overflow-y-auto p-3">
-                <p v-if="!book" class="px-2 text-sm text-slate-500">No hay libro asignado.</p>
                 <ReaderIndexLevelContent
-                    v-else-if="isLevelContent"
+                    v-if="isLevelContent"
                     :sections="sections"
                     :selected-page-id="selectedPageId"
                     :selected-case-id="selectedCaseId"
@@ -136,6 +248,7 @@ const onCaseSelected = (caseId) => {
         </aside>
 
         <button
+            v-if="book"
             type="button"
             class="fixed bottom-4 left-4 z-20 flex items-center gap-2 rounded-full bg-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-lg md:hidden"
             @click="mobileIndexOpen = true"
@@ -145,7 +258,54 @@ const onCaseSelected = (caseId) => {
         </button>
 
         <template v-if="!book">
-            <main class="bib-reader-main relative">
+            <main v-if="canAccessAllBooks" class="bib-reader-main bib-reader-shelf">
+                <div class="bib-reader-shelf__header">
+                    <span class="bib-reader-shelf__badge">Mi biblioteca</span>
+                    <h2 class="bib-reader-shelf__title">Elige un libro</h2>
+                    <p class="bib-reader-shelf__subtitle">
+                        {{ welcomeMessage || 'Selecciona un libro para comenzar a leer.' }}
+                    </p>
+                </div>
+
+                <div v-if="books.length" class="bib-reader-shelf__grid">
+                    <button
+                        v-for="(item, idx) in books"
+                        :key="item.id"
+                        type="button"
+                        class="bib-reader-shelf__card"
+                        :style="{ animationDelay: `${Math.min(idx * 70, 700)}ms` }"
+                        @click="goToBook(item.id)"
+                    >
+                        <span class="bib-reader-shelf__cover">
+                            <img
+                                v-if="item.coverUrl"
+                                :src="item.coverUrl"
+                                :alt="item.title"
+                                loading="lazy"
+                                class="h-full w-full object-cover"
+                            />
+                            <span v-else class="bib-reader-shelf__cover-fallback">
+                                {{ item.title.charAt(0) }}
+                            </span>
+                        </span>
+                        <span class="bib-reader-shelf__meta">
+                            <span class="bib-reader-shelf__book-title">{{ item.title }}</span>
+                            <span v-if="item.description" class="bib-reader-shelf__book-desc">
+                                {{ item.description }}
+                            </span>
+                            <span class="bib-reader-shelf__cta">Leer</span>
+                        </span>
+                    </button>
+                </div>
+
+                <div v-else class="bib-reader-welcome">
+                    <p class="text-slate-600 dark:text-slate-400">
+                        Aún no hay libros activos disponibles.
+                    </p>
+                </div>
+            </main>
+
+            <main v-else class="bib-reader-main relative">
                 <div class="bib-reader-welcome">
                     <UserAvatar
                         :size="150"
@@ -188,6 +348,14 @@ const onCaseSelected = (caseId) => {
             :is-mobile-view="isMobileView"
             :is-desktop-rail-view="isDesktopRailView"
             @update:page-zoom="pageZoom = $event"
+        />
+
+        <ReaderBookSwitcher
+            v-if="book && canAccessAllBooks"
+            :opened-books="openedBooks"
+            :current-book-id="book.id"
+            @open="goToBook"
+            @shelf="goToShelf"
         />
     </ReaderLayout>
 </template>
