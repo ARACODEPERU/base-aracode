@@ -11,6 +11,7 @@ return [
 
     'reader' => [
         'role' => 'Lector',
+        'admin_role' => 'admin',
         'default_book_id' => env('BIB_READER_DEFAULT_BOOK_ID', null),
         'preview_pages_per_book' => 1,
     ],

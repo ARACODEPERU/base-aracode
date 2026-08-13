@@ -28,7 +28,21 @@ class BibReaderAccessService
 
     public function isAdmin(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole($this->adminRoleName());
+    }
+
+    public function adminRoleName(): string
+    {
+        return config('bibliodata.reader.admin_role', 'admin');
+    }
+
+    /**
+     * Un usuario con los roles admin y Lector puede leer todos los libros
+     * sin necesidad de estar suscrito a ningún plan.
+     */
+    public function isAdminLector(User $user): bool
+    {
+        return $this->isAdmin($user) && $this->isLector($user);
     }
 
     /**
@@ -49,10 +63,15 @@ class BibReaderAccessService
     }
 
     /**
-     * El usuario tiene un plan activo con acceso a todos los libros.
+     * El usuario puede acceder a todos los libros: es admin+Lector
+     * o tiene un plan activo con acceso a todos los libros.
      */
     public function canAccessAllBooks(User $user): bool
     {
+        if ($this->isAdminLector($user)) {
+            return true;
+        }
+
         $subscription = $this->getActiveSubscription($user);
 
         return $subscription?->plan?->scope_type === 'all_books';
@@ -134,7 +153,7 @@ class BibReaderAccessService
      */
     public function evaluatePageAccess(User $user, BibBook $book, int $pageId): array
     {
-        if ($this->isAdmin($user)) {
+        if ($this->isAdminLector($user)) {
             return [
                 'allowed' => true,
                 'has_subscription' => true,
@@ -186,7 +205,7 @@ class BibReaderAccessService
 
     public function buildAccessPayload(User $user, ?BibBook $book): array
     {
-        if ($this->isAdmin($user)) {
+        if ($this->isAdminLector($user)) {
             return [
                 'hasActiveSubscription' => true,
                 'previewPageId' => null,
