@@ -29,6 +29,7 @@
     const page = usePage();
 
     const publicKey = ref(page.props.MERCADOPAGO_KEY);
+    const maxInstallments = ref(page.props.MERCADOPAGO_MAX_INSTALLMENTS);
 
     let mp;
 
@@ -83,7 +84,7 @@
                     },
                 },
                 paymentMethods: {
-                    maxInstallments: 1,
+                    maxInstallments: maxInstallments.value,
                 },
             },
             callbacks: {

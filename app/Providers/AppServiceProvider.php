@@ -3,10 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Company;
+use App\Models\Parameter;
 use Illuminate\Support\ServiceProvider;
 use App\Rules\SizeExistence;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
@@ -22,10 +22,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (filter_var(env('VITE_USE_BUILD', false), FILTER_VALIDATE_BOOLEAN)) {
-            Vite::useHotFile(public_path('hot.disabled'));
-        }
-
         Validator::extend('size_existence', function ($attribute, $value, $parameters, $validator) {
             $rule = new SizeExistence($parameters);
 
@@ -36,13 +32,10 @@ class AppServiceProvider extends ServiceProvider
             return Company::first();
         });
 
-
-
         Inertia::share([
-            'flash' => fn () => [
-                'success' => session('success'),
-                'error'   => session('error'),
-            ],
+            'MERCADOPAGO_KEY' => config('services.mercadopago.key'),
+            'MERCADOPAGO_MAX_INSTALLMENTS' => config('services.mercadopago.max_installments'),
         ]);
+
     }
 }

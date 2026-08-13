@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { loadMercadoPago } from "@mercadopago/sdk-js";
-import { router } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 
 const cardPaymentBrickContainer = ref(null);
 
@@ -29,6 +29,7 @@ const props = defineProps({
 });
 
 let mp;
+const page = usePage();
 
 onMounted(async () => {
     console.log('MercadoPago public key:', props.publicKey);
@@ -59,7 +60,7 @@ const renderCardPaymentBrick = async (bricksBuilder) => {
                 },
             },
             paymentMethods: {
-                maxInstallments: 1,
+                maxInstallments: page.props.MERCADOPAGO_MAX_INSTALLMENTS,
             },
         },
         callbacks: {
