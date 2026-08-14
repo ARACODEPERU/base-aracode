@@ -33,15 +33,16 @@ return [
 
     'mercadopago' => [
         'key' => env('MERCADOPAGO_KEY'),
-        'token' => env('MERCADOPAGO_TOKEN')
+        'token' => env('MERCADOPAGO_TOKEN'),
+        'max_installments' => (int) env('MERCADOPAGO_MAX_INSTALLMENTS', 12),
     ],
-
-    'internal_api' => [
-        'key' => env('INTERNAL_API_KEY'),
+    'recaptcha' => [
+    'site_key' => env('RECAPTCHA_SITE_KEY'),
+    'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
-
-    'socket_io' => [
-        'public_url' => env('VITE_SOCKET_IO_SERVER', 'http://localhost:3000'),
-        'internal_url' => env('SOCKET_IO_INTERNAL_URL', env('VITE_SOCKET_IO_SERVER', 'http://127.0.0.1:3000')),
+    'email' => [
+        'mail_from_address' => env('MAIL_FROM_ADDRESS'),
+        'mail_from_name' => env('MAIL_FROM_NAME'),
+        'app_name' => env('APP_NAME'),
     ],
 ];
