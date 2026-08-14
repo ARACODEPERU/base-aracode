@@ -21,11 +21,14 @@ class CommercialNegotiationDocumentMail extends Mailable
 
     public $dataFile;
 
-    public function __construct(CommercialNegotiation $negotiation, SaleDocument $document, array $dataFile)
+    public $credentials;
+
+    public function __construct(CommercialNegotiation $negotiation, SaleDocument $document, array $dataFile, ?array $credentials = null)
     {
         $this->negotiation = $negotiation;
         $this->document = $document;
         $this->dataFile = $dataFile;
+        $this->credentials = $credentials;
     }
 
     public function envelope(): Envelope
@@ -44,6 +47,7 @@ class CommercialNegotiationDocumentMail extends Mailable
         return $this->view('commercial::emails.commercial-negotiation-document', [
             'negotiation' => $this->negotiation,
             'document' => $this->document,
+            'credentials' => $this->credentials,
         ]);
     }
 
