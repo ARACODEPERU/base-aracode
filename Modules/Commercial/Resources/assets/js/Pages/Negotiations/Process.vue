@@ -71,7 +71,7 @@ const steps = ref([
     {
         key: "email",
         label: "Envio de correo",
-        description: "Enviar al cliente los detalles del acuerdo y su comprobante",
+        description: "Enviar al cliente su comprobante en PDF, usuario y contraseña de acceso",
         status: "pending",
         skipped: !isSinglePayment.value,
     },
@@ -284,7 +284,7 @@ const run = async () => {
                     :disabled="processing || finished"
                     @click="run"
                 >
-                    <IconLoader v-if="processing" class="mr-2" />
+                    <IconLoader v-if="processing" class="mr-2 h-4 w-4 animate-spin" />
                     <FontAwesomeIcon v-else-if="hasErrors" :icon="faRotate" class="mr-2 h-4 w-4" />
                     <FontAwesomeIcon v-else :icon="finished ? faClipboardCheck : faPlay" class="mr-2 h-4 w-4" />
                     {{ primaryLabel }}

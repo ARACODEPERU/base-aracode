@@ -467,16 +467,23 @@ class CommercialNegotiationProcessController extends Controller
 
         $document = SaleDocument::find($negotiation->sale_document_id);
 
+        $user = User::where('person_id', $person->id)->first();
+
+        $credentials = $user ? [
+            'username' => $user->email,
+            'password' => $person->number,
+        ] : null;
+
         try {
             $dataFile = app(AcaSaleDocumentController::class)->generateBoletaPDF($document->id);
 
             Mail::to(trim($person->email))->send(
-                new CommercialNegotiationDocumentMail($negotiation, $document, $dataFile)
+                new CommercialNegotiationDocumentMail($negotiation, $document, $dataFile, $credentials)
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Correo con los detalles del acuerdo y su comprobante enviado al cliente.',
+                'message' => 'Correo con los detalles del acuerdo, su comprobante y credenciales de acceso enviado al cliente.',
             ]);
         } catch (\Exception $e) {
             return response()->json([

@@ -95,6 +95,30 @@
             <p style="text-align: center;">
                 <span class="badge">Comprobante: {{ $document->invoice_type_doc == '01' ? 'FACTURA' : 'BOLETA' }} {{ $document->invoice_serie }}-{{ $document->invoice_correlative }}</span>
             </p>
+            <p>
+                Tu comprobante de venta está adjunto en este correo en formato PDF.
+            </p>
+        @endif
+
+        @if (! empty($credentials) && ($credentials['username'] ?? null))
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 20px; margin: 16px 0;">
+                <h2 style="margin: 0 0 8px; font-size: 18px; color: #1e293b;">Acceso a la plataforma</h2>
+                <p style="margin: 0 0 4px; color: #475569;">
+                    Ya puedes ingresar a la plataforma con las siguientes credenciales:
+                </p>
+                <p style="margin: 8px 0 2px;">
+                    <b>Usuario:</b> {{ $credentials['username'] }}
+                </p>
+                <p style="margin: 2px 0 8px;">
+                    <b>Contraseña:</b> {{ $credentials['password'] ?? '---' }}
+                </p>
+                <p style="margin: 8px 0 0; text-align: center;">
+                    <a class="btn" href="{{ url('/login') }}" style="padding: 10px 22px; font-size: 14px;">Ingresar a la plataforma</a>
+                </p>
+            </div>
+            <p style="font-size: 13px; color: #64748b;">
+                Te recomendamos cambiar tu contraseña la primera vez que ingreses.
+            </p>
         @endif
 
         @php
