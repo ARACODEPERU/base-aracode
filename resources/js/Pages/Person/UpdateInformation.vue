@@ -18,10 +18,14 @@ const props = defineProps({
         default : () => ({})
     }
 });
-const baseUrl = assetUrl;
+
+// Manejo seguro de la URL base
+const baseUrl = typeof window !== 'undefined' && window.assetUrl ? window.assetUrl : '/';
 
 const getImage = (path) => {
-    return baseUrl + 'storage/'+ path;
+    // Evita duplicar barras al concatenar
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return `${baseUrl}storage/${cleanPath}`;
 }
 </script>
 
