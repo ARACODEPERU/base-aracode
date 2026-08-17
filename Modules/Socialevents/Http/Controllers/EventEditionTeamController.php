@@ -25,6 +25,7 @@ class EventEditionTeamController extends Controller
 
         $currentEquipment = EventEditionTeam::with('equipo')
             ->where('edition_id', $id)
+            ->orderByRaw('CASE WHEN matches_played = 0 THEN 1 ELSE 0 END') // Equipos sin partidos al final
             ->orderBy('points', 'desc')           // 1° Más puntos arriba
             ->orderBy('goal_difference', 'desc')  // 2° Mejor diferencia de goles
             ->orderBy('goals_for', 'desc')        // 3° Más goles marcados

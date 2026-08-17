@@ -150,7 +150,12 @@ class EventEditionMatchController extends Controller
     public function editionFixturesCreate($id)
     {
         $edition = EventEdition::find($id);
-        $teams = EventTeam::where('status', true)->get();
+        $teams = EventEditionTeam::with('equipo')
+            ->where('edition_id', $id)
+            ->whereHas('equipo', fn ($q) => $q->where('status', true))
+            ->get()
+            ->pluck('equipo')
+            ->values();
         $locales = EvenLocal::where('status', true)->get();
 
         return Inertia::render('Socialevents::Fixtures/Create',[
@@ -196,6 +201,18 @@ class EventEditionMatchController extends Controller
         ], [
             'team_h.different' => 'Un equipo no puede jugar contra sí mismo.',
         ]);
+
+        // 1.1 Validación de que ambos equipos estén inscritos en la edición
+        $inscritos = EventEditionTeam::where('edition_id', $validated['edition_id'])
+            ->whereIn('team_id', [$validated['team_h'], $validated['team_a']])
+            ->pluck('team_id')
+            ->all();
+
+        if (count($inscritos) !== 2) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'team_h' => 'Ambos equipos deben estar inscritos en la edición para registrar el partido.',
+            ]);
+        }
 
         // 2. Validación de duplicados en la misma FASE
         // Verificamos si ya existe un partido entre estos dos equipos en esta edición y fase
@@ -406,11 +423,18 @@ class EventEditionMatchController extends Controller
             // Verificamos si existe.
             $item = EventEditionMatch::findOrFail($id);
 
-            // Si no hay detalles asociados, eliminamos.
+            // Eliminamos los registros asociados al partido para evitar errores de integridad referencial.
+            EventEditionMatchSanction::where('match_id', $item->id)->delete();
+            EventEditionMatchPlayerStat::where('match_id', $item->id)->delete();
+            EventEditionMatchReport::where('match_id', $item->id)->delete();
+            EventEditionMatchParticipation::where('match_id', $item->id)->delete();
+
             $item->delete();
 
             // Si todo ha sido exitoso, confirmamos la transacción.
             DB::commit();
+
+            TournamentLandingCache::forget((int) $item->edition_id);
 
             $message =  'Eliminado correctamente';
             $success = true;

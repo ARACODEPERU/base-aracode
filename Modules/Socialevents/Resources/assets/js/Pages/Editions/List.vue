@@ -451,6 +451,17 @@ const getPositionLabel = (position) => {
                                 </svg>
                                 Actas
                             </Link>
+                             <button
+                                v-can="'even_ediciones_galeria'"
+                                type="button"
+                                @click="router.visit(route('even_ediciones_galeria', edition.id))"
+                                class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-colors duration-200"
+                            >
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 512 512">
+                                    <path d="M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM323.8 202.5c-4.5-6.6-11.9-10.5-19.8-10.5s-15.4 3.9-19.8 10.5l-87 127.6L170.7 297c-4.6-5.7-11.5-9-18.7-9s-14.2 3.3-18.7 9l-64 80c-5.2 6.5-7.2 15.2-5.4 23.6s8.3 14.4 16.6 16.4H437.5c8.4 2 17.3-.2 23.3-7.2s8.2-16 5.3-24.3l-112-208zM272 176c0-22.1-17.9-40-40-40s-40 17.9-40 40 17.9 40 40 40 40-17.9 40-40z"/>
+                                </svg>
+                                Galería de fotos
+                            </button>
                             <button
                                 v-can="'even_ediciones_eliminar'"
                                 @click="destroyEdition(edition.id)"

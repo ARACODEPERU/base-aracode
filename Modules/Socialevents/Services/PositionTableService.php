@@ -125,6 +125,7 @@ class PositionTableService
     public function getStandings($editionId)
     {
         $rankedTeams = EventEditionTeam::with('equipo')->where('edition_id', $editionId)
+            ->orderByRaw('CASE WHEN matches_played = 0 THEN 1 ELSE 0 END') // Equipos sin partidos al final
             ->orderBy('points', 'desc')
             ->orderBy('goal_difference', 'desc')
             ->orderBy('goals_for', 'desc')
@@ -153,6 +154,7 @@ class PositionTableService
     private function updateRank($editionId)
     {
         $rankedTeams = EventEditionTeam::where('edition_id', $editionId)
+            ->orderByRaw('CASE WHEN matches_played = 0 THEN 1 ELSE 0 END') // Equipos sin partidos al final
             ->orderBy('points', 'desc')
             ->orderBy('goal_difference', 'desc')
             ->orderBy('goals_for', 'desc')

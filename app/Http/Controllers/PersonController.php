@@ -194,6 +194,11 @@ class PersonController extends Controller
         $person_id = $request->get('id');
         $student_id = $request->get('student_id');
 
+        $person = $person_id ? Person::find($person_id) : null;
+        if (!$person) {
+            return back()->withErrors(['id' => 'No se encontró la persona asociada a tu cuenta.']);
+        }
+
         $user = User::where('person_id', $person_id)->first();
 
         $this->validate(
@@ -206,7 +211,7 @@ class PersonController extends Controller
                 'telephone'         => 'required|max:12',
                 'email'             => 'required|max:255',
                 'email'             => 'unique:people,email,' . $person_id . ',id',
-                'email'             => 'unique:users,email,' . $user->id . ',id',
+                'email'             => 'unique:users,email,' . Auth::id() . ',id',
                 'address'           => 'required|max:255',
                 'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',
@@ -220,7 +225,7 @@ class PersonController extends Controller
         $destination = 'uploads/students';
         $base64Image = $request->get('image');
 
-        if ($base64Image) {
+        if ($base64Image && str_starts_with($base64Image, 'data:image')) {
             $fileData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64Image));
             if (PHP_OS == 'WINNT') {
                 $tempFile = tempnam(sys_get_temp_dir(), 'img');
@@ -245,7 +250,7 @@ class PersonController extends Controller
             }
         }
 
-        Person::find($person_id)->update([
+        $person->update([
             'document_type_id'      => $request->get('document_type_id'),
             'short_name'            => trim($request->get('names')),
             'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
@@ -253,7 +258,7 @@ class PersonController extends Controller
             'number'                => $request->get('number'),
             'telephone'             => $request->get('telephone'),
             'email'                 => $request->get('email'),
-            'image'                 => $path,
+            'image'                 => $path ?? $person->image,
             'address'               => $request->get('address'),
             'is_provider'           => false,
             'is_client'             => true,
@@ -264,7 +269,7 @@ class PersonController extends Controller
             'mother_lastname'       => trim($request->get('mother_lastname'))
         ]);
 
-        $user->update([
+        ($user ?? Auth::user())->update([
             'name'          => $request->get('names'),
             'email'         => $request->get('email'),
             //'password'      => Hash::make($request->get('number')),
@@ -296,7 +301,7 @@ class PersonController extends Controller
                 'telephone'         => 'required|max:12',
                 'email'             => 'required|max:255',
                 'email'             => 'unique:people,email,' . $person_id . ',id',
-                'email'             => 'unique:users,email,' . $user->id . ',id',
+                'email'             => 'unique:users,email,' . Auth::id() . ',id',
                 'address'           => 'required|max:255',
                 'ubigeo'            => 'required|max:255',
                 'birthdate'         => 'required|',

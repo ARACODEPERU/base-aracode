@@ -22,6 +22,14 @@ class TournamentStandingsService
                 return $rankA <=> $rankB;
             }
 
+            // Equipos sin partidos jugados al final
+            $aPlayed = (int) $a->matches_played;
+            $bPlayed = (int) $b->matches_played;
+
+            if (($aPlayed === 0) !== ($bPlayed === 0)) {
+                return $aPlayed === 0 ? 1 : -1;
+            }
+
             if ((int) $a->points !== (int) $b->points) {
                 return (int) $b->points <=> (int) $a->points;
             }

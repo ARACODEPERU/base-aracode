@@ -64,9 +64,12 @@
                 @if ($hasPrizeSection)
                     <a href="#premios">Premios</a>
                 @endif
-                <a href="#fixture">Fixture</a>
-                <a href="#posiciones">Posiciones</a>
-                @if ($showAppDownload)
+        <a href="#fixture">Fixture</a>
+        <a href="#posiciones">Posiciones</a>
+        @if (filled($gallery ?? null) && count($gallery) > 0)
+            <a href="#galeria">Galería</a>
+        @endif
+        @if ($showAppDownload)
                     <a href="#app">App</a>
                 @endif
                 @if ($edition->path_database_file)
@@ -92,6 +95,9 @@
         @endif
         <a href="#fixture">Fixture</a>
         <a href="#posiciones">Posiciones</a>
+        @if (filled($gallery ?? null) && count($gallery) > 0)
+            <a href="#galeria">Galería</a>
+        @endif
         @if ($showAppDownload)
             <a href="#app">App</a>
         @endif
@@ -375,6 +381,55 @@
             </div>
         </section>
 
+        @if (filled($gallery ?? null) && count($gallery) > 0)
+            <section id="galeria" class="se-section se-section--alt">
+                <div class="se-container">
+                    <header class="se-section__head" data-se-reveal>
+                        <h2 class="se-section__title">Galería <span>del torneo</span></h2>
+                        <p class="se-section__sub">Fotos y videos de cada fecha</p>
+                    </header>
+
+                    <div class="se-gallery">
+                        @foreach ($gallery as $group)
+                            <div class="se-gallery__day" data-se-reveal>
+                                <div class="se-gallery__day-title">
+                                    <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                                    {{ $group['label'] }}
+                                    <span class="se-gallery__day-count">{{ count($group['items']) }} {{ count($group['items']) === 1 ? 'archivo' : 'archivos' }}</span>
+                                </div>
+                                <div class="se-gallery__grid">
+                                    @foreach ($group['items'] as $item)
+                                        <button
+                                            type="button"
+                                            class="se-gallery__item"
+                                            data-se-gallery-open
+                                            data-media-type="{{ $item['type'] }}"
+                                            data-media-url="{{ $item['url'] }}"
+                                            data-media-mime="{{ $item['mime_type'] }}"
+                                            @if ($item['match_label'])
+                                                data-media-label="{{ $item['match_label'] }}"
+                                            @endif
+                                            aria-label="Abrir {{ $item['type'] }}"
+                                        >
+                                            @if ($item['type'] === 'video')
+                                                <video src="{{ $item['url'] }}" preload="metadata" muted playsinline></video>
+                                                <span class="se-gallery__play"><i class="fas fa-play" aria-hidden="true"></i></span>
+                                            @else
+                                                <img src="{{ $item['url'] }}" alt="Foto de la galería" loading="lazy">
+                                            @endif
+                                            @if ($item['match_label'])
+                                                <span class="se-gallery__tag">{{ $item['match_label'] }}</span>
+                                            @endif
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if ($showAppDownload)
             <section id="app" class="se-section se-section--alt">
                 <div class="se-container">
@@ -487,5 +542,15 @@
             </p>
         </div>
     </footer>
+
+    <div class="se-lightbox" data-se-lightbox aria-hidden="true">
+        <button type="button" class="se-lightbox__close" data-se-lightbox-close aria-label="Cerrar">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="se-lightbox__stage">
+            <div class="se-lightbox__media"></div>
+            <p class="se-lightbox__label"></p>
+        </div>
+    </div>
 </body>
 </html>

@@ -217,6 +217,78 @@ function initBrandHover() {
     });
 }
 
+function initGalleryLightbox() {
+    const overlay = document.querySelector('[data-se-lightbox]');
+    const items = document.querySelectorAll('[data-se-gallery-open]');
+    if (!overlay || !items.length) {
+        return;
+    }
+
+    const mediaContainer = overlay.querySelector('.se-lightbox__media');
+    const labelEl = overlay.querySelector('.se-lightbox__label');
+    const closeBtn = overlay.querySelector('[data-se-lightbox-close]');
+    const body = document.body;
+
+    const open = (item) => {
+        const type = item.dataset.mediaType;
+        const url = item.dataset.mediaUrl;
+        const mime = item.dataset.mediaMime || '';
+        const label = item.dataset.mediaLabel || '';
+
+        mediaContainer.innerHTML = '';
+
+        if (type === 'video') {
+            const video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            video.autoplay = true;
+            video.playsInline = true;
+            mediaContainer.appendChild(video);
+        } else {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = 'Foto de la galería';
+            mediaContainer.appendChild(img);
+        }
+
+        labelEl.textContent = label;
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden', 'false');
+        body.style.overflow = 'hidden';
+    };
+
+    const close = () => {
+        const video = mediaContainer.querySelector('video');
+        if (video) {
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+        mediaContainer.innerHTML = '';
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+        body.style.overflow = '';
+    };
+
+    items.forEach((item) => {
+        item.addEventListener('click', () => open(item));
+    });
+
+    closeBtn?.addEventListener('click', close);
+
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+            close();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            close();
+        }
+    });
+}
+
 function boot() {
     const body = document.body;
     if (!body.classList.contains('se-landing')) {
@@ -232,6 +304,7 @@ function boot() {
         initMobileNav();
         initHeaderScroll();
         initNavHighlight();
+        initGalleryLightbox();
         return;
     }
 
@@ -239,6 +312,7 @@ function boot() {
     initHeaderScroll();
     initNavHighlight();
     initBrandHover();
+    initGalleryLightbox();
     runAmbientMotion();
     runHeroEntrance();
     initScrollReveal();

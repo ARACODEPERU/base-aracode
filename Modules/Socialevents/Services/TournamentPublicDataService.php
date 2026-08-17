@@ -3,6 +3,8 @@
 namespace Modules\Socialevents\Services;
 
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Entities\EventEditionMedia;
+use Modules\Socialevents\Support\TournamentDateLabels;
 use Modules\Socialevents\Support\TournamentMedia;
 use Modules\Socialevents\Support\TournamentPhaseLabels;
 
@@ -54,7 +56,54 @@ class TournamentPublicDataService
             'playersRanking' => $this->rankingsService->topPlayers($editionId),
             'goalkeepersRanking' => $this->rankingsService->topGoalkeepers($editionId),
             'phaseLabels' => TournamentPhaseLabels::labels(),
+            'gallery' => $this->galleryPayload($editionId),
         ];
+    }
+
+    /**
+     * Medios de la galería agrupados por fecha para la landing.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function galleryPayload(int $editionId): array
+    {
+        $media = EventEditionMedia::with('match')
+            ->where('edition_id', $editionId)
+            ->orderByDesc('media_date')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $groups = [];
+
+        foreach ($media as $item) {
+            $dateKey = $item->media_date->format('Y-m-d');
+
+            $groups[$dateKey] ??= [
+                'date' => $dateKey,
+                'label' => TournamentDateLabels::full($item->media_date),
+                'items' => [],
+            ];
+
+            $groups[$dateKey]['items'][] = [
+                'id' => $item->id,
+                'type' => $item->type,
+                'url' => TournamentMedia::url($item->file_path),
+                'mime_type' => $item->mime_type,
+                'match_label' => $item->match
+                    ? $this->matchLabel($item->match)
+                    : null,
+            ];
+        }
+
+        return array_values($groups);
+    }
+
+    private function matchLabel($match): string
+    {
+        $home = $match->equipolocal?->name ?? $match->placeholder_h ?? 'Por definir';
+        $away = $match->equipovisitante?->name ?? $match->placeholder_a ?? 'Por definir';
+
+        return $home.' vs '.$away;
     }
 
     /**

@@ -187,7 +187,17 @@ Route::middleware('auth')->group(function () {
 
     // //////////////actualizar informacion de personas
     Route::get('person/update_information', function () {
-        $person = Person::find(Auth::user()->person_id);
+        if (!Auth::user()->hasRole('Alumno')) {
+            return back();
+        }
+
+        // Si el usuario no tiene una persona vinculada, no hay nada que mostrar/actualizar.
+        // Se evita pasar un "person" nulo a la vista (causa el error 500 en estos casos).
+        $person = Auth::user()->person_id ? Person::find(Auth::user()->person_id) : null;
+        if (!$person) {
+            return redirect()->route('dashboard');
+        }
+
         $identityDocumentTypes = DB::table('identity_document_type')->get();
 
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
@@ -200,15 +210,11 @@ Route::middleware('auth')->group(function () {
             )
             ->get();
 
-        if (Auth::user()->hasRole('Alumno')) {
-            return Inertia::render('Person/UpdateInformation', [
-                'person' => $person,
-                'identityDocumentTypes' => $identityDocumentTypes,
-                'ubigeo' => $ubigeo,
-            ]);
-        } else {
-            return back();
-        }
+        return Inertia::render('Person/UpdateInformation', [
+            'person' => $person,
+            'identityDocumentTypes' => $identityDocumentTypes,
+            'ubigeo' => $ubigeo,
+        ]);
     })->name('user-update-profile');
 
     Route::post(
