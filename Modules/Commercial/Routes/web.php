@@ -135,6 +135,10 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->get('negotiations/show/{id}', [CommercialNegotiationController::class, 'show'])
         ->name('comm_negotiations_show');
 
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_editar'])
+        ->post('negotiations/{id}/send-quote', [CommercialNegotiationController::class, 'sendQuote'])
+        ->name('comm_negotiations_send_quote');
+
     Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
         ->get('negotiations/process/{id}', [CommercialNegotiationProcessController::class, 'index'])
         ->name('comm_negotiations_process');

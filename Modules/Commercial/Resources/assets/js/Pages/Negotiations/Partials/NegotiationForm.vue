@@ -38,6 +38,7 @@ const form = useForm({
     single_payment_days: props.negotiation?.single_payment_days ?? null,
     contact_channel: props.negotiation?.contact_channel ?? null,
     contact_detail: props.negotiation?.contact_detail ?? currentUserName,
+    email: props.negotiation?.email ?? null,
     payment_method: props.negotiation?.payment_method ?? "yape",
     payment_link: props.negotiation?.payment_link ?? null,
     course_ids: props.negotiation?.items?.filter((item) => item.item_type === "course").map((item) => item.item_id) ?? [],
@@ -419,6 +420,13 @@ const submit = () => {
                 <InputLabel for="contact_detail" value="Asesor / Persona de contacto *" />
                 <TextInput id="contact_detail" v-model="form.contact_detail" type="text" placeholder="Nombre del asesor que realizo la negociacion" />
                 <InputError :message="form.errors.contact_detail" class="mt-2" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="email" value="Correo del cliente" />
+                <TextInput id="email" v-model="form.email" type="email" placeholder="correo@cliente.com" />
+                <InputError :message="form.errors.email" class="mt-2" />
+                <p class="text-xs text-gray-500 mt-1">Se enviara aqui el enlace de la cotizacion.</p>
             </div>
 
             <div class="col-span-6">

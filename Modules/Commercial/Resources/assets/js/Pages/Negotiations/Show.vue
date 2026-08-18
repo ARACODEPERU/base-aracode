@@ -6,7 +6,7 @@ import { Link, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faCheckCircle, faFileArchive, faFileCode, faFilePdf, faLink, faTrashAlt, faXmarkCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faFileArchive, faFileCode, faFilePdf, faLink, faPaperPlane, faTrashAlt, faXmarkCircle } from "@fortawesome/free-solid-svg-icons";
 
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
@@ -80,6 +80,109 @@ const copyLink = () => {
             padding: "2em",
             customClass: "sweet-alerts",
         });
+    });
+};
+
+const quoteEmail = computed(() => props.negotiation.email?.trim() || "");
+
+const sendQuote = () => {
+    // Si aun no hay correo registrado, pedirlo en la alerta para enviar.
+    if (!quoteEmail.value) {
+        Swal2.fire({
+            title: "Enviar cotizacion?",
+            text: "No hay un correo registrado. Escribe el correo del cliente al que se enviara la cotizacion:",
+            icon: "info",
+            input: "email",
+            inputPlaceholder: "correo@cliente.com",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Enviar",
+            cancelButtonText: "Cancelar",
+            showLoaderOnConfirm: true,
+            padding: "2em",
+            customClass: "sweet-alerts",
+            preConfirm: (email) => {
+                const value = (email || "").trim();
+
+                if (!value) {
+                    Swal2.showValidationMessage("Debes ingresar un correo para enviar la cotizacion.");
+                    return false;
+                }
+
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    Swal2.showValidationMessage("Ingresa un correo valido.");
+                    return false;
+                }
+
+                return axios.post(route("comm_negotiations_send_quote", props.negotiation.id), { email: value })
+                    .then((res) => {
+                        return {
+                            message: res.data?.message || "Cotizacion enviada correctamente.",
+                        };
+                    })
+                    .catch((error) => {
+                        const msg = error.response?.data?.errors?.email?.[0]
+                            || error.response?.data?.message
+                            || "No se pudo enviar la cotizacion.";
+                        Swal2.showValidationMessage(msg);
+                        return false;
+                    });
+            },
+            allowOutsideClick: () => !Swal2.isLoading(),
+        }).then((result) => {
+            if (!result.isConfirmed || !result.value) return;
+
+            Swal2.fire({
+                title: "Enviado",
+                text: result.value.message,
+                icon: "success",
+                confirmButtonText: "Perfecto",
+                padding: "2em",
+                customClass: "sweet-alerts",
+            });
+            refresh();
+        });
+
+        return;
+    }
+
+    Swal2.fire({
+        title: "Enviar cotizacion?",
+        text: `Se enviara el enlace de la cotizacion a ${quoteEmail.value}.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Si, enviar",
+        cancelButtonText: "Cancelar",
+        showLoaderOnConfirm: true,
+        padding: "2em",
+        customClass: "sweet-alerts",
+        preConfirm: () => axios.post(route("comm_negotiations_send_quote", props.negotiation.id))
+            .then((res) => ({
+                message: res.data?.message || "Cotizacion enviada correctamente.",
+            }))
+            .catch((error) => {
+                const msg = error.response?.data?.errors?.email?.[0]
+                    || error.response?.data?.message
+                    || "No se pudo enviar la cotizacion.";
+                Swal2.showValidationMessage(msg);
+                return false;
+            }),
+        allowOutsideClick: () => !Swal2.isLoading(),
+    }).then((result) => {
+        if (!result.isConfirmed || !result.value) return;
+
+        Swal2.fire({
+            title: "Enviado",
+            text: result.value.message,
+            icon: "success",
+            confirmButtonText: "Perfecto",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        refresh();
     });
 };
 
@@ -224,6 +327,10 @@ const cancel = () => {
                 <button type="button" class="btn btn-secondary" @click="copyLink">
                     <FontAwesomeIcon :icon="faLink" class="mr-2 h-4 w-4" />
                     Copiar enlace publico
+                </button>
+                <button type="button" class="btn btn-primary" @click="sendQuote">
+                    <FontAwesomeIcon :icon="faPaperPlane" class="mr-2 h-4 w-4" />
+                    Enviar cotizacion
                 </button>
                 <Link :href="route('comm_negotiations')" class="btn btn-success">
                     Ir al listado
@@ -410,7 +517,7 @@ const cancel = () => {
                         </div>
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Email</dt>
-                            <dd class="dark:text-white">{{ negotiation.client_data?.email || negotiation.client?.email || '--' }}</dd>
+                            <dd class="dark:text-white">{{ negotiation.email || negotiation.client_data?.email || negotiation.client?.email || '--' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Telefono</dt>

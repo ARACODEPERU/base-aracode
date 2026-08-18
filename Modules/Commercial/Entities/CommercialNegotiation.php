@@ -26,6 +26,7 @@ class CommercialNegotiation extends Model
         'single_payment_days',
         'contact_channel',
         'contact_detail',
+        'email',
         'payment_method',
         'payment_link',
         'status',

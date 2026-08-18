@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\IdentityDocumentType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -14,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaSubscriptionType;
+use Modules\Commercial\Emails\CommercialQuoteMail;
 use Modules\Commercial\Entities\CommercialNegotiation;
 
 class CommercialNegotiationController extends Controller
@@ -108,6 +110,56 @@ class CommercialNegotiationController extends Controller
         }
 
         return redirect()->back()->with('success', 'Negociacion actualizada correctamente');
+    }
+
+    /**
+     * Envia el correo con el enlace de la cotizacion al correo del cliente.
+     * Opcionalmente recibe un correo en la peticion para registrarlo y enviar.
+     */
+    public function sendQuote(Request $request, $id)
+    {
+        $negotiation = CommercialNegotiation::findOrFail($id);
+
+        if (in_array($negotiation->status, ['aprobada', 'cancelada'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Esta negociacion ya no puede enviarse como cotizacion.',
+            ], 422);
+        }
+
+        $incomingEmail = trim((string) ($request->input('email') ?? ''));
+
+        if ($incomingEmail !== '') {
+            $negotiation->update(['email' => $incomingEmail]);
+        }
+
+        $email = trim((string) $negotiation->fresh()->email);
+
+        if ($email === '') {
+            throw ValidationException::withMessages([
+                'email' => 'Debe registrar el correo del cliente antes de enviar la cotizacion.',
+            ]);
+        }
+
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw ValidationException::withMessages([
+                'email' => 'El correo del cliente no es valido.',
+            ]);
+        }
+
+        try {
+            Mail::to($email)->send(new CommercialQuoteMail($negotiation->fresh()));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La cotizacion fue enviada correctamente a ' . $email,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo enviar el correo: ' . $e->getMessage(),
+            ], 422);
+        }
     }
 
     public function destroy($id)
@@ -281,6 +333,7 @@ class CommercialNegotiationController extends Controller
             'single_payment_days' => ['nullable', 'integer', 'min:1'],
             'contact_channel' => ['nullable', 'string', 'max:40'],
             'contact_detail' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
             'payment_method' => ['required', Rule::in(['yape', 'mercadopago', 'transferencia', 'enlace'])],
             'payment_link' => ['nullable', 'url', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
@@ -327,6 +380,7 @@ class CommercialNegotiationController extends Controller
             'single_payment_days' => $data['single_payment_days'] ?? null,
             'contact_channel' => $data['contact_channel'] ?? null,
             'contact_detail' => $data['contact_detail'] ?? null,
+            'email' => $data['email'] ?? null,
             'payment_method' => $data['payment_method'],
             'payment_link' => $data['payment_link'] ?? null,
         ];
