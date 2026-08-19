@@ -10,7 +10,7 @@ import IconTwitter from "@/Components/vristo/icon/icon-twitter.vue";
 import IconFacebook from "@/Components/vristo/icon/icon-facebook.vue";
 import IconGithub from "@/Components/vristo/icon/icon-github.vue";
 import IconImages from "@/Components/vristo/icon/icon-images.vue";
-import { useForm } from "@inertiajs/vue3";
+import { useForm, router } from "@inertiajs/vue3";
 import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
@@ -22,6 +22,7 @@ import { ref, onMounted,computed } from "vue";
 import ImageCompressorjs from '@/Components/ImageCompressorjs.vue';
 import cardAccount from '@/Components/cards/cardAccount.vue';
 import { Cascader } from 'ant-design-vue';
+import iconHorizontalDots from '@/Components/vristo/icon/icon-horizontal-dots.vue';
 
 const store = useAppStore();
 const props = defineProps({
@@ -42,6 +43,14 @@ const props = defineProps({
         default: () => ({}),
     },
     currencyTypes: {
+        type: Object,
+        default: () => ({}),
+    },
+    billeteras: {
+        type: Object,
+        default: () => ({}),
+    },
+    companyBilleteras: {
         type: Object,
         default: () => ({}),
     }
@@ -352,6 +361,124 @@ const saveSocialNetworks = () => {
         });
     }
 
+    // Billeteras digitales
+    const qrPreview = ref(null);
+    const selectBilletera = ref(
+        props.billeteras.length
+            ? { id: props.billeteras[0].id, image: props.billeteras[0].image, name: props.billeteras[0].full_name }
+            : { id: null, image: null, name: '' }
+    );
+
+    const changeBilletera = (item) => {
+        selectBilletera.value.id = item.id;
+        selectBilletera.value.image = item.image;
+        selectBilletera.value.name = item.full_name;
+        formBilletera.billetera_id = item.id;
+    }
+
+    const displayModalBilletera = ref(false);
+    const formBilletera = useForm({
+        id: null,
+        billetera_id: selectBilletera.value.id,
+        account_name: null,
+        account_number: null,
+        qr_image: null,
+        bank_account_id: null,
+        status: true
+    });
+
+    const openModalBilletera = (item = null) => {
+        qrPreview.value = null;
+        if(item && item.id){
+            formBilletera.id = item.id;
+            formBilletera.billetera_id = item.billetera_id;
+            formBilletera.account_name = item.account_name;
+            formBilletera.account_number = item.account_number;
+            formBilletera.bank_account_id = item.bank_account_id || null;
+            formBilletera.status = item.status == 1 ? true : false;
+        }
+        displayModalBilletera.value = true;
+    }
+
+    const closeModalBilletera = () => {
+        displayModalBilletera.value = false;
+    }
+
+    const onQrSelected = (event) => {
+        const file = event.target.files[0] || null;
+        formBilletera.qr_image = file;
+        qrPreview.value = file ? URL.createObjectURL(file) : null;
+    }
+
+    const saveBilletera = () => {
+        formBilletera.post(route('company-billetera-store'), {
+            forceFormData: true,
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                displayModalBilletera.value = false;
+                formBilletera.reset();
+                formBilletera.billetera_id = selectBilletera.value.id;
+            },
+            onFinish: () => {
+                showMessage("Datos registrados con éxito",'success');
+            },
+        });
+    }
+
+    const destroyBilletera = (id) => {
+        Swal.fire({
+            title: '¿Estas seguro?',
+            text: "¡No podrás revertir esto!",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: '¡Sí, Eliminar!',
+            cancelButtonText: 'Cancelar',
+            showLoaderOnConfirm: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+            backdrop: true,
+            preConfirm: () => {
+                return axios.delete(route('company-billetera-destroy', id)).then((res) => {
+                    if (!res.data.success) {
+                        Swal.showValidationMessage(res.data.message)
+                    }
+                    return res
+                });
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Enhorabuena',
+                    text: 'Se Eliminó correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                    backdrop: true,
+                });
+                router.reload();
+            }
+        });
+    }
+
+    const getBilleteraImage = (billetera) => {
+        return billetera?.billetera?.image || null;
+    }
+
+    const getBilleteraName = (billetera) => {
+        return billetera?.billetera?.full_name || 'Billetera';
+    }
+
+    const getBilleteraShort = (billetera) => {
+        return billetera?.billetera?.short_name || 'B';
+    }
+
+    const qrUrl = (path) => {
+        return path ? (baseUrl + 'storage/' + path) : null;
+    }
 
 </script>
 <template>
@@ -360,7 +487,7 @@ const saveSocialNetworks = () => {
     </div>
     <TabGroup>
         <TabList
-            class="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap sm:justify-center mt-3 mb-5 sm:space-x-3 rtl:space-x-reverse"
+            class="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:justify-center mt-3 mb-5 sm:space-x-3 rtl:space-x-reverse"
         >
             <Tab as="template" v-slot="{ selected }">
                 <a
@@ -412,6 +539,18 @@ const saveSocialNetworks = () => {
                         <path fill="currentColor" d="M243.4 2.6l-224 96c-14 6-21.8 21-18.7 35.8S16.8 160 32 160l0 8c0 13.3 10.7 24 24 24l400 0c13.3 0 24-10.7 24-24l0-8c15.2 0 28.3-10.7 31.3-25.6s-4.8-29.9-18.7-35.8l-224-96c-8-3.4-17.2-3.4-25.2 0zM128 224l-64 0 0 196.3c-.6 .3-1.2 .7-1.8 1.1l-48 32c-11.7 7.8-17 22.4-12.9 35.9S17.9 512 32 512l448 0c14.1 0 26.5-9.2 30.6-22.7s-1.1-28.1-12.9-35.9l-48-32c-.6-.4-1.2-.7-1.8-1.1L448 224l-64 0 0 192-40 0 0-192-64 0 0 192-48 0 0-192-64 0 0 192-40 0 0-192zM256 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/>
                     </svg>
                     Bancos y Cuentas Bancarias
+                </a>
+            </Tab>
+            <Tab as="template" v-slot="{ selected }">
+                <a
+                    href="javascript:;"
+                    class="p-7 py-3 flex flex-col items-center justify-center rounded-lg bg-[#f1f2f3] dark:bg-[#191e3a] hover:!bg-success hover:text-white hover:shadow-[0_5px_15px_0_rgba(0,0,0,0.30)] !outline-none transition duration-300"
+                    :class="{ '!bg-success text-white': selected }"
+                >
+                    <svg class="w-5 h-5 mb-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
+                        <path fill="currentColor" d="M0 112.5V422.3c0 18 10.1 35 27 41.3l96 43.2c11.6 5.2 25.2 5.2 36.8 0l96-43.2c10.9-4.9 21.8-4.9 32.7 0l96 43.2c11.6 5.2 25.2 5.2 36.8 0l88.5-39.8c.1-5.4 .4-10.8 .4-16.2L576 112.5c0-18-10.1-35-27-41.3L453 28.1c-11.6-5.2-25.2-5.2-36.8 0l-96 43.2c-10.9 4.9-21.8 4.9-32.7 0l-96-43.2c-11.6-5.2-25.2-5.2-36.8 0L27 71.1C10.1 77.3 0 94.5 0 112.5zM288 352c-35.3 0-64-28.7-64-64s28.7-64 64-64s64 28.7 64 64s-28.7 64-64 64z"/>
+                    </svg>
+                    Billeteras Digitales
                 </a>
             </Tab>
         </TabList>
@@ -830,6 +969,128 @@ const saveSocialNetworks = () => {
                     </div>
                 </div>
             </TabPanel>
+            <TabPanel>
+                <div class="relative w-full">
+                    <div class="relative panel">
+                        <div class="">
+                            <div class="flex items-center justify-start space-x-4">
+                                <div class="dropdown">
+                                    <Popper :placement="'bottom-end'" offsetDistance="8">
+                                        <button
+                                            type="button"
+                                            class="flex items-center gap-2.5 rounded-lg border border-white-dark/30 bg-white px-2 py-1.5 text-white-dark hover:border-primary hover:text-primary dark:bg-black min-w-[315px]"
+                                        >
+                                            <span
+                                                v-if="selectBilletera.image"
+                                                class="h-5 w-5 rounded-full object-cover overflow-hidden flex items-center justify-center bg-success text-white text-xs font-bold"
+                                            >
+                                                <img :src="selectBilletera.image" alt="image" class="h-5 w-5 rounded-full object-cover" />
+                                            </span>
+                                            <span v-else class="h-5 w-5 rounded-full bg-success text-white flex items-center justify-center text-xs font-bold uppercase">
+                                                {{ (selectBilletera.name || 'B').charAt(0) }}
+                                            </span>
+                                            <div class="text-base font-bold uppercase">{{ selectBilletera.name }}</div>
+                                            <span class="shrink-0 ml-auto">
+                                                <icon-caret-down />
+                                            </span>
+                                        </button>
+                                        <template #content="{ close }">
+                                            <perfect-scrollbar
+                                                :options="{
+                                                    swipeEasing: true,
+                                                    wheelPropagation: false,
+                                                    suppressScrollX: true
+                                                }"
+                                                class="max-h-[280px]"
+                                            >
+                                                <ul class="w-full !px-2 text-dark dark:text-white-dark font-semibold dark:text-white-light/90">
+                                                    <template v-for="item in billeteras" :key="item.id">
+                                                        <li>
+                                                            <button
+                                                                type="button"
+                                                                class="w-full hover:text-primary"
+                                                                :class="{ 'bg-primary/10 text-primary': selectBilletera.id === item.id }"
+                                                                @click="changeBilletera(item), close()"
+                                                            >
+                                                                <span
+                                                                    v-if="item.image"
+                                                                    class="h-5 w-5 rounded-full overflow-hidden inline-flex items-center justify-center align-middle"
+                                                                >
+                                                                    <img class="w-5 h-5 object-cover rounded-full" :src="item.image" alt="" />
+                                                                </span>
+                                                                <span v-else class="w-5 h-5 inline-flex items-center justify-center rounded-full bg-success text-white text-xs font-bold uppercase">
+                                                                    {{ item.short_name.charAt(0) }}
+                                                                </span>
+                                                                <span class="ltr:ml-3 rtl:mr-3">{{ item.full_name }}</span>
+                                                            </button>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </perfect-scrollbar>
+                                        </template>
+                                    </Popper>
+                                </div>
+                                <DangerButton @click="openModalBilletera" type="button" >NUEVA BILLETERA</DangerButton>
+                            </div>
+                            <div class="mt-6 w-full">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div v-for="billetera in companyBilleteras" :key="billetera.id">
+                                        <div class="panel dark:bg-gray-800">
+                                            <div class="flex items-center justify-between border-b border-[#e0e6ed] dark:border-[#1b2e4b] -m-5 mb-5 p-5">
+                                                <a href="javascript:;" class="flex font-semibold">
+                                                    <span v-if="getBilleteraImage(billetera)" class="shrink-0 w-10 h-10 rounded-md overflow-hidden flex items-center justify-center ltr:mr-4 rtl:ml-4">
+                                                        <img :src="getBilleteraImage(billetera)" class="w-10 h-10 rounded-md object-cover" />
+                                                    </span>
+                                                    <span v-else class="shrink-0 w-10 h-10 rounded-md bg-success text-white flex items-center justify-center font-bold uppercase ltr:mr-4 rtl:ml-4">
+                                                        {{ getBilleteraShort(billetera).charAt(0) }}
+                                                    </span>
+                                                    <div>
+                                                        <h6>{{ getBilleteraName(billetera) }}</h6>
+                                                        <p class="text-xs text-white-dark mt-1">{{ billetera.account_name }}</p>
+                                                    </div>
+                                                </a>
+                                                <div class="dropdown">
+                                                    <Popper :placement="'bottom-end'" offsetDistance="0" class="align-middle">
+                                                        <button type="button">
+                                                            <icon-horizontal-dots class="w-5 h-5 text-black/70 dark:text-white/70 hover:!text-primary" />
+                                                        </button>
+                                                        <template #content="{ close }">
+                                                            <ul @click="close()">
+                                                                <li>
+                                                                    <a @click="openModalBilletera(billetera)" href="javascript:;">Editar</a>
+                                                                </li>
+                                                                <li>
+                                                                    <a @click="destroyBilletera(billetera.id)" href="javascript:;">Eliminar</a>
+                                                                </li>
+                                                            </ul>
+                                                        </template>
+                                                    </Popper>
+                                                </div>
+                                            </div>
+                                            <div class="mb-5 flex items-start gap-3">
+                                                <span class="shrink-0 grid place-content-center text-base w-9 h-9 rounded-md bg-success-light dark:bg-success text-success dark:text-success-light">#</span>
+                                                <div class="flex-1">
+                                                    <p class="font-semibold text-lg dark:text-white-light">Número</p>
+                                                    <div>{{ billetera.account_number }}</div>
+                                                    <p v-if="billetera.bank_account" class="text-sm text-white-dark dark:text-gray-500 mt-1">
+                                                        Cuenta asociada: {{ billetera.bank_account.bank?.short_name }} - {{ billetera.bank_account.number }}
+                                                    </p>
+                                                </div>
+                                                <div v-if="qrUrl(billetera.qr_image)" class="shrink-0">
+                                                    <img :src="qrUrl(billetera.qr_image)" alt="QR" class="w-16 h-16 object-cover rounded-md border" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="!companyBilleteras.length" class="col-span-full text-center text-sm text-white-dark py-8">
+                                        No hay billeteras digitales registradas.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </TabPanel>
         </TabPanels>
     </TabGroup>
     <ModalSmall :show="displayModalBankAccount" :onClose="closeModalBankAccount" :icon="'/img/banco.png'">
@@ -884,6 +1145,69 @@ const saveSocialNetworks = () => {
                 :class="{ 'opacity-25': formAccount.processing }" :disabled="formAccount.processing"
             >
                 <svg v-show="formAccount.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                </svg>
+                GUARDAR
+            </PrimaryButton>
+        </template>
+    </ModalSmall>
+    <ModalSmall :show="displayModalBilletera" :onClose="closeModalBilletera" :icon="'/img/movil.png'">
+        <template #title>Crear billetera digital</template>
+        <template #message>Los campos * son obligatorios</template>
+        <template #content>
+            <div class="space-y-4">
+                <div>
+                    <InputLabel value="Billetera" />
+                    <select v-model="formBilletera.billetera_id" class="form-select">
+                        <template v-for="xw in billeteras">
+                            <option :value="xw.id">{{ xw.full_name }}</option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <InputLabel for="account_name" value="Nombre del titular *" />
+                    <TextInput id="account_name" v-model="formBilletera.account_name" placeholder="Nombre del titular" />
+                </div>
+                <div>
+                    <InputLabel for="account_number" value="Número / Cuenta *" />
+                    <TextInput id="account_number" v-model="formBilletera.account_number" placeholder="Número de la billetera" />
+                </div>
+                <div>
+                    <InputLabel value="Cuenta bancaria asociada (opcional)" />
+                    <select v-model="formBilletera.bank_account_id" class="form-select">
+                        <option :value="null">Sin asociar</option>
+                        <template v-for="cuenta in bankAccounts">
+                            <option :value="cuenta.id">{{ cuenta.bank?.full_name }} - {{ cuenta.number }}</option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <InputLabel value="Imagen QR" />
+                    <input type="file" accept="image/*" class="form-input" @change="onQrSelected" />
+                    <p class="text-xs text-gray-500 mt-1">Sube una imagen con el código QR de la billetera.</p>
+                    <img
+                        v-if="qrPreview"
+                        :src="qrPreview"
+                        alt="QR"
+                        class="mt-2 w-24 h-24 object-cover rounded-md border"
+                    />
+                </div>
+                <div>
+                    <label class="inline-flex">
+                        <input v-model="formBilletera.status" type="checkbox" class="form-checkbox text-success rounded-full" />
+                        <span>Activo</span>
+                    </label>
+                </div>
+            </div>
+        </template>
+        <template #buttons>
+            <PrimaryButton
+                @click="saveBilletera"
+                type="button"
+                :class="{ 'opacity-25': formBilletera.processing }" :disabled="formBilletera.processing"
+            >
+                <svg v-show="formBilletera.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                     <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                 </svg>

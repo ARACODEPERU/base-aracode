@@ -23,6 +23,14 @@ const props = defineProps({
     currencyTypes: {
         type: Object,
         default: () => ({}),
+    },
+    billeteras: {
+        type: Object,
+        default: () => ({}),
+    },
+    companyBilleteras: {
+        type: Object,
+        default: () => ({}),
     }
 });
 </script>
@@ -44,6 +52,8 @@ const props = defineProps({
                 :banks="banks"
                 :bankAccounts="bankAccounts"
                 :currencyTypes="currencyTypes"
+                :billeteras="billeteras"
+                :companyBilleteras="companyBilleteras"
             ></InformationCompany>
         </div>
     </AppLayout>
