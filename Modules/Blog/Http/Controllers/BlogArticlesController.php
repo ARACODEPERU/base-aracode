@@ -91,7 +91,10 @@ class BlogArticlesController extends Controller
         if ($file) {
             $original_name = strtolower(trim($file->getClientOriginalName()));
             $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
+            $extension = strtolower($file->getClientOriginalExtension());
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                $extension = 'jpg';
+            }
             $file_name = $request->get('id') . '.' . $extension;
             $path = $request->file('file')->storeAs(
                 $destination,
@@ -162,7 +165,10 @@ class BlogArticlesController extends Controller
         if ($file) {
             $original_name = strtolower(trim($file->getClientOriginalName()));
             $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
+            $extension = strtolower($file->getClientOriginalExtension());
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                $extension = 'jpg';
+            }
             $file_name = $request->get('id') . '.' . $extension;
             $path = $request->file('file')->storeAs(
                 $destination,
@@ -231,7 +237,10 @@ class BlogArticlesController extends Controller
         if ($file) {
             $original_name = strtolower(trim($file->getClientOriginalName()));
             $original_name = str_replace(" ", "_", $original_name);
-            $extension = $file->getClientOriginalExtension();
+            $extension = strtolower($file->getClientOriginalExtension());
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                $extension = 'jpg';
+            }
             $file_name = $request->get('id') . '.' . $extension;
             $path = $request->file('file')->storeAs(
                 $destination,
@@ -252,12 +261,15 @@ class BlogArticlesController extends Controller
 
     public function uploadImageCkeditor(Request $request)
     {
-        //dd($request->all());
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:5120',
+        ]);
+
         $file = $request->file('file');
-        $file_name = str_replace(' ', '_', $file->getClientOriginalName());
+        $file_name = date('YmdHis') . '_' . Str::random(8) . '.' . $file->guessExtension();
 
         //indicamos que queremos guardar un nuevo archivo en el disco local
-        $path = $request->file('file')->storeAs(
+        $path = $file->storeAs(
             'articles',
             $file_name,
             'public'

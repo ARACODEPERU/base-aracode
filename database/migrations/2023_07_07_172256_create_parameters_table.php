@@ -173,10 +173,10 @@ return new class extends Migration
             ],
             [
                 'parameter_code' => 'P000023',
-                'description' => 'TPV activar o desactivar',
-                'control_type' => 'chx',
+                'description' => 'MIGO API token para consultas RUC',
+                'control_type' => 'tx',
                 'json_query_data' => null,
-                'value_default' => 'false',
+                'value_default' => 'JQniAylHRUUErfrljCiSpuk9YFDrGk0DEjWwUjrfxCSFbSBGNmaokLB6aXUN',
             ],
             [
                 'parameter_code' => 'P000025',
@@ -205,6 +205,13 @@ return new class extends Migration
                 'control_type' => 'sa',
                 'json_query_data' => '[{"value": "1","label":"Aracode Principal"},{"value": "2","label":"Aracode torneos"}]',
                 'value_default' => '1',
+            ],
+            [
+                'parameter_code' => 'P000029',
+                'description' => 'TPV activar o desactivar',
+                'control_type' => 'chx',
+                'json_query_data' => null,
+                'value_default' => 'false',
             ],
         ];
 

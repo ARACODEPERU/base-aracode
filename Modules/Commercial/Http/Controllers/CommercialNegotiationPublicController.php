@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\CommercialNegotiationConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\IdentityDocumentType;
+use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -15,7 +18,6 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialNegotiation;
 use Modules\Commercial\Entities\CommercialNegotiationInvoice;
-use Modules\Commercial\Services\CommercialRucService;
 
 class CommercialNegotiationPublicController extends Controller
 {
@@ -191,7 +193,55 @@ class CommercialNegotiationPublicController extends Controller
             'ruc' => ['required', 'string', 'size:11'],
         ]);
 
-        return response()->json(app(CommercialRucService::class)->consultaRUC($request->input('ruc')));
+        // Replica del metodo consultaRUCmigo del modulo de ventas (ApisnetPeController).
+        $baseMigo = 'https://api.migo.pe/api';
+        $tokenMigo = Parameter::where('parameter_code', 'P000023')->value('value_default');
+
+        $client = new Client();
+
+        try {
+            $response = $client->post($baseMigo . '/v1/ruc', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'token' => $tokenMigo,
+                    'ruc' => $request->input('ruc'),
+                ],
+                'timeout' => 10,
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            return response()->json([
+                'success' => true,
+                'person' => [
+                    'razon_social' => $data['nombre_o_razon_social'],
+                    'numero_documento' => $data['ruc'],
+                    'direccion' => $data['direccion_simple'],
+                    'estado' => $data['estado_del_contribuyente'],
+                    'condicion' => $data['condicion_de_domicilio'],
+                    'ubigeo' => $data['ubigeo'],
+                    'distrito' => $data['distrito'],
+                    'provincia' => $data['provincia'],
+                    'departamento' => $data['departamento'],
+                ],
+            ]);
+        } catch (ClientException $e) {
+            $errorResponse = json_decode($e->getResponse()->getBody()->getContents(), true);
+            $message = $errorResponse['message'] ?? 'Error desconocido';
+
+            return response()->json([
+                'success' => false,
+                'error' => $message,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Ocurrió un error inesperado: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     private function negotiationPayload(CommercialNegotiation $negotiation): array

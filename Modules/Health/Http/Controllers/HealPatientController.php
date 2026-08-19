@@ -325,11 +325,18 @@ class HealPatientController extends Controller
     {
         $image = $request->get('image');
 
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
         if (is_string($image) && str_starts_with($image, 'data:image')) {
             [$meta, $content] = explode(',', $image, 2);
             preg_match('/data:image\/(?<extension>[^;]+);base64/', $meta, $matches);
-            $extension = $matches['extension'] ?? 'png';
+            $extension = strtolower($matches['extension'] ?? 'png');
             $extension = $extension === 'jpeg' ? 'jpg' : $extension;
+
+            if (!in_array($extension, $allowedExtensions, true)) {
+                return null;
+            }
+
             $fileName = date('YmdHis') . '_' . Str::random(8) . '.' . $extension;
             $path = $destination . '/' . $fileName;
 
@@ -343,7 +350,11 @@ class HealPatientController extends Controller
             return null;
         }
 
-        $extension = $file->getClientOriginalExtension();
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (!in_array($extension, $allowedExtensions, true)) {
+            return null;
+        }
+
         $fileName = date('YmdHis') . '_' . Str::random(8) . '.' . $extension;
 
         return $file->storeAs($destination, $fileName, 'public');

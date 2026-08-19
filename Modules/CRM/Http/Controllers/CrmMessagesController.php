@@ -194,19 +194,22 @@ class CrmMessagesController extends Controller
 
     public function deleteFile(Request $request)
     {
-        $filename = public_path('storage/' . $request->get('filename'));
-        // Verifica si el archivo existe
-        //dd($filename);
-        if (file_exists($filename)) {
-            // Elimina el archivo
-            unlink($filename);
+        $filename = str_replace('\\', '/', (string) $request->get('filename'));
 
-            // Devuelve una respuesta exitosa
-            return response()->json(['message' => 'Archivo eliminado correctamente.'], 200);
-        } else {
-            // Devuelve una respuesta de error si el archivo no existe
-            return response()->json(['message' => 'El archivo no existe.'], 404);
+        // Rechaza rutas absolutas, vacías o con navegación de directorios (..).
+        if ($filename === '' || str_starts_with($filename, '/') || preg_match('#(^|/)\.\.(/|$)#', $filename)) {
+            return response()->json(['message' => 'Nombre de archivo inválido.'], 400);
         }
+
+        $disk = Storage::disk('public');
+
+        if ($disk->exists($filename)) {
+            $disk->delete($filename);
+
+            return response()->json(['message' => 'Archivo eliminado correctamente.'], 200);
+        }
+
+        return response()->json(['message' => 'El archivo no existe.'], 404);
     }
 
     public function uploadMessagesFile(Request $request)

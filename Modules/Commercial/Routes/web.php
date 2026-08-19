@@ -164,6 +164,10 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->name('comm_negotiations_process_subscriptions');
 
     Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/installments', [CommercialNegotiationProcessController::class, 'processInstallments'])
+        ->name('comm_negotiations_process_installments');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
         ->post('negotiations/process/{id}/document', [CommercialNegotiationProcessController::class, 'processDocument'])
         ->name('comm_negotiations_process_document');
 

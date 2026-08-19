@@ -396,13 +396,23 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
 }
 
 .dark .bib-reader-page-sheet {
-    background: #fafaf8;
-    border-color: #94a3b8;
-    color: #1e293b;
+    background: #1e293b;
+    border-color: #475569;
+    color: #e2e8f0;
     box-shadow:
         0 2px 4px rgba(0, 0, 0, 0.25),
         0 12px 32px rgba(0, 0, 0, 0.35),
         0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.dark .bib-reader-page-sheet::before {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0) 12%,
+        rgba(255, 255, 255, 0) 88%,
+        rgba(0, 0, 0, 0.12) 100%
+    );
 }
 
 .bib-reader-page-sheet__header {
@@ -701,6 +711,35 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
     white-space: pre-wrap;
     word-break: break-word;
     max-width: 100%;
+}
+
+/* Tema oscuro: forzar texto claro en el contenido de la hoja.
+   Los textos pegados desde Google Docs/Word traen estilos inline
+   (color oscuro y fondo blanco) que pisan el tema; aquí se neutralizan. */
+.dark .bib-reader-page-content,
+.dark .bib-reader-page-content * {
+    color: #e2e8f0 !important;
+}
+
+.dark .bib-reader-page-content a {
+    color: #67e8f9 !important;
+}
+
+.dark .bib-reader-page-content [style*="background-color"],
+.dark .bib-reader-page-content *[style*="background-color"] {
+    background-color: transparent !important;
+}
+
+.dark .bib-reader-page-sheet__header {
+    border-bottom-color: #334155;
+}
+
+.dark .bib-reader-page-sheet__title {
+    color: #f1f5f9;
+}
+
+.dark .bib-reader-page-sheet__section {
+    color: #67e8f9;
 }
 
 .bib-reader-index-sections {
@@ -1052,6 +1091,10 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
     color: rgb(100 116 139);
 }
 
+.dark .bib-reader-cases-panel__document-meta {
+    color: rgb(148 163 184);
+}
+
 .bib-reader-cases-panel__document-link {
     display: inline-flex;
     align-items: center;
@@ -1265,6 +1308,20 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
 
 .dark .bib-reader-case-content {
     color: rgb(203 213 225);
+}
+
+.dark .bib-reader-case-content,
+.dark .bib-reader-case-content * {
+    color: #e2e8f0 !important;
+}
+
+.dark .bib-reader-case-content a {
+    color: #67e8f9 !important;
+}
+
+.dark .bib-reader-case-content [style*="background-color"],
+.dark .bib-reader-case-content *[style*="background-color"] {
+    background-color: transparent !important;
 }
 
 .bib-reader-case-content h1,

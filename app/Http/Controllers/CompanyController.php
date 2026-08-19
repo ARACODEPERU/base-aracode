@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Helpers\Invoice\Certificates\Convert;
 use App\Models\Bank;
 use App\Models\BankAccount;
+use App\Models\BilleteraDigital;
 use App\Models\Company;
+use App\Models\CompanyBilletera;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -25,12 +27,17 @@ class CompanyController extends Controller
         //dd($bankAccounts);
         $currencyTypes = DB::table('sunat_currency_types')->get();
 
+        $billeteras = BilleteraDigital::where('status', true)->orderBy('full_name')->get();
+        $companyBilleteras = CompanyBilletera::with(['billetera', 'bankAccount.bank'])->get();
+
         return Inertia::render('Company/Show', [
             'company'   => $company ? $company : [],
             'ubigeo'    => $ubigeo->toArray(),
             'banks'     => $banks,
             'bankAccounts' => $bankAccounts,
-            'currencyTypes' => $currencyTypes
+            'currencyTypes' => $currencyTypes,
+            'billeteras' => $billeteras,
+            'companyBilleteras' => $companyBilleteras,
         ]);
     }
     public function updateCreate(Request $request)

@@ -35,6 +35,8 @@ class CommercialNegotiation extends Model
         'voucher_path',
         'sale_id',
         'sale_document_id',
+        'email_sent_at',
+        'process_progress',
         'rejected_reason',
         'created_by',
         'verified_by',
@@ -45,6 +47,8 @@ class CommercialNegotiation extends Model
         'schedule' => 'array',
         'client_data' => 'array',
         'verified_at' => 'datetime',
+        'email_sent_at' => 'datetime',
+        'process_progress' => 'array',
     ];
 
     public function items()

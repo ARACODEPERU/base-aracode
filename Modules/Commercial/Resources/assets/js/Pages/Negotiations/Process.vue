@@ -19,73 +19,86 @@ const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
     statuses: { type: Array, default: () => [] },
     paymentMethods: { type: Array, default: () => [] },
+    stepsStatus: { type: Object, default: () => ({}) },
 });
 
 const hasCourses = computed(() => props.negotiation.items?.some((item) => item.item_type === "course") ?? false);
 const hasSubscriptions = computed(() => props.negotiation.items?.some((item) => item.item_type === "subscription") ?? false);
 const isSinglePayment = computed(() => props.negotiation.payment_type === "single");
+const isInstallments = computed(() => props.negotiation.payment_type === "installments");
+
+// Estado inicial de cada paso, tomado del progreso ya guardado en la base de datos.
+const initialStatus = (key, fallback = "pending") => props.stepsStatus?.[key] ?? fallback;
 
 const steps = ref([
     {
         key: "person",
         label: "Datos del cliente",
         description: "Guardar los datos del cliente en la tabla people",
-        status: "pending",
+        status: initialStatus("person"),
         skipped: false,
     },
     {
         key: "user",
         label: "Crear usuario",
         description: "Crear el usuario de acceso con rol Alumno",
-        status: "pending",
+        status: initialStatus("user"),
         skipped: false,
     },
     {
         key: "student",
         label: "Registrar estudiante",
         description: "Crear el estudiante en aca_students",
-        status: "pending",
+        status: initialStatus("student"),
         skipped: false,
     },
     {
         key: "registrations",
         label: "Matriculas de cursos",
         description: "Registrar los cursos en aca_cap_registrations",
-        status: "pending",
+        status: initialStatus("registrations"),
         skipped: !hasCourses.value,
     },
     {
         key: "subscriptions",
         label: "Suscripciones",
         description: "Registrar las suscripciones segun el plan",
-        status: "pending",
+        status: initialStatus("subscriptions"),
         skipped: !hasSubscriptions.value,
+    },
+    {
+        key: "installments",
+        label: "Cuentas por cobrar (cuotas)",
+        description: "Registrar la venta en cuotas con su cronograma en cuentas por cobrar",
+        status: initialStatus("installments"),
+        skipped: isSinglePayment.value,
     },
     {
         key: "document",
         label: "Comprobante de venta",
         description: "Generar la boleta o factura",
-        status: "pending",
-        skipped: !isSinglePayment.value,
+        status: initialStatus("document"),
+        skipped: false,
     },
     {
         key: "email",
         label: "Envio de correo",
         description: "Enviar al cliente su comprobante en PDF, usuario y contraseña de acceso",
-        status: "pending",
-        skipped: !isSinglePayment.value,
+        status: initialStatus("email"),
+        skipped: false,
     },
     {
         key: "complete",
         label: "Finalizar",
         description: "Marcar la negociacion como aprobada",
-        status: "pending",
+        status: initialStatus("complete"),
         skipped: false,
     },
 ]);
 
 const processing = ref(false);
-const finished = ref(false);
+const allStepsDone = computed(() => steps.value.filter((s) => !s.skipped).every((s) => s.status === "done"));
+const finished = ref(allStepsDone.value);
 
 const visibleSteps = computed(() => steps.value.filter((step) => !step.skipped));
 
@@ -148,7 +161,9 @@ const run = async () => {
         step.status = "running";
 
         try {
-            const res = await axios.post(route(`comm_negotiations_process_${step.key}`, props.negotiation.id));
+            // El paso de correo genera el PDF del comprobante y puede tardar mas; le damos mas timeout.
+            const timeout = step.key === "email" ? 120000 : 60000;
+            const res = await axios.post(route(`comm_negotiations_process_${step.key}`, props.negotiation.id), {}, { timeout });
 
             if (!res.data || !res.data.success) {
                 throw new Error(res.data?.message || "Error al procesar el paso");
