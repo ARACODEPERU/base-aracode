@@ -67,6 +67,7 @@ class CommercialNegotiationController extends Controller
             ]));
 
             $this->syncItems($negotiation, $data['items']);
+            $this->syncCompanyBilleteras($negotiation, $data['company_billetera_ids'] ?? []);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -84,7 +85,7 @@ class CommercialNegotiationController extends Controller
     public function edit($id)
     {
         return Inertia::render('Commercial::Negotiations/Edit', array_merge($this->formData(), [
-            'negotiation' => CommercialNegotiation::with('items')->findOrFail($id),
+            'negotiation' => CommercialNegotiation::with(['items', 'companyBilleteras'])->findOrFail($id),
         ]));
     }
 
@@ -98,6 +99,7 @@ class CommercialNegotiationController extends Controller
 
             $negotiation->update($this->payload($data));
             $this->syncItems($negotiation, $data['items']);
+            $this->syncCompanyBilleteras($negotiation, $data['company_billetera_ids'] ?? []);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -315,6 +317,19 @@ class CommercialNegotiationController extends Controller
                 ->get(['id', 'symbol', 'description']),
             'paymentMethods' => $this->paymentMethods(),
             'contactChannels' => $this->contactChannels(),
+            'companyBilleteras' => \App\Models\CompanyBilletera::with('billetera')
+                ->where('status', true)
+                ->whereNotNull('qr_image')
+                ->get()
+                ->map(fn ($cb) => [
+                    'id' => $cb->id,
+                    'billetera_id' => $cb->billetera_id,
+                    'nombre' => $cb->billetera?->full_name,
+                    'titular' => $cb->account_name,
+                    'numero' => $cb->account_number,
+                    'qr_url' => $cb->qr_image ? asset('storage/' . $cb->qr_image) : null,
+                ])
+                ->values(),
         ];
     }
 
@@ -334,7 +349,9 @@ class CommercialNegotiationController extends Controller
             'contact_channel' => ['nullable', 'string', 'max:40'],
             'contact_detail' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'payment_method' => ['required', Rule::in(['yape', 'mercadopago', 'transferencia', 'enlace'])],
+            'payment_method' => ['required', Rule::in(['billetera_digital', 'mercadopago', 'transferencia', 'enlace'])],
+            'company_billetera_ids' => ['nullable', 'array'],
+            'company_billetera_ids.*' => ['nullable', 'integer', 'exists:company_billeteras,id'],
             'payment_link' => ['nullable', 'url', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_type' => ['required', Rule::in(['course', 'subscription'])],
@@ -343,6 +360,15 @@ class CommercialNegotiationController extends Controller
             'items.*.price' => ['nullable', 'numeric', 'min:0'],
         ])->after(function ($validator) {
             $data = $validator->getData();
+
+            // Si el medio de pago es billetera digital, debe elegirse al menos una.
+            if (($data['payment_method'] ?? null) === 'billetera_digital') {
+                $billeteraIds = array_values(array_filter((array) ($data['company_billetera_ids'] ?? [])));
+
+                if (count($billeteraIds) === 0) {
+                    $validator->errors()->add('company_billetera_ids', 'Debe seleccionar al menos una billetera digital que tenga QR.');
+                }
+            }
 
             if (($data['payment_type'] ?? null) !== 'installments') {
                 return;
@@ -400,6 +426,16 @@ class CommercialNegotiationController extends Controller
         }
     }
 
+    /**
+     * Sincroniza las billeteras digitales de la empresa seleccionadas en la negociacion.
+     */
+    private function syncCompanyBilleteras(CommercialNegotiation $negotiation, array $billeteraIds): void
+    {
+        $ids = array_values(array_filter(array_map('intval', $billeteraIds)));
+
+        $negotiation->companyBilleteras()->sync($ids);
+    }
+
     private function statuses(): array
     {
         return [
@@ -415,7 +451,7 @@ class CommercialNegotiationController extends Controller
     private function paymentMethods(): array
     {
         return [
-            ['value' => 'yape', 'label' => 'Yape'],
+            ['value' => 'billetera_digital', 'label' => 'Billetera digital'],
             ['value' => 'mercadopago', 'label' => 'Mercado Pago'],
             ['value' => 'transferencia', 'label' => 'Transferencia bancaria'],
             ['value' => 'enlace', 'label' => 'Enlace de pago'],

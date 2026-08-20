@@ -21,6 +21,7 @@ const props = defineProps({
     currencyTypes: { type: Array, default: () => [] },
     paymentMethods: { type: Array, default: () => [] },
     contactChannels: { type: Array, default: () => [] },
+    companyBilleteras: { type: Array, default: () => [] },
 });
 
 const isEdit = computed(() => !!props.negotiation?.id);
@@ -39,8 +40,9 @@ const form = useForm({
     contact_channel: props.negotiation?.contact_channel ?? null,
     contact_detail: props.negotiation?.contact_detail ?? currentUserName,
     email: props.negotiation?.email ?? null,
-    payment_method: props.negotiation?.payment_method ?? "yape",
+    payment_method: (props.negotiation?.payment_method === "yape" ? "billetera_digital" : props.negotiation?.payment_method) ?? "billetera_digital",
     payment_link: props.negotiation?.payment_link ?? null,
+    company_billetera_ids: props.negotiation?.company_billeteras?.map((item) => item.id) ?? [],
     course_ids: props.negotiation?.items?.filter((item) => item.item_type === "course").map((item) => item.item_id) ?? [],
     subscription_ids: props.negotiation?.items?.filter((item) => item.item_type === "subscription").map((item) => item.item_id) ?? [],
     items: [],
@@ -64,6 +66,11 @@ const currencyOptions = computed(() => props.currencyTypes.map((item) => ({
 const paymentMethodOptions = computed(() => props.paymentMethods.map((item) => ({
     value: item.value,
     label: item.label,
+})));
+
+const billeteraOptions = computed(() => props.companyBilleteras.map((item) => ({
+    value: item.id,
+    label: `${item.nombre || 'Billetera'} - ${item.titular || ''}`.trim(),
 })));
 
 const contactChannelOptions = computed(() => props.contactChannels.map((item) => ({
@@ -394,13 +401,30 @@ const submit = () => {
                 <InputError :message="form.errors.payment_link" class="mt-2" />
             </div>
 
-            <div v-else class="col-span-6 sm:col-span-3">
+            <div v-if="form.payment_method === 'billetera_digital'" class="col-span-6 sm:col-span-3">
+                <InputLabel value="Billetera digital *" />
+                <Select
+                    v-model:value="form.company_billetera_ids"
+                    mode="multiple"
+                    :options="billeteraOptions"
+                    :disabled="form.payment_method !== 'billetera_digital'"
+                    :filter-option="filterOption"
+                    show-search
+                    allow-clear
+                    placeholder="Selecciona las billeteras digitales (con QR)"
+                    style="width: 100%"
+                />
+                <InputError :message="form.errors.company_billetera_ids" class="mt-2" />
+                <p class="text-xs text-gray-500 mt-1">En la confirmacion del cliente se mostrara el titular y el codigo QR de cada billetera seleccionada.</p>
+            </div>
+
+            <div v-if="form.payment_method !== 'billetera_digital'" class="col-span-6 sm:col-span-3">
                 <div class="pt-5 text-xs text-gray-500">
-                    <template v-if="form.payment_method === 'yape'">
-                        Se mostrara el numero de Yape configurado de la empresa al cliente.
+                    <template v-if="form.payment_method === 'transferencia'">
+                        Se mostraran las cuentas bancarias de la empresa al cliente.
                     </template>
                     <template v-else>
-                        Se mostraran las cuentas bancarias de la empresa al cliente.
+                        Se mostraran los datos del pago en linea al cliente.
                     </template>
                 </div>
             </div>

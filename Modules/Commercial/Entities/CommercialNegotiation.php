@@ -2,11 +2,13 @@
 
 namespace Modules\Commercial\Entities;
 
+use App\Models\CompanyBilletera;
 use App\Models\Person;
 use App\Models\SaleDocument;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class CommercialNegotiation extends Model
 {
@@ -79,5 +81,14 @@ class CommercialNegotiation extends Model
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    /**
+     * Billeteras digitales de la empresa seleccionadas para esta negociacion.
+     */
+    public function companyBilleteras(): BelongsToMany
+    {
+        return $this->belongsToMany(CompanyBilletera::class, 'commercial_negotiation_company_billetera', 'negotiation_id', 'company_billetera_id')
+            ->withTimestamps();
     }
 }

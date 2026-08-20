@@ -23,7 +23,7 @@ class CommercialNegotiationPublicController extends Controller
 {
     public function show($token)
     {
-        $negotiation = CommercialNegotiation::with('items')
+        $negotiation = CommercialNegotiation::with(['items', 'companyBilleteras.billetera'])
             ->where('token', $token)
             ->first();
 
@@ -270,6 +270,16 @@ class CommercialNegotiationPublicController extends Controller
                 'title' => $item->title,
                 'price' => (float) $item->price,
             ])->values(),
+            'company_billeteras' => $negotiation->companyBilleteras
+                ->map(fn ($cb) => [
+                    'id' => $cb->id,
+                    'nombre' => $cb->billetera?->full_name,
+                    'short_name' => $cb->billetera?->short_name,
+                    'titular' => $cb->account_name,
+                    'numero' => $cb->account_number,
+                    'qr_url' => $cb->qr_image ? asset('storage/' . $cb->qr_image) : null,
+                ])
+                ->values(),
         ];
     }
 

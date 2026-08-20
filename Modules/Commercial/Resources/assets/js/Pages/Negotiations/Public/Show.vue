@@ -601,10 +601,25 @@ const submit = () => {
                                 </div>
                             </div>
 
-                            <div v-else-if="negotiation.payment_method === 'yape'" class="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
-                                <p class="text-sm font-semibold dark:text-white">Yape</p>
-                                <p class="text-xs text-gray-500">Numero: {{ yapeNumber || '--' }}</p>
-                                <p class="mt-1 text-xs text-gray-500">Envia tu pago por Yape y adjunta el voucher o captura del pago.</p>
+                            <div v-else-if="negotiation.payment_method === 'billetera_digital'" class="space-y-3">
+                                <div
+                                    v-for="billetera in negotiation.company_billeteras"
+                                    :key="billetera.id"
+                                    class="flex items-center gap-4 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40"
+                                >
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold dark:text-white">{{ billetera.nombre }}</p>
+                                        <p class="text-xs text-gray-500">Titular: {{ billetera.titular || '--' }}</p>
+                                        <p class="text-xs text-gray-500">Numero: {{ billetera.numero || '--' }}</p>
+                                    </div>
+                                    <img
+                                        v-if="billetera.qr_url"
+                                        :src="billetera.qr_url"
+                                        :alt="billetera.nombre"
+                                        class="h-20 w-20 shrink-0 rounded-md border border-gray-200 object-cover dark:border-gray-700"
+                                    />
+                                </div>
+                                <p class="text-xs text-gray-500">Elige cualquiera de los medios y adjunta el voucher o captura del pago.</p>
                             </div>
 
                             <div v-else-if="negotiation.payment_method === 'mercadopago' || negotiation.payment_method === 'enlace'" class="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">

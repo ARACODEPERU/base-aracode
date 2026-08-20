@@ -10,6 +10,7 @@ defineProps({
     currencyTypes: { type: Array, default: () => [] },
     paymentMethods: Array,
     contactChannels: Array,
+    companyBilleteras: { type: Array, default: () => [] },
 });
 </script>
 
@@ -30,6 +31,7 @@ defineProps({
                 :currency-types="currencyTypes"
                 :payment-methods="paymentMethods"
                 :contact-channels="contactChannels"
+                :company-billeteras="companyBilleteras"
             />
         </div>
     </AppLayout>
