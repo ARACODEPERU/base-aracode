@@ -670,6 +670,9 @@ class AcaStudentController extends Controller
             })
             ->exists();
 
+        // 1.1 Verificar si el estudiante tiene Premium VIP
+        $hasPremiumVip = $this->hasPremiumVipSubscription($studentId);
+
         // 2. Obtener los IDs de los cursos en los que el estudiante está matriculado
         $registeredCourseIds = AcaCapRegistration::where('student_id', $studentId)
             ->where(function ($query) use ($today) {
@@ -690,12 +693,15 @@ class AcaStudentController extends Controller
                 ->get();
 
         // 4. Procesar cada curso para determinar 'can_view'
-        $coursesWithAccess = $allCourses->map(function ($course) use ($hasActiveSubscription, $registeredCourseIds) {
+        $coursesWithAccess = $allCourses->map(function ($course) use ($hasActiveSubscription, $hasPremiumVip, $registeredCourseIds) {
             $canView = false; // Valor por defecto
 
-            // Condición 4: Si el tipo es 'Programas de especialización', NUNCA se puede ver (a menos que haya una lógica de compra/pago específica no indicada)
-            // Normalizar ambas cadenas (recomendado)
-            if (strcasecmp($course->type_description, 'Programas de Especialización') === 0) {
+            // Condición VIP: Si tiene Premium VIP, puede ver TODOS los cursos (incluido especialización)
+            if ($hasPremiumVip) {
+                $canView = true;
+            }
+            // Condición 4: Si el tipo es 'Programas de especialización', solo matriculados
+            elseif (strcasecmp($course->type_description, 'Programas de Especialización') === 0) {
                 if (in_array($course->id, $registeredCourseIds)) {
                     $canView = true;
                 } else {
@@ -724,6 +730,19 @@ class AcaStudentController extends Controller
         return $coursesWithAccess;
     }
 
+    /**
+     * Verificar si el estudiante tiene una suscripción Premium VIP activa
+     */
+    private function hasPremiumVipSubscription(int $studentId): bool
+    {
+        return AcaStudentSubscription::where('student_id', $studentId)
+            ->where('status', true)
+            ->whereHas('subscription', function ($query) {
+                $query->where('title', 'LIKE', '%Premium VIP%');
+            })
+            ->exists();
+    }
+
     public function checkCourseAccess(int $studentId, int $courseId): bool
     {
         // Obtener la información del curso
@@ -732,6 +751,14 @@ class AcaStudentController extends Controller
         // Si el curso no existe, no hay acceso.
         if (!$course) {
             return false;
+        }
+
+        // Verificar si el estudiante tiene Premium VIP
+        $hasPremiumVip = $this->hasPremiumVipSubscription($studentId);
+
+        // Condición VIP: Si tiene Premium VIP, puede ver TODOS los cursos (incluido especialización)
+        if ($hasPremiumVip) {
+            return true;
         }
 
         // Condición 4: Si el tipo es 'Programas de especialización', NO pasa (a menos que haya lógica de compra/pago específica)
@@ -895,13 +922,6 @@ class AcaStudentController extends Controller
             });
         }
 
-        // Calcular progreso por tema
-        $module->themes->each(function ($theme) {
-            $totalContents = $theme->contents->reject(fn($c) => $c->is_file == 4)->count();
-            $viewedContents = $theme->student_history->unique('content_id')->count();
-            $theme->progress = $totalContents > 0 ? round(($viewedContents / $totalContents) * 100) : 0;
-        });
-
         $course = AcaCourse::with('teacher.person')->where('id', $module->course_id)
             ->first();
 
@@ -919,6 +939,9 @@ class AcaStudentController extends Controller
         $nextModule = $currentModuleIndex !== false ? $courseModules->get($currentModuleIndex + 1) : null;
 
         $isEnrolled = false;
+        $isVipStudent = false;
+        $isMatriculated = false;
+        $isSpecializationCourse = strcasecmp($course->type_description, 'Programas de Especialización') === 0;
 
         $user = Auth::user();
         if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
@@ -927,7 +950,10 @@ class AcaStudentController extends Controller
 
         if($studentId){
             $isEnrolled = $this->checkCourseAccess($studentId, $course->id);
-
+            $isVipStudent = $this->hasPremiumVipSubscription($studentId);
+            $isMatriculated = AcaCapRegistration::where('student_id', $studentId)
+                ->where('course_id', $course->id)
+                ->exists();
         }
 
         // Denegar acceso si no está matriculado y el curso no es gratis
@@ -935,11 +961,53 @@ class AcaStudentController extends Controller
             abort(403, 'No tienes acceso a este curso.');
         }
 
+        // Filtrar contenido según reglas de acceso
+        $module->themes->each(function ($theme) use ($isVipStudent, $isMatriculated, $isSpecializationCourse, $user) {
+            $theme->contents = $theme->contents->filter(function ($content) use ($isVipStudent, $isMatriculated, $isSpecializationCourse, $user) {
+                // Admin/Docentes ven todo
+                if ($user->hasAnyRole(['admin', 'Docente', 'Administrador'])) {
+                    return true;
+                }
+
+                // Zoom/Meet (is_file = 3)
+                if ($content->is_file == 3) {
+                    // VIP en programa de especialización NO ve Zoom/Meet
+                    if ($isVipStudent && $isSpecializationCourse) {
+                        return false;
+                    }
+                    // Matriculados SÍ ven Zoom/Meet
+                    return true;
+                }
+
+                // Webinars (is_file = 5)
+                if ($content->is_file == 5) {
+                    // Matriculados NO ven webinars (ellos tienen Zoom/Meet)
+                    if ($isMatriculated) {
+                        return false;
+                    }
+                    // VIP SÍ ven webinars
+                    return true;
+                }
+
+                // Todo lo demás (videos, PDFs, links, exámenes) siempre visible
+                return true;
+            })->values();
+        });
+
+        // Recalcular progreso después del filtrado
+        $module->themes->each(function ($theme) {
+            $totalContents = $theme->contents->reject(fn($c) => $c->is_file == 4)->count();
+            $viewedContents = $theme->student_history->unique('content_id')->count();
+            $theme->progress = $totalContents > 0 ? round(($viewedContents / $totalContents) * 100) : 0;
+        });
+
         return Inertia::render('Academic::Students/Themes', [
             'course' => $course,
             'module' => $module,
             'previousModule' => $previousModule,
             'nextModule' => $nextModule,
+            'isVipStudent' => $isVipStudent,
+            'isSpecializationCourse' => $isSpecializationCourse,
         ]);
     }
 

@@ -1441,6 +1441,48 @@
                                             </div>
                                         </div>
                                     </template>
+                                    <!-- Webinar -->
+                                    <template v-else-if="content.is_file == 5">
+                                        <div class="group bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl p-5 border border-teal-200 dark:border-teal-800/30 transition-all duration-300 hover:shadow-md hover:scale-[1.01]">
+                                            <div class="flex items-center gap-4">
+                                                <!-- Icono -->
+                                                <div class="bg-teal-500 text-white p-3 rounded-xl group-hover:scale-110 transition-transform shadow-md">
+                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm12.553 1.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                                                    </svg>
+                                                </div>
+
+                                                <!-- Información -->
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center gap-2 mb-2">
+                                                        <span class="bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-2 py-1 rounded-full text-xs font-semibold">
+                                                            WEBINAR
+                                                        </span>
+                                                        <span class="text-xs text-gray-500 dark:text-gray-400">Sesión grabada</span>
+                                                    </div>
+                                                    <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">
+                                                        {{ content.description }}
+                                                    </h3>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                        Reproduce este webinar cuando desees
+                                                    </p>
+                                                </div>
+
+                                                <!-- Botón de Reproducción -->
+                                                <div>
+                                                    <button @click="openSelectedVideo(content)"
+                                                        type="button"
+                                                        class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-medium text-sm hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        Ver Webinar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </template>
                             </template>
                             <!-- Estado Vacío -->
