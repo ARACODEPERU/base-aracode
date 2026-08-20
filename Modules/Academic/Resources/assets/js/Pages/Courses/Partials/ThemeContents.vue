@@ -262,6 +262,7 @@ const destroyContent = (index,id) => {
                                 <select v-model="formContents.is_file" class="form-select disabled:pointer-events-none disabled:bg-[#eee] dark:disabled:bg-[#1b2e4b] text-white-dark">
                                     <option value="1">Link de archivo</option>
                                     <option value="0">Iframe de video</option>
+                                    <option value="5">Webinar (YouTube/Vimeo)</option>
                                 </select>
                             </div>
                             <InputError :message="formContents.errors.is_file" class="mt-2" />
