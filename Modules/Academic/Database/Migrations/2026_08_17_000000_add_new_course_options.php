@@ -26,11 +26,25 @@ return new class extends Migration
             'updated_at' => now(),
         ]);
 
-        // 2. Nuevo tipo en el ENUM (se preservan los valores existentes)
-        DB::statement("ALTER TABLE aca_courses MODIFY COLUMN type_description ENUM('Webinar','Cursos Taller','Programas de Especialización','Bootcamp') NULL");
+        // 2. Obtener todos los valores existentes en type_description para incluirlos en el nuevo ENUM
+        $tiposExistentes = DB::table('aca_courses')
+            ->whereNotNull('type_description')
+            ->distinct()
+            ->pluck('type_description')
+            ->toArray();
+        $todosTipos = array_unique(array_merge($tiposExistentes, ['Webinar', 'Cursos Taller', 'Programas de Especialización', 'Bootcamp']));
+        $tiposEnum = implode(',', array_map(fn($t) => "'" . addslashes($t) . "'", $todosTipos));
+        DB::statement("ALTER TABLE aca_courses MODIFY COLUMN type_description ENUM($tiposEnum) NULL");
 
-        // 3. Nuevo sector en el ENUM (se preservan los valores existentes)
-        DB::statement("ALTER TABLE aca_courses MODIFY COLUMN sector_description ENUM('Contabilidad','Recursos Humanos') NULL");
+        // 3. Obtener todos los valores existentes en sector_description para incluirlos en el nuevo ENUM
+        $sectoresExistentes = DB::table('aca_courses')
+            ->whereNotNull('sector_description')
+            ->distinct()
+            ->pluck('sector_description')
+            ->toArray();
+        $todosSectores = array_unique(array_merge($sectoresExistentes, ['Contabilidad', 'Recursos Humanos']));
+        $sectoresEnum = implode(',', array_map(fn($s) => "'" . addslashes($s) . "'", $todosSectores));
+        DB::statement("ALTER TABLE aca_courses MODIFY COLUMN sector_description ENUM($sectoresEnum) NULL");
     }
 
     /**
