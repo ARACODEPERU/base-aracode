@@ -17,8 +17,21 @@
     # Seguridad: bloquear la ejecución de scripts subidos a /storage
     RewriteRule ^storage/.*\.(php|phtml|phar|php5|php7|php8|cgi|pl|sh)$ - [F,L,NC]
 
+    # Seguridad: bloquear archivos sensibles y de configuración
+    RewriteRule ^\.env$ - [F,L,NC]
+    RewriteRule ^(composer\.(json|lock)|package\.json|artisan|server\.php|phpunit\.xml|\.gitignore)$ - [F,L,NC]
+    RewriteRule \.(log|sql|bak|old|swp|ini|md)$ - [F,L,NC]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# Cabeceras de seguridad
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-XSS-Protection "1; mode=block"
 </IfModule>

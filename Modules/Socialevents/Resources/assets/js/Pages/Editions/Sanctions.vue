@@ -241,6 +241,10 @@
         let url = route('ticketpdf_sales',id)
         window.open(url, "_blank");
     }
+
+    const printSanctionsPdf = () => {
+        window.open(route('even_ediciones_sanciones_pdf', props.edicion.id), "_blank");
+    }
 </script>
 <template>
     <AppLayout title="Ediciones">
@@ -268,6 +272,9 @@
                     <div class="col-span-3 sm:col-span-2">
                         <Keypad>
                             <template #botones>
+                                <button @click="printSanctionsPdf" type="button" class="btn btn-primary uppercase text-xs">
+                                    Imprimir PDF
+                                </button>
                                 <Link :href="route('even_ediciones_listado')" :preserveState="true" class="btn btn-warning uppercase text-xs">
                                     Ir atras
                                 </Link>

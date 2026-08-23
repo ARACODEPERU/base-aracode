@@ -175,6 +175,8 @@ class BibBookController extends Controller
             'description' => 'nullable|string',
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'integer|exists:bib_tags,id',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'file_path' => 'nullable|file|mimes:pdf,epub,mobi,doc,docx,xls,xlsx,ppt,pptx,txt,csv,zip|max:51200',
         ];
 
         if ($isCreate) {

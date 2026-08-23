@@ -4,6 +4,7 @@ namespace Modules\Socialevents\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\PettyCash;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Sale;
 use App\Models\SaleDocument;
 use App\Models\SaleProduct;
@@ -57,6 +58,69 @@ class EventEditionMatchSanctionController extends Controller
             'players' => $players,
             'edicion' => $edicion
         ]);
+    }
+
+    /**
+     * Genera el PDF del listado de sanciones pendientes de pago.
+     */
+    public function printSanctionsPdf($id)
+    {
+        $edicion = EventEdition::with('evento')->findOrFail($id);
+
+        $players = EventEditionTeamPlayer::with(['team', 'person', 'sanctions' => function ($q) {
+            $q->where('is_paid', false);
+        }])
+        ->where('edition_id', $id)
+        ->whereHas('sanctions', fn ($q) => $q->where('is_paid', false))
+        ->get();
+
+        $rows = [];
+        $total = 0;
+
+        foreach ($players as $player) {
+            $grouped = $player->sanctions->groupBy('match_id');
+
+            foreach ($grouped as $matchSanctions) {
+                $hasDoubleYellow = $matchSanctions->where('type', 'double_yellow')->isNotEmpty();
+
+                // Aplica la misma regla de absorción del listado: si hay doble amarilla,
+                // se ignoran las amarillas simples de ese partido.
+                $effective = $hasDoubleYellow
+                    ? $matchSanctions->whereIn('type', ['double_yellow', 'red'])
+                    : $matchSanctions;
+
+                foreach ($effective as $sanction) {
+                    $amount = (float) $sanction->amount_fine;
+                    $total += $amount;
+
+                    $rows[] = [
+                        'player_name' => $player->person?->full_name ?? 'Jugador',
+                        'team_name'   => $player->team?->name ?? 'Equipo',
+                        'card'        => $this->sanctionLabel($sanction->type),
+                        'price'       => number_format($amount, 2, '.', ''),
+                    ];
+                }
+            }
+        }
+
+        $pdf = Pdf::loadView('socialevents::sanctions.pdf.list', [
+            'event_name' => $edicion->evento?->title ?? '',
+            'edicion'    => $edicion,
+            'rows'       => $rows,
+            'total'      => number_format($total, 2, '.', ''),
+        ]);
+
+        return $pdf->stream('sanciones_edicion_' . $id . '_' . date('Ymd') . '.pdf');
+    }
+
+    private function sanctionLabel(?string $type): string
+    {
+        return match ($type) {
+            'yellow'        => 'Amarilla',
+            'double_yellow' => 'Doble Amarilla',
+            'red'           => 'Roja Directa',
+            default         => $type ?? '-',
+        };
     }
 
     public function paySanctions(Request $request)

@@ -309,11 +309,19 @@ class CrmMessagesController extends Controller
 
         if ($file) {
             $folder = 'crm' . DIRECTORY_SEPARATOR . 'chat' . DIRECTORY_SEPARATOR . Auth::id();
-            $file_name = str_replace(' ', '_', $file->getClientOriginalName());
-            $path = $request->file('file')->storeAs($folder, $file_name, 'public');
+            $originalName = str_replace(' ', '_', $file->getClientOriginalName());
+            $extension = strtolower($file->getClientOriginalExtension());
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv', 'zip'];
+
+            if (! in_array($extension, $allowedExtensions, true)) {
+                return response()->json(['success' => false, 'message' => 'Formato de archivo no permitido.'], 422);
+            }
+
+            $storedName = time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+            $path = $request->file('file')->storeAs($folder, $storedName, 'public');
 
             $message->attachments = [
-                array('path' => $path, 'file_name' => $file_name)
+                array('path' => $path, 'file_name' => $originalName)
             ];
             $message->save();
         }
