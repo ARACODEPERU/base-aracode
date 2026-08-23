@@ -12,9 +12,11 @@ const props = defineProps({
 const emit = defineEmits(['update:pageZoom']);
 
 const sheetScalerStyle = computed(() => {
-    const scale = props.pageZoom / 100;
+    // Usamos "zoom" en lugar de "transform: scale()" porque zoom si expande el layout
+    // del elemento, generando scroll y permitiendo desplazar el contenido (clave en movil).
+    const zoomValue = props.pageZoom / 100;
     return {
-        transform: `scale(${scale})`,
+        zoom: zoomValue,
         transformOrigin: 'top center',
     };
 });
@@ -23,7 +25,11 @@ const sheetScalerStyle = computed(() => {
 <template>
     <section class="bib-reader-reading-layout__sheet">
         <div class="bib-reader-page-stage">
-            <div class="bib-reader-page-sheet-scaler" :style="sheetScalerStyle">
+            <div
+                class="bib-reader-page-sheet-scaler"
+                :class="{ 'is-zoomed': pageZoom > 100 }"
+                :style="sheetScalerStyle"
+            >
                 <article class="bib-reader-page-sheet bib-reader-page-content">
                     <header class="bib-reader-page-sheet__header">
                         <p v-if="currentPage.section_title" class="bib-reader-page-sheet__section">

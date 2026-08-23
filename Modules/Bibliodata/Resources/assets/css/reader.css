@@ -228,6 +228,7 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
     flex: 1;
     min-width: 0;
     overflow-y: auto;
+    overflow-x: auto;
     background: linear-gradient(165deg, #e8edf3 0%, #dde4ec 50%, #e9eef4 100%);
 }
 
@@ -356,8 +357,15 @@ html.bib-reader-smooth-theme .bib-reader-header__logout {
     width: fit-content;
     max-width: 100%;
     margin: 0 auto;
-    transition: transform 0.25s ease;
+    transition: transform 0.25s ease, zoom 0.25s ease;
 }
+
+/* Al hacer zoom, el contenido crece y puede desplazarse (scroll) para leerlo;
+   en movil se habilita el arrastre. */
+.bib-reader-page-sheet-scaler.is-zoomed {
+    max-width: none;
+}
+
 
 /* Hoja A4: ancho 210 mm; alto crece con el contenido (sin máximo) */
 .bib-reader-page-sheet {
