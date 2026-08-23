@@ -12,13 +12,17 @@ export function useReaderPageLoader(props, { onMobileIndexClose } = {}) {
     const showAccessBlocked = ref(false);
     const previewPageId = ref(props.access?.previewPageId ?? null);
 
+    // Estado de suscripcion activa interno: se inicializa con el prop y se actualiza
+    // con cada respuesta del servidor (asi el acceso se corrige aunque el prop inicial sea false).
+    const hasActiveSubscription = ref(props.access?.hasActiveSubscription ?? false);
+
     const csrfHeaders = () => ({
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
         Accept: 'application/json',
     });
 
     const canAccessPage = (pageId) => {
-        if (props.access?.hasActiveSubscription) {
+        if (hasActiveSubscription.value) {
             return true;
         }
         if (!previewPageId.value) {
@@ -61,11 +65,13 @@ export function useReaderPageLoader(props, { onMobileIndexClose } = {}) {
     };
 
     const applyPageAccessFromResponse = (access) => {
+        if (access?.hasActiveSubscription) {
+            hasActiveSubscription.value = true;
+            previewPageId.value = null;
+            return;
+        }
         if (access?.previewPageId) {
             previewPageId.value = access.previewPageId;
-        }
-        if (access?.hasActiveSubscription) {
-            previewPageId.value = null;
         }
     };
 
@@ -154,6 +160,7 @@ export function useReaderPageLoader(props, { onMobileIndexClose } = {}) {
         pageZoom,
         showAccessBlocked,
         previewPageId,
+        hasActiveSubscription,
         hasBook,
         loadSectionPages,
         onToggleExpand,
