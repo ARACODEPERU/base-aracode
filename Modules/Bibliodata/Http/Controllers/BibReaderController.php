@@ -434,6 +434,20 @@ class BibReaderController extends Controller
             return '(vacío)';
         }
 
+        // Decodificamos entidades HTML (p. ej. &nbsp; -> espacio) para que el preview
+        // no muestre codigos como texto literal.
+        $plain = html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Normalizamos espacios no separables a espacio simple.
+        $plain = str_replace("\xc2\xa0", ' ', $plain);
+        $plain = preg_replace('/\s+/u', ' ', $plain) ?? $plain;
+
+        $plain = trim($plain);
+
+        if ($plain === '') {
+            return '(vacío)';
+        }
+
         return mb_strlen($plain) > 80 ? mb_substr($plain, 0, 80) . '...' : $plain;
     }
 
