@@ -291,6 +291,7 @@
                                     <th>#</th>
                                     <th>Equipo</th>
                                     <th>PTS</th>
+                                    <th>P. Extra</th>
                                     <th>PJ</th>
                                     <th>PG</th>
                                     <th>PE</th>
@@ -314,7 +315,8 @@
                                                 {{ $team->equipo->name }}
                                             </div>
                                         </td>
-                                        <td class="pts">{{ $team->points }}</td>
+                                        <td class="pts">{{ (int) $team->points + (int) $team->bonus_points }}</td>
+                                        <td style="color:var(--se-amber)">{{ (int) $team->bonus_points }}</td>
                                         <td>{{ $team->matches_played }}</td>
                                         <td style="color:var(--se-green)">{{ $team->matches_won }}</td>
                                         <td style="color:var(--se-amber)">{{ $team->matches_drawn }}</td>

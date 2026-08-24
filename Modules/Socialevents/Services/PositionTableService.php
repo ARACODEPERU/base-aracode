@@ -40,59 +40,64 @@ class PositionTableService
             $hId = $m->team_h_id;
             $aId = $m->team_a_id;
 
-            // Validamos que AMBOS equipos existan en el array de la edición
-            if (isset($table[$hId]) && isset($table[$aId])) {
+            // Verificamos si cada equipo sigue en la edicion. Si uno fue eliminado
+            // (p. ej. por no presentarse y retirarse), igualmente se contabiliza el
+            // partido para el equipo que sigue participando (walkover).
+            $homePresent = isset($table[$hId]);
+            $awayPresent = isset($table[$aId]);
 
-                // Sumar Partidos Jugados
-                $table[$hId]['played'] += 1;
-                $table[$aId]['played'] += 1;
+            // Si ninguno esta inscrito, el partido no aplica.
+            if (! $homePresent && ! $awayPresent) {
+                $count++;
+                continue;
+            }
 
-                // Sumar Goles
-                $table[$hId]['gf'] += (int)$m->score_h;
-                $table[$hId]['ga'] += (int)$m->score_a;
-                $table[$aId]['gf'] += (int)$m->score_a;
-                $table[$aId]['ga'] += (int)$m->score_h;
+            // Sumar Partidos Jugados y Goles a cada equipo presente.
+            $addStats = function (string $sideKey, int $gf, int $ga) use (&$table) {
+                $table[$sideKey]['played'] += 1;
+                $table[$sideKey]['gf'] += $gf;
+                $table[$sideKey]['ga'] += $ga;
+            };
 
-                // Lógica de Puntos y Resultados
-                // Primero verificamos si hay penalesdefinidos
-                $hasPenalties = !empty($m->penalty_rounds) && !empty($m->penalties);
+            if ($homePresent) {
+                $addStats($hId, (int) $m->score_h, (int) $m->score_a);
+            }
+            if ($awayPresent) {
+                $addStats($aId, (int) $m->score_a, (int) $m->score_h);
+            }
 
-                if ($hasPenalties) {
-                    // Calcular ganador de penales
-                    $penaltyGoalsH = collect($m->penalties)->where('team', 'local')->where('result', 'goal')->count();
-                    $penaltyGoalsA = collect($m->penalties)->where('team', 'visitor')->where('result', 'goal')->count();
+            // Lógica de Puntos y Resultados
+            $hasPenalties = !empty($m->penalty_rounds) && !empty($m->penalties);
 
-                    if ($penaltyGoalsH > $penaltyGoalsA) {
-                        // Local gana por penales
-                        $table[$hId]['won'] += 1;
-                        $table[$hId]['points'] += 3;
-                        $table[$aId]['lost'] += 1;
-                    } elseif ($penaltyGoalsA > $penaltyGoalsH) {
-                        // Visitante gana por penales
-                        $table[$aId]['won'] += 1;
-                        $table[$aId]['points'] += 3;
-                        $table[$hId]['lost'] += 1;
-                    } else {
-                        // Empate incluso en penales (dar 1 punto a cadauno)
-                        $table[$hId]['drawn'] += 1;
-                        $table[$hId]['points'] += 1;
-                        $table[$aId]['drawn'] += 1;
-                        $table[$aId]['points'] += 1;
-                    }
-                } elseif ($m->score_h > $m->score_a) {
-                    $table[$hId]['won'] += 1;
-                    $table[$hId]['points'] += 3;
-                    $table[$aId]['lost'] += 1;
-                } elseif ($m->score_h < $m->score_a) {
-                    $table[$aId]['won'] += 1;
-                    $table[$aId]['points'] += 3;
-                    $table[$hId]['lost'] += 1;
+            if ($hasPenalties) {
+                $penaltyGoalsH = collect($m->penalties)->where('team', 'local')->where('result', 'goal')->count();
+                $penaltyGoalsA = collect($m->penalties)->where('team', 'visitor')->where('result', 'goal')->count();
+
+                if ($penaltyGoalsH > $penaltyGoalsA) {
+                    // Local gana por penales
+                    if ($homePresent) { $table[$hId]['won'] += 1; $table[$hId]['points'] += 3; }
+                    if ($awayPresent) { $table[$aId]['lost'] += 1; }
+                } elseif ($penaltyGoalsA > $penaltyGoalsH) {
+                    // Visitante gana por penales
+                    if ($awayPresent) { $table[$aId]['won'] += 1; $table[$aId]['points'] += 3; }
+                    if ($homePresent) { $table[$hId]['lost'] += 1; }
                 } else {
-                    $table[$hId]['drawn'] += 1;
-                    $table[$hId]['points'] += 1;
-                    $table[$aId]['drawn'] += 1;
-                    $table[$aId]['points'] += 1;
+                    // Empate
+                    if ($homePresent) { $table[$hId]['drawn'] += 1; $table[$hId]['points'] += 1; }
+                    if ($awayPresent) { $table[$aId]['drawn'] += 1; $table[$aId]['points'] += 1; }
                 }
+            } elseif ($m->score_h > $m->score_a) {
+                // Gana local
+                if ($homePresent) { $table[$hId]['won'] += 1; $table[$hId]['points'] += 3; }
+                if ($awayPresent) { $table[$aId]['lost'] += 1; }
+            } elseif ($m->score_h < $m->score_a) {
+                // Gana visitante
+                if ($awayPresent) { $table[$aId]['won'] += 1; $table[$aId]['points'] += 3; }
+                if ($homePresent) { $table[$hId]['lost'] += 1; }
+            } else {
+                // Empate
+                if ($homePresent) { $table[$hId]['drawn'] += 1; $table[$hId]['points'] += 1; }
+                if ($awayPresent) { $table[$aId]['drawn'] += 1; $table[$aId]['points'] += 1; }
             }
             $count++;
         }
@@ -126,7 +131,7 @@ class PositionTableService
     {
         $rankedTeams = EventEditionTeam::with('equipo')->where('edition_id', $editionId)
             ->orderByRaw('CASE WHEN matches_played = 0 THEN 1 ELSE 0 END') // Equipos sin partidos al final
-            ->orderBy('points', 'desc')
+            ->orderByRaw('(points + bonus_points) DESC')
             ->orderBy('goal_difference', 'desc')
             ->orderBy('goals_for', 'desc')
             ->get();
@@ -137,7 +142,9 @@ class PositionTableService
                 'team_id' => $team->team_id,
                 'team_name' => $team->equipo->name,
                 'position' => $index + 1,
-                'points' => $team->points,
+                'points' => $team->totalPoints(),
+                'bonus_points' => (int) $team->bonus_points,
+                'base_points' => (int) $team->points,
                 'matches_played' => $team->matches_played,
                 'matches_won' => $team->matches_won,
                 'matches_drawn' => $team->matches_drawn,
@@ -155,7 +162,7 @@ class PositionTableService
     {
         $rankedTeams = EventEditionTeam::where('edition_id', $editionId)
             ->orderByRaw('CASE WHEN matches_played = 0 THEN 1 ELSE 0 END') // Equipos sin partidos al final
-            ->orderBy('points', 'desc')
+            ->orderByRaw('(points + bonus_points) DESC')
             ->orderBy('goal_difference', 'desc')
             ->orderBy('goals_for', 'desc')
             ->get();

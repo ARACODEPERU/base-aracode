@@ -479,7 +479,7 @@ watch(
         </div>
 
         <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
-            <aside class="w-full shrink-0 overflow-y-auto border-b border-gray-200 bg-gray-50/70 dark:border-zinc-700 dark:bg-zinc-900/70 lg:w-80 lg:border-b-0 lg:border-r">
+            <aside class="w-full shrink-0 overflow-x-auto overflow-y-auto border-b border-gray-200 bg-gray-50/70 dark:border-zinc-700 dark:bg-zinc-900/70 max-h-[40vh] lg:w-80 lg:max-h-none lg:border-b-0 lg:border-r">
                 <div class="flex items-center justify-between gap-2 px-4 py-3">
                     <div>
                         <p class="text-sm font-semibold text-gray-800 dark:text-neutral-100">Listado</p>
@@ -567,7 +567,7 @@ watch(
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-4">
+                <div class="flex-1 overflow-x-auto overflow-y-auto p-4">
                     <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
                         <div class="xl:col-span-2 space-y-4">
                             <div>

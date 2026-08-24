@@ -30,8 +30,8 @@ class TournamentStandingsService
                 return $aPlayed === 0 ? 1 : -1;
             }
 
-            if ((int) $a->points !== (int) $b->points) {
-                return (int) $b->points <=> (int) $a->points;
+            if ($a->totalPoints() !== $b->totalPoints()) {
+                return $b->totalPoints() <=> $a->totalPoints();
             }
 
             if ((int) $a->goal_difference !== (int) $b->goal_difference) {
@@ -65,7 +65,9 @@ class TournamentStandingsService
                     'team_name' => $equipo ? $equipo->name : 'Equipo',
                     'team_short_name' => $equipo ? ($equipo->short_name ?? substr($equipo->name, 0, 3)) : 'EQ',
                     'team_logo' => TournamentMedia::url($equipo?->logo_path),
-                    'points' => (int) $team->points,
+                    'points' => $team->totalPoints(),
+                    'bonus_points' => (int) $team->bonus_points,
+                    'base_points' => (int) $team->points,
                     'matches_played' => (int) $team->matches_played,
                     'matches_won' => (int) $team->matches_won,
                     'matches_drawn' => (int) $team->matches_drawn,
@@ -103,7 +105,8 @@ class TournamentStandingsService
                     'goals_for' => (int) $team->goals_for,
                     'goals_against' => (int) $team->goals_against,
                     'goal_difference' => (int) $team->goal_difference,
-                    'points' => (int) $team->points,
+                    'points' => $team->totalPoints(),
+                    'bonus_points' => (int) $team->bonus_points,
                     'is_champion' => (bool) $team->is_champion,
                 ];
             })

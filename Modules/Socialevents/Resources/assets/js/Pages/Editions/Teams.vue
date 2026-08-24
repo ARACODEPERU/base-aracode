@@ -25,6 +25,10 @@
             type: Object,
             default: () => ({}),
         },
+        bonusHistory: {
+            type: Array,
+            default: () => [],
+        },
     });
 
     const form = useForm({
@@ -160,6 +164,155 @@
             });
         }
     }
+
+    // ====== Puntos extra ======
+    const displayModalBonus = ref(false);
+    const bonusPoints = ref(null);
+    const bonusReason = ref('');
+    const bonusLoading = ref(false);
+    const bonusEquipos = ref([]);
+    const bonusHistoryLocal = ref(props.bonusHistory || []);
+
+    const toggleBonusTeam = (teamId) => {
+        const idx = bonusEquipos.value.indexOf(teamId);
+        if (idx === -1) {
+            bonusEquipos.value.push(teamId);
+        } else {
+            bonusEquipos.value.splice(idx, 1);
+        }
+    };
+
+    const openModalBonus = () => {
+        bonusPoints.value = null;
+        bonusReason.value = '';
+        bonusEquipos.value = [];
+        displayModalBonus.value = true;
+    };
+
+    const closeModalBonus = () => {
+        displayModalBonus.value = false;
+    };
+
+    const reloadAfterBonus = () => {
+        router.visit(route('even_ediciones_equipos', props.edicion.id), {
+            replace: false,
+            method: 'get',
+            preserveState: false,
+            preserveScroll: true,
+        });
+    };
+
+    const saveBonus = () => {
+        const puntos = Number(bonusPoints.value);
+        if (!puntos || puntos < 1) {
+            Swal2.fire({ title: 'Atención', text: 'Ingresa al menos 1 punto.', icon: 'warning', padding: '2em', customClass: 'sweet-alerts' });
+            return;
+        }
+        if (!bonusEquipos.value.length) {
+            Swal2.fire({ title: 'Atención', text: 'Selecciona al menos un equipo.', icon: 'warning', padding: '2em', customClass: 'sweet-alerts' });
+            return;
+        }
+        if (!bonusReason.value.trim()) {
+            Swal2.fire({ title: 'Atención', text: 'Indica el motivo del punto extra.', icon: 'warning', padding: '2em', customClass: 'sweet-alerts' });
+            return;
+        }
+
+        bonusLoading.value = true;
+        axios.post(route('even_ediciones_equipos_bonus_store', props.edicion.id), {
+            teams: bonusEquipos.value,
+            points: puntos,
+            reason: bonusReason.value.trim(),
+        }).then((res) => {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: res.data?.message || 'Puntos extra otorgados.',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            closeModalBonus();
+            reloadAfterBonus();
+        }).catch((err) => {
+            Swal2.fire({
+                title: 'Error',
+                text: err.response?.data?.message || 'No se pudo otorgar los puntos.',
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        }).finally(() => {
+            bonusLoading.value = false;
+        });
+    };
+
+    const destroyBonus = (bonusId) => {
+        Swal2.fire({
+            title: '¿Eliminar este punto extra?',
+            text: 'Se revertirá el bono del equipo.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+            axios.delete(route('even_ediciones_equipos_bonus_destroy', [props.edicion.id, bonusId]))
+                .then(() => {
+                    Swal2.fire({ title: 'Eliminado', text: 'Punto extra eliminado.', icon: 'success', timer: 1500, showConfirmButton: false, padding: '2em', customClass: 'sweet-alerts' });
+                    reloadAfterBonus();
+                })
+                .catch(() => {
+                    Swal2.fire({ title: 'Error', text: 'No se pudo eliminar.', icon: 'error', padding: '2em', customClass: 'sweet-alerts' });
+                });
+        });
+    };
+
+    const recalculateLoading = ref(false);
+
+    const recalculateTable = () => {
+        Swal2.fire({
+            title: '¿Recalcular tabla de puntos?',
+            text: 'Se volverán a calcular los puntos, goles y posiciones de todos los equipos de esta edición.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, recalcular',
+            cancelButtonText: 'Cancelar',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            recalculateLoading.value = true;
+            axios.post(route('even_ediciones_equipos_recalculate', props.edicion.id))
+                .then((res) => {
+                    Swal2.fire({
+                        title: 'Recalculado',
+                        text: res.data?.message || 'Tabla de posiciones recalculada.',
+                        icon: 'success',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                    reloadAfterBonus();
+                })
+                .catch((err) => {
+                    Swal2.fire({
+                        title: 'Error',
+                        text: err.response?.data?.message || 'No se pudo recalcular la tabla.',
+                        icon: 'error',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                })
+                .finally(() => {
+                    recalculateLoading.value = false;
+                });
+        });
+    };
 </script>
 <template>
     <AppLayout title="Ediciones">
@@ -203,6 +356,22 @@
                         <button @click="addTeamSave" class="btn btn-primary uppercase text-xs" type="button"><icon-plus class="w-4 h-4 mr-1" />Agregar</button>
                     </div>
                     <div class="flex items-center justify-end gap-6">
+                        <button @click="openModalBonus" class="btn btn-secondary uppercase text-xs">
+                            <svg class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 384 512">
+                                <path d="M240 32h64l70.3 140c8 16 8.1 35.5 0 51.5L278.6 384H192v-32c0-17.7-14.3-32-32-32s-32 14.3-32 32v32H88l-96.3-160.5c-8.1-16-8.1-35.5 0-51.5L80 32h64v32c0 17.7 14.3 32 32 32s32-14.3 32-32V32zm-80 96c-17.7 0-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32s-14.3-32-32-32zm128 0c-17.7 0-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32s-14.3-32-32-32z"/>
+                            </svg>
+                            Puntos extra
+                        </button>
+                        <button @click="recalculateTable" :disabled="recalculateLoading" class="btn btn-info uppercase text-xs">
+                            <svg v-if="recalculateLoading" class="mr-1 h-4 w-4 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                            </svg>
+                            <svg v-else class="w-4 h-4 mr-1 inline" fill="currentColor" viewBox="0 0 512 512">
+                                <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+                            </svg>
+                            Recalcular tabla
+                        </button>
                         <button @click="exportImage" class="btn btn-danger uppercase text-xs">
                             Exportar imagen
                         </button>
@@ -222,6 +391,7 @@
                                         <th class="no-export px-4 py-4 font-bold text-center">Acciones</th>
                                         <th scope="col" class="px-4 py-4 font-bold text-left">Equipo</th>
                                         <th scope="col" class="px-4 py-4 font-bold text-center">PTS</th>
+                                        <th scope="col" class="px-4 py-4 font-bold text-center">P. Extra</th>
                                         <th scope="col" class="px-4 py-4 font-bold text-center">PJ</th>
                                         <th scope="col" class="px-4 py-4 font-bold text-center">PG</th>
                                         <th scope="col" class="px-4 py-4 font-bold text-center">PE</th>
@@ -281,7 +451,10 @@
                                                 <div class="text-base font-semibold text-gray-900 dark:text-white">{{ team.equipo.name }}</div>
                                             </td>
                                             <td class="px-4 py-2 text-center">
-                                                <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold text-lg">{{ team.points }}</span>
+                                                <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold text-lg">{{ (Number(team.points) || 0) + (Number(team.bonus_points) || 0) }}</span>
+                                            </td>
+                                            <td class="px-4 py-2 text-center">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold">{{ team.bonus_points || 0 }}</span>
                                             </td>
                                             <td class="px-4 py-2 text-center font-medium text-gray-700 dark:text-gray-300">{{ team.matches_played }}</td>
                                             <td class="px-4 py-2 text-center font-medium text-green-600">{{ team.matches_won }}</td>
@@ -303,6 +476,104 @@
 
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Modal de Puntos extra -->
+        <div
+            v-if="displayModalBonus"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            @click.self="closeModalBonus"
+        >
+            <div class="w-full max-w-2xl rounded-lg bg-white p-6 shadow-2xl dark:bg-slate-800 max-h-[90vh] overflow-y-auto">
+                <div class="mb-4 flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-slate-800 dark:text-white">Asignar puntos extra</h3>
+                    <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" @click="closeModalBonus">✕</button>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Puntos *</label>
+                        <input
+                            v-model.number="bonusPoints"
+                            type="number"
+                            min="1"
+                            max="999"
+                            class="form-input w-full"
+                            placeholder="Ej: 1"
+                        />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Motivo *</label>
+                        <input
+                            v-model="bonusReason"
+                            type="text"
+                            class="form-input w-full"
+                            placeholder="Ej: Buena conducta / Inauguración"
+                        />
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200">Equipos que reciben los puntos *</label>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 max-h-52 overflow-y-auto">
+                        <label
+                            v-for="team in currentEquipment"
+                            :key="team.team_id"
+                            class="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 transition hover:border-cyan-500 dark:border-slate-600"
+                            :class="{ 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20': bonusEquipos.includes(team.team_id) }"
+                        >
+                            <input
+                                type="checkbox"
+                                class="form-checkbox text-cyan-600"
+                                :checked="bonusEquipos.includes(team.team_id)"
+                                @change="toggleBonusTeam(team.team_id)"
+                            />
+                            <span class="text-sm text-slate-700 dark:text-slate-200">{{ team.equipo?.name }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" class="btn btn-outline-dark" @click="closeModalBonus">Cancelar</button>
+                    <button type="button" class="btn btn-primary" :disabled="bonusLoading" @click="saveBonus">
+                        <svg v-if="bonusLoading" class="mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        Asignar puntos
+                    </button>
+                </div>
+
+                <div v-if="bonusHistory.length" class="mt-6 border-t border-slate-200 pt-4 dark:border-slate-600">
+                    <h4 class="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Historial de puntos extra</h4>
+                    <ul class="space-y-2">
+                        <li
+                            v-for="bonus in bonusHistory"
+                            :key="bonus.id"
+                            class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-sm dark:bg-slate-700"
+                        >
+                            <div>
+                                <span class="font-semibold text-slate-800 dark:text-white">{{ bonus.team_name }}</span>
+                                <span class="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">+{{ bonus.points }}</span>
+                                <span class="block text-xs text-slate-500 dark:text-slate-300">{{ bonus.reason }}</span>
+                            </div>
+                            <button
+                                type="button"
+                                class="text-slate-400 hover:text-red-600"
+                                title="Eliminar punto extra"
+                                @click="destroyBonus(bonus.id)"
+                            >
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 6l12 12M6 18L18 6"></path>
+                                </svg>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <p v-else class="mt-6 border-t border-slate-200 pt-4 text-center text-sm text-slate-400 dark:border-slate-600">
+                    No hay puntos extra otorgados.
+                </p>
             </div>
         </div>
     </AppLayout>

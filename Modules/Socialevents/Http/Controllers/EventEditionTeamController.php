@@ -7,12 +7,15 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeam;
+use Modules\Socialevents\Entities\EventEditionTeamBonusPoint;
 use Modules\Socialevents\Entities\EventTeam;
+use Modules\Socialevents\Services\PositionTableService;
 
 class EventEditionTeamController extends Controller
 {
@@ -26,10 +29,16 @@ class EventEditionTeamController extends Controller
         $currentEquipment = EventEditionTeam::with('equipo')
             ->where('edition_id', $id)
             ->orderByRaw('CASE WHEN matches_played = 0 THEN 1 ELSE 0 END') // Equipos sin partidos al final
-            ->orderBy('points', 'desc')           // 1° Más puntos arriba
+            ->orderByRaw('(points + bonus_points) DESC') // 1° Más puntos totales (incluye extras) arriba
             ->orderBy('goal_difference', 'desc')  // 2° Mejor diferencia de goles
             ->orderBy('goals_for', 'desc')        // 3° Más goles marcados
             ->orderBy('matches_won', 'desc')      // 4° Más partidos ganados
+            ->get();
+
+        // Historico de puntos extra de la edicion.
+        $bonusHistory = EventEditionTeamBonusPoint::with('team')
+            ->where('edition_id', $id)
+            ->orderByDesc('id')
             ->get();
 
         $edicion = EventEdition::find($id);
@@ -38,6 +47,7 @@ class EventEditionTeamController extends Controller
             'teams' => $teams,
             'currentEquipment' => $currentEquipment,
             'edicion' => $edicion,
+            'bonusHistory' => $bonusHistory,
         ]);
     }
 
@@ -149,5 +159,154 @@ class EventEditionTeamController extends Controller
         return response()->json([
             'url' => asset('storage/' . $filePath)
         ]);
+    }
+
+    /**
+     * Historial de puntos extra otorgados en la edicion.
+     */
+    public function bonusPointsIndex($id)
+    {
+        $bonus = EventEditionTeamBonusPoint::with('team')
+            ->where('edition_id', $id)
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'bonus' => $bonus->map(fn ($b) => [
+                'id' => $b->id,
+                'team_id' => $b->team_id,
+                'team_name' => $b->team?->name ?? 'Equipo',
+                'points' => $b->points,
+                'reason' => $b->reason,
+                'created_at' => $b->created_at?->toDateTimeString(),
+            ]),
+        ]);
+    }
+
+    /**
+     * Otorga puntos extra a uno o varios equipos de la edicion.
+     */
+    public function bonusPointsStore(Request $request, $editionId)
+    {
+        $validated = $request->validate([
+            'teams' => ['required', 'array', 'min:1'],
+            'teams.*' => ['required', 'integer'],
+            'points' => ['required', 'integer', 'min:1', 'max:999'],
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $teamIds = array_values(array_unique(array_map('intval', $validated['teams'])));
+
+            // Validar que los equipos pertenezcan a la edicion.
+            $inscritos = EventEditionTeam::where('edition_id', $editionId)
+                ->whereIn('team_id', $teamIds)
+                ->pluck('team_id')
+                ->all();
+
+            if (count($inscritos) === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ninguno de los equipos seleccionados pertenece a esta edicion.',
+                ], 422);
+            }
+
+            foreach ($inscritos as $teamId) {
+                EventEditionTeamBonusPoint::create([
+                    'edition_id' => $editionId,
+                    'team_id' => $teamId,
+                    'points' => $validated['points'],
+                    'reason' => $validated['reason'],
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
+            // Recalcular bonus acumulado de los equipos afectados.
+            foreach ($inscritos as $teamId) {
+                $editionTeam = EventEditionTeam::where('edition_id', $editionId)
+                    ->where('team_id', $teamId)
+                    ->first();
+                $editionTeam?->recalculateBonus();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Puntos extra otorgados a '.count($inscritos).' equipo(s).',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    /**
+     * Elimina un registro de punto extra y recalcula el bonus del equipo.
+     */
+    public function bonusPointsDestroy($editionId, $bonusId)
+    {
+        $message = null;
+        $success = false;
+
+        try {
+            DB::beginTransaction();
+
+            $bonus = EventEditionTeamBonusPoint::where('id', $bonusId)
+                ->where('edition_id', $editionId)
+                ->firstOrFail();
+
+            $teamId = $bonus->team_id;
+            $bonus->delete();
+
+            $editionTeam = EventEditionTeam::where('edition_id', $editionId)
+                ->where('team_id', $teamId)
+                ->first();
+            $editionTeam?->recalculateBonus();
+
+            DB::commit();
+
+            $message = 'Punto extra eliminado correctamente';
+            $success = true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $success = false;
+            $message = $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message,
+        ]);
+    }
+
+    /**
+     * Recalcula toda la tabla de posiciones de la edicion (puntos, bonus y rank).
+     * Util para cuando la acta ya fue cerrada y no se recalculo automaticamente.
+     */
+    public function recalculateTable($editionId)
+    {
+        try {
+            $edition = EventEdition::findOrFail($editionId);
+            app(PositionTableService::class)->updateTablePositions($editionId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tabla de posiciones recalculada correctamente.',
+                'edition' => $edition->name,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo recalcular la tabla: '.$e->getMessage(),
+            ], 422);
+        }
     }
 }
