@@ -29,6 +29,7 @@ use App\Models\Sale;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Greenter\Model\Sale\Cuota;
 class Factura
 {
@@ -51,6 +52,25 @@ class Factura
             $invoice = $this->setDocument($document);
             $see = $this->util->getSee();
             $res = $see->send($invoice);
+
+            // === DEBUG: Log detallado de respuesta SUNAT ===
+            if (!$res->isSuccess()) {
+                $error = $res->getError();
+                Log::error('SUNAT DEBUG - Error en envio de factura:', [
+                    'document_id' => $document_id,
+                    'error_code' => $error ? $error->getCode() : 'N/A',
+                    'error_message' => $error ? $error->getMessage() : 'N/A',
+                    'is_success' => $res->isSuccess(),
+                    'response_type' => get_class($res),
+                ]);
+            } else {
+                Log::info('SUNAT DEBUG - Factura enviada exitosamente:', [
+                    'document_id' => $document_id,
+                    'cdr_code' => $res->getCdrResponse() ? $res->getCdrResponse()->getCode() : 'N/A',
+                ]);
+            }
+            // === FIN DEBUG ===
+
             //fecha en la que se envio a sunat el documento
             $document->invoice_send_date = Carbon::now();
 
@@ -132,7 +152,12 @@ class Factura
                         }
                     }
                 }
-                // Otros errores
+                // Error HTTP - SUNAT respondió con error HTTP (ej: 502 Bad Gateway, 400 Bad Request)
+                elseif (!is_numeric($codeError) && strtolower($codeError) === 'http') {
+                    $status = 'Pendiente de Reintento';
+                    $messageError = "SUNAT respondió con error HTTP ({$originalMessage}). Es probable que SUNAT esté presentando picos de sobrecarga. Intente reintentar más tarde. Si el error persiste, verifique: credenciales SOL, certificado digital o datos del XML.";
+                }
+                // Otros errores numéricos
                 else {
                     $code = (int)$codeError;
                     if (in_array($code, $connectionErrorCodes) || $code === -1 || $code === 0) {
@@ -140,6 +165,7 @@ class Factura
                         $messageError = "SUNAT no responde (error {$codeError}). El comprobante está en espera para reintento automático. Detalle: {$originalMessage}";
                     } else {
                         $status = 'Rechazada';
+                        $messageError = "Error de SUNAT (error {$codeError}). Detalle: {$originalMessage}";
                     }
                 }
             }
