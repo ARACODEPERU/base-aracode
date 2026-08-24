@@ -178,35 +178,60 @@
         selectedPlayer.value = player;
         formSanction.responsable = player.person.full_name;
         formSanction.player_id = player.person.id;
-        formSanction.items = JSON.parse(JSON.stringify(sanctionsToPay));
-
-        const itemsTotal = formSanction.items.reduce((sum, item) => sum + (parseFloat(item.amount_fine) || 0), 0);
-        formSanction.total = Number(itemsTotal.toFixed(2));
+        // Marcamos todas las sanciones como seleccionadas por defecto; el delegado
+        // puede desmarcar las que no quiera pagar (p. ej. pagar solo la de una fecha).
+        formSanction.items = JSON.parse(JSON.stringify(sanctionsToPay)).map(item => ({ ...item, selected: true }));
         formSanction.payments = [{
             type:1,
             reference: null,
-            amount: formSanction.total
+            amount: 0
         }];
+
+        recalcSanctionsTotal();
         displayModalPaymmet.value = true;
     }
     const closeModalPaymmet = () => {
         displayModalPaymmet.value = false;
     }
 
-    // Quitar un item del modal y recalcular el total a cobrar.
-    const removeProduct = (key) => {
-        formSanction.items.splice(key, 1);
-        const itemsTotal = formSanction.items.reduce((sum, item) => sum + (parseFloat(item.amount_fine) || 0), 0);
+    // Suma el importe solo de las sanciones marcadas y actualiza el total.
+    const recalcSanctionsTotal = () => {
+        const selectedItems = formSanction.items.filter(item => item.selected);
+        const itemsTotal = selectedItems.reduce((sum, item) => sum + (parseFloat(item.amount_fine) || 0), 0);
         formSanction.total = Number(itemsTotal.toFixed(2));
         if (formSanction.payments.length) {
             formSanction.payments[0].amount = formSanction.total;
         }
     }
 
+    // Marcar/desmarcar una falta para decidir si se paga en esta liquidacion.
+    const toggleProduct = (key) => {
+        if (formSanction.items[key]) {
+            formSanction.items[key].selected = !formSanction.items[key].selected;
+        }
+        recalcSanctionsTotal();
+    }
+
     const saveSale = async () => {
+        // Solo se pagan las faltas marcadas (selected).
+        const selectedItems = (formSanction.items || []).filter(item => item.selected);
+        const itemsTotal = selectedItems.reduce((sum, item) => sum + (parseFloat(item.amount_fine) || 0), 0);
+
+        if (itemsTotal <= 0) {
+            Swal2.fire({ title: 'Atención', text: 'Selecciona al menos una falta para pagar.', icon: 'warning', padding: '2em', customClass: 'sweet-alerts' });
+            return;
+        }
+
         formSanction.processing = true;
-        if(formSanction.total > 0){
-            axios.post(route('even_ediciones_pago_sanciones_store'), formSanction ).then((res) => {
+
+        const payload = {
+            ...formSanction,
+            items: selectedItems.map(({ selected, ...rest }) => rest),
+            total: Number(itemsTotal.toFixed(2)),
+        };
+        payload.payments[0].amount = Number(itemsTotal.toFixed(2));
+
+        axios.post(route('even_ediciones_pago_sanciones_store'), payload ).then((res) => {
                 formSanction.reset();
                 displayModalPaymmet.value = false;
                 router.reload({
@@ -244,9 +269,6 @@
 
                 Swal2.close();
             });
-        }else{
-            alert('Agregar items para realizar la venta');
-        }
     }
 
     const printPdf = (id) => {
@@ -383,12 +405,17 @@
                         </thead >
                         <tbody style="max-height: 250px;overflow-y: auto;overflow-x: hidden;">
                             <template v-if="formSanction.items.length > 0">
-                                <tr v-for="(item, key) in formSanction.items" >
+                                <tr
+                                    v-for="(item, key) in formSanction.items"
+                                    :class="item.selected ? '' : 'opacity-40'"
+                                >
                                     <td class="text-center">
-                                        <button @click="removeProduct(key)" type="button" v-tippy:delete>
-                                            <icon-trash />
-                                        </button>
-                                        <tippy target="delete">Eliminar</tippy>
+                                        <input
+                                            type="checkbox"
+                                            class="form-checkbox text-primary"
+                                            :checked="item.selected"
+                                            @change="toggleProduct(key)"
+                                        />
                                     </td>
                                     <td >
                                         <div class="font-semibold">{{ translateSanction(item.type)  }}</div>
@@ -416,12 +443,16 @@
                             </template>
                         </tbody>
                     </table>
-                    <div class="flex items-center justify-end gap-6 px-4 py-6">
-                        <div>
-                            Total a Cobrar
-                        </div>
-                        <div>
-                            S/. {{ formSanction.total  }}
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-4">
+                        <p class="text-xs text-gray-500">
+                            Marca o desmarca las faltas que deseas pagar en esta liquidaci&oacute;n.
+                            <span class="font-semibold text-gray-700 dark:text-neutral-200">
+                                ({{ (formSanction.items || []).filter(i => i.selected).length }} seleccionada(s))
+                            </span>
+                        </p>
+                        <div class="flex items-center gap-6">
+                            <div>Total a Cobrar</div>
+                            <div>S/. {{ formSanction.total }}</div>
                         </div>
                     </div>
                 </div>
