@@ -83,13 +83,14 @@ class Factura
                 // === CASO FALLO DE COMUNICACIÓN O ERROR DE SISTEMA ===
                 $error = $res->getError();
                 $codeError = $error->getCode();
-                $messageError = $error->getMessage();
+                $originalMessage = $error->getMessage();
+                $messageError = $originalMessage;
                 $connectionErrorCodes = [130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 1033];
 
                 // Error 0109 - SUNAT autenticación no disponible
                 if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
                     $status = 'Pendiente de Reintento';
-                    $messageError = "SUNAT no responde. El comprobante quedará pendiente para reintento manual.";
+                    $messageError = "SUNAT no responde (error {$codeError}). El comprobante quedará pendiente para reintento manual. Detalle: {$originalMessage}";
                 }
                 // Error 2223 - Archivo ya presentado, intentar recuperar CDR
                 elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
@@ -117,11 +118,11 @@ class Factura
                                 }
                             } else {
                                 $status = 'Pendiente de Reintento';
-                                $messageError = "El archivo ya fue presentado pero no se pudo recuperar la constancia. Ticket: {$ticket}";
+                                $messageError = "El archivo ya fue presentado (error {$codeError}) pero no se pudo recuperar la constancia. Ticket: {$ticket}. Detalle: {$originalMessage}";
                             }
                         } catch (\Exception $e) {
                             $status = 'Pendiente de Reintento';
-                            $messageError = "Error al consultar ticket recuperado: ".$e->getMessage();
+                            $messageError = "Error al consultar ticket recuperado (error {$codeError}): ".$e->getMessage().". Detalle SUNAT: {$originalMessage}";
                         }
                     } else {
                         if (in_array((int)$codeError, $connectionErrorCodes) || (int)$codeError === -1 || (int)$codeError === 0) {
@@ -136,7 +137,7 @@ class Factura
                     $code = (int)$codeError;
                     if (in_array($code, $connectionErrorCodes) || $code === -1 || $code === 0) {
                         $status = 'Error de Conexión';
-                        $messageError = "SUNAT no responde. El comprobante está en espera para reintento automático.";
+                        $messageError = "SUNAT no responde (error {$codeError}). El comprobante está en espera para reintento automático. Detalle: {$originalMessage}";
                     } else {
                         $status = 'Rechazada';
                     }
