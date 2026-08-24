@@ -88,7 +88,7 @@ class Boleta
 
     public function setDocument($document, $tipDet = '022', $ipMeP = '001')
     {
-        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
+        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'));
 
         $client = new Client();
         $client->setTipoDoc($document->client_type_doc)

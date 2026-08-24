@@ -145,10 +145,10 @@ class NotaCredito
             ->setTelephone($this->mycompany->phone)
             ->setAddress($address);
 
-        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
+        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'));
         $invoice_name = $invoice->invoice_serie . '-' . $invoice->invoice_correlative;
 
-        $afe_broadcast_date = new DateTime($invoice->invoice_broadcast_date . ' ' . Carbon::parse($invoice->created_at)->format('H:m:s'));
+        $afe_broadcast_date = new DateTime($invoice->invoice_broadcast_date . ' ' . Carbon::parse($invoice->created_at)->format('H:i:s'));
 
         ////2.0 la version para notas
         $note->setUblVersion($document->invoice_ubl_version)

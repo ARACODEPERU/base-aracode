@@ -161,8 +161,8 @@ class Factura
         $province = $establishment->district->province;
 
         $department = $province->department;
-        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
-        $due_date = new DateTime($document->invoice_due_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
+        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'));
+        $due_date = new DateTime($document->invoice_due_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'));
         // Cliente
         $clientCity = District::with('province.department')->where('id',$document->client_ubigeo_code)->first();
 
@@ -311,7 +311,7 @@ class Factura
                     ->setCodBienDetraccion($tipDet) // catalog. 54
                     // Deposito en cuenta
                     ->setCodMedioPago($ipMeP) // catalog. 59
-                    ->setCtaBanco($this->mycompany->withdrawal_account_number)
+                    ->setCtaBanco($this->resolveDetractionAccount($this->mycompany->withdrawal_account_number))
                     ->setPercent($percent)
                     ->setMount($detMount)
             );
@@ -331,6 +331,29 @@ class Factura
 
         //dd($invoice);
         return $invoice;
+    }
+
+    /**
+     * La cuenta de detraccion debe ser un numero valido (CCI o cuenta).
+     * Si el dato trae texto (p. ej. "B.N. 00-002-235269 o CCI 0180..."), extraemos
+     * el CCI para que el XML no quede con un campo invalido que SUNAT rechaza/corta.
+     */
+    private function resolveDetractionAccount(?string $raw): string
+    {
+        $raw = $raw ?: '';
+
+        // Si hay un CCI (20 digitos), lo usamos.
+        if (preg_match('/\b(\d{20})\b/', $raw, $m)) {
+            return $m[1];
+        }
+
+        // Si hay una cuenta (8 a 20 digitos), quitamos separadores y usamos el primer bloque numerico.
+        $digits = preg_replace('/\D/', '', $raw);
+        if ($digits !== '' ) {
+            return $digits;
+        }
+
+        return '0000';
     }
 
     public function getFacturaDomPdf($id, $format = 'A4')

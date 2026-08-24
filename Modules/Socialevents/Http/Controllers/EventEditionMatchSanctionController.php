@@ -28,7 +28,7 @@ class EventEditionMatchSanctionController extends Controller
     public function collectionPenalties($id)
     {
         $edicion = EventEdition::find($id);
-        $players = EventEditionTeamPlayer::with(['team', 'person', 'sanctions' => function($q) { $q->where('is_paid', false); }])
+        $players = EventEditionTeamPlayer::with(['team', 'person', 'sanctions' => function($q) { $q->with('match')->where('is_paid', false); }])
         ->where('edition_id', $id)
         ->whereHas('sanctions', fn($q) => $q->where('is_paid', false))
         ->get()
@@ -51,6 +51,18 @@ class EventEditionMatchSanctionController extends Controller
             }
 
             $player->total_debt = number_format($total, 2, '.', '');
+
+            // Exponemos la fecha/ronda del partido en cada sancion sin pagar.
+            $player->sanctions->transform(function ($sanction) {
+                $match = $sanction->match;
+                $sanction->match_round = $match?->round_number;
+                $sanction->match_date = $match?->match_date?->format('d/m/Y');
+                $sanction->match_label = $match
+                    ? 'Fecha '.($match->round_number ?? '?').($match->match_date ? ' · '.$match->match_date->format('d/m/Y') : '')
+                    : 'Sin partido asignado';
+                return $sanction;
+            });
+
             return $player;
         });
 
@@ -193,7 +205,8 @@ class EventEditionMatchSanctionController extends Controller
 
                 $products = $request->get('items');
 
-                $match_id = null;
+                // IDs de las sanciones que el delegado dejó en el modal para pagar.
+                $sanctionIds = collect($products)->pluck('id')->filter()->unique()->values()->all();
 
                 foreach ($products as $produc) {
                     SaleProduct::create([
@@ -208,18 +221,19 @@ class EventEditionMatchSanctionController extends Controller
                         'entity_name_product' => EventEditionMatchSanction::class,
                         'advancement' => $produc['amount_fine']
                     ]);
-
-                    $match_id = EventEditionMatchSanction::where('id', $produc['id'])->value('match_id');
-
                 }
 
-                EventEditionMatchSanction::where('player_id', $request->get('player_id'))
-                        ->where('match_id', $match_id)
+                // Marcamos como pagadas SOLO las sanciones incluidas en la venta
+                // (se paga de una en una / por partido, no todas las pendientes del jugador).
+                if ($sanctionIds) {
+                    EventEditionMatchSanction::whereIn('id', $sanctionIds)
+                        ->where('player_id', $request->get('player_id'))
                         ->update([
                             'is_paid' => true,
                             'paid_at' => now(),
                             'note_sale_id' => $sale->id,
                         ]);
+                }
 
                 return $sale;
             });

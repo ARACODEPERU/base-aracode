@@ -129,7 +129,7 @@ class NotaDebito
             ->setTelephone($this->mycompany->phone)
             ->setAddress($address);
 
-        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
+        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'));
         $invoice_name = $invoice->invoice_serie . '-' . $invoice->invoice_correlative;
 
         ////2.0 la version para notas

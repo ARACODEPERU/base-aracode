@@ -179,16 +179,28 @@
         formSanction.responsable = player.person.full_name;
         formSanction.player_id = player.person.id;
         formSanction.items = JSON.parse(JSON.stringify(sanctionsToPay));
-        formSanction.total = player.total_debt;
-        formSanction.payments.push({
+
+        const itemsTotal = formSanction.items.reduce((sum, item) => sum + (parseFloat(item.amount_fine) || 0), 0);
+        formSanction.total = Number(itemsTotal.toFixed(2));
+        formSanction.payments = [{
             type:1,
             reference: null,
-            amount: player.total_debt
-        });
+            amount: formSanction.total
+        }];
         displayModalPaymmet.value = true;
     }
     const closeModalPaymmet = () => {
         displayModalPaymmet.value = false;
+    }
+
+    // Quitar un item del modal y recalcular el total a cobrar.
+    const removeProduct = (key) => {
+        formSanction.items.splice(key, 1);
+        const itemsTotal = formSanction.items.reduce((sum, item) => sum + (parseFloat(item.amount_fine) || 0), 0);
+        formSanction.total = Number(itemsTotal.toFixed(2));
+        if (formSanction.payments.length) {
+            formSanction.payments[0].amount = formSanction.total;
+        }
     }
 
     const saveSale = async () => {
@@ -311,7 +323,7 @@
                                                     getSanctionColor(s.type),
                                                     isSanctionCancelled(s, player.sanctions) ? 'opacity-40 grayscale line-through border-gray-300' : ''
                                                 ]"
-                                                :title="isSanctionCancelled(s, player.sanctions) ? 'Anulada por doble amarilla' : ''"
+                                                :title="(isSanctionCancelled(s, player.sanctions) ? 'Anulada por doble amarilla' : (s.match_label || 'Sin partido'))"
                                             >
                                                 {{ translateSanction(s.type) }}
                                                 <span class="ml-1 opacity-75">S/ {{ s.amount_fine }}</span>
@@ -379,7 +391,10 @@
                                         <tippy target="delete">Eliminar</tippy>
                                     </td>
                                     <td >
-                                        {{ translateSanction(item.type)  }}
+                                        <div class="font-semibold">{{ translateSanction(item.type)  }}</div>
+                                        <div class="text-xs text-gray-500">
+                                            {{ item.match_label || 'Sin partido asignado' }}
+                                        </div>
                                     </td>
                                     <td class="text-right px-4 w-40">
                                         {{ item.amount_fine  }}
