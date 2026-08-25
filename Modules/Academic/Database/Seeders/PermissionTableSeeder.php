@@ -28,7 +28,7 @@ class PermissionTableSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'aca_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_dashboard']));
         array_push($permissions, Permission::create(['name' => 'aca_suscripciones']));
         array_push($permissions, Permission::create(['name' => 'aca_suscripciones_nuevo']));
         array_push($permissions, Permission::create(['name' => 'aca_suscripciones_editar']));
