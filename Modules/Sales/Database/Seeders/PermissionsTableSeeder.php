@@ -92,7 +92,7 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissionsAC, Permission::firstOrCreate(['name' => 'acco_dashboard']));
         array_push($permissionsAC, Permission::firstOrCreate(['name' => 'acco_documento_listado']));
         array_push($permissionsAC, Permission::firstOrCreate(['name' => 'acco_pagos_cuotas_especiales']));
-        array_push($permissionsAC, Permission::firstOrfirstOrCreate(['name' => 'acco_pagos_cuotas_especiales_nuevo']));
+        array_push($permissionsAC, Permission::firstOrCreate(['name' => 'acco_pagos_cuotas_especiales_nuevo']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
