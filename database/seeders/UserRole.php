@@ -20,25 +20,25 @@ class UserRole extends Seeder
      */
     public function run()
     {
-        $role = Role::create(['name' => 'admin']);
+        $role = Role::firstOrCreate(['name' => 'admin']);
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'dashboard']));
-        array_push($permissions, Permission::create(['name' => 'configuracion']));
-        array_push($permissions, Permission::create(['name' => 'empresa']));
-        array_push($permissions, Permission::create(['name' => 'modulos']));
-        array_push($permissions, Permission::create(['name' => 'usuarios']));
-        array_push($permissions, Permission::create(['name' => 'usuarios_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'usuarios_editar']));
-        array_push($permissions, Permission::create(['name' => 'usuarios_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'usuarios_ver']));
-        array_push($permissions, Permission::create(['name' => 'roles']));
-        array_push($permissions, Permission::create(['name' => 'permisos']));
-        array_push($permissions, Permission::create(['name' => 'parametros']));
-        array_push($permissions, Permission::create(['name' => 'parametros_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'parametros_editar']));
-        array_push($permissions, Permission::create(['name' => 'parametros_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'configuracion']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'empresa']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'modulos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'usuarios']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'usuarios_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'usuarios_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'usuarios_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'usuarios_ver']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'roles']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'permisos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'parametros']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'parametros_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'parametros_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'parametros_eliminar']));
 
 
 

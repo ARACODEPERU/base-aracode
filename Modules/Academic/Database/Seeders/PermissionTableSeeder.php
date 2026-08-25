@@ -19,7 +19,7 @@ class PermissionTableSeeder extends Seeder
      */
     public function run()
     {
-        $role = Role::find(1);
+        $role = Role::firstOrCreate(['name' => 'admin']);
 
         $modulo = Modulo::create(['identifier' => 'M007', 'description' => 'Académico']);
 
