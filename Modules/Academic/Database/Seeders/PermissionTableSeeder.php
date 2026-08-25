@@ -109,11 +109,11 @@ class PermissionTableSeeder extends Seeder
             }
         }
 
-        $alumno = Role::create(['name' => 'Alumno']);
+        $alumno = Role::firstOrCreate(['name' => 'Alumno']);
         $alumno->givePermissionTo('aca_dashboard');
         $alumno->givePermissionTo('aca_miscursos');
 
-        $docente = Role::create(['name' => 'Docente']);
+        $docente = Role::firstOrCreate(['name' => 'Docente']);
         $docente->givePermissionTo('aca_dashboard');
         $docente->givePermissionTo('aca_cursos_listado');
     }
