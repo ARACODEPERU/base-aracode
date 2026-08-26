@@ -195,12 +195,24 @@ class AcaGradeManagementController extends Controller
                 })->toArray();
 
                 // Calcular promedio final del estudiante (solo módulos con PROM válido)
+                $roundGrades = $course->round_grades ?? false;
                 $validAverages = array_filter(array_column($studentModules, 'average'), function ($val) {
                     return $val !== null;
                 });
-                $finalAverage = count($validAverages) > 0
-                    ? round(array_sum($validAverages) / count($validAverages), 2)
-                    : null;
+
+                if ($roundGrades) {
+                    // Redondear cada promedio de módulo a entero antes de calcular el promedio final
+                    $roundedAverages = array_map(function ($avg) {
+                        return (int) ceil($avg);
+                    }, $validAverages);
+                    $finalAverage = count($roundedAverages) > 0
+                        ? ceil((array_sum($roundedAverages) / count($roundedAverages)) * 100) / 100
+                        : null;
+                } else {
+                    $finalAverage = count($validAverages) > 0
+                        ? round(array_sum($validAverages) / count($validAverages), 2)
+                        : null;
+                }
             }
 
             return [
@@ -255,12 +267,25 @@ class AcaGradeManagementController extends Controller
             $observations = $gradeData['observations'] ?? null;
 
             // Calcular promedio final (promedio de todos los promedios de módulos)
+            $courseModel = AcaCourse::find($courseId);
+            $roundGrades = $courseModel->round_grades ?? false;
             $averages = array_filter(array_column($modules, 'average'), function ($val) {
                 return $val !== null && $val !== '';
             });
-            $calculatedFinalAverage = count($averages) > 0
-                ? round(array_sum($averages) / count($averages), 2)
-                : null;
+
+            if ($roundGrades) {
+                // Redondear cada promedio de módulo a entero antes de calcular el promedio final
+                $roundedAverages = array_map(function ($avg) {
+                    return (int) ceil($avg);
+                }, $averages);
+                $calculatedFinalAverage = count($roundedAverages) > 0
+                    ? ceil((array_sum($roundedAverages) / count($roundedAverages)) * 100) / 100
+                    : null;
+            } else {
+                $calculatedFinalAverage = count($averages) > 0
+                    ? round(array_sum($averages) / count($averages), 2)
+                    : null;
+            }
 
             $finalAvg = $finalAverage ?? $calculatedFinalAverage;
             $approved = $finalAvg !== null && $finalAvg >= 11;

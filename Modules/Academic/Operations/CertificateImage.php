@@ -724,10 +724,37 @@ class CertificateImage
                 $studentGrade = \Modules\Academic\Entities\AcaStudentGrade::where('registration_id', $register->id)->first();
 
                 if ($studentGrade && $studentGrade->final_average !== null) {
-                    $gradeValue = number_format($studentGrade->final_average, 2);
                     $isPreview = false;
 
-                    if ($studentGrade->final_average < 11) {
+                    // Check if round_grades is enabled for this course
+                    $course = AcaCourse::find($this->course_id);
+                    $roundGrades = $course->round_grades ?? false;
+
+                    if ($roundGrades) {
+                        // Recalculate final average from rounded module grades
+                        $modules = AcaModule::where('course_id', $this->course_id)->orderBy('position')->get();
+                        $roundedAverages = [];
+                        foreach ($modules as $module) {
+                            $exam = AcaExam::where('module_id', $module->id)->where('is_mock', false)->first();
+                            if ($exam) {
+                                $studentExam = AcaStudentExam::where('exam_id', $exam->id)
+                                    ->where('student_id', $this->student_id)
+                                    ->first();
+                                if ($studentExam && $studentExam->punctuation !== null) {
+                                    $roundedAverages[] = (int) ceil($studentExam->punctuation);
+                                }
+                            }
+                        }
+                        $finalAverage = count($roundedAverages) > 0
+                            ? ceil((array_sum($roundedAverages) / count($roundedAverages)) * 100) / 100
+                            : $studentGrade->final_average;
+                    } else {
+                        $finalAverage = $studentGrade->final_average;
+                    }
+
+                    $gradeValue = number_format($finalAverage, 2);
+
+                    if ($finalAverage < 11) {
                         $textColor = '#FF0000';
                     }
                 } else {

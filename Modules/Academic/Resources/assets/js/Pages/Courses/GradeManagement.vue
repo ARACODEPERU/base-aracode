@@ -95,24 +95,28 @@
         const aypValid = ayP !== null && ayP !== '' && ayP !== '-';
         const examValid = exam !== null && exam !== '' && exam !== '-';
         
+        let average = null;
+        
         // Caso 1: Solo A y P tiene valor → 100%
         if (aypValid && !examValid) {
-            return Number(ayP);
+            average = Number(ayP);
         }
-        
         // Caso 2: Solo E tiene valor → 100%
-        if (!aypValid && examValid) {
-            return Number(exam);
+        else if (!aypValid && examValid) {
+            average = Number(exam);
         }
-        
         // Caso 3: Ambos tienen valor → A y P 40% + E 60%
-        if (aypValid && examValid) {
-            const average = (Number(ayP) * 0.4) + (Number(exam) * 0.6);
-            return Number(average.toFixed(2));
+        else if (aypValid && examValid) {
+            average = Number(((Number(ayP) * 0.4) + (Number(exam) * 0.6)).toFixed(2));
+        }
+        // Caso 4: Ambos vacíos → null
+        
+        // Si round_grades está activado, redondear a entero
+        if (average !== null && courseData.value?.round_grades) {
+            average = Math.ceil(average);
         }
         
-        // Caso 4: Ambos vacíos → null
-        return null;
+        return average;
     };
 
     // Verificar si un módulo tiene simulacro configurado
@@ -124,6 +128,7 @@
     // Calcular promedio final del estudiante (se recalcula cuando cambian las notas)
     const calculateFinalAverage = (student) => {
         // Filtrar solo módulos que tienen PROM válido (no null)
+        // calculateModuleAverage ya aplica round_grades si está activado
         const averages = student.modules
             .map(m => calculateModuleAverage(m))
             .filter(a => a !== null);
@@ -131,7 +136,14 @@
         if (averages.length === 0) return null;
 
         const sum = averages.reduce((acc, val) => acc + Number(val), 0);
-        return Number((sum / averages.length).toFixed(2));
+        const avg = sum / averages.length;
+        
+        // Si round_grades está activado, redondear el promedio final hacia arriba a 2 decimales
+        if (courseData.value?.round_grades) {
+            return Math.ceil(avg * 100) / 100;
+        }
+        
+        return Number(avg.toFixed(2));
     };
 
     // Obtener clase de color según la nota

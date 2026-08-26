@@ -49,7 +49,8 @@ const form = useForm({
     certificate_title: null,
     discount: 0,
     discount_applies: '02',
-    auto_certificate: false
+    auto_certificate: false,
+    round_grades: false
 });
 
 const createCourse = () => {
@@ -253,6 +254,26 @@ const handleImageCompressed = (file) => {
                             </label>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 Los alumnos podrán descargar el certificado al completar todos los contenidos del curso, sin necesidad de exámenes ni nota aprobatoria.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <input
+                            v-model="form.round_grades"
+                            id="round_grades"
+                            type="checkbox"
+                            class="w-5 h-5 mt-0.5 text-amber-600 bg-gray-100 border-gray-300 rounded focus:ring-amber-500 dark:focus:ring-amber-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        >
+                        <div class="flex-1">
+                            <label for="round_grades" class="text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer">
+                                Redondear promedios en certificados
+                            </label>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Al activar, las notas de módulo se redondearán a número entero (ej: 19.8 → 20) antes de calcular el promedio final del certificado.
                             </p>
                         </div>
                     </div>

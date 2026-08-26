@@ -1157,10 +1157,26 @@ class AcaCertificateController extends Controller
         }
 
         $label = 'Promedio Final: ';
-        $gradeDisplay = number_format($studentGrade->final_average, 2);
+        $course = AcaCourse::find($certificate->course_id);
+        $roundGrades = $course->round_grades ?? false;
+
+        if ($roundGrades) {
+            // Recalcular promedio final desde notas redondeadas de módulo
+            $moduleGrades = $this->getStudentModuleGrades($student, $certificate);
+            $roundedAverages = array_filter(array_map(function ($grade) {
+                return (int) ceil($grade);
+            }, $moduleGrades));
+            $finalAverage = count($roundedAverages) > 0
+                ? ceil((array_sum($roundedAverages) / count($roundedAverages)) * 100) / 100
+                : $studentGrade->final_average;
+        } else {
+            $finalAverage = $studentGrade->final_average;
+        }
+
+        $gradeDisplay = number_format($finalAverage, 2);
         $fontSize = (int) ($gradeConfig->back_font_size_grade ?? 14);
 
-        if ($studentGrade->final_average < 11) {
+        if ($finalAverage < 11) {
             $textColor = '#FF0000';
         } else {
             $textColor = $gradeConfig->back_color_grade ?? '#000000';
@@ -1282,6 +1298,8 @@ class AcaCertificateController extends Controller
 
     private function courseTablePayload(string $id, AcaCourse $course, float $x, float $y, int $width, int $fontSize, string $color, string $fontFamily, string $type, array $moduleGrades = []): array
     {
+        $roundGrades = $course->round_grades ?? false;
+
         return [
             'id' => $id,
             'type' => $type,
@@ -1291,12 +1309,12 @@ class AcaCertificateController extends Controller
             'font_size' => $fontSize,
             'color' => $color,
             'font_family' => $fontFamily,
-            'modules' => $course->modules->map(function ($module) use ($moduleGrades) {
+            'modules' => $course->modules->map(function ($module) use ($moduleGrades, $roundGrades) {
                 $grade = $moduleGrades[$module->id] ?? null;
                 return [
                     'title' => $module->description ?? '',
                     'themes' => $module->themes->pluck('description')->filter()->values()->all(),
-                    'grade' => $grade !== null ? (int) ceil($grade) : null,
+                    'grade' => $grade !== null ? ($roundGrades ? (int) ceil($grade) : round($grade, 2)) : null,
                 ];
             })->values()->all(),
         ];

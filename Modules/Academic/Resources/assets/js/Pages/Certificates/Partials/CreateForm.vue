@@ -319,7 +319,7 @@
                                 v-model="form.has_reverse"
                                 class="form-checkbox text-primary"
                             />
-                            <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Incluir reverso al descargar (ZIP)</span>
+                            <span class="ltr:ml-2 rtl:mr-2 text-sm font-medium">Permitir descargar el reverso</span>
                         </label>
                     </div>
 
