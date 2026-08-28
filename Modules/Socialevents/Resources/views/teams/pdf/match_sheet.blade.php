@@ -184,17 +184,23 @@
         <table class="players-table">
             <thead>
                 <tr>
-                    <th style="width: 8%;">N</th>
-                    <th style="width: 42%;">Apellidos y Nombres</th>
-                    <th style="width: 22%;">N Documento</th>
-                    <th style="width: 20%;">Posicion</th>
-                    <th style="width: 8%;">Firma</th>
+                    <th style="width: 26%;">Nombre Completo</th>
+                    <th style="width: 9%;">Num.</th>
+                    <th style="width: 9%;">Goles</th>
+                    <th style="width: 10%;">Asist.</th>
+                    <th style="width: 11%;">Ataj. Dir.</th>
+                    <th style="width: 12%;">MVP</th>
+                    <th style="width: 8%;">T.A.</th>
+                    <th style="width: 8%;">T.R.</th>
                 </tr>
             </thead>
             <tbody>
                 @for ($i = 1; $i <= 6; $i++)
                 <tr>
-                    <td>{{ $i }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -208,17 +214,23 @@
         <table class="players-table">
             <thead>
                 <tr>
-                    <th style="width: 8%;">N</th>
-                    <th style="width: 42%;">Apellidos y Nombres</th>
-                    <th style="width: 22%;">N Documento</th>
-                    <th style="width: 20%;">Posicion</th>
-                    <th style="width: 8%;">Firma</th>
+                    <th style="width: 26%;">Nombre Completo</th>
+                    <th style="width: 9%;">Num.</th>
+                    <th style="width: 9%;">Goles</th>
+                    <th style="width: 10%;">Asist.</th>
+                    <th style="width: 11%;">Ataj. Dir.</th>
+                    <th style="width: 12%;">MVP</th>
+                    <th style="width: 8%;">T.A.</th>
+                    <th style="width: 8%;">T.R.</th>
                 </tr>
             </thead>
             <tbody>
                 @for ($i = 1; $i <= 6; $i++)
                 <tr>
-                    <td>{{ $i }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -278,17 +290,23 @@
         <table class="players-table">
             <thead>
                 <tr>
-                    <th style="width: 8%;">N</th>
-                    <th style="width: 42%;">Apellidos y Nombres</th>
-                    <th style="width: 22%;">N Documento</th>
-                    <th style="width: 20%;">Posicion</th>
-                    <th style="width: 8%;">Firma</th>
+                    <th style="width: 26%;">Nombre Completo</th>
+                    <th style="width: 9%;">Num.</th>
+                    <th style="width: 9%;">Goles</th>
+                    <th style="width: 10%;">Asist.</th>
+                    <th style="width: 11%;">Ataj. Dir.</th>
+                    <th style="width: 12%;">MVP</th>
+                    <th style="width: 8%;">T.A.</th>
+                    <th style="width: 8%;">T.R.</th>
                 </tr>
             </thead>
             <tbody>
                 @for ($i = 1; $i <= 6; $i++)
                 <tr>
-                    <td>{{ $i }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -302,17 +320,23 @@
         <table class="players-table">
             <thead>
                 <tr>
-                    <th style="width: 8%;">N</th>
-                    <th style="width: 42%;">Apellidos y Nombres</th>
-                    <th style="width: 22%;">N Documento</th>
-                    <th style="width: 20%;">Posicion</th>
-                    <th style="width: 8%;">Firma</th>
+                    <th style="width: 26%;">Nombre Completo</th>
+                    <th style="width: 9%;">Num.</th>
+                    <th style="width: 9%;">Goles</th>
+                    <th style="width: 10%;">Asist.</th>
+                    <th style="width: 11%;">Ataj. Dir.</th>
+                    <th style="width: 12%;">MVP</th>
+                    <th style="width: 8%;">T.A.</th>
+                    <th style="width: 8%;">T.R.</th>
                 </tr>
             </thead>
             <tbody>
                 @for ($i = 1; $i <= 6; $i++)
                 <tr>
-                    <td>{{ $i }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td></td>

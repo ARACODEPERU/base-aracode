@@ -25,15 +25,15 @@ class SeedPermissionsTableSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'blog_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias_editar']));
-        array_push($permissions, Permission::create(['name' => 'blog_categorias_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos_editar']));
-        array_push($permissions, Permission::create(['name' => 'blog_articulos_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_categorias']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_categorias_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_categorias_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_categorias_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_articulos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_articulos_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_articulos_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'blog_articulos_eliminar']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

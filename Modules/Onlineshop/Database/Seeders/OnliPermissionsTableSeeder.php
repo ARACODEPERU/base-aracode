@@ -24,15 +24,15 @@ class OnliPermissionsTableSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'onli_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'onli_items']));
-        array_push($permissions, Permission::create(['name' => 'onli_items_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'onli_items_editar']));
-        array_push($permissions, Permission::create(['name' => 'onli_items_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'onli_pedidos']));
-        array_push($permissions, Permission::create(['name' => 'onli_pedidos_aprobar']));
-        array_push($permissions, Permission::create(['name' => 'onli_pedidos_responder']));
-        array_push($permissions, Permission::create(['name' => 'onli_pedidos_enviar_boletas']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_items']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_items_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_items_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_items_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_pedidos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_pedidos_aprobar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_pedidos_responder']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'onli_pedidos_enviar_boletas']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);

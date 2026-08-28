@@ -26,8 +26,8 @@ class SecurityDatabaseSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'conf_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'conf_historial_actividades']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'conf_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'conf_historial_actividades']));
 
 
         foreach ($permissions as $permission) {

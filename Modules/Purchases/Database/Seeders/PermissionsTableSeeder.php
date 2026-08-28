@@ -26,12 +26,12 @@ class PermissionsTableSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'purc_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'purc_documentos_listado']));
-        array_push($permissions, Permission::create(['name' => 'purc_documentos_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'purc_documentos_editar']));
-        array_push($permissions, Permission::create(['name' => 'purc_documentos_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'purc_reporte']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'purc_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'purc_documentos_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'purc_documentos_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'purc_documentos_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'purc_documentos_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'purc_reporte']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);

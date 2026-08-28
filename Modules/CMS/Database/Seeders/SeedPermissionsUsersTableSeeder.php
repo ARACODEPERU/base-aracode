@@ -21,37 +21,37 @@ class SeedPermissionsUsersTableSeeder extends Seeder
      */
     public function run()
     {
-        $role = Role::create(['name' => 'webAdmin']);
+        $role = Role::firstOrCreate(['name' => 'webAdmin']);
         $admin = Role::find(1);
 
         $modulo = Modulo::create(['identifier' => 'M005', 'description' => 'CMS']);
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'cms_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina_editar']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina_seccion']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina_seccion_items']));
-        array_push($permissions, Permission::create(['name' => 'cms_pagina_seccion_items_delete']));
-        array_push($permissions, Permission::create(['name' => 'cms_seccion']));
-        array_push($permissions, Permission::create(['name' => 'cms_seccion_editar']));
-        array_push($permissions, Permission::create(['name' => 'cms_seccion_items']));
-        array_push($permissions, Permission::create(['name' => 'cms_seccion_grupos']));
-        array_push($permissions, Permission::create(['name' => 'cms_seccion_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'cms_seccion_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'cms_editor']));
-        array_push($permissions, Permission::create(['name' => 'cms_items']));
-        array_push($permissions, Permission::create(['name' => 'cms_testimonios']));
-        array_push($permissions, Permission::create(['name' => 'cms_testimonios_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'cms_testimonios_editar']));
-        array_push($permissions, Permission::create(['name' => 'cms_testimonios_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'cms_publicidad']));
-        array_push($permissions, Permission::create(['name' => 'cms_landings']));
-        array_push($permissions, Permission::create(['name' => 'cms_landing_curso_gratis']));
-        array_push($permissions, Permission::create(['name' => 'cms_suscriptores_exportar_excel']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina_seccion']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina_seccion_items']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_pagina_seccion_items_delete']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_seccion']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_seccion_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_seccion_items']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_seccion_grupos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_seccion_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_seccion_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_editor']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_items']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_testimonios']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_testimonios_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_testimonios_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_testimonios_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_publicidad']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_landings']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_landing_curso_gratis']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cms_suscriptores_exportar_excel']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

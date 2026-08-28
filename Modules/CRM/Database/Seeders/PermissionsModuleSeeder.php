@@ -21,31 +21,31 @@ class PermissionsModuleSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'crm_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'crm_contactos_listado']));
-        array_push($permissions, Permission::create(['name' => 'crm_contactos_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'crm_contactos_editar']));
-        array_push($permissions, Permission::create(['name' => 'crm_contactos_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'crm_chat_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'crm_mailbox_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'crm_chat_notifications']));
-        array_push($permissions, Permission::create(['name' => 'crm_chat_messages']));
-        array_push($permissions, Permission::create(['name' => 'crm_envio_correo_masivo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_contactos_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_contactos_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_contactos_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_contactos_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_chat_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_mailbox_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_chat_notifications']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_chat_messages']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_envio_correo_masivo']));
 
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_listado']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_editar']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_empleados']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_agregar_empleados']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_eliminar_empleados']));
-        array_push($permissions, Permission::create(['name' => 'crm_empresas_enviar_correo_empleados']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_empleados']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_agregar_empleados']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_eliminar_empleados']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_empresas_enviar_correo_empleados']));
 
-        array_push($permissions, Permission::create(['name' => 'crm_clientes_preguntas_ia']));
-        array_push($permissions, Permission::create(['name' => 'crm_dudas_comunes']));
-        array_push($permissions, Permission::create(['name' => 'crm_dudas_comunes_edicion']));
-        array_push($permissions, Permission::create(['name' => 'crm_libro_reclamos']));
-        array_push($permissions, Permission::create(['name' => 'crm_nuevas_captaciones']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_clientes_preguntas_ia']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_dudas_comunes']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_dudas_comunes_edicion']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_libro_reclamos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'crm_nuevas_captaciones']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
