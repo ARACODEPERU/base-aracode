@@ -695,7 +695,7 @@ class CertificateImage
         $student = AcaStudent::with('person')->find($this->student_id);
 
         if ($student && $student->person) {
-            return $student->person->full_name;
+            return $student->person->formatted_name;
         }
 
         return 'Nombres del Estudiante o alumnos';

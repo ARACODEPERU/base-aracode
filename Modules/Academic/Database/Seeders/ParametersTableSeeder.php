@@ -42,7 +42,7 @@ class ParametersTableSeeder extends Seeder
             [
                 'description' => 'Orede del nombre completo de los usuarios',
                 'control_type' => 'rdj',
-                'json_query_data' => '[{"value": "1","label":"Pallido paterno Apellido materno Nombres"},{"value": "2","label":"Nombres Pallido paterno Apellido materno"},{"value": "3","label":"Nombres Pallido paterno"}]',
+                'json_query_data' => '[{"value": "1","label":"Apellido paterno Apellido materno Nombres"},{"value": "2","label":"Nombres Apellido paterno Apellido materno"},{"value": "3","label":"Nombres Apellido paterno"}]',
                 'value_default' => '1',
             ]
         );

@@ -1102,7 +1102,7 @@ class AcaCertificateController extends Controller
     private function certificateTextItems(AcaCertificate $certificate, AcaStudent $student, AcaCertificateParameter $parameter, ?AcaCourse $course, string $side, ?AcaModule $module = null): array
     {
         $texts = [];
-        $studentName = $student->person->full_name ?? '';
+        $studentName = $student->person->formatted_name ?? '';
 
         // Si es certificado de módulo, usar datos del módulo
         if ($module) {
@@ -1606,7 +1606,7 @@ class AcaCertificateController extends Controller
     private function moduleCertificateTextItems(AcaStudent $student, AcaModule $module, AcaCertificateParameter $parameter, ?AcaCourse $course, string $side): array
     {
         $texts = [];
-        $studentName = $student->person->full_name ?? '';
+        $studentName = $student->person->formatted_name ?? '';
 
         // Título: usar certificate_title del módulo o formar uno con el curso
         $courseTitle = $module->certificate_title

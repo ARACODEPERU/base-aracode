@@ -319,6 +319,19 @@
 
     }
 
+
+    const onUnitTypeChange = (row) => {
+        if (row.unit_type === 'ZZ') {
+            row.is_product = false;
+        }
+    }
+
+    const onIsProductChange = (row) => {
+        if (row.is_product) {
+            row.unit_type = 'NIU';
+        }
+    }
+
     ////imprimir documento
     const downloadDocument = (id,type,file) => {
         let url = route('saledocuments_download',[id, type,file])
@@ -848,6 +861,7 @@
                                             </td>
                                             <td style="width: 80px;" class="text-center">
                                                 <input v-model="row.is_product"
+                                                @change="onIsProductChange(row)"
                                                 :disabled="row.id ? true : false"
                                                 :class="row.id ? 'bg-gray-100' : ''"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
@@ -855,6 +869,7 @@
                                             </td>
                                             <td style="width: 110px;">
                                                 <select v-model="row.unit_type"
+                                                @change="onUnitTypeChange(row)"
                                                 :disabled="row.id ? true : false"
                                                 :class="row.id ? 'bg-gray-100' : ''"
                                                 :style="row.id ? 'cursor: not-allowed': ''"
