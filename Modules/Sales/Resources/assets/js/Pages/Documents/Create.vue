@@ -323,6 +323,8 @@
     const onUnitTypeChange = (row) => {
         if (row.unit_type === 'ZZ') {
             row.is_product = false;
+        } else if (row.unit_type === 'NIU') {
+            row.is_product = true;
         }
     }
 
