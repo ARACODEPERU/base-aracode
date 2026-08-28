@@ -31,7 +31,12 @@ class AcaCourse extends Model
         'discount',
         'discount_applies',
         'auto_certificate',
+        'round_grades',
         'certificate_title',
+    ];
+
+    protected $casts = [
+        'round_grades' => 'boolean',
     ];
 
     public function category(): BelongsTo

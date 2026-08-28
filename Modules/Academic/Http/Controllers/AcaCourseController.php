@@ -277,6 +277,7 @@ class AcaCourseController extends Controller
         $course->discount = $request->get('discount') ?? 0;
         $course->discount_applies = $request->get('discount_applies') ?? null;
         $course->auto_certificate = $request->get('auto_certificate') ? true : false;
+        $course->round_grades = $request->boolean('round_grades');
 
         $destination = 'uploads/courses';
         $base64Image = $request->get('image');

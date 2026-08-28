@@ -1543,7 +1543,7 @@
                         <div class="col-span-2 mb-4" v-if="form.has_back">
                             <label class="flex items-center cursor-pointer">
                                 <input v-model="form.has_reverse" type="checkbox" class="form-checkbox text-primary" />
-                                <span class="ltr:ml-2 rtl:mr-2 text-white-dark font-medium">Incluir reverso al descargar (ZIP)</span>
+                                <span class="ltr:ml-2 rtl:mr-2 text-white-dark font-medium">Permitir la descarga del Reverso</span>
                             </label>
                         </div>
 
