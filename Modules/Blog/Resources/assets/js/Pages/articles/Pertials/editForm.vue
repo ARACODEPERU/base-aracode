@@ -1,5 +1,5 @@
 <script setup>
-    import { useForm, Link } from '@inertiajs/vue3';
+    import { useForm, Link, router } from '@inertiajs/vue3';
     import FormSection from '@/Components/FormSection.vue';
     import InputError from '@/Components/InputError.vue';
     import InputLabel from '@/Components/InputLabel.vue';
@@ -121,8 +121,16 @@
 
     const inputKeyword = ref(null);
     const addkeyword = () => {
-        form.keywords.push(inputKeyword.value);
-        inputKeyword.value = null;
+        const text = inputKeyword.value;
+        if (text) {
+            const parts = text.split(/[,]+/).map(s => s.trim()).filter(s => s.length > 0);
+            parts.forEach(part => {
+                if (!form.keywords.includes(part)) {
+                    form.keywords.push(part);
+                }
+            });
+            inputKeyword.value = null;
+        }
     }
 
     const removekeyword = (index) => {
@@ -230,7 +238,7 @@
                     <input @keydown.enter.stop.prevent="addkeyword" 
                         v-model="inputKeyword" 
                         class="form-input"
-                        :maxlength="22" placeholder="Máximo 22 caracteres"
+                        :maxlength="22" placeholder="Separar con comas (ej: jovenes, escolares)"
                     />
                 </div>
                 <InputError :message="form.errors.keywords" class="mt-2" />

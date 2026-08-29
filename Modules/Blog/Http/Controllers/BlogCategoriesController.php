@@ -20,10 +20,10 @@ class BlogCategoriesController extends Controller
 
     public function index()
     {
-        $gategories = (new BlogCategory())->newQuery();
+        $categories = (new BlogCategory())->newQuery();
 
         if (request()->has('search')) {
-            $gategories->where('description', 'Like', '%' . request()->input('search') . '%');
+            $categories->where('description', 'Like', '%' . request()->input('search') . '%');
         }
 
         if (request()->query('sort')) {
@@ -33,15 +33,15 @@ class BlogCategoriesController extends Controller
                 $sort_order = 'DESC';
                 $attribute = substr($attribute, 1);
             }
-            $gategories->orderBy($attribute, $sort_order);
+            $categories->orderBy($attribute, $sort_order);
         } else {
-            $gategories->latest();
+            $categories->latest();
         }
 
-        $gategories = $gategories->paginate(10)->onEachSide(2)->appends(request()->query());
+        $categories = $categories->paginate(10)->onEachSide(2)->appends(request()->query());
 
         return Inertia::render('Blog::categories/List', [
-            'categories' => $gategories,
+            'categories' => $categories,
             'filters' => request()->all('search')
         ]);
     }
@@ -105,7 +105,7 @@ class BlogCategoriesController extends Controller
         ]);
 
         return redirect()->route('blog-category.edit', $blogCategory->id)
-            ->with('message', 'Categoria updated successfully.');
+            ->with('message', 'Categoría actualizada con éxito.');
     }
 
     /**
@@ -118,7 +118,7 @@ class BlogCategoriesController extends Controller
         $blogCategory->delete();
 
         return redirect()->route('blog-category.index')
-            ->with('message', __('Category deleted successfully'));
+            ->with('message', __('Categoría eliminada con éxito'));
     }
 
     public function articlesAll($id)

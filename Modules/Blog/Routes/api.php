@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use Modules\Blog\Http\Controllers\BlogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,9 +19,7 @@ Route::middleware('auth:api')->get('/blog', function (Request $request) {
 });
 
 Route::prefix('blog_v1')->group(function () {
-    Route::get('all', 'BlogController@apiGetDataBlog');
-
-    Route::get('GetArticle/{url?}', 'BlogController@apiGetDataArticle');
-
-    Route::get('GetArticlesByCategories/{id}', 'BlogController@apiGetDataArticlesByCategories');
+    Route::get('all', [BlogController::class, 'apiGetDataBlog']);
+    Route::get('GetArticle/{url?}', [BlogController::class, 'apiGetDataArticle']);
+    Route::get('GetArticlesByCategories/{id}', [BlogController::class, 'apiGetDataArticlesByCategories']);
 });

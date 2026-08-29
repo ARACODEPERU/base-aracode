@@ -60,7 +60,7 @@ class BlogController extends Controller
      */
     public function dashboard()
     {
-        return Inertia::render('Blog::Dashboard');
+        return redirect()->route('blog-article.index');
     }
 
 
