@@ -404,6 +404,9 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::post('certificate/update/info', [AcaCertificateController::class, 'updateInfo'])
         ->name('aca_certificate_update_info');
 
+    Route::get('certificate/{id}/test-preview', [AcaCertificateController::class, 'testCertificatePreview'])
+        ->name('aca_certificate_test_preview');
+
     Route::middleware(['middleware' => 'permission:aca_cursos_listado_estudiantes'])
         ->get('courses/enrolledstudents/{id}/registered', [AcaCourseController::class, 'enrolledStudents'])
         ->name('aca_enrolledstudents_list');

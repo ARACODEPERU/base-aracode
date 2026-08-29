@@ -17,6 +17,7 @@
     import ImagePng from '@/Components/loader/image-png.vue';
     import switchMobinkakei from '@/Components/switch/switch-mobinkakei.vue';
     import QRCode from 'qrcode';
+    import CertificatePreviewModal from '../../Students/Partials/CertificatePreviewModal.vue';
 
     const props = defineProps({
         certificate: {
@@ -30,6 +31,9 @@
     });
 
     const imagePreviewLoading = ref(false);
+    const showTestPreview = ref(false);
+    const testPreviewData = ref(null);
+    const testPreviewLoading = ref(false);
     const xasset = assetUrl;
 
     const getImage = (path) => {
@@ -102,7 +106,7 @@
         back_content_show_manual: props.certificate.back_content_show_manual != 0 ? true : false,
         back_content_show_course: props.certificate.back_content_show_course != 0 ? true : false,
         back_content_show_module: props.certificate.back_content_show_module != 0 ? true : false,
-        back_content_type: props.certificate.back_content_type || 'list',
+        back_content_type: props.certificate.back_content_type ?? 'table',
         back_content_type_module: props.certificate.back_content_type_module || 'list',
 
         // Configuración del módulo/descripción del módulo (tabla separada)
@@ -160,13 +164,13 @@
         back_visible_description: props.certificate.back_visible_description == 1 ? true : false,
 
         // Contenido del curso del reverso
-        back_fontfamily_course: props.certificate.back_fontfamily_course,
-        back_font_align_course: props.certificate.back_font_align_course,
-        back_font_vertical_align_course: props.certificate.back_font_vertical_align_course,
-        back_position_course_x: props.certificate.back_position_course_x,
-        back_position_course_y: props.certificate.back_position_course_y,
-        back_font_size_course: props.certificate.back_font_size_course,
-        back_max_width_course: props.certificate.back_max_width_course,
+        back_fontfamily_course: props.certificate.back_fontfamily_course ?? 'Pacifico-Regular.ttf',
+        back_font_align_course: props.certificate.back_font_align_course ?? 'left',
+        back_font_vertical_align_course: props.certificate.back_font_vertical_align_course ?? 'top',
+        back_position_course_x: props.certificate.back_position_course_x ?? 172,
+        back_position_course_y: props.certificate.back_position_course_y ?? 338,
+        back_font_size_course: props.certificate.back_font_size_course ?? 18,
+        back_max_width_course: props.certificate.back_max_width_course ?? 1200,
         back_color_course: props.certificate.back_color_course ?? '#000000',
         back_visible_course: props.certificate.back_visible_course == 1 ? true : false,
 
@@ -189,14 +193,14 @@
         back_visible_qr: props.certificate.back_visible_qr == 1 ? true : false,
 
         // Nota Final (PROMEDIO FINAL)
-        back_fontfamily_grade: props.gradeConfig?.back_fontfamily_grade,
-        back_font_size_grade: props.gradeConfig?.back_font_size_grade,
+        back_fontfamily_grade: props.gradeConfig?.back_fontfamily_grade ?? 'Pacifico-Regular.ttf',
+        back_font_size_grade: props.gradeConfig?.back_font_size_grade ?? 18,
         back_color_grade: props.gradeConfig?.back_color_grade ?? '#000000',
-        back_position_grade_x: props.gradeConfig?.back_position_grade_x,
-        back_position_grade_y: props.gradeConfig?.back_position_grade_y,
-        back_visible_grade: props.gradeConfig?.back_visible_grade == 1 ? true : false,
-        back_rectangle_width: props.gradeConfig?.back_rectangle_width ?? 100,
-        back_rectangle_height: props.gradeConfig?.back_rectangle_height ?? 100,
+        back_position_grade_x: props.gradeConfig?.back_position_grade_x ?? 538,
+        back_position_grade_y: props.gradeConfig?.back_position_grade_y ?? 800,
+        back_visible_grade: props.gradeConfig?.back_visible_grade == 1 ? true : true,
+        back_rectangle_width: props.gradeConfig?.back_rectangle_width ?? 50,
+        back_rectangle_height: props.gradeConfig?.back_rectangle_height ?? 50,
         back_rectangle_color: props.gradeConfig?.back_rectangle_color ?? '#000000',
 
         // Contenido del curso
@@ -934,6 +938,30 @@
             imagePreviewLoading.value = false;
         }
     }
+
+    const loadTestPreview = async () => {
+        testPreviewLoading.value = true;
+        try {
+            const response = await axios.get(route('aca_certificate_test_preview', props.certificate.id));
+            testPreviewData.value = response.data;
+            showTestPreview.value = true;
+        } catch (error) {
+            Swal2.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.response?.data?.message || 'No se pudo generar la vista previa de prueba',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        } finally {
+            testPreviewLoading.value = false;
+        }
+    };
+
+    const closeTestPreview = () => {
+        showTestPreview.value = false;
+        testPreviewData.value = null;
+    };
 
 </script>
 <template>
@@ -2287,6 +2315,15 @@
                             Guardar todos los elementos
                         </button>
                     </div>
+                    <div class="col-span-2">
+                        <button @click="loadTestPreview" class="btn btn-warning w-full" type="button" :disabled="testPreviewLoading">
+                            <svg v-show="testPreviewLoading" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                                <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                            </svg>
+                            Vista Previa de Prueba
+                        </button>
+                    </div>
                 </div>
             </div>
             <div
@@ -2470,4 +2507,10 @@
             </div>
         </div>
     </div>
+    <CertificatePreviewModal
+        v-if="showTestPreview"
+        :preview-data="testPreviewData"
+        :is-test="true"
+        @close="closeTestPreview"
+    />
 </template>
