@@ -97,10 +97,20 @@ class BlogController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
+        // Articulos agrupados por categoria para el sidebar
+        $articlesByCategory = [];
+        foreach ($categories as $category) {
+            $articlesByCategory[$category->id] = BlogArticle::where('category_id', $category->id)
+                ->where('status', true)
+                ->orderByDesc('created_at')
+                ->get();
+        }
+
         return view('pages.blog-articulo', [
             'categories'        => $categories,
             'article'           => $article,
             'latest_articles'   => $latest_articles,
+            'articlesByCategory' => $articlesByCategory,
             'logo'   => $logo
             // 'company'           => $company
         ]);
