@@ -23,7 +23,7 @@
         }
     });
 
-    if(usePage().props.flash.message){
+    if(usePage().props.flash?.message){
         swal(usePage().props.flash.message);
     }
     
@@ -67,7 +67,7 @@
                         <div class="w-full p-4">
                             <div class="grid grid-cols-3">
                                 <div class="col-span-3 sm:col-span-1">
-                                    <form @submit.prevent="form.get(route('roles.index'))">
+                                    <form @submit.prevent="form.get(route('blog-article.index'))">
                                         <label for="table-search" class="sr-only">Search</label>
                                         <div class="relative">
                                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">

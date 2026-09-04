@@ -21,7 +21,7 @@ class SeedPermissionsTableSeeder extends Seeder
     {
         $role = Role::find(1);
 
-        $modulo = Modulo::create(['identifier' => 'M006', 'description' => 'Blog']);
+        $modulo = Modulo::firstOrCreate(['identifier' => 'M006', 'description' => 'Blog']);
 
         $permissions = [];
 

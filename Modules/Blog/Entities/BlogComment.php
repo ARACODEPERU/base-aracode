@@ -28,7 +28,7 @@ class BlogComment extends Model
 
     protected static function newFactory(): BlogCommentFactory
     {
-        //return BlogCommentFactory::new();
+        return BlogCommentFactory::new();
     }
     public function user(): BelongsTo
     {

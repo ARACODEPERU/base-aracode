@@ -7,6 +7,8 @@ import { jsPDF } from 'jspdf';
 
 const props = defineProps({
     certificateId: { type: Number, default: null },
+    previewData: { type: Object, default: null },
+    isTest: { type: Boolean, default: false },
 });
 const emit = defineEmits(['close']);
 
@@ -83,15 +85,21 @@ const loadPreview = async () => {
     previewLoading.value = true;
 
     try {
-        const response = await axios.get(route('aca_image_download', props.certificateId), {
-            params: { preview: 1 },
-        });
+        let data;
+        if (props.previewData) {
+            data = props.previewData;
+        } else {
+            const response = await axios.get(route('aca_image_download', props.certificateId), {
+                params: { preview: 1 },
+            });
+            data = response.data;
+        }
 
-        certificatePreview.value = response.data;
-        activeSideKey.value = response.data?.sides?.[0]?.key || 'front';
+        certificatePreview.value = data;
+        activeSideKey.value = data?.sides?.[0]?.key || 'front';
         await nextTick();
         updateStageWidth();
-        await Promise.all((response.data?.sides || []).map(prepareSideAssets));
+        await Promise.all((data?.sides || []).map(prepareSideAssets));
     } catch (error) {
         const title = error.response?.status === 404 ? 'Certificado no encontrado' : 'Error al descargar';
         const message = error.response?.data?.message || 'Falta configuración del administrador.';
@@ -246,19 +254,43 @@ const downloadDataUrl = (dataUrl, fileName) => {
     link.remove();
 };
 
-const getStageDataUrl = () => {
+const getStageDataUrl = async () => {
     const stage = stageRef.value?.getStage();
-    return stage?.toDataURL({ pixelRatio: 2 / stageScale.value, mimeType: 'image/png' });
+    const dataUrl = stage?.toDataURL({ pixelRatio: 2 / stageScale.value, mimeType: 'image/png' });
+    if (!props.isTest || !dataUrl) return dataUrl;
+    // Agregar marca de agua PRUEBA
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            ctx.save();
+            ctx.globalAlpha = 0.12;
+            ctx.font = 'bold ' + Math.round(img.width * 0.08) + 'px Arial';
+            ctx.fillStyle = '#000000';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.translate(img.width / 2, img.height / 2);
+            ctx.rotate(-Math.PI / 6);
+            ctx.fillText('PRUEBA', 0, 0);
+            ctx.restore();
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.src = dataUrl;
+    });
 };
 
-const downloadPng = () => {
-    const dataUrl = getStageDataUrl();
+const downloadPng = async () => {
+    const dataUrl = await getStageDataUrl();
     if (!dataUrl || !activeSide.value) return;
     downloadDataUrl(dataUrl, `${certificatePreview.value?.file_name || 'certificado'}_${activeSide.value.key}.png`);
 };
 
-const downloadPdf = () => {
-    const dataUrl = getStageDataUrl();
+const downloadPdf = async () => {
+    const dataUrl = await getStageDataUrl();
     if (!dataUrl || !activeSide.value) return;
 
     const orientation = activeSide.value.width >= activeSide.value.height ? 'landscape' : 'portrait';
@@ -357,6 +389,22 @@ const downloadPdf = () => {
                             <v-image
                                 v-if="qrConfig"
                                 :config="qrConfig"
+                            />
+                            <v-text
+                                v-if="isTest"
+                                :config="{
+                                    x: activeSide.width / 2,
+                                    y: activeSide.height / 2,
+                                    text: 'PRUEBA',
+                                    fontSize: Math.round(activeSide.width * 0.08),
+                                    fontFamily: 'Arial',
+                                    fontStyle: 'bold',
+                                    fill: '#000000',
+                                    opacity: 0.12,
+                                    align: 'center',
+                                    rotation: -30,
+                                    listening: false
+                                }"
                             />
                         </v-layer>
                     </v-stage>

@@ -90,9 +90,22 @@ class BlogCommentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id): RedirectResponse
+    public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'message' => 'required',
+        ]);
+
+        $comment = BlogComment::findOrFail($id);
+        $comment->update([
+            'message' => htmlentities($request->get('message'), ENT_QUOTES, "UTF-8"),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comentario actualizado correctamente',
+            'comment' => $comment->fresh()
+        ]);
     }
 
     /**

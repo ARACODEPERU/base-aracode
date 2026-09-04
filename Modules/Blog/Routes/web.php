@@ -11,12 +11,13 @@
 |
 */
 
+use App\Http\Controllers\WebPageController;
 use Modules\Blog\Http\Controllers\BlogArticlesController;
 use Modules\Blog\Http\Controllers\BlogCategoriesController;
 use Modules\Blog\Http\Controllers\BlogCommentController;
 
 Route::prefix('blog')->group(function () {
-    Route::get('/', 'BlogController@index');
+    Route::get('/', [WebPageController::class, 'blog_index'])->name('blog_principal');
 
     Route::middleware(['auth'])->group(function () {
         Route::middleware(['middleware' => 'permission:blog_dashboard'])

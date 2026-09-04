@@ -1161,7 +1161,7 @@ class AcaCertificateController extends Controller
         $roundGrades = $course->round_grades ?? false;
 
         if ($roundGrades) {
-            // Recalcular promedio final desde notas redondeadas de módulo
+            // Recalcular promedio final desde notas redondeadas de mï¿½dulo
             $moduleGrades = $this->getStudentModuleGrades($student, $certificate);
             $roundedAverages = array_filter(array_map(function ($grade) {
                 return (int) ceil($grade);
@@ -2012,6 +2012,252 @@ class AcaCertificateController extends Controller
             'courses' => $courses,
             'filters' => request()->only(['course_id', 'per_page']),
         ]);
+    }
+
+    /**
+     * Genera una vista previa de prueba del certificado con datos ficticios
+     * No altera nada en la base de datos
+     */
+    public function testCertificatePreview($id)
+    {
+        $parameter = AcaCertificateParameter::with(['moduleConfig'])->find($id);
+        if (!$parameter) {
+            return response()->json(['success' => false, 'message' => 'Certificado no encontrado'], 404);
+        }
+
+        $course = null;
+        if ($parameter->course_id) {
+            $course = AcaCourse::with([
+                'modules' => function ($query) { $query->orderBy('position'); },
+                'modules.themes' => function ($query) { $query->orderBy('position'); },
+            ])->find($parameter->course_id);
+        }
+        if (!$course) {
+            $course = AcaCourse::with([
+                'modules' => function ($query) { $query->orderBy('position'); },
+                'modules.themes' => function ($query) { $query->orderBy('position'); },
+            ])->first();
+        }
+        if (!$course) {
+            return response()->json(['success' => false, 'message' => 'No hay cursos disponibles para la vista previa de prueba'], 422);
+        }
+
+        $studentName = 'Jhon Smith Barak Obama';
+        $today = Carbon::now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY');
+        $frontUrl = url('/');
+
+        $testModuleGrades = [];
+        $testModules = [];
+        foreach ($course->modules as $module) {
+            $grade = rand(1400, 2000) / 100;
+            $testModuleGrades[$module->id] = $grade;
+            $roundedGrade = ($course->round_grades ?? false) ? (int) ceil($grade) : round($grade, 2);
+            $testModules[] = [
+                'title' => $module->description ?? '',
+                'themes' => $module->themes->pluck('description')->filter()->values()->all(),
+                'grade' => $roundedGrade,
+            ];
+        }
+
+        $finalAverage = 0;
+        if (count($testModuleGrades) > 0) {
+            if ($course->round_grades ?? false) {
+                $roundedAverages = array_map(function ($g) { return (int) ceil($g); }, $testModuleGrades);
+                $finalAverage = ceil((array_sum($roundedAverages) / count($roundedAverages)) * 100) / 100;
+            } else {
+                $finalAverage = round(array_sum($testModuleGrades) / count($testModuleGrades), 2);
+            }
+        }
+
+        $sides = [
+            $this->buildTestSidePayload($parameter, $course, 'front', $studentName, $today, $frontUrl, $testModules, $finalAverage),
+        ];
+        if ($parameter->has_reverse && $parameter->back_certificate_img) {
+            $sides[] = $this->buildTestSidePayload($parameter, $course, 'back', $studentName, $today, $frontUrl, $testModules, $finalAverage);
+        }
+
+        return response()->json([
+            'success' => true,
+            'file_name' => 'certificado_prueba',
+            'is_test' => true,
+            'sides' => $sides,
+        ]);
+    }
+
+    private function buildTestSidePayload(AcaCertificateParameter $parameter, AcaCourse $course, string $side, string $studentName, string $today, string $frontUrl, array $testModules, float $finalAverage): array
+    {
+        $isBack = $side === 'back';
+        $imagePath = $isBack ? $parameter->back_certificate_img : $parameter->certificate_img;
+        $imageSize = $this->certificateImageSize($imagePath);
+        $configuredWidth = (int) ($isBack ? $parameter->back_certificate_img_width : $parameter->certificate_img_width);
+        $configuredHeight = (int) ($isBack ? $parameter->back_certificate_img_height : $parameter->certificate_img_height);
+        $width = $configuredWidth > 0 ? $configuredWidth : (int) ($imageSize['width'] ?? 1550);
+        $height = $configuredHeight > 0 ? $configuredHeight : (int) ($imageSize['height'] ?? 1096);
+
+        return [
+            'key' => $side,
+            'label' => $isBack ? 'Reverso' : 'Anverso',
+            'width' => $width,
+            'height' => $height,
+            'base_image' => $this->certificateStorageUrl($imagePath),
+            'texts' => $this->buildTestTextItems($parameter, $course, $side, $studentName, $today, $finalAverage),
+            'contents' => $this->buildTestContentItems($parameter, $course, $side, $testModules),
+            'qr' => $this->buildTestQrItem($parameter, $side, $frontUrl),
+        ];
+    }
+
+    private function buildTestTextItems(AcaCertificateParameter $parameter, AcaCourse $course, string $side, string $studentName, string $today, float $finalAverage): array
+    {
+        $texts = [];
+        $courseTitle = $course->certificate_title ?? $course->description ?? 'Curso de Prueba';
+        $description = $course->certificate_description ?? 'Descripcion del curso de prueba para vista previa.';
+
+        $this->pushTestCertificateText($texts, $parameter, $side, 'date', 'Lima, '.$today);
+        $this->pushTestCertificateText($texts, $parameter, $side, 'names', $studentName, (int) ($this->certificateField($parameter, $side, 'max_width_names') ?? 600));
+        $this->pushTestCertificateText($texts, $parameter, $side, 'title', $courseTitle, (int) ($this->certificateField($parameter, $side, 'max_width_title') ?? 800));
+
+        if ($side === 'front') {
+            if (($parameter->content_type ?? 'description') !== 'table') {
+                $this->pushTestCertificateText($texts, $parameter, $side, 'description', $description, (int) ($parameter->max_width_description ?? 800), true);
+            }
+        } elseif ($parameter->back_content_show_manual) {
+            $this->pushTestCertificateText($texts, $parameter, $side, 'description', $parameter->back_description ?? 'Manual del reverso.', (int) ($parameter->back_max_width_description ?? 800), true);
+        }
+
+        if ($side === 'back') {
+            $gradeConfig = AcaCertificateGradeConfig::where('certificate_id', $parameter->id)->first();
+            $showGrade = $gradeConfig ? $gradeConfig->back_visible_grade : true;
+            if ($showGrade) {
+                $label = 'Promedio Final: ';
+                $gradeDisplay = number_format($finalAverage, 2);
+                $fontSize = (int) (($gradeConfig->back_font_size_grade ?? null) ?? 14);
+                $textColor = $finalAverage < 11 ? '#FF0000' : (($gradeConfig->back_color_grade ?? null) ?? '#000000');
+                $posX = (float) (($gradeConfig->back_position_grade_x ?? null) ?? 0);
+                $posY = (float) (($gradeConfig->back_position_grade_y ?? null) ?? 800);
+                $labelWidth = strlen($label) * $fontSize * 0.65;
+                $spacing = 8;
+                $rectWidth = (int) (($gradeConfig->back_rectangle_width ?? null) ?? 100);
+                $rectHeight = (int) (($gradeConfig->back_rectangle_height ?? null) ?? 50);
+                $rectColor = ($gradeConfig->back_rectangle_color ?? null) ?? '#000000';
+                $avgDim = ($rectWidth + $rectHeight) / 2;
+                $rectStrokeWidth = max(1, round($avgDim * 0.03));
+                $rectX = $posX + $labelWidth + $spacing;
+                $rectY = $posY + ($fontSize / 2) - ($rectHeight / 2);
+
+                $texts[] = [
+                    'id' => 'back-grade-label',
+                    'text' => $label,
+                    'x' => $posX,
+                    'y' => $posY,
+                    'font_size' => $fontSize,
+                    'font_family' => $this->certificateFontFamily(($gradeConfig->back_fontfamily_grade ?? null) ?? 'Poppins-Light.ttf'),
+                    'color' => $textColor,
+                    'align' => 'left',
+                    'width' => null,
+                    'line_height' => 1,
+                ];
+                $texts[] = [
+                    'id' => 'back-grade-value',
+                    'text' => $gradeDisplay,
+                    'x' => $rectX + ($rectWidth / 2),
+                    'y' => $rectY + ($rectHeight / 2),
+                    'font_size' => $fontSize,
+                    'font_family' => $this->certificateFontFamily(($gradeConfig->back_fontfamily_grade ?? null) ?? 'Poppins-Light.ttf'),
+                    'color' => $textColor,
+                    'align' => 'center',
+                    'width' => $rectWidth,
+                    'line_height' => 1,
+                    'rect_width' => $rectWidth,
+                    'rect_height' => $rectHeight,
+                    'rect_color' => $rectColor,
+                    'rect_stroke_width' => $rectStrokeWidth,
+                ];
+            }
+        }
+
+        return $texts;
+    }
+
+    private function pushTestCertificateText(array &$texts, AcaCertificateParameter $parameter, string $side, string $field, ?string $text, ?int $width = null, bool $multiline = false): void
+    {
+        if (!$text || !$this->certificateField($parameter, $side, 'visible_'.$field)) {
+            return;
+        }
+        $fontSize = (int) ($this->certificateField($parameter, $side, 'font_size_'.$field) ?? 18);
+        $texts[] = [
+            'id' => $side.'-'.$field,
+            'text' => $text,
+            'x' => (float) ($this->certificateField($parameter, $side, 'position_'.$field.'_x') ?? 0),
+            'y' => (float) ($this->certificateField($parameter, $side, 'position_'.$field.'_y') ?? 0),
+            'font_size' => $fontSize,
+            'font_family' => $this->certificateFontFamily($this->certificateField($parameter, $side, 'fontfamily_'.$field)),
+            'color' => $this->certificateField($parameter, $side, 'color_'.$field) ?? '#000000',
+            'align' => $this->certificateField($parameter, $side, 'font_align_'.$field) ?? 'left',
+            'vertical_align' => $this->certificateField($parameter, $side, 'font_vertical_align_'.$field) ?? 'top',
+            'width' => $width,
+            'line_height' => $multiline ? 1.25 : 1,
+        ];
+    }
+
+    private function buildTestContentItems(AcaCertificateParameter $parameter, ?AcaCourse $course, string $side, array $testModules): array
+    {
+        if (!$course) {
+            return [];
+        }
+        $items = [];
+        if ($side === 'front' && ($parameter->content_type ?? 'description') === 'table' && $parameter->visible_description) {
+            $items[] = [
+                'id' => 'front-course-table',
+                'type' => 'table',
+                'x' => (float) ($parameter->position_description_x ?? 0),
+                'y' => (float) ($parameter->position_description_y ?? 0),
+                'width' => (int) ($parameter->max_width_description ?? 800),
+                'font_size' => (int) ($parameter->font_size_description ?? 14),
+                'color' => $parameter->color_description ?? '#000000',
+                'font_family' => $this->certificateFontFamily($parameter->fontfamily_description),
+                'modules' => $testModules,
+            ];
+        }
+        if ($side === 'back' && !$parameter->for_module && $parameter->back_visible_course) {
+            $items[] = [
+                'id' => 'back-course-content',
+                'type' => $parameter->back_content_type ?? 'list',
+                'x' => (float) ($parameter->back_position_course_x ?? 0),
+                'y' => (float) ($parameter->back_position_course_y ?? 0),
+                'width' => (int) ($parameter->back_max_width_course ?? 800),
+                'font_size' => (int) ($parameter->back_font_size_course ?? 14),
+                'color' => $parameter->back_color_course ?? '#000000',
+                'font_family' => $this->certificateFontFamily($parameter->back_fontfamily_course),
+                'modules' => $testModules,
+            ];
+        }
+        return $items;
+    }
+
+    private function buildTestQrItem(AcaCertificateParameter $parameter, string $side, string $frontUrl): ?array
+    {
+        if ($side === 'front') {
+            if (!$parameter->visible_image_qr || !$parameter->size_qr) {
+                return null;
+            }
+            return [
+                'text' => $frontUrl,
+                'x' => (float) ($parameter->position_qr_x ?? 0),
+                'y' => (float) ($parameter->position_qr_y ?? 0),
+                'size' => (float) ($parameter->size_qr ?? 120),
+                'align' => $parameter->font_align_qr ?? 'top-left',
+            ];
+        }
+        if (!$parameter->back_visible_qr || !$parameter->back_size_qr) {
+            return null;
+        }
+        return [
+            'text' => $frontUrl,
+            'x' => (float) ($parameter->back_position_qr_x ?? 0),
+            'y' => (float) ($parameter->back_position_qr_y ?? 0),
+            'size' => (float) ($parameter->back_size_qr ?? 120),
+            'align' => 'top-left',
+        ];
     }
 
 }
