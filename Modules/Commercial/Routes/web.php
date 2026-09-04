@@ -9,6 +9,7 @@ use Modules\Commercial\Http\Controllers\CommercialController;
 use Modules\Commercial\Http\Controllers\CommercialNegotiationController;
 use Modules\Commercial\Http\Controllers\CommercialNegotiationProcessController;
 use Modules\Commercial\Http\Controllers\CommercialNegotiationPublicController;
+use Modules\Commercial\Http\Controllers\CommercialNegotiationPaymentController;
 
 Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function () {
     Route::get('dashboard', [CommercialController::class, 'index'])
@@ -187,6 +188,10 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->post('negotiations/reject/{id}', [CommercialNegotiationController::class, 'reject'])
         ->name('comm_negotiations_reject');
 
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/reactivate/{id}', [CommercialNegotiationController::class, 'reactivate'])
+        ->name('comm_negotiations_reactivate');
+
     Route::middleware(['middleware' => 'permission:comm_negociaciones_editar'])
         ->post('negotiations/cancel/{id}', [CommercialNegotiationController::class, 'cancel'])
         ->name('comm_negotiations_cancel');
@@ -207,3 +212,7 @@ Route::post('negotiations/public/{token}/search', [CommercialNegotiationPublicCo
 Route::post('negotiations/public/{token}/validate-ruc', [CommercialNegotiationPublicController::class, 'validateRuc'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_validate_ruc');
+
+Route::post('negotiations/public/{token}/mercadopago/process', [CommercialNegotiationPaymentController::class, 'processPayment'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_mercadopago_process');

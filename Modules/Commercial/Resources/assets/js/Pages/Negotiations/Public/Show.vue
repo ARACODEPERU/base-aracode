@@ -5,7 +5,8 @@ import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
 import { useForm, usePage } from "@inertiajs/vue3";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
+import { loadMercadoPago } from "@mercadopago/sdk-js";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -62,13 +63,31 @@ const isFactura = computed(() => form.invoice_type === "factura");
 const rucLengthOk = computed(() => Boolean(form.ruc) && String(form.ruc).length === 11);
 const isApproved = computed(() => props.negotiation.status === "aprobada");
 const isCancelled = computed(() => props.negotiation.status === "cancelada");
+const isExpired = computed(() => props.negotiation.status === "sin_respuesta");
+const isConfirmed = computed(() => props.negotiation.status === "confirmada");
 const isRejected = computed(() => props.negotiation.status === "rechazada");
-const showForm = computed(() => !isApproved.value && !isCancelled.value);
+const isCompleting = ["completada"].includes(props.negotiation.status);
+const showForm = computed(() => !isApproved.value && !isCancelled.value && !isExpired.value && !isConfirmed.value && props.negotiation.status !== "completada");
 
-const documentTypeOptions = computed(() => props.identityDocumentTypes.map((item) => ({
-    value: String(item.id),
-    label: item.description,
-})));
+const isMercadoPago = computed(() => props.negotiation.payment_method === "mercadopago");
+const paymentData = computed(() => props.negotiation.mercado_payment_data || null);
+const cardPaymentBrickContainer = ref(null);
+const mpBrickController = ref(null);
+let marketplaceMp = null;
+
+const documentTypeOptions = computed(() => {
+    const seen = new Set();
+    const options = [];
+
+    for (const item of props.identityDocumentTypes) {
+        const label = (item.description || '').trim().toLowerCase();
+        if (seen.has(label)) continue;
+        seen.add(label);
+        options.push({ value: String(item.id), label: item.description });
+    }
+
+    return options;
+});
 
 const filterOption = (input, option) => option.label.toLowerCase().includes(input.toLowerCase());
 
@@ -93,6 +112,21 @@ const showItemPrices = computed(() => {
 });
 
 const scheduleCount = computed(() => (props.negotiation.schedule || []).length || '--');
+
+// Monto a cobrar en linea (Mercado Pago): en cuotas se cobra la primera cuota.
+const mercadoAmount = computed(() => {
+    const total = Number(props.negotiation.total_price || 0);
+
+    if (props.negotiation.payment_type === 'installments') {
+        const schedule = props.negotiation.schedule || [];
+        const first = Number(schedule[0]?.amount || 0);
+        if (first > 0) return first;
+    }
+
+    return total;
+});
+
+const mercadoAmountLabel = computed(() => `${props.negotiation.currency} ${mercadoAmount.value.toFixed(2)}`);
 
 const onlyNumbers = () => {
     form.number = form.number ? String(form.number).replace(/\D/g, "") : null;
@@ -272,19 +306,12 @@ const openVoucherSelector = () => {
 };
 
 const submit = () => {
+    if (!validateRucBeforeSubmit()) return;
+    confirmNegotiation();
+};
+
+const confirmNegotiation = () => {
     form.accepted = true;
-
-    if (isFactura.value && !rucValidated.value) {
-        Swal2.fire({
-            title: "RUC no validado",
-            text: rucNotice.value || "Debes validar el RUC y confirmar que este ACTIVO y HABIDO para continuar.",
-            icon: "warning",
-            padding: "2em",
-            customClass: "sweet-alerts",
-        });
-        return;
-    }
-
     onlyNumbers();
 
     form.post(route("comm_negotiations_public_store", props.negotiation.token), {
@@ -297,10 +324,127 @@ const submit = () => {
                 icon: "success",
                 padding: "2em",
                 customClass: "sweet-alerts",
+            }).then(() => {
+                window.location.reload();
             });
         },
     });
 };
+
+const validateRucBeforeSubmit = () => {
+    if (isFactura.value && !rucValidated.value) {
+        Swal2.fire({
+            title: "RUC no validado",
+            text: rucNotice.value || "Debes validar el RUC y confirmar que este ACTIVO y HABIDO para continuar.",
+            icon: "warning",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        return false;
+    }
+    return true;
+};
+
+const showAlertToast = async (msg, type = null) => {
+    const toast = Swal2.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000,
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+    toast.fire({
+        icon: type,
+        title: msg,
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+};
+
+const renderCardPaymentBrick = async (bricksBuilder) => {
+    if (!cardPaymentBrickContainer.value) return;
+
+    const tot = mercadoAmount.value;
+
+    const settings = {
+        initialization: {
+            amount: tot,
+        },
+        customization: {
+            visual: {
+                style: {
+                    customVariables: {
+                        theme: "bootstrap",
+                    },
+                },
+            },
+            paymentMethods: {
+                maxInstallments: usePage().props.MERCADOPAGO_MAX_INSTALLMENTS || 12,
+            },
+        },
+        callbacks: {
+            onReady: () => {},
+            onSubmit: (cardFormData) => {
+                cardFormData.transaction_amount = tot;
+                return axios({
+                    method: "POST",
+                    url: route("comm_negotiations_public_mercadopago_process", props.negotiation.token),
+                    data: cardFormData,
+                }).then((response) => {
+                    return response.data;
+                }).then((data) => {
+                    if (data.status === "approved") {
+                        showAlertToast("El pago se realizo correctamente. Enviando tu confirmacion ...", "success");
+                        if (!validateRucBeforeSubmit()) return;
+                        confirmNegotiation();
+                    } else {
+                        showAlertToast(data.message || "El pago no fue aprobado.", "error");
+                        reloadBrick();
+                    }
+                }).catch((error) => {
+                    const msxg = error.response?.data?.error || error.response?.data?.message || error.message || "Error al procesar el pago.";
+                    showAlertToast(msxg, "error");
+                    reloadBrick();
+                });
+            },
+            onError: (error) => {
+                showAlertToast(error?.message || "Error en el formulario de pago.", "error");
+            },
+        },
+    };
+
+    mpBrickController.value = await bricksBuilder.create(
+        "cardPayment",
+        "cardPaymentBrick_container",
+        settings
+    );
+};
+
+const reloadBrick = async () => {
+    mpBrickController.value?.unmount();
+    mpBrickController.value = null;
+    await initBrick();
+};
+
+const brickFormVisible = computed(() => isMercadoPago.value && (accepted.value || isRejected.value));
+
+const initBrick = async () => {
+    if (mpBrickController.value) return;
+    if (!cardPaymentBrickContainer.value) return;
+
+    await nextTick();
+    await loadMercadoPago();
+    marketplaceMp = new window.MercadoPago(usePage().props.MERCADOPAGO_KEY, { locale: "es" });
+    await renderCardPaymentBrick(marketplaceMp.bricks());
+};
+
+watch(brickFormVisible, async (visible) => {
+    if (!visible) return;
+    await nextTick();
+    await initBrick();
+}, { immediate: true });
+
 </script>
 
 <template>
@@ -332,6 +476,29 @@ const submit = () => {
                     <h2 class="mb-2 text-2xl font-bold dark:text-white">Negociacion no disponible</h2>
                     <p class="text-gray-600 dark:text-gray-400">
                         Esta negociacion fue cancelada y ya no acepta envios.
+                    </p>
+                </div>
+
+                <div v-else-if="isExpired" class="panel p-8 text-center">
+                    <h2 class="mb-2 text-2xl font-bold dark:text-white">Enlace expirado</h2>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        El plazo para confirmar esta negociacion ya vencio. Contacta al asesor para generar un nuevo enlace.
+                    </p>
+                </div>
+
+                <div v-else-if="isConfirmed" class="panel p-8 text-center">
+                    <FontAwesomeIcon :icon="faCheckCircle" class="mx-auto mb-4 h-16 w-16 text-emerald-500" />
+                    <h2 class="mb-2 text-2xl font-bold dark:text-white">Tu confirmacion fue registrada</h2>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Ya enviaste tus datos correctamente. A partir de ahora el asesor continuara con el proceso de aprobacion. Gracias por tu preferencia.
+                    </p>
+                </div>
+
+                <div v-else-if="isCompleting" class="panel p-8 text-center">
+                    <FontAwesomeIcon :icon="faCheckCircle" class="mx-auto mb-4 h-16 w-16 text-emerald-500" />
+                    <h2 class="mb-2 text-2xl font-bold dark:text-white">Proceso finalizado</h2>
+                    <p class="text-gray-600 dark:text-gray-400">
+                        Esta negociacion ya fue procesada. Gracias por tu preferencia.
                     </p>
                 </div>
 
@@ -434,24 +601,6 @@ const submit = () => {
                         <InputError :message="form.errors.accepted" class="mb-3" />
 
                         <div class="grid grid-cols-6 gap-4">
-                            <div class="col-span-6">
-                                <InputLabel value="Tipo de comprobante *" />
-                                <div class="flex flex-wrap gap-4 mt-2">
-                                    <label class="inline-flex items-center">
-                                        <input v-model="form.invoice_type" type="radio" value="boleta" class="form-radio" />
-                                        <span>Boleta electronica</span>
-                                    </label>
-                                    <label class="inline-flex items-center">
-                                        <input v-model="form.invoice_type" type="radio" value="factura" class="form-radio text-success" />
-                                        <span>Factura electronica</span>
-                                    </label>
-                                </div>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    {{ isBoleta ? 'Los datos de la boleta seran los datos personales que ingreses a continuacion.' : 'Ademas de tus datos personales, ingresa el RUC de la empresa y validalo; son obligatorios para la factura.' }}
-                                </p>
-                                <InputError :message="form.errors.invoice_type" class="mt-1" />
-                            </div>
-
                             <div class="col-span-6 sm:col-span-2">
                                 <InputLabel value="Tipo de documento" />
                                 <Select
@@ -542,8 +691,26 @@ const submit = () => {
                                 <InputError :message="form.errors.profession" class="mt-1" />
                             </div>
 
+                            <div class="col-span-6 mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                <InputLabel value="Tipo de comprobante *" />
+                                <div class="flex flex-wrap gap-4 mt-2">
+                                    <label class="inline-flex items-center">
+                                        <input v-model="form.invoice_type" type="radio" value="boleta" class="form-radio" />
+                                        <span>Boleta electronica</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input v-model="form.invoice_type" type="radio" value="factura" class="form-radio text-success" />
+                                        <span>Factura electronica</span>
+                                    </label>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    {{ isFactura ? 'Ademas de tus datos personales, ingresa el RUC de la empresa y validalo; son obligatorios para la factura.' : 'Los datos de la boleta seran los datos personales que ingresaste.' }}
+                                </p>
+                                <InputError :message="form.errors.invoice_type" class="mt-1" />
+                            </div>
+
                             <template v-if="isFactura">
-                                <div class="col-span-6 mt-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                <div class="col-span-6 pt-2">
                                     <h3 class="font-semibold dark:text-white">Datos de la factura</h3>
                                     <p class="text-xs text-gray-500">Estos datos se usaran solo para la factura electronica.</p>
                                 </div>
@@ -621,7 +788,7 @@ const submit = () => {
                                 <p class="text-sm text-gray-500">Elige cualquiera de los medios, escanea el codigo QR y adjunta el voucher o captura del pago.</p>
                             </div>
 
-                            <div v-else-if="negotiation.payment_method === 'mercadopago' || negotiation.payment_method === 'enlace'" class="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
+                            <div v-else-if="negotiation.payment_method === 'enlace'" class="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
                                 <p class="text-sm font-semibold dark:text-white">Pago en linea</p>
                                 <p class="mt-1 text-xs text-gray-500">Realiza tu pago en el siguiente enlace y adjunta la captura del comprobante.</p>
                                 <a v-if="negotiation.payment_link" :href="negotiation.payment_link" target="_blank" class="btn btn-primary btn-sm mt-2">
@@ -629,10 +796,16 @@ const submit = () => {
                                 </a>
                             </div>
 
-                            <p class="mt-2 text-xs text-gray-500">Despues de realizar el pago, adjunta el voucher o captura para que el asesor lo verifique.</p>
+                            <div v-else-if="negotiation.payment_method === 'mercadopago'" class="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
+                                <p class="text-sm font-semibold dark:text-white">Pago con tarjeta (Mercado Pago)</p>
+                                <p class="mt-1 text-xs text-gray-500">Ingresa los datos de tu tarjeta para realizar el pago de <strong>{{ mercadoAmountLabel }}</strong>. Al aprobarse, tu confirmacion se envía automaticamente.</p>
+                                <div id="cardPaymentBrick_container" ref="cardPaymentBrickContainer" class="mt-3"></div>
+                            </div>
+
+                            <p v-if="negotiation.payment_method !== 'mercadopago'" class="mt-2 text-xs text-gray-500">Despues de realizar el pago, adjunta el voucher o captura para que el asesor lo verifique.</p>
                         </div>
 
-                        <div class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
+                        <div v-if="negotiation.payment_method !== 'mercadopago'" class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
                             <InputLabel for="voucher" value="Voucher de pago *" />
                             <input ref="fileInput" id="voucher" type="file" accept="image/*" class="hidden" @input="selectVoucher" />
 
@@ -669,7 +842,7 @@ const submit = () => {
                             <InputError :message="form.errors.voucher" class="mt-2" />
                         </div>
 
-                        <div class="mt-6 flex justify-end">
+                        <div v-if="negotiation.payment_method !== 'mercadopago'" class="mt-6 flex justify-end">
                             <button type="submit" class="btn btn-primary" :class="{ 'opacity-50': form.processing }" :disabled="form.processing">
                                 <IconLoader v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
                                 {{ isRejected ? "Reenviar confirmacion" : "Enviar confirmacion" }}

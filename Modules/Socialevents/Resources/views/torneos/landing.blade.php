@@ -15,6 +15,7 @@
     $appDownloadUrl = $appDownloadUrl ?? null;
     $appVersion = $appVersion ?? config('socialevents.mobile_app_version', '1.0.0');
     $heroStatValue = $prizeSummary ?? ($inscriptionLabel ?? '—');
+    $scorersRanking = $scorersRanking ?? collect();
 @endphp
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
@@ -284,6 +285,9 @@
                     <h3 class="se-section__title" data-se-reveal style="text-align:left;margin-bottom:1.5rem">
                         Tabla de <span>posiciones</span>
                     </h3>
+                    <div class="se-table-scroll-hint" aria-hidden="true">
+                        <i class="fas fa-arrows-alt-h"></i> Desliza para ver más
+                    </div>
                     <div class="se-table-wrap" data-se-reveal>
                         <table class="se-table">
                             <thead>
@@ -333,7 +337,7 @@
 
                 <aside>
                     <div class="se-ranking-block">
-                        <h4 data-se-reveal>Jugadores <span>top</span></h4>
+                        <h4 data-se-reveal>Mejor <span>jugador</span></h4>
                         @forelse ($playersRanking as $index => $player)
                             <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">
@@ -356,8 +360,33 @@
                         @endforelse
                     </div>
 
+                    <div class="se-ranking-block se-ranking-block--scorer">
+                        <h4 data-se-reveal>Goleador <span>de la temporada</span></h4>
+                        <p class="se-ranking-block__note" data-se-reveal>Desempate: menos partidos jugados</p>
+                        @forelse ($scorersRanking as $index => $scorer)
+                            <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
+                                <div class="se-rank-card__avatar">
+                                    @if ($scorer['player']['person']->image ?? null)
+                                        <img src="{{ asset('storage/' . $scorer['player']['person']->image) }}" alt="">
+                                    @else
+                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($scorer['player']['person']->full_name) }}&background=b45309&color=fff" alt="">
+                                    @endif
+                                    <span class="se-rank-card__pos">{{ $index + 1 }}</span>
+                                </div>
+                                <div>
+                                    <div class="se-rank-card__name">{{ $scorer['player']['person']->full_name }}</div>
+                                    <div class="se-rank-card__stats">
+                                        {{ $scorer['goals'] ?? 0 }} {{ ($scorer['goals'] ?? 0) == 1 ? 'gol' : 'goles' }} · {{ $scorer['matches_played'] ?? 0 }} {{ ($scorer['matches_played'] ?? 0) == 1 ? 'partido' : 'partidos' }}
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="se-section__sub" data-se-reveal>Sin datos de goleadores aún.</p>
+                        @endforelse
+                    </div>
+
                     <div class="se-ranking-block se-ranking-block--gk">
-                        <h4 data-se-reveal>Porteros <span>top</span></h4>
+                        <h4 data-se-reveal>Mejor <span>arquero</span></h4>
                         @forelse ($goalkeepersRanking as $index => $gk)
                             <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">

@@ -22,6 +22,8 @@ class CommercialNegotiationController extends Controller
 {
     public function index()
     {
+        $this->expireOverdueNegotiations();
+
         $negotiations = CommercialNegotiation::with(['items', 'client'])
             ->when(request()->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -63,6 +65,8 @@ class CommercialNegotiationController extends Controller
             $negotiation = CommercialNegotiation::create(array_merge($this->payload($data), [
                 'token' => (string) Str::uuid(),
                 'status' => 'pendiente',
+                'link_days' => $data['link_days'] ?? $this->defaultLinkDays(),
+                'link_expires_at' => $this->expirationDate($data['link_days'] ?? $this->defaultLinkDays()),
                 'created_by' => auth()->id(),
             ]));
 
@@ -97,7 +101,15 @@ class CommercialNegotiationController extends Controller
         try {
             DB::beginTransaction();
 
-            $negotiation->update($this->payload($data));
+            $negotiation->update(array_merge($this->payload($data), [
+                'link_days' => $data['link_days'],
+            ]));
+
+            // Recalcula la fecha de expiracion del enlace solo para negociaciones aun no vencidas/respondidas.
+            if (in_array($negotiation->status, ['pendiente', 'sin_respuesta'])) {
+                $negotiation->update(['link_expires_at' => $this->expirationDate($data['link_days'])]);
+            }
+
             $this->syncItems($negotiation, $data['items']);
             $this->syncCompanyBilleteras($negotiation, $data['company_billetera_ids'] ?? []);
 
@@ -309,7 +321,32 @@ class CommercialNegotiationController extends Controller
                 ->get(['id', 'description', 'price']),
             'subscriptions' => AcaSubscriptionType::where('status', 1)
                 ->orderBy('title')
-                ->get(['id', 'title', 'prices']),
+                ->get(['id', 'title', 'prices'])
+                ->map(function ($sub) {
+                    // Exponemos el precio en soles (PEN) de forma explicita para el formulario.
+                    $price = null;
+                    $prices = is_array($sub->prices) ? $sub->prices : [];
+
+                    foreach ($prices as $row) {
+                        if (is_array($row) && strtoupper((string) ($row['currency'] ?? '')) === 'PEN') {
+                            $price = $row['amount'] ?? null;
+                            break;
+                        }
+                    }
+
+                    if ($price === null && count($prices) > 0) {
+                        $first = reset($prices);
+                        $price = is_array($first) ? ($first['amount'] ?? null) : $first;
+                    }
+
+                    return [
+                        'id' => $sub->id,
+                        'title' => $sub->title,
+                        'prices' => $sub->prices,
+                        'price' => $price !== null ? (float) $price : null,
+                    ];
+                })
+                ->values(),
             'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get(),
             'currencyTypes' => DB::table('sunat_currency_types')
                 ->where('active', true)
@@ -346,6 +383,7 @@ class CommercialNegotiationController extends Controller
             'schedule.*.due_date' => ['required', 'date'],
             'schedule.*.amount' => ['required', 'numeric', 'min:0'],
             'single_payment_days' => ['nullable', 'integer', 'min:1'],
+            'link_days' => ['nullable', 'integer', 'min:1'],
             'contact_channel' => ['nullable', 'string', 'max:40'],
             'contact_detail' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -404,6 +442,7 @@ class CommercialNegotiationController extends Controller
             'initial_amount' => $data['initial_amount'] ?? null,
             'schedule' => $data['schedule'] ?? null,
             'single_payment_days' => $data['single_payment_days'] ?? null,
+            'link_days' => $data['link_days'] ?? null,
             'contact_channel' => $data['contact_channel'] ?? null,
             'contact_detail' => $data['contact_detail'] ?? null,
             'email' => $data['email'] ?? null,
@@ -419,11 +458,24 @@ class CommercialNegotiationController extends Controller
         foreach ($items as $item) {
             $negotiation->items()->create([
                 'item_type' => $item['item_type'],
+                'entity_name_product' => $item['entity_name_product'] ?? $this->entityNameForItemType($item['item_type']),
                 'item_id' => $item['item_id'] ?? null,
                 'title' => $item['title'],
                 'price' => $item['price'] ?? null,
             ]);
         }
+    }
+
+    /**
+     * Clase (FQCN) de la que proviene un item segun su tipo.
+     */
+    private function entityNameForItemType(?string $itemType): ?string
+    {
+        return match ($itemType) {
+            'course' => \Modules\Academic\Entities\AcaCourse::class,
+            'subscription' => \Modules\Academic\Entities\AcaSubscriptionType::class,
+            default => null,
+        };
     }
 
     /**
@@ -444,6 +496,7 @@ class CommercialNegotiationController extends Controller
             ['value' => 'aprobada', 'label' => 'Aprobada', 'color' => 'success'],
             ['value' => 'completada', 'label' => 'Proceso completado', 'color' => 'success'],
             ['value' => 'rechazada', 'label' => 'Rechazada', 'color' => 'danger'],
+            ['value' => 'sin_respuesta', 'label' => 'No hubo respuesta', 'color' => 'warning'],
             ['value' => 'cancelada', 'label' => 'Cancelada', 'color' => 'dark'],
         ];
     }
@@ -468,5 +521,64 @@ class CommercialNegotiationController extends Controller
             ['value' => 'facebook', 'label' => 'Facebook'],
             ['value' => 'otro', 'label' => 'Otro'],
         ];
+    }
+
+    /**
+     * Marca como "No hubo respuesta" las negociaciones pendientes cuyo enlace vencio.
+     * Se ejecuta como script previo antes de listar las negociaciones.
+     */
+    private function expireOverdueNegotiations(): void
+    {
+        CommercialNegotiation::where('status', 'pendiente')
+            ->whereNotNull('link_expires_at')
+            ->where('link_expires_at', '<', now())
+            ->update(['status' => 'sin_respuesta']);
+    }
+
+    /**
+     * Estados desde los que el administrador puede generar un nuevo enlace (reactivar).
+     */
+    private function reactivableStatuses(): array
+    {
+        return ['pendiente', 'sin_respuesta', 'rechazada'];
+    }
+
+    private function expirationDate(?int $days): ?\Illuminate\Support\Carbon
+    {
+        return $days ? now()->addDays($days) : null;
+    }
+
+    private function defaultLinkDays(): int
+    {
+        return (int) (config('commercial.negotiation_link_days', 2));
+    }
+
+    /**
+     * Genera un nuevo enlace (token nuevo) para la negociacion y vuelve a ponerla como pendiente.
+     */
+    public function reactivate($id)
+    {
+        $negotiation = CommercialNegotiation::findOrFail($id);
+
+        if (! in_array($negotiation->status, $this->reactivableStatuses())) {
+            return back()->with('error', 'No se puede generar un nuevo enlace desde el estado actual de la negociacion.');
+        }
+
+        DB::transaction(function () use ($negotiation) {
+            $negotiation->update([
+                'token' => (string) Str::uuid(),
+                'status' => 'pendiente',
+                'link_days' => $negotiation->link_days ?: $this->defaultLinkDays(),
+                'link_expires_at' => $this->expirationDate($negotiation->link_days ?: $this->defaultLinkDays()),
+                'client_id' => null,
+                'client_data' => null,
+                'voucher_path' => null,
+                'rejected_reason' => null,
+                'verified_by' => null,
+                'verified_at' => null,
+            ]);
+        });
+
+        return back()->with('success', 'Se genero un nuevo enlace para la negociacion.');
     }
 }

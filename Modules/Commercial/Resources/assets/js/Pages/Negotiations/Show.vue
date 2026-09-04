@@ -29,6 +29,23 @@ const publicUrl = computed(() => {
 
 const voucherUrl = computed(() => props.negotiation.voucher_path ? `/storage/${props.negotiation.voucher_path}` : null);
 
+const isMercadoPago = computed(() => props.negotiation.payment_method === "mercadopago");
+const canReactivate = computed(() => ["pendiente", "sin_respuesta", "rechazada"].includes(props.negotiation.status));
+const mercadoPaymentData = computed(() => props.negotiation.mercado_payment_data || null);
+const estadoLabel = computed(() => {
+    const s = props.negotiation.mercado_payment_status;
+    if (s === "approved") return "Aprobado";
+    if (s === "rejected") return "Rechazado";
+    if (s === "in_process") return "En proceso";
+    return s || "Pendiente";
+});
+const estadoClase = computed(() => {
+    const s = props.negotiation.mercado_payment_status;
+    if (s === "approved") return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300";
+    if (s === "rejected") return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+    return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300";
+});
+
 const canVerify = computed(() => props.negotiation.status === "confirmada");
 
 const saleDocument = computed(() => props.negotiation.sale_document || null);
@@ -296,6 +313,46 @@ const cancel = () => {
         refresh();
     });
 };
+
+const reactivate = () => {
+    Swal2.fire({
+        title: "Generar nuevo enlace?",
+        text: "Se generara un nuevo enlace (URL nueva), se volvera el estado a Pendiente y se reiniciara el plazo de vigencia.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Si, generar",
+        cancelButtonText: "No",
+        showLoaderOnConfirm: true,
+        padding: "2em",
+        customClass: "sweet-alerts",
+        preConfirm: () => {
+            return axios.post(route("comm_negotiations_reactivate", props.negotiation.id)).then((res) => {
+                if (res.data && !res.data.success) {
+                    Swal2.showValidationMessage(res.data.message || "Error al generar el enlace");
+                }
+
+                return res;
+            }).catch((error) => {
+                Swal2.showValidationMessage(error.response?.data?.message || "Error de conexion");
+            });
+        },
+        allowOutsideClick: () => !Swal2.isLoading(),
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        Swal2.fire({
+            title: "Nuevo enlace generado",
+            text: "La negociacion quedo pendiente. Copia el nuevo enlace publico para enviarlo al cliente.",
+            icon: "success",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+
+        refresh();
+    });
+};
 </script>
 
 <template>
@@ -535,14 +592,53 @@ const cancel = () => {
                 </div>
 
                 <div class="panel">
-                    <h3 class="mb-4 font-semibold dark:text-white">Voucher de pago</h3>
-                    <p class="mb-3 text-xs text-gray-500">
-                        {{ negotiation.status === 'rechazada' ? 'El voucher fue rechazado; el cliente puede volver a enviar uno.' : (negotiation.status === 'aprobada' || negotiation.status === 'completada') ? 'Voucher aceptado por el asesor.' : 'Voucher enviado por el cliente.' }}
-                    </p>
-                    <a v-if="voucherUrl" :href="voucherUrl" target="_blank">
-                        <img :src="voucherUrl" alt="Voucher" class="w-full rounded-md border border-gray-200 object-contain dark:border-gray-700" />
-                    </a>
-                    <p v-else class="text-sm text-gray-500">Sin voucher cargado.</p>
+                    <template v-if="isMercadoPago && mercadoPaymentData">
+                        <h3 class="mb-4 font-semibold dark:text-white">Pago con tarjeta (Mercado Pago)</h3>
+                        <dl class="space-y-2 text-sm">
+                            <div>
+                                <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Estado</dt>
+                                <dd>
+                                    <span
+                                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
+                                        :class="estadoClase"
+                                    >{{ estadoLabel }}</span>
+                                </dd>
+                            </div>
+                            <div v-if="negotiation.mercado_payment_id">
+                                <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">ID del pago (Mercado Pago)</dt>
+                                <dd class="font-mono text-xs dark:text-white">{{ negotiation.mercado_payment_id }}</dd>
+                            </div>
+                            <div v-if="mercadoPaymentData?.payment?.status_detail">
+                                <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Detalle del pago</dt>
+                                <dd class="font-mono text-xs dark:text-white">{{ mercadoPaymentData.payment.status_detail }}</dd>
+                            </div>
+                            <div v-if="mercadoPaymentData?.transaction_amount">
+                                <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Monto</dt>
+                                <dd class="dark:text-white">S/ {{ Number(mercadoPaymentData.transaction_amount).toFixed(2) }}</dd>
+                            </div>
+                            <div v-if="mercadoPaymentData?.payment_method_id">
+                                <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Metodo</dt>
+                                <dd class="dark:text-white">{{ mercadoPaymentData.payment_method_id }}</dd>
+                            </div>
+                            <div v-if="mercadoPaymentData?.payer?.email">
+                                <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Pagador</dt>
+                                <dd class="dark:text-white">{{ mercadoPaymentData.payer.email }}</dd>
+                            </div>
+                        </dl>
+                        <p class="mt-3 text-xs text-gray-500">
+                            Verifica el pago en tu cuenta de Mercado Pago antes de continuar con el proceso de aprobacion.
+                        </p>
+                    </template>
+                    <template v-else>
+                        <h3 class="mb-4 font-semibold dark:text-white">Voucher de pago</h3>
+                        <p class="mb-3 text-xs text-gray-500">
+                            {{ negotiation.status === 'rechazada' ? 'El voucher fue rechazado; el cliente puede volver a enviar uno.' : (negotiation.status === 'aprobada' || negotiation.status === 'completada') ? 'Voucher aceptado por el asesor.' : 'Voucher enviado por el cliente.' }}
+                        </p>
+                        <a v-if="voucherUrl" :href="voucherUrl" target="_blank">
+                            <img :src="voucherUrl" alt="Voucher" class="w-full rounded-md border border-gray-200 object-contain dark:border-gray-700" />
+                        </a>
+                        <p v-else class="text-sm text-gray-500">Sin voucher cargado.</p>
+                    </template>
                 </div>
 
                 <div class="panel">
@@ -561,6 +657,17 @@ const cancel = () => {
                             <dd class="break-all text-xs text-gray-500">{{ publicUrl }}</dd>
                         </div>
                     </dl>
+
+                    <button
+                        v-if="canReactivate"
+                        type="button"
+                        v-can="'comm_negociaciones_verificar'"
+                        class="btn btn-outline-primary btn-sm mt-2 w-full"
+                        @click="reactivate"
+                    >
+                        <FontAwesomeIcon :icon="faLink" class="mr-2 h-4 w-4" />
+                        Reactivar enlace (nuevo enlace)
+                    </button>
 
                     <button
                         v-if="negotiation.status !== 'cancelada' && negotiation.status !== 'aprobada' && negotiation.status !== 'completada'"

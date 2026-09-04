@@ -37,6 +37,7 @@ const form = useForm({
     initial_amount: props.negotiation?.initial_amount ?? null,
     schedule: props.negotiation?.schedule ?? [],
     single_payment_days: props.negotiation?.single_payment_days ?? null,
+    link_days: props.negotiation?.link_days ?? 2,
     contact_channel: props.negotiation?.contact_channel ?? null,
     contact_detail: props.negotiation?.contact_detail ?? currentUserName,
     email: props.negotiation?.email ?? null,
@@ -81,9 +82,22 @@ const contactChannelOptions = computed(() => props.contactChannels.map((item) =>
 const filterOption = (input, option) => option.label.toLowerCase().includes(input.toLowerCase());
 
 const subscriptionPrice = (item) => {
+    // Si el backend ya envia el precio normalizado (PEN), lo usamos directamente.
+    if (item?.price !== undefined && item?.price !== null && item?.price !== '') {
+        return Number(item.price);
+    }
+
+    // Fallback: prices viene como array de objetos [{currency, amount, detail}] u array de numeros.
     const prices = Array.isArray(item?.prices) ? item.prices : null;
-    const value = prices?.find((price) => typeof price === "number" || !isNaN(parseFloat(price)));
-    return value ?? null;
+    if (!prices || !prices.length) return null;
+
+    // Siempre prioriza el precio en soles (PEN).
+    const pen = prices.find((p) => String(p?.currency).toUpperCase() === "PEN");
+    const price = pen
+        ? pen.amount
+        : prices.find((p) => typeof p === "number" || !isNaN(parseFloat(p)));
+
+    return price !== undefined && price !== null ? Number(price) : null;
 };
 
 const selectedItemsTotal = computed(() => {
@@ -344,6 +358,13 @@ const submit = () => {
                 <InputError :message="form.errors.single_payment_days" class="mt-2" />
             </div>
 
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="link_days" value="Vigencia del enlace (dias)" />
+                <TextInput id="link_days" v-model="form.link_days" type="number" min="1" />
+                <InputError :message="form.errors.link_days" class="mt-2" />
+                <p class="text-xs text-gray-500 mt-1">Pasado este plazo el enlace se desactiva y la negociacion pasa a "No hubo respuesta".</p>
+            </div>
+
             <template v-if="form.payment_type === 'installments'">
                 <div class="col-span-6">
                     <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -395,7 +416,7 @@ const submit = () => {
                 <InputError :message="form.errors.payment_method" class="mt-2" />
             </div>
 
-            <div v-if="['mercadopago', 'enlace'].includes(form.payment_method)" class="col-span-6 sm:col-span-3">
+            <div v-if="form.payment_method === 'enlace'" class="col-span-6 sm:col-span-3">
                 <InputLabel for="payment_link" value="Enlace de pago" />
                 <TextInput id="payment_link" v-model="form.payment_link" type="url" placeholder="https://..." />
                 <InputError :message="form.errors.payment_link" class="mt-2" />
@@ -422,6 +443,9 @@ const submit = () => {
                 <div class="pt-5 text-xs text-gray-500">
                     <template v-if="form.payment_method === 'transferencia'">
                         Se mostraran las cuentas bancarias de la empresa al cliente.
+                    </template>
+                    <template v-else-if="form.payment_method === 'mercadopago'">
+                        El cliente pagara con su tarjeta (Mercado Pago) directamente en la confirmacion.
                     </template>
                     <template v-else>
                         Se mostraran los datos del pago en linea al cliente.

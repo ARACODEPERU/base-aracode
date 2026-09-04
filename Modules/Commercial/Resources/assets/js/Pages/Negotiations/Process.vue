@@ -102,11 +102,12 @@ const finished = ref(allStepsDone.value);
 
 const visibleSteps = computed(() => steps.value.filter((step) => !step.skipped));
 
-const processedCount = computed(() => steps.value.filter((step) => step.status === "done" || step.status === "skipped").length);
+// Pasos efectivamente completados (avance real del proceso).
+const completedCount = computed(() => steps.value.filter((step) => !step.skipped && step.status === "done").length);
 
 const progress = computed(() => {
-    const total = steps.value.length;
-    return total ? Math.round((processedCount.value / total) * 100) : 0;
+    const total = visibleSteps.value.length;
+    return total ? Math.round((completedCount.value / total) * 100) : 0;
 });
 
 const hasErrors = computed(() => steps.value.some((step) => step.status === "error"));
@@ -247,7 +248,7 @@ const run = async () => {
             <div class="mb-4 flex items-center justify-between gap-3">
                 <div>
                     <h3 class="font-semibold dark:text-white">Progreso del proceso</h3>
-                    <p class="text-sm text-gray-500">{{ processedCount }} de {{ steps.length }} pasos</p>
+                    <p class="text-sm text-gray-500">{{ completedCount }} de {{ visibleSteps.length }} pasos</p>
                 </div>
                 <span class="text-lg font-bold text-primary">{{ progress }}%</span>
             </div>

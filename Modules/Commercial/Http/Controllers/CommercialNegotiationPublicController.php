@@ -29,6 +29,14 @@ class CommercialNegotiationPublicController extends Controller
 
         abort_unless($negotiation, 404);
 
+        // Si el enlace vencio y aun estaba pendiente, se marca como "No hubo respuesta".
+        if ($negotiation->status === 'pendiente'
+            && $negotiation->link_expires_at
+            && $negotiation->link_expires_at->isPast()) {
+            $negotiation->update(['status' => 'sin_respuesta']);
+            $negotiation->refresh();
+        }
+
         return Inertia::render('Commercial::Negotiations/Public/Show', [
             'negotiation' => $this->negotiationPayload($negotiation),
             'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get(),
@@ -41,7 +49,14 @@ class CommercialNegotiationPublicController extends Controller
     {
         $negotiation = CommercialNegotiation::where('token', $token)->firstOrFail();
 
-        if (in_array($negotiation->status, ['aprobada', 'cancelada'])) {
+        // Enlace vencido: se marca como "No hubo respuesta" y se bloquea el envio.
+        if ($negotiation->status === 'pendiente'
+            && $negotiation->link_expires_at
+            && $negotiation->link_expires_at->isPast()) {
+            $negotiation->update(['status' => 'sin_respuesta']);
+        }
+
+        if (in_array($negotiation->status, ['aprobada', 'cancelada', 'sin_respuesta'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Esta negociacion ya no acepta envios.',
@@ -71,7 +86,7 @@ class CommercialNegotiationPublicController extends Controller
             'invoice_distrito' => ['nullable', 'string', 'max:255'],
             'invoice_provincia' => ['nullable', 'string', 'max:255'],
             'invoice_departamento' => ['nullable', 'string', 'max:255'],
-            'voucher' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'voucher' => [Rule::requiredIf($negotiation->payment_method !== 'mercadopago'), 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         $isRuc = (string) $data['document_type_id'] === '6';
@@ -114,10 +129,13 @@ class CommercialNegotiationPublicController extends Controller
                 $clientId = $person->id;
             }
 
-            $voucherPath = $request->file('voucher')->store('negotiations/vouchers', 'public');
+            $voucherPath = null;
+            if ($request->hasFile('voucher')) {
+                $voucherPath = $request->file('voucher')->store('negotiations/vouchers', 'public');
 
-            if ($negotiation->voucher_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($negotiation->voucher_path);
+                if ($negotiation->voucher_path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($negotiation->voucher_path);
+                }
             }
 
             $negotiation->update([
@@ -126,7 +144,7 @@ class CommercialNegotiationPublicController extends Controller
                 'client_data' => array_merge($personPayload, [
                     'full_name' => $fullName ?: ($data['full_name'] ?? null),
                 ]),
-                'voucher_path' => $voucherPath,
+                'voucher_path' => $voucherPath ?: $negotiation->voucher_path,
                 'rejected_reason' => null,
                 'verified_by' => null,
                 'verified_at' => null,
@@ -263,6 +281,8 @@ class CommercialNegotiationPublicController extends Controller
             'payment_link' => $negotiation->payment_link,
             'status' => $negotiation->status,
             'client_data' => $negotiation->client_data,
+            'link_days' => $negotiation->link_days,
+            'link_expires_at' => $negotiation->link_expires_at?->toISOString(),
             'voucher_path' => $negotiation->voucher_path,
             'rejected_reason' => $negotiation->rejected_reason,
             'items' => $negotiation->items->map(fn ($item) => [

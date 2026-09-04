@@ -31,7 +31,12 @@ class CommercialNegotiation extends Model
         'email',
         'payment_method',
         'payment_link',
+        'mercado_payment_id',
+        'mercado_payment_status',
+        'mercado_payment_data',
         'status',
+        'link_days',
+        'link_expires_at',
         'client_id',
         'client_data',
         'voucher_path',
@@ -48,9 +53,11 @@ class CommercialNegotiation extends Model
     protected $casts = [
         'schedule' => 'array',
         'client_data' => 'array',
+        'mercado_payment_data' => 'array',
         'verified_at' => 'datetime',
         'email_sent_at' => 'datetime',
         'process_progress' => 'array',
+        'link_expires_at' => 'datetime',
     ];
 
     public function items()
