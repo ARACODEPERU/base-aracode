@@ -119,6 +119,14 @@ class Resumen
                 $codeError = $error->getCode();
                 $messageError = $error->getMessage();
 
+                // SUNAT aún está procesando el comprobante (envío asíncrono).
+                // No es un error: se mantiene 'Enviado' para poder volver a consultar después.
+                $isProcessing =
+                    $codeError === '0098'
+                    || $codeError === '98'
+                    || stripos((string) $messageError, 'no ha terminado') !== false
+                    || stripos((string) $messageError, 'procesamiento') !== false;
+
                 // Error 0109 - SUNAT autenticación no disponible
                 if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
                     $isSunatUnavailable = true;
@@ -129,7 +137,7 @@ class Resumen
                     $isAlreadySent = true;
                     $status = 'fue_enviado';
                 }
-                // Otros errores - detectar conexión o rechazo real
+                // Otros errores - detectar conexión, "en proceso" o rechazo real
                 else {
                     $isConnectionError =
                         empty($codeError)
@@ -140,7 +148,7 @@ class Resumen
                         || stripos($messageError, 'servidor') !== false
                         || stripos($messageError, 'HTTP') !== false;
 
-                    if ($isConnectionError) {
+                    if ($isConnectionError || $isProcessing) {
                         $status = 'Enviado';
                     } else {
                         $status = 'Rechazado';
@@ -172,6 +180,8 @@ class Resumen
                 $summary->response_description = 'Los servidores de SUNAT no están disponibles temporalmente. Puede reintentar el envío manualmente. Detalle: '.$messageError;
             } elseif (isset($isAlreadySent) && $isAlreadySent) {
                 $summary->response_description = 'El archivo ya fue presentado anteriormente ante SUNAT. Detalle: '.$messageError;
+            } elseif (isset($isProcessing) && $isProcessing) {
+                $summary->response_description = 'SUNAT sigue procesando el comprobante. No es un error del sistema; vuelve a consultar más tarde. Detalle: '.$messageError;
             } elseif (isset($isConnectionError) && $isConnectionError) {
                 $summary->response_description = 'Error de conexión con SUNAT. Intenta consultar más tarde. Detalle: '.$messageError;
             } else {
@@ -190,6 +200,7 @@ class Resumen
                 'is_connection_error' => isset($isConnectionError) ? $isConnectionError : false,
                 'is_sunat_unavailable' => isset($isSunatUnavailable) ? $isSunatUnavailable : false,
                 'is_already_sent' => isset($isAlreadySent) ? $isAlreadySent : false,
+                'is_processing' => isset($isProcessing) ? (bool) $isProcessing : false,
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema'];

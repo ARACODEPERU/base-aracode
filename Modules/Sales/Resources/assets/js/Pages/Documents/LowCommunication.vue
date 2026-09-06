@@ -97,7 +97,20 @@
                     preserveState: true,
                     preserveScroll: true,
                 });
-            }else{
+            } else if (res.data.is_processing) {
+                Swal.fire({
+                    title: 'Comprobante en proceso',
+                    html: 'SUNAT aún está procesando el comprobante (Código 0098). No es un error del sistema.<br><br>Puedes <b>volver a consultar más tarde</b> presionando nuevamente el botón Consultar.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
+                    icon: 'info',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                router.visit(route('low_communication_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            } else {
                 Swal.fire({
                     title: 'Error',
                     text: 'Codigo: '+ res.data.code + '<br> Descripcion: ' + res.data.message ,

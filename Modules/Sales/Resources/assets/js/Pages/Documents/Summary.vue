@@ -243,6 +243,19 @@ const displaySearchLoading = ref(false);
                     preserveState: true,
                     preserveScroll: true,
                 });
+            } else if (res.data.is_processing) {
+                Swal.fire({
+                    title: 'Comprobante en proceso',
+                    html: 'SUNAT aún está procesando el comprobante (Código 0098). No es un error del sistema.<br><br>Puedes <b>volver a consultar más tarde</b> presionando nuevamente el botón Consultar.<br><br><b>Código:</b> '+ (res.data.code || 'N/A') + '<br><b>Descripción:</b> ' + (res.data.message || 'Sin detalles'),
+                    icon: 'info',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                router.visit(route('salesummaries_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
             } else {
                 Swal.fire({
                     title: 'Error',
@@ -306,6 +319,7 @@ const displaySearchLoading = ref(false);
     const sunatCodes = [
         { code: '0', description: 'Aceptado', type: 'success' },
         { code: '0109', description: 'Error de autenticaci\u00f3n - SUNAT no disponible temporalmente', type: 'warning' },
+        { code: '0098', description: 'El procesamiento del comprobante aún no ha terminado (puede volver a consultar más tarde)', type: 'info' },
         { code: '0127', description: 'El ticket de consulta no existe o ha expirado', type: 'error' },
         { code: '2223', description: 'El archivo ya fue presentado anteriormente ante SUNAT', type: 'warning' },
         { code: '2325', description: 'Aceptado con observaciones', type: 'warning' },

@@ -93,7 +93,16 @@ class LowCommunication
                 $error = $res->getError();
                 $codeError = $error->getCode();
                 $messageError = $error->getMessage();
-                $status = 'Rechazado';
+
+                // SUNAT aún está procesando el comprobante (envío asíncrono).
+                // No es un error: se mantiene 'Enviado' para poder volver a consultar después.
+                $isProcessing =
+                    $codeError === '0098'
+                    || $codeError === '98'
+                    || stripos((string) $messageError, 'no ha terminado') !== false
+                    || stripos((string) $messageError, 'procesamiento') !== false;
+
+                $status = $isProcessing ? 'Enviado' : 'Rechazado';
             } else {
                 $cdr = $res->getCdrResponse();
                 $codeError = $cdr->getCode();
@@ -117,12 +126,20 @@ class LowCommunication
             }
 
             $voided->response_code = $codeError;
-            $voided->response_description = $codeError == '0127' ? 'El ticket no existe' : $messageError;
+            $voided->response_description = isset($isProcessing) && $isProcessing
+                ? 'SUNAT sigue procesando el comprobante. No es un error del sistema; vuelve a consultar más tarde. Detalle: ' . $messageError
+                : ($codeError == '0127' ? 'El ticket no existe' : $messageError);
             $voided->notes = $notes;
             $voided->status = $status;
             $voided->save();
 
-            return array('success' => $res->isSuccess(), 'code' => $codeError, 'message' => $messageError, 'notes' => $notes);
+            return array(
+                'success' => $res->isSuccess(),
+                'code' => $codeError,
+                'message' => $messageError,
+                'notes' => $notes,
+                'is_processing' => isset($isProcessing) ? (bool) $isProcessing : false,
+            );
         } catch (\Exception $e) {
             return array('success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema');
         }
