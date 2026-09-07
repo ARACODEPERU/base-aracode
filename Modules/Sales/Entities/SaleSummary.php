@@ -5,10 +5,11 @@ namespace Modules\Sales\Entities;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SaleSummary extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'summary_name',
@@ -36,21 +37,15 @@ class SaleSummary extends Model
         parent::boot();
 
         static::created(function ($summary) {
-            // Verificamos si la tabla está vacía
+            // El correlativo es monótono creciente: se toma el máximo histórico
+            // (incluidos los registros eliminados con soft delete) para no reutilizar
+            // un correlativo que SUNAT ya recibió.
+            $lastCorrelativo = static::withTrashed()
+                ->where('id', '<>', $summary->id)
+                ->max('correlative');
 
-            $lastSummary = static::latest()->first();
-            $correlativo = null;
-            if (!$lastSummary) {
-                // Si está vacía, establecemos el correlativo inicial a '00001'
-                $correlativo = '00001';
-            } else {
+            $correlativo = str_pad((int) $lastCorrelativo + 1, 5, '0', STR_PAD_LEFT);
 
-                // Si no está vacía, incrementamos el correlativo del último registro
-                $lastCorrelativo = SaleSummary::where('id', '<>', $lastSummary->id)->max('correlative');
-                $correlativo = str_pad((int) $lastCorrelativo + 1, 5, '0', STR_PAD_LEFT);
-            }
-            //dd($correlativo);
-            // Actualizamos el campo "correlativo" del registro recién insertado
             $summary->update(['correlative' => $correlativo]);
         });
     }

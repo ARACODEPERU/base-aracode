@@ -331,7 +331,7 @@
                     allowOutsideClick: () => !Swal.isLoading()
                 }).then((res) => {
                     if (res.isConfirmed) {
-                        showMessage('El documento fue anulado correctamente');
+                        showMessage(res.value?.data?.message || 'El documento fue anulado correctamente');
                     }
                     refreshTable();
                 });
