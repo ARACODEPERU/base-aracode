@@ -5,7 +5,9 @@ namespace Modules\Sales\Entities;
 use App\Models\SaleDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Sales\Entities\SaleSummary;
 
 class SaleSummaryDetail extends Model
 {
@@ -26,5 +28,10 @@ class SaleSummaryDetail extends Model
     public function document(): HasOne
     {
         return $this->hasOne(SaleDocument::class,'id','document_id');
+    }
+
+    public function summary(): BelongsTo
+    {
+        return $this->belongsTo(SaleSummary::class, 'summary_id');
     }
 }

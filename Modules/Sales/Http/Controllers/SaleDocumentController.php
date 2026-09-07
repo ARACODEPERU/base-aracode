@@ -1128,6 +1128,27 @@ class SaleDocumentController extends Controller
             // dd($document);
             $document->status = 3;
             $document->reason_cancellation = $request->get('reason');
+
+            // Verificar si la boleta fue informada como "alta" (estado 1) y aceptada por SUNAT.
+            // Si nunca llegó a SUNAT, no debe intentarse anular electrónicamente (SUNAT responde 2663).
+            $informedAsAlta = SaleSummaryDetail::where('document_id', $document->id)
+                ->where('status', 1)
+                ->whereHas('summary', fn ($q) => $q->where('status', 'Aceptado'))
+                ->exists();
+
+            if (! $informedAsAlta) {
+                $document->invoice_status = 'Anulada';
+                $document->save();
+
+                $boleta = new Boleta;
+                $boleta->updateStockSale($document->id);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'La boleta no fue informada a SUNAT (no existe en sus registros). Se anuló localmente sin conformidad SUNAT.',
+                ]);
+            }
+
             $document->invoice_status = 'Enviada Por Anular';
             $document->save();
 
