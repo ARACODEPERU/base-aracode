@@ -226,28 +226,27 @@
                                     @foreach ($roundMatches as $match)
                                         <article class="se-match">
                                             <div class="se-match__side">
-                                                @if ($match->equipolocal)
-                                                    @if ($match->equipolocal->logo_path)
-                                                        <img src="{{ asset('storage/' . $match->equipolocal->logo_path) }}" alt="">
-                                                    @else
+                                                <div class="se-match__crest">
+                                                    @if ($match->equipolocal && $match->equipolocal->logo_path)
+                                                        <img src="{{ asset('storage/' . $match->equipolocal->logo_path) }}" alt="{{ $match->equipolocal->name }}">
+                                                    @elseif ($match->equipolocal)
                                                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                                    @else
+                                                        <i class="fas fa-question" aria-hidden="true"></i>
                                                     @endif
-                                                    <span class="se-match__name">{{ $match->equipolocal->name }}</span>
-                                                @else
-                                                    <i class="fas fa-question" aria-hidden="true"></i>
-                                                    <span class="se-match__name">Por definir</span>
-                                                @endif
+                                                </div>
+                                                <span class="se-match__name">{{ $match->equipolocal?->name ?? 'Por definir' }}</span>
                                             </div>
 
                                             <div class="se-match__center">
                                                 @if (in_array($match->status, ['finished', 'closed']))
-                                                    <div class="se-match__score">{{ $match->score_h ?? 0 }} - {{ $match->score_a ?? 0 }}</div>
+                                                    <div class="se-match__score">{{ $match->score_h ?? 0 }}<span class="se-match__score-sep">-</span>{{ $match->score_a ?? 0 }}</div>
                                                     <div class="se-match__meta se-match__meta--done">Finalizado</div>
                                                 @elseif ($match->status === 'live')
-                                                    <div class="se-match__score se-match__meta--live">EN VIVO</div>
+                                                    <div class="se-match__score se-match__score--live">En vivo</div>
                                                     <div class="se-match__meta se-match__meta--live">Jugando</div>
                                                 @else
-                                                    <div class="se-match__score" style="font-size:0.85rem;color:var(--se-muted)">VS</div>
+                                                    <div class="se-match__score se-match__score--vs">VS</div>
                                                     <div class="se-match__meta se-match__meta--pending">
                                                         {{ $match->match_date ? $match->match_date->format('d/m H:i') : 'Por definir' }}
                                                     </div>
@@ -255,17 +254,16 @@
                                             </div>
 
                                             <div class="se-match__side se-match__side--away">
-                                                @if ($match->equipovisitante)
-                                                    <span class="se-match__name">{{ $match->equipovisitante->name }}</span>
-                                                    @if ($match->equipovisitante->logo_path)
-                                                        <img src="{{ asset('storage/' . $match->equipovisitante->logo_path) }}" alt="">
-                                                    @else
+                                                <span class="se-match__name">{{ $match->equipovisitante?->name ?? 'Por definir' }}</span>
+                                                <div class="se-match__crest">
+                                                    @if ($match->equipovisitante && $match->equipovisitante->logo_path)
+                                                        <img src="{{ asset('storage/' . $match->equipovisitante->logo_path) }}" alt="{{ $match->equipovisitante->name }}">
+                                                    @elseif ($match->equipovisitante)
                                                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                                    @else
+                                                        <i class="fas fa-question" aria-hidden="true"></i>
                                                     @endif
-                                                @else
-                                                    <span class="se-match__name">Por definir</span>
-                                                    <i class="fas fa-question" aria-hidden="true"></i>
-                                                @endif
+                                                </div>
                                             </div>
                                         </article>
                                     @endforeach

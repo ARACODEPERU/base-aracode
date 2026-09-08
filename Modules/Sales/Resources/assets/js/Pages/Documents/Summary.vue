@@ -10,6 +10,7 @@
     import { Link, router } from '@inertiajs/vue3';
     import IconBell from "@/Components/vristo/icon/icon-bell.vue";
     import IconX from "@/Components/vristo/icon/icon-x.vue";
+    import IconMoon from "@/Components/vristo/icon/icon-moon.vue";
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import iconFileCode from '@/Components/vristo/icon/icon-file-code.vue';
     import iconZipFile from '@/Components/vristo/icon/icon-zip-file.vue';
@@ -29,6 +30,8 @@
     const form = useForm({
         search: props.filters.search,
     });
+
+    const showSunatNotice = ref(true);
 
     const displayModalCreateSummary = ref(false);
 
@@ -392,6 +395,16 @@ const displaySearchLoading = ref(false);
                 </span>
                 <span class="ltr:pr-2 rtl:pl-2"><strong class="ltr:mr-1 rtl:ml-1">Resumen diario:</strong>Para comunicar las boletas de ventas emitidas o anuladas, así como las notas de crédito/débito releacionadas, necesita hacerlo mediante un resumen diario. A diferencia del envío de una factura, donde la respuesta es inmediata, en este documento debemos hacer un consulta adicional para conocer su estado utilizando el numero de ticket.</span>
                 <button type="button" class="ltr:ml-auto rtl:mr-auto hover:opacity-80">
+                    <icon-x />
+                </button>
+            </div>
+
+            <div v-if="showSunatNotice" class="relative flex items-center border p-3.5 rounded text-warning bg-warning-light border-warning ltr:border-l-[64px] rtl:border-r-[64px] dark:bg-warning-dark-light">
+                <span class="absolute ltr:-left-11 rtl:-right-11 inset-y-0 text-white w-6 h-6 m-auto">
+                    <icon-moon class="w-6 h-6"/>
+                </span>
+                <span class="ltr:pr-2 rtl:pl-2"><strong class="ltr:mr-1 rtl:ml-1">Aviso:</strong>SUNAT puede presentar inestabilidad o saturación durante el día. Se recomienda enviar los resúmenes preferentemente en la noche para evitar rechazos o demoras en el procesamiento.</span>
+                <button type="button" class="ltr:ml-auto rtl:mr-auto hover:opacity-80" @click="showSunatNotice = false">
                     <icon-x />
                 </button>
             </div>

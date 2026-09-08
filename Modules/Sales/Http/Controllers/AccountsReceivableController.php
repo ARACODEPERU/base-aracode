@@ -152,14 +152,7 @@ class AccountsReceivableController extends Controller
                 ->orderBy('payment_date', 'ASC')
                 ->limit(1),
         ])
-            ->orderByRaw('
-                CASE
-                    WHEN sales.total = sales.advancement THEN 1
-                    ELSE 0
-                END ASC
-            ')
-            ->orderBy('next_payment_date', 'ASC')
-            ->orderBy('sales.id', 'DESC')
+            ->orderByDesc('sales.id')
             ->paginate(20);
 
         return Inertia::render('Sales::AccountsReceivable/ListSpecialRates', [
