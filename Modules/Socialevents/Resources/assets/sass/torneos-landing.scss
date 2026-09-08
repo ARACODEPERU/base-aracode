@@ -1575,6 +1575,17 @@ body.se-landing ::selection {
     color: var(--se-muted);
 }
 
+.se-app-download__count {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--se-accent);
+}
+
+.se-app-download__count i {
+    margin-right: 0.35rem;
+}
+
 /* Reveal (initial state for anime) */
 [data-se-reveal] {
     opacity: 0;

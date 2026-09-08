@@ -485,13 +485,17 @@
                                 <li>Abre el instalador y confirma</li>
                             </ul>
                             <div class="se-app-download__actions">
-                                <a href="{{ $appDownloadUrl }}" class="se-btn se-btn--primary se-btn--lg" download>
+                                <a href="{{ route('socialevents_torneos_download_app', $edition->landingSlug()) }}" class="se-btn se-btn--primary se-btn--lg">
                                     <i class="fas fa-download" aria-hidden="true"></i>
                                     Descargar APK v{{ $appVersion }}
                                 </a>
                             </div>
                             <p class="se-app-download__note">
                                 Versión {{ $appVersion }} · Solo Android · Publicación en tiendas próximamente
+                            </p>
+                            <p class="se-app-download__count">
+                                <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                                {{ number_format((int) $edition->app_downloads, 0) }} {{ (int) $edition->app_downloads === 1 ? 'descarga' : 'descargas' }}
                             </p>
                         </div>
                     </div>

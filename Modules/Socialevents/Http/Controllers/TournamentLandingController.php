@@ -64,4 +64,28 @@ class TournamentLandingController extends Controller
 
         return view('socialevents::torneos.landing', $viewData);
     }
+
+    /**
+     * Registra una descarga de la app móvil e incrementa el contador de la edición.
+     */
+    public function downloadApp(string $slug)
+    {
+        $edition = EventEdition::query()
+            ->where('public_slug', $slug)
+            ->when(ctype_digit($slug), fn ($q) => $q->orWhere('id', (int) $slug))
+            ->first();
+
+        abort_unless($edition, 404);
+
+        $url = TournamentLandingPresenter::appDownloadUrl($edition);
+
+        abort_unless($url, 404);
+
+        $edition->increment('app_downloads');
+
+        // Refresca la vista cacheada para que el contador se actualice.
+        TournamentLandingCache::forget((int) $edition->id);
+
+        return redirect()->away($url);
+    }
 }
