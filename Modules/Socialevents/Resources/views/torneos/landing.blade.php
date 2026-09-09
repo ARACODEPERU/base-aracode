@@ -15,6 +15,7 @@
     $appDownloadUrl = $appDownloadUrl ?? null;
     $appVersion = $appVersion ?? config('socialevents.mobile_app_version', '1.0.0');
     $heroStatValue = $prizeSummary ?? ($inscriptionLabel ?? '—');
+    $scorersRanking = $scorersRanking ?? collect();
 @endphp
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
@@ -225,28 +226,27 @@
                                     @foreach ($roundMatches as $match)
                                         <article class="se-match">
                                             <div class="se-match__side">
-                                                @if ($match->equipolocal)
-                                                    @if ($match->equipolocal->logo_path)
-                                                        <img src="{{ asset('storage/' . $match->equipolocal->logo_path) }}" alt="">
-                                                    @else
+                                                <div class="se-match__crest">
+                                                    @if ($match->equipolocal && $match->equipolocal->logo_path)
+                                                        <img src="{{ asset('storage/' . $match->equipolocal->logo_path) }}" alt="{{ $match->equipolocal->name }}">
+                                                    @elseif ($match->equipolocal)
                                                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                                    @else
+                                                        <i class="fas fa-question" aria-hidden="true"></i>
                                                     @endif
-                                                    <span class="se-match__name">{{ $match->equipolocal->name }}</span>
-                                                @else
-                                                    <i class="fas fa-question" aria-hidden="true"></i>
-                                                    <span class="se-match__name">Por definir</span>
-                                                @endif
+                                                </div>
+                                                <span class="se-match__name">{{ $match->equipolocal?->name ?? 'Por definir' }}</span>
                                             </div>
 
                                             <div class="se-match__center">
                                                 @if (in_array($match->status, ['finished', 'closed']))
-                                                    <div class="se-match__score">{{ $match->score_h ?? 0 }} - {{ $match->score_a ?? 0 }}</div>
+                                                    <div class="se-match__score">{{ $match->score_h ?? 0 }}<span class="se-match__score-sep">-</span>{{ $match->score_a ?? 0 }}</div>
                                                     <div class="se-match__meta se-match__meta--done">Finalizado</div>
                                                 @elseif ($match->status === 'live')
-                                                    <div class="se-match__score se-match__meta--live">EN VIVO</div>
+                                                    <div class="se-match__score se-match__score--live">En vivo</div>
                                                     <div class="se-match__meta se-match__meta--live">Jugando</div>
                                                 @else
-                                                    <div class="se-match__score" style="font-size:0.85rem;color:var(--se-muted)">VS</div>
+                                                    <div class="se-match__score se-match__score--vs">VS</div>
                                                     <div class="se-match__meta se-match__meta--pending">
                                                         {{ $match->match_date ? $match->match_date->format('d/m H:i') : 'Por definir' }}
                                                     </div>
@@ -254,17 +254,16 @@
                                             </div>
 
                                             <div class="se-match__side se-match__side--away">
-                                                @if ($match->equipovisitante)
-                                                    <span class="se-match__name">{{ $match->equipovisitante->name }}</span>
-                                                    @if ($match->equipovisitante->logo_path)
-                                                        <img src="{{ asset('storage/' . $match->equipovisitante->logo_path) }}" alt="">
-                                                    @else
+                                                <span class="se-match__name">{{ $match->equipovisitante?->name ?? 'Por definir' }}</span>
+                                                <div class="se-match__crest">
+                                                    @if ($match->equipovisitante && $match->equipovisitante->logo_path)
+                                                        <img src="{{ asset('storage/' . $match->equipovisitante->logo_path) }}" alt="{{ $match->equipovisitante->name }}">
+                                                    @elseif ($match->equipovisitante)
                                                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                                    @else
+                                                        <i class="fas fa-question" aria-hidden="true"></i>
                                                     @endif
-                                                @else
-                                                    <span class="se-match__name">Por definir</span>
-                                                    <i class="fas fa-question" aria-hidden="true"></i>
-                                                @endif
+                                                </div>
                                             </div>
                                         </article>
                                     @endforeach
@@ -284,6 +283,9 @@
                     <h3 class="se-section__title" data-se-reveal style="text-align:left;margin-bottom:1.5rem">
                         Tabla de <span>posiciones</span>
                     </h3>
+                    <div class="se-table-scroll-hint" aria-hidden="true">
+                        <i class="fas fa-arrows-alt-h"></i> Desliza para ver más
+                    </div>
                     <div class="se-table-wrap" data-se-reveal>
                         <table class="se-table">
                             <thead>
@@ -333,7 +335,7 @@
 
                 <aside>
                     <div class="se-ranking-block">
-                        <h4 data-se-reveal>Jugadores <span>top</span></h4>
+                        <h4 data-se-reveal>Mejor <span>jugador</span></h4>
                         @forelse ($playersRanking as $index => $player)
                             <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">
@@ -356,8 +358,33 @@
                         @endforelse
                     </div>
 
+                    <div class="se-ranking-block se-ranking-block--scorer">
+                        <h4 data-se-reveal>Goleador <span>de la temporada</span></h4>
+                        <p class="se-ranking-block__note" data-se-reveal>Desempate: menos partidos jugados</p>
+                        @forelse ($scorersRanking as $index => $scorer)
+                            <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
+                                <div class="se-rank-card__avatar">
+                                    @if ($scorer['player']['person']->image ?? null)
+                                        <img src="{{ asset('storage/' . $scorer['player']['person']->image) }}" alt="">
+                                    @else
+                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($scorer['player']['person']->full_name) }}&background=b45309&color=fff" alt="">
+                                    @endif
+                                    <span class="se-rank-card__pos">{{ $index + 1 }}</span>
+                                </div>
+                                <div>
+                                    <div class="se-rank-card__name">{{ $scorer['player']['person']->full_name }}</div>
+                                    <div class="se-rank-card__stats">
+                                        {{ $scorer['goals'] ?? 0 }} {{ ($scorer['goals'] ?? 0) == 1 ? 'gol' : 'goles' }} · {{ $scorer['matches_played'] ?? 0 }} {{ ($scorer['matches_played'] ?? 0) == 1 ? 'partido' : 'partidos' }}
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="se-section__sub" data-se-reveal>Sin datos de goleadores aún.</p>
+                        @endforelse
+                    </div>
+
                     <div class="se-ranking-block se-ranking-block--gk">
-                        <h4 data-se-reveal>Porteros <span>top</span></h4>
+                        <h4 data-se-reveal>Mejor <span>arquero</span></h4>
                         @forelse ($goalkeepersRanking as $index => $gk)
                             <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">
@@ -458,13 +485,17 @@
                                 <li>Abre el instalador y confirma</li>
                             </ul>
                             <div class="se-app-download__actions">
-                                <a href="{{ $appDownloadUrl }}" class="se-btn se-btn--primary se-btn--lg" download>
+                                <a href="{{ route('socialevents_torneos_download_app', $edition->landingSlug()) }}" class="se-btn se-btn--primary se-btn--lg">
                                     <i class="fas fa-download" aria-hidden="true"></i>
                                     Descargar APK v{{ $appVersion }}
                                 </a>
                             </div>
                             <p class="se-app-download__note">
                                 Versión {{ $appVersion }} · Solo Android · Publicación en tiendas próximamente
+                            </p>
+                            <p class="se-app-download__count">
+                                <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                                {{ number_format((int) $edition->app_downloads, 0) }} {{ (int) $edition->app_downloads === 1 ? 'descarga' : 'descargas' }}
                             </p>
                         </div>
                     </div>

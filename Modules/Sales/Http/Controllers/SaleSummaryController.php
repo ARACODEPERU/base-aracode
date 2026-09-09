@@ -190,6 +190,7 @@ class SaleSummaryController extends Controller
             'notes' => $result['notes'],
             'is_sunat_unavailable' => $result['is_sunat_unavailable'] ?? false,
             'is_already_sent' => $result['is_already_sent'] ?? false,
+            'is_processing' => $result['is_processing'] ?? false,
         ]);
     }
 

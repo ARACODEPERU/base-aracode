@@ -67,7 +67,7 @@ final class TournamentLandingPresenter
             return null;
         }
 
-        $relativePath = config('socialevents.mobile_app_apk_path', 'downloads/aracode-torneos.apk');
+        $relativePath = config('socialevents.mobile_app_apk_path', 'downloads/pichanguero.apk');
 
         if (! is_string($relativePath) || $relativePath === '') {
             return null;

@@ -21,60 +21,69 @@ class PermissionsModuleSeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'even_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'even_categoria_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_categoria_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_categoria_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_categoria_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_local_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_local_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_local_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_local_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_alquiler_local_pagos']));
-        array_push($permissions, Permission::create(['name' => 'even_evento_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_evento_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_evento_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_evento_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_evento_precios']));
-        array_push($permissions, Permission::create(['name' => 'even_ventas_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_ventas_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_ventas_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_ventas_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_equipos_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_equipos_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_equipos_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_equipos_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_listado']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_equipos']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_equipos_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_equipo_jugadores']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_fixtures']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_fixtures_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_partido_resultado']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_partido_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_sanciones']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_partido_acta']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_actas']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_acta_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_partido_acta_editar']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_galeria']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_galeria_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'even_ediciones_galeria_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_categoria_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_categoria_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_categoria_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_categoria_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_local_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_local_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_local_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_local_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_alquiler_local_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_alquiler_local_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_alquiler_local_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_alquiler_local_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_alquiler_local_pagos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_evento_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_evento_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_evento_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_evento_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_evento_precios']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ventas_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ventas_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ventas_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ventas_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_equipos_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_equipos_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_equipos_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_equipos_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_equipos']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_equipos_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_equipo_jugadores']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_fixtures']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_fixtures_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_resultado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_sanciones']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_acta']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_actas']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_acta_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_acta_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria_eliminar']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);
-            DB::table('model_has_permissions')->insert([
-                'permission_id' => $permission->id,
-                'model_type' => Modulo::class,
-                'model_id' => $modulo->identifier
-            ]);
+
+            $exists = DB::table('model_has_permissions')
+                ->where('permission_id', $permission->id)
+                ->where('model_type', Modulo::class)
+                ->where('model_id', $modulo->identifier)
+                ->exists();
+
+            if (! $exists) {
+                DB::table('model_has_permissions')->insert([
+                    'permission_id' => $permission->id,
+                    'model_type' => Modulo::class,
+                    'model_id' => $modulo->identifier
+                ]);
+            }
         }
     }
 }

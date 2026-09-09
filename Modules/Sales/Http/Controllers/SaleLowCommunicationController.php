@@ -141,7 +141,8 @@ class SaleLowCommunicationController extends Controller
             'success' => $result['success'],
             'code'  => $result['code'],
             'message'   => $result['message'],
-            'notes'   => $result['notes']
+            'notes'   => $result['notes'],
+            'is_processing' => $result['is_processing'] ?? false,
         ]);
     }
     public function destroy($id)

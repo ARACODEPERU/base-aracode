@@ -45,12 +45,14 @@ class EventEdition extends Model
         'landing_published',
         'public_slug',
         'mobile_enabled',
+        'app_downloads',
         'branding',
     ];
 
     protected $casts = [
         'landing_published' => 'boolean',
         'mobile_enabled' => 'boolean',
+        'app_downloads' => 'integer',
         'branding' => 'array',
         'inscription_fee' => 'decimal:2',
         'yellow_price' => 'decimal:2',

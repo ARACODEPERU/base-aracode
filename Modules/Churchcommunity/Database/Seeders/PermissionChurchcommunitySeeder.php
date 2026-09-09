@@ -21,15 +21,15 @@ class PermissionChurchcommunitySeeder extends Seeder
 
         $permissions = [];
 
-        array_push($permissions, Permission::create(['name' => 'cigle_dashboard']));
-        array_push($permissions, Permission::create(['name' => 'cigle_miembros']));
-        array_push($permissions, Permission::create(['name' => 'cigle_tipo_miembro']));
-        array_push($permissions, Permission::create(['name' => 'cigle_tipo_miembro_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'cigle_tipo_miembro_eliminar']));
-        array_push($permissions, Permission::create(['name' => 'cigle_creyente_listado']));
-        array_push($permissions, Permission::create(['name' => 'cigle_creyente_nuevo']));
-        array_push($permissions, Permission::create(['name' => 'cigle_creyente_editar']));
-        array_push($permissions, Permission::create(['name' => 'cigle_creyente_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_dashboard']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_miembros']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_tipo_miembro']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_tipo_miembro_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_tipo_miembro_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_creyente_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_creyente_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_creyente_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'cigle_creyente_eliminar']));
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);

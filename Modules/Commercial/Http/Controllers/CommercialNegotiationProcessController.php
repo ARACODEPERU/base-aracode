@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaCapRegistration;
@@ -48,9 +49,11 @@ class CommercialNegotiationProcessController extends Controller
 
     /**
      * Determina el estado real (done / skipped / pending) de cada paso del proceso
-     * para persistir el progreso al recargar. La fuente principal es el campo
-     * process_progress (los pasos ejecutados). Para negociaciones antiguas sin ese
-     * campo se usa la deteccion por datos como respaldo.
+     * para persistir el progreso al recargar. La fuente unica es el campo
+     * process_progress: si no existe ningun avance registrado, el proceso inicia
+     * en cero (todos los pasos pending o skipped segun corresponda), aun cuando el
+     * cliente ya exista o haya confirmado antes. Solo se retoma el progreso cuando
+     * el administrador ya ejecuto algun paso y este quedo guardado en process_progress.
      *
      * @return array<string, string>
      */
@@ -66,53 +69,16 @@ class CommercialNegotiationProcessController extends Controller
             return in_array($key, $progress, true) ? 'done' : $fallback;
         };
 
-        // Un paso que ya se ejecuto y fue registrado en process_progress manda siempre.
-        if (! empty($progress)) {
-            return [
-                'person' => $statusOf('person'),
-                'user' => $statusOf('user'),
-                'student' => $statusOf('student'),
-                'registrations' => $hasCourses ? $statusOf('registrations') : 'skipped',
-                'subscriptions' => $hasSubscriptions ? $statusOf('subscriptions') : 'skipped',
-                'installments' => $isInstallments ? $statusOf('installments') : 'skipped',
-                'document' => $statusOf('document'),
-                'email' => $statusOf('email'),
-                'complete' => $statusOf('complete'),
-            ];
-        }
-
-        // Sin process_progress usamos el respaldo por datos (negociaciones ya procesadas antes de este cambio).
-        return array_merge([
-            'person' => 'pending',
-        ], $this->fallbackStatuses($negotiation));
-    }
-
-    /**
-     * Respaldo por datos guardados para negociaciones sin process_progress registrado.
-     *
-     * @return array<string, string>
-     */
-    private function fallbackStatuses(CommercialNegotiation $negotiation): array
-    {
-        $clientId = $negotiation->client_id;
-        $isInstallments = $negotiation->payment_type === 'installments';
-
-        $hasCourses = $negotiation->items->contains(fn ($item) => $item->item_type === 'course');
-        $hasSubscriptions = $negotiation->items->contains(fn ($item) => $item->item_type === 'subscription');
-
-        $userDone = $clientId && User::where('person_id', $clientId)->exists();
-        $studentDone = $clientId && AcaStudent::where('person_id', $clientId)->exists();
-        $student = $clientId ? AcaStudent::where('person_id', $clientId)->first() : null;
-
         return [
-            'user' => $userDone ? 'done' : 'pending',
-            'student' => $studentDone ? 'done' : 'pending',
-            'registrations' => (! $hasCourses) ? 'skipped' : (($student && AcaCapRegistration::where('student_id', $student->id)->whereIn('course_id', $negotiation->items->where('item_type', 'course')->pluck('item_id'))->exists()) ? 'done' : 'pending'),
-            'subscriptions' => (! $hasSubscriptions) ? 'skipped' : (($student && AcaStudentSubscription::where('student_id', $student->id)->whereIn('subscription_id', $negotiation->items->where('item_type', 'subscription')->pluck('item_id'))->exists()) ? 'done' : 'pending'),
-            'installments' => $isInstallments ? ($negotiation->sale_id ? 'done' : 'pending') : 'skipped',
-            'document' => $negotiation->sale_document_id ? 'done' : 'pending',
-            'email' => $negotiation->email_sent_at ? 'done' : 'pending',
-            'complete' => $negotiation->status === 'completada' ? 'done' : 'pending',
+            'person' => $statusOf('person'),
+            'user' => $statusOf('user'),
+            'student' => $statusOf('student'),
+            'registrations' => $hasCourses ? $statusOf('registrations') : 'skipped',
+            'subscriptions' => $hasSubscriptions ? $statusOf('subscriptions') : 'skipped',
+            'installments' => $isInstallments ? $statusOf('installments') : 'skipped',
+            'document' => $statusOf('document'),
+            'email' => $statusOf('email'),
+            'complete' => $statusOf('complete'),
         ];
     }
 
@@ -517,13 +483,11 @@ class CommercialNegotiationProcessController extends Controller
 
                 if ($presentationMode === 'list' || $presentationMode === 'summary') {
                     $firstItem = $items->first();
-                    $entity = $firstItem->item_type === 'subscription'
-                        ? AcaSubscriptionType::class
-                        : AcaCourse::class;
-                    $product = $entity::find($firstItem->item_id);
+                    $entity = $firstItem->entityClass();
+                    $product = $entity ? $entity::find($firstItem->item_id) : null;
 
-                    if (! $product) {
-                        throw new \Exception('No se encontro el producto de la negociacion.');
+                    if (! $entity || ! $product) {
+                        throw new \Exception('No se encontro el producto ('.($entity ?: 'clase no resuelta').') de la clase '.($firstItem->entity_name_product ?? 'desconocida').' en la negociacion.');
                     }
 
                     $product->formatted_description = $formattedDescription;
@@ -543,14 +507,13 @@ class CommercialNegotiationProcessController extends Controller
                     // En cuotas el monto del documento se reparte entre los items para que sume la primera cuota.
                     $totalItems = $items->count();
                     $basePrice = $documentTotal / $totalItems;
+                    $addedProducts = 0;
 
                     foreach ($items as $item) {
-                        $entity = $item->item_type === 'subscription'
-                            ? AcaSubscriptionType::class
-                            : AcaCourse::class;
-                        $product = $entity::find($item->item_id);
+                        $entity = $item->entityClass();
+                        $product = $entity ? $entity::find($item->item_id) : null;
 
-                        if (! $product) {
+                        if (! $entity || ! $product) {
                             continue;
                         }
 
@@ -575,6 +538,12 @@ class CommercialNegotiationProcessController extends Controller
                             'total' => $price,
                             'entity_name_product' => $entity,
                         ]);
+
+                        $addedProducts++;
+                    }
+
+                    if ($addedProducts === 0) {
+                        throw new \Exception('Ninguno de los items de la negociacion pudo resolverse a un producto valido para generar el comprobante.');
                     }
                 }
 
@@ -640,13 +609,15 @@ class CommercialNegotiationProcessController extends Controller
                 // En paquetes el detalle del comprobante es una sola linea;
                 // vinculamos el comprobante a todas las matriculas de cursos.
                 if (in_array($presentationMode, ['list', 'summary'], true)) {
-                    $student = AcaStudent::where('person_id', $person->id)->first();
+                    $student = $person ? AcaStudent::where('person_id', $person->id)->first() : null;
 
-                    foreach ($negotiation->items as $item) {
-                        if ($item->item_type === 'course') {
-                            AcaCapRegistration::where('student_id', $student->id)
-                                ->where('course_id', $item->item_id)
-                                ->update(['document_id' => $data['document']['id']]);
+                    if ($student) {
+                        foreach ($negotiation->items as $item) {
+                            if ($item->entityClass() === AcaCourse::class) {
+                                AcaCapRegistration::where('student_id', $student->id)
+                                    ->where('course_id', $item->item_id)
+                                    ->update(['document_id' => $data['document']['id']]);
+                            }
                         }
                     }
                 }
@@ -661,6 +632,11 @@ class CommercialNegotiationProcessController extends Controller
                     : 'Comprobante de venta generado correctamente.',
             ]);
         } catch (\Exception $e) {
+            Log::error('CommercialNegotiation::processDocument error para negociacion '.$id, [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

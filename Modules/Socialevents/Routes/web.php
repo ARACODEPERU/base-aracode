@@ -130,3 +130,8 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
 Route::get('torneos/{slug}', [TournamentLandingController::class, 'show'])
     ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
     ->name('socialevents_torneos_landing');
+
+// Ruta pública para registrar la descarga de la app móvil y redirigir al APK
+Route::get('torneos/{slug}/download-app', [TournamentLandingController::class, 'downloadApp'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->name('socialevents_torneos_download_app');

@@ -66,7 +66,7 @@
 
                                 <div class="abs abs-center p-40 pb-30 bottom-0 z-2 w-100 text-center"
                                     style="background-size: cover; background-repeat: no-repeat;">
-                                    <a class="btn-main fx-slide w-100" href=""><span>Solicitar Plan</span></a>
+                                    <a class="btn-main fx-slide w-100" href="https://wa.link/1lubng"><span>Solicitar Plan</span></a>
                                 </div>
 
                             </div>
@@ -117,7 +117,7 @@
 
                                 <div class="abs abs-center p-40 pb-30 bottom-0 z-2 w-100 text-center"
                                     style="background-size: cover; background-repeat: no-repeat;">
-                                    <a class="btn-main fx-slide w-100" href=""><span>Solicitar Plan</span></a>
+                                    <a class="btn-main fx-slide w-100" href="https://wa.link/7c6phm"><span>Solicitar Plan</span></a>
                                 </div>
 
                             </div>

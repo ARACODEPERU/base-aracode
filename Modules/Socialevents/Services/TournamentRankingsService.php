@@ -3,6 +3,7 @@
 namespace Modules\Socialevents\Services;
 
 use Illuminate\Support\Collection;
+use Modules\Socialevents\Entities\EventEditionMatchParticipation;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
 
@@ -109,6 +110,66 @@ class TournamentRankingsService
     }
 
     /**
+     * Ranking de goleadores (goles a favor).
+     * Desempate: 1) menos partidos jugados, 2) más asistencias.
+     */
+    public function topScorers(int $editionId, ?int $limit = null): Collection
+    {
+        $limit = $limit ?? (int) config('socialevents.rankings.top_limit', 5);
+
+        $playerStats = EventEditionMatchPlayerStat::with(['player.person'])
+            ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
+            ->get();
+
+        $matchesPlayed = EventEditionMatchParticipation::query()
+            ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
+            ->selectRaw('player_id, COUNT(*) as total')
+            ->groupBy('player_id')
+            ->pluck('total', 'player_id');
+
+        $scorers = [];
+
+        foreach ($playerStats as $stat) {
+            if ((int) $stat->goals <= 0) {
+                continue;
+            }
+
+            $playerId = $stat->player_id;
+
+            if (! isset($scorers[$playerId])) {
+                $scorers[$playerId] = [
+                    'player' => $stat->player,
+                    'goals' => 0,
+                    'assists' => 0,
+                    'matches_played' => 0,
+                ];
+            }
+
+            $scorers[$playerId]['goals'] += (int) $stat->goals;
+            $scorers[$playerId]['assists'] += (int) $stat->assists;
+        }
+
+        foreach ($scorers as $playerId => $row) {
+            $scorers[$playerId]['matches_played'] = (int) ($matchesPlayed[$playerId] ?? 0);
+        }
+
+        return collect($scorers)
+            ->sort(function (array $a, array $b) {
+                if ($a['goals'] !== $b['goals']) {
+                    return $b['goals'] <=> $a['goals'];
+                }
+
+                if ($a['matches_played'] !== $b['matches_played']) {
+                    return $a['matches_played'] <=> $b['matches_played'];
+                }
+
+                return $b['assists'] <=> $a['assists'];
+            })
+            ->take($limit)
+            ->values();
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function topPlayersPayload(int $editionId, ?int $limit = null): array
@@ -125,6 +186,16 @@ class TournamentRankingsService
     {
         return $this->topGoalkeepers($editionId, $limit)
             ->map(fn (array $row) => $this->serializeGoalkeeperRow($row))
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function topScorersPayload(int $editionId, ?int $limit = null): array
+    {
+        return $this->topScorers($editionId, $limit)
+            ->map(fn (array $row) => $this->serializeScorerRow($row))
             ->all();
     }
 
@@ -157,6 +228,23 @@ class TournamentRankingsService
             'player_name' => $player?->person?->full_name ?? 'Arquero',
             'points' => round((float) $row['points'], 2),
             'stats' => $row['stats'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    private function serializeScorerRow(array $row): array
+    {
+        $player = $row['player'] ?? null;
+
+        return [
+            'player_id' => $player?->person_id,
+            'player_name' => $player?->person?->full_name ?? 'Jugador',
+            'goals' => (int) $row['goals'],
+            'assists' => (int) ($row['assists'] ?? 0),
+            'matches_played' => (int) ($row['matches_played'] ?? 0),
         ];
     }
 }
