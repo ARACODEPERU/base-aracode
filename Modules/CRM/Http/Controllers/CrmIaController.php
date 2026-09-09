@@ -189,21 +189,39 @@ class CrmIaController extends Controller
 
     public function basicQuestionService(Request $request)
     {
-        $response = $this->sendPromptOpenAI($request->input('messageText'));
+        try {
+            $response = $this->sendPromptOpenAI($request->input('messageText'));
 
-        return response()->json([
-            'success' => true,
-            'responseText' => $response,
-        ]);
+            return response()->json([
+                'success' => true,
+                'responseText' => $response,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('CRM basicQuestionService: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 200);
+        }
     }
 
     public function censorTextService(Request $request)
     {
-        $response = app(OpenAiAssistantService::class)->censorText(Auth::id(), $request->input('messageText'));
+        try {
+            $response = app(OpenAiAssistantService::class)->censorText(Auth::id(), $request->input('messageText'));
 
-        return response()->json([
-            'success' => true,
-            'responseText' => $response,
-        ]);
+            return response()->json([
+                'success' => true,
+                'responseText' => $response,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('CRM censorTextService: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 200);
+        }
     }
 }

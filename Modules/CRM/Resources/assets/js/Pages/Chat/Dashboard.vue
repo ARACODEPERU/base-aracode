@@ -310,7 +310,13 @@
             },
             timeout: 0,
         }).then((result) => {
-            formIaconsulta.respond = result.data.responseText
+            if (result.data.success) {
+                formIaconsulta.respond = result.data.responseText
+            } else {
+                showMessage(result.data.message || 'No se pudo consultar la IA.', 'error')
+            }
+        }).catch((error) => {
+            showMessage(error.response?.data?.message || 'Error al consultar la IA. Intenta nuevamente.', 'error')
         }).finally(()=>{
             formIaconsulta.processing = false;;
         });
@@ -412,7 +418,11 @@
         }).then((result) => {
             if(result.data.success){
                 showMessage('Información guardada correctamente. puede visualizarlo en DUDAS COMUNES','success');
+            } else {
+                showMessage(result.data.message || 'No se pudo consultar la IA.', 'error')
             }
+        }).catch((error) => {
+            showMessage(error.response?.data?.message || 'Error al consultar la IA. Intenta nuevamente.', 'error')
         }).finally(()=>{
             formIaconsulta.processing = false;;
         });
