@@ -6,7 +6,7 @@ use App\Models\Parameter;
 
 final class SalesA4Template
 {
-    public const PARAMETER_CODE = 'P000026';
+    public const PARAMETER_CODE = 'P000028';
 
     public const CURRENT = '1';
 

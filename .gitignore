@@ -22,3 +22,6 @@ yarn-error.log
 /app/Helpers/Invoice/Certificates/*.pem
 !/app/Helpers/Invoice/Certificates/certificate.pem
 
+public/robots.txt
+public/llms.txt
+public/robots.txt

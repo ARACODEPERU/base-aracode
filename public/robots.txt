@@ -1,2 +1,20 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Permitir bots de IA explícitamente
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+Sitemap: https://academy.globalcpaperu.com/sitemap.xml
