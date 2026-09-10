@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 
 class ParametersController extends Controller
@@ -37,6 +38,8 @@ class ParametersController extends Controller
                 }
             }
 
+            // Verificar estado de sincronizacion para archivos (P000026, P000027)
+            $sync_status = $this->getFileSyncStatus($parameter);
 
             array_push($formatted, [
                 'id' => $parameter->id,
@@ -45,6 +48,7 @@ class ParametersController extends Controller
                 'control_type' => $parameter->control_type,
                 'json_query_data' => $json_query_data,
                 'value_default' => $parameter->value_default,
+                'sync_status' => $sync_status,
             ]);
         }
         //dd($formatted);
@@ -112,7 +116,8 @@ class ParametersController extends Controller
             $valor_seguro = htmlspecialchars($value_default, ENT_QUOTES, 'UTF-8');
         }
 
-        Parameter::find($id)->update([
+        $parameter = Parameter::find($id);
+        $parameter->update([
             'parameter_code'        => $request->get('parameter_code'),
             'description'           => $request->get('description'),
             'control_type'          => $request->get('control_type'),
@@ -123,6 +128,9 @@ class ParametersController extends Controller
         // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
         Cache::forget('academic:openai-api-key:' . $request->get('parameter_code'));
         Log::info('Parametro actualizado, cache de API key invalidada', ['parameter_code' => $request->get('parameter_code')]);
+
+        // Sincronizar archivos (robots.txt, llms.txt)
+        $this->syncFileFromParameter($parameter);
     }
 
     public function getSubQuery($json_query_data)
@@ -142,5 +150,85 @@ class ParametersController extends Controller
 
         // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
         Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
+
+        // Sincronizar archivos (robots.txt, llms.txt)
+        $this->syncFileFromParameter($parameter);
+    }
+
+    /**
+     * Endpoint POST para guardar valores largos (textareas como robots.txt / llms.txt)
+     * desde la lista de parametros, evitando el limite de longitud de URL en GET.
+     */
+    public function updateDefaultValuePost(Request $request, $id)
+    {
+        $parameter = Parameter::find($id);
+
+        $parameter->update([
+            'value_default' => $request->input('value_default', '')
+        ]);
+
+        Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
+        $this->syncFileFromParameter($parameter);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Sincroniza el contenido del parametro con su archivo correspondiente en public/.
+     * Aplica solo para P000026 (robots.txt) y P000027 (llms.txt).
+     */
+    private function syncFileFromParameter(Parameter $parameter): void
+    {
+        $fileMap = [
+            'P000026' => 'robots.txt',
+            'P000027' => 'llms.txt',
+        ];
+
+        if (!isset($fileMap[$parameter->parameter_code])) {
+            return;
+        }
+
+        $fileName = $fileMap[$parameter->parameter_code];
+        $filePath = public_path($fileName);
+        $content = $parameter->value_default ?? '';
+
+        try {
+            File::put($filePath, $content);
+            Log::info("Archivo {$fileName} sincronizado desde parametro {$parameter->parameter_code}");
+        } catch (\Exception $e) {
+            Log::error("Error al sincronizar {$fileName}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verifica si el valor del parametro coincide con el contenido del archivo.
+     * Retorna 'Actualizado' si coinciden, 'Pendiente' si son diferentes, o null si no aplica.
+     */
+    private function getFileSyncStatus(Parameter $parameter): ?string
+    {
+        $fileMap = [
+            'P000026' => 'robots.txt',
+            'P000027' => 'llms.txt',
+        ];
+
+        if (!isset($fileMap[$parameter->parameter_code])) {
+            return null;
+        }
+
+        $fileName = $fileMap[$parameter->parameter_code];
+        $filePath = public_path($fileName);
+
+        if (!File::exists($filePath)) {
+            return 'Pendiente';
+        }
+
+        $fileContent = File::get($filePath);
+        $paramContent = $parameter->value_default ?? '';
+
+        // Normalizar saltos de linea para comparacion
+        $fileContentNormalized = str_replace("\r\n", "\n", $fileContent);
+        $paramContentNormalized = str_replace("\r\n", "\n", $paramContent);
+
+        return $fileContentNormalized === $paramContentNormalized ? 'Actualizado' : 'Pendiente';
     }
 }
