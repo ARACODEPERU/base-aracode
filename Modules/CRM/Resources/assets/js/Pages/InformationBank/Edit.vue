@@ -17,7 +17,7 @@
     <AppLayout title="Contactos">
         <Navigation :routeModule="route('crm_dashboard')" :titleModule="'CRM'">
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Dudas Comunes</span>
+                <span>Banco de Consultas</span>
             </li>
             <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
                 <span v-html="ibank.question_text"></span>

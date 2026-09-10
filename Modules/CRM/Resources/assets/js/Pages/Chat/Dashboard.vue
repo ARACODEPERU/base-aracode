@@ -281,9 +281,17 @@
         userId: null
     });
 
-    const instructionsPorDefecto = 'Eres un contador y un experto en NIIF, responde la consulta pero censura nombres propios de personas y empresas y cambialas por nombres genéricos igual si encuentras datos como teléfonos, numeros de identidad o similares';
+    const instructionsPorDefecto = `Eres un contador y un experto en NIIF y NIA, responde la consulta. La respuesta debe combinar lenguaje técnico sencillo de entender, y tener la siguiente estructura:
+Análisis - Desarrollo - Conclusiones y Recomendaciones
+responde usando etiquetas html
+Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
 
     const displayModalRespuestaAi = ref(false);
+    const displayModalConfirmarAi = ref(false);
+    const censoredQuestion = ref(null);
+    const censoredResponse = ref(null);
+    // Bandera: tras guardar en banco de consultas, ¿se debe enviar la respuesta al usuario?
+    const sendAfterSave = ref(false);
 
     const openModalQuestionAI = (item) => {
         formIaconsulta.messageText = item.content
@@ -300,6 +308,10 @@
     const closeModalQuestionAI = () => {
         displayModalAi.value = false;
         displayModalRespuestaAi.value = false;
+        displayModalConfirmarAi.value = false;
+        censoredQuestion.value = null;
+        censoredResponse.value = null;
+        sendAfterSave.value = false;
         formIaconsulta.reset();
     };
 
@@ -359,32 +371,73 @@
     }
 
     const sendMessageAi = () => {
-        if (formIaconsulta.respond.trim()) {
-            isShowLoadingSend.value = true;
-            const msg = {
-                fromUserId: selectedUser.value.userId,
-                toUserId: 0,
-                text: formIaconsulta.respond,
-                time: 'En este momento',
-                type: 'text',
-                id: null,
-                answer_ai: true
-            };
-            axios.post(route('crm_send_message'), msg).then((response) => {
-                return response.data;
-            }).then((res) => {
-                if(res.success){
-                    selectedUser.value.messages.push(msg);
-                    textMessage.value = '';
-                    scrollToBottom();
-                }else{
-                    showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
+        if (formIaconsulta.respond?.trim()) {
+            Swal.fire({
+                title: '¿Quieres guardar la respuesta en el banco de consultas?',
+                text: 'Si eliges sí, podrás revisarla antes de enviarla.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, guardar y enviar',
+                cancelButtonText: 'No, solo enviar',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendAfterSave.value = true;
+                    saveQuestionResult();
+                } else {
+                    sendAfterSave.value = false;
+                    doSendMessageAi();
                 }
-                isShowLoadingSend.value = false;
-            }).finally(() => {
-                closeModalQuestionAI();
             });
         }
+    };
+
+    const doSendMessageAi = () => {
+        if (!formIaconsulta.respond?.trim()) return;
+        isShowLoadingSend.value = true;
+        const msg = {
+            fromUserId: selectedUser.value.userId,
+            toUserId: 0,
+            text: formIaconsulta.respond,
+            time: 'En este momento',
+            type: 'text',
+            id: null,
+            answer_ai: true
+        };
+        axios.post(route('crm_send_message'), msg).then((response) => {
+            return response.data;
+        }).then((res) => {
+            if(res.success){
+                selectedUser.value.messages.push(msg);
+                textMessage.value = '';
+                scrollToBottom();
+            }else{
+                showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
+            }
+            isShowLoadingSend.value = false;
+        }).finally(() => {
+            closeModalQuestionAI();
+        });
+    };
+
+    // Tras guardar en banco de consultas (desde el botón Guardar), preguntar si enviar al usuario
+    const askSendAfterSave = () => {
+        Swal.fire({
+            title: '¿Quieres enviar la respuesta al usuario?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, enviar',
+            cancelButtonText: 'No',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                doSendMessageAi();
+            } else {
+                closeModalQuestionAI();
+            }
+        });
     };
 
     const clearHTMLdelimiters = (cadena) => {
@@ -417,6 +470,12 @@
         }).then((result) => {
             if(result.data.success){
                 showMessage('Información guardada correctamente.','success');
+                if (sendAfterSave.value) {
+                    sendAfterSave.value = false;
+                    doSendMessageAi();
+                } else {
+                    askSendAfterSave();
+                }
             }
         }).finally(()=>{
             censorLoader.value = false;
@@ -433,22 +492,105 @@
             timeout: 0,
         }).then((result) => {
             if(result.data.success){
-                showMessage('Información guardada correctamente. puede visualizarlo en DUDAS COMUNES','success');
+                censoredQuestion.value = result.data.questionText;
+                censoredResponse.value = result.data.responseText;
+                displayModalRespuestaAi.value = false;
+                displayModalConfirmarAi.value = true;
             } else {
-                showMessage(result.data.message || 'No se pudo consultar la IA.', 'error')
+                showMessage(result.data.message || 'No se pudo censurar la respuesta.', 'error')
             }
         }).catch((error) => {
-            showMessage(error.response?.data?.message || 'Error al consultar la IA. Intenta nuevamente.', 'error')
+            showMessage(error.response?.data?.message || 'Error al censurar la respuesta. Intenta nuevamente.', 'error')
         }).finally(()=>{
             formIaconsulta.processing = false;;
         });
     }
+
+    const closeModalConfirmarAI = () => {
+        displayModalConfirmarAi.value = false;
+        displayModalRespuestaAi.value = true;
+        sendAfterSave.value = false;
+    };
+
+    const confirmSaveQuestion = () => {
+        if (!censoredQuestion.value?.trim() || !censoredResponse.value?.trim()) {
+            showMessage('La pregunta y la respuesta no pueden estar vacías.', 'warning');
+            return;
+        }
+        censorLoader.value = true;
+        axios.post(route('crm_common_questions_store'), {
+            question_text: censoredQuestion.value,
+            response_text: censoredResponse.value,
+            user_id: authUser.id,
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        }).then((result) => {
+            if (result.data.ibank) {
+                showMessage('Información guardada correctamente. puede visualizarlo en Banco de Consultas','success');
+                if (sendAfterSave.value) {
+                    sendAfterSave.value = false;
+                    doSendMessageAi();
+                } else {
+                    askSendAfterSave();
+                }
+            } else {
+                showMessage('No se pudo guardar la respuesta.', 'error');
+            }
+        }).catch((error) => {
+            showMessage(error.response?.data?.message || 'Error al guardar la respuesta. Intenta nuevamente.', 'error');
+        }).finally(() => {
+            censorLoader.value = false;
+        });
+    };
 
     const stripHtml = (html) => {
         const div = document.createElement('div');
         div.innerHTML = html;
         return div.textContent || div.innerText || '';
     }
+
+    const hasAnyRole = (rolesToCheck) => {
+        return (authUser.roles || []).some(role => rolesToCheck.includes(role.name));
+    };
+
+    const canDeleteMessage = (message) => {
+        if (!message || !message.id || !message.created_at) return false;
+        if (!hasAnyRole(['Docente', 'admin', 'Administrador'])) return false;
+        if (selectedUser.value?.userId !== message.fromUserId) return false;
+        const createdAt = new Date(message.created_at);
+        if (isNaN(createdAt.getTime())) return false;
+        return Date.now() - createdAt.getTime() < 60 * 60 * 1000;
+    };
+
+    const deleteMessage = (message, index) => {
+        Swal.fire({
+            title: '¿Estás seguro de eliminar este mensaje?',
+            text: 'Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                axios.delete(route('crm_chat_message_destroy'), {
+                    data: { message_id: message.id },
+                }).then((response) => {
+                    if (response.data.success) {
+                        selectedUser.value.messages.splice(index, 1);
+                        showMessage(response.data.message || 'Mensaje eliminado correctamente.', 'success');
+                    } else {
+                        showMessage(response.data.message || 'No se pudo eliminar el mensaje.', 'error');
+                    }
+                }).catch((error) => {
+                    showMessage(error.response?.data?.message || 'Error al eliminar el mensaje. Intenta nuevamente.', 'error');
+                });
+            }
+        });
+    };
 </script>
 <template>
     <AppLayout title="Chat">
@@ -461,7 +603,7 @@
 
             <div class="flex gap-5 relative sm:h-[calc(100vh_-_150px)] h-full sm:min-h-0" :class="{ 'min-h-[999px]': isShowChatMenu }">
                 <!-- Modal de Consulta AI - Primera pantalla -->
-                <ModalLargeX :show="displayModalAi" :onClose="closeModalQuestionAI" :icon="'/img/ai.png'">
+                <ModalLargeX :show="displayModalAi" :onClose="closeModalQuestionAI" :icon="'/img/ai.png'" :loading="formIaconsulta.processing">
                     <template #title>Inteligencia Artificial</template>
                     <template #message>Mejora tu respuesta</template>
                     <template #content>
@@ -506,7 +648,7 @@
                 </ModalLargeX>
 
                 <!-- Modal de Respuesta AI - Segunda pantalla -->
-                <ModalLargeX :show="displayModalRespuestaAi" :onClose="closeModalQuestionAI" :icon="'/img/ai.png'">
+                <ModalLargeX :show="displayModalRespuestaAi" :onClose="closeModalQuestionAI" :icon="'/img/ai.png'" :loading="censorLoader || formIaconsulta.processing">
                     <template #title>Inteligencia Artificial</template>
                     <template #message>Respuesta generada</template>
                     <template #content>
@@ -554,7 +696,7 @@
                             class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50"
                             :disabled="censorLoader"
                         >
-                            Guardar respuesta
+                            Guardar en Banco de consultas
                         </button>
                         <button
                             type="button"
@@ -570,6 +712,50 @@
                             class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
                         >
                             Modificar
+                        </button>
+                    </template>
+                </ModalLargeX>
+
+                <!-- Modal de Confirmacion de Guardado - Tercera pantalla -->
+                <ModalLargeX :show="displayModalConfirmarAi" :onClose="closeModalConfirmarAI" :icon="'/img/ai.png'" :loading="censorLoader">
+                    <template #title>Inteligencia Artificial</template>
+                    <template #message>Revisa la pregunta y la respuesta antes de guardarla en Banco de Consultas</template>
+                    <template #content>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Pregunta</label>
+                                <textarea
+                                    class="form-textarea text-gray-900 font-medium"
+                                    style="border-color:#3b5bdb"
+                                    rows="3"
+                                    v-model="censoredQuestion"
+                                ></textarea>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-md border">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Respuesta</label>
+                                <Editor
+                                    id="confirmarRespondTxt"
+                                    :api-key="P000010"
+                                    v-model="censoredResponse"
+                                />
+                            </div>
+                        </div>
+                    </template>
+                    <template #buttons>
+                        <button
+                            type="button"
+                            @click="confirmSaveQuestion"
+                            class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                            :disabled="censorLoader"
+                        >
+                            Guardar
+                        </button>
+                        <button
+                            type="button"
+                            @click="closeModalConfirmarAI"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+                        >
+                            Cancelar
                         </button>
                     </template>
                 </ModalLargeX>
@@ -987,7 +1173,7 @@
                                         </div>
                                         <template v-if="selectedUser.messages && selectedUser.messages.length">
                                             <div v-for="(message, index) in selectedUser.messages" :key="index">
-                                                <div class="flex items-start gap-3" :class="{ 'justify-end': selectedUser.userId === message.fromUserId }">
+                                                <div class="flex items-start gap-3 group" :class="{ 'justify-end': selectedUser.userId === message.fromUserId }">
                                                     <div class="flex-none" :class="{ 'order-2': selectedUser.userId === message.fromUserId }">
                                                         <template v-if="selectedUser.userId === message.fromUserId">
                                                             <img v-if="$page.props.auth.user.avatar" :src="getImage($page.props.auth.user.avatar)" class="rounded-full h-10 w-10 object-cover" />
@@ -1000,6 +1186,16 @@
                                                     </div>
                                                     <div class="space-y-2">
                                                         <div class="flex items-center gap-3">
+
+                                                                <button
+                                                                    v-if="canDeleteMessage(message)"
+                                                                    type="button"
+                                                                    class="hidden group-hover:flex items-center text-white-dark hover:text-danger"
+                                                                    title="Eliminar mensaje"
+                                                                    @click="deleteMessage(message, index)"
+                                                                >
+                                                                    <icon-trash-lines class="w-4.5 h-4.5" />
+                                                                </button>
 
                                                                 <div class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10"
                                                                     :class="message.fromUserId == selectedUser.userId ? 'ltr:rounded-br-none rtl:rounded-bl-none !bg-primary text-white': 'ltr:rounded-tl-none rtl:rounded-tr-none'"

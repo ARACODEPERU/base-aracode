@@ -55,21 +55,41 @@ class CrmChatController extends Controller
             })
             ->groupBy('contact_id');
 
-        // Query principal
-        $persons = Person::join('users', 'people.id', '=', 'users.person_id')
+        // Query principal: personas con cuenta de usuario o con alguna conversación conmigo
+        $persons = Person::where(function ($query) use ($persomId) {
+            // Tiene cuenta de usuario (se le puede iniciar un chat aunque aún no haya conversación)
+            $query->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('users')
+                    ->whereColumn('users.person_id', 'people.id');
+            })
+            // o tiene una conversación conmigo (aunque no tenga cuenta de usuario)
+            ->orWhereExists(function ($sub) use ($persomId) {
+                $sub->select(DB::raw(1))
+                    ->from('crm_participants as cp')
+                    ->whereColumn('cp.person_id', 'people.id')
+                    ->whereExists(function ($conv) use ($persomId) {
+                        $conv->select(DB::raw(1))
+                            ->from('crm_participants as me')
+                            ->whereColumn('me.conversation_id', 'cp.conversation_id')
+                            ->where('me.person_id', $persomId);
+                    });
+            });
+        })
+            ->where('people.id', '<>', $persomId)
             ->leftJoinSub($latestMessageSubquery, 'latest', function ($join) {
                 $join->on('people.id', '=', 'latest.contact_id');
             })
-            ->select('people.*', 'latest.last_message_at')
-            ->where('people.id', '<>', $persomId);
+            ->select('people.*', 'latest.last_message_at');
 
         // Filtro por búsqueda
         if (request()->has('search')) {
             $persons->where('people.full_name', 'like', '%' . request()->input('search') . '%');
         }
 
-        // Ordenar por último mensaje o por fecha de creación si no hay mensajes
-        $persons = $persons->orderByDesc(DB::raw('COALESCE(last_message_at, people.created_at)'))
+        // Primero las conversaciones por último mensaje (más recientes) y luego el resto por fecha de creación
+        $persons = $persons->orderByRaw('(latest.last_message_at IS NULL) ASC')
+            ->orderByDesc(DB::raw('COALESCE(latest.last_message_at, people.created_at)'))
             ->paginate(5);
 
         // Mapear resultados para añadir campos extra
@@ -77,7 +97,7 @@ class CrmChatController extends Controller
 
             $conversationId = CrmParticipant::whereIn('person_id', [$persomId, $person->id])
                 ->groupBy('conversation_id')
-                ->having(DB::raw('COUNT(DISTINCT user_id)'), '>=', 2)
+                ->having(DB::raw('COUNT(DISTINCT person_id)'), '>=', 2)
                 ->value('conversation_id');
 
             $message_active = false;

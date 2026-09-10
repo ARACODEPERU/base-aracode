@@ -3,11 +3,15 @@
 namespace Modules\CRM\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Modules\Academic\Entities\AcaStudent;
+use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\CRM\Entities\CrmInformationBank;
 
 class CrmInformationBankController extends Controller
@@ -17,10 +21,46 @@ class CrmInformationBankController extends Controller
      */
     public function index()
     {
-        $ibanks = CrmInformationBank::get();
+        $user = Auth::user();
+
+        // Los alumnos solo pueden acceder con una suscripción activa y vigente
+        if ($user && $user->hasRole('Alumno')) {
+            if (!$this->hasActiveSubscription($user)) {
+                return redirect()->route('web_subscriptions')
+                    ->with('message', 'El Banco de Consultas está disponible con una suscripción activa.');
+            }
+
+            $ibanks = CrmInformationBank::where('status', true)->get();
+        } else {
+            $ibanks = CrmInformationBank::get();
+        }
+
         return Inertia::render('CRM::InformationBank/Index', [
             'ibanks' => $ibanks
         ]);
+    }
+
+    /**
+     * Verifica si el usuario tiene una suscripción activa y vigente.
+     */
+    private function hasActiveSubscription($user): bool
+    {
+        $studentId = AcaStudent::where('person_id', $user->person_id)->value('id');
+        if (!$studentId) {
+            return false;
+        }
+
+        $today = Carbon::today();
+
+        return AcaStudentSubscription::where('student_id', $studentId)
+            ->where(function ($query) use ($today) {
+                $query->where('status', true)
+                    ->orWhere(function ($q) use ($today) {
+                        $q->whereDate('date_start', '<=', $today)
+                            ->whereDate('date_end', '>=', $today);
+                    });
+            })
+            ->exists();
     }
 
     public function edit($id)
