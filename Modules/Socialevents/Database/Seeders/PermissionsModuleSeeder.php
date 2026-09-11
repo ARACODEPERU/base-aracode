@@ -17,7 +17,7 @@ class PermissionsModuleSeeder extends Seeder
     {
         $admin = Role::find(1);
 
-        $modulo = Modulo::create(['identifier' => 'M013', 'description' => 'Gestión de Eventos Sociales']);
+        $modulo = Modulo::firstOrCreate(['identifier' => 'M013'], ['description' => 'Gestión de Eventos Sociales']);
 
         $permissions = [];
 
@@ -67,6 +67,7 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria_nuevo']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_galeria_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_exclusiones']));
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);

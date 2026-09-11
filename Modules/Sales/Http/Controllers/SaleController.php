@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Sales\Support\SalesA4Template;
 use Modules\Health\Entities\HealPatientCharge;
 use Modules\Sales\Services\SaleStockService;
+use Modules\Treasury\Services\TreasuryHooks;
 
 class SaleController extends Controller
 {
@@ -227,6 +228,9 @@ class SaleController extends Controller
                 return $sale;
             });
 
+            // Tesorería: registrar los ingresos de la venta según método de pago
+            $this->recordTreasuryIncomes($res);
+
             return response()->json($res);
         } catch (\Exception $e) {
             return response()->json(['message' => $e]);
@@ -271,6 +275,9 @@ class SaleController extends Controller
                 }
                 return $sale;
             });
+
+            // Tesorería: anular los ingresos generados por la venta anulada
+            TreasuryHooks::voidSaleIncomes($res);
 
             return response()->json([
                 'message' => 'Venta Anulado con éxito.'
@@ -487,5 +494,14 @@ class SaleController extends Controller
                 'message' => 'No existen Datos'
             ]);
         }
+    }
+
+    /**
+     * Tesorería: registra los ingresos de la venta según el método de pago.
+     * Es best-effort: sin cuenta mapeada o con el módulo inactivo no interrumpe la venta.
+     */
+    private function recordTreasuryIncomes(Sale $sale): void
+    {
+        TreasuryHooks::recordSaleIncomes($sale);
     }
 }

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Sales\Entities\SaleDocumentQuota;
 use Modules\Sales\Entities\SalePaymentQuota;
 use Modules\Sales\Http\Requests\StorePaymentRequest;
+use Modules\Treasury\Services\TreasuryHooks;
 
 class SalePaymentQuotaController extends Controller
 {
@@ -87,6 +88,9 @@ class SalePaymentQuotaController extends Controller
 
             DB::commit();
 
+            // Tesorería: registrar el ingreso del abono según método de pago
+            TreasuryHooks::recordQuotaPayment($newPayment, $saleDocument);
+
             $quota->load('payments');
 
             return response()->json([
@@ -124,6 +128,7 @@ class SalePaymentQuotaController extends Controller
             DB::beginTransaction();
 
             $totalPaid = 0;
+            $createdPayments = [];
 
             $pendingQuotas = SaleDocumentQuota::where('sale_document_id', $request->get('document_id'))
                         ->whereIn('status', ['Pendiente', 'Parcialmente Pagada', 'Amortizado', 'Vencido'])
@@ -146,7 +151,7 @@ class SalePaymentQuotaController extends Controller
             foreach ($pendingQuotas as $quota) {
                 // Registrar un pago por el balance restante de cada cuota
                 // Esto crea un registro de pago por cada cuota, lo que es detallado para el historial
-                SalePaymentQuota::create([
+                $createdPayment = SalePaymentQuota::create([
                     'payment_method_id' => $request->get('payment_method_id'),
                     'sale_document_quota_id' => $quota->id,
                     'reference' => $request->get('reference') . ' (Saldado Total)', // Añadir un sufijo para identificar
@@ -155,6 +160,11 @@ class SalePaymentQuotaController extends Controller
                     'description' => 'Pago total de deuda: ' . $quota->quota_number,
                     'estado' => false
                 ]);
+
+                // Tesorería: solo los abonos reales (no los de relleno) generan movimiento
+                if ($createdPayment->estado != false) {
+                    $createdPayments[] = $createdPayment;
+                }
 
                 $totalPaid += $quota->balance; // Suma lo que se "pagó" por esta cuota
 
@@ -174,6 +184,11 @@ class SalePaymentQuotaController extends Controller
             $sale->save();
 
             DB::commit();
+
+            // Tesorería: registrar los ingresos de los abonos según método de pago
+            foreach ($createdPayments as $createdPayment) {
+                TreasuryHooks::recordQuotaPayment($createdPayment, $saleDocument);
+            }
 
             return to_route('acco_document_list')->with('success', 'Pago registrado y cuota actualizada exitosamente.');
 
@@ -245,6 +260,9 @@ class SalePaymentQuotaController extends Controller
             $payment->delete();
 
             DB::commit();
+
+            // Tesorería: anular el ingreso generado por el abono eliminado
+            TreasuryHooks::voidQuotaPayment($payment);
 
             return response()->json([
                 'success' => true,

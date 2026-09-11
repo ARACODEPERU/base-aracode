@@ -19,6 +19,7 @@ import menuOnlineshop from 'Modules/Onlineshop/Resources/assets/js/Menu.js';
 import menuBibliodata from 'Modules/Bibliodata/Resources/assets/js/Menu.js';
 import menuIntegrationhub from 'Modules/Integrationhub/Resources/assets/js/Menu.js';
 import menuCommercial from 'Modules/Commercial/Resources/assets/js/Menu.js';
+import menuTreasury from 'Modules/Treasury/Resources/assets/js/Menu.js';
 
 const MenuData = ref([
     {
@@ -60,6 +61,7 @@ const MenuData = ref([
     // menuCiglesia,
     menuBibliodata,
     menuIntegrationhub,
-    menuCommercial
+    menuCommercial,
+    menuTreasury
 ]);
 export default MenuData;

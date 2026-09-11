@@ -224,7 +224,7 @@
                                 </summary>
                                 <div class="se-round__body">
                                     @foreach ($roundMatches as $match)
-                                        <article class="se-match">
+                                        <article class="se-match {{ $match->status === 'cancelled' ? 'se-match--cancelled' : '' }}">
                                             <div class="se-match__side">
                                                 <div class="se-match__crest">
                                                     @if ($match->equipolocal && $match->equipolocal->logo_path)
@@ -242,6 +242,11 @@
                                                 @if (in_array($match->status, ['finished', 'closed']))
                                                     <div class="se-match__score">{{ $match->score_h ?? 0 }}<span class="se-match__score-sep">-</span>{{ $match->score_a ?? 0 }}</div>
                                                     <div class="se-match__meta se-match__meta--done">Finalizado</div>
+                                                @elseif ($match->status === 'cancelled')
+                                                    {{-- Partido cancelado: no se jugará; se muestra 0-0 y no suma puntos --}}
+                                                    <div class="se-match__score se-match__score--cancelled">0<span class="se-match__score-sep">-</span>0</div>
+                                                    <div class="se-match__meta se-match__meta--cancelled">Cancelado</div>
+                                                    <div class="se-match__note">Ambos equipos no suman puntos</div>
                                                 @elseif ($match->status === 'live')
                                                     <div class="se-match__score se-match__score--live">En vivo</div>
                                                     <div class="se-match__meta se-match__meta--live">Jugando</div>

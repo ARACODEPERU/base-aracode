@@ -6,9 +6,21 @@ use Illuminate\Support\Collection;
 use Modules\Socialevents\Entities\EventEditionMatchParticipation;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
+use Modules\Socialevents\Entities\EventEditionPlayerExclusion;
 
 class TournamentRankingsService
 {
+    /**
+     * IDs de jugadores excluidos de los rankings en la edición.
+     *
+     * @return array<int>
+     */
+    private function getExcludedPlayerIds(int $editionId): array
+    {
+        return EventEditionPlayerExclusion::where('edition_id', $editionId)
+            ->pluck('player_id')
+            ->all();
+    }
     /**
      * Ranking de jugadores de campo (misma fórmula que la landing).
      */
@@ -16,6 +28,8 @@ class TournamentRankingsService
     {
         $limit = $limit ?? (int) config('socialevents.rankings.top_limit', 5);
         $weights = config('socialevents.rankings.players', []);
+
+        $excludedPlayers = $this->getExcludedPlayerIds($editionId);
 
         $playerStats = EventEditionMatchPlayerStat::with(['player.person', 'match'])
             ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
@@ -30,6 +44,10 @@ class TournamentRankingsService
 
         foreach ($playerStats as $stat) {
             if ($stat->saves > 0) {
+                continue;
+            }
+
+            if (in_array($stat->player_id, $excludedPlayers)) {
                 continue;
             }
 
@@ -68,6 +86,8 @@ class TournamentRankingsService
         $limit = $limit ?? (int) config('socialevents.rankings.top_limit', 5);
         $weights = config('socialevents.rankings.goalkeepers', []);
 
+        $excludedPlayers = $this->getExcludedPlayerIds($editionId);
+
         $playerStats = EventEditionMatchPlayerStat::with(['player.person', 'match'])
             ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
             ->get();
@@ -81,6 +101,10 @@ class TournamentRankingsService
 
         foreach ($playerStats as $stat) {
             if ($stat->saves == 0) {
+                continue;
+            }
+
+            if (in_array($stat->player_id, $excludedPlayers)) {
                 continue;
             }
 
@@ -117,6 +141,8 @@ class TournamentRankingsService
     {
         $limit = $limit ?? (int) config('socialevents.rankings.top_limit', 5);
 
+        $excludedPlayers = $this->getExcludedPlayerIds($editionId);
+
         $playerStats = EventEditionMatchPlayerStat::with(['player.person'])
             ->whereHas('match', fn ($q) => $q->where('edition_id', $editionId))
             ->get();
@@ -131,6 +157,10 @@ class TournamentRankingsService
 
         foreach ($playerStats as $stat) {
             if ((int) $stat->goals <= 0) {
+                continue;
+            }
+
+            if (in_array($stat->player_id, $excludedPlayers)) {
                 continue;
             }
 

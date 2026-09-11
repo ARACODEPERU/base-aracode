@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/treasury",
+    "description": "Módulo de Tesorería: estados de cuenta bancarios y de billeteras digitales.",
+    "authors": [
+        {
+            "name": "ARACODE",
+            "email": "contacto@aracode.pe"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Treasury\\": "",
+            "Modules\\Treasury\\Database\\Factories\\": "database/factories/",
+            "Modules\\Treasury\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Treasury\\Tests\\": "tests/"
+        }
+    }
+}

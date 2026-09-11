@@ -16,6 +16,7 @@ use App\Models\Serie;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Modules\Sales\Support\ElectronicDiscountMode;
+use Modules\Treasury\Services\TreasuryHooks;
 use RuntimeException;
 
 class QuickSaleService
@@ -115,6 +116,9 @@ class QuickSaleService
         }
 
         $serie->increment('number', 1);
+
+        // Tesorería: registrar los ingresos de la venta según método de pago
+        $this->recordTreasuryIncomes($sale);
 
         return $this->buildResponse($sale, $document, '80');
     }
@@ -267,6 +271,9 @@ class QuickSaleService
 
         $serie->increment('number', 1);
 
+        // Tesorería: registrar los ingresos de la venta según método de pago
+        $this->recordTreasuryIncomes($sale);
+
         return $this->buildResponse($sale, $document, $sunatId);
     }
 
@@ -313,6 +320,15 @@ class QuickSaleService
                 'reference' => $payment['reference'] ?? null,
             ];
         })->values()->all();
+    }
+
+    /**
+     * Tesorería: registra los ingresos de la venta según el método de pago.
+     * Es best-effort: sin cuenta mapeada o con el módulo inactivo no interrumpe la venta.
+     */
+    private function recordTreasuryIncomes(Sale $sale): void
+    {
+        TreasuryHooks::recordSaleIncomes($sale);
     }
 
     /**

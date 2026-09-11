@@ -13,6 +13,7 @@ use Modules\Socialevents\Http\Controllers\EventEditionGalleryController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchReportController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchSanctionController;
+use Modules\Socialevents\Http\Controllers\EventEditionPlayerExclusionController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
@@ -124,6 +125,9 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_acta_editar'])->get('editions/accordance/{id}/edit', [EventEditionAccordanceController::class, 'edit'])->name('even_ediciones_actas_editar');
     Route::middleware(['middleware' => 'permission:even_ediciones_acta_editar'])->post('editions/accordance/update', [EventEditionAccordanceController::class, 'update'])->name('even_ediciones_actas_update');
     Route::middleware(['middleware' => 'permission:even_ediciones_partido_acta_editar'])->post('editions/match/accordance/update', [EventEditionMatchReportController::class, 'update'])->name('even_ediciones_match_accordance_update');
+    Route::middleware(['middleware' => 'permission:even_ediciones_exclusiones'])->get('editions/{id}/exclusions', [EventEditionPlayerExclusionController::class, 'index'])->name('even_ediciones_exclusiones');
+    Route::middleware(['middleware' => 'permission:even_ediciones_exclusiones'])->post('editions/{id}/exclusions/store', [EventEditionPlayerExclusionController::class, 'store'])->name('even_ediciones_exclusiones_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_exclusiones'])->delete('editions/{eId}/exclusions/{exclusionId}/destroy', [EventEditionPlayerExclusionController::class, 'destroy'])->name('even_ediciones_exclusiones_destroy');
 });
 
 // Ruta pública para landing de torneos

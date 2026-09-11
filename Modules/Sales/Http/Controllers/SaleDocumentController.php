@@ -28,6 +28,7 @@ use DataTables;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Treasury\Services\TreasuryHooks;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -507,6 +508,9 @@ class SaleDocumentController extends Controller
 
                 return $document;
             });
+
+            // Tesorería: registrar los ingresos de la venta según método de pago
+            $this->recordTreasuryIncomes($res->sale);
 
             $healthChargeIds = collect($request->get('items', []))
                 ->pluck('health_charge_id')
@@ -1203,5 +1207,14 @@ class SaleDocumentController extends Controller
         } catch (\Exception $e) {
             return ['message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Tesorería: registra los ingresos de la venta según el método de pago.
+     * Es best-effort: sin cuenta mapeada o con el módulo inactivo no interrumpe la venta.
+     */
+    private function recordTreasuryIncomes(Sale $sale): void
+    {
+        TreasuryHooks::recordSaleIncomes($sale);
     }
 }
