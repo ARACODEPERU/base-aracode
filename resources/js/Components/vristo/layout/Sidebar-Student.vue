@@ -88,12 +88,38 @@
             color: 'secondary',
             permissions: 'crm_dudas_comunes',
             requiresSubscription: true,
+        },
+        {
+            id: 'job-offers',
+            title: 'Ofertas Laborales',
+            icon: 'ri-briefcase-line',
+            route: route("job_offers"),
+            badge: null,
+            color: 'primary',
+            // Solo se muestra a alumnos con curso de pago o suscripción activa
+            requiresJobOffersAccess: true,
         }
     ]);
 
     // Indica si el alumno tiene una suscripción activa y vigente
     const hasActiveSubscription = computed(() => {
         return page.props.hasActiveSubscription === true;
+    });
+
+    // Indica si el alumno puede ver Ofertas Laborales (curso de pago o suscripción activa)
+    const canViewJobOffers = computed(() => {
+        return page.props.canViewJobOffers === true;
+    });
+
+    // Menú visible: oculta las opciones cuyos requisitos de acceso no se cumplen
+    const visibleStudentMenu = computed(() => {
+        return studentMenu.value.filter((menuItem) => {
+            if (menuItem.requiresJobOffersAccess && !canViewJobOffers.value) {
+                return false;
+            }
+
+            return true;
+        });
     });
 
     // Función para obtener clases de color dinámicas
@@ -337,7 +363,7 @@
                                 </div>
                             </div>
                         </div>
-                        <template v-for="menuItem in studentMenu" :key="menuItem.id">
+                        <template v-for="menuItem in visibleStudentMenu" :key="menuItem.id">
                             <li v-if="!menuItem.expandable" class="menu nav-item">
                                 <!-- Sin suscripción activa: se muestra el ícono pero bloqueado con tooltip -->
                                 <div
