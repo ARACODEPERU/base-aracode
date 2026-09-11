@@ -193,6 +193,13 @@ return new class extends Migration
                 'value_default' => '1',
             ],
             [
+                'parameter_code' => 'P000029',
+                'description' => 'TPV activar o desactivar',
+                'control_type' => 'chx',
+                'json_query_data' => null,
+                'value_default' => 'false',
+            ],
+            [
                 'parameter_code' => 'P000030',
                 'description' => 'Modulos activos',
                 'control_type' => 'chq',
@@ -200,18 +207,11 @@ return new class extends Migration
                 'value_default' => '1',
             ],
             [
-                'parameter_code' => 'P000031',
+                'parameter_code' => 'PW00001',
                 'description' => 'Pagina web principal',
                 'control_type' => 'sa',
                 'json_query_data' => '[{"value": "1","label":"Aracode Principal"},{"value": "2","label":"Aracode torneos"}]',
                 'value_default' => '1',
-            ],
-            [
-                'parameter_code' => 'P000029',
-                'description' => 'TPV activar o desactivar',
-                'control_type' => 'chx',
-                'json_query_data' => null,
-                'value_default' => 'false',
             ],
         ];
 

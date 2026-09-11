@@ -13,11 +13,11 @@ return new class extends Migration
      *
      * Mapeo:
      *   P000026 → robots.txt (nuevo, estaba ocupado por Plantilla A4)
-     *   P000027 → llms.txt  (ya correcto en la BD)
+     *   P000027 → llms.txt  (nuevo, estaba ocupado por Modulos activos)
      *   P000028 → Plantilla A4 para impresion (movida desde P000026)
      *   P000029 → TPV activar/desactivar (sin cambios)
      *   P000030 → Modulos activos (movida desde P000027)
-     *   P000031 → Pagina web principal (movida desde P000028)
+     *   PW00001 → Pagina web principal (codigo nuevo estilo PW; 1 = Aracode Principal, 2 = Aracode torneos)
      *
      * Idempotente: solo ejecuta cambios si los codigos antiguos aun existen.
      */
@@ -35,37 +35,61 @@ return new class extends Migration
         // ============================================================
 
         // --- Mover Plantilla A4 de P000026 → P000028 ---
+        // (solo si la fila en P000028 no existe ya: idempotente)
+        $a4Exists = Parameter::where('parameter_code', 'P000028')->exists();
+
         $oldA4 = Parameter::where('parameter_code', 'P000026')
             ->where('description', 'Plantilla A4 para impresión de documentos de ventas')
             ->first();
 
-        if ($oldA4) {
+        if ($oldA4 && !$a4Exists) {
             $oldA4->update(['parameter_code' => 'P000028']);
         }
 
         // --- Mover Modulos activos de P000027 → P000030 ---
+        // (solo si la fila en P000030 no existe ya: idempotente)
+        $modulesExists = Parameter::where('parameter_code', 'P000030')->exists();
+
         $oldModules = Parameter::where('parameter_code', 'P000027')
             ->where('description', 'Modulos activos')
             ->first();
 
-        if ($oldModules) {
+        if ($oldModules && !$modulesExists) {
             $oldModules->update(['parameter_code' => 'P000030']);
         }
 
-        // --- Mover Pagina web de P000028 → P000031 ---
-        // Solo si aun es Pagina web principal (podria haber sido
-        // reemplazado por Plantilla A4 movida arriba en el paso 1)
-        $oldWebPage = Parameter::where('parameter_code', 'P000028')
-            ->where('description', 'Pagina web principal')
-            ->first();
+        // ============================================================
+        // PASO 2: Asegurar "Pagina web principal" en su codigo nuevo
+        //         PW00001. Si existe en otro codigo, se mueve; si no
+        //         existe, se crea. Nunca se toca su valor actual.
+        // ============================================================
 
-        if ($oldWebPage) {
-            $oldWebPage->update(['parameter_code' => 'P000031']);
+        $webPage = Parameter::where('description', 'Pagina web principal')->first();
+
+        if ($webPage) {
+            if ($webPage->parameter_code !== 'PW00001') {
+                // Puede haber una colision si PW00001 esta ocupado por otra cosa
+                $occupant = Parameter::where('parameter_code', 'PW00001')->first();
+
+                if ($occupant && $occupant->id !== $webPage->id) {
+                    $occupant->delete();
+                }
+
+                $webPage->update(['parameter_code' => 'PW00001']);
+            }
+        } else {
+            Parameter::create([
+                'parameter_code'   => 'PW00001',
+                'description'      => 'Pagina web principal',
+                'control_type'     => 'sa',
+                'json_query_data'  => '[{"value": "1","label": "Aracode Principal"},{"value": "2","label": "Aracode torneos"}]',
+                'value_default'    => '1',
+            ]);
         }
 
         // ============================================================
-        // PASO 2: Ahora crear robots.txt y llms.txt en los codigos
-        //         que quedaron libres.
+        // PASO 3: Crear robots.txt y llms.txt en los codigos que
+        //         quedaron libres.
         // ============================================================
 
         // --- Crear P000026: robots.txt ---
@@ -117,20 +141,37 @@ return new class extends Migration
             return;
         }
 
-        // Revertir movimientos (en orden inverso para evitar colisiones)
-        Parameter::where('parameter_code', 'P000031')
+        // --- Revertir pagina web: solo si sigue en PW00001 ---
+        // (si ya fue editada o recreada con otro contenido, no se toca)
+        $webPage = Parameter::where('parameter_code', 'PW00001')
             ->where('description', 'Pagina web principal')
-            ->update(['parameter_code' => 'P000028']);
+            ->first();
+
+        if ($webPage) {
+            // Liberar P000028 por si el paso inverso de A4 necesita el codigo
+            Parameter::where('parameter_code', 'P000028')
+                ->where('description', 'Plantilla A4 para impresión de documentos de ventas')
+                ->delete();
+
+            $webPage->update(['parameter_code' => 'P000028']);
+        }
+
+        // --- Revertir Modulos activos de P000030 → P000027 ---
+        Parameter::where('parameter_code', 'P000027')
+            ->where('description', 'Contenido del archivo llms.txt (ubicacion: public/llms.txt)')
+            ->delete();
 
         Parameter::where('parameter_code', 'P000030')
             ->where('description', 'Modulos activos')
             ->update(['parameter_code' => 'P000027']);
 
+        // --- Revertir Plantilla A4 de P000028 → P000026 ---
+        Parameter::where('parameter_code', 'P000026')
+            ->where('description', 'Contenido del archivo robots.txt (ubicacion: public/robots.txt)')
+            ->delete();
+
         Parameter::where('parameter_code', 'P000028')
             ->where('description', 'Plantilla A4 para impresión de documentos de ventas')
             ->update(['parameter_code' => 'P000026']);
-
-        Parameter::where('parameter_code', 'P000027')->delete();
-        Parameter::where('parameter_code', 'P000026')->delete();
     }
 };

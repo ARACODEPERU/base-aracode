@@ -58,7 +58,7 @@ class WebPageController extends Controller
 
     public function index(Request $request)
     {
-        $pagina = Parameter::where('parameter_code', 'P000031')->value('value_default');
+        $pagina = Parameter::where('parameter_code', 'PW00001')->value('value_default');
 
         if ($pagina === '2') {
             $eventos = EvenEvent::whereHas('editions', function ($q) {
@@ -226,7 +226,7 @@ class WebPageController extends Controller
         return view('pages/lms');
     }
 
-    
+
     public function billing()
     {
         return view('pages/billing');
