@@ -77,11 +77,12 @@ class CrmMessagesController extends Controller
             $participants = CrmParticipant::where('conversation_id', $conversationId)
                 ->where('user_id', '<>', Auth::id())
                 ->pluck('user_id');
-            // Crear el mensaje
+            // Crear el mensaje (se guarda el HTML tal cual para que las etiquetas
+            // se rendericen al mostrarse con v-html)
             $message = CrmMessage::create([
                 'conversation_id' => $conversationId,
                 'person_id' => $personId,
-                'content' => htmlentities($request->get('text'), ENT_QUOTES, "UTF-8"),
+                'content' => $request->get('text'),
                 'type' => $request->get('type'),
                 'answer_ai' => $request->has('answer_ai') ? $request->get('answer_ai') : false
             ]);
@@ -194,22 +195,19 @@ class CrmMessagesController extends Controller
 
     public function deleteFile(Request $request)
     {
-        $filename = str_replace('\\', '/', (string) $request->get('filename'));
+        $filename = public_path('storage/' . $request->get('filename'));
+        // Verifica si el archivo existe
+        //dd($filename);
+        if (file_exists($filename)) {
+            // Elimina el archivo
+            unlink($filename);
 
-        // Rechaza rutas absolutas, vacías o con navegación de directorios (..).
-        if ($filename === '' || str_starts_with($filename, '/') || preg_match('#(^|/)\.\.(/|$)#', $filename)) {
-            return response()->json(['message' => 'Nombre de archivo inválido.'], 400);
-        }
-
-        $disk = Storage::disk('public');
-
-        if ($disk->exists($filename)) {
-            $disk->delete($filename);
-
+            // Devuelve una respuesta exitosa
             return response()->json(['message' => 'Archivo eliminado correctamente.'], 200);
+        } else {
+            // Devuelve una respuesta de error si el archivo no existe
+            return response()->json(['message' => 'El archivo no existe.'], 404);
         }
-
-        return response()->json(['message' => 'El archivo no existe.'], 404);
     }
 
     public function uploadMessagesFile(Request $request)
@@ -309,19 +307,11 @@ class CrmMessagesController extends Controller
 
         if ($file) {
             $folder = 'crm' . DIRECTORY_SEPARATOR . 'chat' . DIRECTORY_SEPARATOR . Auth::id();
-            $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-            $extension = strtolower($file->getClientOriginalExtension());
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv', 'zip'];
-
-            if (! in_array($extension, $allowedExtensions, true)) {
-                return response()->json(['success' => false, 'message' => 'Formato de archivo no permitido.'], 422);
-            }
-
-            $storedName = time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
-            $path = $request->file('file')->storeAs($folder, $storedName, 'public');
+            $file_name = str_replace(' ', '_', $file->getClientOriginalName());
+            $path = $request->file('file')->storeAs($folder, $file_name, 'public');
 
             $message->attachments = [
-                array('path' => $path, 'file_name' => $originalName)
+                array('path' => $path, 'file_name' => $file_name)
             ];
             $message->save();
         }
@@ -337,6 +327,51 @@ class CrmMessagesController extends Controller
         Mail::to($data[1]->email_for)->send(new ClientHelpEmail($data));
 
         return true;
+    }
+
+    public function destroyMessage(Request $request)
+    {
+        $authUser = Auth::user();
+
+        // Solo docentes y administradores pueden eliminar mensajes
+        if (!$authUser->hasAnyRole(['Docente', 'admin', 'Administrador'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para eliminar mensajes.'
+            ], 403);
+        }
+
+        try {
+            $msg = CrmMessage::findOrFail($request->get('message_id'));
+
+            // Solo puede eliminar mensajes que él mismo haya enviado
+            if ($msg->person_id != $authUser->person_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo puedes eliminar tus propios mensajes.'
+                ], 403);
+            }
+
+            // Solo puede eliminar mensajes enviados hace menos de una hora
+            if (!$msg->created_at || $msg->created_at->lt(now()->subHour())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo puedes eliminar mensajes enviados hace menos de una hora.'
+                ], 403);
+            }
+
+            $msg->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mensaje eliminado correctamente.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo eliminar el mensaje. Intenta nuevamente.'
+            ], 500);
+        }
     }
 
     public function frequentlyQuestionsStore(Request $request)

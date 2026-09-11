@@ -1248,20 +1248,20 @@ function formatCommentTime(timestamp) {
 </template>
 <style>
     :root {
-        --bg-color: #223333;
-        --text-color: #ffffff;
-        --accent-color: #4a90e2;
-        --success-color: #52c41a;
-        --warning-color: #faad14;
-        --error-color: #f5222d;
-        --sidebar-width: 320px;
-        --header-height: 80px;
-        --border-radius: 12px;
-        --spacing: 16px;
-        --font-size-small: 14px;
-        --font-size-medium: 16px;
-        --font-size-large: 18px;
-        --font-size-xl: 24px;
+        --bg-color: #{{ config.bgColor }};
+        --text-color: #{{ config.textColor }};
+        --accent-color: #{{ config.accentColor }};
+        --success-color: #{{ config.successColor }};
+        --warning-color: #{{ config.warningColor }};
+        --error-color: #{{ config.errorColor }};
+        --sidebar-width: {{ config.sidebarWidth }};
+        --header-height: {{ config.headerHeight }};
+        --border-radius: {{ config.borderRadius }};
+        --spacing: {{ config.spacing }};
+        --font-size-small: {{ config.fontSize.small }};
+        --font-size-medium: {{ config.fontSize.medium }};
+        --font-size-large: {{ config.fontSize.large }};
+        --font-size-xl: {{ config.fontSize.xl }};
     }
     @media (max-width: 639px) {
         .ps__rail-y {

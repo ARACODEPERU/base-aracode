@@ -58,9 +58,7 @@
                                     <div class="flex items-start gap-3 justify-end">
                                         <div class="space-y-2">
                                         <div class="flex items-center gap-3">
-                                            <div class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10 ltr:rounded-br-none rtl:rounded-bl-none">
-                                            {{ message.text }}
-                                            </div>
+                                            <div class="dark:bg-gray-800 p-4 py-2 rounded-md bg-black/10 ltr:rounded-br-none rtl:rounded-bl-none" v-html="message.text"></div>
                                         </div>
                                         <div class="text-xs text-white-dark ltr:text-right rtl:text-left">{{ message.time }}</div>
                                         </div>

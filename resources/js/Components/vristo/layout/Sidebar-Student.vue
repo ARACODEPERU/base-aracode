@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, computed, onMounted } from 'vue';
     import { useAppStore } from '@/stores/index';
     import { Link, usePage } from '@inertiajs/vue3';
     import IconCaretsDown from '@/Components/vristo/icon/icon-carets-down.vue';
@@ -78,8 +78,23 @@
             badge: 'new',
             color: 'warning',
             permissions: 'crm_chatbot'
+        },
+        {
+            id: 'common-questions',
+            title: 'Banco de Consultas',
+            icon: 'ri-question-answer-line',
+            route: route("crm_common_questions"),
+            badge: null,
+            color: 'secondary',
+            permissions: 'crm_dudas_comunes',
+            requiresSubscription: true,
         }
     ]);
+
+    // Indica si el alumno tiene una suscripción activa y vigente
+    const hasActiveSubscription = computed(() => {
+        return page.props.hasActiveSubscription === true;
+    });
 
     // Función para obtener clases de color dinámicas
     const getColorClasses = (colorType, type = 'bg') => {
@@ -278,8 +293,6 @@
         localStorage.setItem('studentChatExpanded', isChatExpanded.value);
     };
 
-
-
 </script>
 <template>
     <div :class="{ 'dark text-white-dark': store.semidark }">
@@ -326,7 +339,20 @@
                         </div>
                         <template v-for="menuItem in studentMenu" :key="menuItem.id">
                             <li v-if="!menuItem.expandable" class="menu nav-item">
+                                <!-- Sin suscripción activa: se muestra el ícono pero bloqueado con tooltip -->
+                                <div
+                                    v-if="menuItem.requiresSubscription && !hasActiveSubscription"
+                                    v-tippy="{ content: 'Disponible con Suscripción', placement: 'bottom' }"
+                                    class="nav-link group w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-gray-400 dark:text-gray-500 cursor-not-allowed select-none"
+                                >
+                                    <div class="flex items-center justify-between gap-2">
+                                        <i :class="[menuItem.icon, 'text-xl text-gray-300 dark:text-gray-600']"></i>
+                                        <span class="ltr:pl-3 rtl:pr-3 font-medium">{{ menuItem.title }}</span>
+                                        <i class="ri-lock-2-line text-gray-300 dark:text-gray-600"></i>
+                                    </div>
+                                </div>
                                 <Link
+                                    v-else
                                     :href="menuItem.route"
                                     @click="handleMenuClick(menuItem)"
                                     class="nav-link group px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200"

@@ -88,7 +88,10 @@ const updateParameter = () => {
                     class="mt-1 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     id="value_default"
                     v-model="form.value_default"
+                    :rows="form.parameter_code === 'P000026' || form.parameter_code === 'P000027' ? 15 : 5"
+                    :maxlength="form.parameter_code === 'P000026' || form.parameter_code === 'P000027' ? 100000 : 5000"
                 ></textarea>
+                <small class="text-gray-500">{{ form.value_default?.length || 0 }} / {{ form.parameter_code === 'P000026' || form.parameter_code === 'P000027' ? 100000 : 5000 }} caracteres</small>
                 <InputError :message="form.errors.value_default" class="mt-2" />
             </div>
             <div v-else class="col-span-6 sm:col-span-2 ">

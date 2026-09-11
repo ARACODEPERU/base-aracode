@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Parameter;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 
 class ParametersController extends Controller
@@ -17,28 +19,41 @@ class ParametersController extends Controller
         if (request()->has('search')) {
             $parameters->where('description', 'Like', '%' . request()->input('search') . '%');
         }
-        $parameters = $parameters->orderBy('parameter_code')->get();
+        $parameters = $parameters->get();
 
         $formatted = [];
 
         foreach ($parameters as $parameter) {
-            $options = $this->resolveOptions($parameter->control_type, $parameter->json_query_data);
+            $json_query_data = [];
+            if ($parameter->control_type == 'sq') {
+                $json_query_data = $this->getSubQuery($parameter->json_query_data);
+            } else {
+                $data = json_decode($parameter->json_query_data);
+                // Verifica si la decodificación fue exitosa
+                if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+                    // El JSON es inválido
+                    $json_query_data = null;
+                } else {
+                    $json_query_data = $parameter->json_query_data;
+                }
+            }
 
-            $formatted[] = [
+            // Verificar estado de sincronizacion para archivos (P000026, P000027)
+            $sync_status = $this->getFileSyncStatus($parameter);
+
+            array_push($formatted, [
                 'id' => $parameter->id,
                 'parameter_code' => $parameter->parameter_code,
                 'description' => $parameter->description,
                 'control_type' => $parameter->control_type,
-                'json_query_data' => $parameter->json_query_data,
-                'options' => $options,
+                'json_query_data' => $json_query_data,
                 'value_default' => $parameter->value_default,
-                'selected_values' => $this->parseMultiValue($parameter->value_default),
-            ];
+                'sync_status' => $sync_status,
+            ]);
         }
-
+        //dd($formatted);
         return Inertia::render('Parameters/List', [
-            'parameters' => $formatted,
-            'filters' => request()->only(['search']),
+            'parameters' => $formatted
         ]);
     }
 
@@ -101,149 +116,119 @@ class ParametersController extends Controller
             $valor_seguro = htmlspecialchars($value_default, ENT_QUOTES, 'UTF-8');
         }
 
-        Parameter::find($id)->update([
+        $parameter = Parameter::find($id);
+        $parameter->update([
             'parameter_code'        => $request->get('parameter_code'),
             'description'           => $request->get('description'),
             'control_type'          => $request->get('control_type'),
             'json_query_data'       => $request->get('json_query_data'),
             'value_default'         => $valor_seguro
         ]);
+
+        // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
+        Cache::forget('academic:openai-api-key:' . $request->get('parameter_code'));
+        Log::info('Parametro actualizado, cache de API key invalidada', ['parameter_code' => $request->get('parameter_code')]);
+
+        // Sincronizar archivos (robots.txt, llms.txt)
+        $this->syncFileFromParameter($parameter);
     }
 
     public function getSubQuery($json_query_data)
     {
-        $result = DB::select($json_query_data);
+        $result  = DB::select($json_query_data);
 
         return json_encode($result);
     }
 
-    public function updateDefaultValue(Request $request, $id): JsonResponse
+    public function updateDefaultValue($id, $val)
     {
-        $parameter = Parameter::findOrFail($id);
-        $value = $request->input('value', $request->route('val'));
-
-        if (in_array($parameter->control_type, ['chq', 'chj'], true)) {
-            if (is_array($value)) {
-                $value = json_encode(array_values(array_map('strval', $value)));
-            } elseif (is_string($value) && str_starts_with(trim($value), '[')) {
-                $decoded = json_decode($value, true);
-                $value = is_array($decoded)
-                    ? json_encode(array_values(array_map('strval', $decoded)))
-                    : $value;
-            }
-        } elseif ($parameter->control_type === 'tx') {
-            $value = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-        } elseif ($parameter->control_type === 'chx') {
-            $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
-        } else {
-            $value = is_scalar($value) || $value === null ? (string) $value : json_encode($value);
-        }
+        $parameter = Parameter::find($id);
 
         $parameter->update([
-            'value_default' => $value,
+            'value_default' => $val
         ]);
 
-        return response()->json([
-            'success' => true,
-            'value_default' => $parameter->fresh()->value_default,
-            'selected_values' => $this->parseMultiValue($parameter->fresh()->value_default),
+        // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
+        Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
+
+        // Sincronizar archivos (robots.txt, llms.txt)
+        $this->syncFileFromParameter($parameter);
+    }
+
+    /**
+     * Endpoint POST para guardar valores largos (textareas como robots.txt / llms.txt)
+     * desde la lista de parametros, evitando el limite de longitud de URL en GET.
+     */
+    public function updateDefaultValuePost(Request $request, $id)
+    {
+        $parameter = Parameter::find($id);
+
+        $parameter->update([
+            'value_default' => $request->input('value_default', '')
         ]);
+
+        Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
+        $this->syncFileFromParameter($parameter);
+
+        return response()->json(['success' => true]);
     }
 
     /**
-     * @return array<int, array{value: string, label: string}>
+     * Sincroniza el contenido del parametro con su archivo correspondiente en public/.
+     * Aplica solo para P000026 (robots.txt) y P000027 (llms.txt).
      */
-    protected function resolveOptions(?string $controlType, ?string $jsonQueryData): array
+    private function syncFileFromParameter(Parameter $parameter): void
     {
-        if (! in_array($controlType, ['sq', 'chq', 'sa', 'chj', 'rdj'], true) || empty($jsonQueryData)) {
-            return [];
+        $fileMap = [
+            'P000026' => 'robots.txt',
+            'P000027' => 'llms.txt',
+        ];
+
+        if (!isset($fileMap[$parameter->parameter_code])) {
+            return;
         }
 
-        if (in_array($controlType, ['sq', 'chq'], true)) {
-            return $this->resolveQueryOptions($jsonQueryData);
-        }
+        $fileName = $fileMap[$parameter->parameter_code];
+        $filePath = public_path($fileName);
+        $content = $parameter->value_default ?? '';
 
-        return $this->resolveJsonOptions($jsonQueryData);
+        try {
+            File::put($filePath, $content);
+            Log::info("Archivo {$fileName} sincronizado desde parametro {$parameter->parameter_code}");
+        } catch (\Exception $e) {
+            Log::error("Error al sincronizar {$fileName}: " . $e->getMessage());
+        }
     }
 
     /**
-     * @return array<int, array{value: string, label: string}>
+     * Verifica si el valor del parametro coincide con el contenido del archivo.
+     * Retorna 'Actualizado' si coinciden, 'Pendiente' si son diferentes, o null si no aplica.
      */
-    protected function resolveQueryOptions(string $query): array
+    private function getFileSyncStatus(Parameter $parameter): ?string
     {
-        $trimmed = trim($query);
+        $fileMap = [
+            'P000026' => 'robots.txt',
+            'P000027' => 'llms.txt',
+        ];
 
-        if (str_starts_with($trimmed, '[') || str_starts_with($trimmed, '{')) {
-            return $this->resolveJsonOptions($query);
+        if (!isset($fileMap[$parameter->parameter_code])) {
+            return null;
         }
 
-        return $this->mapRowsToOptions(DB::select($query));
-    }
+        $fileName = $fileMap[$parameter->parameter_code];
+        $filePath = public_path($fileName);
 
-    /**
-     * @return array<int, array{value: string, label: string}>
-     */
-    protected function resolveJsonOptions(string $json): array
-    {
-        $decoded = json_decode($json, true);
-
-        if (! is_array($decoded)) {
-            return [];
+        if (!File::exists($filePath)) {
+            return 'Pendiente';
         }
 
-        return array_values(array_map(function ($item) {
-            if (! is_array($item)) {
-                $stringValue = (string) $item;
+        $fileContent = File::get($filePath);
+        $paramContent = $parameter->value_default ?? '';
 
-                return ['value' => $stringValue, 'label' => $stringValue];
-            }
+        // Normalizar saltos de linea para comparacion
+        $fileContentNormalized = str_replace("\r\n", "\n", $fileContent);
+        $paramContentNormalized = str_replace("\r\n", "\n", $paramContent);
 
-            $value = $item['value'] ?? $item['id'] ?? $item['identifier'] ?? null;
-            $label = $item['label'] ?? $item['description'] ?? $item['name'] ?? $value;
-
-            return [
-                'value' => (string) $value,
-                'label' => (string) $label,
-            ];
-        }, $decoded));
-    }
-
-    /**
-     * @param  array<int, object>  $rows
-     * @return array<int, array{value: string, label: string}>
-     */
-    protected function mapRowsToOptions(array $rows): array
-    {
-        return array_values(array_map(function ($row) {
-            $row = (array) $row;
-            $value = $row['id'] ?? $row['identifier'] ?? $row['value'] ?? reset($row);
-            $label = $row['description'] ?? $row['label'] ?? $row['name'] ?? (string) $value;
-
-            return [
-                'value' => (string) $value,
-                'label' => (string) $label,
-            ];
-        }, $rows));
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    protected function parseMultiValue(?string $value): array
-    {
-        if ($value === null || $value === '') {
-            return [];
-        }
-
-        $decoded = json_decode($value, true);
-        if (is_array($decoded)) {
-            return array_values(array_map('strval', $decoded));
-        }
-
-        if (preg_match_all("/['\"]([^'\"]+)['\"]/", $value, $matches)) {
-            return array_values($matches[1]);
-        }
-
-        return [(string) $value];
+        return $fileContentNormalized === $paramContentNormalized ? 'Actualizado' : 'Pendiente';
     }
 }

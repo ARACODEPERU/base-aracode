@@ -13,7 +13,7 @@ class ActiveModulesResolver
     public static function forLogin(): array
     {
         $parameter = Parameter::query()
-            ->where('parameter_code', 'P000027')
+            ->where('parameter_code', 'P000030')
             ->first();
 
         if (! $parameter) {

@@ -182,8 +182,9 @@ Route::middleware('auth')->group(function () {
     Route::post('parameters/store', [ParametersController::class, 'store'])->name('parameters_store');
     Route::get('parameters/{id}/edit', [ParametersController::class, 'edit'])->name('parameters_edit');
     Route::put('parameters/update/{id}', [ParametersController::class, 'update'])->name('parameters_update');
-    Route::post('parameters/{id}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value');
-    Route::get('parameters/{id}/{val}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value_legacy');
+    Route::get('parameters/{id}/{val}/default', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value_get');
+    Route::post('parameters/{id}/default', [ParametersController::class, 'updateDefaultValuePost'])->name('parameters_update_default_value');
+    Route::get('parameters/{id}/{val}/default_legacy', [ParametersController::class, 'updateDefaultValue'])->name('parameters_update_default_value_legacy');
 
     // //////////////actualizar informacion de personas
     Route::get('person/update_information', function () {

@@ -47,7 +47,7 @@ const menuCRM = {
         {
             route: route("crm_common_questions"),
             status: false,
-            text: "Dudas Comunes",
+            text: "Banco de Consultas",
             permissions: "crm_dudas_comunes",
             icom: faPersonCircleQuestion,
         },

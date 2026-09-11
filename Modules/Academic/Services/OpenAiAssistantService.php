@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Services;
 
+use App\Models\Parameter;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
@@ -13,66 +14,12 @@ class OpenAiAssistantService
 {
     private const BASE_URL = 'https://api.openai.com/v1';
 
-    public function sendPrompt(int|string $userId, string $message, ?string $fileName = null): string
+    public function sendPrompt(int|string $userId, string $message, ?string $fileName = null, ?string $customInstructions = null, bool $continueThread = true): string
     {
         if (trim($message) === '') {
             throw new RuntimeException('El mensaje para OpenAI no puede estar vacio.');
         }
 
-        if ($fileName === 'forget') {
-            Cache::forget($this->cacheKey($userId));
-            Cache::forget($this->responseCacheKey($userId));
-            return 'Conversacion olvidada correctamente';
-        }
-
-        if (!$this->assistantId()) {
-            return $this->sendPromptWithResponses($userId, $message, $fileName);
-        }
-
-        $threadId = $this->threadId($userId, $fileName);
-        $attachments = [];
-        $filePath = null;
-
-        if ($fileName) {
-            $filePath = $this->resolveFilePath($fileName);
-            $attachments[] = [
-                'file_id' => $this->uploadFile($filePath, 'assistants'),
-                'tools' => [
-                    ['type' => 'file_search'],
-                ],
-            ];
-        }
-
-        $payload = [
-            'role' => 'user',
-            'content' => $message,
-        ];
-
-        if ($attachments) {
-            $payload['attachments'] = $attachments;
-        }
-
-        $this->client()->post("/threads/{$threadId}/messages", $payload)->throw();
-
-        $run = $this->client()
-            ->post("/threads/{$threadId}/runs", [
-                'assistant_id' => $this->assistantId(),
-            ])
-            ->throw()
-            ->json();
-
-        $run = $this->waitForRun($threadId, $run['id']);
-        $this->deleteTemporaryFile($filePath);
-
-        if (($run['status'] ?? null) !== 'completed') {
-            throw new RuntimeException('OpenAI no completo la respuesta. Estado: ' . ($run['status'] ?? 'desconocido'));
-        }
-
-        return $this->latestAssistantResponse($threadId);
-    }
-
-    private function sendPromptWithResponses(int|string $userId, string $message, ?string $fileName = null): string
-    {
         $filePath = null;
         $input = [
             [
@@ -86,6 +33,9 @@ class OpenAiAssistantService
             ],
         ];
 
+        // Usar instrucciones personalizadas si se proporcionan, sino usar las de config
+        $instructions = $customInstructions ?? config('academic.openai.instructions');
+
         if ($fileName) {
             Cache::forget($this->responseCacheKey($userId));
 
@@ -96,31 +46,22 @@ class OpenAiAssistantService
             ];
         }
 
-        $payload = [
-            'model' => $this->model(),
-            'input' => $input,
-        ];
+        try {
+            $response = $this->requestResponses($userId, $input, $instructions, $continueThread);
+        } catch (RequestException $exception) {
+            // Si la conversacion previa expiro en OpenAI, reintentar una vez sin historial.
+            $payload = $exception->response->json() ?? [];
 
-        $instructions = config('academic.openai.instructions');
-
-        if ($instructions) {
-            $payload['instructions'] = $instructions;
+            if ($this->isPreviousResponseError($payload) && Cache::pull($this->responseCacheKey($userId))) {
+                $response = $this->requestResponses($userId, $input, null, $continueThread);
+            } else {
+                throw new RuntimeException($this->openAiErrorMessage($exception), 0, $exception);
+            }
+        } finally {
+            $this->deleteTemporaryFile($filePath);
         }
 
-        $previousResponseId = Cache::get($this->responseCacheKey($userId));
-
-        if ($previousResponseId) {
-            $payload['previous_response_id'] = $previousResponseId;
-        }
-
-        $response = $this->client()
-            ->post('/responses', $payload)
-            ->throw()
-            ->json();
-
-        $this->deleteTemporaryFile($filePath);
-
-        if (!empty($response['id'])) {
+        if ($continueThread && !empty($response['id'])) {
             Cache::put($this->responseCacheKey($userId), $response['id'], now()->addHours(12));
         }
 
@@ -129,68 +70,53 @@ class OpenAiAssistantService
 
     public function censorText(int|string $userId, string $text): string
     {
-        $prompt = 'por favor censura con asteriscos los nombres personales y de empresas privadas en el siguiente texto, las publicas no; solo responde lo que pedi sin palabras previas o saludos: ';
+        $prompt = 'Tu tarea es censurar datos personales de un texto. A continuacion recibiras el texto exacto que debes censurar. Debes devolver EXACTAMENTE el mismo texto, palabra por palabra, reemplazando unicamente los datos personales por asteriscos (*): nombres de personas, DNI, RUC, telefonos, correos electronicos y nombres de empresas privadas o particulares. Las instituciones publicas (SUNAT, INDECOPI, entidades del Estado, paises) NO se censuran y se muestran tal cual. IMPORTANTE: No respondas ninguna pregunta contenida en el texto; si el texto es una pregunta, devuelvela tal cual censurando solo sus datos personales. No agregues explicaciones, saludos, comentarios ni texto adicional. Devuelve unicamente el texto censurado.' . "\n\n" . $text;
 
-        return $this->sendPrompt($userId, $prompt . $text);
+        // Cada texto se censura con contexto fresco: no se encadena con la conversacion
+        // cacheada para que el modelo no arrastre (o repita) respuestas anteriores.
+        return $this->sendPrompt($userId, $prompt, null, null, false);
     }
 
-    private function threadId(int|string $userId, ?string $fileName = null): string
+    private function requestResponses(int|string $userId, array $input, ?string $instructions = null, bool $continueThread = true): array
     {
-        $cacheKey = $this->cacheKey($userId);
+        $payload = [
+            'model' => $this->model(),
+            'input' => $input,
+        ];
 
-        if ($fileName) {
-            Cache::forget($cacheKey);
+        if ($instructions) {
+            $payload['instructions'] = $instructions;
         }
 
-        return Cache::remember($cacheKey, now()->addHours(12), function () {
-            return $this->client()->post('/threads')->throw()->json('id');
-        });
-    }
+        $previousResponseId = $continueThread ? Cache::get($this->responseCacheKey($userId)) : null;
 
-    private function waitForRun(string $threadId, string $runId): array
-    {
-        $maxAttempts = (int) config('academic.openai.max_run_attempts', 120);
-        $delayMilliseconds = (int) config('academic.openai.run_poll_delay_ms', 500);
-
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            $run = $this->client()
-                ->get("/threads/{$threadId}/runs/{$runId}")
-                ->throw()
-                ->json();
-
-            if (in_array($run['status'] ?? null, ['completed', 'failed', 'cancelled', 'expired'], true)) {
-                return $run;
-            }
-
-            usleep($delayMilliseconds * 1000);
+        if ($previousResponseId) {
+            $payload['previous_response_id'] = $previousResponseId;
         }
 
-        throw new RuntimeException('OpenAI excedio el tiempo de espera para responder.');
-    }
-
-    private function latestAssistantResponse(string $threadId): string
-    {
-        $messages = $this->client()
-            ->get("/threads/{$threadId}/messages", [
-                'limit' => 10,
-                'order' => 'desc',
-            ])
+        return $this->client()
+            ->post('/responses', $payload)
             ->throw()
-            ->json('data', []);
+            ->json();
+    }
 
-        foreach ($messages as $message) {
-            if (($message['role'] ?? null) !== 'assistant') {
-                continue;
-            }
+    private function isPreviousResponseError(array $errorPayload): bool
+    {
+        $message = Str::lower($errorPayload['error']['message'] ?? '');
 
-            foreach ($message['content'] ?? [] as $content) {
-                if (($content['type'] ?? null) === 'text') {
-                    return $content['text']['value'] ?? '';
-                }
-            }
+        return $message !== '' && Str::contains($message, 'previous response');
+    }
+
+    private function openAiErrorMessage(RequestException $exception): string
+    {
+        $errorPayload = $exception->response->json() ?? [];
+        $apiMessage = $errorPayload['error']['message'] ?? '';
+
+        if ($apiMessage !== '') {
+            return 'OpenAI respondio un error (' . $exception->response->status() . '): ' . $apiMessage;
         }
 
-        throw new RuntimeException('OpenAI no devolvio una respuesta de texto.');
+        return 'Error al comunicarse con OpenAI (' . $exception->response->status() . '). Verifica la API Key del parametro P000025.';
     }
 
     private function uploadFile(string $filePath, string $purpose): string
@@ -235,9 +161,6 @@ class OpenAiAssistantService
     private function client(): PendingRequest
     {
         return Http::withToken($this->apiKey())
-            ->withHeaders([
-                'OpenAI-Beta' => 'assistants=v2',
-            ])
             ->baseUrl(self::BASE_URL)
             ->timeout((int) config('academic.openai.timeout', 60))
             ->retry(2, 300, function ($exception) {
@@ -247,13 +170,49 @@ class OpenAiAssistantService
 
     private function apiKey(): string
     {
-        $apiKey = config('academic.openai.api_key');
+        $apiKey = $this->apiKeyFromParameter();
 
         if (!$apiKey) {
-            throw new RuntimeException('Falta configurar API_KEY_IA u OPENAI_API_KEY.');
+            $apiKey = config('academic.openai.api_key');
         }
 
-        return $apiKey;
+        if (!$apiKey) {
+            throw new RuntimeException('Falta configurar la API Key de OpenAI en el parametro P000025 del sistema.');
+        }
+
+        return $this->sanitizeApiKey($apiKey);
+    }
+
+    /**
+     * Limpia la key de caracteres invisibles o espacios que suelen quedar
+     * al copiarla/pegarla (espacios, saltos de linea, zero-width, NBSP).
+     */
+    private function sanitizeApiKey(string $apiKey): string
+    {
+        $clean = preg_replace('/[\s\x{200B}-\x{200D}\x{FEFF}\x{00A0}]+/u', '', $apiKey) ?? '';
+
+        return trim($clean);
+    }
+
+    protected function apiKeyFromParameter(): ?string
+    {
+        $parameterCode = config('academic.openai.api_key_parameter');
+
+        if (!$parameterCode) {
+            return null;
+        }
+
+        $value = Cache::remember(
+            'academic:openai-api-key:' . $parameterCode,
+            now()->addMinutes(60),
+            function () use ($parameterCode) {
+                return Parameter::where('parameter_code', $parameterCode)->value('value_default');
+            }
+        );
+
+        $value = trim((string) $value);
+
+        return $value !== '' ? $value : null;
     }
 
     private function responseText(array $response): string
@@ -273,27 +232,15 @@ class OpenAiAssistantService
         throw new RuntimeException('OpenAI no devolvio una respuesta de texto.');
     }
 
-    private function assistantId(): ?string
-    {
-        $assistantId = config('academic.openai.assistant_id');
-
-        return $assistantId ?: null;
-    }
-
     private function model(): string
     {
         $model = config('academic.openai.model');
 
         if (!$model) {
-            throw new RuntimeException('Falta configurar OPENAI_MODEL para usar OpenAI sin assistant_id.');
+            throw new RuntimeException('Falta configurar OPENAI_MODEL para usar OpenAI.');
         }
 
         return $model;
-    }
-
-    private function cacheKey(int|string $userId): string
-    {
-        return 'academic:openai-assistant-thread:' . $userId;
     }
 
     private function responseCacheKey(int|string $userId): string
