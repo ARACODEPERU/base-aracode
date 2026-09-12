@@ -1088,39 +1088,104 @@ class WebPageController extends Controller
         ]);
     }
 
-    public function contacto()
-    {
-        $banner = CmsSection::where('component_id', 'nosotros_banner_area_11')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-            ->select(
-                'cms_items.content',
-                'cms_section_items.position'
-            )
-            ->orderBy('cms_section_items.position')
-            ->first();
 
-        $title = CmsSection::where('component_id', 'header_area_1')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-            ->select(
-                'cms_items.content',
-                'cms_section_items.position'
-            )
-            ->orderBy('cms_section_items.position')
-            ->get();
-
-
-        return view('pages.contacto', [
-            'banner' => $banner,
-            'title' => $title
-        ]);
-    }
 
     public function carrito()
     {
 
         return view('pages.carrito');
+    }
+
+    // ==========================================
+    // ARACODE Website V2 Methods
+    // ==========================================
+
+    public function home()
+    {
+        return view('pages.home');
+    }
+
+    public function soluciones()
+    {
+        return view('pages.soluciones');
+    }
+
+    public function solucionKapta()
+    {
+        return view('pages.kapta');
+    }
+
+    public function solucionFacturacion()
+    {
+        return view('pages.facturacion');
+    }
+
+    public function solucionDesarrollo()
+    {
+        return view('pages.desarrollo');
+    }
+
+    public function empresa()
+    {
+        return view('pages.empresa');
+    }
+
+    public function contacto()
+    {
+        return view('pages.contacto');
+    }
+
+    public function blog_index(Request $request)
+    {
+        $categories = \Modules\Blog\Entities\BlogCategory::where('status', true)->get();
+
+        $query = \Modules\Blog\Entities\BlogArticle::with('category')->with('author')
+            ->where('status', true);
+
+        if ($categoryId = $request->get('category')) {
+            $query->where('category_id', $categoryId);
+        }
+
+        $articles = $query->latest('created_at')->paginate(9);
+
+        return view('pages.blog', [
+            'categories' => $categories,
+            'articles' => $articles,
+        ]);
+    }
+
+    public function blog_article($url)
+    {
+        $article = \Modules\Blog\Entities\BlogArticle::with('author', 'category')
+            ->where('url', $url)
+            ->where('status', true)
+            ->firstOrFail();
+
+        $article->increment('views');
+
+        $categories = \Modules\Blog\Entities\BlogCategory::where('status', true)->get();
+
+        $latest_articles = \Modules\Blog\Entities\BlogArticle::with('author')
+            ->where('status', true)
+            ->where('id', '!=', $article->id)
+            ->latest('created_at')
+            ->take(4)
+            ->get();
+
+        $articlesByCategory = [];
+        foreach ($categories as $category) {
+            $articlesByCategory[$category->id] = \Modules\Blog\Entities\BlogArticle::where('category_id', $category->id)
+                ->where('status', true)
+                ->orderByDesc('created_at')
+                ->get();
+        }
+
+        return view('pages.blog-articulo', [
+            'article' => $article,
+            'categories' => $categories,
+            'latest_articles' => $latest_articles,
+            'articlesByCategory' => $articlesByCategory,
+        ]);
     }
 
 

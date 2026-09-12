@@ -26,15 +26,36 @@ use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 use App\Http\Controllers\CalendarController;
 
-// Rutas Webs en Blade
-Route::get('/', [WebPageController::class, 'index'])->name('index_main');
-Route::get('/home', [WebPageController::class, 'index'])->name('index_main2');
-Route::get('/nosotros', [WebPageController::class, 'about'])->name('web_about');
-Route::get('/sitios-webs', [WebPageController::class, 'cms'])->name('web_cms');
-Route::get('/tienda-online', [WebPageController::class, 'storeonline'])->name('web_store_online');
-Route::get('/e-learning', [WebPageController::class, 'lms'])->name('web_lms');
-Route::get('/facturador', [WebPageController::class, 'billing'])->name('web_billing');
-Route::get('/contacto', [WebPageController::class, 'contact'])->name('web_contact');
+// ========================================
+// ARACODE Smart Solutions — Website
+// ========================================
+
+// Homepage
+Route::get('/', [WebPageController::class, 'home'])->name('index_main');
+Route::get('/home', fn () => redirect()->route('index_main'));
+
+// Soluciones
+Route::get('/soluciones', [WebPageController::class, 'soluciones'])->name('soluciones');
+Route::get('/soluciones/kapta', [WebPageController::class, 'solucionKapta'])->name('solucion_kapta');
+Route::get('/soluciones/facturacion', [WebPageController::class, 'solucionFacturacion'])->name('solucion_facturacion');
+Route::get('/soluciones/desarrollo', [WebPageController::class, 'solucionDesarrollo'])->name('solucion_desarrollo');
+
+// Empresa y Contacto
+Route::get('/empresa', [WebPageController::class, 'empresa'])->name('empresa');
+Route::get('/contacto', [WebPageController::class, 'contacto'])->name('contacto');
+
+// Blog
+Route::get('/blog', [WebPageController::class, 'blog_index'])->name('blog_principal');
+Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])->name('blog_article');
+
+// Redirecciones de rutas antiguas
+Route::get('/nosotros', fn () => redirect()->route('empresa'));
+Route::get('/v2', fn () => redirect()->route('index_main'));
+Route::get('/sitios-webs', fn () => redirect()->route('solucion_kapta'));
+Route::get('/tienda-online', fn () => redirect()->route('soluciones'));
+Route::get('/e-learning', fn () => redirect()->route('solucion_kapta'));
+Route::get('/facturador', fn () => redirect()->route('solucion_facturacion'));
+Route::get('/contacto-v2', fn () => redirect()->route('contacto'));
 
 // Route::get('/', [LandingController::class, 'index'])->name('index_main');
 // Route::get('/facturador', [LandingController::class, 'biller'])->name('biller_main');
