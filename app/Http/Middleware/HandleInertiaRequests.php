@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Services\StudentTestimonyAccess;
 use App\Services\JobOffersAccess;
+use App\Services\StudentTestimonyAccess;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 use Modules\Academic\Entities\AcaStudent;
@@ -47,7 +49,11 @@ class HandleInertiaRequests extends Middleware
             ),
             // Acceso a la vista "Ofertas Laborales": curso de pago o suscripcion activa y vigente
             'canViewJobOffers' => fn () => JobOffersAccess::canView($request->user()),
-            'ziggy' => function () use ($request) {
+            // Acceso al apartado "Testimonios" del alumno (misma regla de acceso)
+             'canLeaveTestimonials' => fn () => StudentTestimonyAccess::canParticipate($request->user()),
+                        // Acceso al apartado "Testimonios" del alumno (misma regla de acceso)
+                        'canLeaveTestimonials' => fn () => StudentTestimonyAccess::canParticipate($request->user()),
+             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [
                     'location' => $request->url(),
                 ]);

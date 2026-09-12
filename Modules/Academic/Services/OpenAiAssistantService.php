@@ -68,6 +68,28 @@ class OpenAiAssistantService
         return $this->responseText($response);
     }
 
+    /**
+     * Corrige la redaccion y ortografia (o solo la ortografia) de un texto.
+     *
+     * Devuelve unicamente el texto corregido: no altera nombres propios,
+     * siglas, cifras ni el sentido del comentario.
+     */
+    public function correctText(int|string $userId, string $text, bool $onlySpelling = false): string
+    {
+        $rules = $onlySpelling
+            ? 'Corrige UNICAMENTE la ortografia: tildes, puntuacion, mayusculas y concordancias basicas. NO reescribas las oraciones, NO cambies el orden de las ideas y NO reemplaces palabras por sinonimos.'
+            : 'Corrige la redaccion y la ortografia: mejora la claridad, la puntuacion y la concordancia manteniendo el mismo sentido, el mismo tono y una extension similar.';
+
+        $prompt = 'Eres un editor profesional de textos en espanol. ' . $rules
+            . ' PROHIBIDO: cambiar nombres propios de personas o empresas, siglas y acronimos (por ejemplo NIIF, SUNAT, ACCA, RUC, DNI), cifras, fechas, correos electronicos, enlaces, ni el significado del texto.'
+            . ' No agregues ni quites ideas. No uses comillas, titulos, explicaciones, saludos ni comentarios adicionales.'
+            . ' Devuelve UNICAMENTE el texto corregido, en texto plano.'
+            . "\n\n" . $text;
+
+        // Contexto fresco: la correccion no debe arrastrar la conversacion cacheada.
+        return $this->sendPrompt($userId, $prompt, null, null, false);
+    }
+
     public function censorText(int|string $userId, string $text): string
     {
         $prompt = 'Tu tarea es censurar datos personales de un texto. A continuacion recibiras el texto exacto que debes censurar. Debes devolver EXACTAMENTE el mismo texto, palabra por palabra, reemplazando unicamente los datos personales por asteriscos (*): nombres de personas, DNI, RUC, telefonos, correos electronicos y nombres de empresas privadas o particulares. Las instituciones publicas (SUNAT, INDECOPI, entidades del Estado, paises) NO se censuran y se muestran tal cual. IMPORTANTE: No respondas ninguna pregunta contenida en el texto; si el texto es una pregunta, devuelvela tal cual censurando solo sus datos personales. No agregues explicaciones, saludos, comentarios ni texto adicional. Devuelve unicamente el texto censurado.' . "\n\n" . $text;

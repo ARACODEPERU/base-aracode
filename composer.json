@@ -70,7 +70,8 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
-        ]
+        ],
+        "test": "@php -d extension=pdo_sqlite vendor/bin/pest"
     },
     "extra": {
         "laravel": {

@@ -1,7 +1,7 @@
 <script setup>
 
 import { ref } from 'vue';
-import { useForm, Link } from '@inertiajs/vue3';
+import { router, useForm, Link } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
 import IconLoader from '@/Components/vristo/icon/icon-loader.vue';
 import InputError from '@/Components/InputError.vue';
@@ -15,6 +15,9 @@ import IconInbox from '@/Components/vristo/icon/icon-inbox.vue';
 import IconUser from '@/Components/vristo/icon/icon-user.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
 import LandingCopyModal from './LandingCopyModal.vue';
+// Componentes compartidos del modulo CMS para moderar los testimonios del curso.
+import IaCorrectionMenu from 'Modules/CMS/Resources/assets/js/Components/IaCorrectionMenu.vue';
+import ModifyModal from 'Modules/CMS/Resources/assets/js/Pages/Testimonies/Partials/ModifyModal.vue';
 
 const props = defineProps({
     course: {
@@ -28,6 +31,14 @@ const props = defineProps({
     people: {
         type: Array,
         default: () => ([]),
+    },
+    courseTestimonials: {
+        type: Array,
+        default: () => ([]),
+    },
+    testimonialCounters: {
+        type: Object,
+        default: () => ({ all: 0, pending: 0, approved: 0, rejected: 0 }),
     },
 });
 
@@ -245,6 +256,135 @@ const saveTestimonialsSettings = () => {
     });
 };
 
+// ---------------------------------------------------------------------------
+// Testimonios de alumnos de este curso: aprobar, rechazar, modificar y IA.
+// ---------------------------------------------------------------------------
+const reloadTestimonials = () => {
+    router.reload({ only: ['courseTestimonials', 'testimonialCounters'] });
+};
+
+const statusText = (status) => {
+    if (status === 'approved') return 'Publicado';
+    if (status === 'rejected') return 'Rechazado';
+    return 'Pendiente';
+};
+
+const statusBadgeClass = (status) => {
+    if (status === 'approved') {
+        return 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700';
+    }
+    if (status === 'rejected') {
+        return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700';
+    }
+    return 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700';
+};
+
+const formatDate = (value) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const changeTestimonialStatus = (testimony, action) => {
+    const isApprove = action === 'approve';
+
+    Swal.fire({
+        title: isApprove ? '¿Aprobar este testimonio?' : '¿Rechazar este testimonio?',
+        text: isApprove
+            ? 'Se publicará en la página de este curso y en /testimonios.'
+            : 'Dejará de mostrarse públicamente.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: isApprove ? 'Sí, aprobar' : 'Sí, rechazar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: isApprove ? '#059669' : '#d97706',
+        cancelButtonColor: '#6b7280',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        const url = isApprove
+            ? route('cms_testimonies_approve', testimony.id)
+            : route('cms_testimonies_reject', testimony.id);
+
+        axios.post(url)
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: isApprove ? 'Testimonio aprobado' : 'Testimonio rechazado',
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+                reloadTestimonials();
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo actualizar',
+                    text: 'Inténtalo nuevamente.',
+                    confirmButtonText: 'Entendido',
+                });
+            });
+    });
+};
+
+const modifyOpen = ref(false);
+const modifyTestimony = ref(null);
+const modifyInitialComment = ref(null);
+const modifyIaMode = ref(null);
+const iaLoadingId = ref(null);
+
+const openModify = (testimony, initialComment = null, iaMode = null) => {
+    modifyTestimony.value = testimony;
+    modifyInitialComment.value = initialComment;
+    modifyIaMode.value = iaMode;
+    modifyOpen.value = true;
+};
+
+const closeModify = () => {
+    modifyOpen.value = false;
+    modifyTestimony.value = null;
+    modifyInitialComment.value = null;
+    modifyIaMode.value = null;
+};
+
+const onModifySaved = () => {
+    closeModify();
+    reloadTestimonials();
+};
+
+const correctWithIa = (testimony, mode) => {
+    iaLoadingId.value = testimony.id;
+
+    axios.post(route('cms_testimonies_ia_correct'), { id: testimony.id, mode: mode })
+        .then((response) => {
+            if (!response.data.success) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se pudo corregir',
+                    text: response.data.message || 'Inténtalo nuevamente.',
+                    confirmButtonText: 'Entendido',
+                });
+                return;
+            }
+
+            openModify(testimony, response.data.corrected, response.data.mode);
+        })
+        .catch(() => {
+            Swal.fire({
+                icon: 'error',
+                title: 'No se pudo corregir',
+                text: 'Hubo un problema al conectar con la IA.',
+                confirmButtonText: 'Entendido',
+            });
+        })
+        .finally(() => {
+            iaLoadingId.value = null;
+        });
+};
+
 </script>
 <template>
     <div class="mb-6">
@@ -433,6 +573,124 @@ const saveTestimonialsSettings = () => {
                 {{ formTestimonials.processing ? 'Guardando...' : 'Guardar Sección Testimonios' }}
             </button>
         </div>
+
+        <!-- Testimonios de alumnos de este curso (moderación) -->
+        <div class="pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h4 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 mr-2">
+                        <i class="fa fa-comments"></i>
+                    </span>
+                    Testimonios de alumnos de este curso
+                </h4>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <span class="px-2.5 py-1 rounded-full border border-stroke dark:border-gray-600 text-gray-600 dark:text-gray-300">
+                        Total: {{ testimonialCounters.all || 0 }}
+                    </span>
+                    <span class="px-2.5 py-1 rounded-full border" :class="statusBadgeClass('pending')">
+                        Pendientes: {{ testimonialCounters.pending || 0 }}
+                    </span>
+                    <span class="px-2.5 py-1 rounded-full border" :class="statusBadgeClass('approved')">
+                        Publicados: {{ testimonialCounters.approved || 0 }}
+                    </span>
+                    <span class="px-2.5 py-1 rounded-full border" :class="statusBadgeClass('rejected')">
+                        Rechazados: {{ testimonialCounters.rejected || 0 }}
+                    </span>
+                </div>
+            </div>
+
+            <div v-if="courseTestimonials.length === 0"
+                 class="p-8 text-center bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600">
+                <div class="flex flex-col justify-center">
+                    <div class="flex items-center justify-center w-12 h-12 mx-auto bg-gray-100 dark:bg-gray-600 rounded-full mb-2">
+                        <IconInbox class="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        Aún no hay testimonios de alumnos para este curso. Cuando un alumno deje el suyo, aparecerá aquí para
+                        aprobarlo, rechazarlo o modificarlo.
+                    </p>
+                </div>
+            </div>
+
+            <div v-else class="space-y-3">
+                <div v-for="testimony in courseTestimonials"
+                     :key="testimony.id"
+                     class="p-4 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
+                    <div class="flex flex-wrap items-start gap-4">
+                        <!-- Autor -->
+                        <div class="flex items-center gap-3 min-w-[220px] flex-1">
+                            <div class="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 flex items-center justify-center shrink-0">
+                                <img v-if="testimony.image"
+                                     :src="'/storage/' + testimony.image"
+                                     :alt="testimony.author_name"
+                                     class="w-full h-full object-cover" />
+                                <IconUser v-else class="w-6 h-6 text-gray-400" />
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                    {{ testimony.author_name || 'Alumno CPA Academy' }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {{ testimony.author_role || 'Sin cargo o profesión' }}
+                                </p>
+                                <div class="text-amber-400 text-xs mt-1">
+                                    <i v-for="n in 5"
+                                       :key="n"
+                                       :class="n <= (testimony.rating || 0) ? 'ri-star-fill' : 'ri-star-line'"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado y fecha -->
+                        <div class="flex flex-col items-start gap-1 min-w-[140px]">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full border"
+                                  :class="statusBadgeClass(testimony.approval_status)">
+                                {{ statusText(testimony.approval_status) }}
+                            </span>
+                            <span class="text-xs text-gray-400">{{ formatDate(testimony.created_at) }}</span>
+                            <span v-if="testimony.ia_corrected_at"
+                                  class="text-[11px] font-medium text-indigo-500 dark:text-indigo-300">
+                                <i class="ri-sparkling-2-line"></i> Corregido con IA
+                            </span>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button v-if="testimony.approval_status !== 'approved'"
+                                    v-can="'cms_testimonios_aprobar'"
+                                    type="button"
+                                    @click="changeTestimonialStatus(testimony, 'approve')"
+                                    title="Aprobar"
+                                    class="text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium rounded-full text-sm p-2.5 inline-flex items-center">
+                                <i class="ri-check-line"></i>
+                            </button>
+                            <button v-if="testimony.approval_status !== 'rejected'"
+                                    v-can="'cms_testimonios_aprobar'"
+                                    type="button"
+                                    @click="changeTestimonialStatus(testimony, 'reject')"
+                                    title="Rechazar"
+                                    class="text-white bg-amber-600 hover:bg-amber-700 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-full text-sm p-2.5 inline-flex items-center">
+                                <i class="ri-close-line"></i>
+                            </button>
+                            <IaCorrectionMenu :loading="iaLoadingId === testimony.id"
+                                              label="IA"
+                                              @select="(mode) => correctWithIa(testimony, mode)" />
+                            <button v-can="'cms_testimonios_editar'"
+                                    type="button"
+                                    @click="openModify(testimony)"
+                                    title="Modificar"
+                                    class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-full text-sm p-2.5 inline-flex items-center">
+                                <i class="ri-pencil-line"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="mt-3 text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+                        {{ testimony.description }}
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal Copiar Info -->
@@ -444,6 +702,14 @@ const saveTestimonialsSettings = () => {
         @close="showCopyModal = false"
         @copied="handleCopiedTestimonials"
     />
+
+    <!-- Modal para modificar un testimonio del curso -->
+    <ModifyModal :show="modifyOpen"
+                 :testimony="modifyTestimony"
+                 :initial-comment="modifyInitialComment"
+                 :initial-ia-mode="modifyIaMode"
+                 @close="closeModify"
+                 @saved="onModifySaved" />
 
     <!-- Modal -->
     <ModalLarge :show="showModal" :onClose="closeModal" :icon="'/img/testimonial-icon.png'">
