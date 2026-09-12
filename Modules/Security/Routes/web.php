@@ -29,6 +29,7 @@ Route::middleware(['auth','user_activity_log'])->prefix('security')->group(funct
     Route::post('person/information/update', [PersonController::class, 'createdOrUpdated'])->name('person_information_update');
 
     Route::get('dashboard/storage/indicator', [SecurityController::class, 'storageIndicador'])->name('security_storage_indicator');
+    Route::post('dashboard/storage/recalculate', [SecurityController::class, 'storageRecalculate'])->name('security_storage_recalculate');
 
     Route::get('table/permissions', [PermissionController::class, 'getData'])->name('security_permissions_data');
 

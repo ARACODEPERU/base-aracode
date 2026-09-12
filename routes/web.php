@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
+use App\Http\Controllers\CalendarController;
 
 // Rutas Webs en Blade
 Route::get('/', [WebPageController::class, 'index'])->name('index_main');

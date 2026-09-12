@@ -29,6 +29,12 @@ class Kernel extends ConsoleKernel
                     ->withoutOverlapping()
                     ->timezone('America/Lima');
 
+        // Medición de almacenamiento para el indicador del dashboard (módulo Security).
+        // El resultado queda en caché 24 h; el dashboard puede recalcular manualmente.
+        $schedule->command('security:measure-storage')
+                    ->dailyAt('01:00')
+                    ->timezone('America/Lima');
+
     }
 
     /**
@@ -39,6 +45,7 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
         $this->load(base_path('Modules/Sales/Console'));
         $this->load(base_path('Modules/Academic/Console'));
+        $this->load(base_path('Modules/Security/Console'));
         require base_path('routes/console.php');
     }
 }

@@ -28,6 +28,13 @@ class SecurityServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        // Comandos de consola (patrón de Sales: registro explícito vía ServiceProvider)
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\Security\Console\MeasureStorageCommand::class,
+            ]);
+        }
     }
 
     /**
@@ -38,6 +45,10 @@ class SecurityServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(RouteServiceProvider::class);
+
+        // Métricas de almacenamiento: singleton para que la caché en memoria
+        // sirva la medición durante toda la petición sin re-escanear.
+        $this->app->singleton(\Modules\Security\Services\StorageMetricsService::class);
     }
 
     /**
