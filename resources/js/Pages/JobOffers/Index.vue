@@ -30,7 +30,7 @@
     };
 
     /**
-     * Extrae el primer <iframe> del código configurado en el parámetro P000032
+     * Extrae el primer <iframe> del código configurado en el parámetro PC00001
      * para renderizarlo con Vue y así poder escuchar su carga (con v-html no se
      * puede). Si el código no trae un <iframe> (por ejemplo un widget con
      * <script>), se devuelve null y se inyecta con v-html como respaldo.
@@ -109,7 +109,7 @@
 
         <div class="mt-5">
             <div class="panel p-0 overflow-hidden">
-                <!-- Código configurado en el parámetro del sistema P000032 -->
+                <!-- Código configurado en el parámetro del sistema PC00001 -->
                 <div v-if="iframeCode" class="job-offers-embed relative w-full">
                     <template v-if="iframeAttrs">
                         <iframe v-bind="iframeAttrs" @load="onIframeLoad" @error="onIframeError"></iframe>

@@ -179,7 +179,7 @@ Route::middleware('auth')->group(function () {
         [PersonController::class, 'updateInfoPersonByUser']
     )->name('user_persom_info_store');
 
-        // Ofertas Laborales (iframe configurable desde el parametro P000032)
+        // Ofertas Laborales (iframe configurable desde el parametro PC00001)
         Route::get('ofertas-laborales', [JobOffersController::class, 'index'])->name('job_offers');
 
     Route::get('parameters/list', [ParametersController::class, 'index'])->name('parameters');
