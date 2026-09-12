@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Services\StudentTestimonyAccess;
+use App\Services\JobOffersAccess;
+use App\Services\StudentTestimonyAccess;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 use Modules\Academic\Entities\AcaStudent;
@@ -41,30 +44,16 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $request->user() ? $request->user()->roles->pluck('name') : [],
                 'permissions' => $request->user() ? $request->user()->getPermissionsViaRoles()->pluck('name') : [],
             ],
-            'hasActiveSubscription' => function () use ($request) {
-                $user = $request->user();
-                if (!$user || !$user->person_id) {
-                    return false;
-                }
-
-                $studentId = AcaStudent::where('person_id', $user->person_id)->value('id');
-                if (!$studentId) {
-                    return false;
-                }
-
-                $today = Carbon::today();
-
-                return AcaStudentSubscription::where('student_id', $studentId)
-                    ->where(function ($query) use ($today) {
-                        $query->where('status', true)
-                            ->orWhere(function ($q) use ($today) {
-                                $q->whereDate('date_start', '<=', $today)
-                                    ->whereDate('date_end', '>=', $today);
-                            });
-                    })
-                    ->exists();
-            },
-            'ziggy' => function () use ($request) {
+            'hasActiveSubscription' => fn () => JobOffersAccess::hasActiveSubscription(
+                JobOffersAccess::studentId($request->user())
+            ),
+            // Acceso a la vista "Ofertas Laborales": curso de pago o suscripcion activa y vigente
+            'canViewJobOffers' => fn () => JobOffersAccess::canView($request->user()),
+            // Acceso al apartado "Testimonios" del alumno (misma regla de acceso)
+             'canLeaveTestimonials' => fn () => StudentTestimonyAccess::canParticipate($request->user()),
+                        // Acceso al apartado "Testimonios" del alumno (misma regla de acceso)
+                        'canLeaveTestimonials' => fn () => StudentTestimonyAccess::canParticipate($request->user()),
+             'ziggy' => function () use ($request) {
                 return array_merge((new Ziggy)->toArray(), [
                     'location' => $request->url(),
                 ]);

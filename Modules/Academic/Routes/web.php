@@ -33,6 +33,7 @@ use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
 use Modules\Academic\Http\Controllers\AcaShortVideoController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
+use Modules\Academic\Http\Controllers\AcaStudentTestimonyController;
 use Modules\Academic\Http\Controllers\AcaThemeCommentController;
 use Modules\Academic\Http\Controllers\MercadopagoController;
 use Modules\Academic\Jobs\ExportStudentsExcel;
@@ -256,6 +257,23 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_miscursos'])
         ->get('mycourses/student', 'AcaStudentController@myCourses')
         ->name('aca_mycourses');
+
+    // Apartado "Testimonios" del alumno: solo cursos culminados y dentro de la ventana de edicion.
+    Route::middleware(['middleware' => 'permission:aca_testimonios'])
+        ->get('marcar-testimonio', [AcaStudentTestimonyController::class, 'index'])
+        ->name('aca_student_testimonials');
+
+    Route::middleware(['middleware' => 'permission:aca_testimonios'])
+        ->post('marcar-testimonio/store', [AcaStudentTestimonyController::class, 'store'])
+        ->name('aca_student_testimonials_store');
+
+    Route::middleware(['middleware' => 'permission:aca_testimonios'])
+        ->put('marcar-testimonio/update/{id}', [AcaStudentTestimonyController::class, 'update'])
+        ->name('aca_student_testimonials_update');
+
+    Route::middleware(['middleware' => 'permission:aca_testimonios'])
+        ->delete('marcar-testimonio/destroy/{id}', [AcaStudentTestimonyController::class, 'destroy'])
+        ->name('aca_student_testimonials_destroy');
 
     Route::get('courses_teacher_null', 'AcaCourseController@getCoursesTeacherNull')
         ->name('courses_teacher_null');

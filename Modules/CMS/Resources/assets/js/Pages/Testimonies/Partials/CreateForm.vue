@@ -7,8 +7,8 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
-import { ref, watch } from 'vue';
-import { Select, Input, Textarea } from 'flowbite-vue'
+import { computed, ref, watch } from 'vue';
+import { Input, Textarea } from 'flowbite-vue'
 import Editor from '@tinymce/tinymce-vue'
 import ImageCompressorjs from '@/Components/ImageCompressorjs.vue';
 
@@ -28,8 +28,15 @@ const props = defineProps({
 });
 
 
+// Sugerencias de productos/servicios existentes, pero el campo es de texto libre.
+const itemOptions = computed(() => Array.isArray(props.items)
+    ? props.items.filter((item) => item && item.name)
+    : []);
+
 const form = useForm({
-    item_id: null,
+    author_name: null,
+    author_role: null,
+    item_label: null,
     title: null,
     description: null,
     image: null,
@@ -81,29 +88,47 @@ const handleImageCompressed = (file) => {
         </template>
 
         <template #description>
-            Crear nuevo Testimonio, Los campos con * son obligatorios
+            Crear nuevo Testimonio. Todos los campos son opcionales (incluido el video).
         </template>
 
         <template #form>
             <div class="col-span-6">
-                <Select
-                    v-model="form.item_id"
-                    :options="items"
-                    label="Producto o Servicio *"
-                    placeholder="Seleccionar"
-                    class="w-full"
+                <Input
+                    v-model="form.author_name"
+                    label="Nombre de la persona (opcional)"
                 />
-                <InputError :message="form.errors.description" class="mt-2" />
+                <InputError :message="form.errors.author_name" class="mt-2" />
+            </div>
+            <div class="col-span-6">
+                <Input
+                    v-model="form.author_role"
+                    label="Cargo o profesión (opcional)"
+                />
+                <InputError :message="form.errors.author_role" class="mt-2" />
+            </div>
+            <div class="col-span-6">
+                <InputLabel for="item_label" value="Producto o servicio (opcional)" />
+                <input id="item_label"
+                       v-model="form.item_label"
+                       list="cms-testimony-items"
+                       type="text"
+                       maxlength="255"
+                       placeholder="Escribe lo que quieras o elige una sugerencia"
+                       class="w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400" />
+                <datalist id="cms-testimony-items">
+                    <option v-for="item in itemOptions" :key="item.value" :value="item.name"></option>
+                </datalist>
+                <InputError :message="form.errors.item_label" class="mt-2" />
             </div>
             <div class="col-span-6">
                 <Input
                     v-model="form.title"
-                    label="Título *"
+                    label="Título (opcional)"
                 />
-                <InputError :message="form.errors.description" class="mt-2" />
+                <InputError :message="form.errors.title" class="mt-2" />
             </div>
             <div class="col-span-6">
-                <InputLabel for="description" value="Descripción *" />
+                <InputLabel for="description" value="Descripción (opcional)" />
                 <Editor
                     id="description"
                     :api-key="tiny_api_key"
@@ -116,7 +141,7 @@ const handleImageCompressed = (file) => {
                 <InputError :message="form.errors.description" class="mt-2" />
             </div>
             <div class="col-span-6">
-                <InputLabel for="content" value="Imagen *" />
+                <InputLabel for="content" value="Imagen (opcional)" />
                 <div class="flex justify-center space-x-2">
                     <figure class="max-w-lg">
                         <img class="h-auto max-w-full rounded-lg" :src="form.image_pre">
@@ -131,7 +156,7 @@ const handleImageCompressed = (file) => {
                 <Textarea
                     v-model="form.video"
                     :rows="4"
-                    label="Iframe del vídeo *"
+                    label="Iframe del vídeo (opcional)"
                     placeholder="Código del vídeo... por favor verifique que el código no contenga emoticonos(genera error). Borre los emoticonos manualmente"
                 />
                 <InputError :message="form.errors.video" class="mt-2" />

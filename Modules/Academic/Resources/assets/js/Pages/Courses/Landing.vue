@@ -44,6 +44,14 @@ const props = defineProps({
         type: Object,
         default: () => ({ subscribers: [], sales: [] }),
     },
+    courseTestimonials: {
+        type: Array,
+        default: () => ([]),
+    },
+    testimonialCounters: {
+        type: Object,
+        default: () => ({ all: 0, pending: 0, approved: 0, rejected: 0 }),
+    },
 });
 
 const activeTab = ref('banner');
@@ -374,6 +382,8 @@ const formatIconForVue = (iconName) => {
                             :course="course"
                             :landing="landing"
                             :people="people"
+                            :course-testimonials="courseTestimonials"
+                            :testimonial-counters="testimonialCounters"
                         />
                     </div>
 

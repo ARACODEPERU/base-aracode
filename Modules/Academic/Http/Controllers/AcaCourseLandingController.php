@@ -13,6 +13,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCourseLanding;
 use Modules\Academic\Entities\AcaTeacher;
 use Modules\CMS\Entities\CmsSubscriber;
+use Modules\CMS\Entities\CmsTestimony;
 use Modules\Onlineshop\Entities\OnliItem;
 use Modules\Onlineshop\Entities\OnliSale;
 
@@ -63,6 +64,43 @@ class AcaCourseLandingController extends Controller
                 ];
             });
 
+        // Testimonios de alumnos de este curso: se moderan desde esta pestana
+        // (aprobar, rechazar, modificar y corregir con IA).
+        $courseTestimonials = CmsTestimony::query()
+            ->where('course_id', $courseId)
+            ->where('source', CmsTestimony::SOURCE_STUDENT)
+            ->orderByRaw("CASE WHEN approval_status = 'pending' THEN 0 ELSE 1 END")
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (CmsTestimony $testimony) {
+                return [
+                    'id' => $testimony->id,
+                    'student_id' => $testimony->student_id,
+                    'author_name' => $testimony->author_name,
+                    'author_role' => $testimony->author_role,
+                    'rating' => $testimony->rating,
+                    'description' => $testimony->description,
+                    'image' => $testimony->image,
+                    'video' => $testimony->video,
+                    'source' => $testimony->source,
+                    'approval_status' => $testimony->approval_status,
+                    'status' => (bool) $testimony->status,
+                    'created_at' => optional($testimony->created_at)->toIso8601String(),
+                    'ia_corrected_at' => optional($testimony->ia_corrected_at)->toIso8601String(),
+                ];
+            })
+            ->values();
+
+        $testimonialCounters = [
+            'all' => CmsTestimony::where('course_id', $courseId)->where('source', CmsTestimony::SOURCE_STUDENT)->count(),
+            'pending' => CmsTestimony::where('course_id', $courseId)->where('source', CmsTestimony::SOURCE_STUDENT)
+                ->where('approval_status', CmsTestimony::STATUS_PENDING)->count(),
+            'approved' => CmsTestimony::where('course_id', $courseId)->where('source', CmsTestimony::SOURCE_STUDENT)
+                ->where('approval_status', CmsTestimony::STATUS_APPROVED)->count(),
+            'rejected' => CmsTestimony::where('course_id', $courseId)->where('source', CmsTestimony::SOURCE_STUDENT)
+                ->where('approval_status', CmsTestimony::STATUS_REJECTED)->count(),
+        ];
+
         return Inertia::render('Academic::Courses/Landing', [
             'course' => $course,
             'landing' => $landing,
@@ -70,6 +108,8 @@ class AcaCourseLandingController extends Controller
             'teachers' => $teachers,
             'people' => $people,
             'utmStats' => $this->getUtmStatsData($courseId),
+            'courseTestimonials' => $courseTestimonials,
+            'testimonialCounters' => $testimonialCounters,
         ]);
     }
 

@@ -14,6 +14,9 @@
     <link href="{{ asset('themes/webpage/css/bootstrap.min.css') }}" rel="stylesheet" type="text/css" id="bootstrap">
     <link href="{{ asset('themes/webpage/css/vendors.css') }}" rel="stylesheet" type="text/css" >
     <link href="{{ asset('themes/webpage/css/style.css') }}" rel="stylesheet" type="text/css" >
+    <!-- Font Awesome 4 (usado en testimonios, landing, etc.) -->
+    <link rel="stylesheet" type="text/css" href="{{ asset('themes/webpage/font-awesome-4.7.0/css/font-awesome.min.css') }}">
+
     <!-- color scheme -->
     <link id="colors" href="{{ asset('themes/webpage/css/colors/scheme-01.css') }}" rel="stylesheet" type="text/css" >
 
@@ -22,7 +25,7 @@
 <body class="dark-scheme">
 
     @yield('content')
-    
+
     <!-- Javascript Files
     ================================================== -->
     <script src="{{ asset('themes/webpage/js/vendors.js') }}"></script>

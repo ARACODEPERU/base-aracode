@@ -5,6 +5,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KardexController;
+use App\Http\Controllers\JobOffersController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LocalSaleController;
 use App\Http\Controllers\MetaController;
@@ -177,6 +178,9 @@ Route::middleware('auth')->group(function () {
         'user/persom/info/store',
         [PersonController::class, 'updateInfoPersonByUser']
     )->name('user_persom_info_store');
+
+        // Ofertas Laborales (iframe configurable desde el parametro P000032)
+        Route::get('ofertas-laborales', [JobOffersController::class, 'index'])->name('job_offers');
 
     Route::get('parameters/list', [ParametersController::class, 'index'])->name('parameters');
     Route::get('parameters/create', [ParametersController::class, 'create'])->name('parameters_create');

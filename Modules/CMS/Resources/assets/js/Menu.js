@@ -7,7 +7,8 @@ import {
     faBlog,
     faFeather,
     faPeopleGroup,
-    faFaceGrinStars
+    faFaceGrinStars,
+    faSitemap
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuCMS = {
@@ -95,6 +96,13 @@ const menuCMS = {
                     icom: faArrowTrendUp,
                 }
             ]
+        },
+        {
+            route: route("cms_sitemap"),
+            status: false,
+            text: "Sitemap",
+            permissions: "cms_dashboard",
+            icom: faSitemap,
         },
     ],
 };

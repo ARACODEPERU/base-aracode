@@ -21,8 +21,12 @@
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
-        <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
-        <!-- <env name="DB_DATABASE" value=":memory:"/> -->
+        <!-- Las pruebas usan sqlite en memoria para no tocar NUNCA la base de desarrollo. -->
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- Varias FKs de MySQL apuntan a columnas solo indexadas (no unicas), que
+             sqlite rechaza; las pruebas no dependen de ese chequeo. -->
+        <env name="DB_FOREIGN_KEYS" value="false"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
