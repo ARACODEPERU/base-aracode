@@ -30,45 +30,97 @@
                 <div class="reveal">
                     <h2 class="text-2xl font-bold text-ara-slate-700 mb-6">Envíanos un mensaje</h2>
                     
-                    <form action="#" method="POST" class="space-y-6">
+                    @if(session('success'))
+                        <div class="p-4 mb-6 bg-green-50 border border-green-200 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <p class="text-green-700 font-medium">{{ session('success') }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(session('error'))
+                        <div class="p-4 mb-6 bg-red-50 border border-red-200 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                                <p class="text-red-700 font-medium">{{ session('error') }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($errors->any())
+                        <div class="p-4 mb-6 bg-red-50 border border-red-200 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    <p class="text-red-700 font-medium">Por favor corrige los siguientes errores:</p>
+                                    <ul class="mt-1 list-disc list-inside text-red-600 text-sm">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('contacto_store') }}" method="POST" class="space-y-6">
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-ara-slate-700 mb-2">Nombre *</label>
-                                <input type="text" name="name" required class="ara-input" placeholder="Tu nombre">
+                                <input type="text" name="name" required class="ara-input @error('name') border-red-500 @enderror" placeholder="Tu nombre" value="{{ old('name') }}">
+                                @error('name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-ara-slate-700 mb-2">Email *</label>
-                                <input type="email" name="email" required class="ara-input" placeholder="tu@email.com">
+                                <input type="email" name="email" required class="ara-input @error('email') border-red-500 @enderror" placeholder="tu@email.com" value="{{ old('email') }}">
+                                @error('email')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-ara-slate-700 mb-2">Teléfono</label>
-                            <input type="tel" name="phone" class="ara-input" placeholder="+51 999 999 999">
+                            <input type="tel" name="phone" class="ara-input" placeholder="+51 999 999 999" value="{{ old('phone') }}">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-ara-slate-700 mb-2">Empresa</label>
-                            <input type="text" name="company" class="ara-input" placeholder="Nombre de tu empresa">
+                            <input type="text" name="company" class="ara-input" placeholder="Nombre de tu empresa" value="{{ old('company') }}">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-ara-slate-700 mb-2">¿En qué podemos ayudarte? *</label>
-                            <select name="service" required class="ara-input">
+                            <select name="service" required class="ara-input @error('service') border-red-500 @enderror">
                                 <option value="">Selecciona un servicio</option>
-                                <option value="kapta">KAPTA LMS</option>
-                                <option value="facturacion">Facturación Electrónica</option>
-                                <option value="desarrollo">Desarrollo a Medida</option>
-                                <option value="automatizacion">Automatización de Procesos</option>
-                                <option value="consultoria">Consultoría Tecnológica</option>
-                                <option value="otro">Otro</option>
+                                <option value="kapta" {{ old('service') == 'kapta' ? 'selected' : '' }}>KAPTA LMS</option>
+                                <option value="facturacion" {{ old('service') == 'facturacion' ? 'selected' : '' }}>Facturación Electrónica</option>
+                                <option value="desarrollo" {{ old('service') == 'desarrollo' ? 'selected' : '' }}>Desarrollo a Medida</option>
+                                <option value="automatizacion" {{ old('service') == 'automatizacion' ? 'selected' : '' }}>Automatización de Procesos</option>
+                                <option value="consultoria" {{ old('service') == 'consultoria' ? 'selected' : '' }}>Consultoría Tecnológica</option>
+                                <option value="otro" {{ old('service') == 'otro' ? 'selected' : '' }}>Otro</option>
                             </select>
+                            @error('service')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-ara-slate-700 mb-2">Mensaje *</label>
-                            <textarea name="message" required class="ara-input ara-textarea" rows="5" placeholder="Cuéntanos sobre tu proyecto o necesidad..."></textarea>
+                            <textarea name="message" required class="ara-input ara-textarea @error('message') border-red-500 @enderror" rows="5" placeholder="Cuéntanos sobre tu proyecto o necesidad...">{{ old('message') }}</textarea>
+                            @error('message')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                         
                         <button type="submit" class="ara-btn ara-btn-primary ara-btn-lg w-full">

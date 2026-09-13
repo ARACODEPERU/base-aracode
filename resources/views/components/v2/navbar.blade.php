@@ -9,11 +9,11 @@
 
             {{-- Desktop Navigation --}}
             <div class="hidden lg:flex items-center gap-1">
-                <a href="{{ route('index_main') }}" class="nav-link">Inicio</a>
-                <a href="{{ route('soluciones') }}" class="nav-link">Soluciones</a>
-                <a href="{{ route('empresa') }}" class="nav-link">Empresa</a>
-                <a href="{{ route('blog_principal') }}" class="nav-link">Blog</a>
-                <a href="{{ route('contacto') }}" class="nav-link">Contacto</a>
+                <a href="{{ route('index_main') }}" class="nav-link {{ request()->routeIs('index_main') ? 'active' : '' }}">Inicio</a>
+                <a href="{{ route('soluciones') }}" class="nav-link {{ request()->routeIs('soluciones') || request()->routeIs('solucion_*') ? 'active' : '' }}">Soluciones</a>
+                <a href="{{ route('empresa') }}" class="nav-link {{ request()->routeIs('empresa') ? 'active' : '' }}">Empresa</a>
+                <a href="{{ route('blog_principal') }}" class="nav-link {{ request()->routeIs('blog_*') ? 'active' : '' }}">Blog</a>
+                <a href="{{ route('contacto') }}" class="nav-link {{ request()->routeIs('contacto') ? 'active' : '' }}">Contacto</a>
             </div>
 
             {{-- CTA & Theme Toggle --}}
@@ -62,11 +62,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
     </button>
-    <a href="{{ route('index_main') }}" class="nav-link">Inicio</a>
-    <a href="{{ route('soluciones') }}" class="nav-link">Soluciones</a>
-    <a href="{{ route('empresa') }}" class="nav-link">Empresa</a>
-    <a href="{{ route('blog_principal') }}" class="nav-link">Blog</a>
-    <a href="{{ route('contacto') }}" class="nav-link">Contacto</a>
+    <a href="{{ route('index_main') }}" class="nav-link {{ request()->routeIs('index_main') ? 'active' : '' }}">Inicio</a>
+    <a href="{{ route('soluciones') }}" class="nav-link {{ request()->routeIs('soluciones') || request()->routeIs('solucion_*') ? 'active' : '' }}">Soluciones</a>
+    <a href="{{ route('empresa') }}" class="nav-link {{ request()->routeIs('empresa') ? 'active' : '' }}">Empresa</a>
+    <a href="{{ route('blog_principal') }}" class="nav-link {{ request()->routeIs('blog_*') ? 'active' : '' }}">Blog</a>
+    <a href="{{ route('contacto') }}" class="nav-link {{ request()->routeIs('contacto') ? 'active' : '' }}">Contacto</a>
     <div class="mt-8">
         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary w-full">
             Solicitar Asesoría

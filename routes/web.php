@@ -43,10 +43,19 @@ Route::get('/soluciones/desarrollo', [WebPageController::class, 'solucionDesarro
 // Empresa y Contacto
 Route::get('/empresa', [WebPageController::class, 'empresa'])->name('empresa');
 Route::get('/contacto', [WebPageController::class, 'contacto'])->name('contacto');
+Route::post('/contacto', [WebPageController::class, 'contactoStore'])->name('contacto_store');
 
 // Blog
 Route::get('/blog', [WebPageController::class, 'blog_index'])->name('blog_principal');
 Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])->name('blog_article');
+
+// Páginas adicionales
+Route::get('/casos-exito', [WebPageController::class, 'casosExito'])->name('casos_exito');
+Route::get('/faq', [WebPageController::class, 'faq'])->name('faq');
+Route::get('/trabaja-con-nosotros', [WebPageController::class, 'trabajaNosotros'])->name('trabaja_nosotros');
+Route::get('/politica-privacidad', [WebPageController::class, 'politicaPrivacidad'])->name('politica_privacidad');
+Route::get('/terminos-condiciones', [WebPageController::class, 'terminosCondiciones'])->name('terminos_condiciones');
+Route::get('/libro-reclamaciones', [WebPageController::class, 'libroReclamaciones'])->name('libro_reclamaciones');
 
 // Redirecciones de rutas antiguas
 Route::get('/nosotros', fn () => redirect()->route('empresa'));
