@@ -26,15 +26,52 @@ use Modules\Blog\Http\Controllers\BlogController;
 use Modules\Sales\Http\Controllers\SalesController;
 use App\Http\Controllers\CalendarController;
 
-// Rutas Webs en Blade
-Route::get('/', [WebPageController::class, 'index'])->name('index_main');
-Route::get('/home', [WebPageController::class, 'index'])->name('index_main2');
-Route::get('/nosotros', [WebPageController::class, 'about'])->name('web_about');
-Route::get('/sitios-webs', [WebPageController::class, 'cms'])->name('web_cms');
-Route::get('/tienda-online', [WebPageController::class, 'storeonline'])->name('web_store_online');
-Route::get('/e-learning', [WebPageController::class, 'lms'])->name('web_lms');
-Route::get('/facturador', [WebPageController::class, 'billing'])->name('web_billing');
-Route::get('/contacto', [WebPageController::class, 'contact'])->name('web_contact');
+// ========================================
+// ARACODE Smart Solutions — Website
+// ========================================
+
+// Homepage
+Route::get('/', [WebPageController::class, 'home'])->name('index_main');
+Route::get('/home', fn () => redirect()->route('index_main'));
+
+// Soluciones
+Route::get('/soluciones', [WebPageController::class, 'soluciones'])->name('soluciones');
+Route::get('/soluciones/kapta', [WebPageController::class, 'solucionKapta'])->name('solucion_kapta');
+Route::get('/soluciones/facturacion', [WebPageController::class, 'solucionFacturacion'])->name('solucion_facturacion');
+Route::get('/soluciones/desarrollo', [WebPageController::class, 'solucionDesarrollo'])->name('solucion_desarrollo');
+
+// Empresa y Contacto
+Route::get('/empresa', [WebPageController::class, 'empresa'])->name('empresa');
+Route::get('/contacto', [WebPageController::class, 'contacto'])->name('contacto');
+Route::post('/contacto', [WebPageController::class, 'contactoStore'])->name('contacto_store');
+
+// Blog
+Route::get('/blog', [WebPageController::class, 'blog_index'])->name('blog_principal');
+// El wildcard {url} captura cualquier slug de artículo público. Se marca como
+// fallback para que NO tape las rutas del admin del módulo Blog
+// (/blog/blog-article, /blog/blog-category, /blog/dashboard), que se registran
+// después. Sin fallback, /blog/blog-article caía aquí y devolvía 404 porque
+// no existe ningún artículo con ese slug.
+Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])
+    ->name('blog_article')
+    ->fallback();
+
+// Páginas adicionales
+Route::get('/casos-exito', [WebPageController::class, 'casosExito'])->name('casos_exito');
+Route::get('/faq', [WebPageController::class, 'faq'])->name('faq');
+Route::get('/trabaja-con-nosotros', [WebPageController::class, 'trabajaNosotros'])->name('trabaja_nosotros');
+Route::get('/politica-privacidad', [WebPageController::class, 'politicaPrivacidad'])->name('politica_privacidad');
+Route::get('/terminos-condiciones', [WebPageController::class, 'terminosCondiciones'])->name('terminos_condiciones');
+Route::get('/libro-reclamaciones', [WebPageController::class, 'libroReclamaciones'])->name('libro_reclamaciones');
+
+// Redirecciones de rutas antiguas
+Route::get('/nosotros', fn () => redirect()->route('empresa'));
+Route::get('/v2', fn () => redirect()->route('index_main'));
+Route::get('/sitios-webs', fn () => redirect()->route('solucion_kapta'));
+Route::get('/tienda-online', fn () => redirect()->route('soluciones'));
+Route::get('/e-learning', fn () => redirect()->route('solucion_kapta'));
+Route::get('/facturador', fn () => redirect()->route('solucion_facturacion'));
+Route::get('/contacto-v2', fn () => redirect()->route('contacto'));
 
 // Route::get('/', [LandingController::class, 'index'])->name('index_main');
 // Route::get('/facturador', [LandingController::class, 'biller'])->name('biller_main');
@@ -179,7 +216,7 @@ Route::middleware('auth')->group(function () {
         [PersonController::class, 'updateInfoPersonByUser']
     )->name('user_persom_info_store');
 
-        // Ofertas Laborales (iframe configurable desde el parametro P000032)
+        // Ofertas Laborales (iframe configurable desde el parametro PC00001)
         Route::get('ofertas-laborales', [JobOffersController::class, 'index'])->name('job_offers');
 
     Route::get('parameters/list', [ParametersController::class, 'index'])->name('parameters');

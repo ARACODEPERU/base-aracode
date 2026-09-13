@@ -48,6 +48,7 @@ module.exports = {
         },
         extend: {
             colors: {
+                /* Admin / Existing palette */
                 primary: {
                     DEFAULT: '#4361ee',
                     light: '#eaf1ff',
@@ -93,9 +94,42 @@ module.exports = {
                     light: '#e0e6ed',
                     dark: '#888ea8',
                 },
+                /* ARACODE Brand Palette */
+                'ara-navy': {
+                    DEFAULT: '#060E2D',
+                    light: '#0c1a40',
+                },
+                'ara-blue': {
+                    DEFAULT: '#0188EE',
+                    light: '#e6f4fc',
+                    dark: '#016bc4',
+                },
+                'ara-green': {
+                    DEFAULT: '#4EAE33',
+                    light: '#edf8ea',
+                    dark: '#3d8b29',
+                },
+                'ara-red': {
+                    DEFAULT: '#F11600',
+                    light: '#fef0ee',
+                    dark: '#c41200',
+                },
+                'ara-slate': {
+                    50: '#F5F7FA',
+                    100: '#E8ECF1',
+                    200: '#CBD2DC',
+                    300: '#9DA6B4',
+                    400: '#64748B',
+                    500: '#475569',
+                    600: '#334155',
+                    700: '#1E293B',
+                    800: '#0F172A',
+                    900: '#060E2D',
+                },
             },
             fontFamily: {
                 nunito: ['Nunito', 'sans-serif'],
+                'ara-sans': ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
             },
             spacing: {
                 4.5: '18px',
@@ -121,17 +155,49 @@ module.exports = {
                 },
             }),
             keyframes: {
-                // Define la secuencia de la animación (cómo se mueve la flecha)
                 pointRight: {
-                '0%, 100%': { transform: 'translateX(0)' }, // En el inicio y al final, la flecha está en su posición original
-                '50%': { transform: 'translateX(4px)' },   // A la mitad de la animación, se mueve 4px a la derecha
-                }
+                    '0%, 100%': { transform: 'translateX(0)' },
+                    '50%': { transform: 'translateX(4px)' },
+                },
+                fadeInUp: {
+                    '0%': { opacity: '0', transform: 'translateY(30px)' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
+                },
+                fadeIn: {
+                    '0%': { opacity: '0' },
+                    '100%': { opacity: '1' },
+                },
+                slideInLeft: {
+                    '0%': { opacity: '0', transform: 'translateX(-30px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
+                slideInRight: {
+                    '0%': { opacity: '0', transform: 'translateX(30px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
+                countUp: {
+                    '0%': { opacity: '0', transform: 'scale(0.5)' },
+                    '100%': { opacity: '1', transform: 'scale(1)' },
+                },
+                float: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(-10px)' },
+                },
+                pulse: {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.5' },
+                },
             },
             animation: {
-                // Aplica el keyframe 'pointRight' con una duración de 1 segundo,
-                // una función de tiempo suave (ease-in-out) y repetición infinita
                 'point-right': 'pointRight 1s ease-in-out infinite',
-            }
+                'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                'fade-in': 'fadeIn 0.6s ease-out forwards',
+                'slide-in-left': 'slideInLeft 0.6s ease-out forwards',
+                'slide-in-right': 'slideInRight 0.6s ease-out forwards',
+                'count-up': 'countUp 0.5s ease-out forwards',
+                'float': 'float 3s ease-in-out infinite',
+                'pulse-slow': 'pulse 3s ease-in-out infinite',
+            },
         },
     },
     plugins: [

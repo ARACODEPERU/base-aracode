@@ -19,8 +19,11 @@ class JobOffersAccess
 {
     /**
      * Parametro del sistema que contiene el codigo HTML/iframe de la vista.
+     *
+     * Es un codigo propio de Ofertas Laborales: P000032 se usa en el sidebar de
+     * alumnos y ambas vistas deben poder configurarse por separado.
      */
-    public const PARAMETER_CODE = 'P000032';
+    public const PARAMETER_CODE = 'PC00001';
 
     /**
      * Id del alumno (aca_students) asociado a la persona del usuario autenticado.
