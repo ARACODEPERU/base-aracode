@@ -46,7 +46,14 @@ Route::get('/contacto', [WebPageController::class, 'contacto'])->name('contacto'
 
 // Blog
 Route::get('/blog', [WebPageController::class, 'blog_index'])->name('blog_principal');
-Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])->name('blog_article');
+// El wildcard {url} captura cualquier slug de artículo público. Se marca como
+// fallback para que NO tape las rutas del admin del módulo Blog
+// (/blog/blog-article, /blog/blog-category, /blog/dashboard), que se registran
+// después. Sin fallback, /blog/blog-article caía aquí y devolvía 404 porque
+// no existe ningún artículo con ese slug.
+Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])
+    ->name('blog_article')
+    ->fallback();
 
 // Redirecciones de rutas antiguas
 Route::get('/nosotros', fn () => redirect()->route('empresa'));
