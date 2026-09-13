@@ -160,6 +160,19 @@ body {
     width: 60%;
 }
 
+.ara-nav .nav-link.active {
+    color: #ffffff;
+    background: rgba(1, 136, 238, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.ara-nav .nav-link.active::after {
+    width: 60%;
+    background: #0188EE;
+    height: 3px;
+}
+
 /* Mobile menu */
 .ara-mobile-menu {
     position: fixed;
@@ -517,6 +530,25 @@ body {
     opacity: 0.6;
     transition: all 0.3s ease;
     flex-shrink: 0;
+}
+
+.dark .ara-client-logo {
+    filter: brightness(0) invert(1);
+    opacity: 0.7;
+}
+
+.dark .ara-client-logo:hover {
+    filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(1, 136, 238, 0.3));
+    opacity: 1;
+}
+
+/* Dark: Empresa client cards */
+.dark #clientes .border {
+    border-color: #334155 !important;
+}
+
+.dark #clientes .border:hover {
+    border-color: rgba(1, 136, 238, 0.4) !important;
 }
 
 .ara-client-logo:hover {
@@ -885,6 +917,35 @@ body {
 /* Dark: Mobile menu */
 .dark .ara-mobile-menu {
     background: #020817;
+}
+
+/* Dark: Alert messages */
+.dark .bg-green-50 {
+    background-color: #052e16 !important;
+}
+
+.dark .border-green-200 {
+    border-color: #166534 !important;
+}
+
+.dark .text-green-700 {
+    color: #4ade80 !important;
+}
+
+.dark .bg-red-50 {
+    background-color: #450a0a !important;
+}
+
+.dark .border-red-200 {
+    border-color: #7f1d1d !important;
+}
+
+.dark .text-red-700 {
+    color: #fca5a5 !important;
+}
+
+.dark .text-red-600 {
+    color: #f87171 !important;
 }
 
 /* Dark: Navbar scrolled */

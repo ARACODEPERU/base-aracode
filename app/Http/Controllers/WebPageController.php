@@ -1135,6 +1135,36 @@ class WebPageController extends Controller
         return view('pages.contacto');
     }
 
+    public function contactoStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'company' => 'nullable|string|max:255',
+            'service' => 'required|string|max:100',
+            'message' => 'required|string|max:2000',
+        ], [
+            'name.required' => 'El nombre es obligatorio.',
+            'email.required' => 'El email es obligatorio.',
+            'email.email' => 'Debe ingresar un email válido.',
+            'service.required' => 'Seleccione un servicio.',
+            'message.required' => 'El mensaje es obligatorio.',
+        ]);
+
+        try {
+            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
+            
+            Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
+
+            return redirect()->route('contacto')
+                ->with('success', '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.');
+        } catch (\Throwable $e) {
+            return redirect()->route('contacto')
+                ->with('error', 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.');
+        }
+    }
+
     public function blog_index(Request $request)
     {
         $categories = \Modules\Blog\Entities\BlogCategory::where('status', true)->get();
@@ -1186,6 +1216,36 @@ class WebPageController extends Controller
             'latest_articles' => $latest_articles,
             'articlesByCategory' => $articlesByCategory,
         ]);
+    }
+
+    public function casosExito()
+    {
+        return view('pages.casos-exito');
+    }
+
+    public function faq()
+    {
+        return view('pages.faq');
+    }
+
+    public function trabajaNosotros()
+    {
+        return view('pages.trabaja-nosotros');
+    }
+
+    public function politicaPrivacidad()
+    {
+        return view('pages.politica-privacidad');
+    }
+
+    public function terminosCondiciones()
+    {
+        return view('pages.terminos-condiciones');
+    }
+
+    public function libroReclamaciones()
+    {
+        return view('pages.libro-reclamaciones');
     }
 
 

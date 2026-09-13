@@ -32,6 +32,7 @@
                         title="Tecnología que impulsa negocios"
                         subtitle="Somos una empresa peruana especializada en el desarrollo de software a medida y productos digitales innovadores."
                         align="left"
+                        :light="false"
                     />
 
                     <div class="space-y-6 mt-8">
@@ -175,7 +176,7 @@
                         <img 
                             src="{{ asset('themes/webpage/images/customers/' . $client . '.png') }}" 
                             alt="Cliente {{ ucfirst($client) }}" 
-                            class="max-h-12 object-contain opacity-60 hover:opacity-100 transition-opacity"
+                            class="ara-client-logo max-h-12 object-contain"
                             loading="lazy"
                         >
                     </div>
