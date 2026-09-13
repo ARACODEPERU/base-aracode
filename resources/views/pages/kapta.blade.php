@@ -160,45 +160,7 @@
                             ],
                             'highlighted' => false,
                         ],
-                        [
-                            'name' => 'Plan 4',
-                            'price' => 'S/ 0',
-                            'period' => '/mes',
-                            'annual' => '',
-                            'features' => [
-                                'Característica 1',
-                                'Característica 2',
-                                'Característica 3',
-                                'Característica 4',
-                            ],
-                            'highlighted' => false,
-                        ],
-                        [
-                            'name' => 'Plan 5',
-                            'price' => 'S/ 0',
-                            'period' => '/mes',
-                            'annual' => '',
-                            'features' => [
-                                'Característica 1',
-                                'Característica 2',
-                                'Característica 3',
-                                'Característica 4',
-                            ],
-                            'highlighted' => false,
-                        ],
-                        [
-                            'name' => 'Plan 6',
-                            'price' => 'S/ 0',
-                            'period' => '/mes',
-                            'annual' => '',
-                            'features' => [
-                                'Característica 1',
-                                'Característica 2',
-                                'Característica 3',
-                                'Característica 4',
-                            ],
-                            'highlighted' => false,
-                        ],
+                        
                     ];
                 @endphp
 
