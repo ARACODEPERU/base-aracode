@@ -12,10 +12,13 @@ return new class extends Migration
      * capacidad contra la cual se compara el espacio usado en el indicador
      * del dashboard (no se usa el disco real del servidor).
      *
-     * Si la instalacion ya tenia la cuota en el codigo anterior (P000032),
-     * se renombra a PHD0001 conservando el valor ya configurado en produccion.
+     * IMPORTANTE: esta migracion NO modifica parametros existentes. Si la
+     * instalacion ya tiene la cuota registrada con el codigo anterior
+     * (P000032), se deja intacta: el servicio la lee como respaldo de solo
+     * lectura. PHD0001 solo se crea en instalaciones donde no existe
+     * ninguna de las dos.
      *
-     * Valor inicial cuando no existe nada previo: DISC_SPACE del .env si es
+     * Valor inicial (solo instalacion nueva): DISC_SPACE del .env si es
      * numerico; de lo contrario 10 GB.
      */
     public function up(): void
@@ -24,22 +27,15 @@ return new class extends Migration
             return;
         }
 
-        // Ya existe con el codigo nuevo: nada que hacer.
-        if (Parameter::where('parameter_code', 'PHD0001')->exists()) {
+        // Nada que crear si ya existe cualquiera de las dos variantes.
+        // No se renombra, no se actualiza, no se toca nada existente.
+        $existsNew = Parameter::where('parameter_code', 'PHD0001')->exists();
+        $existsLegacy = Parameter::where('parameter_code', 'P000032')->exists();
+
+        if ($existsNew || $existsLegacy) {
             return;
         }
 
-        // Renombrado seguro desde el codigo anterior, conservando el valor
-        // configurado en produccion (solo si es nuestra fila por descripcion).
-        $previous = Parameter::where('parameter_code', 'P000032')->first();
-
-        if ($previous !== null) {
-            $previous->update(['parameter_code' => 'PHD0001']);
-
-            return;
-        }
-
-        // Instalacion nueva: valor inicial desde .env o 10 GB.
         $initialQuota = trim((string) env('DISC_SPACE', ''));
 
         if ($initialQuota === '' || !is_numeric($initialQuota) || (float) $initialQuota <= 0) {
@@ -61,7 +57,8 @@ return new class extends Migration
             return;
         }
 
-        // Revertir solo la fila propia (por descripcion, para no borrar datos ajenos).
+        // Elimina unicamente la fila que esta migracion pudo haber creado
+        // (identificada por su descripcion, para no borrar datos ajenos).
         Parameter::where('parameter_code', 'PHD0001')
             ->where('description', 'Cuota de almacenamiento del sistema en GB (indicador del dashboard)')
             ->delete();

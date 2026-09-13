@@ -34,7 +34,6 @@ use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourseLanding;
-use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudentCoursesInterest;
 use Modules\CMS\Entities\CmsTestimony;
 use Modules\CMS\Entities\CmsLanding;
@@ -58,144 +57,6 @@ class WebPageController extends Controller
             )
             ->orderBy('cms_section_items.position')
             ->get();
-    }
-
-    public function testimonials(Request $request)
-    {
-        $perPage = 12;
-        $category = $request->query('categoria');
-        $courseFilter = $request->query('curso');
-        $ratingFilter = $request->query('rating');
-
-        $baseQuery = function () use ($category, $courseFilter, $ratingFilter) {
-            $query = CmsTestimony::query()
-                ->with(['course.category', 'product', 'student.person'])
-                ->where('approval_status', CmsTestimony::STATUS_APPROVED)
-                ->where('status', true)
-                ->whereNotNull('description');
-
-            if ($category) {
-                $query->whereHas('course.category', function ($q) use ($category) {
-                    $q->where('description', $category);
-                });
-            }
-
-            if ($courseFilter) {
-                $query->where('course_id', $courseFilter);
-            }
-
-            if ($ratingFilter && is_numeric($ratingFilter)) {
-                $query->where('rating', (int) $ratingFilter);
-            }
-
-            return $query;
-        };
-
-        $total = $baseQuery()->count();
-        $page = max(1, (int) $request->query('page', 1));
-
-        $rows = $total > $perPage
-            ? $baseQuery()->orderByDesc('created_at')->forPage($page, $perPage)->get()
-            : $baseQuery()->orderByDesc('created_at')->get();
-
-        $map = fn (CmsTestimony $testimony) => $this->testimonyPayload($testimony);
-
-        $testimonies = $rows->map($map)->values();
-
-        // Agrupacion por categoria de curso (los mas recientes primero dentro de cada grupo).
-        $groups = $testimonies
-            ->groupBy('category')
-            ->map(function ($items, $categoryName) {
-                return [
-                    'category' => $categoryName,
-                    'testimonies' => $items->values(),
-                ];
-            })
-            ->values();
-
-        // Chips de filtro por categoria con su conteo (sobre el total aprobado).
-        $categoryOptions = CmsTestimony::query()
-            ->where('cms_testimonies.approval_status', CmsTestimony::STATUS_APPROVED)
-            ->where('cms_testimonies.status', true)
-            ->whereNotNull('cms_testimonies.course_id')
-            ->join('aca_courses', 'aca_courses.id', '=', 'cms_testimonies.course_id')
-            ->join('aca_category_courses', 'aca_category_courses.id', '=', 'aca_courses.category_id')
-            ->select('aca_category_courses.description as category', DB::raw('COUNT(*) as total'))
-            ->groupBy('aca_category_courses.description')
-            ->orderByDesc('total')
-            ->get();
-
-        // Cursos con testimonios aprobados (para el filtro por curso).
-        $courseOptions = CmsTestimony::query()
-            ->where('cms_testimonies.approval_status', CmsTestimony::STATUS_APPROVED)
-            ->where('cms_testimonies.status', true)
-            ->whereNotNull('cms_testimonies.course_id')
-            ->join('aca_courses', 'aca_courses.id', '=', 'cms_testimonies.course_id')
-            ->select('aca_courses.id as id', 'aca_courses.description as description', DB::raw('COUNT(*) as total'))
-            ->groupBy('aca_courses.id', 'aca_courses.description')
-            ->orderByDesc('total')
-            ->limit(60)
-            ->get();
-
-        // Estadisticas reales de los testimonios aprobados.
-        $ratingsQuery = CmsTestimony::query()
-            ->where('approval_status', CmsTestimony::STATUS_APPROVED)
-            ->where('status', true)
-            ->whereNotNull('rating');
-
-        $ratingsTotal = (clone $ratingsQuery)->count();
-        $ratingsSum = (clone $ratingsQuery)->sum('rating');
-        $positive = (clone $ratingsQuery)->where('rating', '>=', 4)->count();
-
-        $stats = [
-            'total' => $ratingsTotal,
-            'average' => $ratingsTotal > 0 ? round($ratingsSum / $ratingsTotal, 1) : 0,
-            'recommend' => $ratingsTotal > 0 ? (int) round(($positive / $ratingsTotal) * 100) : 0,
-            'courses' => (clone $ratingsQuery)->whereNotNull('course_id')->distinct('course_id')->count('course_id'),
-            'top_rating' => (clone $ratingsQuery)->max('rating') ?: 5,
-        ];
-
-        // Testimonio destacado: el de mejor calificacion mas reciente.
-        $featuredRow = (clone $ratingsQuery)->orderByDesc('rating')->orderByDesc('created_at')->first();
-        $featured = $featuredRow ? $map($featuredRow) : null;
-
-        $hasMore = $total > $perPage && ($page * $perPage) < $total;
-
-        // Schema markup (JSON-LD): Organization con valoracion agregada y resenas.
-        $schema = null;
-
-        if ($stats['total'] > 0) {
-            $reviewPool = $testimonies->isNotEmpty() ? $testimonies : collect(array_filter([$featured]));
-
-            $schema = [
-                '@context' => 'https://schema.org',
-                '@type' => 'Organization',
-                'name' => 'CPA Academy',
-                'url' => url('/'),
-                'logo' => asset('themes/webpage/images/Logo_cpa_modificado.png'),
-                'aggregateRating' => $this->aggregateRatingSchema($reviewPool, (float) ($stats['average'] ?: 5)),
-                'review' => $reviewPool->take(20)->map(fn (array $item) => $this->reviewSchema($item))->values()->all(),
-            ];
-        }
-
-        return view('pages.testimonios', [
-            'testimonies' => $testimonies,
-            'groups' => $groups,
-            'featured' => $featured,
-            'stats' => $stats,
-            'schema' => $schema,
-            'categoryOptions' => $categoryOptions,
-            'courseOptions' => $courseOptions,
-            'total' => $total,
-            'perPage' => $perPage,
-            'page' => $page,
-            'hasMore' => $hasMore,
-            'filters' => [
-                'categoria' => $category,
-                'curso' => $courseFilter,
-                'rating' => $ratingFilter,
-            ],
-        ]);
     }
 
     public function index(Request $request)
@@ -903,14 +764,6 @@ class WebPageController extends Controller
              'course_testimonials' => $courseTestimonials,
              'course_schema' => $courseSchema,
             ]);
-        }
-
-        return view ('pages.course-landing', [
-            'landing' => $landing,
-            'teachers_premium' => $teachersPremium,
-            'colors' => $colors,
-            'onli_item_id' => $onliItem ? $onliItem->id : null,
-        ]);
     }
 
     public function course_landing_preview($id){

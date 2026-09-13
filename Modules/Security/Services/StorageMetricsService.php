@@ -21,6 +21,12 @@ class StorageMetricsService
     public const QUOTA_PARAMETER = 'PHD0001';
 
     /**
+     * Código legado de la cuota (instalaciones anteriores). Se acepta como
+     * respaldo de SOLO LECTURA: nunca se renombra ni se modifica.
+     */
+    public const LEGACY_QUOTA_PARAMETER = 'P000032';
+
+    /**
      * Devuelve la medición actual (desde caché si existe).
      * Estructura: users{total,image,pdf,other}, system{total,logs,framework,vendor},
      * public_static{total}, database{total}, used, quota, used_percentage,
@@ -216,9 +222,10 @@ class StorageMetricsService
 
     /**
      * Resuelve la cuota de almacenamiento en GB desde el parámetro PHD0001.
-     * Es la única fuente de capacidad: si el parámetro no existe o no es un
-     * número válido, devuelve 0 (el indicador mostrará la medición sin
-     * porcentaje de cuota).
+     * Es la única fuente de capacidad; se acepta el código legado P000032
+     * como respaldo de solo lectura (sin modificarlo nunca). Si no existe
+     * ninguno o el valor no es un número válido, devuelve 0 (el indicador
+     * mostrará la medición sin porcentaje de cuota).
      */
     public function resolveQuota(): float
     {
@@ -228,6 +235,14 @@ class StorageMetricsService
 
             if ($paramQuota !== null && $paramQuota !== '' && is_numeric($paramQuota) && (float) $paramQuota > 0) {
                 return (float) $paramQuota;
+            }
+
+            // Respaldo de solo lectura para instalaciones con el código legado
+            $legacyQuota = Parameter::where('parameter_code', self::LEGACY_QUOTA_PARAMETER)
+                ->value('value_default');
+
+            if ($legacyQuota !== null && $legacyQuota !== '' && is_numeric($legacyQuota) && (float) $legacyQuota > 0) {
+                return (float) $legacyQuota;
             }
         } catch (\Throwable $e) {
             // La tabla puede no existir aún durante la migración inicial
