@@ -119,9 +119,9 @@
                     $plans = [
                         [
                             'name' => 'Emprendedor',
-                            'price' => 'S/ 35',
+                            'price' => 'S/ 149',
                             'period' => '/mes',
-                            'annual' => 'S/ 350 /año',
+                            'annual' => 'S/ 1490 /año',
                             'features' => [
                                 'Hasta 50 estudiantes',
                                 '10 cursos',
@@ -132,9 +132,9 @@
                         ],
                         [
                             'name' => 'Profesional',
-                            'price' => 'S/ 80',
+                            'price' => 'S/ 299',
                             'period' => '/mes',
-                            'annual' => 'S/ 800 /año',
+                            'annual' => 'S/ 2990 /año',
                             'features' => [
                                 'Hasta 200 estudiantes',
                                 'Cursos ilimitados',
