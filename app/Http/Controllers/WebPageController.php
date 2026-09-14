@@ -1163,8 +1163,11 @@ class WebPageController extends Controller
         ]);
 
         try {
-            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
+            // Guardar en base de datos
+            \App\Models\ContactMessage::create($validated);
 
+            // Enviar email al admin
+            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
             Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
 
             return redirect()->route('contacto')
@@ -1208,6 +1211,44 @@ class WebPageController extends Controller
             'popular_articles' => $popular_articles,
             'search' => $search ?? null,
         ]);
+    }
+
+    public function blogSubscriberStore(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+        ], [
+            'email.required' => 'El email es obligatorio.',
+            'email.email' => 'Debe ingresar un email válido.',
+        ]);
+
+        try {
+            $subscriber = \App\Models\BlogSubscriber::updateOrCreate(
+                ['email' => $validated['email']],
+                [
+                    'name' => $request->get('name', ''),
+                    'status' => 'active',
+                    'source' => 'blog-sidebar',
+                ]
+            );
+
+            // Enviar email de bienvenida
+            Mail::to($validated['email'])->send(new \App\Mail\BlogSubscriberWelcomeMail(
+                $subscriber->name ?: 'Suscriptor',
+                $validated['email']
+            ));
+
+            // Notificar al admin
+            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
+            Mail::to($adminEmail)->send(new \App\Mail\BlogSubscriberAdminMail(
+                $subscriber->name ?: 'Sin nombre',
+                $validated['email']
+            ));
+
+            return back()->with('success', '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Hubo un error al procesar tu suscripción. Por favor, intenta nuevamente.');
+        }
     }
 
     public function blog_article($url)
