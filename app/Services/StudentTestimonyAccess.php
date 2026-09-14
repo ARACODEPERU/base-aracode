@@ -32,10 +32,18 @@ class StudentTestimonyAccess
 
     /**
      * Curso de pago o suscripcion activa y vigente.
+     * Se mantiene independiente de JobOffersAccess::canView() porque las reglas
+     * de acceso de Testimonios y Ofertas Laborales pueden diferir.
      */
     public static function canParticipate(?User $user): bool
     {
-        return JobOffersAccess::canView($user);
+        $studentId = JobOffersAccess::studentId($user);
+
+        if (!$studentId) {
+            return false;
+        }
+
+        return JobOffersAccess::hasPaidCourse($studentId) || JobOffersAccess::hasActiveSubscription($studentId);
     }
 
     public static function studentId(?User $user): ?int
