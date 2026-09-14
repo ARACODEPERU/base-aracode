@@ -3,6 +3,7 @@
 use App\Http\Controllers\ComplaintsBookAttentionController;
 use App\Http\Controllers\ComplaintsBookController;
 use Illuminate\Support\Facades\Route;
+use Modules\CRM\Http\Controllers\CrmChatAsistenteController;
 use Modules\CRM\Http\Controllers\CrmChatbotController;
 use Modules\CRM\Http\Controllers\CrmChatController;
 use Modules\CRM\Http\Controllers\CrmContactsController;
@@ -44,11 +45,16 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->gro
         ->get('chat/dashboard', [CrmChatController::class, 'index'])
         ->name('crm_chat_dashboard');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_notifications'])
+    // Chat de consultas: los admins entran como un asistente y responden por el.
+    Route::middleware(['middleware' => 'permission:crm_chat_asistente'])
+        ->get('chat/asistentes', [CrmChatAsistenteController::class, 'index'])
+        ->name('crm_chat_asistente');
+
+    Route::middleware(['middleware' => 'permission:crm_chat_notifications|crm_chat_asistente'])
         ->get('chat/notifications', [CrmConversationController::class, 'getConversations'])
         ->name('crm_chat_notifications');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
+    Route::middleware(['middleware' => 'permission:crm_chat_dashboard|crm_chat_asistente'])
         ->get('chat/contacts', [CrmChatController::class, 'getContacts'])
         ->name('crm_chat_contacts_data');
 
@@ -56,7 +62,7 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->gro
         ->name('crm_chat_conveersation_status');
 
 
-    Route::middleware(['middleware' => 'permission:crm_chat_messages'])
+    Route::middleware(['middleware' => 'permission:crm_chat_messages|crm_chat_asistente'])
         ->post('conversations/messages', [CrmMessagesController::class, 'sendMessage'])
         ->name('crm_send_message');
 
@@ -64,23 +70,23 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->gro
         ->post('conversations/email/messages', [CrmMessagesController::class, 'sendMessageEmail'])
         ->name('crm_send_message_email');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_messages'])
+    Route::middleware(['middleware' => 'permission:crm_chat_messages|crm_chat_asistente'])
         ->post('conversations/messages/list', [CrmMessagesController::class, 'getMessages'])
         ->name('crm_list_message');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_messages'])
+    Route::middleware(['middleware' => 'permission:crm_chat_messages|crm_chat_asistente'])
         ->delete('conversations/messages/destroy', [CrmMessagesController::class, 'destroyMessage'])
         ->name('crm_chat_message_destroy');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
+    Route::middleware(['middleware' => 'permission:crm_chat_dashboard|crm_chat_asistente'])
         ->post('conversations/messages/upload/audio', [CrmMessagesController::class, 'uploadMessagesAudio'])
         ->name('crm_upload_message_audio');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
+    Route::middleware(['middleware' => 'permission:crm_chat_dashboard|crm_chat_asistente'])
         ->post('conversations/messages/delete/file', [CrmMessagesController::class, 'deleteFile'])
         ->name('crm_delete_message_file');
 
-    Route::middleware(['middleware' => 'permission:crm_chat_dashboard'])
+    Route::middleware(['middleware' => 'permission:crm_chat_dashboard|crm_chat_asistente'])
         ->post('conversations/messages/upload/file', [CrmMessagesController::class, 'uploadMessagesFile'])
         ->name('crm_upload_message_file');
 
@@ -144,7 +150,7 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('crm')->gro
         ->post('application-ai-prompt/send/messages/geminiai', [CrmIaController::class, 'sendMessage'])
         ->name('crm_application_ai_prompt_send_message');
 
-    Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia'])
+    Route::middleware(['middleware' => 'permission:crm_clientes_preguntas_ia|crm_chat_asistente'])
         ->post('application-ai-prompt/send/messages/openai', [CrmIaController::class, 'basicQuestionService'])
         ->name('crm_application_ai_prompt_send_message_openai');
 

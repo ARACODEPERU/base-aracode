@@ -104,6 +104,32 @@
         }
     }
 
+    // Curso no disponible: en vez de no hacer nada, ofrece ver la informacion
+    // publica del curso y redirige a la landing (/curso/{slug}) o, si el curso
+    // no tiene landing publicada, a la descripcion (/curso-descripcion/{id}).
+    const viewCourseInfo = (course) => {
+        Swal2.fire({
+            title: '¿Ver información del curso?',
+            html: `Te mostramos la información de <strong>${course.description}</strong>.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, ver información',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            const hasLanding = course.url_slug && (course.landing_published === true || course.landing_published === 1);
+            const url = hasLanding
+                ? route('course_url_slug', course.url_slug)
+                : route('web_course_description', course.id);
+
+            window.open(url, '_blank');
+        });
+    };
+
     const showAlertToast = async (text, iconType = null, xposition = 'top-end') => {
         const toast = Swal2.mixin({
             toast: true,
@@ -364,11 +390,15 @@
                                 </template>
                                 <template v-else>
                                     <!-- Curso no matriculado -->
-                                    <div class="relative flex items-end overflow-hidden rounded-xl mb-4">
+                                    <div class="relative flex items-end overflow-hidden rounded-xl mb-4 cursor-pointer"
+                                        @click="viewCourseInfo(course)"
+                                        title="Ver información del curso">
                                         <img :src="getImage(course.image)" alt="Hotel Photo" class="w-full h-48 object-cover transition-all duration-300 group-hover:brightness-110" />
                                     </div>
 
-                                    <div class="space-y-3">
+                                    <div class="space-y-3 cursor-pointer"
+                                        @click="viewCourseInfo(course)"
+                                        title="Ver información del curso">
                                         <!-- Badges de información -->
                                         <div class="flex flex-wrap gap-2">
                                             <div class="inline-flex items-center px-2 py-1 bg-purple-500 text-white rounded-lg text-xs font-medium group-hover:bg-purple-600 transition-colors duration-300">

@@ -109,7 +109,13 @@
                 return response.data;
             }).then((res) => {
                 if(res.success){
-                    privateChat.value.messages.push(msg);
+                    // El id real permite reconocer el eco que llega por socket y no
+                    // pintar el mismo mensaje dos veces (en cualquier orden de llegada).
+                    msg.id = res.message?.id ?? null;
+                    const mensajes = privateChat.value.messages ?? (privateChat.value.messages = []);
+                    if(! mensajes.some(m => m.id != null && String(m.id) === String(msg.id))){
+                        mensajes.push(msg);
+                    }
                     privateChatText.value = '';
                     scrollToBottomChatBox();
                 }else{
@@ -145,15 +151,24 @@
                 text: result.data.message.content,
                 time: 'En este momento',
                 type: result.data.message.type,
-                id: result.data.message.id
+                id: result.data.message.id,
+                // El widget decide el lado comparando authUser.person_id con el
+                // person_id del mensaje, asi que hay que conservarlo: sin el, mis
+                // propios mensajes se pintaban como si los hubiera escrito el otro.
+                person_id: result.data.message.person_id,
             };
 
             participants.forEach(item => {
                 if(authUser.id == item){
                     if(privateChat.value){
                         if(conversationId == privateChat.value.conversation){
-                            privateChat.value.messages.push(newmsg);
-                            scrollToBottomChatBox();
+                            const mensajes = privateChat.value.messages ?? (privateChat.value.messages = []);
+                            const yaPintado = mensajes.some(m => m.id != null && String(m.id) === String(newmsg.id));
+
+                            if(! yaPintado){
+                                mensajes.push(newmsg);
+                                scrollToBottomChatBox();
+                            }
                         }
                     }
 

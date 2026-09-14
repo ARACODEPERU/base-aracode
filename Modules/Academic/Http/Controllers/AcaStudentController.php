@@ -39,6 +39,7 @@ use Modules\Academic\Entities\AcaSubscriptionPayment;
 use Modules\Academic\Entities\AcaStudentAttendance;
 use Modules\Academic\Entities\AcaStudentParticipation;
 use Modules\Academic\Entities\AcaStudentGrade;
+use Modules\Onlineshop\Entities\OnliItem;
 
 class AcaStudentController extends Controller
 {
@@ -693,15 +694,27 @@ class AcaStudentController extends Controller
             ->pluck('course_id')
             ->toArray();
 
-        // 3. Obtener todos los cursos disponibles
+        // 3. Obtener los IDs de los cursos publicados como producto web activo.
+        // Un curso sin producto web no debe ofrecerse: no se puede cobrar en
+        // /carrito, que resuelve los items por onli_items.id.
+        $webProductCourseIds = OnliItem::query()
+            ->whereIn('entitie', ['Modules-Academic-Entities-AcaCourse', AcaCourse::class])
+            ->where('status', true)
+            ->whereNotNull('item_id')
+            ->pluck('item_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        // 4. Obtener todos los cursos disponibles
         $allCourses = AcaCourse::with('modules.themes.contents')
                 ->with('modality')
                 ->with('teacher.person')
+                ->with('landing:id,course_id,url_slug,is_published')
                 ->orderBy('id', 'DESC')
                 ->get();
 
-        // 4. Procesar cada curso para determinar 'can_view'
-        $coursesWithAccess = $allCourses->map(function ($course) use ($hasActiveSubscription, $hasPremiumVip, $registeredCourseIds) {
+        // 5. Procesar cada curso para determinar 'can_view'
+        $coursesWithAccess = $allCourses->map(function ($course) use ($hasActiveSubscription, $hasPremiumVip, $registeredCourseIds, $webProductCourseIds) {
             $canView = false; // Valor por defecto
 
             // Condición VIP: Si tiene Premium VIP, puede ver TODOS los cursos (incluido especialización)
@@ -729,11 +742,23 @@ class AcaStudentController extends Controller
                 $canView = true;
             }
 
+            // Un curso sin producto web activo no forma parte del catalogo que
+            // se ofrece en la web. Si el alumno ya tiene acceso, se conserva.
+            if (! $canView && ! in_array((int) $course->id, $webProductCourseIds, true)) {
+                return null;
+            }
+
             // Agrega el campo 'can_view' al objeto del curso
             $course->can_view = $canView;
 
+            // Datos de la landing publica del curso, para poder ofrecer mas
+            // informacion cuando el alumno no tiene acceso al contenido.
+            $course->url_slug = $course->landing?->url_slug;
+            $course->landing_published = (bool) ($course->landing?->is_published);
+            $course->unsetRelation('landing');
+
             return $course;
-        });
+        })->filter()->values();
 
         return $coursesWithAccess;
     }

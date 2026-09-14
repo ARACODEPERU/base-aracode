@@ -14,9 +14,12 @@ use Inertia\Inertia;
 use Modules\CRM\Entities\CrmConversation;
 use Modules\CRM\Entities\CrmMessage;
 use Modules\CRM\Entities\CrmParticipant;
+use Modules\CRM\Http\Controllers\Concerns\ResuelveIdentidadAsistente;
 
 class CrmChatController extends Controller
 {
+    use ResuelveIdentidadAsistente;
+
     /**
      * Display a listing of the resource.
      */
@@ -37,9 +40,11 @@ class CrmChatController extends Controller
         ]);
     }
 
-    public function getContacts()
+    public function getContacts(Request $request)
     {
-        $persomId = Auth::user()->person_id;
+        // Identidad efectiva: el asistente suplantado cuando un admin entra
+        // desde "Chat de consultas".
+        $persomId = $this->personaEfectiva($request);
 
         // Subquery: obtener la fecha del último mensaje por conversación entre personas distintas
         $latestMessageSubquery = DB::table('crm_messages as m')
