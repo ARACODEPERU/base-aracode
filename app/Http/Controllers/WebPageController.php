@@ -1186,11 +1186,27 @@ class WebPageController extends Controller
             $query->where('category_id', $categoryId);
         }
 
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('short_description', 'like', "%{$search}%")
+                  ->orWhere('content_text', 'like', "%{$search}%");
+            });
+        }
+
         $articles = $query->latest('created_at')->paginate(9);
+
+        $popular_articles = \Modules\Blog\Entities\BlogArticle::with('category')
+            ->where('status', true)
+            ->orderByDesc('views')
+            ->take(5)
+            ->get();
 
         return view('pages.blog', [
             'categories' => $categories,
             'articles' => $articles,
+            'popular_articles' => $popular_articles,
+            'search' => $search ?? null,
         ]);
     }
 
@@ -1212,6 +1228,13 @@ class WebPageController extends Controller
             ->take(4)
             ->get();
 
+        $popular_articles = \Modules\Blog\Entities\BlogArticle::with('category')
+            ->where('status', true)
+            ->where('id', '!=', $article->id)
+            ->orderByDesc('views')
+            ->take(5)
+            ->get();
+
         $articlesByCategory = [];
         foreach ($categories as $category) {
             $articlesByCategory[$category->id] = \Modules\Blog\Entities\BlogArticle::where('category_id', $category->id)
@@ -1224,6 +1247,7 @@ class WebPageController extends Controller
             'article' => $article,
             'categories' => $categories,
             'latest_articles' => $latest_articles,
+            'popular_articles' => $popular_articles,
             'articlesByCategory' => $articlesByCategory,
         ]);
     }
