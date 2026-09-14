@@ -31,12 +31,13 @@ use Carbon\Carbon;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourseLanding;
-use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudentCoursesInterest;
 use Modules\CMS\Entities\CmsLanding;
 use Modules\Socialevents\Entities\EvenEvent;
 use App\Models\Parameter;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+
 
 class WebPageController extends Controller
 {
@@ -378,12 +379,21 @@ class WebPageController extends Controller
             $onliItem = OnliItem::where('item_id', $landing->course->id)->first();
         }
 
-        return view ('pages.course-landing', [
-            'landing' => $landing,
-            'teachers_premium' => $teachersPremium,
-            'colors' => $colors,
-            'onli_item_id' => $onliItem ? $onliItem->id : null,
+         // Testimonios aprobados y visibles de ESTE curso (se publican al final de la landing).
+         $courseTestimonials = $this->publicCourseTestimonials($landing?->course);
+
+         // Schema markup del curso, con su valoracion agregada y resenas cuando las tiene.
+         $courseSchema = $this->publicCourseSchema($landing, $courseTestimonials);
+
+         return view ('pages.course-landing', [
+             'landing' => $landing,
+             'teachers_premium' => $teachersPremium,
+             'colors' => $colors,
+             'onli_item_id' => $onliItem ? $onliItem->id : null,
+             'course_testimonials' => $courseTestimonials,
+             'course_schema' => $courseSchema,
         ]);
+
     }
 
     public function course_landing_preview($id){
@@ -1153,8 +1163,11 @@ class WebPageController extends Controller
         ]);
 
         try {
+            // Guardar en base de datos
+            \App\Models\ContactMessage::create($validated);
+
+            // Enviar email al admin
             $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-            
             Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
 
             return redirect()->route('contacto')
@@ -1176,12 +1189,66 @@ class WebPageController extends Controller
             $query->where('category_id', $categoryId);
         }
 
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('short_description', 'like', "%{$search}%")
+                  ->orWhere('content_text', 'like', "%{$search}%");
+            });
+        }
+
         $articles = $query->latest('created_at')->paginate(9);
+
+        $popular_articles = \Modules\Blog\Entities\BlogArticle::with('category')
+            ->where('status', true)
+            ->orderByDesc('views')
+            ->take(5)
+            ->get();
 
         return view('pages.blog', [
             'categories' => $categories,
             'articles' => $articles,
+            'popular_articles' => $popular_articles,
+            'search' => $search ?? null,
         ]);
+    }
+
+    public function blogSubscriberStore(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+        ], [
+            'email.required' => 'El email es obligatorio.',
+            'email.email' => 'Debe ingresar un email válido.',
+        ]);
+
+        try {
+            $subscriber = \App\Models\BlogSubscriber::updateOrCreate(
+                ['email' => $validated['email']],
+                [
+                    'name' => $request->get('name', ''),
+                    'status' => 'active',
+                    'source' => 'blog-sidebar',
+                ]
+            );
+
+            // Enviar email de bienvenida
+            Mail::to($validated['email'])->send(new \App\Mail\BlogSubscriberWelcomeMail(
+                $subscriber->name ?: 'Suscriptor',
+                $validated['email']
+            ));
+
+            // Notificar al admin
+            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
+            Mail::to($adminEmail)->send(new \App\Mail\BlogSubscriberAdminMail(
+                $subscriber->name ?: 'Sin nombre',
+                $validated['email']
+            ));
+
+            return back()->with('success', '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Hubo un error al procesar tu suscripción. Por favor, intenta nuevamente.');
+        }
     }
 
     public function blog_article($url)
@@ -1202,6 +1269,13 @@ class WebPageController extends Controller
             ->take(4)
             ->get();
 
+        $popular_articles = \Modules\Blog\Entities\BlogArticle::with('category')
+            ->where('status', true)
+            ->where('id', '!=', $article->id)
+            ->orderByDesc('views')
+            ->take(5)
+            ->get();
+
         $articlesByCategory = [];
         foreach ($categories as $category) {
             $articlesByCategory[$category->id] = \Modules\Blog\Entities\BlogArticle::where('category_id', $category->id)
@@ -1214,6 +1288,7 @@ class WebPageController extends Controller
             'article' => $article,
             'categories' => $categories,
             'latest_articles' => $latest_articles,
+            'popular_articles' => $popular_articles,
             'articlesByCategory' => $articlesByCategory,
         ]);
     }
