@@ -95,6 +95,13 @@ class CrmMessagesController extends Controller
                 'sent_by_user_id' => $suplantando ? Auth::id() : null,
             ]);
 
+            // Auditoria en el eco del socket: el listado ya expone sent_by_name, asi
+            // que el mensaje recien pintado debe traerlo tambien (no se guarda en la
+            // base, solo viaja en el payload del broadcast).
+            if ($suplantando) {
+                $message->sent_by_name = Auth::user()?->name;
+            }
+
             // Devolver la conversación con los mensajes
             //broadcast(new SendMessage($participants, $message, ['ofUserId' => $personId], $conversationId));
 

@@ -41,6 +41,28 @@ class CrmChatAsistenteController extends Controller
             'modoAsistentes' => true,
             'asistentes' => $asistentes,
             'asistenteSeleccionado' => $seleccionado,
+            'avisoAsistentes' => $this->avisoAsistentes($asistentes, $request, $seleccionado),
         ]);
+    }
+
+    /**
+     * Aviso para el administrador cuando el chat de consultas no puede operar
+     * como un asistente: o no existe ninguno con ese rol, o el que se pidio en la
+     * URL ya no lo tiene.
+     */
+    private function avisoAsistentes($asistentes, Request $request, $seleccionado): ?string
+    {
+        if ($asistentes->isNotEmpty()) {
+            if (! $request->filled('asistente') || $seleccionado) {
+                return null;
+            }
+
+            return 'El asistente que intentas usar no existe o ya no tiene el rol Asistente. '
+                . 'Se abrió el chat como tú mismo; corrige ese usuario o asígnale de nuevo el rol Asistente.';
+        }
+
+        return 'No existe ningún usuario con el rol Asistente, así que no hay quien atienda el chat de consultas. '
+            . 'Crea un usuario y asígnale el rol Asistente (Roles y permisos) para poder responder como él. '
+            . 'Mientras tanto puedes responder como tú mismo.';
     }
 }

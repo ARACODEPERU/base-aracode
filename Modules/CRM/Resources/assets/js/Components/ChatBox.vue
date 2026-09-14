@@ -113,7 +113,15 @@
                     // pintar el mismo mensaje dos veces (en cualquier orden de llegada).
                     msg.id = res.message?.id ?? null;
                     const mensajes = privateChat.value.messages ?? (privateChat.value.messages = []);
-                    if(! mensajes.some(m => m.id != null && String(m.id) === String(msg.id))){
+                    const porId = mensajes.find(m => m.id != null && String(m.id) === String(msg.id));
+                    // Si el eco se adelantó sin id, se completa ese mensaje en pantalla
+                    // (con su id real) en vez de agregar un duplicado.
+                    const sinId = porId ?? mensajes.find(m => m.id == null && m.text === msg.text && m.type === msg.type);
+
+                    if (sinId) {
+                        sinId.id = msg.id;
+                        sinId.person_id = msg.person_id ?? sinId.person_id;
+                    } else {
                         mensajes.push(msg);
                     }
                     privateChatText.value = '';
@@ -163,12 +171,18 @@
                     if(privateChat.value){
                         if(conversationId == privateChat.value.conversation){
                             const mensajes = privateChat.value.messages ?? (privateChat.value.messages = []);
-                            const yaPintado = mensajes.some(m => m.id != null && String(m.id) === String(newmsg.id));
+                            const yaPintado = mensajes.find(m => m.id != null && String(m.id) === String(newmsg.id));
+                            // Sin id (o antes de la respuesta del POST) se reconoce el
+                            // mensaje ya pintado por contenido y tipo, no se duplica.
+                            const sinId = yaPintado ?? mensajes.find(m => m.id == null && m.text === newmsg.text && m.type === newmsg.type);
 
-                            if(! yaPintado){
+                            if (sinId) {
+                                if (newmsg.id != null) sinId.id = newmsg.id;
+                                sinId.person_id = newmsg.person_id ?? sinId.person_id;
+                            } else {
                                 mensajes.push(newmsg);
-                                scrollToBottomChatBox();
                             }
+                            scrollToBottomChatBox();
                         }
                     }
 

@@ -22,6 +22,7 @@
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
     import IconCamera from '@/Components/vristo/icon/icon-camera.vue';
     import IconMessage from '@/Components/vristo/icon/icon-message.vue';
+    import IconInfoCircle from '@/Components/vristo/icon/icon-info-circle.vue';
     import { useForm, Link, usePage } from '@inertiajs/vue3';
     import AudioRecord from './Partials/AudioRecord.vue';
     import UploadFile from './Partials/UploadFile.vue';
@@ -52,6 +53,12 @@
         },
         asistenteSeleccionado: {
             type: Object,
+            default: null
+        },
+        // Mensaje del backend cuando el chat de consultas no puede operar como un
+        // asistente (no existe ninguno con ese rol, o el pedido ya no lo tiene).
+        avisoAsistentes: {
+            type: String,
             default: null
         }
     });
@@ -153,27 +160,62 @@
     // Compara ids sin depender del tipo (el id del socket puede llegar como texto).
     const mismoMensaje = (a, b) => a != null && b != null && String(a) === String(b);
 
-    // Pinta un mensaje propio evitando duplicados: el eco del socket puede llegar
-    // antes o despues de la respuesta del POST, y en los dos ordenes debe quedar un
-    // solo mensaje, pintado como mio.
-    const pushMensajePropio = (msg) => {
-        if (!selectedUser.value) return;
+    const listaMensajes = () => selectedUser.value?.messages ?? (selectedUser.value.messages = []);
 
-        const mensajes = selectedUser.value.messages ?? (selectedUser.value.messages = []);
+    // Mensajes que acabo de enviar y cuyo eco aun no ha llegado: permite reconocer
+    // como propio el eco del socket aunque venga sin id o sin person_id.
+    const propiosEnVuelo = ref([]);
 
-        const eco = mensajes.find((m) => mismoMensaje(m.id, msg.id));
+    const registrarPropio = (msg) => {
+        propiosEnVuelo.value.push({ text: msg.text, type: msg.type, at: Date.now() });
+    };
 
-        if (eco) {
-            // El eco del socket se adelanto a esta respuesta: se corrige el lado del
-            // mensaje ya pintado en vez de agregar un duplicado.
-            eco.fromUserId = msg.fromUserId;
-            eco.time = msg.time;
+    const olvidarPropio = (msg) => {
+        const i = propiosEnVuelo.value.findIndex((p) => p.text === msg.text && p.type === msg.type);
+        if (i > -1) propiosEnVuelo.value.splice(i, 1);
+    };
+
+    // Consume (una sola vez) la coincidencia con un mensaje propio en vuelo.
+    const consumePropioEnVuelo = (msg) => {
+        propiosEnVuelo.value = propiosEnVuelo.value.filter((p) => Date.now() - p.at < 60000);
+        const i = propiosEnVuelo.value.findIndex((p) => p.text === msg.text && p.type === msg.type);
+        if (i === -1) return false;
+        propiosEnVuelo.value.splice(i, 1);
+        return true;
+    };
+
+    // Pinta (o completa) un mensaje en la conversacion abierta sin duplicarlo.
+    //
+    // El eco del socket y la respuesta del POST describen el mismo mensaje y pueden
+    // llegar en cualquier orden, con o sin id: se busca primero por id real y, si el
+    // eco vino sin id, por contenido+tipo. El lado ya pintado como mio nunca se
+    // degrada a "del alumno".
+    const pintarMensaje = (msg, esMio) => {
+        if (! selectedUser.value) return;
+
+        const mensajes = listaMensajes();
+        const mio = selectedUser.value.userId;
+        const porId = msg.id != null ? mensajes.find((m) => mismoMensaje(m.id, msg.id)) : null;
+        const existente = porId ?? mensajes.find((m) => m.id == null && m.text === msg.text && m.type === msg.type);
+
+        if (existente) {
+            if (msg.id != null) existente.id = msg.id;
+            if (esMio || ! mismoMensaje(existente.fromUserId, mio)) {
+                existente.fromUserId = esMio ? mio : 0;
+            }
+            if (msg.time) existente.time = msg.time;
+            scrollToBottom();
             return;
         }
 
-        mensajes.push(msg);
+        mensajes.push({ ...msg, fromUserId: esMio ? mio : 0 });
         scrollToBottom();
     };
+
+    // Pinta un mensaje propio evitando duplicados: el eco del socket puede llegar
+    // antes o despues de la respuesta del POST, y en los dos ordenes debe quedar un
+    // solo mensaje, pintado como mio.
+    const pushMensajePropio = (msg) => pintarMensaje(msg, true);
 
     const sendMessage = () => {
         if (textMessage.value.trim()) {
@@ -186,6 +228,7 @@
                 type: 'text',
                 id: null
             };
+            registrarPropio(msg);
             chatPost(route('crm_send_message'),msg).then((response) => {
                 return response.data;
             }).then((res) => {
@@ -196,6 +239,7 @@
                 }else{
                     showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
                 }
+                olvidarPropio(msg);
                 isShowLoadingSend.value = false;
             });
         }
@@ -229,11 +273,13 @@
                 type: 'audio',
                 id: null
             };
+            registrarPropio(msg);
             chatPost(route('crm_send_message'),msg).then((response) => {
                 return response.data;
             }).then((res) => {
                 msg.id = res.message?.id ?? null;
                 pushMensajePropio(msg);
+                olvidarPropio(msg);
                 isShowLoadingSend.value = false;
             });
         }
@@ -250,11 +296,13 @@
                 type: 'file',
                 id: null
             };
+            registrarPropio(msg);
             chatPost(route('crm_send_message'),msg).then((response) => {
                 return response.data;
             }).then((res) => {
                 msg.id = res.message?.id ?? null;
                 pushMensajePropio(msg);
+                olvidarPropio(msg);
                 isShowLoadingSend.value = false;
             });
         }
@@ -339,26 +387,32 @@
             // del contacto, asi que hay que traducirlo: si el emisor soy yo, va como
             // mio; si no, va como del alumno.
             const ofUserId = Number(result.data.ofUserId);
+            const mensajeEco = result.data.message ?? {};
             // Se compara contra todas mis identidades: la persona suplantada (si
             // estoy respondiendo como un asistente) y mi propia persona. El
             // person_id que guarda el mensaje es el dato de la base, asi que sirve
             // de respaldo si el socket manda el emisor de otra forma. Ademas,
             // sent_by_user_id solo se llena cuando un admin responde en nombre de un
             // asistente, asi que tambien confirma que el mensaje lo escribi yo.
+            // El eco de un mensaje que acabo de enviar es mio aunque el payload
+            // llegue incompleto: se compara con la cola de propios en vuelo.
+            const enVuelo = consumePropioEnVuelo({ text: mensajeEco.content, type: mensajeEco.type });
             const misPersonas = [asistenteActivo.value?.person_id, authUser.person_id]
                 .filter(persona => persona != null)
                 .map(Number);
-            const esMio = misPersonas.includes(ofUserId)
-                || misPersonas.includes(Number(result.data.message?.person_id))
-                || result.data.message?.sent_by_user_id != null;
+            const esMio = enVuelo
+                || misPersonas.includes(ofUserId)
+                || misPersonas.includes(Number(mensajeEco.person_id))
+                || mensajeEco.sent_by_user_id != null;
 
             const newmsg = {
                 fromUserId: esMio ? (selectedUser.value?.userId ?? ofUserId) : 0,
                 toUserId: 0,
-                text: result.data.message.content,
+                text: mensajeEco.content,
                 time: 'En este momento',
-                type: result.data.message.type,
-                id: result.data.message.id
+                type: mensajeEco.type,
+                id: mensajeEco.id,
+                sent_by_name: mensajeEco.sent_by_name ?? null
             };
 
             participants.forEach(item => {
@@ -366,25 +420,9 @@
                     fetchPosts()
                     if(selectedUser.value){
                         if(conversationId == selectedUser.value.conversationId){
-                            const mensajes = selectedUser.value.messages ?? (selectedUser.value.messages = []);
-
-                            // 1) El eco puede llegar despues del POST: si el mensaje ya
-                            //    esta pintado con el id real, no se repite.
-                            const yaPintado = mensajes.some(m => mismoMensaje(m.id, newmsg.id));
-
-                            // 2) Si todavia no tiene id (el POST aun no responde), se le
-                            //    asigna el id real en lugar de pintar un duplicado.
-                            const pendiente = (esMio && ! yaPintado)
-                                ? [...mensajes].reverse().find(m => m.id == null && m.text === newmsg.text && m.type === newmsg.type)
-                                : null;
-
-                            if (pendiente) {
-                                pendiente.id = newmsg.id;
-                            } else if (! yaPintado) {
-                                mensajes.push(newmsg);
-                            }
-
-                            scrollToBottom();
+                            // Se completa el mensaje que ya estaba en pantalla (eco
+                            // adelantado o respuesta del POST) o se agrega una sola vez.
+                            pintarMensaje(newmsg, esMio);
                         }
                     }
 
@@ -411,6 +449,22 @@
             padding: '10px 20px',
         });
     };
+
+    // Aviso bloqueante (modal) para los problemas que impiden operar el chat de
+    // consultas: no hay ningun usuario con rol Asistente, o el pedido ya no lo tiene.
+    const mostrarAvisoAsistentes = () => {
+        if (! props.avisoAsistentes) return;
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Chat de consultas',
+            text: props.avisoAsistentes,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#3b5bdb',
+        });
+    };
+
+    onMounted(() => mostrarAvisoAsistentes());
 
     const formIaconsulta = useForm({
         messageText: null,
@@ -545,12 +599,14 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             id: null,
             answer_ai: true
         };
+        registrarPropio(msg);
         chatPost(route('crm_send_message'), msg).then((response) => {
             return response.data;
         }).then((res) => {
             if(res.success){
                 msg.id = res.message?.id ?? null;
                 pushMensajePropio(msg);
+                olvidarPropio(msg);
                 textMessage.value = '';
             }else{
                 showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
@@ -760,6 +816,15 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                         Escribiendo como {{ asistenteActivo.full_name }}
                     </span>
                 </div>
+                <!-- Aviso cuando no hay con quien operar: ningun usuario con rol
+                     Asistente, o el asistente pedido ya no tiene el rol. -->
+                <div
+                    v-if="avisoAsistentes"
+                    class="mb-3 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
+                >
+                    <IconInfoCircle class="mt-0.5 h-4 w-4 flex-none" />
+                    <p>{{ avisoAsistentes }}</p>
+                </div>
                 <div class="flex flex-wrap gap-2">
                     <button
                         type="button"
@@ -809,7 +874,10 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                     </button>
                 </div>
                 <p v-if="!asistentes.length" class="mt-2 text-xs text-gray-500">
-                    No hay usuarios con el rol Asistente.
+                    Aún no hay usuarios con el rol Asistente: créalo para poder responder como él.
+                </p>
+                <p v-else-if="!suplantando" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Estás viendo tu propio chat: elige un asistente de la lista para responder como él.
                 </p>
             </div>
 
