@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Person;
 use Illuminate\Http\Request;
 use Modules\Onlineshop\Entities\OnliItem;
 
@@ -16,6 +15,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\CMS\Entities\CmsSection;
+use Modules\CMS\Entities\CmsSectionItem;
+use Modules\Sales\Entities\SaleProductCategory;
+use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Client\Payment\PaymentClient;
 
 class LandingController extends Controller
 {

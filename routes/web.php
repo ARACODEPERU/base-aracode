@@ -70,7 +70,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('contact-messages.index');
     Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'show'])->name('contact-messages.show');
     Route::put('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'update'])->name('contact-messages.update');
-    
+
     Route::get('/blog-subscribers', [\App\Http\Controllers\Admin\BlogSubscriberController::class, 'index'])->name('blog-subscribers.index');
     Route::delete('/blog-subscribers/{blogSubscriber}', [\App\Http\Controllers\Admin\BlogSubscriberController::class, 'destroy'])->name('blog-subscribers.destroy');
     Route::get('/blog-subscribers/export', [\App\Http\Controllers\Admin\BlogSubscriberController::class, 'export'])->name('blog-subscribers.export');
@@ -265,11 +265,28 @@ Route::middleware('auth')->group(function () {
             )
             ->get();
 
-        return Inertia::render('Person/UpdateInformation', [
-            'person' => $person,
-            'identityDocumentTypes' => $identityDocumentTypes,
-            'ubigeo' => $ubigeo,
-        ]);
+            if ($user->hasRole('Alumno')) {
+                $countries = \App\Models\Country::where('status', true)->orderBy('description')->get();
+
+                return Inertia::render('Person/UpdateInformation', [
+                    'person' => $person,
+                    'identityDocumentTypes' => $identityDocumentTypes,
+                    'ubigeo' => $ubigeo,
+                    'countries' => $countries
+                ]);
+            }
+
+            return back();
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'exception' => get_class($e),
+                'message'   => $e->getMessage(),
+                'file'      => $e->getFile() . ':' . $e->getLine(),
+                'trace'     => collect($e->getTrace())->take(3) // Muestra las primeras 3 líneas del fallo
+            ], 500);
+        }
     })->name('user-update-profile');
 
     Route::post(

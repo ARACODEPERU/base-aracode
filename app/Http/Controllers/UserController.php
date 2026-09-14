@@ -91,6 +91,8 @@ class UserController extends Controller
             )
             ->get();
 
+        $countries = \App\Models\Country::where('status', true)->orderBy('description')->get();
+
         return Inertia::render('Users/Edit', [
             'establishments' => LocalSale::all(),
             'xuser' => $user,
@@ -98,7 +100,8 @@ class UserController extends Controller
             'roles' => Role::all(),
             'person' => $person,
             'identityDocumentTypes' => $identityDocumentTypes,
-            'ubigeo'       => $ubigeo
+            'ubigeo'       => $ubigeo,
+            'countries'    => $countries
         ]);
     }
     public function update(Request $request, User $user)

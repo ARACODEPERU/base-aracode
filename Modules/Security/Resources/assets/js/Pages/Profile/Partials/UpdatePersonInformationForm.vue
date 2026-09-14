@@ -1,6 +1,6 @@
 <script setup>
 import { Link, useForm, usePage, router } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import flatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 import { Spanish } from 'flatpickr/dist/l10n/es.js';
@@ -25,6 +25,10 @@ import Swal2 from 'sweetalert2';
         ubigeo: {
             type: Object,
             default: () => ({})
+        },
+        countries: {
+            type: [Array, Object],
+            default: () => []
         }
     });
 
@@ -38,7 +42,7 @@ import Swal2 from 'sweetalert2';
         description: props.person ? props.person.description : null,
         number: props.person ? props.person.number : null,
         telephone: props.person ? props.person.telephone : null,
-        email: props.person ? props.person.email : user_email,
+        email: (props.person && props.person.email) ? props.person.email : user_email,
         image: props.person ? props.person.image : null,
         address: props.person ? props.person.address : null,
         ubigeo: props.person ? {"district_id" : props.person.ubigeo, "name_city" : props.person.ubigeo_description} : null,
@@ -50,9 +54,26 @@ import Swal2 from 'sweetalert2';
         presentacion: props.person ? props.person.presentacion : null,
         gender: props.person ? props.person.gender : 'M',
         status: props.person ? props.person.status : null,
-        social_networks: props.person ? props.person.social_networks : null
+        social_networks: props.person ? props.person.social_networks : null,
+        foreign_country_id: props.person ? props.person.foreign_country_id : null,
+        foreign_state: props.person ? props.person.foreign_state : '',
+        foreign_city: props.person ? props.person.foreign_city : '',
     });
     const socialData = ref({});
+
+    const isForeignDocument = computed(() => {
+        return String(form.document_type_id) === '0';
+    });
+
+    const countryOptions = computed(() => {
+        const list = Array.isArray(props.countries)
+            ? props.countries
+            : Object.values(props.countries || {});
+        return list.map((c) => ({
+            value: c?.id,
+            label: c?.description ?? '',
+        }));
+    });
     const basic = ref({
         dateFormat: 'Y-m-d',
         locale: Spanish,
@@ -71,6 +92,38 @@ import Swal2 from 'sweetalert2';
     });
 
 
+
+  const submitForm = async () => {
+    if (!isForeignDocument.value) {
+      savePerson();
+      return;
+    }
+
+    const countryLabel = countryOptions.value.find(c => c.value === form.foreign_country_id)?.label || 'No seleccionado';
+    const stateLabel = form.foreign_state || 'No ingresado';
+    const cityLabel = form.foreign_city || 'No ingresado';
+
+    const result = await Swal2.fire({
+        title: 'Confirmar ubicación',
+        html: `
+            <p style="text-align:left; margin-bottom: 8px;">¿Los datos de ubicación son correctos?</p>
+            <div style="text-align:left; background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                <p style="margin: 4px 0;"><strong>País:</strong> ${countryLabel}</p>
+                <p style="margin: 4px 0;"><strong>Departamento/Estado:</strong> ${stateLabel}</p>
+                <p style="margin: 4px 0;"><strong>Ciudad:</strong> ${cityLabel}</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar',
+        customClass: 'sweet-alerts',
+    });
+
+    if (result.isConfirmed) {
+      savePerson();
+    }
+  };
 
   const savePerson = () => {
     form.social_networks = socialData.value;
@@ -99,7 +152,7 @@ import Swal2 from 'sweetalert2';
     };
 </script>
 <template>
-    <form @submit.prevent="savePerson">
+    <form @submit.prevent="submitForm">
         <div class="border border-[#ebedf2] dark:border-[#191e3a] rounded-md p-4 mb-5 bg-white dark:bg-[#0e1726]">
             <h6 class="text-lg font-bold mt-1">Información Personal</h6>
             <p class="mb-5 text-sm text-gray-600 dark:text-gray-400">
@@ -154,23 +207,48 @@ import Swal2 from 'sweetalert2';
                     <input v-model="form.address" class="form-input" />
                     <InputError class="mt-2" :message="form.errors.address" />
                 </div>
-                <div class="col-span-3 sm:col-span-2 md:col-span-2">
-                    <label for="ubigeo">Ciudad</label>
-                    <multiselect
-                        id="ubigeo"
-                        v-model="form.ubigeo"
-                        :options="ubigeo"
-                        class="custom-multiselect"
-                        :searchable="true"
-                        placeholder="Buscar ciudad"
-                        selected-label="seleccionado"
-                        select-label="Elegir"
-                        deselect-label="Quitar"
-                        label="name_city"
-                        track-by="district_id"
-                        ></multiselect>
-                    <InputError class="mt-2" :message="form.errors.ubigeo" />
-                </div>
+                <!-- UBIGEO PERUANO -->
+                <template v-if="!isForeignDocument">
+                    <div class="col-span-3 sm:col-span-2 md:col-span-2">
+                        <label for="ubigeo">Ciudad</label>
+                        <multiselect
+                            id="ubigeo"
+                            v-model="form.ubigeo"
+                            :options="ubigeo"
+                            class="custom-multiselect"
+                            :searchable="true"
+                            placeholder="Buscar ciudad"
+                            selected-label="seleccionado"
+                            select-label="Elegir"
+                            deselect-label="Quitar"
+                            label="name_city"
+                            track-by="district_id"
+                            ></multiselect>
+                        <InputError class="mt-2" :message="form.errors.ubigeo" />
+                    </div>
+                </template>
+
+                <!-- UBICACIÓN EXTRANJERA -->
+                <template v-else>
+                    <div>
+                        <label for="foreign_country_id">País</label>
+                        <select v-model="form.foreign_country_id" class="form-select text-white-dark" required>
+                            <option value="">Seleccionar país</option>
+                            <option v-for="country in countries" :value="country.id">{{ country.description }}</option>
+                        </select>
+                        <InputError class="mt-2" :message="form.errors.foreign_country_id" />
+                    </div>
+                    <div>
+                        <label for="foreign_state">Depto./Estado</label>
+                        <input v-model="form.foreign_state" type="text" class="form-input" placeholder="Ej: California" required />
+                        <InputError class="mt-2" :message="form.errors.foreign_state" />
+                    </div>
+                    <div>
+                        <label for="foreign_city">Ciudad</label>
+                        <input v-model="form.foreign_city" type="text" class="form-input" placeholder="Ej: Los Ángeles" required />
+                        <InputError class="mt-2" :message="form.errors.foreign_city" />
+                    </div>
+                </template>
                 <div>
                     <label for="gender">Sexo</label>
                     <select id="gender" v-model="form.gender" class="form-select text-white-dark" required>

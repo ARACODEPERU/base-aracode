@@ -3,6 +3,7 @@
 namespace Modules\Security\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Country;
 use App\Models\District;
 use App\Models\Person;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -32,12 +33,15 @@ class ProfileController extends Controller
             )
             ->get();
 
+        $countries = Country::where('status', true)->orderBy('description')->get();
+
         return Inertia::render('Security::Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'person' => $person,
             'document_types' => $document_types,
-            'ubigeo' => $ubigeo
+            'ubigeo' => $ubigeo,
+            'countries' => $countries
         ]);
     }
 

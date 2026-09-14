@@ -28,16 +28,21 @@ use App\Models\Country;
 use App\Models\Department;
 use App\Models\District;
 use Carbon\Carbon;
+use Modules\Onlineshop\Jobs\ProcessCompra;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaCourseLanding;
+use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaStudentCoursesInterest;
 use Modules\CMS\Entities\CmsLanding;
-use Modules\Socialevents\Entities\EvenEvent;
-use App\Models\Parameter;
-use Illuminate\Support\Facades\DB;
+use Modules\CMS\Entities\CmsTestimony;
+use Modules\Onlineshop\Entities\OnliCarritoAbandonado;
+use Modules\Onlineshop\Entities\OnliPaymentProblem;
+use Modules\Blog\Entities\BlogArticle;
+use Modules\Blog\Entities\BlogCategory;
 use Spatie\Permission\Models\Role;
-
 
 class WebPageController extends Controller
 {
@@ -57,26 +62,8 @@ class WebPageController extends Controller
             ->get();
     }
 
-    public function index(Request $request)
+    public function index()
     {
-        $pagina = Parameter::where('parameter_code', 'PW00001')->value('value_default');
-
-        if ($pagina === '2') {
-            $eventos = EvenEvent::whereHas('editions', function ($q) {
-                $q->where('landing_published', true);
-            })->with(['editions' => function ($q) {
-                $q->where('landing_published', true)->orderBy('start_date', 'desc');
-            }])->withCount(['editions as editions_count' => function ($q) {
-                $q->where('landing_published', true);
-            }])->get();
-
-            $eventos->each(function ($evento) {
-                $evento->editions->loadCount('equipos');
-            });
-
-            return view('pages.torneos', compact('eventos'));
-        }
-
         return view('pages.home');
     }
 
@@ -132,55 +119,364 @@ class WebPageController extends Controller
         ]);
     }
 
-    public function nosotros()
+    public function about()
     {
+        return view('pages.nosotros');
+    }
 
-        $banner = CmsSection::where('component_id', 'nosotros_banner_area_11')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-            ->select(
-                'cms_items.content',
-                'cms_section_items.position'
-            )
-            ->orderBy('cms_section_items.position')
-            ->first();
+    public function whyCpa()
+    {
+        return view('pages.por-que-cpa-academy');
+    }
 
+    /**
+     * Pagina publica de testimonios.
+     *
+     * Muestra los testimonios aprobados y visibles. Si hay pocos se muestran
+     * todos; si hay muchos, se pagina mostrando los mas recientes agrupados por
+     * categoria de curso (y con filtro por curso).
+     */
+    public function testimonials(Request $request)
+    {
+        $perPage = 12;
+        $category = $request->query('categoria');
+        $courseFilter = $request->query('curso');
+        $ratingFilter = $request->query('rating');
 
-        $visions = CmsSection::where('component_id', 'nosotros_vision_area_12')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
-            ->select(
-                'cms_items.content',
-                'cms_section_items.position'
-            )
-            ->orderBy('cms_section_items.position')
+        $baseQuery = function () use ($category, $courseFilter, $ratingFilter) {
+            $query = CmsTestimony::query()
+                ->with(['course.category', 'product', 'student.person'])
+                ->where('approval_status', CmsTestimony::STATUS_APPROVED)
+                ->where('status', true)
+                ->whereNotNull('description');
+
+            if ($category) {
+                $query->whereHas('course.category', function ($q) use ($category) {
+                    $q->where('description', $category);
+                });
+            }
+
+            if ($courseFilter) {
+                $query->whereHas('course.landing', function ($lq) use ($courseFilter) {
+                    $lq->where('url_slug', $courseFilter);
+                });
+            }
+
+            if ($ratingFilter && is_numeric($ratingFilter)) {
+                $query->where('rating', (int) $ratingFilter);
+            }
+
+            return $query;
+        };
+
+        $total = $baseQuery()->count();
+        $page = max(1, (int) $request->query('page', 1));
+
+        $rows = $total > $perPage
+            ? $baseQuery()->orderByDesc('created_at')->forPage($page, $perPage)->get()
+            : $baseQuery()->orderByDesc('created_at')->get();
+
+        $map = fn (CmsTestimony $testimony) => $this->testimonyPayload($testimony);
+
+        $testimonies = $rows->map($map)->values();
+
+        // Agrupacion por categoria de curso (los mas recientes primero dentro de cada grupo).
+        $groups = $testimonies
+            ->groupBy('category')
+            ->map(function ($items, $categoryName) {
+                return [
+                    'category' => $categoryName,
+                    'testimonies' => $items->values(),
+                ];
+            })
+            ->values();
+
+        // Chips de filtro por categoria con su conteo (sobre el total aprobado).
+        $categoryOptions = CmsTestimony::query()
+            ->where('cms_testimonies.approval_status', CmsTestimony::STATUS_APPROVED)
+            ->where('cms_testimonies.status', true)
+            ->whereNotNull('cms_testimonies.course_id')
+            ->join('aca_courses', 'aca_courses.id', '=', 'cms_testimonies.course_id')
+            ->join('aca_category_courses', 'aca_category_courses.id', '=', 'aca_courses.category_id')
+            ->select('aca_category_courses.description as category', DB::raw('COUNT(*) as total'))
+            ->groupBy('aca_category_courses.description')
+            ->orderByDesc('total')
             ->get();
 
-        $lider = CmsSection::where('component_id', 'nosotros_lider_area_13')  //siempre cambiar el id del componente
-            ->join('cms_section_items', 'section_id', 'cms_sections.id')
-            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+        // Cursos con testimonios aprobados (para el filtro por curso).
+        $courseOptions = CmsTestimony::query()
+            ->where('cms_testimonies.approval_status', CmsTestimony::STATUS_APPROVED)
+            ->where('cms_testimonies.status', true)
+            ->whereNotNull('cms_testimonies.course_id')
+            ->join('aca_courses', 'aca_courses.id', '=', 'cms_testimonies.course_id')
+            ->leftJoin('aca_course_landings', 'aca_course_landings.course_id', '=', 'aca_courses.id')
             ->select(
-                'cms_items.content',
-                'cms_section_items.position'
+                'aca_courses.id as id',
+                'aca_courses.description as description',
+                'aca_course_landings.url_slug as slug',
+                DB::raw('COUNT(*) as total')
             )
-            ->orderBy('cms_section_items.position')
+            ->groupBy('aca_courses.id', 'aca_courses.description', 'aca_course_landings.url_slug')
+            ->orderByDesc('total')
+            ->limit(60)
             ->get();
 
-        return view('pages.nosotros', [
-            'banner' => $banner,
-            'visions' => $visions,
-            'lider' => $lider
+        // Estadisticas reales de los testimonios aprobados.
+        $ratingsQuery = CmsTestimony::query()
+            ->where('approval_status', CmsTestimony::STATUS_APPROVED)
+            ->where('status', true)
+            ->whereNotNull('rating');
+
+        $ratingsTotal = (clone $ratingsQuery)->count();
+        $ratingsSum = (clone $ratingsQuery)->sum('rating');
+        $positive = (clone $ratingsQuery)->where('rating', '>=', 4)->count();
+
+        $stats = [
+            'total' => $ratingsTotal,
+            'average' => $ratingsTotal > 0 ? round($ratingsSum / $ratingsTotal, 1) : 0,
+            'recommend' => $ratingsTotal > 0 ? (int) round(($positive / $ratingsTotal) * 100) : 0,
+            'courses' => (clone $ratingsQuery)->whereNotNull('course_id')->distinct('course_id')->count('course_id'),
+            'top_rating' => (clone $ratingsQuery)->max('rating') ?: 5,
+        ];
+
+        // Testimonio destacado: el de mejor calificacion mas reciente.
+        $featuredRow = (clone $ratingsQuery)->orderByDesc('rating')->orderByDesc('created_at')->first();
+        $featured = $featuredRow ? $map($featuredRow) : null;
+
+        $hasMore = $total > $perPage && ($page * $perPage) < $total;
+
+        // Schema markup (JSON-LD): Organization con valoracion agregada y resenas.
+        $schema = null;
+
+        if ($stats['total'] > 0) {
+            $reviewPool = $testimonies->isNotEmpty() ? $testimonies : collect(array_filter([$featured]));
+
+            $schema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'name' => 'CPA Academy',
+                'url' => url('/'),
+                'logo' => asset('themes/webpage/images/Logo_cpa_modificado.png'),
+                'aggregateRating' => $this->aggregateRatingSchema($reviewPool, (float) ($stats['average'] ?: 5)),
+                'review' => $reviewPool->take(20)->map(fn (array $item) => $this->reviewSchema($item))->values()->all(),
+            ];
+        }
+
+        return view('pages.testimonios', [
+            'testimonies' => $testimonies,
+            'groups' => $groups,
+            'featured' => $featured,
+            'stats' => $stats,
+            'schema' => $schema,
+            'categoryOptions' => $categoryOptions,
+            'courseOptions' => $courseOptions,
+            'total' => $total,
+            'perPage' => $perPage,
+            'page' => $page,
+            'hasMore' => $hasMore,
+            'filters' => [
+                'categoria' => $category,
+                'curso' => $courseFilter,
+                'rating' => $ratingFilter,
+            ],
         ]);
     }
 
-    public function about()
+    /**
+     * Normaliza un testimonio para las vistas publicas (tarjetas, landing de
+     * curso y schema markup). Compartido por testimonials() y course_url_slug().
+     */
+    private function testimonyPayload(CmsTestimony $testimony): array
     {
-        return view('pages.about');
+        $course = $testimony->course;
+        // Solo se usa el item de tienda cuando el testimonio apunta a uno
+        // (los sembrados desde products se enlazan al propio producto).
+        $product = $testimony->entitie === OnliItem::class ? $testimony->product : null;
+        $studentName = optional(optional($testimony->student)->person)->full_name;
+        $author = $testimony->author_name ?: $studentName ?: 'Alumno CPA Academy';
+        // El cargo o profesion escrito tiene prioridad; si esta vacio se usa el
+        // tipo de curso y, en su defecto, "Egresado".
+        $role = $testimony->author_role ?: ($course?->type_description ?: 'Egresado');
+        // El texto libre que escribio el admin tiene prioridad sobre el item enlazado.
+        $program = $course?->description ?: ($testimony->item_label ?: ($product?->name ?: $testimony->title));
+
+        $cover = null;
+        if ($course && $course->image) {
+            $cover = asset('storage/' . $course->image);
+        } elseif ($product) {
+            $cover = $product->image;
+        }
+
+        return [
+            'id' => $testimony->id,
+            'author' => $author,
+            'role' => $role,
+            'program' => $program,
+            'category' => $course?->category?->description ?: 'Testimonios',
+            'course_id' => $testimony->course_id ? (int) $testimony->course_id : null,
+            'rating' => (int) ($testimony->rating ?: 5),
+            'quote' => $testimony->description,
+            'photo' => $testimony->image ? asset('storage/' . $testimony->image) : null,
+            'cover' => $cover,
+            'video' => $this->cleanIframe($testimony->video),
+            'avatar' => 'https://ui-avatars.com/api/?name=' . urlencode($author) . '&size=140&rounded=true&background=002060&color=ffffff&bold=true',
+            'date' => optional($testimony->created_at)->format('d/m/Y'),
+            'created_at_iso' => optional($testimony->created_at)->toIso8601String(),
+        ];
     }
 
-    public function contact()
+    /**
+     * Arma una reseña de schema.org (JSON-LD) a partir de un testimonio normalizado.
+     */
+    private function reviewSchema(array $testimony, string $itemType = 'Course'): array
     {
-        return view('pages.contact');
+        $review = [
+            '@type' => 'Review',
+            'author' => [
+                '@type' => 'Person',
+                'name' => $testimony['author'],
+            ],
+            'reviewRating' => [
+                '@type' => 'Rating',
+                'ratingValue' => $testimony['rating'],
+                'bestRating' => 5,
+                'worstRating' => 1,
+            ],
+            'reviewBody' => Str::limit(trim(strip_tags((string) $testimony['quote'])), 500, ''),
+            'itemReviewed' => [
+                '@type' => $itemType,
+                'name' => $testimony['program'] ?: 'CPA Academy',
+            ],
+        ];
+
+        if (!empty($testimony['created_at_iso'])) {
+            $review['datePublished'] = $testimony['created_at_iso'];
+        }
+
+        return $review;
+    }
+
+    /**
+     * Valoracion agregada (schema.org) a partir de una coleccion de testimonios normalizados.
+     */
+    private function aggregateRatingSchema($testimonies, ?float $average = null): ?array
+    {
+        $count = count($testimonies);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        if ($average === null) {
+            $ratings = collect($testimonies)->pluck('rating')->filter();
+            $average = $ratings->isNotEmpty() ? round($ratings->avg(), 1) : 5;
+        }
+
+        return [
+            '@type' => 'AggregateRating',
+            'ratingValue' => $average,
+            'reviewCount' => $count,
+            'bestRating' => 5,
+            'worstRating' => 1,
+        ];
+    }
+
+    /**
+     * Testimonios publicables (aprobados, visibles y con texto) de un curso.
+     */
+    private function publicCourseTestimonials($course)
+    {
+        if (!$course) {
+            return collect();
+        }
+
+        return CmsTestimony::query()
+            ->with(['course.category', 'product', 'student.person'])
+            ->where('course_id', $course->id)
+            ->where('approval_status', CmsTestimony::STATUS_APPROVED)
+            ->where('status', true)
+            ->whereNotNull('description')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (CmsTestimony $testimony) => $this->testimonyPayload($testimony))
+            ->values();
+    }
+
+    /**
+     * Schema markup (Course) de una landing, con valoracion agregada y resenas.
+     */
+    private function publicCourseSchema($landing, $testimonials = null): ?array
+    {
+        if (!$landing || !$landing->course) {
+            return null;
+        }
+
+        $course = $landing->course;
+
+        $schema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Course',
+            'name' => $course->description,
+            'description' => Str::limit(trim(strip_tags((string) $course->description)), 300, ''),
+            'url' => route('course_url_slug', $landing->url_slug),
+            'inLanguage' => 'es',
+            'provider' => [
+                '@type' => 'Organization',
+                'name' => 'CPA Academy',
+                'url' => url('/'),
+            ],
+        ];
+
+        if ($course->image) {
+            $schema['image'] = asset('storage/' . $course->image);
+        }
+
+        if ($course->category?->description) {
+            $schema['about'] = $course->category->description;
+        }
+
+        $testimonials = $testimonials ?? $this->publicCourseTestimonials($course);
+
+        if ($testimonials->isNotEmpty()) {
+            $schema['aggregateRating'] = $this->aggregateRatingSchema($testimonials);
+            $schema['review'] = $testimonials->take(20)
+                ->map(fn (array $testimony) => $this->reviewSchema($testimony))
+                ->values()
+                ->all();
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Devuelve el codigo iframe del video de un testimonio editorial.
+     *
+     * Solo se acepta si contiene un <iframe>; se eliminan los <script> y los
+     * manejadores inline (on*) por seguridad.
+     */
+    private function cleanIframe(?string $html): ?string
+    {
+        $html = trim((string) $html);
+
+        if ($html === '' || !Str::contains($html, '<iframe')) {
+            return null;
+        }
+
+        $html = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $html) ?? '';
+        $html = preg_replace('#\son\w+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $html) ?? '';
+        $html = trim($html);
+
+        return Str::contains($html, '<iframe') ? $html : null;
+    }
+
+    public function fag()
+    {
+        return view('pages.fag');
+    }
+
+    public function faq()
+    {
+        return view('pages.faq');
     }
 
     public function teachers()
@@ -213,31 +509,10 @@ class WebPageController extends Controller
         return view('pages/terms');
     }
 
-    public function storeonline()
-    {
-        return view('pages/store-online');
-    }
-
-    public function cms()
-    {
-        return view('pages/cms');
-    }
-    public function lms()
-    {
-        return view('pages/lms');
-    }
-
-
-    public function billing()
-    {
-        return view('pages/billing');
-    }
-
-
     public function courses()
     {
         $courses = OnliItem::whereHas('course') // Filtra para que solo traiga items con curso existente
-                    ->with('course')                  // Carga la relación para evitar el problema de N+1
+                    ->with(['course', 'course.landing', 'course.category']) // Evita el problema de N+1
                     ->latest()
                     ->get();
 
@@ -267,6 +542,43 @@ class WebPageController extends Controller
 
         $p = 12; //numero de cursos mostrados PAGINACION
 
+        // Schema markup: ItemList de cursos para los buscadores.
+        $coursesSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'ItemList',
+            'itemListElement' => $courses->take(30)->values()->map(function (OnliItem $item, int $index) {
+                $course = $item->course;
+                $hasPublishedLanding = filled($course?->landing?->url_slug) && ($course?->landing?->is_published ?? false);
+
+                $element = [
+                    '@type' => 'ListItem',
+                    'position' => $index + 1,
+                    'item' => [
+                        '@type' => 'Course',
+                        'name' => $course?->description ?: $item->name,
+                        'url' => $hasPublishedLanding
+                            ? route('course_url_slug', $course->landing->url_slug)
+                            : route('web_course_description', $item->id),
+                        'provider' => [
+                            '@type' => 'Organization',
+                            'name' => 'CPA Academy',
+                            'url' => url('/'),
+                        ],
+                    ],
+                ];
+
+                if ($course?->image) {
+                    $element['item']['image'] = asset('storage/' . $course->image);
+                }
+
+                if ($course?->category?->description) {
+                    $element['item']['about'] = $course->category->description;
+                }
+
+                return $element;
+            })->all(),
+        ];
+
         return view('pages.courses', [
             'courses' => $courses,
             //'categories' => $categories,
@@ -274,6 +586,44 @@ class WebPageController extends Controller
             'title' => $title,
             'types' => $types,
             'p' => $p,
+            'coursesSchema' => $coursesSchema,
+        ]);
+    }
+
+    /**
+     * Buscador de cursos: busca por nombre, descripción o categoría.
+     */
+    public function searchCourses(Request $request)
+    {
+        $query = trim($request->input('q', ''));
+
+        $courses = OnliItem::whereHas('course')
+            ->whereHas('course.landing', function ($landingQ) {
+                $landingQ->where('is_published', true)->whereNotNull('url_slug');
+            })
+            ->with(['course', 'course.landing', 'course.category'])
+            ->when($query, function ($q) use ($query) {
+                $q->where(function ($sub) use ($query) {
+                    $sub->where('name', 'like', "%{$query}%")
+                        ->orWhere('description', 'like', "%{$query}%")
+                        ->orWhereHas('course', function ($cq) use ($query) {
+                            $cq->where('description', 'like', "%{$query}%")
+                               ->orWhereHas('category', function ($catQ) use ($query) {
+                                   $catQ->where('description', 'like', "%{$query}%");
+                               });
+                        });
+                });
+            })
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        $total = $courses->total();
+
+        return view('pages.search-results', [
+            'courses' => $courses,
+            'query'   => $query,
+            'total'   => $total,
         ]);
     }
 
@@ -379,21 +729,20 @@ class WebPageController extends Controller
             $onliItem = OnliItem::where('item_id', $landing->course->id)->first();
         }
 
-         // Testimonios aprobados y visibles de ESTE curso (se publican al final de la landing).
-         $courseTestimonials = $this->publicCourseTestimonials($landing?->course);
+        // Testimonios aprobados y visibles de ESTE curso (se publican al final de la landing).
+        $courseTestimonials = $this->publicCourseTestimonials($landing?->course);
 
-         // Schema markup del curso, con su valoracion agregada y resenas cuando las tiene.
-         $courseSchema = $this->publicCourseSchema($landing, $courseTestimonials);
+        // Schema markup del curso, con su valoracion agregada y resenas cuando las tiene.
+        $courseSchema = $this->publicCourseSchema($landing, $courseTestimonials);
 
-         return view ('pages.course-landing', [
-             'landing' => $landing,
-             'teachers_premium' => $teachersPremium,
-             'colors' => $colors,
-             'onli_item_id' => $onliItem ? $onliItem->id : null,
-             'course_testimonials' => $courseTestimonials,
-             'course_schema' => $courseSchema,
+        return view ('pages.course-landing', [
+            'landing' => $landing,
+            'teachers_premium' => $teachersPremium,
+            'colors' => $colors,
+            'onli_item_id' => $onliItem ? $onliItem->id : null,
+            'course_testimonials' => $courseTestimonials,
+            'course_schema' => $courseSchema,
         ]);
-
     }
 
     public function course_landing_preview($id){
@@ -463,11 +812,15 @@ class WebPageController extends Controller
             $onliItem = OnliItem::where('item_id', $landing->course->id)->first();
         }
 
+        $previewTestimonials = $this->publicCourseTestimonials($landing?->course);
+
         return view ('pages.course-landing', [
             'landing' => $landing,
             'teachers_premium' => $teachersPremium,
             'colors' => $colors,
             'onli_item_id' => $onliItem ? $onliItem->id : null,
+            'course_testimonials' => $previewTestimonials,
+            'course_schema' => $this->publicCourseSchema($landing, $previewTestimonials),
         ]);
     }
 
@@ -501,9 +854,17 @@ class WebPageController extends Controller
 
 
 
+    public function index2()
+    {
+        return view('pages.home2');
+    }
+
+
+
     public function shopcart()
     {
-        return view('pages.shop-cart');
+        $documentTypes = DB::table('identity_document_type')->get();
+        return view('pages.shop-cart', ['documentTypes' => $documentTypes]);
     }
 
     public function cartPreference(Request $request)
@@ -602,6 +963,12 @@ class WebPageController extends Controller
             return response()->json(['error' => 'Ingresa un correo valido en el formulario de MercadoPago.'], 422);
         }
 
+        if (empty($cardData['token'])) {
+            return response()->json([
+                'error' => 'Mercado Pago no genero el token de tarjeta. Recarga el formulario y vuelve a ingresar los datos de la tarjeta.'
+            ], 422);
+        }
+
         try {
             $payment = (new PaymentClient())->create([
                 'token' => $cardData['token'] ?? null,
@@ -614,8 +981,15 @@ class WebPageController extends Controller
         } catch (\MercadoPago\Exceptions\MPApiException $e) {
             $response = $e->getApiResponse();
             $content = $response ? $response->getContent() : [];
+
+            $message = $content['message'] ?? $e->getMessage();
+
+            if ($message === 'Invalid card_token_id') {
+                $message .= '. Verifica que MERCADOPAGO_KEY y MERCADOPAGO_TOKEN sean de prueba y pertenezcan a la misma cuenta, y recarga el formulario para generar un token nuevo.';
+            }
+
             return response()->json([
-                'error' => 'Error al procesar el pago: ' . ($content['message'] ?? $e->getMessage())
+                'error' => 'Error al procesar el pago: ' . $message
             ], 412);
         }
 
@@ -627,14 +1001,19 @@ class WebPageController extends Controller
         }
 
         $identification = $payer['identification'] ?? [];
+        $payerName = trim($payer['names'] ?? trim(($payer['first_name'] ?? '') . ' ' . ($payer['last_name'] ?? '')));
+        $payerName = $payerName ?: trim($cardData['cardholderName'] ?? ($cardData['cardholder']['name'] ?? ''));
+        $phoneCode = $payer['phone']['area_code'] ?? null;
+        $phoneNumber = $payer['phone']['number'] ?? null;
+        $phone = trim(($phoneCode ? '+' . ltrim($phoneCode, '+') . ' ' : '') . ($phoneNumber ?? ''));
 
         DB::beginTransaction();
         try {
             $sale = OnliSale::create([
                 'module_name' => 'Onlineshop',
                 'person_id' => null,
-                'clie_full_name' => trim(($payer['first_name'] ?? '') . ' ' . ($payer['last_name'] ?? '')),
-                'phone' => $payer['phone']['number'] ?? null,
+                'clie_full_name' => $payerName,
+                'phone' => $phone ?: null,
                 'email' => $payer['email'] ?? null,
                 'total' => $expectedTotal,
                 'transaction_amount' => $expectedTotal,
@@ -648,6 +1027,17 @@ class WebPageController extends Controller
                 'response_date_approved' => Carbon::now()->format('Y-m-d'),
                 'response_payer' => json_encode($request->all()),
                 'response_payment_method_id' => $cardData['payment_method_id'] ?? null,
+                'utm_source'     => $cardData['utm_source'] ?? null,
+                'utm_medium'     => $cardData['utm_medium'] ?? null,
+                'utm_campaign'   => $cardData['utm_campaign'] ?? null,
+                'utm_term'       => $cardData['utm_term'] ?? null,
+                'utm_content'    => $cardData['utm_content'] ?? null,
+                'utm_id'         => $cardData['utm_id'] ?? null,
+                'fbclid'         => $cardData['fbclid'] ?? null,
+                'gclid'          => $cardData['gclid'] ?? null,
+                'referer'        => $cardData['referer'] ?? null,
+                'landing_url'    => $cardData['landing_url'] ?? null,
+                'traffic_source' => $cardData['traffic_source'] ?? null,
             ]);
 
             $sale->mercado_payment_id = $payment->id;
@@ -665,6 +1055,50 @@ class WebPageController extends Controller
             }
 
             $sale->save();
+
+            // Guardar en payment_problems si el pago fue aprobado pero aún no se ha completado el registro
+            OnliPaymentProblem::create([
+                'sale_id' => $sale->id,
+                'phone_country' => ltrim($phoneCode ?? '', '+'),
+                'phone' => $phoneNumber ?? null,
+                'email' => $payer['email'] ?? null,
+                'clie_full_name' => $payerName,
+                'amount' => $expectedTotal,
+                'payment_method' => $cardData['payment_method_id'] ?? null,
+                'courses_info' => $items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'item_id' => $item->item_id,
+                        'name' => $item->name,
+                        'image' => $item->image,
+                        'price' => $item->price,
+                        'additional' => $item->additional,
+                    ];
+                })->toArray(),
+                'payment_data' => [
+                    'payment_id' => $payment->id,
+                    'status' => $payment->status,
+                    'payment_method_id' => $cardData['payment_method_id'] ?? null,
+                    'installments' => $cardData['installments'] ?? 1,
+                    'payer' => $payer,
+                ],
+                'status' => 'pending',
+            ]);
+
+            OnliCarritoAbandonado::where('paid', false)
+                ->where(function ($q) use ($phoneCode, $phoneNumber, $payer) {
+                    if (!empty($phoneNumber)) {
+                        $q->where('phone', $phoneNumber);
+                        if (!empty($phoneCode)) {
+                            $q->where('phone_country', ltrim($phoneCode, '+'));
+                        }
+                    }
+                    if (!empty($payer['email'])) {
+                        $q->orWhere('email', $payer['email']);
+                    }
+                })
+                ->update(['paid' => true]);
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -686,21 +1120,36 @@ class WebPageController extends Controller
 
     public function cartFinalize(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'sale_id' => 'required|integer|exists:onli_sales,id',
+        $freeCheckout = ! $request->filled('sale_id');
+
+        $rules = [
             'account_mode' => 'required|in:login,create',
             'email' => 'required|email',
             'password' => 'nullable|string|min:6',
             'names' => 'required_if:account_mode,create|nullable|string|max:255',
-            'dni' => 'required_if:account_mode,create|nullable|string|max:20',
-            'invoice_type' => 'required|in:boleta,factura',
-            'invoice_name' => 'required_if:invoice_type,boleta|nullable|string|max:255',
-            'invoice_dni' => 'required_if:invoice_type,boleta|nullable|string|max:20',
-            'invoice_email' => 'nullable|email',
-            'invoice_ruc' => 'required_if:invoice_type,factura|nullable|string|max:20',
-            'invoice_business_name' => 'required_if:invoice_type,factura|nullable|string|max:255',
-            'invoice_address' => 'nullable|string|max:255',
-        ]);
+            'create_document_type' => 'required_if:account_mode,create|nullable|integer',
+            'number' => 'required_if:account_mode,create|nullable|string|max:20',
+            'phone' => ($freeCheckout ? 'required' : 'nullable') . '|string|max:20',
+            'phone_country' => ($freeCheckout ? 'required' : 'nullable') . '|string|max:10',
+        ];
+
+        if ($freeCheckout) {
+            $rules['item_id'] = 'required|array|min:1';
+            $rules['item_id.*'] = 'integer|distinct';
+        } else {
+            $rules = array_merge($rules, [
+                'sale_id' => 'required|integer|exists:onli_sales,id',
+                'invoice_type' => 'required|in:boleta,factura',
+                'invoice_name' => 'required_if:invoice_type,boleta|nullable|string|max:255',
+                'invoice_dni' => 'required_if:invoice_type,boleta|nullable|string|max:20',
+                'invoice_email' => 'nullable|email',
+                'invoice_ruc' => 'required_if:invoice_type,factura|nullable|string|max:20',
+                'invoice_business_name' => 'required_if:invoice_type,factura|nullable|string|max:255',
+                'invoice_address' => 'nullable|string|max:255',
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -710,25 +1159,64 @@ class WebPageController extends Controller
         }
 
         $validated = $validator->validated();
-        $onliSale = OnliSale::with('details.item')->findOrFail($validated['sale_id']);
+        $onliSale = null;
+        $freeItems = null;
 
-        if ($onliSale->response_status !== 'approved') {
-            return response()->json(['error' => 'El pago aun no fue aprobado.'], 422);
-        }
+        // Teléfono capturado en el carrito (se guarda en people.telephone para enviarlo a n8n_post_compra)
+        $phoneNumber = trim((string) ($validated['phone'] ?? ''));
+        $phoneCountry = trim((string) ($validated['phone_country'] ?? ''));
+        $telephone = $phoneNumber !== ''
+            ? ($phoneCountry !== '' ? '+' . ltrim($phoneCountry, '+') . ' ' . $phoneNumber : $phoneNumber)
+            : null;
 
-        if ($onliSale->nota_sale_id) {
-            return response()->json(['error' => 'Esta venta ya fue finalizada.'], 422);
+        if ($freeCheckout) {
+            $freeItems = $this->cartItemsFromIds($validated['item_id']);
+
+            if ($this->cartTotal($freeItems) > 0) {
+                return response()->json(['error' => 'El carrito no es gratuito. Completa el pago con tarjeta.'], 422);
+            }
+        } else {
+            $onliSale = OnliSale::with('details.item')->findOrFail($validated['sale_id']);
+
+            if ($onliSale->response_status !== 'approved') {
+                return response()->json(['error' => 'El pago aun no fue aprobado.'], 422);
+            }
+
+            if ($onliSale->nota_sale_id) {
+                return response()->json(['error' => 'Esta venta ya fue finalizada.'], 422);
+            }
         }
 
         if ($validated['account_mode'] === 'create') {
-            if (User::where('email', $validated['email'])->exists()) {
-                return response()->json(['error' => 'Este email ya tiene una cuenta. Elige iniciar sesion.'], 422);
+            $email = strtolower(trim($validated['email']));
+            $number = trim($validated['number']);
+            $documentType = $validated['create_document_type'] ?? 1;
+
+            // Verificar duplicado por tipo documento + número (combo único)
+            $existingPerson = Person::where('document_type_id', $documentType)
+                ->where('number', $number)
+                ->first();
+
+            if ($existingPerson) {
+                return response()->json([
+                    'error' => 'Tranquilo, tu compra esta protegida. El numero de identificacion ingresado ya esta registrado en CPA Academy, por eso no podemos crear otra cuenta con el mismo documento. Inicia sesion con tu cuenta para continuar. Si necesitas ayuda, escribenos a informes@globalcpaperu.com o comunicate al +51 967052506.',
+                    'conflict_type' => 'dni',
+                ], 409);
             }
 
-            $existingPerson = Person::where('number', $validated['dni'])->first();
-            if ($existingPerson && User::where('person_id', $existingPerson->id)->exists()) {
-                return response()->json(['error' => 'Este DNI ya tiene una cuenta. Elige iniciar sesion.'], 422);
+            if (
+                User::where('email', $email)->exists()
+                || Person::whereRaw('LOWER(email) = ?', [$email])->exists()
+            ) {
+                return response()->json([
+                    'error' => 'Tranquilo, tu compra esta protegida. El email ingresado ya esta registrado en CPA Academy. Para cuidar tu acceso, inicia sesion con esa cuenta y continua desde aqui. Si necesitas ayuda, escribenos a informes@globalcpaperu.com o comunicate al +51 967052506.',
+                    'conflict_type' => 'email',
+                ], 409);
             }
+
+            $validated['email'] = $email;
+            $validated['number'] = $number;
+            $validated['create_document_type'] = $documentType;
         }
 
         DB::beginTransaction();
@@ -736,7 +1224,7 @@ class WebPageController extends Controller
             if ($validated['account_mode'] === 'login') {
                 if (!Auth::attempt(['email' => $validated['email'], 'password' => $validated['password'] ?? ''])) {
                     DB::rollBack();
-                    return response()->json(['error' => 'El email o la contrasena no son correctos.'], 422);
+                    return response()->json(['error' => 'El email o la contraseña no son correctos.'], 422);
                 }
 
                 $request->session()->regenerate();
@@ -744,13 +1232,16 @@ class WebPageController extends Controller
                 $person = Person::findOrFail($user->person_id);
             } else {
                 $person = Person::firstOrCreate(
-                    ['number' => $validated['dni']],
                     [
-                        'document_type_id' => 1,
+                        'document_type_id' => $validated['create_document_type'],
+                        'number' => $validated['number'],
+                    ],
+                    [
+                        'document_type_id' => $validated['create_document_type'],
                         'short_name' => $validated['names'],
                         'full_name' => $validated['names'],
-                        'number' => $validated['dni'],
-                        'telephone' => null,
+                        'number' => $validated['number'],
+                        'telephone' => $telephone,
                         'email' => $validated['email'],
                         'is_provider' => false,
                         'is_client' => true,
@@ -768,7 +1259,7 @@ class WebPageController extends Controller
                 $user = User::create([
                     'name' => $person->names ?: $person->full_name,
                     'email' => $validated['email'],
-                    'password' => Hash::make($validated['password'] ?: $validated['dni']),
+                    'password' => Hash::make($validated['password'] ?: $validated['number']),
                     'person_id' => $person->id
                 ]);
 
@@ -782,10 +1273,27 @@ class WebPageController extends Controller
                 }
             }
 
+            // Guardar/actualizar siempre el teléfono ingresado (tanto en registro como en login)
+            if (!is_null($telephone)) {
+                $person->telephone = $telephone;
+                $person->save();
+            }
+
             $student = AcaStudent::firstOrCreate(
                 ['person_id' => $person->id],
                 ['student_code' => $person->number ?: $person->id, 'new_student' => true]
             );
+
+            if ($freeCheckout) {
+                $onliSale = $this->createFreeCartSale($freeItems, $person, $request->only([
+                    'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+                    'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source',
+                ]));
+                $validated['invoice_type'] = 'boleta';
+                $validated['invoice_name'] = $person->full_name;
+                $validated['invoice_dni'] = $person->number;
+                $validated['invoice_email'] = $person->email;
+            }
 
             $saleNote = $this->createCartSaleNote($onliSale, $person, $validated);
             $onliSale->person_id = $person->id;
@@ -794,13 +1302,16 @@ class WebPageController extends Controller
             $onliSale->nota_sale_id = $saleNote->id;
             $onliSale->save();
 
+            // Si existía un registro en payment_problems, eliminarlo (usuario completó el proceso)
+            OnliPaymentProblem::where('sale_id', $onliSale->id)->delete();
+
             foreach ($onliSale->details as $detail) {
                 $item = $detail->item ?: OnliItem::find($detail->onli_item_id);
                 if (!$item) {
                     continue;
                 }
 
-                AcaCapRegistration::firstOrCreate(
+                AcaCapRegistration::updateOrCreate(
                     ['student_id' => $student->id, 'course_id' => $item->item_id],
                     [
                         'status' => true,
@@ -838,16 +1349,21 @@ class WebPageController extends Controller
             return response()->json(['error' => 'No se pudo finalizar la compra.'], 500);
         }
 
-        try {
-            Mail::to($onliSale->email ?: $person->email)
-                ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $onliSale->id)->first()));
-        } catch (\Throwable $e) {
-            $onliSale->email_sent = false;
-            $onliSale->save();
+        // Enviar datos de la compra a N8N via Integrationhub (async)
+        ProcessCompra::dispatch($onliSale->id, 'carrito_web');
+
+        if (! $freeCheckout) {
+            try {
+                Mail::to($onliSale->email ?: $person->email)
+                    ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $onliSale->id)->first()));
+            } catch (\Throwable $e) {
+                $onliSale->email_sent = false;
+                $onliSale->save();
+            }
         }
 
         return response()->json([
-            'url' => route('web_thanks', $onliSale->id)
+            'url' => $freeCheckout ? route('aca_mycourses') : route('web_thanks', $onliSale->id)
         ]);
     }
 
@@ -880,6 +1396,50 @@ class WebPageController extends Controller
         $payer['email'] = $email;
 
         return $payer;
+    }
+
+    private function createFreeCartSale($items, Person $person, array $tracking = []): OnliSale
+    {
+        $sale = OnliSale::create([
+            'module_name' => 'Onlineshop',
+            'person_id' => $person->id,
+            'clie_full_name' => $person->full_name,
+            'phone' => $person->telephone,
+            'email' => $person->email,
+            'total' => 0,
+            'transaction_amount' => 0,
+            'installments' => 1,
+            'identification_type' => $person->document_type_id,
+            'identification_number' => $person->number,
+            'response_status' => 'approved',
+            'response_status_detail' => 'free_checkout',
+            'response_date_approved' => Carbon::now()->format('Y-m-d'),
+            'response_payment_method_id' => 'free',
+            'utm_source'     => $tracking['utm_source'] ?? null,
+            'utm_medium'     => $tracking['utm_medium'] ?? null,
+            'utm_campaign'   => $tracking['utm_campaign'] ?? null,
+            'utm_term'       => $tracking['utm_term'] ?? null,
+            'utm_content'    => $tracking['utm_content'] ?? null,
+            'utm_id'         => $tracking['utm_id'] ?? null,
+            'fbclid'         => $tracking['fbclid'] ?? null,
+            'gclid'          => $tracking['gclid'] ?? null,
+            'referer'        => $tracking['referer'] ?? null,
+            'landing_url'    => $tracking['landing_url'] ?? null,
+            'traffic_source' => $tracking['traffic_source'] ?? null,
+        ]);
+
+        foreach ($items as $item) {
+            OnliSaleDetail::create([
+                'sale_id' => $sale->id,
+                'item_id' => $item->item_id,
+                'entitie' => $item->entitie,
+                'price' => 0,
+                'quantity' => 1,
+                'onli_item_id' => $item->id,
+            ]);
+        }
+
+        return $sale->load('details.item');
     }
 
     private function createCartSaleNote(OnliSale $onliSale, Person $person, array $data): Sale
@@ -1098,229 +1658,39 @@ class WebPageController extends Controller
         ]);
     }
 
+    public function contacto()
+    {
+        $banner = CmsSection::where('component_id', 'nosotros_banner_area_11')  //siempre cambiar el id del componente
+            ->join('cms_section_items', 'section_id', 'cms_sections.id')
+            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+            ->select(
+                'cms_items.content',
+                'cms_section_items.position'
+            )
+            ->orderBy('cms_section_items.position')
+            ->first();
 
+        $title = CmsSection::where('component_id', 'header_area_1')  //siempre cambiar el id del componente
+            ->join('cms_section_items', 'section_id', 'cms_sections.id')
+            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+            ->select(
+                'cms_items.content',
+                'cms_section_items.position'
+            )
+            ->orderBy('cms_section_items.position')
+            ->get();
+
+
+        return view('pages.contacto', [
+            'banner' => $banner,
+            'title' => $title
+        ]);
+    }
 
     public function carrito()
     {
 
         return view('pages.carrito');
-    }
-
-    // ==========================================
-    // ARACODE Website V2 Methods
-    // ==========================================
-
-    public function home()
-    {
-        return view('pages.home');
-    }
-
-    public function soluciones()
-    {
-        return view('pages.soluciones');
-    }
-
-    public function solucionKapta()
-    {
-        return view('pages.kapta');
-    }
-
-    public function solucionFacturacion()
-    {
-        return view('pages.facturacion');
-    }
-
-    public function solucionDesarrollo()
-    {
-        return view('pages.desarrollo');
-    }
-
-    public function empresa()
-    {
-        return view('pages.empresa');
-    }
-
-    public function contacto()
-    {
-        return view('pages.contacto');
-    }
-
-    public function contactoStore(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'company' => 'nullable|string|max:255',
-            'service' => 'required|string|max:100',
-            'message' => 'required|string|max:2000',
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'email.required' => 'El email es obligatorio.',
-            'email.email' => 'Debe ingresar un email válido.',
-            'service.required' => 'Seleccione un servicio.',
-            'message.required' => 'El mensaje es obligatorio.',
-        ]);
-
-        try {
-            // Guardar en base de datos
-            \App\Models\ContactMessage::create($validated);
-
-            // Enviar email al admin
-            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-            Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
-
-            return redirect()->route('contacto')
-                ->with('success', '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.');
-        } catch (\Throwable $e) {
-            return redirect()->route('contacto')
-                ->with('error', 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.');
-        }
-    }
-
-    public function blog_index(Request $request)
-    {
-        $categories = \Modules\Blog\Entities\BlogCategory::where('status', true)->get();
-
-        $query = \Modules\Blog\Entities\BlogArticle::with('category')->with('author')
-            ->where('status', true);
-
-        if ($categoryId = $request->get('category')) {
-            $query->where('category_id', $categoryId);
-        }
-
-        if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('short_description', 'like', "%{$search}%")
-                  ->orWhere('content_text', 'like', "%{$search}%");
-            });
-        }
-
-        $articles = $query->latest('created_at')->paginate(9);
-
-        $popular_articles = \Modules\Blog\Entities\BlogArticle::with('category')
-            ->where('status', true)
-            ->orderByDesc('views')
-            ->take(5)
-            ->get();
-
-        return view('pages.blog', [
-            'categories' => $categories,
-            'articles' => $articles,
-            'popular_articles' => $popular_articles,
-            'search' => $search ?? null,
-        ]);
-    }
-
-    public function blogSubscriberStore(Request $request)
-    {
-        $validated = $request->validate([
-            'email' => 'required|email|max:255',
-        ], [
-            'email.required' => 'El email es obligatorio.',
-            'email.email' => 'Debe ingresar un email válido.',
-        ]);
-
-        try {
-            $subscriber = \App\Models\BlogSubscriber::updateOrCreate(
-                ['email' => $validated['email']],
-                [
-                    'name' => $request->get('name', ''),
-                    'status' => 'active',
-                    'source' => 'blog-sidebar',
-                ]
-            );
-
-            // Enviar email de bienvenida
-            Mail::to($validated['email'])->send(new \App\Mail\BlogSubscriberWelcomeMail(
-                $subscriber->name ?: 'Suscriptor',
-                $validated['email']
-            ));
-
-            // Notificar al admin
-            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-            Mail::to($adminEmail)->send(new \App\Mail\BlogSubscriberAdminMail(
-                $subscriber->name ?: 'Sin nombre',
-                $validated['email']
-            ));
-
-            return back()->with('success', '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.');
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Hubo un error al procesar tu suscripción. Por favor, intenta nuevamente.');
-        }
-    }
-
-    public function blog_article($url)
-    {
-        $article = \Modules\Blog\Entities\BlogArticle::with('author', 'category')
-            ->where('url', $url)
-            ->where('status', true)
-            ->firstOrFail();
-
-        $article->increment('views');
-
-        $categories = \Modules\Blog\Entities\BlogCategory::where('status', true)->get();
-
-        $latest_articles = \Modules\Blog\Entities\BlogArticle::with('author')
-            ->where('status', true)
-            ->where('id', '!=', $article->id)
-            ->latest('created_at')
-            ->take(4)
-            ->get();
-
-        $popular_articles = \Modules\Blog\Entities\BlogArticle::with('category')
-            ->where('status', true)
-            ->where('id', '!=', $article->id)
-            ->orderByDesc('views')
-            ->take(5)
-            ->get();
-
-        $articlesByCategory = [];
-        foreach ($categories as $category) {
-            $articlesByCategory[$category->id] = \Modules\Blog\Entities\BlogArticle::where('category_id', $category->id)
-                ->where('status', true)
-                ->orderByDesc('created_at')
-                ->get();
-        }
-
-        return view('pages.blog-articulo', [
-            'article' => $article,
-            'categories' => $categories,
-            'latest_articles' => $latest_articles,
-            'popular_articles' => $popular_articles,
-            'articlesByCategory' => $articlesByCategory,
-        ]);
-    }
-
-    public function casosExito()
-    {
-        return view('pages.casos-exito');
-    }
-
-    public function faq()
-    {
-        return view('pages.faq');
-    }
-
-    public function trabajaNosotros()
-    {
-        return view('pages.trabaja-nosotros');
-    }
-
-    public function politicaPrivacidad()
-    {
-        return view('pages.politica-privacidad');
-    }
-
-    public function terminosCondiciones()
-    {
-        return view('pages.terminos-condiciones');
-    }
-
-    public function libroReclamaciones()
-    {
-        return view('pages.libro-reclamaciones');
     }
 
 
@@ -1377,6 +1747,17 @@ class WebPageController extends Controller
                 'phone'                         => $comprador_telefono,
                 'email'                         => $comprador_email,
                 'response_status'               => 'pendiente',
+                'utm_source'     => $request->get('utm_source'),
+                'utm_medium'     => $request->get('utm_medium'),
+                'utm_campaign'   => $request->get('utm_campaign'),
+                'utm_term'       => $request->get('utm_term'),
+                'utm_content'    => $request->get('utm_content'),
+                'utm_id'         => $request->get('utm_id'),
+                'fbclid'         => $request->get('fbclid'),
+                'gclid'          => $request->get('gclid'),
+                'referer'        => $request->get('referer'),
+                'landing_url'    => $request->get('landing_url'),
+                'traffic_source' => $request->get('traffic_source'),
             ]);
 
             $productquantity = 1;
@@ -1550,6 +1931,17 @@ class WebPageController extends Controller
                 'phone'                         => $comprador_telefono,
                 'email'                         => $comprador_email,
                 'response_status'               => 'pendiente',
+                'utm_source'     => $request->get('utm_source'),
+                'utm_medium'     => $request->get('utm_medium'),
+                'utm_campaign'   => $request->get('utm_campaign'),
+                'utm_term'       => $request->get('utm_term'),
+                'utm_content'    => $request->get('utm_content'),
+                'utm_id'         => $request->get('utm_id'),
+                'fbclid'         => $request->get('fbclid'),
+                'gclid'          => $request->get('gclid'),
+                'referer'        => $request->get('referer'),
+                'landing_url'    => $request->get('landing_url'),
+                'traffic_source' => $request->get('traffic_source'),
             ]);
 
             $productquantity = 1;
@@ -1982,8 +2374,159 @@ class WebPageController extends Controller
              // 5. REVERSIÓN (ROLLBACK) si algo falla
              DB::rollBack();
              dd($th);
-            return redirect()->back()->with('fail', 'Registro fallido Reintentar.');
+            return redirect()->back()->with('fail', 'Registro fallido. Reintentar.');
         }
 
     }
+
+    // ==================== ABANDONED CART ====================
+
+    public function saveAbandonedCart(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'nullable|string|max:100',
+            'phone_country' => 'nullable|string|max:10',
+            'phone' => 'nullable|string|max:20',
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'cart_items' => 'nullable|array',
+            'cart_total' => 'nullable|numeric',
+        ]);
+
+        if (empty($validated['client_id'])) {
+            return response()->json(['status' => 'ignored']);
+        }
+
+        $existing = OnliCarritoAbandonado::where('client_id', $validated['client_id'])->first();
+
+        $data = [];
+        if (isset($validated['phone'])) {
+            $data['phone'] = $validated['phone'];
+        }
+        if (isset($validated['phone_country'])) {
+            $data['phone_country'] = $validated['phone_country'];
+        }
+        if (isset($validated['name'])) {
+            $data['name'] = $validated['name'];
+        }
+        if (isset($validated['email'])) {
+            $data['email'] = $validated['email'];
+        }
+        if (isset($validated['cart_items'])) {
+            $data['cart_items'] = json_encode($validated['cart_items']);
+        }
+        if (isset($validated['cart_total'])) {
+            $data['cart_total'] = $validated['cart_total'];
+        }
+
+        foreach ([
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+            'utm_id', 'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source',
+        ] as $field) {
+            if ($request->has($field)) {
+                $data[$field] = $request->get($field);
+            }
+        }
+
+        if ($existing) {
+            if (!empty($data)) {
+                $data['paid'] = false;
+                $existing->update($data);
+            }
+        } else {
+            $data['client_id'] = $validated['client_id'];
+            $data['paid'] = false;
+            OnliCarritoAbandonado::create($data);
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    // ==================== PASSWORD RECOVERY ====================
+
+    public function sendPasswordRecovery(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $person = Person::where('email', $request->email)->first();
+
+        if (!$person) {
+            return response()->json(['error' => 'Correo no encontrado'], 404);
+        }
+
+        $user = User::where('person_id', $person->id)->first();
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        try {
+            // Use academic module route to align with /academic/students recovery
+            $resetUrl = URL::temporarySignedRoute(
+                'aca_students_password_recovery_form',
+                now()->addMinutes(60),
+                ['personId' => $person->id]
+            );
+
+            Mail::to($person->email)->send(new \App\Mail\StudentPasswordRecoveryMail($person, $resetUrl));
+
+            return response()->json(['status' => 'success', 'message' => 'Correo enviado']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+    // =========== BLOG - PROVISIONAL =========== //
+
+    public function blog_index()
+    {
+        $categories = BlogCategory::where('status', true)->get();
+
+        $articles = BlogArticle::with('category')->with('author')
+            ->where('status', true)
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        $latest_articles = BlogArticle::select(
+            'title',
+            'imagen',
+            'url',
+            'created_at'
+        )
+            ->where('status', true)
+            ->latest('created_at')
+            ->take(4)
+            ->get();
+
+        $banner = CmsSection::where('component_id', 'blog_banner_area_16')
+            ->join('cms_section_items', 'section_id', 'cms_sections.id')
+            ->join('cms_items', 'cms_section_items.item_id', 'cms_items.id')
+            ->select(
+                'cms_items.content',
+                'cms_section_items.position'
+            )
+            ->orderBy('cms_section_items.position')
+            ->first();
+
+        $courses = OnliItem::whereHas('course')->with('course')->latest()->get();
+        $types = getEnumValues('onli_items', 'additional', 0, 1);
+        $p = 12;
+        $lines = 2;
+
+        // Art�culos agrupados por categor�a para el sidebar accordion
+        $articlesByCategory = [];
+        foreach ($categories as $category) {
+            $articlesByCategory[$category->id] = BlogArticle::where('category_id', $category->id)
+                ->where('status', true)
+                ->orderByDesc('created_at')
+                ->get();
+        }
+
+        return view('pages.blog', compact(
+            'categories', 'articles', 'latest_articles', 'banner',
+            'courses', 'types', 'p', 'lines', 'articlesByCategory'
+        ));
+    }
+
+
 }

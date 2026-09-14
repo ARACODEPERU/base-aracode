@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Company;
-use App\Support\ActiveModulesResolver;
-use Illuminate\Support\Str;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -50,7 +48,6 @@ class AuthenticatedSessionController extends Controller
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             'socialNetworks' => $socialNetworks,
-            'activeModules' => ActiveModulesResolver::forLogin(),
         ]);
     }
 
@@ -61,21 +58,7 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        $user = Auth::user();
-        if ($user->hasRole('Lector') && $user->roles()->count() === 1) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'email' => __('No tienes permiso para acceder a este panel. Usa el acceso de Biblioteca.'),
-            ]);
-        }
-
         $request->session()->regenerate();
-
-        $redirectTo = $this->resolveSafeRedirectTo($request->input('redirect_to'));
-        if ($redirectTo) {
-            return redirect()->to($redirectTo);
-        }
 
         return redirect()->intended(RouteServiceProvider::HOME);
     }
@@ -92,34 +75,5 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/login');
-    }
-
-    private function resolveSafeRedirectTo(?string $redirectTo): ?string
-    {
-        if (!is_string($redirectTo)) {
-            return null;
-        }
-
-        $redirectTo = trim($redirectTo);
-        if ($redirectTo === '' || Str::startsWith($redirectTo, ['//', 'http://', 'https://'])) {
-            return null;
-        }
-
-        if (!Str::startsWith($redirectTo, '/')) {
-            return null;
-        }
-
-        $path = parse_url($redirectTo, PHP_URL_PATH) ?: '/';
-        if (Str::startsWith($path, [
-            '/login',
-            '/logout',
-            '/forgot-password',
-            '/reset-password',
-            '/verify-email',
-        ])) {
-            return null;
-        }
-
-        return $redirectTo;
     }
 }

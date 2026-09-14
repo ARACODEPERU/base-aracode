@@ -16,6 +16,10 @@ const props = defineProps({
     person:{
         type: Object,
         default : () => ({})
+    },
+    countries: {
+        type: [Array, Object],
+        default: () => ([])
     }
 });
 
@@ -54,7 +58,7 @@ const getImage = (path) => {
             </div>
         </div>
         <div class="mt-5">
-            <UpdateInformationForm :person="person" :identityDocumentTypes="identityDocumentTypes" :ubigeo="ubigeo" /> 
+            <UpdateInformationForm :person="person" :identityDocumentTypes="identityDocumentTypes" :ubigeo="ubigeo" :countries="countries" />
         </div>
     </AppLayout>
 </template>
