@@ -105,7 +105,7 @@
     }
 
     const showAlertToast = async (text, iconType = null, xposition = 'top-end') => {
-        const toast = Swal.mixin({
+        const toast = Swal2.mixin({
             toast: true,
             position: xposition,
             showConfirmButton: false,

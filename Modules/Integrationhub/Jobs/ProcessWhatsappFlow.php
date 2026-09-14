@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
+use Modules\Integrationhub\Support\TrafficSourceResolver;
 
 class ProcessWhatsappFlow implements ShouldQueue
 {
@@ -19,16 +20,18 @@ class ProcessWhatsappFlow implements ShouldQueue
     public string $phone;
     public string $email;
     public string $flowId;
+    public array $tracking;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(string $name, string $phone, string $email, string $flowId)
+    public function __construct(string $name, string $phone, string $email, string $flowId, array $tracking = [])
     {
         $this->name = $name;
         $this->phone = $phone;
         $this->email = $email;
         $this->flowId = $flowId;
+        $this->tracking = $tracking;
     }
 
     /**
@@ -40,10 +43,13 @@ class ProcessWhatsappFlow implements ShouldQueue
 
         try {
             // 1. Crear contacto
+            $actions = TrafficSourceResolver::actions($this->tracking);
+
             $hub->runEndpoint('create_contact', [
                 'phone' => $this->phone,
                 'email' => $this->email,
                 'first_name' => $this->name,
+                'actions' => $actions,
             ]);
 
             // 2. Sincronizar campo de correo electrónico en custom fields

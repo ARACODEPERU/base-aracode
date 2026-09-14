@@ -590,8 +590,16 @@ class AcaStudentController extends Controller
                 'course.teacher.person',
                 'course.category',
             ])
-            ->orderBy('aca_courses.description')
+            // Varias filas para el mismo curso (reintentos de pago) se muestran
+            // como una sola tarjeta: primero la matricula ilimitada, luego la
+            // que vence mas tarde y por ultimo la mas reciente.
+            ->orderByDesc('aca_cap_registrations.unlimited')
+            ->orderByDesc('aca_cap_registrations.date_end')
+            ->orderByDesc('aca_cap_registrations.id')
             ->get()
+            ->unique('course_id')
+            ->sortBy(fn ($registration) => $registration->course?->description)
+            ->values()
             ->map(function ($registration) use ($student_id, $user) {
                 $course = $registration->course;
                 $course->can_view = true;
