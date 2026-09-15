@@ -303,7 +303,7 @@
             </div>
             <div class="mt-6">
                 <div ref="captureRef" class="panel">
-                    <h3 class="text-lg uppercase mb-4 font-medium">Tabla de posiciones</h3>
+                    <h3 class="text-lg uppercase mb-4 font-medium">Lista de jugadores — {{ equipo.name }}</h3>
                     <div class="table-responsive">
                         <table class="w-full text-sm text-left rtl:text-right border-collapse">
                             <thead class="text-sm text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800">
