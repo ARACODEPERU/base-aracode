@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Blog\Services\ArticleContentCleaner;
 
 class BlogArticle extends Model
 {
@@ -36,6 +37,15 @@ class BlogArticle extends Model
     public function getContentTextAttribute($value)
     {
         return html_entity_decode($value, ENT_QUOTES, "UTF-8");
+    }
+
+    /**
+     * Contenido listo para pintar en la web publica: igual que content_text pero con
+     * las listas reparadas, porque el HTML guardado puede venir mal formado.
+     */
+    public function getContentHtmlAttribute(): string
+    {
+        return ArticleContentCleaner::cleanLists($this->content_text);
     }
 
     public function getImagenAttribute($value)
