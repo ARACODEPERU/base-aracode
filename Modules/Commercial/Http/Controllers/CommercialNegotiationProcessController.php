@@ -481,6 +481,12 @@ class CommercialNegotiationProcessController extends Controller
                 $presentationMode = \App\Helpers\Invoice\DocumentPresentation::modeForCount($items->count());
                 $formattedDescription = \App\Helpers\Invoice\DocumentPresentation::descriptionForItems($items);
 
+                // En cuotas el comprobante de la 1ra cuota lleva el prefijo "1ra cuota - ".
+                // Solo cuando el cronograma tiene mas de una cuota (con una sola seria un pago unico).
+                if ($isInstallments && count(is_array($negotiation->schedule) ? $negotiation->schedule : []) > 1) {
+                    $formattedDescription = \App\Helpers\Invoice\DocumentPresentation::installmentLabel(1).' - '.$formattedDescription;
+                }
+
                 if ($presentationMode === 'list' || $presentationMode === 'summary') {
                     $firstItem = $items->first();
                     $entity = $firstItem->entityClass();

@@ -722,15 +722,21 @@ class AccountsReceivableController extends Controller
 
         $totalItems = count($names);
 
+        $label = \App\Helpers\Invoice\DocumentPresentation::installmentLabel((int) $installmentNumber);
+
         // Si hay más de 2 cursos/ítems, resumen
         if ($totalItems > 2) {
-            return "Pago de la cuota {$installmentNumber} correspondiente a: {$totalItems} cursos.";
+            return "{$label} - {$totalItems} cursos.";
         }
 
         // Si hay 1 o 2, mostrar la lista completa
         $list = implode(', ', $names);
 
-        return "Pago de la cuota {$installmentNumber} correspondiente a: {$list}.";
+        if ($totalItems === 0) {
+            return "{$label}.";
+        }
+
+        return "{$label} - {$list}.";
     }
 
     public function storeSpacePayments(Request $request, $id)
