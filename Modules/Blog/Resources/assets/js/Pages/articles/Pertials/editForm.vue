@@ -10,6 +10,7 @@
     import SecondaryButton from '@/Components/SecondaryButton.vue';
     import Editor from '@tinymce/tinymce-vue'
     import swal from "sweetalert";
+    import BlogAiAssistant from '@/Components/BlogAiAssistant.vue';
 
     const props = defineProps({
         categories: {
@@ -168,7 +169,17 @@
                 <InputError :message="form.errors.description" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-6">
-                <InputLabel for="content" value="Contenido *" />
+                <div class="flex items-center justify-between mb-2">
+                    <InputLabel for="content" value="Contenido *" />
+                    <BlogAiAssistant
+                        :contentText="form.content_text"
+                        :title="form.title"
+                        :description="form.description"
+                        @update:contentText="form.content_text = $event"
+                        @update:title="form.title = $event"
+                        @update:description="form.description = $event"
+                    />
+                </div>
                 <Editor
                     :api-key="tiny_api_key"
                     v-model="form.content_text"
