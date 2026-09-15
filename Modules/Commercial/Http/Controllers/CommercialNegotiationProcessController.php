@@ -913,7 +913,7 @@ class CommercialNegotiationProcessController extends Controller
                 'correlativo' => $document?->invoice_correlative,
                 'numero' => $document?->invoice_document_name,
                 'estado' => $document?->invoice_status,
-                'pdf' => $document?->invoice_pdf,
+                'pdf' => $this->publicInvoiceUrl($document?->invoice_pdf),
                 'total' => $document?->overall_total !== null ? (float) $document->overall_total : null,
             ],
             'items' => $negotiation->items->map(fn ($item) => [
@@ -924,6 +924,28 @@ class CommercialNegotiationProcessController extends Controller
                 'entidad' => $item->entity_name_product,
             ])->values()->toArray(),
         ];
+    }
+
+    /**
+     * Convierte la ruta absoluta con la que se guarda el PDF del comprobante
+     * (public/storage/invoice/20613668323-03-B001-247.pdf) en su URL publica
+     * (.../storage/invoice/20613668323-03-B001-247.pdf), que es la que un
+     * sistema externo como n8n puede descargar.
+     */
+    private function publicInvoiceUrl(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        // Si ya viene una URL (documentos antiguos) se devuelve tal cual.
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        $file = basename(str_replace('\\', '/', $path));
+
+        return rtrim(config('app.url') ?: url('/'), '/').'/storage/invoice/'.$file;
     }
 
     private function nextPaymentDate(CommercialNegotiation $negotiation): ?string
