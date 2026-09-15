@@ -18,9 +18,12 @@ use Modules\CRM\Entities\CrmConversation;
 use Modules\CRM\Entities\CrmMessage;
 use Modules\CRM\Entities\CrmParticipant;
 use Modules\CRM\Entities\CrmUser;
+use Modules\CRM\Http\Controllers\Concerns\ResuelveIdentidadAsistente;
 
 class CrmIaController extends Controller
 {
+    use ResuelveIdentidadAsistente;
+
     public function clientDashboard()
     {
         $conversationId = null;
@@ -74,6 +77,11 @@ class CrmIaController extends Controller
             ->limit(200)
             ->get();
 
+        // El alumno nunca ve quien respondio realmente (auditoria interna).
+        $messages->each(function ($message) {
+            $message->makeHidden('sent_by_user_id');
+        });
+
         return Inertia::render('CRM::Chat/studentDashboard', [
             'messages' => $messages,
             'participants' => $participants,
@@ -81,9 +89,10 @@ class CrmIaController extends Controller
         ]);
     }
 
-    public function sendPromptOpenAI(string $message, ?string $instructions = null, ?string $archivo = null): string
+    public function sendPromptOpenAI(string $message, ?string $instructions = null, ?string $archivo = null, ?int $userId = null): string
     {
-        return app(OpenAiAssistantService::class)->sendPrompt(Auth::id(), $message, $archivo, $instructions);
+        // El hilo de la IA es el del usuario efectivo (el asistente suplantado).
+        return app(OpenAiAssistantService::class)->sendPrompt($userId ?: Auth::id(), $message, $archivo, $instructions);
     }
 
     public function sendMessage(Request $request)
@@ -158,6 +167,14 @@ class CrmIaController extends Controller
 
     public function broadcastSend($participants, $message, $personId)
     {
+        // Los admins tambien escuchan, para que su campanita agregada
+        // ("Mensaje para tus Asistentes") se actualice sola.
+        $participants = collect($participants)
+            ->merge($this->usuariosNotificadosAdicionales())
+            ->unique()
+            ->values()
+            ->all();
+
         $client = new Client();
 
         $dom = env('VITE_SOCKET_IO_SERVER', 'https://localhost:3000');
@@ -193,7 +210,7 @@ class CrmIaController extends Controller
         try {
             $messageText = $request->input('messageText');
             $instructions = $request->input('instructions');
-            $response = $this->sendPromptOpenAI($messageText, $instructions);
+            $response = $this->sendPromptOpenAI($messageText, $instructions, null, $this->usuarioEfectivo($request));
 
             return response()->json([
                 'success' => true,

@@ -37,6 +37,10 @@
         ubigeo: {
             type: Object,
             default: () => ({}),
+        },
+        countries: {
+            type: [Array, Object],
+            default: () => ([])
         }
     });
 </script>
@@ -121,7 +125,7 @@
                         </TabPanel>
                         <TabPanel>
                             <div>
-                                <UpdatePersonInformationForm :person="person" :document_types="document_types" :ubigeo="ubigeo" />
+                                <UpdatePersonInformationForm :person="person" :document_types="document_types" :ubigeo="ubigeo" :countries="countries" />
                             </div>
                         </TabPanel>
                         <TabPanel>

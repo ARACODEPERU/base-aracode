@@ -107,7 +107,6 @@
             route: route("job_offers"),
             badge: null,
             color: 'primary',
-            // Solo se muestra a alumnos con curso de pago o suscripción activa
             requiresJobOffersAccess: true,
         }
     ]);
@@ -117,7 +116,7 @@
         return page.props.hasActiveSubscription === true;
     });
 
-    // Indica si el alumno puede ver Ofertas Laborales (curso de pago o suscripción activa)
+    // Indica si el alumno puede ver Ofertas Laborales (programa de especialización o suscripción activa)
     const canViewJobOffers = computed(() => {
         return page.props.canViewJobOffers === true;
     });
@@ -127,13 +126,10 @@
         return page.props.canLeaveTestimonials === true;
     });
 
-    // Menú visible: oculta las opciones cuyos requisitos de acceso no se cumplen
+    // Menú visible: oculta las opciones cuyos requisitos de acceso no se cumplen.
+    // Ofertas Laborales siempre se muestra (bloqueado si no hay acceso).
     const visibleStudentMenu = computed(() => {
         return studentMenu.value.filter((menuItem) => {
-            if (menuItem.requiresJobOffersAccess && !canViewJobOffers.value) {
-                return false;
-            }
-
             if (menuItem.requiresTestimonialsAccess && !canLeaveTestimonials.value) {
                 return false;
             }
@@ -385,10 +381,10 @@
                         </div>
                         <template v-for="menuItem in visibleStudentMenu" :key="menuItem.id">
                             <li v-if="!menuItem.expandable" class="menu nav-item">
-                                <!-- Sin suscripción activa: se muestra el ícono pero bloqueado con tooltip -->
+                                <!-- Sin suscripción o acceso: se muestra el ícono pero bloqueado con tooltip -->
                                 <div
-                                    v-if="menuItem.requiresSubscription && !hasActiveSubscription"
-                                    v-tippy="{ content: 'Disponible con Suscripción', placement: 'bottom' }"
+                                    v-if="(menuItem.requiresSubscription && !hasActiveSubscription) || (menuItem.requiresJobOffersAccess && !canViewJobOffers)"
+                                    v-tippy="{ content: menuItem.requiresJobOffersAccess ? 'Disponible con Suscripción o Programa de Especialización' : 'Disponible con Suscripción', placement: 'bottom' }"
                                     class="nav-link group w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-gray-400 dark:text-gray-500 cursor-not-allowed select-none"
                                 >
                                     <div class="flex items-center justify-between gap-2">

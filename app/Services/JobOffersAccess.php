@@ -12,8 +12,8 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 /**
  * Acceso a la seccion "Ofertas Laborales" y al codigo HTML/iframe que la alimenta.
  *
- * Puede verla cualquier alumno que haya comprado algun curso con precio mayor a 0
- * o que tenga una suscripcion activa y vigente.
+ * Puede verla cualquier alumno que este matriculado en un programa de
+ * especializacion o que tenga una suscripcion activa y vigente.
  */
 class JobOffersAccess
 {
@@ -24,6 +24,11 @@ class JobOffersAccess
      * alumnos y ambas vistas deben poder configurarse por separado.
      */
     public const PARAMETER_CODE = 'PC00001';
+
+    /**
+     * Tipo de curso que identifica los programas de especializacion.
+     */
+    public const SPECIALIZATION_TYPE = 'Programas de Especialización';
 
     /**
      * Id del alumno (aca_students) asociado a la persona del usuario autenticado.
@@ -61,6 +66,7 @@ class JobOffersAccess
 
     /**
      * Algun curso comprado con precio mayor a 0 (aunque la matricula ya haya vencido).
+     * Usado por StudentTestimonyAccess para mantener la regla de acceso original.
      */
     public static function hasPaidCourse(?int $studentId): bool
     {
@@ -76,7 +82,23 @@ class JobOffersAccess
     }
 
     /**
-     * Curso de pago O suscripcion activa y vigente.
+     * Matriculado en al menos un programa de especializacion.
+     */
+    public static function hasSpecializationProgram(?int $studentId): bool
+    {
+        if (!$studentId) {
+            return false;
+        }
+
+        return AcaCapRegistration::query()
+            ->join('aca_courses', 'aca_courses.id', '=', 'aca_cap_registrations.course_id')
+            ->where('aca_cap_registrations.student_id', $studentId)
+            ->where('aca_courses.type_description', self::SPECIALIZATION_TYPE)
+            ->exists();
+    }
+
+    /**
+     * Programa de especializacion O suscripcion activa y vigente.
      */
     public static function canView(?User $user): bool
     {
@@ -86,7 +108,7 @@ class JobOffersAccess
             return false;
         }
 
-        return self::hasPaidCourse($studentId) || self::hasActiveSubscription($studentId);
+        return self::hasSpecializationProgram($studentId) || self::hasActiveSubscription($studentId);
     }
 
     /**

@@ -22,6 +22,7 @@
     import IconSend from '@/Components/vristo/icon/icon-send.vue';
     import IconCamera from '@/Components/vristo/icon/icon-camera.vue';
     import IconMessage from '@/Components/vristo/icon/icon-message.vue';
+    import IconInfoCircle from '@/Components/vristo/icon/icon-info-circle.vue';
     import { useForm, Link, usePage } from '@inertiajs/vue3';
     import AudioRecord from './Partials/AudioRecord.vue';
     import UploadFile from './Partials/UploadFile.vue';
@@ -40,6 +41,25 @@
         P000010: {
             type: String,
             default: null
+        },
+        // Chat de consultas (solo admins): elegir un asistente y operar como el.
+        modoAsistentes: {
+            type: Boolean,
+            default: false
+        },
+        asistentes: {
+            type: Array,
+            default: () => []
+        },
+        asistenteSeleccionado: {
+            type: Object,
+            default: null
+        },
+        // Mensaje del backend cuando el chat de consultas no puede operar como un
+        // asistente (no existe ninguno con ese rol, o el pedido ya no lo tiene).
+        avisoAsistentes: {
+            type: String,
+            default: null
         }
     });
 
@@ -55,7 +75,7 @@
 
     const fetchPosts = async () => {
         try {
-            axios.get(route('crm_chat_contacts_data')).then( (response) => {
+            chatGet(route('crm_chat_contacts_data')).then( (response) => {
                 data.posts = response.data;
             });
         } catch (error) {
@@ -65,7 +85,7 @@
 
     const fetchNextPosts = async () => {
         try {
-            axios.get(`${route('crm_chat_contacts_data')}?page=${data.posts.current_page += 1}`).then((response) => {
+            chatGet(`${route('crm_chat_contacts_data')}?page=${data.posts.current_page += 1}`).then((response) => {
                 response.data.data.map(item => {
                     data.posts.data.push(item);
                 });
@@ -98,7 +118,7 @@
 
     const searchUsers = async () => {
         try {
-            const response = await axios.get(`${route('crm_chat_contacts_data')}?search=${searchUser.value}`);
+            const response = await chatGet(`${route('crm_chat_contacts_data')}?search=${searchUser.value}`);
             console.log(response);
             data.posts = response.data;
         } catch (error) {
@@ -118,7 +138,7 @@
         }
 
         try {
-            axios.post(route('crm_list_message'),{
+            chatPost(route('crm_list_message'),{
                 conversationId: user.conversationId,
                 personId: user.userId
             }).then((response) => {
@@ -137,6 +157,66 @@
 
     };
 
+    // Compara ids sin depender del tipo (el id del socket puede llegar como texto).
+    const mismoMensaje = (a, b) => a != null && b != null && String(a) === String(b);
+
+    const listaMensajes = () => selectedUser.value?.messages ?? (selectedUser.value.messages = []);
+
+    // Mensajes que acabo de enviar y cuyo eco aun no ha llegado: permite reconocer
+    // como propio el eco del socket aunque venga sin id o sin person_id.
+    const propiosEnVuelo = ref([]);
+
+    const registrarPropio = (msg) => {
+        propiosEnVuelo.value.push({ text: msg.text, type: msg.type, at: Date.now() });
+    };
+
+    const olvidarPropio = (msg) => {
+        const i = propiosEnVuelo.value.findIndex((p) => p.text === msg.text && p.type === msg.type);
+        if (i > -1) propiosEnVuelo.value.splice(i, 1);
+    };
+
+    // Consume (una sola vez) la coincidencia con un mensaje propio en vuelo.
+    const consumePropioEnVuelo = (msg) => {
+        propiosEnVuelo.value = propiosEnVuelo.value.filter((p) => Date.now() - p.at < 60000);
+        const i = propiosEnVuelo.value.findIndex((p) => p.text === msg.text && p.type === msg.type);
+        if (i === -1) return false;
+        propiosEnVuelo.value.splice(i, 1);
+        return true;
+    };
+
+    // Pinta (o completa) un mensaje en la conversacion abierta sin duplicarlo.
+    //
+    // El eco del socket y la respuesta del POST describen el mismo mensaje y pueden
+    // llegar en cualquier orden, con o sin id: se busca primero por id real y, si el
+    // eco vino sin id, por contenido+tipo. El lado ya pintado como mio nunca se
+    // degrada a "del alumno".
+    const pintarMensaje = (msg, esMio) => {
+        if (! selectedUser.value) return;
+
+        const mensajes = listaMensajes();
+        const mio = selectedUser.value.userId;
+        const porId = msg.id != null ? mensajes.find((m) => mismoMensaje(m.id, msg.id)) : null;
+        const existente = porId ?? mensajes.find((m) => m.id == null && m.text === msg.text && m.type === msg.type);
+
+        if (existente) {
+            if (msg.id != null) existente.id = msg.id;
+            if (esMio || ! mismoMensaje(existente.fromUserId, mio)) {
+                existente.fromUserId = esMio ? mio : 0;
+            }
+            if (msg.time) existente.time = msg.time;
+            scrollToBottom();
+            return;
+        }
+
+        mensajes.push({ ...msg, fromUserId: esMio ? mio : 0 });
+        scrollToBottom();
+    };
+
+    // Pinta un mensaje propio evitando duplicados: el eco del socket puede llegar
+    // antes o despues de la respuesta del POST, y en los dos ordenes debe quedar un
+    // solo mensaje, pintado como mio.
+    const pushMensajePropio = (msg) => pintarMensaje(msg, true);
+
     const sendMessage = () => {
         if (textMessage.value.trim()) {
             isShowLoadingSend.value = true;
@@ -148,16 +228,18 @@
                 type: 'text',
                 id: null
             };
-            axios.post(route('crm_send_message'),msg).then((response) => {
+            registrarPropio(msg);
+            chatPost(route('crm_send_message'),msg).then((response) => {
                 return response.data;
             }).then((res) => {
                 if(res.success){
-                    selectedUser.value.messages.push(msg);
+                    msg.id = res.message?.id ?? null;
+                    pushMensajePropio(msg);
                     textMessage.value = '';
-                    scrollToBottom();
                 }else{
                     showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
                 }
+                olvidarPropio(msg);
                 isShowLoadingSend.value = false;
             });
         }
@@ -191,11 +273,13 @@
                 type: 'audio',
                 id: null
             };
-            axios.post(route('crm_send_message'),msg).then((response) => {
+            registrarPropio(msg);
+            chatPost(route('crm_send_message'),msg).then((response) => {
                 return response.data;
             }).then((res) => {
-                selectedUser.value.messages.push(msg);
-                scrollToBottom();
+                msg.id = res.message?.id ?? null;
+                pushMensajePropio(msg);
+                olvidarPropio(msg);
                 isShowLoadingSend.value = false;
             });
         }
@@ -212,11 +296,13 @@
                 type: 'file',
                 id: null
             };
-            axios.post(route('crm_send_message'),msg).then((response) => {
+            registrarPropio(msg);
+            chatPost(route('crm_send_message'),msg).then((response) => {
                 return response.data;
             }).then((res) => {
-                selectedUser.value.messages.push(msg);
-                scrollToBottom();
+                msg.id = res.message?.id ?? null;
+                pushMensajePropio(msg);
+                olvidarPropio(msg);
                 isShowLoadingSend.value = false;
             });
         }
@@ -225,26 +311,118 @@
     // Configura tu conexión a Socket.IO
     const authUser = usePage().props.auth.user;
 
+    // ---------------------------------------------------------------------
+    // Chat de consultas: un admin entra "como" un asistente y desde ese momento
+    // todo el chat (contactos, mensajes, IA) se hace con acting_person_id /
+    // acting_user_id, y el backend responde y firma como el asistente.
+    // ---------------------------------------------------------------------
+    // Asistente activo: arranca con el de la URL (?asistente=) y se puede
+    // cambiar en caliente desde el selector, sin recargar la pagina.
+    const asistenteActivo = ref(props.asistenteSeleccionado);
+
+    const suplantando = computed(() => !!asistenteActivo.value);
+
+    const actingParams = computed(() => suplantando.value ? {
+        acting_person_id: asistenteActivo.value.person_id,
+        acting_user_id: asistenteActivo.value.user_id,
+    } : {});
+
+    // Id de usuario con el que se compara lo que llega por socket.
+    const effectiveUserId = computed(() => asistenteActivo.value?.user_id ?? authUser.id);
+
+    const withActing = (config = {}) => ({
+        ...config,
+        params: { ...(config.params || {}), ...actingParams.value },
+    });
+
+    const chatGet = (url, config = {}) => axios.get(url, withActing(config));
+    const chatPost = (url, data = {}, config = {}) => axios.post(url, data, withActing(config));
+    const chatDelete = (url, config = {}) => axios.delete(url, withActing(config));
+
+    // Mantiene la URL sincronizada para que un refresh conserve la seleccion.
+    const actualizarUrl = (asistente = null) => {
+        try {
+            window.history.replaceState(
+                {},
+                '',
+                asistente
+                    ? route('crm_chat_asistente', { asistente: asistente.person_id })
+                    : route('crm_chat_asistente')
+            );
+        } catch (error) {
+            // Sin Ziggy disponible: el selector sigue funcionando en memoria.
+        }
+    };
+
+    // Cambia de identidad (null = "Yo") y recarga la bandeja del nuevo perfil.
+    const aplicarIdentidad = (asistente = null) => {
+        asistenteActivo.value = asistente;
+
+        selectedUser.value = null;
+        isShowUserChat.value = false;
+        isShowChatMenu.value = false;
+        textMessage.value = '';
+        data.posts = { data: [], current_page: 1, total: 0 };
+
+        actualizarUrl(asistente);
+        fetchPosts();
+    };
+
+    const entrarComoAsistente = (asistente) => aplicarIdentidad(asistente);
+    const salirModoAsistente = () => aplicarIdentidad(null);
+
+    const getAsistenteImage = (image) => {
+        if (!image) return null;
+        if (image.startsWith('/img/')) return `${xasset}${image}`;
+        return `${xasset}storage/${image}`;
+    };
+
     onMounted(() => {
         window.socketIo.on(channelListenChat, (result) => {
             let participants = result.data.participants;
             let conversationId = result.data.message.conversation_id;
+
+            // El backend manda "ofUserId" = person_id de quien ENVIO. Esta vista
+            // pinta como propio (derecha) lo que trae fromUserId igual al person_id
+            // del contacto, asi que hay que traducirlo: si el emisor soy yo, va como
+            // mio; si no, va como del alumno.
+            const ofUserId = Number(result.data.ofUserId);
+            const mensajeEco = result.data.message ?? {};
+            // Se compara contra todas mis identidades: la persona suplantada (si
+            // estoy respondiendo como un asistente) y mi propia persona. El
+            // person_id que guarda el mensaje es el dato de la base, asi que sirve
+            // de respaldo si el socket manda el emisor de otra forma. Ademas,
+            // sent_by_user_id solo se llena cuando un admin responde en nombre de un
+            // asistente, asi que tambien confirma que el mensaje lo escribi yo.
+            // El eco de un mensaje que acabo de enviar es mio aunque el payload
+            // llegue incompleto: se compara con la cola de propios en vuelo.
+            const enVuelo = consumePropioEnVuelo({ text: mensajeEco.content, type: mensajeEco.type });
+            const misPersonas = [asistenteActivo.value?.person_id, authUser.person_id]
+                .filter(persona => persona != null)
+                .map(Number);
+            const esMio = enVuelo
+                || misPersonas.includes(ofUserId)
+                || misPersonas.includes(Number(mensajeEco.person_id))
+                || mensajeEco.sent_by_user_id != null;
+
             const newmsg = {
-                fromUserId: result.data.ofUserId,
+                fromUserId: esMio ? (selectedUser.value?.userId ?? ofUserId) : 0,
                 toUserId: 0,
-                text: result.data.message.content,
+                text: mensajeEco.content,
                 time: 'En este momento',
-                type: result.data.message.type,
-                id: result.data.message.id
+                type: mensajeEco.type,
+                id: mensajeEco.id,
+                sent_by_name: mensajeEco.sent_by_name ?? null
             };
 
             participants.forEach(item => {
-                if(authUser.id == item){
+                if(effectiveUserId.value == item){
                     fetchPosts()
                     if(selectedUser.value){
                         if(conversationId == selectedUser.value.conversationId){
-                            selectedUser.value.messages.push(newmsg);
-                            scrollToBottom();
+                            // Se completa el mensaje que ya estaba en pantalla (eco
+                            // adelantado o respuesta del POST) o se agrega una sola vez.
+                            pintarMensaje(newmsg, esMio);
                         }
                     }
 
@@ -271,6 +449,22 @@
             padding: '10px 20px',
         });
     };
+
+    // Aviso bloqueante (modal) para los problemas que impiden operar el chat de
+    // consultas: no hay ningun usuario con rol Asistente, o el pedido ya no lo tiene.
+    const mostrarAvisoAsistentes = () => {
+        if (! props.avisoAsistentes) return;
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Chat de consultas',
+            text: props.avisoAsistentes,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#3b5bdb',
+        });
+    };
+
+    onMounted(() => mostrarAvisoAsistentes());
 
     const formIaconsulta = useForm({
         messageText: null,
@@ -328,7 +522,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
     const sendPromptOpenAI = () => {
         formIaconsulta.processing = true;
         const url = route('crm_application_ai_prompt_send_message_openai');
-        axios.post(url,formIaconsulta,{
+        chatPost(url,formIaconsulta,{
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -405,13 +599,15 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             id: null,
             answer_ai: true
         };
-        axios.post(route('crm_send_message'), msg).then((response) => {
+        registrarPropio(msg);
+        chatPost(route('crm_send_message'), msg).then((response) => {
             return response.data;
         }).then((res) => {
             if(res.success){
-                selectedUser.value.messages.push(msg);
+                msg.id = res.message?.id ?? null;
+                pushMensajePropio(msg);
+                olvidarPropio(msg);
                 textMessage.value = '';
-                scrollToBottom();
             }else{
                 showMessage('No puede enviar mensajes en este momento. Por favor, complete su información personal en su perfil para habilitar esta función.','info');
             }
@@ -485,7 +681,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
     const sendCensorTextOpenAI = () => {
         formIaconsulta.processing = true;
         const url = route('crm_respond_frequently_questions_store');
-        axios.post(url,formIaconsulta,{
+        chatPost(url,formIaconsulta,{
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -518,10 +714,10 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             return;
         }
         censorLoader.value = true;
-        axios.post(route('crm_common_questions_store'), {
+        chatPost(route('crm_common_questions_store'), {
             question_text: censoredQuestion.value,
             response_text: censoredResponse.value,
-            user_id: authUser.id,
+            user_id: effectiveUserId.value,
         }, {
             headers: {
                 'Content-Type': 'application/json'
@@ -576,7 +772,7 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             cancelButtonText: 'Cancelar',
         }).then((result) => {
             if (result.isConfirmed) {
-                axios.delete(route('crm_chat_message_destroy'), {
+                chatDelete(route('crm_chat_message_destroy'), {
                     data: { message_id: message.id },
                 }).then((response) => {
                     if (response.data.success) {
@@ -600,6 +796,90 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
             </li>
         </Navigation>
         <div class="mt-5">
+
+            <!-- Chat de consultas: el selector queda siempre visible para poder
+                 cambiar entre "Yo" y cada asistente sin perder el contexto. -->
+            <div v-if="modoAsistentes" class="mb-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <p class="text-sm font-bold text-gray-700 dark:text-gray-200">
+                            Chat de consultas
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Elige con quién chatear: tú mismo o uno de los asistentes.
+                        </p>
+                    </div>
+                    <span
+                        v-if="suplantando"
+                        class="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200"
+                    >
+                        Escribiendo como {{ asistenteActivo.full_name }}
+                    </span>
+                </div>
+                <!-- Aviso cuando no hay con quien operar: ningun usuario con rol
+                     Asistente, o el asistente pedido ya no tiene el rol. -->
+                <div
+                    v-if="avisoAsistentes"
+                    class="mb-3 flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-3 text-xs text-warning"
+                >
+                    <IconInfoCircle class="mt-0.5 h-4 w-4 flex-none" />
+                    <p>{{ avisoAsistentes }}</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition"
+                        :class="suplantando
+                            ? 'border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-700 dark:border-gray-700 dark:text-gray-200 dark:hover:text-indigo-300'
+                            : 'border-indigo-500 bg-indigo-50 font-semibold text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/40 dark:text-indigo-200'"
+                        @click="salirModoAsistente"
+                    >
+                        <img
+                            v-if="authUser.avatar"
+                            :src="getImage(authUser.avatar)"
+                            class="h-6 w-6 rounded-full object-cover"
+                            alt=""
+                        />
+                        <img
+                            v-else
+                            :src="'https://ui-avatars.com/api/?name=' + authUser.name + '&size=48&rounded=true'"
+                            class="h-6 w-6 rounded-full object-cover"
+                            alt=""
+                        />
+                        Yo
+                    </button>
+                    <button
+                        v-for="asistente in asistentes"
+                        :key="asistente.person_id"
+                        type="button"
+                        class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition"
+                        :class="asistenteActivo && asistenteActivo.person_id === asistente.person_id
+                            ? 'border-indigo-500 bg-indigo-50 font-semibold text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/40 dark:text-indigo-200'
+                            : 'border-gray-200 text-gray-700 hover:border-indigo-400 hover:text-indigo-700 dark:border-gray-700 dark:text-gray-200 dark:hover:text-indigo-300'"
+                        @click="entrarComoAsistente(asistente)"
+                    >
+                        <img
+                            v-if="getAsistenteImage(asistente.image)"
+                            :src="getAsistenteImage(asistente.image)"
+                            class="h-6 w-6 rounded-full object-cover"
+                            alt=""
+                        />
+                        <img
+                            v-else
+                            :src="'https://ui-avatars.com/api/?name=' + asistente.full_name + '&size=48&rounded=true'"
+                            class="h-6 w-6 rounded-full object-cover"
+                            alt=""
+                        />
+                        {{ asistente.full_name }}
+                    </button>
+                </div>
+                <p v-if="!asistentes.length" class="mt-2 text-xs text-gray-500">
+                    Aún no hay usuarios con el rol Asistente: créalo para poder responder como él.
+                </p>
+                <p v-else-if="!suplantando" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Estás viendo tu propio chat: elige un asistente de la lista para responder como él.
+                </p>
+            </div>
 
             <div class="flex gap-5 relative sm:h-[calc(100vh_-_150px)] h-full sm:min-h-0" :class="{ 'min-h-[999px]': isShowChatMenu }">
                 <!-- Modal de Consulta AI - Primera pantalla -->
@@ -1228,6 +1508,13 @@ Limitate a responder las consultas, y no ofrescas algo más para continuar.`;
                                                             :class="{ 'ltr:text-right rtl:text-left': selectedUser.userId === message.fromUserId }"
                                                         >
                                                             {{ message.time ? message.time : '5h ago' }}
+                                                        </div>
+                                                        <div
+                                                            v-if="message.sent_by_name"
+                                                            class="text-[11px] font-semibold text-warning"
+                                                            :class="{ 'ltr:text-right rtl:text-left': selectedUser.userId === message.fromUserId }"
+                                                        >
+                                                            Respondido por {{ message.sent_by_name }}
                                                         </div>
                                                     </div>
                                                 </div>

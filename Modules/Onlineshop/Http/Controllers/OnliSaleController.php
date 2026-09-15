@@ -35,6 +35,7 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Onlineshop\Rules\ValidationRuleCourseSubscriptions;
+use Modules\Onlineshop\Jobs\ProcessCompra;
 
 class OnliSaleController extends Controller
 {
@@ -647,6 +648,9 @@ class OnliSaleController extends Controller
                 }
             });
 
+            // Enviar datos de la compra a N8N via Integrationhub (async)
+            $adminName = Auth::user()->name ?? 'Desconocido';
+            ProcessCompra::dispatch($sale->id, 'Administrador encargado: ' . $adminName);
 
             //return response()->json($res);
             return to_route('onlineshop_sales');

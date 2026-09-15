@@ -23,6 +23,8 @@ class CarritoAbandonado extends Command
         $this->info('Revisando carritos abandonados...');
 
         $records = OnliCarritoAbandonado::where('paid', false)
+            ->whereNull('last_success_at')
+            ->where('notification_count', '<', 5)
             ->where('created_at', '<', Carbon::now()->subMinutes(10))
             ->where(function ($q) {
                 $q->whereNull('notification_sent_at')

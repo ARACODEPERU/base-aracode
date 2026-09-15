@@ -11,7 +11,7 @@
     import swal from 'sweetalert2';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import SuccessButton  from '@/Components/SuccessButton.vue';
-    import { ref } from 'vue';
+    import { ref, computed } from 'vue';
 
     import {
         ConfigProvider, Select, Input, InputSearch
@@ -46,6 +46,10 @@
             type: Object,
             default: () => ({})
         },
+        countries: {
+            type: [Array, Object],
+            default: () => []
+        },
     });
 
     const form = useForm({
@@ -75,6 +79,20 @@
 
     library.add(faTrashAlt);
 
+    const isForeignDocument = computed(() => {
+        return String(personForm.document_type) === '0';
+    });
+
+    const countryOptions = computed(() => {
+        const list = Array.isArray(props.countries)
+            ? props.countries
+            : Object.values(props.countries || {});
+        return list.map((c) => ({
+            value: c?.id,
+            label: c?.description ?? '',
+        }));
+    });
+
     const displayModalPerson = ref(false);
     const searchLoader = ref(false);
 
@@ -95,6 +113,9 @@
         mother_lastname: props.person?.mother_lastname ?? null,
         ubigeo_description: props.person?.city ?? null,
         gender: props.person?.gender ?? 'M',
+        foreign_country_id: props.person?.foreign_country_id ?? null,
+        foreign_state: props.person?.foreign_state ?? '',
+        foreign_city: props.person?.foreign_city ?? '',
     });
 
     const openModalPersonUser = () => {
@@ -142,6 +163,38 @@
             searchLoader.value = false;
         });
     }
+
+    const submitPersonForm = async () => {
+        if (!isForeignDocument.value) {
+            savePersonUser();
+            return;
+        }
+
+        const countryLabel = countryOptions.value.find(c => c.value === personForm.foreign_country_id)?.label || 'No seleccionado';
+        const stateLabel = personForm.foreign_state || 'No ingresado';
+        const cityLabel = personForm.foreign_city || 'No ingresado';
+
+        const result = await swal.fire({
+            title: 'Confirmar ubicación',
+            html: `
+                <p style="text-align:left; margin-bottom: 8px;">¿Los datos de ubicación son correctos?</p>
+                <div style="text-align:left; background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                    <p style="margin: 4px 0;"><strong>País:</strong> ${countryLabel}</p>
+                    <p style="margin: 4px 0;"><strong>Departamento/Estado:</strong> ${stateLabel}</p>
+                    <p style="margin: 4px 0;"><strong>Ciudad:</strong> ${cityLabel}</p>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar',
+            customClass: 'sweet-alerts',
+        });
+
+        if (result.isConfirmed) {
+            savePersonUser();
+        }
+    };
 
     const savePersonUser = () => {
         personForm.post(route('user_persom_info_store'), {
@@ -298,19 +351,54 @@
                             <Input v-model:value="personForm.birthdate" class="w-full" type="date" />
                             <InputError :message="personForm.errors.birthdate" class="mt-2" />
                         </div>
-                        <div class="col-span-6 sm:col-span-3 ">
-                            <InputLabel for="ubigeo" value="Ciudad *" />
-                            <Select
-                                v-model:value="personForm.ubigeo"
-                                show-search
-                                placeholder="Seleccione una ciudad"
-                                style="width: 100%"
-                                :options="ubigeo.map((row) => ({value: row.district_id, label: row.department_name+'-'+row.province_name+'-'+row.district_name,district_name: row.district_name }))"
-                                :filter-option="filterOption"
-                                @change="handleChange"
-                            ></Select>
-                            <InputError :message="personForm.errors.ubigeo" class="mt-2" />
-                        </div>
+                        <!-- UBIGEO PERUANO -->
+                        <template v-if="!isForeignDocument">
+                            <div class="col-span-6 sm:col-span-3">
+                                <InputLabel for="ubigeo" value="Ciudad *" />
+                                <Select
+                                    v-model:value="personForm.ubigeo"
+                                    show-search
+                                    placeholder="Seleccione una ciudad"
+                                    style="width: 100%"
+                                    :options="ubigeo.map((row) => ({value: row.district_id, label: row.department_name+'-'+row.province_name+'-'+row.district_name,district_name: row.district_name }))"
+                                    :filter-option="filterOption"
+                                    @change="handleChange"
+                                ></Select>
+                                <InputError :message="personForm.errors.ubigeo" class="mt-2" />
+                            </div>
+                        </template>
+
+                        <!-- UBICACIÓN EXTRANJERA -->
+                        <template v-else>
+                            <div class="col-span-6 sm:col-span-1">
+                                <InputLabel for="foreign_country_id" value="País *" />
+                                <Select
+                                    v-model:value="personForm.foreign_country_id"
+                                    show-search
+                                    placeholder="Seleccione un país"
+                                    style="width: 100%"
+                                    :options="countryOptions"
+                                    :filter-option="filterOption"
+                                ></Select>
+                                <InputError :message="personForm.errors.foreign_country_id" class="mt-2" />
+                            </div>
+                            <div class="col-span-6 sm:col-span-1">
+                                <InputLabel for="foreign_state" value="Depto./Estado *" />
+                                <Input
+                                    v-model:value="personForm.foreign_state"
+                                    placeholder="Ej: California"
+                                />
+                                <InputError :message="personForm.errors.foreign_state" class="mt-2" />
+                            </div>
+                            <div class="col-span-6 sm:col-span-1">
+                                <InputLabel for="foreign_city" value="Ciudad *" />
+                                <Input
+                                    v-model:value="personForm.foreign_city"
+                                    placeholder="Ej: Los Ángeles"
+                                />
+                                <InputError :message="personForm.errors.foreign_city" class="mt-2" />
+                            </div>
+                        </template>
                         <div class="col-span-6 sm:col-span-3">
                             <InputLabel for="address" value="Dirección *" />
                             <Input
@@ -383,7 +471,7 @@
                 </template>
                 <template #buttons>
                     <InputError :message="personForm.errors.id" />
-                    <PrimaryButton @click="savePersonUser" :class="{ 'opacity-25': personForm.processing }" :disabled="form.processing">
+                    <PrimaryButton @click="submitPersonForm" :class="{ 'opacity-25': personForm.processing }" :disabled="form.processing">
                         Guardar cambios
                     </PrimaryButton>
                 </template>

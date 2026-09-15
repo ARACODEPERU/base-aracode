@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Modules\Sales\Entities\SaleDocumentQuota;
+use Modules\Sales\Entities\SalePaymentSchedule;
 
 class SaleDocument extends Model
 {
@@ -95,5 +96,9 @@ class SaleDocument extends Model
     public function quotas(): HasMany
     {
         return $this->hasMany(SaleDocumentQuota::class,'sale_document_id','id');
+    }
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(SalePaymentSchedule::class, 'document_id', 'id');
     }
 }

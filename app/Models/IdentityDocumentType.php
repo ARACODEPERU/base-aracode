@@ -26,4 +26,18 @@ class IdentityDocumentType extends Model
         'sunat_code',
         'number_characters'
     ];
+
+    /**
+     * Indica si este tipo de documento corresponde a un extranjero (sunat_code = '00').
+     */
+    public static function isForeign($documentTypeId): bool
+    {
+        if ($documentTypeId === null || $documentTypeId === '') {
+            return false;
+        }
+
+        $docType = static::find((string) $documentTypeId);
+
+        return $docType && $docType->sunat_code === '00';
+    }
 }

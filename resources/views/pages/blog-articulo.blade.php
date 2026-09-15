@@ -12,7 +12,7 @@
     {{-- Article Header --}}
     <section class="pt-32 pb-12 bg-ara-navy relative overflow-hidden">
         <div class="absolute top-0 right-0 w-96 h-96 bg-ara-blue/10 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             {{-- Breadcrumb --}}
             <nav class="flex items-center gap-2 text-sm text-white/50 mb-8 reveal" aria-label="Breadcrumb">
                 <a href="{{ route('index_main') }}" class="hover:text-white transition-colors">Inicio</a>
@@ -24,14 +24,14 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
-                    <span class="text-white/70">{{ $article->category->name }}</span>
+                    <span class="text-white/70">{{ $article->category->description }}</span>
                 @endif
             </nav>
 
             {{-- Category Badge --}}
             @if($article->category)
                 <span class="ara-badge ara-badge-blue mb-4 inline-block reveal reveal-delay-1">
-                    {{ $article->category->name }}
+                    {{ $article->category->description }}
                 </span>
             @endif
 
@@ -73,10 +73,10 @@
 
     {{-- Article Content --}}
     <section class="py-12 lg:py-16 bg-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-12">
-                {{-- Main Content --}}
-                <article class="reveal">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {{-- Main Content (3/4) --}}
+                <article class="lg:col-span-3">
                     {{-- Featured Image --}}
                     @if($article->imagen)
                         <div class="rounded-2xl overflow-hidden mb-8 shadow-lg">
@@ -129,54 +129,129 @@
                     </div>
                 </article>
 
-                {{-- Sidebar --}}
-                <aside class="hidden lg:block">
-                    {{-- Categories --}}
-                    @if($categories->count() > 0)
-                        <div class="ara-card mb-6">
-                            <h3 class="text-lg font-bold text-ara-slate-700 mb-4">Categorías</h3>
-                            <ul class="space-y-2">
-                                @foreach($categories as $category)
-                                    <li>
-                                        <a href="{{ route('blog_principal') }}?category={{ $category->id }}" 
-                                           class="flex items-center justify-between text-ara-slate-500 hover:text-ara-blue transition-colors text-sm py-1">
-                                            <span>{{ $category->name }}</span>
-                                            @if(isset($articlesByCategory[$category->id]))
-                                                <span class="text-ara-slate-300">{{ $articlesByCategory[$category->id]->count() }}</span>
-                                            @endif
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
+                {{-- Sidebar (1/4) --}}
+                <aside class="lg:col-span-1 lg:sticky lg:top-24 lg:self-start space-y-6">
+                    
+                    {{-- Newsletter --}}
+                    @if(session('success'))
+                        <div class="p-3 rounded-lg bg-green-500/20 border border-green-400/30 text-green-100 text-xs mb-4">
+                            {{ session('success') }}
                         </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="p-3 rounded-lg bg-red-500/20 border border-red-400/30 text-red-100 text-xs mb-4">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+                    <div class="ara-card-newsletter p-5 rounded-xl text-white" style="background: linear-gradient(135deg, #060E2D 0%, #0188EE 100%);">
+                        <div class="text-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-sm font-bold mb-1">Suscríbete al newsletter</h3>
+                            <p class="text-xs text-white/80">Recibe artículos como este en tu correo.</p>
+                        </div>
+                        <form action="{{ route('blog.subscribe') }}" method="POST" class="space-y-3">
+                            @csrf
+                            <input type="email" name="email" placeholder="Tu correo electrónico" required
+                                   class="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/25 text-sm text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all">
+                            <button type="submit" 
+                                    class="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors" style="background-color: #ffffff; color: #060E2D;">
+                                Suscribirme
+                            </button>
+                        </form>
+                    </div>
+
+                    {{-- Popular Articles --}}
+                    @if(isset($popular_articles) && $popular_articles->count() > 0)
+                    <div class="ara-card p-5">
+                        <h3 class="text-sm font-bold text-ara-slate-700 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                            <svg class="w-4 h-4 text-ara-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/>
+                            </svg>
+                            Populares
+                        </h3>
+                        <div class="space-y-3">
+                            @foreach($popular_articles as $popular)
+                                <a href="{{ route('blog_article', $popular->url) }}" class="flex gap-3 group">
+                                    <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-ara-slate-100">
+                                        <img src="{{ $popular->imagen }}" 
+                                             alt="{{ $popular->title }}" 
+                                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                             loading="lazy">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-xs font-semibold text-ara-slate-700 group-hover:text-ara-blue transition-colors line-clamp-2 leading-snug">
+                                            {{ $popular->title }}
+                                        </h4>
+                                        <div class="flex items-center gap-2 mt-1.5">
+                                            <time class="text-[10px] text-ara-slate-400">
+                                                {{ $popular->created_at->format('d M Y') }}
+                                            </time>
+                                            <span class="text-[10px] text-ara-slate-300">•</span>
+                                            <span class="text-[10px] text-ara-slate-400 flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                </svg>
+                                                {{ $popular->views ?? 0 }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
                     @endif
 
-                    {{-- Latest Articles --}}
-                    @if($latest_articles->count() > 0)
-                        <div class="ara-card">
-                            <h3 class="text-lg font-bold text-ara-slate-700 mb-4">Últimos artículos</h3>
-                            <div class="space-y-4">
-                                @foreach($latest_articles->take(4) as $latest)
-                                    @if($latest->url !== $article->url)
-                                        <a href="{{ route('blog_article', $latest->url) }}" class="flex gap-3 group">
-                                            <img src="{{ $latest->imagen }}" 
-                                                 alt="{{ $latest->title }}" 
-                                                 class="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                                                 loading="lazy">
-                                            <div>
-                                                <h4 class="text-sm font-semibold text-ara-slate-700 group-hover:text-ara-blue transition-colors line-clamp-2">
-                                                    {{ $latest->title }}
-                                                </h4>
-                                                <time class="text-xs text-ara-slate-400">
-                                                    {{ $latest->created_at->format('d M Y') }}
-                                                </time>
-                                            </div>
-                                        </a>
-                                    @endif
-                                @endforeach
+                    {{-- CTA Contacto --}}
+                    <div class="p-5 rounded-xl border-2 border-ara-blue/20 bg-white dark:bg-slate-800">
+                        <div class="text-center">
+                            <div class="w-10 h-10 rounded-full bg-ara-blue/10 dark:bg-ara-blue/20 flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-5 h-5 text-ara-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
                             </div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-white mb-2">¿Necesitas asesoría?</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Nuestro equipo está listo para ayudarte con tu proyecto.</p>
+                            <a href="{{ route('contacto') }}" 
+                               class="inline-flex items-center justify-center w-full py-2.5 rounded-lg bg-ara-blue text-white text-sm font-semibold hover:bg-ara-blue/90 transition-colors gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                Contactar ahora
+                            </a>
                         </div>
+                    </div>
+
+                    {{-- Categories --}}
+                    @if($categories->count() > 0)
+                    <div class="ara-card p-5">
+                        <h3 class="text-sm font-bold text-ara-slate-700 mb-3 flex items-center gap-2 uppercase tracking-wide">
+                            <svg class="w-4 h-4 text-ara-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Categorías
+                        </h3>
+                        <ul class="space-y-1">
+                            @foreach($categories as $category)
+                                <li>
+                                    <a href="{{ route('blog_principal') }}?category={{ $category->id }}" 
+                                       class="flex items-center justify-between text-ara-slate-500 hover:text-ara-blue transition-colors text-sm py-2 px-2 rounded-lg hover:bg-ara-slate-50">
+                                        <span>{{ $category->description }}</span>
+                                        @if(isset($articlesByCategory[$category->id]) && $articlesByCategory[$category->id]->count() > 0)
+                                            <span class="text-xs bg-ara-slate-100 text-ara-slate-500 px-2 py-0.5 rounded-full">{{ $articlesByCategory[$category->id]->count() }}</span>
+                                        @endif
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                     @endif
+
                 </aside>
             </div>
         </div>

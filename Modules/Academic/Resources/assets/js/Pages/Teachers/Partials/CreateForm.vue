@@ -57,7 +57,9 @@ const form = useForm({
     country_id: 1,
     gender: 'M',
     occupation_id: null,
-    profession_id: null
+    profession_id: null,
+    foreign_state: null,
+    foreign_city: null
 });
 
 const createTeacher = () => {
@@ -404,12 +406,28 @@ const handleChange = (val) => {
                     <InputError :message="form.errors.ubigeo" class="mt-2" />
                 </template>
                 <template v-else>
-                    <TextInput
-                        id="ubigeo_id"
-                        v-model="form.ubigeo_description"
-                        type="text"
-                    />
-                    <InputError :message="form.errors.ubigeo_description" class="mt-2" />
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <InputLabel for="foreign_state" value="Depto./Estado *" />
+                            <TextInput
+                                id="foreign_state"
+                                v-model="form.foreign_state"
+                                type="text"
+                                placeholder="Ej: California"
+                            />
+                            <InputError :message="form.errors.foreign_state" class="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel for="foreign_city" value="Ciudad *" />
+                            <TextInput
+                                id="foreign_city"
+                                v-model="form.foreign_city"
+                                type="text"
+                                placeholder="Ej: Los Ángeles"
+                            />
+                            <InputError :message="form.errors.foreign_city" class="mt-1" />
+                        </div>
+                    </div>
                 </template>
             </div>
             <div class="col-span-6 sm:col-span-2">

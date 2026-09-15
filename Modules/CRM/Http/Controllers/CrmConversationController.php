@@ -8,19 +8,31 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Modules\CRM\Entities\CrmConversation;
 use Modules\CRM\Entities\CrmMessage;
 use Modules\CRM\Entities\CrmParticipant;
 use Modules\CRM\Events\SendNotification;
+use Modules\CRM\Http\Controllers\Concerns\ResuelveIdentidadAsistente;
 
 class CrmConversationController extends Controller
 {
+    use ResuelveIdentidadAsistente;
+
     /**
      * Display a listing of the resource.
      */
-    public function getConversations()
+    public function getConversations(Request $request)
     {
-        $persomId = Auth::user()->person_id;
+        // Los administradores reciben una sola notificacion agregada que los
+        // lleva al chat de asistentes ("Mensaje para tus Asistentes").
+        if ($this->puedeVerComoAsistentes()) {
+            return $this->notificacionAgregadaAsistentes();
+        }
+
+        // Identidad efectiva: el asistente suplantado cuando un admin entra
+        // desde "Chat de consultas".
+        $persomId = $this->personaEfectiva($request);
 
         $latestReceivedMessage = CrmMessage::select('crm_messages.*')
             ->joinSub(
@@ -91,6 +103,68 @@ class CrmConversationController extends Controller
         ]);
     }
 
+
+    /**
+     * Notificacion unica para el admin: cuantas conversaciones estan esperando
+     * respuesta de algun asistente, con enlace a la vista de asistentes.
+     */
+    private function notificacionAgregadaAsistentes()
+    {
+        $asistentesPersonIds = User::query()
+            ->role('Asistente')
+            ->pluck('person_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($asistentesPersonIds->isEmpty()) {
+            return response()->json(['conversations' => [], 'totalNew' => 0]);
+        }
+
+        $latestMessage = CrmMessage::select('conversation_id', DB::raw('MAX(id) as last_message_id'))
+            ->groupBy('conversation_id');
+
+        $conversations = CrmParticipant::join('crm_conversations', 'crm_participants.conversation_id', 'crm_conversations.id')
+            ->joinSub($latestMessage, 'last_message', function ($join) {
+                $join->on('crm_conversations.id', '=', 'last_message.conversation_id');
+            })
+            ->join('crm_messages as last_message_data', 'last_message_data.id', '=', 'last_message.last_message_id')
+            ->join('people', 'last_message_data.person_id', 'people.id')
+            ->whereIn('crm_participants.person_id', $asistentesPersonIds)
+            ->where('crm_conversations.new_message', true)
+            // Solo cuentan los mensajes que estan esperando a un asistente.
+            ->whereNotIn('last_message_data.person_id', $asistentesPersonIds)
+            ->select(
+                'crm_conversations.id',
+                'last_message_data.created_at as message_created_at',
+                'people.full_name',
+                'people.image'
+            )
+            ->orderByDesc('last_message_data.created_at')
+            ->get()
+            ->unique('id')
+            ->values();
+
+        if ($conversations->isEmpty()) {
+            return response()->json(['conversations' => [], 'totalNew' => 0]);
+        }
+
+        $ultimo = $conversations->first();
+
+        return response()->json([
+            'conversations' => [[
+                'id' => 'asistentes',
+                'is_assistant_aggregate' => true,
+                'url' => route('crm_chat_asistente'),
+                'full_name' => 'Mensaje para tus Asistentes',
+                'image' => null,
+                'preview' => '<strong class="text-sm mr-1">Mensaje para tus Asistentes</strong>',
+                'time' => timeElapsed($ultimo->message_created_at),
+                'total' => $conversations->count(),
+            ]],
+            'totalNew' => $conversations->count(),
+        ]);
+    }
 
     public function store(Request $request): RedirectResponse
     {

@@ -86,9 +86,7 @@ class ClientController extends Controller
                 'email'  => $request->get('email'),
                 'address'  => $request->get('address'),
                 'is_client' => true,
-                'ubigeo'    => $request->get('ubigeo'),
-                'birthdate' => $request->get('birthdate') ?? null,
-                'gender' => $request->get('gender')
+                'ubigeo'    => $request->get('ubigeo')
             ]);
         } else {
             Person::where('number', $request->get('number'))->first()->update([
@@ -99,9 +97,7 @@ class ClientController extends Controller
                 'email'  => $request->get('email'),
                 'address'  => $request->get('address'),
                 'is_client' => true,
-                'ubigeo'    => $request->get('ubigeo'),
-                'birthdate' => $request->get('birthdate') ?? null,
-                'gender' => $request->get('gender')
+                'ubigeo'    => $request->get('ubigeo')
             ]);
         }
 
@@ -174,9 +170,7 @@ class ClientController extends Controller
             'document_type_id'  => $request->get('document_type_id'),
             'address'  => $request->get('address'),
             'email' => $request->get('email'),
-            'ubigeo'    => $request->get('ubigeo'),
-            'birthdate' => $request->get('birthdate') ?? null,
-            'gender' => $request->get('gender')
+            'ubigeo'    => $request->get('ubigeo')
         ]);
 
         return redirect()->route('clients.index')

@@ -4,7 +4,7 @@
     import IconBellBing from '@/Components/vristo/icon/icon-bell-bing.vue';
     import IconInfoCircle from '@/Components/vristo/icon/icon-info-circle.vue';
     import IconSquareCheck from '@/Components/vristo/icon/icon-square-check.vue';
-    import { useForm, Link, usePage } from '@inertiajs/vue3';
+    import { useForm, Link, usePage, router } from '@inertiajs/vue3';
     import { useSharedStore } from '../useSharedStore';
 
     const store = useAppStore();
@@ -60,6 +60,24 @@
         updateStateNotification(notification);
     };
 
+    // El admin recibe una sola notificacion agregada ("Mensaje para tus
+    // Asistentes"): al hacer clic se abre la vista de asistentes.
+    const abrirNotificacion = (notification, close = null) => {
+        if (notification.is_assistant_aggregate) {
+            if (typeof close === 'function') {
+                close();
+            }
+            router.visit(notification.url || route('crm_chat_asistente'));
+            return;
+        }
+
+        showChatBox(notification);
+
+        if (typeof close === 'function') {
+            close();
+        }
+    };
+
     const updateStateNotification = (notification) => {
         try {
             axios.get(route('crm_chat_conveersation_status', notification.id));
@@ -97,7 +115,7 @@
                     </li>
                     <template v-for="notification in notifications" :key="notification.id">
                         <template v-if="notification.full_name">
-                            <li @click="showChatBox(notification),close()" class="dark:text-white-light/90 cursor-pointer">
+                            <li @click="abrirNotificacion(notification, close)" class="dark:text-white-light/90 cursor-pointer">
                                 <div class="group flex items-center px-4 py-2">
                                     <div class="grid place-content-center rounded">
                                         <div class="w-12 h-12 relative">
@@ -123,7 +141,7 @@
                                         <button
                                             type="button"
                                             class="ltr:ml-auto rtl:mr-auto text-neutral-300 hover:text-danger opacity-0 group-hover:opacity-100"
-                                            @click="showChatBox(notification)"
+                                            @click="abrirNotificacion(notification)"
                                         >
 
                                             <icon-square-check />

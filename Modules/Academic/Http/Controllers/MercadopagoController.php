@@ -27,6 +27,7 @@ use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
 use Illuminate\Support\Facades\Mail;
+use Modules\Onlineshop\Jobs\ProcessCompra;
 
 class MercadopagoController extends Controller
 {
@@ -439,6 +440,11 @@ class MercadopagoController extends Controller
             $url = route('aca_mycourses');
 
             $payment = $res['payment'];
+
+            // Enviar datos de la compra a N8N via Integrationhub (async)
+            if ($payment->status === 'approved') {
+                ProcessCompra::dispatch($sale->id, 'carrito_autenticado');
+            }
 
             return response()->json([
                 'status' => $payment->status,

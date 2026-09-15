@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent } from 'vue';
+import { computed, ref, defineAsyncComponent } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -9,7 +9,6 @@ import esES from 'ant-design-vue/es/locale/es_ES';
 
 // 🚨 IMPORTACIÓN DINÁMICA: Evita que Cropper.js se ejecute en SSR / Node.js
 const CropperImage = defineAsyncComponent(() => {
-    // Importamos el CSS e ImageCropper solo cuando se ejecute en el navegador
     if (typeof window !== 'undefined') {
         import('cropperjs/dist/cropper.css');
     }
@@ -28,6 +27,10 @@ const props = defineProps({
     person: {
         type: Object,
         default: () => ({}),
+    },
+    countries: {
+        type: [Array, Object],
+        default: () => [],
     },
 });
 
@@ -55,6 +58,22 @@ const ubigeoOptions = computed(() => {
     }));
 });
 
+const countryOptions = computed(() => {
+    const list = Array.isArray(props.countries)
+        ? props.countries
+        : Object.values(props.countries || {});
+
+    return list.map((c) => ({
+        value: c?.id,
+        label: c?.description ?? '',
+    }));
+});
+
+// Detectar si el tipo de documento es extranjero (OTROS = sunat_code '00', id '0')
+const isForeignDocument = computed(() => {
+    return String(form.document_type_id) === '0';
+});
+
 // Inicialización
 const form = useForm({
     id: props.person?.id ?? null,
@@ -72,24 +91,10 @@ const form = useForm({
     father_lastname: props.person?.father_lastname ?? '',
     mother_lastname: props.person?.mother_lastname ?? '',
     ubigeo_description: props.person?.city ?? null,
+    foreign_country_id: props.person?.foreign_country_id ?? null,
+    foreign_state: props.person?.foreign_state ?? '',
+    foreign_city: props.person?.foreign_city ?? '',
 });
-
-const updateInfoPerson = () => {
-    form.post(route('user-update-profile-store'), {
-        forceFormData: true,
-        errorBag: 'updateInfoPerson',
-        preserveScroll: true,
-        onSuccess: async () => {
-            // Importación dinámica de SweetAlert2 para evitar fallos en SSR
-            const { default: Swal2 } = await import('sweetalert2');
-            Swal2.fire({
-                title: 'Enhorabuena',
-                text: 'Se registró correctamente',
-                icon: 'success',
-            });
-        },
-    });
-};
 
 const filterOption = (input, option) => {
     const inputValueLower = (input || '').toLowerCase();
@@ -99,6 +104,57 @@ const filterOption = (input, option) => {
 
 const cropImageAndSave = (res) => {
     form.image = res;
+};
+
+// Modal de confirmación para extranjeros
+const submitForm = async () => {
+    if (!isForeignDocument.value) {
+        updateInfoPerson();
+        return;
+    }
+
+    const { default: Swal2 } = await import('sweetalert2');
+
+    const countryLabel = countryOptions.value.find(c => c.value === form.foreign_country_id)?.label || 'No seleccionado';
+    const stateLabel = form.foreign_state || 'No ingresado';
+    const cityLabel = form.foreign_city || 'No ingresado';
+
+    const result = await Swal2.fire({
+        title: 'Confirmar ubicación',
+        html: `
+            <p style="text-align:left; margin-bottom: 8px;">¿Los datos de ubicación son correctos?</p>
+            <div style="text-align:left; background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                <p style="margin: 4px 0;"><strong>País:</strong> ${countryLabel}</p>
+                <p style="margin: 4px 0;"><strong>Departamento/Estado:</strong> ${stateLabel}</p>
+                <p style="margin: 4px 0;"><strong>Ciudad:</strong> ${cityLabel}</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar',
+        customClass: 'sweet-alerts',
+    });
+
+    if (result.isConfirmed) {
+        updateInfoPerson();
+    }
+};
+
+const updateInfoPerson = () => {
+    form.post(route('user-update-profile-store'), {
+        forceFormData: true,
+        errorBag: 'updateInfoPerson',
+        preserveScroll: true,
+        onSuccess: async () => {
+            const { default: Swal2 } = await import('sweetalert2');
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se registró correctamente',
+                icon: 'success',
+            });
+        },
+    });
 };
 </script>
 
@@ -138,19 +194,64 @@ const cropImageAndSave = (res) => {
                             <InputError :message="form.errors.birthdate" class="mt-2" />
                         </div>
 
-                        <!-- Ciudad / Ubigeo -->
-                        <div class="col-span-6 sm:col-span-3">
-                            <InputLabel for="ubigeo" value="Ciudad *" />
-                            <Select
-                                v-model:value="form.ubigeo"
-                                show-search
-                                placeholder="Seleccione una ciudad"
-                                style="width: 100%"
-                                :options="ubigeoOptions"
-                                :filter-option="filterOption"
-                            />
-                            <InputError :message="form.errors.ubigeo" class="mt-2" />
-                        </div>
+                        <!-- === UBIGEO PERUANO (cuando NO es extranjero) === -->
+                        <template v-if="!isForeignDocument">
+                            <div class="col-span-6 sm:col-span-3">
+                                <InputLabel for="ubigeo" value="Ciudad *" />
+                                <Select
+                                    v-model:value="form.ubigeo"
+                                    show-search
+                                    placeholder="Seleccione una ciudad"
+                                    style="width: 100%"
+                                    :options="ubigeoOptions"
+                                    :filter-option="filterOption"
+                                />
+                                <InputError :message="form.errors.ubigeo" class="mt-2" />
+                            </div>
+                        </template>
+
+                        <!-- === UBICACIÓN EXTRANJERA (cuando ES extranjero) === -->
+                        <template v-else>
+                            <!-- País -->
+                            <div class="col-span-6 sm:col-span-1">
+                                <InputLabel for="foreign_country_id" value="País *" />
+                                <Select
+                                    v-model:value="form.foreign_country_id"
+                                    show-search
+                                    placeholder="Seleccione un país"
+                                    style="width: 100%"
+                                    :options="countryOptions"
+                                    :filter-option="filterOption"
+                                />
+                                <InputError :message="form.errors.foreign_country_id" class="mt-2" />
+                            </div>
+
+                            <!-- Departamento / Estado -->
+                            <div class="col-span-6 sm:col-span-1">
+                                <InputLabel for="foreign_state" value="Depto./Estado *" />
+                                <Input
+                                    id="foreign_state"
+                                    v-model:value="form.foreign_state"
+                                    type="text"
+                                    placeholder="Ej: California"
+                                    class="block w-full mt-1"
+                                />
+                                <InputError :message="form.errors.foreign_state" class="mt-2" />
+                            </div>
+
+                            <!-- Ciudad -->
+                            <div class="col-span-6 sm:col-span-1">
+                                <InputLabel for="foreign_city" value="Ciudad *" />
+                                <Input
+                                    id="foreign_city"
+                                    v-model:value="form.foreign_city"
+                                    type="text"
+                                    placeholder="Ej: Los Ángeles"
+                                    class="block w-full mt-1"
+                                />
+                                <InputError :message="form.errors.foreign_city" class="mt-2" />
+                            </div>
+                        </template>
 
                         <!-- Dirección -->
                         <div class="col-span-6 sm:col-span-3">
@@ -236,7 +337,7 @@ const cropImageAndSave = (res) => {
         <!-- Footer / Botón -->
         <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md dark:bg-gray-700">
             <PrimaryButton
-                @click="updateInfoPerson"
+                @click="submitForm"
                 type="button"
                 :class="{ 'opacity-25': form.processing }"
                 :disabled="form.processing"

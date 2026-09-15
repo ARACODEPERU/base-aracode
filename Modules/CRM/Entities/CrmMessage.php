@@ -17,6 +17,7 @@ class CrmMessage extends Model
     protected $fillable = [
         'conversation_id',
         'person_id',
+        'sent_by_user_id',
         'content',
         'server_response',
         'type',

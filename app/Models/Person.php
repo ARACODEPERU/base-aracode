@@ -47,7 +47,10 @@ class Person extends Model
         'industry_id',
         'profession_id',
         'occupation_id',
-        'country_id'
+        'country_id',
+        'foreign_country_id',
+        'foreign_state',
+        'foreign_city'
     ];
 
     protected $appends = ['formatted_name'];

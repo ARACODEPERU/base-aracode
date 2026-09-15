@@ -137,35 +137,52 @@ class AcaTeacherController extends Controller
             );
         }
 
+        $personData = [
+            'short_name'            => trim($request->get('names')),
+            'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
+            'description'           => $request->get('description'),
+            'telephone'             => $request->get('telephone'),
+            'email'                 => trim($request->get('email')),
+            'address'               => $request->get('address'),
+            'is_provider'           => false,
+            'is_client'             => true,
+            'birthdate'             => $request->get('birthdate'),
+            'names'                 => trim($request->get('names')),
+            'father_lastname'       => trim($request->get('father_lastname')),
+            'mother_lastname'       => trim($request->get('mother_lastname')),
+            'presentacion'          => $request->get('presentacion'),
+            'country_id'            => $request->get('country_id') ?? 1,
+            'gender'                => $request->get('gender') ?? 'M',
+            'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
+            'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
+            'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
+            'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
+        ];
+
+        if ($country_id != 1) {
+            $country = Country::find($request->get('country_id'));
+            $countryName = $country ? $country->description : '';
+            $foreignState = $request->get('foreign_state') ?? '';
+            $foreignCity = $request->get('foreign_city') ?? '';
+            $personData['ubigeo'] = null;
+            $personData['ubigeo_description'] = trim($countryName . ' - ' . $foreignState . ' - ' . $foreignCity);
+            $personData['foreign_country_id'] = $request->get('country_id');
+            $personData['foreign_state'] = $foreignState;
+            $personData['foreign_city'] = $foreignCity;
+        } else {
+            $personData['ubigeo'] = $request->get('ubigeo');
+            $personData['ubigeo_description'] = $request->get('ubigeo_description');
+            $personData['foreign_country_id'] = null;
+            $personData['foreign_state'] = null;
+            $personData['foreign_city'] = null;
+        }
+
         $per = Person::updateOrCreate(
             [
                 'document_type_id'      => $request->get('document_type_id'),
                 'number'                => $request->get('number'),
             ],
-            [
-
-                'short_name'            => trim($request->get('names')),
-                'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
-                'description'           => $request->get('description'),
-                'telephone'             => $request->get('telephone'),
-                'email'                 => trim($request->get('email')),
-                'address'               => $request->get('address'),
-                'is_provider'           => false,
-                'is_client'             => true,
-                'ubigeo'                => $request->get('ubigeo'),
-                'ubigeo_description'    => $request->get('ubigeo_description'),
-                'birthdate'             => $request->get('birthdate'),
-                'names'                 => trim($request->get('names')),
-                'father_lastname'       => trim($request->get('father_lastname')),
-                'mother_lastname'       => trim($request->get('mother_lastname')),
-                'presentacion'          => $request->get('presentacion'),
-                'country_id'            => $request->get('country_id') ?? 1,
-                'gender'                => $request->get('gender') ?? 'M',
-                'profession_id'         => $request->get('profession_id') ? $request->get('profession_id')['id'] : null,
-                'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
-                'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
-                'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
-            ]
+            $personData
         );
 
         $path = null;
@@ -331,7 +348,7 @@ class AcaTeacherController extends Controller
             $person->save();
         }
 
-        $person->update([
+        $updateData = [
             'document_type_id'      => $request->get('document_type_id'),
             'short_name'            => trim($request->get('names')),
             'full_name'             => trim($request->get('father_lastname') . ' ' .  $request->get('mother_lastname') . ' ' . $request->get('names')),
@@ -342,8 +359,6 @@ class AcaTeacherController extends Controller
             'address'               => $request->get('address'),
             'is_provider'           => false,
             'is_client'             => true,
-            'ubigeo'                => $request->get('ubigeo') ?? null,
-            'ubigeo_description'    => $request->get('ubigeo_description'),
             'birthdate'             => $request->get('birthdate'),
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
@@ -355,7 +370,27 @@ class AcaTeacherController extends Controller
             'occupation_id'         => $request->get('occupation_id') ? $request->get('occupation_id')['id'] : null,
             'ocupacion'             => $request->get('occupation_id') ? $request->get('occupation_id')['description'] : null,
             'profession'            => $request->get('profession_id') ? $request->get('profession_id')['description'] : null,
-        ]);
+        ];
+
+        if ($country_id != 1) {
+            $country = Country::find($request->get('country_id'));
+            $countryName = $country ? $country->description : '';
+            $foreignState = $request->get('foreign_state') ?? '';
+            $foreignCity = $request->get('foreign_city') ?? '';
+            $updateData['ubigeo'] = null;
+            $updateData['ubigeo_description'] = trim($countryName . ' - ' . $foreignState . ' - ' . $foreignCity);
+            $updateData['foreign_country_id'] = $request->get('country_id');
+            $updateData['foreign_state'] = $foreignState;
+            $updateData['foreign_city'] = $foreignCity;
+        } else {
+            $updateData['ubigeo'] = $request->get('ubigeo') ?? null;
+            $updateData['ubigeo_description'] = $request->get('ubigeo_description');
+            $updateData['foreign_country_id'] = null;
+            $updateData['foreign_state'] = null;
+            $updateData['foreign_city'] = null;
+        }
+
+        $person->update($updateData);
 
         $user->update([
             'name'          => $request->get('names'),
