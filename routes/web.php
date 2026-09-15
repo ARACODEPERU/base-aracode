@@ -265,19 +265,15 @@ Route::middleware('auth')->group(function () {
             )
             ->get();
 
-            if ($user->hasRole('Alumno')) {
-                $countries = \App\Models\Country::where('status', true)->orderBy('description')->get();
+        try {
+            $countries = \App\Models\Country::where('status', true)->orderBy('description')->get();
 
-                return Inertia::render('Person/UpdateInformation', [
-                    'person' => $person,
-                    'identityDocumentTypes' => $identityDocumentTypes,
-                    'ubigeo' => $ubigeo,
-                    'countries' => $countries
-                ]);
-            }
-
-            return back();
-
+            return Inertia::render('Person/UpdateInformation', [
+                'person' => $person,
+                'identityDocumentTypes' => $identityDocumentTypes,
+                'ubigeo' => $ubigeo,
+                'countries' => $countries
+            ]);
         } catch (\Throwable $e) {
 
             return response()->json([
