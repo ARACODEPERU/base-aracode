@@ -5,7 +5,10 @@ namespace Modules\Commercial\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Mail\CommercialNegotiationConfirmedMail;
 use App\Models\BankAccount;
+use App\Models\Country;
+use App\Models\District;
 use App\Models\IdentityDocumentType;
+use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
@@ -39,7 +42,17 @@ class CommercialNegotiationPublicController extends Controller
 
         return Inertia::render('Commercial::Negotiations/Public/Show', [
             'negotiation' => $this->negotiationPayload($negotiation),
-            'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get(),
+            'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get()
+                ->map(fn ($type) => [
+                    'id' => $type->id,
+                    'description' => $type->description,
+                    'sunat_code' => $type->sunat_code,
+                    'requires_foreign_location' => $type->requiresForeignLocation(),
+                ])
+                ->values(),
+            'industries' => Industry::select('id', 'description')->orderBy('description')->get(),
+            'countries' => Country::where('status', true)->orderBy('description')->get(['id', 'description']),
+            'ubigeo' => $this->ubigeo(),
             'paymentMethodCatalog' => PaymentMethod::with('bankAccount.bank')->get(),
             'bankAccounts' => BankAccount::with('bank')->where('status', 1)->get(),
         ]);
@@ -76,7 +89,19 @@ class CommercialNegotiationPublicController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'telephone' => ['nullable', 'string', 'max:20'],
             'ocupacion' => ['nullable', 'string', 'max:255'],
-            'profession' => ['nullable', 'string', 'max:255'],
+            'company' => ['nullable', 'string', 'max:200'],
+            'industry_id' => ['nullable'],
+            // El multiselect envia el objeto {id, description}: se valida el id por separado.
+            'industry_id.id' => ['nullable', 'integer', 'exists:industries,id'],
+            'birthdate' => ['nullable', 'date', 'before:today'],
+            'address' => ['nullable', 'string', 'max:255'],
+            // Ubicacion: si el documento es extranjero se piden Pais / Depto.-Estado / Ciudad,
+            // en caso contrario se usa el ubigeo peruano como en el resto de formularios.
+            'ubigeo' => [Rule::requiredIf(fn () => ! IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'string', 'max:10'],
+            'ubigeo_description' => ['nullable', 'string', 'max:255'],
+            'foreign_country_id' => [Rule::requiredIf(fn () => IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'integer', 'exists:countries,id'],
+            'foreign_state' => [Rule::requiredIf(fn () => IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'string', 'max:255'],
+            'foreign_city' => [Rule::requiredIf(fn () => IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'string', 'max:255'],
             'ruc' => ['required_if:invoice_type,factura', 'nullable', 'string', 'size:11'],
             'invoice_razon_social' => ['required_if:invoice_type,factura', 'nullable', 'string', 'max:255'],
             'invoice_direccion' => ['nullable', 'string', 'max:255'],
@@ -99,7 +124,40 @@ class CommercialNegotiationPublicController extends Controller
             ->where('document_type_id', $data['document_type_id'])
             ->first();
 
-        $personPayload = [
+        $isForeignLocation = IdentityDocumentType::isForeignLocation($data['document_type_id']);
+
+        $industryInput = $data['industry_id'] ?? null;
+        $industryId = is_array($industryInput) ? ($industryInput['id'] ?? null) : $industryInput;
+        $industry = ! empty($industryId) ? Industry::find($industryId) : null;
+
+        // El cliente extranjero guarda su ubicacion como "Pais - Estado - Ciudad".
+        $foreignCountry = ($isForeignLocation && ! empty($data['foreign_country_id']))
+            ? Country::where('id', $data['foreign_country_id'])->value('description')
+            : null;
+
+        // La ubicacion se guarda en columnas propias: peruana (ubigeo) o extranjera (pais/estado/ciudad).
+        $locationPayload = $isForeignLocation
+            ? [
+                'ubigeo' => null,
+                'ubigeo_description' => trim(($foreignCountry ?? '') . ' - ' . ($data['foreign_state'] ?? '') . ' - ' . ($data['foreign_city'] ?? '')),
+                'foreign_country_id' => $data['foreign_country_id'] ?? null,
+                'foreign_state' => $data['foreign_state'] ?? null,
+                'foreign_city' => $data['foreign_city'] ?? null,
+            ]
+            : [
+                'ubigeo' => $data['ubigeo'] ?? null,
+                'ubigeo_description' => $data['ubigeo_description'] ?? null,
+                'foreign_country_id' => null,
+                'foreign_state' => null,
+                'foreign_city' => null,
+            ];
+
+        // Solo se pisa la ubicacion guardada cuando el cliente envio datos de ubicacion.
+        $hasLocationInput = $isForeignLocation
+            ? (! empty($data['foreign_country_id']) || ! empty($data['foreign_state']) || ! empty($data['foreign_city']))
+            : (! empty($data['ubigeo']) || ! empty($data['ubigeo_description']));
+
+        $personPayload = array_merge([
             'short_name' => $data['names'] ?? ($fullName ?: $data['full_name']),
             'full_name' => $fullName ?: ($data['full_name'] ?? null),
             'document_type_id' => $data['document_type_id'],
@@ -111,15 +169,25 @@ class CommercialNegotiationPublicController extends Controller
             'email' => $data['email'] ?? null,
             'telephone' => $data['telephone'] ?? null,
             'ocupacion' => $data['ocupacion'] ?? null,
-            'profession' => $data['profession'] ?? null,
+            'company' => $data['company'] ?? null,
+            'industry_id' => $industry?->id,
+            'industry' => $industry?->description,
+            'birthdate' => $data['birthdate'] ?? null,
+            'address' => $data['address'] ?? null,
             'status' => true,
-        ];
+        ], $locationPayload);
 
         try {
             DB::beginTransaction();
 
             if ($person) {
                 $person->update(array_filter($personPayload, fn ($value) => $value !== null && $value !== ''));
+
+                if ($hasLocationInput) {
+                    // Se aplica completo (incluye nulls) para poder pasar de extranjero a Peru y viceversa.
+                    $person->update($locationPayload);
+                }
+
                 $clientId = $person->id;
             } else {
                 $person = Person::create(array_merge($personPayload, [
@@ -260,6 +328,20 @@ class CommercialNegotiationPublicController extends Controller
                 'error' => 'Ocurrió un error inesperado: ' . $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Ciudades peruanas (ubigeo) para el formulario publico.
+     */
+    private function ubigeo()
+    {
+        return District::join('provinces', 'province_id', 'provinces.id')
+            ->join('departments', 'provinces.department_id', 'departments.id')
+            ->select(
+                'districts.id AS district_id',
+                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS ubigeo_description")
+            )
+            ->get();
     }
 
     private function negotiationPayload(CommercialNegotiation $negotiation): array

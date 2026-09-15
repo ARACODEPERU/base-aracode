@@ -3,6 +3,7 @@
 namespace Modules\Commercial\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\IdentityDocumentType;
 use App\Models\Person;
 use App\Models\Sale;
 use App\Models\SaleDocument;
@@ -25,6 +26,8 @@ use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Commercial\Emails\CommercialNegotiationDocumentMail;
 use Modules\Commercial\Entities\CommercialNegotiation;
+use Modules\Integrationhub\Entities\IntegrationError;
+use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 use Modules\Sales\Entities\SalePaymentSchedule;
 
 class CommercialNegotiationProcessController extends Controller
@@ -78,6 +81,7 @@ class CommercialNegotiationProcessController extends Controller
             'installments' => $isInstallments ? $statusOf('installments') : 'skipped',
             'document' => $statusOf('document'),
             'email' => $statusOf('email'),
+            'webhook' => $statusOf('webhook'),
             'complete' => $statusOf('complete'),
         ];
     }
@@ -122,12 +126,38 @@ class CommercialNegotiationProcessController extends Controller
             'email' => $data['email'] ?? $person->email,
             'telephone' => $data['telephone'] ?? $person->telephone,
             'ocupacion' => $data['ocupacion'] ?? $person->ocupacion,
-            'profession' => $data['profession'] ?? $person->profession,
+            'company' => $data['company'] ?? $person->company,
+            'industry_id' => $data['industry_id'] ?? $person->industry_id,
+            'industry' => $data['industry'] ?? $person->industry,
+            'birthdate' => $data['birthdate'] ?? $person->birthdate,
+            'address' => $data['address'] ?? $person->address,
             'status' => true,
             'is_client' => true,
         ];
 
+        // La ubicacion depende del tipo de documento: peruana (ubigeo) o extranjera (pais/estado/ciudad).
+        $isForeignLocation = IdentityDocumentType::isForeignLocation($personPayload['document_type_id']);
+
+        $locationPayload = $isForeignLocation
+            ? [
+                'ubigeo' => null,
+                'ubigeo_description' => $data['ubigeo_description'] ?? $person->ubigeo_description,
+                'foreign_country_id' => $data['foreign_country_id'] ?? $person->foreign_country_id,
+                'foreign_state' => $data['foreign_state'] ?? $person->foreign_state,
+                'foreign_city' => $data['foreign_city'] ?? $person->foreign_city,
+            ]
+            : [
+                'ubigeo' => $data['ubigeo'] ?? $person->ubigeo,
+                'ubigeo_description' => $data['ubigeo_description'] ?? $person->ubigeo_description,
+                'foreign_country_id' => null,
+                'foreign_state' => null,
+                'foreign_city' => null,
+            ];
+
         $person->update(array_filter($personPayload, fn ($value) => $value !== null && $value !== ''));
+
+        // Se aplica completa (incluye nulls) para poder pasar de extranjero a Peru y viceversa.
+        $person->update($locationPayload);
 
         $this->markStepDone($negotiation, 'person');
 
@@ -703,6 +733,59 @@ class CommercialNegotiationProcessController extends Controller
         }
     }
 
+    /**
+     * Ultimo paso de trabajo del proceso: envia todos los datos de la negociacion a n8n
+     * a traves de la integracion N8N_Global (endpoint n8n_post_negociacion).
+     * Si falla, la negociacion no se marca como completada y el paso puede reintentarse.
+     */
+    public function processWebhook(Request $request, $id)
+    {
+        $negotiation = $this->negotiation($id);
+
+        try {
+            $person = $this->person($negotiation);
+
+            $payload = $this->webhookPayload($negotiation, $person);
+
+            // Misma ejecucion por nombre de endpoint que usa el modulo Onlineshop.
+            $response = app(IntegrationhubController::class)
+                ->runEndpoint('n8n_post_negociacion', [], ['body' => $payload], true);
+
+            $result = $response->getData(true);
+            $statusCode = (int) ($result['status_code'] ?? 0);
+
+            if ($response->getStatusCode() !== 200 || $statusCode < 200 || $statusCode >= 300) {
+                $externalResponse = $result['response'] ?? null;
+                $externalMessage = is_array($externalResponse)
+                    ? ($externalResponse['message'] ?? $externalResponse['error'] ?? null)
+                    : (is_string($externalResponse) ? $externalResponse : null);
+
+                throw new \Exception(
+                    $externalMessage
+                        ? "n8n respondio con estado {$statusCode}: ".(is_string($externalMessage) ? $externalMessage : json_encode($externalMessage))
+                        : ($result['message'] ?? "La integracion respondio con estado {$statusCode}.")
+                );
+            }
+
+            $this->markStepDone($negotiation, 'webhook');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Datos de la negociacion enviados a n8n correctamente.',
+            ]);
+        } catch (\Throwable $e) {
+            IntegrationError::create([
+                'message' => 'CommercialNegotiation::processWebhook (negociacion '.$id.'): '.$e->getMessage(),
+                'source' => 'CommercialNegotiation::processWebhook',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudieron enviar los datos a n8n: '.$e->getMessage(),
+            ], 422);
+        }
+    }
+
     public function complete(Request $request, $id)
     {
         $negotiation = $this->negotiation($id);
@@ -747,6 +830,100 @@ class CommercialNegotiationProcessController extends Controller
         }
 
         return $person;
+    }
+
+    /**
+     * Arma el JSON que se envia a n8n con la negociacion, el cliente, su usuario,
+     * el comprobante y los items acordados.
+     *
+     * @return array<string, mixed>
+     */
+    private function webhookPayload(CommercialNegotiation $negotiation, Person $person): array
+    {
+        $negotiation->loadMissing(['items', 'creator', 'verifier', 'invoice']);
+
+        $user = User::where('person_id', $person->id)->first();
+        $student = AcaStudent::where('person_id', $person->id)->first();
+        $invoice = $negotiation->invoice;
+        $document = $negotiation->sale_document_id ? SaleDocument::find($negotiation->sale_document_id) : null;
+
+        return [
+            'evento' => 'negociacion_aprobada',
+            'fecha' => Carbon::now()->toIso8601String(),
+            'origen' => 'commercial_negociations',
+            'negociacion' => [
+                'id' => $negotiation->id,
+                'titulo' => $negotiation->title,
+                'descripcion' => $negotiation->body,
+                'moneda' => $negotiation->currency,
+                'total' => (float) $negotiation->total_price,
+                'tipo_pago' => $negotiation->payment_type,
+                'monto_inicial' => $negotiation->initial_amount !== null ? (float) $negotiation->initial_amount : null,
+                'cuotas' => $negotiation->schedule ?? [],
+                'estado' => $negotiation->status,
+                'canal_contacto' => $negotiation->contact_channel,
+                'detalle_contacto' => $negotiation->contact_detail,
+                'metodo_pago' => $negotiation->payment_method,
+                'sale_id' => $negotiation->sale_id,
+                'sale_document_id' => $negotiation->sale_document_id,
+                'creado_por' => $negotiation->creator?->name,
+                'aprobado_por' => $negotiation->verifier?->name,
+                'aprobado_en' => $negotiation->verified_at?->toIso8601String(),
+            ],
+            'persona' => [
+                'id' => $person->id,
+                'nombre_completo' => $person->full_name ?: $person->short_name,
+                'nombres' => $person->names,
+                'apellido_paterno' => $person->father_lastname,
+                'apellido_materno' => $person->mother_lastname,
+                'tipo_documento' => $person->document_type_id,
+                'numero_documento' => $person->number,
+                'email' => $person->email,
+                'telefono' => $person->telephone,
+                'genero' => $person->gender,
+                'ocupacion' => $person->ocupacion,
+                'empresa' => $person->company,
+                'industria' => $person->industry,
+                'industria_id' => $person->industry_id,
+                'fecha_nacimiento' => $person->birthdate,
+                'direccion' => $person->address,
+                'ubigeo' => $person->ubigeo,
+                'ciudad' => $person->ubigeo_description,
+                'pais_extranjero_id' => $person->foreign_country_id,
+                'departamento_estado' => $person->foreign_state,
+                'ciudad_extranjera' => $person->foreign_city,
+            ],
+            'usuario' => [
+                'id' => $user?->id,
+                'email' => $user?->email,
+            ],
+            'estudiante' => [
+                'id' => $student?->id,
+                'codigo' => $student?->student_code,
+            ],
+            'comprobante' => [
+                'tipo' => $invoice?->invoice_type,
+                'ruc' => $invoice?->ruc,
+                'razon_social' => $invoice?->razon_social,
+                'direccion' => $invoice?->direccion,
+                'distrito' => $invoice?->distrito,
+                'provincia' => $invoice?->provincia,
+                'departamento' => $invoice?->departamento,
+                'serie' => $document?->invoice_serie,
+                'correlativo' => $document?->invoice_correlative,
+                'numero' => $document?->invoice_document_name,
+                'estado' => $document?->invoice_status,
+                'pdf' => $document?->invoice_pdf,
+                'total' => $document?->overall_total !== null ? (float) $document->overall_total : null,
+            ],
+            'items' => $negotiation->items->map(fn ($item) => [
+                'tipo' => $item->item_type,
+                'titulo' => $item->title,
+                'producto_id' => $item->item_id,
+                'precio' => (float) $item->price,
+                'entidad' => $item->entity_name_product,
+            ])->values()->toArray(),
+        ];
     }
 
     private function nextPaymentDate(CommercialNegotiation $negotiation): ?string

@@ -4,6 +4,8 @@ import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
+import Multiselect from "@suadelabs/vue3-multiselect";
+import "@suadelabs/vue3-multiselect/dist/vue3-multiselect.css";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, watch, nextTick } from "vue";
 import { loadMercadoPago } from "@mercadopago/sdk-js";
@@ -15,6 +17,9 @@ import { faCheckCircle, faFileImage, faMagnifyingGlass, faUpload, faXmark, faXma
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
     identityDocumentTypes: { type: Array, default: () => [] },
+    industries: { type: Array, default: () => [] },
+    countries: { type: Array, default: () => [] },
+    ubigeo: { type: Array, default: () => [] },
     paymentMethodCatalog: { type: Array, default: () => [] },
     bankAccounts: { type: Array, default: () => [] },
 });
@@ -26,6 +31,7 @@ const accepted = ref(false);
 const searchLoading = ref(false);
 const fileInput = ref(null);
 const voucherPreview = ref(null);
+const ubigeoSelected = ref(null);
 
 const form = useForm({
     accepted: false,
@@ -40,7 +46,15 @@ const form = useForm({
     email: null,
     telephone: null,
     ocupacion: null,
-    profession: null,
+    company: null,
+    industry_id: null,
+    birthdate: null,
+    address: null,
+    ubigeo: null,
+    ubigeo_description: null,
+    foreign_country_id: null,
+    foreign_state: null,
+    foreign_city: null,
     ruc: null,
     invoice_razon_social: null,
     invoice_direccion: null,
@@ -91,6 +105,19 @@ const documentTypeOptions = computed(() => {
 
 const filterOption = (input, option) => option.label.toLowerCase().includes(input.toLowerCase());
 
+// Tipo de documento elegido por el cliente (el backend indica si exige ubicacion extranjera).
+const selectedDocumentType = computed(() =>
+    props.identityDocumentTypes.find((item) => String(item.id) === String(form.document_type_id)) ?? null
+);
+
+// Documentos extranjeros (OTROS, CARNET EXT., PASAPORTE): piden Pais / Depto.-Estado / Ciudad
+// en lugar del ubigeo peruano.
+const isForeignLocation = computed(() => Boolean(selectedDocumentType.value?.requires_foreign_location));
+
+const countryOptions = computed(() =>
+    (props.countries ?? []).map((country) => ({ value: country.id, label: country.description ?? "" }))
+);
+
 const yapeNumber = computed(() => {
     const method = props.paymentMethodCatalog.find((item) => /yape/i.test(item.description));
     return method?.number || null;
@@ -132,6 +159,11 @@ const onlyNumbers = () => {
     form.number = form.number ? String(form.number).replace(/\D/g, "") : null;
 };
 
+const selectCity = () => {
+    form.ubigeo = ubigeoSelected.value?.district_id ?? null;
+    form.ubigeo_description = ubigeoSelected.value?.ubigeo_description ?? null;
+};
+
 const fillForm = (person) => {
     form.document_type_id = String(person.document_type_id ?? form.document_type_id);
     form.number = person.number ?? person.document_number ?? form.number;
@@ -143,7 +175,20 @@ const fillForm = (person) => {
     form.email = person.email ?? form.email;
     form.telephone = person.telephone ?? form.telephone;
     form.ocupacion = person.ocupacion ?? form.ocupacion;
-    form.profession = person.profession ?? form.profession;
+    form.company = person.company ?? form.company;
+    form.industry_id = person.industry_id ? { id: person.industry_id, description: person.industry } : form.industry_id;
+    form.birthdate = person.birthdate ? String(person.birthdate).slice(0, 10) : form.birthdate;
+    form.address = person.address ?? form.address;
+
+    if (person.foreign_country_id || person.foreign_state || person.foreign_city) {
+        form.foreign_country_id = person.foreign_country_id ?? form.foreign_country_id;
+        form.foreign_state = person.foreign_state ?? form.foreign_state;
+        form.foreign_city = person.foreign_city ?? form.foreign_city;
+    } else if (person.ubigeo) {
+        form.ubigeo = person.ubigeo;
+        form.ubigeo_description = person.ubigeo_description ?? form.ubigeo_description;
+        ubigeoSelected.value = { district_id: person.ubigeo, ubigeo_description: person.ubigeo_description };
+    }
 };
 
 const searchPerson = () => {
@@ -261,6 +306,21 @@ watch(() => form.invoice_type, (value) => {
         form.invoice_departamento = null;
         rucValidated.value = false;
         rucNotice.value = "";
+    }
+});
+
+// Al cambiar el tipo de documento se limpia la ubicacion que ya no corresponde.
+watch(() => form.document_type_id, (current, previous) => {
+    if (String(current) === String(previous)) return;
+
+    if (isForeignLocation.value) {
+        form.ubigeo = null;
+        form.ubigeo_description = null;
+        ubigeoSelected.value = null;
+    } else {
+        form.foreign_country_id = null;
+        form.foreign_state = null;
+        form.foreign_city = null;
     }
 });
 
@@ -686,10 +746,88 @@ watch(brickFormVisible, async (visible) => {
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
-                                <InputLabel for="profession" value="Especializacion" />
-                                <TextInput id="profession" v-model="form.profession" type="text" />
-                                <InputError :message="form.errors.profession" class="mt-1" />
+                                <InputLabel for="company" value="Empresa (donde labora)" />
+                                <TextInput id="company" v-model="form.company" type="text" />
+                                <InputError :message="form.errors.company" class="mt-1" />
                             </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <InputLabel for="industry_id" value="Industria" />
+                                <multiselect
+                                    id="industry_id"
+                                    v-model="form.industry_id"
+                                    :options="industries"
+                                    class="custom-multiselect"
+                                    :searchable="true"
+                                    placeholder="Buscar sector"
+                                    selected-label="seleccionado"
+                                    select-label="Elegir"
+                                    deselect-label="Quitar"
+                                    label="description"
+                                    track-by="id"
+                                ></multiselect>
+                                <p class="mt-1 text-xs text-gray-500">Sector al que se dedica la empresa donde labora.</p>
+                                <InputError :message="form.errors.industry_id" class="mt-1" />
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <InputLabel for="birthdate" value="Fecha de nacimiento" />
+                                <TextInput id="birthdate" v-model="form.birthdate" type="date" />
+                                <InputError :message="form.errors.birthdate" class="mt-1" />
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <InputLabel for="address" value="Direccion" />
+                                <TextInput id="address" v-model="form.address" type="text" />
+                                <InputError :message="form.errors.address" class="mt-1" />
+                            </div>
+
+                            <template v-if="!isForeignLocation">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <InputLabel for="ubigeo" value="Ciudad *" />
+                                    <multiselect
+                                        id="ubigeo"
+                                        v-model="ubigeoSelected"
+                                        :options="ubigeo"
+                                        class="custom-multiselect"
+                                        :searchable="true"
+                                        placeholder="Buscar ciudad"
+                                        selected-label="seleccionado"
+                                        select-label="Elegir"
+                                        deselect-label="Quitar"
+                                        label="ubigeo_description"
+                                        track-by="district_id"
+                                        @update:model-value="selectCity"
+                                    ></multiselect>
+                                    <InputError :message="form.errors.ubigeo" class="mt-1" />
+                                </div>
+                            </template>
+
+                            <template v-else>
+                                <div class="col-span-6 sm:col-span-3">
+                                    <InputLabel for="foreign_country_id" value="Pais *" />
+                                    <Select
+                                        v-model:value="form.foreign_country_id"
+                                        :options="countryOptions"
+                                        style="width: 100%"
+                                        show-search
+                                        placeholder="Selecciona tu pais"
+                                    />
+                                    <InputError :message="form.errors.foreign_country_id" class="mt-1" />
+                                </div>
+
+                                <div class="col-span-6 sm:col-span-3">
+                                    <InputLabel for="foreign_state" value="Depto./Estado *" />
+                                    <TextInput id="foreign_state" v-model="form.foreign_state" type="text" placeholder="Ej: California" />
+                                    <InputError :message="form.errors.foreign_state" class="mt-1" />
+                                </div>
+
+                                <div class="col-span-6 sm:col-span-3">
+                                    <InputLabel for="foreign_city" value="Ciudad *" />
+                                    <TextInput id="foreign_city" v-model="form.foreign_city" type="text" placeholder="Ej: Los Angeles" />
+                                    <InputError :message="form.errors.foreign_city" class="mt-1" />
+                                </div>
+                            </template>
 
                             <div class="col-span-6 mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
                                 <InputLabel value="Tipo de comprobante *" />

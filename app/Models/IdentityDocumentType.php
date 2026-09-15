@@ -40,4 +40,29 @@ class IdentityDocumentType extends Model
 
         return $docType && $docType->sunat_code === '00';
     }
+
+    /**
+     * Indica si para este tipo de documento la ubicacion debe pedirse como extranjera
+     * (Pais / Departamento-Estado / Ciudad) en lugar del ubigeo peruano.
+     *
+     * Se consideran extranjeros: OTROS (00), CARNET DE EXTRANJERIA (04) y PASAPORTE (07).
+     */
+    public static function isForeignLocation($documentTypeId): bool
+    {
+        if ($documentTypeId === null || $documentTypeId === '') {
+            return false;
+        }
+
+        $docType = static::find((string) $documentTypeId);
+
+        return $docType ? $docType->requiresForeignLocation() : false;
+    }
+
+    /**
+     * Indica si este tipo de documento requiere ubicacion extranjera.
+     */
+    public function requiresForeignLocation(): bool
+    {
+        return in_array((string) $this->sunat_code, ['00', '04', '07'], true);
+    }
 }

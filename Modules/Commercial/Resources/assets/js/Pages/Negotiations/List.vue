@@ -3,7 +3,8 @@ import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import Navigation from "@/Components/vristo/layout/Navigation.vue";
 import Pagination from "@/Components/Pagination.vue";
 import Keypad from "@/Components/Keypad.vue";
-import { Link, router, useForm } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { computed } from "vue";
 import { faEye, faLink, faPencilAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import Swal2 from "sweetalert2";
 
@@ -17,6 +18,21 @@ const props = defineProps({
 const form = useForm({
     search: props.filters.search,
 });
+
+// El listado completo lo ve cualquiera con permiso, pero el detalle, la edicion y el borrado
+// solo quedan disponibles para los roles administradores o para quien creo la negociacion.
+const page = usePage();
+
+const authRoles = computed(() =>
+    (page.props.auth?.roles ?? page.props.auth?.user?.roles ?? []).map((role) =>
+        typeof role === "string" ? role : role?.name
+    )
+);
+
+const isNegotiationManager = computed(() => authRoles.value.some((role) => ["Administrador", "admin"].includes(role)));
+
+const canManage = (negotiation) =>
+    isNegotiationManager.value || negotiation.created_by === page.props.auth?.user?.id;
 
 const statusByValue = (value) => props.statuses.find((item) => item.value === value);
 
@@ -179,16 +195,17 @@ const destroy = (negotiation) => {
                                 <td>{{ negotiations.from + index }}</td>
                                 <td class="text-center">
                                     <div class="flex gap-2 items-center justify-center">
-                                        <Link v-can="'comm_negociaciones_listado'" :href="route('comm_negotiations_show', negotiation.id)" class="btn btn-info btn-sm" v-tippy="{ content: 'Ver detalle', placement: 'bottom'}">
+                                        <Link v-if="canManage(negotiation)" v-can="'comm_negociaciones_listado'" :href="route('comm_negotiations_show', negotiation.id)" class="btn btn-info btn-sm" v-tippy="{ content: 'Ver detalle', placement: 'bottom'}">
                                             <font-awesome-icon :icon="faEye" />
                                         </Link>
                                         <button type="button" class="btn btn-secondary btn-sm" v-tippy="{ content: 'Copiar enlace publico', placement: 'bottom'}" @click="copyLink(negotiation)">
                                             <font-awesome-icon :icon="faLink" />
                                         </button>
-                                        <Link v-can="'comm_negociaciones_editar'" :href="route('comm_negotiations_edit', negotiation.id)" class="btn btn-success btn-sm">
+                                        <Link v-if="canManage(negotiation)" v-can="'comm_negociaciones_editar'" :href="route('comm_negotiations_edit', negotiation.id)" class="btn btn-success btn-sm">
                                             <font-awesome-icon :icon="faPencilAlt" />
                                         </Link>
                                         <button
+                                            v-if="canManage(negotiation)"
                                             v-can="'comm_negociaciones_eliminar'"
                                             type="button"
                                             class="btn btn-danger btn-sm"

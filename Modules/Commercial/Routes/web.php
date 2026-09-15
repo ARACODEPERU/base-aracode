@@ -177,6 +177,10 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->name('comm_negotiations_process_email');
 
     Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/webhook', [CommercialNegotiationProcessController::class, 'processWebhook'])
+        ->name('comm_negotiations_process_webhook');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
         ->post('negotiations/process/{id}/complete', [CommercialNegotiationProcessController::class, 'complete'])
         ->name('comm_negotiations_process_complete');
 

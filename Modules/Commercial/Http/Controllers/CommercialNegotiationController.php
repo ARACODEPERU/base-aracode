@@ -88,14 +88,27 @@ class CommercialNegotiationController extends Controller
 
     public function edit($id)
     {
+        $negotiation = CommercialNegotiation::with(['items', 'companyBilleteras'])->findOrFail($id);
+
+        abort_unless(
+            $this->canManage($negotiation),
+            403,
+            'Solo puedes editar las negociaciones que tu creaste.'
+        );
+
         return Inertia::render('Commercial::Negotiations/Edit', array_merge($this->formData(), [
-            'negotiation' => CommercialNegotiation::with(['items', 'companyBilleteras'])->findOrFail($id),
+            'negotiation' => $negotiation,
         ]));
     }
 
     public function update(Request $request, $id)
     {
         $negotiation = CommercialNegotiation::findOrFail($id);
+
+        if (! $this->canManage($negotiation)) {
+            return $this->forbiddenManageResponse();
+        }
+
         $data = $this->validatedData($request);
 
         try {
@@ -133,6 +146,10 @@ class CommercialNegotiationController extends Controller
     public function sendQuote(Request $request, $id)
     {
         $negotiation = CommercialNegotiation::findOrFail($id);
+
+        if (! $this->canManage($negotiation)) {
+            return $this->forbiddenManageResponse();
+        }
 
         if (in_array($negotiation->status, ['aprobada', 'cancelada'])) {
             return response()->json([
@@ -180,6 +197,10 @@ class CommercialNegotiationController extends Controller
     {
         $negotiation = CommercialNegotiation::findOrFail($id);
 
+        if (! $this->canManage($negotiation)) {
+            return $this->forbiddenManageResponse();
+        }
+
         if ($negotiation->status === 'confirmada') {
             return response()->json([
                 'success' => false,
@@ -213,8 +234,7 @@ class CommercialNegotiationController extends Controller
 
     public function show($id)
     {
-        return Inertia::render('Commercial::Negotiations/Show', [
-            'negotiation' => CommercialNegotiation::with([
+        $negotiation = CommercialNegotiation::with([
                 'items',
                 'client',
                 'creator',
@@ -241,7 +261,16 @@ class CommercialNegotiationController extends Controller
                     'overall_total',
                     'created_at',
                 ]),
-            ])->findOrFail($id),
+            ])->findOrFail($id);
+
+        abort_unless(
+            $this->canManage($negotiation),
+            403,
+            'Solo puedes ver el detalle de las negociaciones que tu creaste.'
+        );
+
+        return Inertia::render('Commercial::Negotiations/Show', [
+            'negotiation' => $negotiation,
             'statuses' => $this->statuses(),
             'paymentMethods' => $this->paymentMethods(),
         ]);
@@ -303,6 +332,10 @@ class CommercialNegotiationController extends Controller
     {
         $negotiation = CommercialNegotiation::findOrFail($id);
 
+        if (! $this->canManage($negotiation)) {
+            return $this->forbiddenManageResponse();
+        }
+
         $negotiation->update([
             'status' => 'cancelada',
         ]);
@@ -311,6 +344,36 @@ class CommercialNegotiationController extends Controller
             'success' => true,
             'message' => 'Negociacion cancelada correctamente.',
         ]);
+    }
+
+    /**
+     * Los roles administradores gestionan cualquier negociacion; el resto (por ejemplo Ventas)
+     * solo las que creo. Se usa en show, edit, update, sendQuote, destroy y cancel.
+     */
+    private function canManage(CommercialNegotiation $negotiation): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['Administrador', 'admin'])) {
+            return true;
+        }
+
+        return (int) $negotiation->created_by === (int) $user->id;
+    }
+
+    /**
+     * Respuesta 403 para las rutas AJAX cuando el usuario no puede gestionar la negociacion.
+     */
+    private function forbiddenManageResponse()
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Solo puedes gestionar las negociaciones que tu creaste.',
+        ], 403);
     }
 
     private function formData(): array

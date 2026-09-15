@@ -2,7 +2,7 @@
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import Navigation from "@/Components/vristo/layout/Navigation.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
-import { Link, router } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -16,6 +16,22 @@ const props = defineProps({
 
 const processing = ref(false);
 
+// El detalle lo administra el mismo criterio que el backend: los roles administradores ven
+// todo y el resto (p. ej. Ventas) solo lo que creo.
+const page = usePage();
+
+const authRoles = computed(() =>
+    (page.props.auth?.roles ?? page.props.auth?.user?.roles ?? []).map((role) =>
+        typeof role === "string" ? role : role?.name
+    )
+);
+
+const isNegotiationManager = computed(() => authRoles.value.some((role) => ["Administrador", "admin"].includes(role)));
+
+const canCancelNegotiation = computed(
+    () => isNegotiationManager.value || props.negotiation.created_by === page.props.auth?.user?.id
+);
+
 const statusByValue = (value) => props.statuses.find((item) => item.value === value);
 
 const paymentMethodLabel = (value) => props.paymentMethods.find((item) => item.value === value)?.label || value;
@@ -28,6 +44,28 @@ const publicUrl = computed(() => {
 });
 
 const voucherUrl = computed(() => props.negotiation.voucher_path ? `/storage/${props.negotiation.voucher_path}` : null);
+
+const clientBirthdate = computed(() => {
+    const value = props.negotiation.client_data?.birthdate || props.negotiation.client?.birthdate;
+    return value ? String(value).slice(0, 10) : null;
+});
+
+// Ubicacion peruana (ubigeo) o extranjera (Pais - Estado - Ciudad).
+const clientLocation = computed(() => {
+    const data = props.negotiation.client_data || {};
+
+    if (data.ubigeo_description) {
+        return data.ubigeo_description;
+    }
+
+    const foreign = [data.foreign_state, data.foreign_city].filter(Boolean);
+
+    if (foreign.length) {
+        return foreign.join(" - ");
+    }
+
+    return data.ubigeo || null;
+});
 
 const isMercadoPago = computed(() => props.negotiation.payment_method === "mercadopago");
 const canReactivate = computed(() => ["pendiente", "sin_respuesta", "rechazada"].includes(props.negotiation.status));
@@ -405,11 +443,11 @@ const reactivate = () => {
                         </p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" class="btn btn-success" :disabled="processing" @click="approve">
+                        <button type="button" class="btn btn-success" v-can="'comm_negociaciones_verificar'" :disabled="processing" @click="approve">
                             <FontAwesomeIcon :icon="faCheckCircle" class="mr-2 h-4 w-4" />
                             Aprobar
                         </button>
-                        <button type="button" class="btn btn-danger" :disabled="processing" @click="reject">
+                        <button type="button" class="btn btn-danger" v-can="'comm_negociaciones_verificar'" :disabled="processing" @click="reject">
                             <FontAwesomeIcon :icon="faXmarkCircle" class="mr-2 h-4 w-4" />
                             Rechazar
                         </button>
@@ -585,8 +623,20 @@ const reactivate = () => {
                             <dd class="dark:text-white">{{ negotiation.client_data?.ocupacion || '--' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Especializacion</dt>
-                            <dd class="dark:text-white">{{ negotiation.client_data?.profession || '--' }}</dd>
+                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Empresa</dt>
+                            <dd class="dark:text-white">{{ negotiation.client_data?.company || '--' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Industria</dt>
+                            <dd class="dark:text-white">{{ negotiation.client_data?.industry || negotiation.client_data?.profession || '--' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Fecha de nacimiento</dt>
+                            <dd class="dark:text-white">{{ clientBirthdate || '--' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Ubicacion</dt>
+                            <dd class="dark:text-white">{{ clientLocation || '--' }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -670,7 +720,7 @@ const reactivate = () => {
                     </button>
 
                     <button
-                        v-if="negotiation.status !== 'cancelada' && negotiation.status !== 'aprobada' && negotiation.status !== 'completada'"
+                        v-if="negotiation.status !== 'cancelada' && negotiation.status !== 'aprobada' && negotiation.status !== 'completada' && canCancelNegotiation"
                         type="button"
                         v-can="'comm_negociaciones_editar'"
                         class="btn btn-outline-danger btn-sm mt-4 w-full"

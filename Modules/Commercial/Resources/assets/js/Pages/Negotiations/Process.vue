@@ -88,6 +88,13 @@ const steps = ref([
         skipped: false,
     },
     {
+        key: "webhook",
+        label: "Notificar a n8n",
+        description: "Enviar los datos de la negociacion a n8n mediante Integrationhub",
+        status: initialStatus("webhook"),
+        skipped: false,
+    },
+    {
         key: "complete",
         label: "Finalizar",
         description: "Marcar la negociacion como aprobada",
