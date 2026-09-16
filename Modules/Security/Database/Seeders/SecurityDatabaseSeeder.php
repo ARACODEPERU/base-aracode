@@ -22,7 +22,7 @@ class SecurityDatabaseSeeder extends Seeder
         // historial_actividades
         $role = Role::find(1);
 
-        $modulo = Modulo::create(['identifier' => 'M019', 'description' => 'Configuración y seguridad']);
+        $modulo = Modulo::firstOrCreate(['identifier' => 'M019', 'description' => 'Configuración y seguridad']);
 
         $permissions = [];
 

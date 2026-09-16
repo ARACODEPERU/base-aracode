@@ -12,6 +12,9 @@ return new class extends Migration
      * se duplicaron filas para la misma moneda (PEN, USD) y los selects mostraban
      * opciones repetidas. Este script conserva una sola fila por moneda.
      *
+     * Es idempotente: puede re-ejecutarse sobre una BD donde ya se corrio una
+     * version anterior (indice o columna ya existentes) sin lanzar errores.
+     *
      * Sin renombrar la tabla (otras tablas la referencian por FK) y sin tocar filas
      * que esten siendo usadas: solo elimina duplicados exactos.
      */
@@ -21,10 +24,13 @@ return new class extends Migration
             return;
         }
 
-        // 1. Columna temporal autoincremental para poder distinguir filas identicas.
-        Schema::table('sunat_currency_types', function (Blueprint $table) {
-            $table->increments('tmp_dedup_id')->first();
-        });
+        // 1. Columna temporal autoincremental para poder distinguir filas identicas
+        //    (solo se agrega si no quedo de una ejecucion previa incompleta).
+        if (! Schema::hasColumn('sunat_currency_types', 'tmp_dedup_id')) {
+            Schema::table('sunat_currency_types', function (Blueprint $table) {
+                $table->increments('tmp_dedup_id')->first();
+            });
+        }
 
         // 2. Borra duplicados exactos conservando la primera aparicion (tmp_dedup_id menor).
         DB::statement('
@@ -46,30 +52,52 @@ return new class extends Migration
         ');
 
         // 4. Quita la columna temporal.
-        Schema::table('sunat_currency_types', function (Blueprint $table) {
-            $table->dropColumn('tmp_dedup_id');
-        });
-
-        // 5. Evita duplicados futuros (si alguna instalacion aun tiene ids distintos
-        //    no normalizados, el indice no se crea y el sistema sigue funcionando).
-        try {
+        if (Schema::hasColumn('sunat_currency_types', 'tmp_dedup_id')) {
             Schema::table('sunat_currency_types', function (Blueprint $table) {
-                $table->unique('id');
+                $table->dropColumn('tmp_dedup_id');
             });
-        } catch (\Throwable $e) {
-            // Sin indice unico: la deduplicacion del backend/frontend cubre la visualizacion.
+        }
+
+        // 5. Evita duplicados futuros: solo crea el indice si todavia no existe.
+        if (! $this->uniqueIndexExists()) {
+            try {
+                Schema::table('sunat_currency_types', function (Blueprint $table) {
+                    $table->unique('id');
+                });
+            } catch (\Throwable $e) {
+                // Sin indice unico: la deduplicacion del backend/frontend cubre la visualizacion.
+            }
         }
     }
 
     public function down(): void
     {
         // No se restauran las filas duplicadas: eran datos erroneos.
-        try {
+        if ($this->uniqueIndexExists()) {
             Schema::table('sunat_currency_types', function (Blueprint $table) {
                 $table->dropUnique(['id']);
             });
-        } catch (\Throwable $e) {
-            // El indice pudo no haberse creado.
         }
+    }
+
+    /**
+     * El indice puede haber quedado creado por una version anterior de este
+     * script (o por un restore de BD): se verifica con SHOW INDEX.
+     */
+    private function uniqueIndexExists(): bool
+    {
+        try {
+            $indexes = DB::select('SHOW INDEX FROM sunat_currency_types');
+
+            foreach ($indexes as $index) {
+                if ($index->Key_name === 'sunat_currency_types_id_unique') {
+                    return true;
+                }
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return false;
     }
 };

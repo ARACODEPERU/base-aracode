@@ -20,12 +20,46 @@ const props = defineProps({
     statuses: { type: Array, default: () => [] },
     paymentMethods: { type: Array, default: () => [] },
     stepsStatus: { type: Object, default: () => ({}) },
+    existingAccount: { type: Object, default: () => ({}) },
 });
 
 const hasCourses = computed(() => props.negotiation.items?.some((item) => item.item_type === "course") ?? false);
 const hasSubscriptions = computed(() => props.negotiation.items?.some((item) => item.item_type === "subscription") ?? false);
 const isSinglePayment = computed(() => props.negotiation.payment_type === "single");
 const isInstallments = computed(() => props.negotiation.payment_type === "installments");
+
+// El cliente ya tiene cuenta de usuario y/o registro de estudiante: los pasos
+// correspondientes se muestran como actualizacion con color distintivo (ambar).
+const existingUser = computed(() => props.existingAccount?.has_user ?? false);
+const existingStudent = computed(() => props.existingAccount?.has_student ?? false);
+
+const isUpdateStep = (step) =>
+    (step.key === "user" && existingUser.value) ||
+    (step.key === "student" && existingStudent.value);
+
+const updateBadgeText = (step) => (step.key === "user" ? "Ya tiene cuenta" : "Ya esta registrado");
+
+const displayLabel = (step) => {
+    if (step.key === "person") return "Actualizar datos del cliente";
+    if (step.key === "user") return existingUser.value ? "Actualizar usuario" : "Crear usuario";
+    if (step.key === "student") return existingStudent.value ? "Actualizar estudiante" : "Registrar estudiante";
+    return step.label;
+};
+
+const displayDescription = (step) => {
+    if (step.key === "person") return "Actualizar los datos del cliente en la tabla people";
+    if (step.key === "user") {
+        return existingUser.value
+            ? "Actualizar la cuenta existente del alumno con rol Alumno (no se crea una nueva)"
+            : "Crear el usuario de acceso con rol Alumno";
+    }
+    if (step.key === "student") {
+        return existingStudent.value
+            ? "Actualizar el registro del estudiante en aca_students (ya esta registrado)"
+            : "Crear el estudiante en aca_students";
+    }
+    return step.description;
+};
 
 // Estado inicial de cada paso, tomado del progreso ya guardado en la base de datos.
 const initialStatus = (key, fallback = "pending") => props.stepsStatus?.[key] ?? fallback;
@@ -272,6 +306,7 @@ const run = async () => {
                     v-for="(step, index) in visibleSteps"
                     :key="step.key"
                     class="flex items-start gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700"
+                    :class="{ 'ring-1 ring-amber-400 dark:ring-amber-500': isUpdateStep(step) }"
                 >
                     <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                         :class="{
@@ -289,10 +324,13 @@ const run = async () => {
                     </div>
                     <div class="flex-1">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-semibold dark:text-white">{{ step.label }}</p>
+                            <p class="font-semibold dark:text-white">
+                                {{ displayLabel(step) }}
+                                <span v-if="isUpdateStep(step)" class="badge bg-warning text-black align-middle">{{ updateBadgeText(step) }}</span>
+                            </p>
                             <span class="badge" :class="`bg-${stepBadge(step.status)}`">{{ stepLabel(step.status) }}</span>
                         </div>
-                        <p class="text-sm text-gray-500">{{ step.description }}</p>
+                        <p class="text-sm text-gray-500">{{ displayDescription(step) }}</p>
                     </div>
                 </div>
             </div>

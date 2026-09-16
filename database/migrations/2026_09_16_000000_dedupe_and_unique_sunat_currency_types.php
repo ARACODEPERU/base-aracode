@@ -57,15 +57,37 @@ return new class extends Migration
             );
         }
 
-        Schema::table(self::TABLE, function (Blueprint $table) {
-            $table->unique('id', self::UNIQUE_INDEX);
-        });
+        // Solo crea el indice si todavia no existe: la deduplicacion de
+        // Modules/Commercial (2026_09_15) ya pudo haberlo creado, y re-crearlo
+        // lanzaria "Duplicate key name".
+        if (! $this->uniqueIndexExists()) {
+            Schema::table(self::TABLE, function (Blueprint $table) {
+                $table->unique('id', self::UNIQUE_INDEX);
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table(self::TABLE, function (Blueprint $table) {
-            $table->dropUnique(self::UNIQUE_INDEX);
-        });
+        if ($this->uniqueIndexExists()) {
+            Schema::table(self::TABLE, function (Blueprint $table) {
+                $table->dropUnique(self::UNIQUE_INDEX);
+            });
+        }
+    }
+
+    private function uniqueIndexExists(): bool
+    {
+        try {
+            foreach (DB::select('SHOW INDEX FROM ' . self::TABLE) as $index) {
+                if ($index->Key_name === self::UNIQUE_INDEX) {
+                    return true;
+                }
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return false;
     }
 };
