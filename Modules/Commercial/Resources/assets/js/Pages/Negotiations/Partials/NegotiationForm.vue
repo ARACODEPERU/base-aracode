@@ -6,7 +6,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import EditorAracode from "@/Components/EditorAracode.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
-import { Link, useForm, usePage } from "@inertiajs/vue3";
+import { Link, useForm, usePage, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
@@ -59,10 +59,23 @@ const subscriptionOptions = computed(() => props.subscriptions.map((item) => ({
     label: `${item.title}${subscriptionPrice(item) ? ` (S/ ${subscriptionPrice(item)})` : ""}`,
 })));
 
-const currencyOptions = computed(() => props.currencyTypes.map((item) => ({
-    value: item.id,
-    label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
-})));
+// Deduplica defensivamente: la tabla puede tener filas repetidas para la misma moneda.
+const currencyOptions = computed(() => {
+    const seen = new Set();
+    const options = [];
+
+    for (const item of props.currencyTypes) {
+        const value = String(item.id).trim().toUpperCase();
+        if (seen.has(value)) continue;
+        seen.add(value);
+        options.push({
+            value,
+            label: `${value} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
+        });
+    }
+
+    return options;
+});
 
 const paymentMethodOptions = computed(() => props.paymentMethods.map((item) => ({
     value: item.value,
@@ -225,21 +238,13 @@ const submit = () => {
         onSuccess: () => {
             Swal2.fire({
                 title: "Enhorabuena",
-                text: isEdit.value ? "Se actualizo correctamente" : "Se guardo correctamente",
+                text: isEdit.value ? "Negociacion actualizada con exito" : "Negociacion creada con exito",
                 icon: "success",
                 padding: "2em",
                 customClass: "sweet-alerts",
+            }).then(() => {
+                router.visit(route("comm_negotiations"));
             });
-
-            if (!isEdit.value) {
-                form.reset();
-                form.currency = "PEN";
-                form.payment_type = "single";
-                form.payment_method = "yape";
-                form.body = "";
-                form.schedule = [];
-                form.items = [];
-            }
         },
         onError: () => {
             if (form.errors.items) {

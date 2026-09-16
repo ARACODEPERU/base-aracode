@@ -174,6 +174,16 @@ class CommercialNegotiationProcessController extends Controller
 
         $user = User::where('person_id', $person->id)->first();
 
+        // Si el correo ya tiene una cuenta registrada, se reutiliza esa cuenta en lugar
+        // de crear un duplicado: se vincula a esta persona y se asigna el rol Alumno.
+        if (! $user && $person->email) {
+            $user = User::where('email', trim($person->email))->first();
+
+            if ($user) {
+                $user->update(['person_id' => $person->id, 'status' => true]);
+            }
+        }
+
         if (! $user) {
             $email = $person->email ?: 'alumno' . $person->id . '@sistema.local';
 
@@ -453,6 +463,17 @@ class CommercialNegotiationProcessController extends Controller
                 $person = $this->person($negotiation);
                 $invoice = $negotiation->invoice;
                 $isFactura = $invoice && $invoice->invoice_type === 'factura';
+
+                // Boleta a nombre de una tercera persona (el cliente la pidio al confirmar).
+                $boletaTercero = $invoice && $invoice->invoice_type === 'boleta'
+                    && ! empty($invoice->boleta_numero)
+                    && ! empty($invoice->boleta_nombre);
+
+                $clientOverride = $boletaTercero ? [
+                    'client_type_doc' => $invoice->boleta_documento_tipo ?: '1',
+                    'client_number' => $invoice->boleta_numero,
+                    'client_rzn_social' => $invoice->boleta_nombre,
+                ] : null;
                 $localId = Auth::user()->local_id ?? 1;
                 $total = (float) $negotiation->total_price;
 
@@ -594,6 +615,11 @@ class CommercialNegotiationProcessController extends Controller
                     'userId' => Auth::id(),
                     'enline' => true,
                 ];
+
+                // La boleta se emite con los datos del tercero indicado por el cliente.
+                if ($clientOverride) {
+                    $pedido['client_override'] = $clientOverride;
+                }
 
                 $internalRequest = Request::create(
                     '/commercial/negotiations/document/internal',

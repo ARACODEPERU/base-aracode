@@ -78,6 +78,17 @@ class AcaSaleDocumentController extends Controller
                     $client_address = $sale->invoice_direccion;
                     $client_ubigeo_code = $sale->invoice_ubigeo;
                     $client_ubigeo_description = $sale->invoice_ruc;
+                } elseif (! empty($pedido['client_override'])) {
+                    // Boleta emitida a nombre de una tercera persona (negociaciones):
+                    // el cliente confirmo pero pidió que el comprobante salga a nombre de otro.
+                    $override = $pedido['client_override'];
+
+                    $client_type_doc = $override['client_type_doc'] ?? $person->document_type_id;
+                    $client_number = $override['client_number'] ?? $person->number;
+                    $client_rzn_social = $override['client_rzn_social'] ?? $person->full_name;
+                    $client_address = $person->address;
+                    $client_ubigeo_code = $person->ubigeo ?? null;
+                    $client_ubigeo_description = $person->ubigeo_description ?? null;
                 } else {
                     $client_type_doc = $person->document_type_id;
                     $client_number = $person->number;

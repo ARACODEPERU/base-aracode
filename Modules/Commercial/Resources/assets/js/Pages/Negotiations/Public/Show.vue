@@ -64,6 +64,9 @@ const form = useForm({
     invoice_distrito: null,
     invoice_provincia: null,
     invoice_departamento: null,
+    boleta_documento_tipo: "1",
+    boleta_numero: null,
+    boleta_nombre: null,
     voucher: null,
 });
 
@@ -71,7 +74,22 @@ const rucLoading = ref(false);
 const rucValidated = ref(false);
 const rucNotice = ref("");
 
+// Validacion DNI del cliente principal (obligatoria para continuar).
+const dniLoading = ref(false);
+const dniValidated = ref(false);
+const dniNotice = ref("");
+
+// Cuenta existente por correo: continuar con la cuenta ya registrada.
+const accountNotice = ref("");
+
+// Boleta a nombre de una tercera persona.
+const boletaTercero = ref(false);
+const boletaDniLoading = ref(false);
+const boletaDniValidated = ref(false);
+const boletaDniNotice = ref("");
+
 const isRuc = computed(() => String(form.document_type_id) === "6");
+const isDni = computed(() => String(form.document_type_id) === "1");
 const isBoleta = computed(() => form.invoice_type === "boleta");
 const isFactura = computed(() => form.invoice_type === "factura");
 const rucLengthOk = computed(() => Boolean(form.ruc) && String(form.ruc).length === 11);
@@ -159,6 +177,13 @@ const onlyNumbers = () => {
     form.number = form.number ? String(form.number).replace(/\D/g, "") : null;
 };
 
+// Al cambiar el DNI manualmente se invalida la validacion anterior.
+const onNumberInput = () => {
+    onlyNumbers();
+    dniValidated.value = false;
+    dniNotice.value = "";
+};
+
 const selectCity = () => {
     form.ubigeo = ubigeoSelected.value?.district_id ?? null;
     form.ubigeo_description = ubigeoSelected.value?.ubigeo_description ?? null;
@@ -214,6 +239,10 @@ const searchPerson = () => {
         }
 
         fillForm(res.data.person);
+
+        // Los datos ya estan verificados en la base de datos interna.
+        dniValidated.value = true;
+        dniNotice.value = "";
 
         Swal2.fire({
             title: "Cliente encontrado",
@@ -295,6 +324,14 @@ const validateRuc = () => {
 
 watch(() => form.invoice_type, (value) => {
     if (value === "boleta") {
+        // Reinicia la boleta a terceros al volver a boleta normal.
+        boletaTercero.value = false;
+        form.boleta_documento_tipo = "1";
+        form.boleta_numero = null;
+        form.boleta_nombre = null;
+        boletaDniValidated.value = false;
+        boletaDniNotice.value = "";
+
         form.ruc = null;
         form.invoice_razon_social = null;
         form.invoice_direccion = null;
@@ -312,6 +349,9 @@ watch(() => form.invoice_type, (value) => {
 // Al cambiar el tipo de documento se limpia la ubicacion que ya no corresponde.
 watch(() => form.document_type_id, (current, previous) => {
     if (String(current) === String(previous)) return;
+
+    dniValidated.value = false;
+    dniNotice.value = "";
 
     if (isForeignLocation.value) {
         form.ubigeo = null;
@@ -367,7 +407,187 @@ const openVoucherSelector = () => {
 
 const submit = () => {
     if (!validateRucBeforeSubmit()) return;
+    if (!validateDniBeforeSubmit()) return;
+    if (!validateBoletaTerceroBeforeSubmit()) return;
     confirmNegotiation();
+};
+
+// Verifica si el correo ya tiene cuenta registrada: pregunta y precarga los datos.
+const checkEmailAccount = () => {
+    const email = String(form.email || "").trim();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
+
+    axios.post(route("comm_negotiations_public_check_email", props.negotiation.token), {
+        email,
+    }).then((res) => {
+        if (!res.data?.exists) {
+            accountNotice.value = "";
+            return;
+        }
+
+        accountNotice.value = res.data.message || "Este correo ya tiene una cuenta registrada.";
+
+        Swal2.fire({
+            title: "Cuenta existente",
+            text: res.data.message || "Este correo ya tiene una cuenta registrada. ¿Deseas continuar con ella?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Si, usar mi cuenta",
+            cancelButtonText: "No, seguir como nuevo",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        }).then((result) => {
+            if (result.isConfirmed && res.data.person) {
+                fillForm(res.data.person);
+
+                // Los datos ya estan verificados en la cuenta existente.
+                dniValidated.value = true;
+                dniNotice.value = "";
+
+                Swal2.fire({
+                    title: "Datos cargados",
+                    text: "Continuaras con tu cuenta existente. Revisa que tus datos esten actualizados.",
+                    icon: "success",
+                    padding: "2em",
+                    customClass: "sweet-alerts",
+                });
+            }
+        });
+    }).catch(() => {
+        // Fallo de red: no bloquea el flujo, la cuenta se resuelve al procesar.
+    });
+};
+
+// Consulta el DNI del cliente principal en la API (obligatoria para enviar).
+const validateDni = () => {
+    if (dniLoading.value) return;
+
+    if (!form.number || String(form.number).length !== 8) {
+        Swal2.fire({
+            title: "DNI invalido",
+            text: "El DNI debe tener 8 digitos.",
+            icon: "warning",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        return;
+    }
+
+    dniLoading.value = true;
+    dniNotice.value = "";
+
+    axios.post(route("comm_negotiations_public_validate_dni", props.negotiation.token), {
+        dni: form.number,
+    }).then((res) => {
+        if (!res.data?.success) {
+            dniValidated.value = false;
+            dniNotice.value = res.data?.error || "No se pudo validar el DNI. Intenta nuevamente.";
+            return;
+        }
+
+        const person = res.data.person || {};
+        if (person.names) form.names = person.names;
+        if (person.father_lastname) form.father_lastname = person.father_lastname;
+        if (person.mother_lastname) form.mother_lastname = person.mother_lastname;
+
+        // Fallback (migo): devuelve "APELLIDOS NOMBRES" en un solo campo; se reparte.
+        if (!person.names && person.full_name) {
+            const parts = String(person.full_name).trim().split(/\s+/);
+            if (parts.length >= 3) {
+                form.father_lastname = parts[0];
+                form.mother_lastname = parts[1];
+                form.names = parts.slice(2).join(" ");
+            } else if (parts.length === 2) {
+                form.father_lastname = parts[0];
+                form.names = parts[1];
+            } else {
+                form.names = person.full_name;
+            }
+        }
+
+        dniValidated.value = true;
+        dniNotice.value = "";
+
+        Swal2.fire({
+            title: "DNI validado",
+            text: "Tus datos fueron cargados desde RENIEC. Verificalos antes de continuar.",
+            icon: "success",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+    }).catch(() => {
+        dniValidated.value = false;
+        dniNotice.value = "No se pudo validar el DNI en este momento. Intenta nuevamente.";
+    }).finally(() => {
+        dniLoading.value = false;
+    });
+};
+
+// Consulta el DNI de la tercera persona para la boleta.
+const validateBoletaDni = () => {
+    if (boletaDniLoading.value) return;
+
+    if (!form.boleta_numero || String(form.boleta_numero).length !== 8) {
+        Swal2.fire({
+            title: "DNI invalido",
+            text: "El DNI debe tener 8 digitos.",
+            icon: "warning",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        return;
+    }
+
+    boletaDniLoading.value = true;
+    boletaDniNotice.value = "";
+
+    axios.post(route("comm_negotiations_public_validate_dni", props.negotiation.token), {
+        dni: form.boleta_numero,
+    }).then((res) => {
+        if (!res.data?.success) {
+            boletaDniValidated.value = false;
+            boletaDniNotice.value = res.data?.error || "No se pudo validar el DNI. Intenta nuevamente.";
+            return;
+        }
+
+        const person = res.data.person || {};
+        form.boleta_nombre = person.full_name || [person.father_lastname, person.mother_lastname, person.names].filter(Boolean).join(" ") || form.boleta_nombre;
+        boletaDniValidated.value = true;
+        boletaDniNotice.value = "";
+    }).catch(() => {
+        boletaDniValidated.value = false;
+        boletaDniNotice.value = "No se pudo validar el DNI en este momento. Intenta nuevamente.";
+    }).finally(() => {
+        boletaDniLoading.value = false;
+    });
+};
+
+const onBoletaNumeroInput = () => {
+    form.boleta_numero = form.boleta_numero ? String(form.boleta_numero).replace(/\D/g, "") : null;
+    boletaDniValidated.value = false;
+    boletaDniNotice.value = "";
+};
+
+const toggleBoletaTercero = (checked) => {
+    boletaTercero.value = checked;
+
+    if (checked) {
+        // Precarga con los datos del cliente, editables (o reemplazables por otro DNI).
+        form.boleta_documento_tipo = "1";
+        form.boleta_numero = form.number;
+        form.boleta_nombre = [form.father_lastname, form.mother_lastname, form.names].filter(Boolean).join(" ")
+            || form.full_name
+            || null;
+        boletaDniValidated.value = dniValidated.value && String(form.number) === String(form.boleta_numero);
+    } else {
+        form.boleta_documento_tipo = "1";
+        form.boleta_numero = null;
+        form.boleta_nombre = null;
+        boletaDniValidated.value = false;
+        boletaDniNotice.value = "";
+    }
 };
 
 const confirmNegotiation = () => {
@@ -401,6 +621,49 @@ const validateRucBeforeSubmit = () => {
             customClass: "sweet-alerts",
         });
         return false;
+    }
+    return true;
+};
+
+// El DNI del cliente principal debe estar validado por la API antes de enviar.
+const validateDniBeforeSubmit = () => {
+    if (isDni.value && !dniValidated.value) {
+        Swal2.fire({
+            title: "DNI no validado",
+            text: dniNotice.value || "Debes validar tu DNI con la API para continuar (el boton RENIEC junto al numero de documento).",
+            icon: "warning",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        return false;
+    }
+    return true;
+};
+
+// Si la boleta va a nombre de otra persona, su DNI tambien debe estar validado.
+const validateBoletaTerceroBeforeSubmit = () => {
+    if (isBoleta.value && boletaTercero.value) {
+        if (!form.boleta_numero || !form.boleta_nombre) {
+            Swal2.fire({
+                title: "Datos incompletos",
+                text: "Completa el DNI y el nombre de la persona a nombre de quien se emitira la boleta.",
+                icon: "warning",
+                padding: "2em",
+                customClass: "sweet-alerts",
+            });
+            return false;
+        }
+
+        if (!boletaDniValidated.value) {
+            Swal2.fire({
+                title: "DNI no validado",
+                text: boletaDniNotice.value || "Debes validar el DNI de la persona para la boleta (boton Buscar en reniec).",
+                icon: "warning",
+                padding: "2em",
+                customClass: "sweet-alerts",
+            });
+            return false;
+        }
     }
     return true;
 };
@@ -673,8 +936,17 @@ watch(brickFormVisible, async (visible) => {
 
                             <div class="col-span-6 sm:col-span-2">
                                 <InputLabel for="number" value="Numero de documento *" />
-                                <TextInput id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" @input="onlyNumbers" />
+                                <div v-if="isDni" class="flex">
+                                    <TextInput id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" class="ltr:rounded-r-none rtl:rounded-l-none" @input="onNumberInput" />
+                                    <button type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': dniLoading }" :disabled="dniLoading" @click="validateDni">
+                                        <IconLoader v-if="dniLoading" class="w-4 h-4 mr-2 animate-spin" />
+                                        <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
+                                        RENIEC
+                                    </button>
+                                </div>
+                                <TextInput v-else id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" @input="onlyNumbers" />
                                 <InputError :message="form.errors.number" class="mt-1" />
+                                <p v-if="isDni && dniNotice" class="mt-1 text-xs text-danger">{{ dniNotice }}</p>
                             </div>
 
                             <div class="col-span-6 sm:col-span-2">
@@ -682,7 +954,7 @@ watch(brickFormVisible, async (visible) => {
                                     <button type="button" class="btn btn-secondary w-full" :class="{ 'opacity-50': searchLoading }" :disabled="searchLoading" @click="searchPerson">
                                         <IconLoader v-if="searchLoading" class="w-4 h-4 mr-2 animate-spin" />
                                         <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
-                                        Buscar datos
+                                        Buscar si ya es alumno
                                     </button>
                                 </div>
                             </div>
@@ -729,8 +1001,9 @@ watch(brickFormVisible, async (visible) => {
 
                             <div class="col-span-6 sm:col-span-2">
                                 <InputLabel for="email" value="Email" />
-                                <TextInput id="email" v-model="form.email" type="email" />
+                                <TextInput id="email" v-model="form.email" type="email" @blur="checkEmailAccount" />
                                 <InputError :message="form.errors.email" class="mt-1" />
+                                <p v-if="accountNotice" class="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">{{ accountNotice }}</p>
                             </div>
 
                             <div class="col-span-6 sm:col-span-2">
@@ -842,10 +1115,51 @@ watch(brickFormVisible, async (visible) => {
                                     </label>
                                 </div>
                                 <p class="mt-1 text-xs text-gray-500">
-                                    {{ isFactura ? 'Ademas de tus datos personales, ingresa el RUC de la empresa y validalo; son obligatorios para la factura.' : 'Los datos de la boleta seran los datos personales que ingresaste.' }}
+                                    {{ isFactura ? 'Ademas de tus datos personales, ingresa el RUC de la empresa y validalo; son obligatorios para la factura.' : 'Por defecto la boleta usa tus datos. Si quieres que salga a nombre de otra persona, activa la opcion debajo.' }}
                                 </p>
                                 <InputError :message="form.errors.invoice_type" class="mt-1" />
                             </div>
+
+                            <template v-if="isBoleta">
+                                <div class="col-span-6">
+                                    <div class="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
+                                        <label class="inline-flex cursor-pointer items-center gap-3">
+                                            <input
+                                                type="checkbox"
+                                                class="form-checkbox"
+                                                :checked="boletaTercero"
+                                                @change="toggleBoletaTercero($event.target.checked)"
+                                            />
+                                            <span class="text-sm font-semibold dark:text-white">Emitir boleta a nombre de otra persona</span>
+                                        </label>
+
+                                        <template v-if="boletaTercero">
+                                            <div class="mt-4 grid grid-cols-6 gap-4">
+                                                <div class="col-span-6 sm:col-span-3">
+                                                    <InputLabel for="boleta_numero" value="DNI de la persona *" />
+                                                    <div class="flex">
+                                                        <TextInput id="boleta_numero" v-model="form.boleta_numero" type="text" inputmode="numeric" pattern="[0-9]*" class="ltr:rounded-r-none rtl:rounded-l-none" placeholder="DNI" @input="onBoletaNumeroInput" />
+                                                        <button type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': boletaDniLoading }" :disabled="boletaDniLoading" @click="validateBoletaDni">
+                                                            <IconLoader v-if="boletaDniLoading" class="w-4 h-4 mr-2 animate-spin" />
+                                                            <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
+                                                            Buscar en reniec
+                                                        </button>
+                                                    </div>
+                                                    <InputError :message="form.errors.boleta_numero" class="mt-1" />
+                                                    <p v-if="boletaDniNotice" class="mt-1 text-xs text-danger">{{ boletaDniNotice }}</p>
+                                                    <p v-else class="mt-1 text-xs text-gray-500">La consulta autollena el nombre; puedes editarlo después.</p>
+                                                </div>
+
+                                                <div class="col-span-6 sm:col-span-3">
+                                                    <InputLabel for="boleta_nombre" value="Nombre completo *" />
+                                                    <TextInput id="boleta_nombre" v-model="form.boleta_nombre" type="text" />
+                                                    <InputError :message="form.errors.boleta_nombre" class="mt-1" />
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
 
                             <template v-if="isFactura">
                                 <div class="col-span-6 pt-2">
@@ -860,7 +1174,7 @@ watch(brickFormVisible, async (visible) => {
                                         <button type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': rucLoading }" :disabled="rucLoading" @click="validateRuc">
                                             <IconLoader v-if="rucLoading" class="w-4 h-4 mr-2 animate-spin" />
                                             <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
-                                            Validar
+                                            Buscar en sunat
                                         </button>
                                     </div>
                                     <InputError :message="form.errors.ruc" class="mt-1" />

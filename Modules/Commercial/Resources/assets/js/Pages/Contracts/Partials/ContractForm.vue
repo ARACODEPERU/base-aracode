@@ -60,10 +60,23 @@ const clientOptions = computed(() => props.clients.map((item) => ({
     label: `${item.full_name} - ${item.number}`,
 })));
 
-const currencyOptions = computed(() => props.currencyTypes.map((item) => ({
-    value: item.id,
-    label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
-})));
+// Deduplica defensivamente: la tabla puede tener filas repetidas para la misma moneda.
+const currencyOptions = computed(() => {
+    const seen = new Set();
+    const options = [];
+
+    for (const item of props.currencyTypes) {
+        const value = String(item.id).trim().toUpperCase();
+        if (seen.has(value)) continue;
+        seen.add(value);
+        options.push({
+            value,
+            label: `${value} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
+        });
+    }
+
+    return options;
+});
 
 const documentTypeOptions = computed(() => props.identityDocumentTypes.map((item) => ({
     value: String(item.id),

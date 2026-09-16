@@ -217,6 +217,14 @@ Route::post('negotiations/public/{token}/validate-ruc', [CommercialNegotiationPu
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_validate_ruc');
 
+Route::post('negotiations/public/{token}/check-email', [CommercialNegotiationPublicController::class, 'checkEmail'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_check_email');
+
+Route::post('negotiations/public/{token}/validate-dni', [CommercialNegotiationPublicController::class, 'validateDni'])
+    ->where('token', '[A-Za-z0-9-]+')
+    ->name('comm_negotiations_public_validate_dni');
+
 Route::post('negotiations/public/{token}/mercadopago/process', [CommercialNegotiationPaymentController::class, 'processPayment'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_mercadopago_process');
