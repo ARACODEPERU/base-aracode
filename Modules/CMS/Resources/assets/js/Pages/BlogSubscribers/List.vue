@@ -2,7 +2,7 @@
 import { useForm } from "@inertiajs/vue3";
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
-import { faTimes, faTrashAlt, faDownload, faUsers, faUserCheck, faCalendarMonth, faCalendarWeek } from "@fortawesome/free-solid-svg-icons";
+import { faTimes, faTrashAlt, faDownload, faUsers, faUserCheck, faCalendarDays, faCalendarWeek } from "@fortawesome/free-solid-svg-icons";
 import Keypad from '@/Components/Keypad.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import FlatPickr from 'vue-flatpickr-component';
@@ -145,7 +145,7 @@ const exportCsv = () => {
                             <p class="text-sm text-gray-500 dark:text-gray-400">Este Mes</p>
                         </div>
                         <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                            <font-awesome-icon :icon="faCalendarMonth" class="text-blue-600 dark:text-blue-400" />
+                            <font-awesome-icon :icon="faCalendarDays" class="text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
                 </div>
