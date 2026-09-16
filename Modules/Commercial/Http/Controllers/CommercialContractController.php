@@ -164,10 +164,13 @@ class CommercialContractController extends Controller
                 ->orderBy('full_name')
                 ->get(['id', 'document_type_id', 'number', 'full_name', 'telephone', 'email']),
             'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get(),
+            // unique(): la tabla puede contener filas repetidas para la misma moneda.
             'currencyTypes' => DB::table('sunat_currency_types')
                 ->where('active', true)
                 ->orderBy('id')
-                ->get(['id', 'symbol', 'description']),
+                ->get(['id', 'symbol', 'description'])
+                ->unique('id')
+                ->values(),
             'contractTypes' => $this->contractTypes(),
         ];
     }

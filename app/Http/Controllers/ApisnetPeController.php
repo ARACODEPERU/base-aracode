@@ -176,12 +176,19 @@ class ApisnetPeController extends Controller
         $type = $request->get('document_type');
         $number = $request->get('number');
 
+        if (empty($number)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Ingresa el número de documento a consultar.',
+            ]);
+        }
+
         if ($type == 6) {
             $data = $this->consultaRUCmigo($number);
         } else {
-            $data = $this->consultaDNI($number);
+            // RENIEC vía migo.pe (el token decolecta no está configurado).
+            $data = $this->consultaDNImigo($number);
         }
-
 
         return response()->json($data);
     }
@@ -248,7 +255,7 @@ class ApisnetPeController extends Controller
                 ],
                 'json' => [
                     'token' => $this->tokenMigo, // ⚠️ Guarda tu token en .env
-                    'ruc' => $dni,
+                    'dni' => $dni,
                 ],
                 'timeout' => 10, // segundos (opcional)
             ]);
@@ -256,6 +263,14 @@ class ApisnetPeController extends Controller
             // Obtener respuesta como array asociativo
             $data = json_decode($response->getBody(), true);
             //dd($data);
+
+            if (empty($data['nombre'])) {
+                return [
+                    'success' => false,
+                    'error' => 'No se encontraron datos para el DNI consultado.',
+                ];
+            }
+
             return [
                 'success' => true,
                 'person' => [
@@ -263,7 +278,7 @@ class ApisnetPeController extends Controller
                     'names' => null,
                     'father_lastname' => null,
                     'mother_lastname' => null,
-                    'document_number' => null,
+                    'document_number' => $data['dni'] ?? $dni,
                 ]
             ];
 

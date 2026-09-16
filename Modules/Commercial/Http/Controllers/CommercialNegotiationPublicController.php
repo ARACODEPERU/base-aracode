@@ -102,6 +102,11 @@ class CommercialNegotiationPublicController extends Controller
             'foreign_country_id' => [Rule::requiredIf(fn () => IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'integer', 'exists:countries,id'],
             'foreign_state' => [Rule::requiredIf(fn () => IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'string', 'max:255'],
             'foreign_city' => [Rule::requiredIf(fn () => IdentityDocumentType::isForeignLocation($request->input('document_type_id'))), 'nullable', 'string', 'max:255'],
+            // Boleta a nombre de una tercera persona: el cliente pide que la boleta
+            // salga a nombre de otra persona (DNI validado por RENIEC/migo).
+            'boleta_documento_tipo' => ['nullable', 'string', 'max:10'],
+            'boleta_numero' => ['nullable', 'string', 'max:20'],
+            'boleta_nombre' => ['nullable', 'string', 'max:255'],
             'ruc' => ['required_if:invoice_type,factura', 'nullable', 'string', 'size:11'],
             'invoice_razon_social' => ['required_if:invoice_type,factura', 'nullable', 'string', 'max:255'],
             'invoice_direccion' => ['nullable', 'string', 'max:255'],
@@ -218,10 +223,20 @@ class CommercialNegotiationPublicController extends Controller
                 'verified_at' => null,
             ]);
 
+            // Boleta a nombre de terceros: solo se guarda si el cliente la activo
+            // y el DNI fue validado (numero + nombre completados por la consulta).
+            $boletaTercero = $data['invoice_type'] === 'boleta'
+                && ! empty($data['boleta_documento_tipo'])
+                && ! empty($data['boleta_numero'])
+                && ! empty($data['boleta_nombre']);
+
             CommercialNegotiationInvoice::updateOrCreate(
                 ['negotiation_id' => $negotiation->id],
                 [
                     'invoice_type' => $data['invoice_type'],
+                    'boleta_documento_tipo' => $boletaTercero ? $data['boleta_documento_tipo'] : null,
+                    'boleta_numero' => $boletaTercero ? trim($data['boleta_numero']) : null,
+                    'boleta_nombre' => $boletaTercero ? trim($data['boleta_nombre']) : null,
                     'ruc' => $data['invoice_type'] === 'factura' ? trim($data['ruc']) : null,
                     'razon_social' => $data['invoice_razon_social'] ?? null,
                     'direccion' => $data['invoice_direccion'] ?? null,
@@ -328,6 +343,131 @@ class CommercialNegotiationPublicController extends Controller
                 'error' => 'Ocurrió un error inesperado: ' . $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Indica si el correo ingresado ya tiene una cuenta de usuario registrada.
+     * Si existe, devuelve los datos de la persona vinculada para precargarlos
+     * en el formulario y que el cliente continue con esa misma cuenta.
+     */
+    public function checkEmail(Request $request, $token)
+    {
+        CommercialNegotiation::where('token', $token)->firstOrFail();
+
+        $request->validate([
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $email = trim(strtolower((string) $request->input('email')));
+
+        $user = \App\Models\User::where('email', $email)->first();
+
+        if (! $user) {
+            return response()->json([
+                'exists' => false,
+                'message' => 'El correo no tiene una cuenta registrada.',
+            ]);
+        }
+
+        $person = $user->person_id ? Person::find($user->person_id) : null;
+
+        return response()->json([
+            'exists' => true,
+            'has_person' => (bool) $person,
+            'person' => $person, // Precarga el formulario con los datos de la cuenta existente.
+            'message' => 'Este correo ya tiene una cuenta registrada'
+                .($person?->full_name ? ' a nombre de '.$person->full_name : '')
+                .'. Puedes continuar con esa cuenta y tus datos se actualizaran en ella.',
+        ]);
+    }
+
+    /**
+     * Consulta un DNI en RENIEC (apis.net.pe, token P000012) y como respaldo en migo.pe
+     * (token P000023). Devuelve los nombres separados cuando la fuente los proporciona.
+     */
+    public function validateDni(Request $request, $token)
+    {
+        CommercialNegotiation::where('token', $token)->firstOrFail();
+
+        $request->validate([
+            'dni' => ['required', 'string', 'digits:8'],
+        ]);
+
+        $dni = trim((string) $request->input('dni'));
+
+        // Fuente principal: RENIEC por apis.net.pe (nombres y apellidos separados).
+        try {
+            $tokenReniec = Parameter::where('parameter_code', 'P000012')->value('value_default');
+            $client = new Client(['verify' => false, 'connect_timeout' => 5]);
+            $response = $client->request('GET', 'https://api.apis.net.pe/v2/reniec/dni', [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$tokenReniec,
+                    'Referer' => 'https://apis.net.pe/api-consulta-dni',
+                    'User-Agent' => 'laravel/guzzle',
+                    'Accept' => 'application/json',
+                ],
+                'query' => ['numero' => $dni],
+                'timeout' => 12,
+            ]);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            if (! empty($data['nombreCompleto']) || ! empty($data['nombres'])) {
+                return response()->json([
+                    'success' => true,
+                    'source' => 'reniec',
+                    'person' => [
+                        'names' => $data['nombres'] ?? null,
+                        'father_lastname' => $data['apellidoPaterno'] ?? null,
+                        'mother_lastname' => $data['apellidoMaterno'] ?? null,
+                        'full_name' => $data['nombreCompleto'] ?? null,
+                        'document_number' => $data['numeroDocumento'] ?? $dni,
+                    ],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Sin token, token vencido o servicio caido: se intenta el respaldo.
+        }
+
+        // Respaldo: migo.pe (devuelve el nombre completo en un solo campo).
+        try {
+            $tokenMigo = Parameter::where('parameter_code', 'P000023')->value('value_default');
+            $client = new Client();
+            $response = $client->post('https://api.migo.pe/api/v1/dni', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => [
+                    'token' => $tokenMigo,
+                    'dni' => $dni,
+                ],
+                'timeout' => 10,
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            if (! empty($data['nombre'])) {
+                return response()->json([
+                    'success' => true,
+                    'source' => 'migo',
+                    'person' => [
+                        'names' => null,
+                        'father_lastname' => null,
+                        'mother_lastname' => null,
+                        'full_name' => $data['nombre'],
+                        'document_number' => $data['dni'] ?? $dni,
+                    ],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Se reporta como no disponible.
+        }
+
+        return response()->json([
+            'success' => false,
+            'error' => 'No se pudo validar el DNI con RENIEC en este momento. Intenta nuevamente.',
+        ]);
     }
 
     /**

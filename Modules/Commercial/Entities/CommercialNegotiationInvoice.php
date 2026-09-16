@@ -14,6 +14,9 @@ class CommercialNegotiationInvoice extends Model
     protected $fillable = [
         'negotiation_id',
         'invoice_type',
+        'boleta_documento_tipo',
+        'boleta_numero',
+        'boleta_nombre',
         'ruc',
         'razon_social',
         'direccion',

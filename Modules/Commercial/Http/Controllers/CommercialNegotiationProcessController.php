@@ -47,7 +47,37 @@ class CommercialNegotiationProcessController extends Controller
             'statuses' => $this->statuses(),
             'paymentMethods' => $this->paymentMethods(),
             'stepsStatus' => $this->stepStatuses($negotiation),
+            'existingAccount' => $this->existingAccountInfo($negotiation),
         ]);
+    }
+
+    /**
+     * Detecta si el cliente de la negociacion ya tiene persona, cuenta de usuario
+     * y/o registro de estudiante: la pantalla de proceso usa esto para mostrar
+     * "Actualizar" en lugar de "Crear" y diferenciarlo con otro color.
+     */
+    private function existingAccountInfo(CommercialNegotiation $negotiation): array
+    {
+        try {
+            $person = $negotiation->client_id ? Person::find($negotiation->client_id) : null;
+
+            if (! $person) {
+                return ['has_user' => false, 'has_student' => false];
+            }
+
+            $user = User::where('person_id', $person->id)->first();
+
+            if (! $user && $person->email) {
+                $user = User::where('email', trim($person->email))->first();
+            }
+
+            return [
+                'has_user' => (bool) $user,
+                'has_student' => AcaStudent::where('person_id', $person->id)->exists(),
+            ];
+        } catch (\Throwable $e) {
+            return ['has_user' => false, 'has_student' => false];
+        }
     }
 
     /**
@@ -163,16 +193,26 @@ class CommercialNegotiationProcessController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Datos del cliente guardados en la tabla people.',
+            'message' => 'Actualizar los datos del cliente en la tabla people: cliente ya existente.',
             'person_id' => $person->id,
         ]);
-    }
-
-    public function processUser(Request $request, $id)
+    }    public function processUser(Request $request, $id)
     {        $negotiation = $this->negotiation($id);
         $person = $this->person($negotiation);
 
         $user = User::where('person_id', $person->id)->first();
+
+        // Si el correo ya tiene una cuenta registrada, se reutiliza esa cuenta en lugar
+        // de crear un duplicado: se vincula a esta persona y se asigna el rol Alumno.
+        if (! $user && $person->email) {
+            $user = User::where('email', trim($person->email))->first();
+
+            if ($user) {
+                $user->update(['person_id' => $person->id, 'status' => true]);
+            }
+        }
+
+        $existed = (bool) $user;
 
         if (! $user) {
             $email = $person->email ?: 'alumno' . $person->id . '@sistema.local';
@@ -193,8 +233,11 @@ class CommercialNegotiationProcessController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Usuario creado correctamente.',
+            'message' => $existed
+                ? 'Usuario actualizado correctamente: el alumno ya tenia una cuenta, no se creo una nueva.'
+                : 'Usuario creado correctamente.',
             'user_id' => $user->id,
+            'updated' => (bool) $existed,
         ]);
     }
 
@@ -204,6 +247,7 @@ class CommercialNegotiationProcessController extends Controller
         $person = $this->person($negotiation);
 
         $student = AcaStudent::where('person_id', $person->id)->first();
+        $wasExisting = (bool) $student;
 
         if (! $student) {
             $student = AcaStudent::create([
@@ -220,8 +264,11 @@ class CommercialNegotiationProcessController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Estudiante registrado en aca_students.',
+            'message' => $wasExisting
+                ? 'Estudiante actualizado en aca_students: el alumno ya estaba registrado.'
+                : 'Estudiante registrado en aca_students.',
             'student_id' => $student->id,
+            'updated' => (bool) $wasExisting,
         ]);
     }
 
@@ -453,6 +500,17 @@ class CommercialNegotiationProcessController extends Controller
                 $person = $this->person($negotiation);
                 $invoice = $negotiation->invoice;
                 $isFactura = $invoice && $invoice->invoice_type === 'factura';
+
+                // Boleta a nombre de una tercera persona (el cliente la pidio al confirmar).
+                $boletaTercero = $invoice && $invoice->invoice_type === 'boleta'
+                    && ! empty($invoice->boleta_numero)
+                    && ! empty($invoice->boleta_nombre);
+
+                $clientOverride = $boletaTercero ? [
+                    'client_type_doc' => $invoice->boleta_documento_tipo ?: '1',
+                    'client_number' => $invoice->boleta_numero,
+                    'client_rzn_social' => $invoice->boleta_nombre,
+                ] : null;
                 $localId = Auth::user()->local_id ?? 1;
                 $total = (float) $negotiation->total_price;
 
@@ -594,6 +652,11 @@ class CommercialNegotiationProcessController extends Controller
                     'userId' => Auth::id(),
                     'enline' => true,
                 ];
+
+                // La boleta se emite con los datos del tercero indicado por el cliente.
+                if ($clientOverride) {
+                    $pedido['client_override'] = $clientOverride;
+                }
 
                 $internalRequest = Request::create(
                     '/commercial/negotiations/document/internal',

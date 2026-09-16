@@ -411,10 +411,13 @@ class CommercialNegotiationController extends Controller
                 })
                 ->values(),
             'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get(),
+            // unique(): la tabla puede contener filas repetidas para la misma moneda.
             'currencyTypes' => DB::table('sunat_currency_types')
                 ->where('active', true)
                 ->orderBy('id')
-                ->get(['id', 'symbol', 'description']),
+                ->get(['id', 'symbol', 'description'])
+                ->unique('id')
+                ->values(),
             'paymentMethods' => $this->paymentMethods(),
             'contactChannels' => $this->contactChannels(),
             'companyBilleteras' => \App\Models\CompanyBilletera::with('billetera')

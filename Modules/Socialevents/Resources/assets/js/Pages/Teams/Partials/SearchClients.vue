@@ -248,10 +248,18 @@
                     form.estado = res.data.person['estado'];
                     form.condicion = res.data.person['condicion'];
                 }else{
-                    form.full_name =  res.data.person['razon_social'];
-                    form.father_lastname =  res.data.person['father_lastname'];
-                    form.mother_lastname =  res.data.person['mother_lastname'];
-                    form.names =  res.data.person['names'];
+                    // RENIEC (migo.pe) devuelve el nombre completo en un solo campo:
+                    // names / apellidos pueden venir null, se conservan los ya escritos.
+                    form.full_name = res.data.person['razon_social'];
+                    if (res.data.person['names']) {
+                        form.names = res.data.person['names'];
+                    }
+                    if (res.data.person['father_lastname']) {
+                        form.father_lastname = res.data.person['father_lastname'];
+                    }
+                    if (res.data.person['mother_lastname']) {
+                        form.mother_lastname = res.data.person['mother_lastname'];
+                    }
                     form.estado = null;
                     form.condicion = null;
                 }
@@ -264,6 +272,13 @@
                 })
             }
 
+        }).catch(error => {
+            Swal2.fire({
+                icon: 'error',
+                text: error.response?.data?.error || 'No se pudo consultar la API en este momento. Verifica el número e intenta de nuevo.',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            })
         }).finally(()=> {
             apiesLoading.value = false;
         });
