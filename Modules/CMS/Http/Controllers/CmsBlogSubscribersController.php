@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace Modules\CMS\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\BlogSubscriber;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Response;
+use Carbon\Carbon;
 
-class BlogSubscriberController extends Controller
+class CmsBlogSubscribersController extends Controller
 {
     public function index(Request $request)
     {
@@ -24,8 +26,21 @@ class BlogSubscriberController extends Controller
             });
         }
 
-        $subscribers = $query->latest()->paginate(20);
-        
+        if ($dates = $request->get('dates')) {
+            if ($dates) {
+                if (str_contains($dates, ' to ') || str_contains($dates, ' a ')) {
+                    $separator = str_contains($dates, ' to ') ? ' to ' : ' a ';
+                    [$startDate, $endDate] = explode($separator, $dates);
+                    $query->whereDate('created_at', '>=', Carbon::parse($startDate)->startOfDay())
+                          ->whereDate('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+                } else {
+                    $query->whereDate('created_at', Carbon::parse($dates)->toDateString());
+                }
+            }
+        }
+
+        $subscribers = $query->latest()->paginate(20)->appends($request->query());
+
         $stats = [
             'total' => BlogSubscriber::count(),
             'active' => BlogSubscriber::where('status', 'active')->count(),
@@ -33,14 +48,19 @@ class BlogSubscriberController extends Controller
             'this_week' => BlogSubscriber::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
         ];
 
-        return view('admin.blog-subscribers', compact('subscribers', 'stats'));
+        return Inertia::render('CMS::BlogSubscribers/List', [
+            'subscribers' => $subscribers,
+            'stats' => $stats,
+            'filters' => $request->all(['search', 'status', 'dates']),
+        ]);
     }
 
-    public function destroy(BlogSubscriber $blogSubscriber)
+    public function destroy($id)
     {
-        $blogSubscriber->update(['status' => 'unsubscribed']);
+        $subscriber = BlogSubscriber::findOrFail($id);
+        $subscriber->update(['status' => 'unsubscribed']);
 
-        return redirect()->route('admin.blog-subscribers.index')
+        return redirect()->route('cms_blog_subscribers_list')
             ->with('success', 'Suscriptor dado de baja correctamente.');
     }
 
@@ -55,7 +75,7 @@ class BlogSubscriberController extends Controller
         $subscribers = $query->latest()->get();
 
         $csv = "Nombre,Email,Estado,Fuente,Fecha de suscripción\n";
-        
+
         foreach ($subscribers as $subscriber) {
             $csv .= '"' . ($subscriber->name ?? '') . '",';
             $csv .= '"' . $subscriber->email . '",';
