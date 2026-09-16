@@ -8,7 +8,9 @@ import {
     faFeather,
     faPeopleGroup,
     faFaceGrinStars,
-    faSitemap
+    faSitemap,
+    faEnvelope,
+    faUsers
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuCMS = {
@@ -66,6 +68,20 @@ const menuCMS = {
             text: "Descargas de Brochures",
             permissions: "cms_subscribers_list",
             icom: faPeopleGroup
+        },
+        {
+            route: route("cms_contact_messages_list"),
+            status: false,
+            text: "Mensajes de Contacto",
+            permissions: "cms_mensajes_contacto",
+            icom: faEnvelope,
+        },
+        {
+            route: route("cms_blog_subscribers_list"),
+            status: false,
+            text: "Suscriptores Blog",
+            permissions: "cms_blog_suscriptores",
+            icom: faUsers,
         },
         {
             route: route("cms_testimonies_list"),

@@ -65,17 +65,6 @@ Route::get('/politica-privacidad', [WebPageController::class, 'politicaPrivacida
 Route::get('/terminos-condiciones', [WebPageController::class, 'terminosCondiciones'])->name('terminos_condiciones');
 Route::get('/libro-reclamaciones', [WebPageController::class, 'libroReclamaciones'])->name('libro_reclamaciones');
 
-// Admin Routes
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/contact-messages', [\App\Http\Controllers\Admin\ContactMessageController::class, 'index'])->name('contact-messages.index');
-    Route::get('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'show'])->name('contact-messages.show');
-    Route::put('/contact-messages/{contactMessage}', [\App\Http\Controllers\Admin\ContactMessageController::class, 'update'])->name('contact-messages.update');
-
-    Route::get('/blog-subscribers', [\App\Http\Controllers\Admin\BlogSubscriberController::class, 'index'])->name('blog-subscribers.index');
-    Route::delete('/blog-subscribers/{blogSubscriber}', [\App\Http\Controllers\Admin\BlogSubscriberController::class, 'destroy'])->name('blog-subscribers.destroy');
-    Route::get('/blog-subscribers/export', [\App\Http\Controllers\Admin\BlogSubscriberController::class, 'export'])->name('blog-subscribers.export');
-});
-
 // Redirecciones de rutas antiguas
 Route::get('/nosotros', fn () => redirect()->route('empresa'));
 Route::get('/v2', fn () => redirect()->route('index_main'));
