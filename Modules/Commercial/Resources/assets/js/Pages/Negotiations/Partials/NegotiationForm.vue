@@ -6,7 +6,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import EditorAracode from "@/Components/EditorAracode.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
-import { Link, useForm, usePage } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
@@ -208,6 +208,37 @@ const buildItems = () => {
     return items;
 };
 
+/**
+ * Modal bloqueante que se muestra mientras el guardado esta en curso.
+ * Se cierra en onSuccess/onError, nunca por clic fuera ni con la tecla Esc.
+ */
+const showContractLoader = () => {
+    Swal2.fire({
+        title: "Validando contrato...",
+        html: '<p class="text-sm text-gray-500">Estamos validando el contrato y registrando la negociacion.</p>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal2.showLoading(),
+        padding: "2em",
+        customClass: "sweet-alerts",
+    });
+};
+
+const closeContractLoader = () => {
+    if (Swal2.isVisible()) {
+        Swal2.close();
+    }
+};
+
+/** Primer error disponible del formulario, para el aviso cuando el guardado falla. */
+const negotiationFormError = () => {
+    if (form.errors.items) return form.errors.items;
+
+    const first = Object.values(form.errors)[0];
+
+    return first ?? "No se pudo registrar la negociacion. Verifica los datos e intentalo nuevamente.";
+};
+
 const submit = () => {
     form.clearErrors();
 
@@ -236,36 +267,39 @@ const submit = () => {
     const options = {
         preserveScroll: true,
         onSuccess: () => {
+            closeContractLoader();
+
             Swal2.fire({
-                title: "Enhorabuena",
-                text: isEdit.value ? "Se actualizo correctamente" : "Se guardo correctamente",
+                title: "Registro exitoso",
+                text: isEdit.value
+                    ? "La negociacion se actualizo correctamente."
+                    : "La negociacion se registro correctamente.",
                 icon: "success",
+                confirmButtonText: "OK",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                padding: "2em",
+                customClass: "sweet-alerts",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    router.visit(route("comm_negotiations"));
+                }
+            });
+        },
+        onError: () => {
+            closeContractLoader();
+
+            Swal2.fire({
+                title: "Atencion",
+                text: negotiationFormError(),
+                icon: "warning",
                 padding: "2em",
                 customClass: "sweet-alerts",
             });
-
-            if (!isEdit.value) {
-                form.reset();
-                form.currency = "PEN";
-                form.payment_type = "single";
-                form.payment_method = "yape";
-                form.body = "";
-                form.schedule = [];
-                form.items = [];
-            }
-        },
-        onError: () => {
-            if (form.errors.items) {
-                Swal2.fire({
-                    title: "Atencion",
-                    text: form.errors.items,
-                    icon: "warning",
-                    padding: "2em",
-                    customClass: "sweet-alerts",
-                });
-            }
         },
     };
+
+    showContractLoader();
 
     if (isEdit.value) {
         form.post(route("comm_negotiations_update", props.negotiation.id), options);
