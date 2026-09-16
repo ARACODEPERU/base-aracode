@@ -69,50 +69,9 @@
 
         <!-- Page Body Start-->
         <div class="page-body-wrapper">
-            <!-- Page Sidebar Start-->
-            <x-sidebar />
-            <!-- Page Sidebar Ends-->
             <div class="page-body dark:bg-[#111c2d] transition-colors duration-300">
-
-                {{-- Hero Section --}}
-                <x-courselanding.hero :landing="$landing" />
-
-                {{-- Professional Development - ORIGINAL --}}
-                {{-- <x-courselanding.professional-development :landing="$landing" /> --}}
+                {{-- Las secciones de esta landing (hero, staff, results, faq, inversión, testimonios, ...) se construyen ahora en la landing en Vue: Academic::Courses/PublicLanding. --}}
                 
-                {{-- Professional Development - INFORMACIÓN --}}
-                <x-courselanding.professional-development-info :landing="$landing" />
-
-                {{-- The Problem --}}
-                <x-courselanding.the-problem :landing="$landing" />
-
-                {{-- Study Plan --}}
-                <x-courselanding.study-plan :landing="$landing" />
-
-                {{-- Carrusel de Expertos Premium (Opción 5) --}}
-                <x-courselanding.staff :landing="$landing" :teachers-premium="$teachers_premium" />
-
-                {{-- Results --}}
-                <x-courselanding.results :landing="$landing" :colors="$colors" />
-
-                {{-- Testimonials --}}
-                <x-courselanding.testimonials :landing="$landing" />
-
-                {{-- Nueva Sección: Planes de Inversión --}}
-                <x-courselanding.investment :landing="$landing" />
-
-                {{-- Propuesta 2: Preguntas Frecuentes (Diseño Moderno de Tarjetas) --}}
-                <x-courselanding.faq :landing="$landing" />
-
-                {{-- Professional Development - FORMULARIO --}}
-                <x-courselanding.professional-development-form :landing="$landing" />
-
-                <x-courselanding.certificate-template />
-
-                {{-- Testimonios de los alumnos de este curso (al final) + schema markup --}}
-                <x-courselanding.course-testimonials :testimonials="$course_testimonials ?? []"
-                    :course="$landing->course"
-                    :schema="$course_schema ?? null" />
 
 
             </div>

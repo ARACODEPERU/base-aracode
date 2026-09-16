@@ -9,8 +9,6 @@
         <x-header />
 
         <div class="page-body-wrapper">
-            <x-sidebar />
-
             <div class="page-body" x-data>
                 <div class="container-fluid pb-5">
 
@@ -188,9 +186,6 @@
           </p>
         </div>
         @endif
-
-                    <x-courses.list-card />
-                    <x-social-networks />
 
                     <x-footer />
                 </div>

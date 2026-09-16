@@ -23,9 +23,6 @@
         <!-- Page Header Ends-->
         <!-- Page Body Start-->
         <div class="page-body-wrapper">
-            <!-- Page Sidebar Start-->
-            <x-sidebar />
-            <!-- Page Sidebar Ends-->
             <div class="page-body">
                 <div class="container-fluid"></div>
                 <div class="container-fluid">

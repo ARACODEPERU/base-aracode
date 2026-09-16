@@ -3,12 +3,6 @@
 @section('content')
     <script src="https://sdk.mercadopago.com/js/v2"></script>
 
-    <!-- App Header Wrapper-->
-    <x-nav />
-
-    <!-- Sidebar -->
-    <x-slidebar />
-
     <!-- Main Content Wrapper -->
     <main class="main-content w-full px-[var(--margin-x)] pb-8">
 

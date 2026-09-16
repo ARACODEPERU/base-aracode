@@ -7,8 +7,6 @@
     <div class="page-wrapper" id="pageWrapper">
         <x-header />
         <div class="page-body-wrapper">
-            <x-sidebar />
-
             <div class="page-body checkout-page-body">
                 <div class="container-fluid checkout-container">
                     <div class="checkout-page-heading">

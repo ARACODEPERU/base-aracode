@@ -448,10 +448,6 @@
 
         <!-- Page Body Start-->
         <div class="page-body-wrapper">
-            <!-- Page Sidebar Start-->
-            <x-sidebar />
-            <!-- Page Sidebar Ends-->
-
             <div class="page-body" style="padding-bottom: 40px;">
 
                 {{-- ============================================ --}}
