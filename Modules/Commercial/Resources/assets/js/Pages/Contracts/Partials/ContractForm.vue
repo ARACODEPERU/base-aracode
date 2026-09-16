@@ -29,53 +29,55 @@ const searchServiceRef = ref(null);
 const serviceDisplay = ref("");
 const selectedService = ref(null);
 
-const form = useForm({
-    client_id: props.contract?.client_id ?? null,
-    service_id: props.contract?.service_id ?? null,
-    contract_type: props.contract?.contract_type ?? "new_development",
-    title: props.contract?.title ?? null,
-    start_date: props.contract?.start_date ?? null,
-    end_date: props.contract?.end_date ?? null,
-    amount: props.contract?.amount ?? null,
-    currency: props.contract?.currency ?? "PEN",
-    body: props.contract?.body ?? "",
-    signed_pdf: null,
-    remove_signed_pdf: false,
-    responsible_document_type_id: props.contract?.responsible?.document_type_id ?? "1",
-    responsible_number: props.contract?.responsible?.number ?? null,
-    responsible_names: props.contract?.responsible?.names ?? null,
-    responsible_father_lastname: props.contract?.responsible?.father_lastname ?? null,
-    responsible_mother_lastname: props.contract?.responsible?.mother_lastname ?? null,
-    responsible_gender: props.contract?.responsible?.gender ?? "M",
-    responsible_email: props.contract?.responsible?.email ?? null,
-    responsible_telephone: props.contract?.responsible?.telephone ?? null,
-});
+    const form = useForm({
+        client_id: props.contract?.client_id ?? null,
+        service_id: props.contract?.service_id ?? null,
+        contract_type: props.contract?.contract_type ?? "new_development",
+        title: props.contract?.title ?? null,
+        start_date: props.contract?.start_date ?? null,
+        end_date: props.contract?.end_date ?? null,
+        amount: props.contract?.amount ?? null,
+        currency: props.contract?.currency ?? "PEN",
+        body: props.contract?.body ?? "",
+        signed_pdf: null,
+        remove_signed_pdf: false,
+        responsible_document_type_id: props.contract?.responsible?.document_type_id ?? "1",
+        responsible_number: props.contract?.responsible?.number ?? null,
+        responsible_names: props.contract?.responsible?.names ?? null,
+        responsible_father_lastname: props.contract?.responsible?.father_lastname ?? null,
+        responsible_mother_lastname: props.contract?.responsible?.mother_lastname ?? null,
+        responsible_gender: props.contract?.responsible?.gender ?? "M",
+        responsible_email: props.contract?.responsible?.email ?? null,
+        responsible_telephone: props.contract?.responsible?.telephone ?? null,
+    });
 
-const isEdit = computed(() => !!props.contract?.id);
-const selectedClient = computed(() => props.clients.find((item) => String(item.id) === String(form.client_id)));
-const requiresResponsible = computed(() => String(selectedClient.value?.document_type_id) === "6");
+    const isEdit = computed(() => !!props.contract?.id);
+    const selectedClient = computed(() => props.clients.find((item) => String(item.id) === String(form.client_id)));
+    const requiresResponsible = computed(() => String(selectedClient.value?.document_type_id) === "6");
 
-const clientOptions = computed(() => props.clients.map((item) => ({
-    value: item.id,
-    label: `${item.full_name} - ${item.number}`,
-})));
+    const clientOptions = computed(() => props.clients.map((item) => ({
+        value: item.id,
+        label: `${item.full_name} - ${item.number}`,
+    })));
 
-// Deduplica defensivamente: la tabla puede tener filas repetidas para la misma moneda.
-const currencyOptions = computed(() => {
-    const seen = new Set();
-    const options = [];
 
-    for (const item of props.currencyTypes) {
-        const value = String(item.id).trim().toUpperCase();
-        if (seen.has(value)) continue;
-        seen.add(value);
-        options.push({
-            value,
-            label: `${value} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
-        });
-    }
+    // Una sola opcion por moneda: si la tabla de monedas llega con filas repetidas,
+    // el select mostraba la misma moneda tres veces.
+    const currencyOptions = computed(() => {
+        const vistas = new Set();
 
-    return options;
+        return props.currencyTypes.reduce((opciones, item) => {
+            if (vistas.has(item.id)) return opciones;
+
+            vistas.add(item.id);
+            opciones.push({
+                value: item.id,
+                label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
+            });
+
+            return opciones;
+        }, []);
+
 });
 
 const documentTypeOptions = computed(() => props.identityDocumentTypes.map((item) => ({

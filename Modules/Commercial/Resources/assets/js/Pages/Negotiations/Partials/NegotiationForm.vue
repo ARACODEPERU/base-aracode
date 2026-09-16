@@ -6,7 +6,8 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import EditorAracode from "@/Components/EditorAracode.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
-import { Link, useForm, usePage, router } from "@inertiajs/vue3";
+
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
@@ -59,22 +60,24 @@ const subscriptionOptions = computed(() => props.subscriptions.map((item) => ({
     label: `${item.title}${subscriptionPrice(item) ? ` (S/ ${subscriptionPrice(item)})` : ""}`,
 })));
 
-// Deduplica defensivamente: la tabla puede tener filas repetidas para la misma moneda.
+
+// Una sola opcion por moneda: si la tabla de monedas llega con filas repetidas,
+// el select mostraba la misma moneda tres veces.
 const currencyOptions = computed(() => {
-    const seen = new Set();
-    const options = [];
+    const vistas = new Set();
 
-    for (const item of props.currencyTypes) {
-        const value = String(item.id).trim().toUpperCase();
-        if (seen.has(value)) continue;
-        seen.add(value);
-        options.push({
-            value,
-            label: `${value} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
+    return props.currencyTypes.reduce((opciones, item) => {
+        if (vistas.has(item.id)) return opciones;
+
+        vistas.add(item.id);
+        opciones.push({
+            value: item.id,
+            label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
         });
-    }
 
-    return options;
+        return opciones;
+    }, []);
+
 });
 
 const paymentMethodOptions = computed(() => props.paymentMethods.map((item) => ({
@@ -208,6 +211,37 @@ const buildItems = () => {
     return items;
 };
 
+/**
+ * Modal bloqueante que se muestra mientras el guardado esta en curso.
+ * Se cierra en onSuccess/onError, nunca por clic fuera ni con la tecla Esc.
+ */
+const showContractLoader = () => {
+    Swal2.fire({
+        title: "Validando contrato...",
+        html: '<p class="text-sm text-gray-500">Estamos validando el contrato y registrando la negociacion.</p>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal2.showLoading(),
+        padding: "2em",
+        customClass: "sweet-alerts",
+    });
+};
+
+const closeContractLoader = () => {
+    if (Swal2.isVisible()) {
+        Swal2.close();
+    }
+};
+
+/** Primer error disponible del formulario, para el aviso cuando el guardado falla. */
+const negotiationFormError = () => {
+    if (form.errors.items) return form.errors.items;
+
+    const first = Object.values(form.errors)[0];
+
+    return first ?? "No se pudo registrar la negociacion. Verifica los datos e intentalo nuevamente.";
+};
+
 const submit = () => {
     form.clearErrors();
 
@@ -236,10 +270,32 @@ const submit = () => {
     const options = {
         preserveScroll: true,
         onSuccess: () => {
+            closeContractLoader();
+
             Swal2.fire({
-                title: "Enhorabuena",
-                text: isEdit.value ? "Negociacion actualizada con exito" : "Negociacion creada con exito",
+                title: "Registro exitoso",
+                text: isEdit.value
+                    ? "La negociacion se actualizo correctamente."
+                    : "La negociacion se registro correctamente.",
                 icon: "success",
+                confirmButtonText: "OK",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                padding: "2em",
+                customClass: "sweet-alerts",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    router.visit(route("comm_negotiations"));
+                }
+            });
+        },
+        onError: () => {
+            closeContractLoader();
+
+            Swal2.fire({
+                title: "Atencion",
+                text: negotiationFormError(),
+                icon: "warning",
                 padding: "2em",
                 customClass: "sweet-alerts",
             }).then(() => {
@@ -256,8 +312,11 @@ const submit = () => {
                     customClass: "sweet-alerts",
                 });
             }
+
         },
     };
+
+    showContractLoader();
 
     if (isEdit.value) {
         form.post(route("comm_negotiations_update", props.negotiation.id), options);
