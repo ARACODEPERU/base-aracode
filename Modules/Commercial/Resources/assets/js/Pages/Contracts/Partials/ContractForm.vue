@@ -60,10 +60,23 @@ const clientOptions = computed(() => props.clients.map((item) => ({
     label: `${item.full_name} - ${item.number}`,
 })));
 
-const currencyOptions = computed(() => props.currencyTypes.map((item) => ({
-    value: item.id,
-    label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
-})));
+// Una sola opcion por moneda: si la tabla de monedas llega con filas repetidas,
+// el select mostraba la misma moneda tres veces.
+const currencyOptions = computed(() => {
+    const vistas = new Set();
+
+    return props.currencyTypes.reduce((opciones, item) => {
+        if (vistas.has(item.id)) return opciones;
+
+        vistas.add(item.id);
+        opciones.push({
+            value: item.id,
+            label: `${item.id} - ${item.description}${item.symbol ? ` (${item.symbol})` : ""}`,
+        });
+
+        return opciones;
+    }, []);
+});
 
 const documentTypeOptions = computed(() => props.identityDocumentTypes.map((item) => ({
     value: String(item.id),

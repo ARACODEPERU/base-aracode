@@ -167,7 +167,10 @@ class CommercialContractController extends Controller
             'currencyTypes' => DB::table('sunat_currency_types')
                 ->where('active', true)
                 ->orderBy('id')
-                ->get(['id', 'symbol', 'description']),
+                ->get(['id', 'symbol', 'description'])
+                // Una sola opcion por moneda aunque la tabla traiga filas repetidas.
+                ->unique('id')
+                ->values(),
             'contractTypes' => $this->contractTypes(),
         ];
     }
