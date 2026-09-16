@@ -99,7 +99,16 @@ class CommercialNegotiationProcessController extends Controller
         $hasSubscriptions = $negotiation->items->contains(fn ($item) => $item->item_type === 'subscription');
 
         $statusOf = function (string $key, string $fallback = 'pending') use ($progress) {
-            return in_array($key, $progress, true) ? 'done' : $fallback;
+            if (in_array($key, $progress, true)) {
+                return 'done';
+            }
+
+            // Paso omitido manualmente desde la pantalla de proceso.
+            if (in_array('skipped:'.$key, $progress, true)) {
+                return 'omitted';
+            }
+
+            return $fallback;
         };
 
         return [
@@ -114,6 +123,53 @@ class CommercialNegotiationProcessController extends Controller
             'webhook' => $statusOf('webhook'),
             'complete' => $statusOf('complete'),
         ];
+    }
+
+    /**
+     * Claves validas de los pasos del proceso de aprobacion.
+     */
+    private const PROCESS_KEYS = [
+        'person', 'user', 'student', 'registrations', 'subscriptions',
+        'installments', 'document', 'email', 'webhook', 'complete',
+    ];
+
+    /**
+     * Marca un paso como omitido manualmente (error del paso + decision del
+     * administrador de continuar con los demas). Se persiste en process_progress
+     * con el prefijo "skipped:" para que al recargar la pantalla siga mostrandose
+     * como omitido y el proceso no lo vuelva a intentar.
+     */
+    public function skipStep(Request $request, $id, $key)
+    {
+        if (! in_array($key, self::PROCESS_KEYS, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Paso invalido.',
+            ], 422);
+        }
+
+        $negotiation = $this->negotiation($id);
+        $progress = $negotiation->process_progress ?? [];
+
+        if (in_array($key, $progress, true)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'El paso ya estaba completado.',
+            ]);
+        }
+
+        $skippedKey = 'skipped:'.$key;
+
+        if (! in_array($skippedKey, $progress, true)) {
+            $progress[] = $skippedKey;
+            $negotiation->update(['process_progress' => $progress]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'skipped' => true,
+            'message' => 'Paso omitido: se continuara con los pasos restantes.',
+        ]);
     }
 
     /**

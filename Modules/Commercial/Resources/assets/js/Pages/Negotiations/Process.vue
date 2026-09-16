@@ -10,6 +10,7 @@ import {
     faCheckCircle,
     faCircleNotch,
     faClipboardCheck,
+    faForward,
     faPlay,
     faRotate,
     faXmarkCircle,
@@ -138,13 +139,18 @@ const steps = ref([
 ]);
 
 const processing = ref(false);
-const allStepsDone = computed(() => steps.value.filter((s) => !s.skipped).every((s) => s.status === "done"));
+const allStepsDone = computed(() =>
+    steps.value.filter((s) => !s.skipped).every((s) => s.status === "done" || s.status === "omitted"),
+);
 const finished = ref(allStepsDone.value);
 
 const visibleSteps = computed(() => steps.value.filter((step) => !step.skipped));
 
-// Pasos efectivamente completados (avance real del proceso).
-const completedCount = computed(() => steps.value.filter((step) => !step.skipped && step.status === "done").length);
+// Pasos efectivamente completados (avance real del proceso; los omitidos cuentan
+// como resueltos para que el progreso pueda llegar al 100%).
+const completedCount = computed(() =>
+    steps.value.filter((step) => !step.skipped && (step.status === "done" || step.status === "omitted")).length,
+);
 
 const progress = computed(() => {
     const total = visibleSteps.value.length;
@@ -164,6 +170,7 @@ const clientName = computed(() => props.negotiation.client_data?.full_name || pr
 
 const stepBadge = (status) => {
     if (status === "done") return "success";
+    if (status === "omitted") return "warning";
     if (status === "skipped") return "secondary";
     if (status === "error") return "danger";
     if (status === "running") return "primary";
@@ -172,6 +179,7 @@ const stepBadge = (status) => {
 
 const stepLabel = (status) => {
     if (status === "done") return "Completado";
+    if (status === "omitted") return "Omitido";
     if (status === "skipped") return "No aplica";
     if (status === "error") return "Error";
     if (status === "running") return "Procesando...";
@@ -192,13 +200,10 @@ const toast = (message, icon = "success") => {
     });
 };
 
-const run = async () => {
-    if (processing.value || finished.value) return;
-
-    processing.value = true;
-
+// Ejecuta los pasos que aun no esten completados ni omitidos.
+const runRemaining = async () => {
     for (const step of steps.value) {
-        if (step.skipped || step.status === "done") continue;
+        if (step.skipped || step.status === "done" || step.status === "omitted") continue;
 
         step.status = "running";
 
@@ -218,16 +223,25 @@ const run = async () => {
             }
         } catch (error) {
             step.status = "error";
-            processing.value = false;
 
-            Swal2.fire({
+            const decision = await Swal2.fire({
                 title: "Error en el paso",
                 text: error.response?.data?.message || error.message || "Error de conexion",
                 icon: "error",
+                showCancelButton: true,
                 confirmButtonText: "Entendido",
+                cancelButtonText: "Omitir este paso y continuar",
                 padding: "2em",
                 customClass: "sweet-alerts",
             });
+
+            processing.value = false;
+
+            // El boton "Omitir este paso y continuar" marca el paso como omitido
+            // y reanuda automaticamente los pasos restantes.
+            if (decision.isDismissed && decision.dismiss === Swal2.DismissReason.cancel) {
+                await skipStep(step);
+            }
 
             return;
         }
@@ -254,6 +268,37 @@ const run = async () => {
             router.visit(route("comm_negotiations"));
         }
     });
+};
+
+// Marca un paso como omitido (persistente en process_progress) y reanuda
+// automaticamente los pasos restantes.
+const skipStep = async (step) => {
+    step.status = "omitted";
+
+    try {
+        await axios.post(
+            route("comm_negotiations_process_skip", [props.negotiation.id, step.key]),
+            {},
+            { timeout: 30000 },
+        );
+        toast("Paso omitido: se continuara con los pasos restantes.", "warning");
+    } catch (skipError) {
+        // Si no se pudo persistir la omision, el paso queda omitido solo en pantalla.
+        toast("No se pudo registrar la omision del paso.", "error");
+    }
+
+    processing.value = true;
+    try {
+        await runRemaining();
+    } finally {
+        processing.value = false;
+    }
+};
+
+const run = () => {
+    if (processing.value || finished.value) return;
+    processing.value = true;
+    runRemaining();
 };
 </script>
 
@@ -311,6 +356,7 @@ const run = async () => {
                     <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                         :class="{
                             'bg-green-100 text-green-600': step.status === 'done',
+                            'bg-amber-100 text-amber-600': step.status === 'omitted',
                             'bg-gray-100 text-gray-400': step.status === 'skipped',
                             'bg-red-100 text-red-600': step.status === 'error',
                             'bg-blue-100 text-blue-600': step.status === 'running',
@@ -318,6 +364,7 @@ const run = async () => {
                         }"
                     >
                         <FontAwesomeIcon v-if="step.status === 'done'" :icon="faCheckCircle" class="h-4 w-4" />
+                        <FontAwesomeIcon v-else-if="step.status === 'omitted'" :icon="faForward" class="h-4 w-4" />
                         <FontAwesomeIcon v-else-if="step.status === 'error'" :icon="faXmarkCircle" class="h-4 w-4" />
                         <FontAwesomeIcon v-else-if="step.status === 'running'" :icon="faCircleNotch" class="h-4 w-4 animate-spin" />
                         <span v-else class="text-sm font-semibold">{{ index + 1 }}</span>

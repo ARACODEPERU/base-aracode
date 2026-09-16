@@ -185,6 +185,10 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->name('comm_negotiations_process_complete');
 
     Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
+        ->post('negotiations/process/{id}/skip/{key}', [CommercialNegotiationProcessController::class, 'skipStep'])
+        ->name('comm_negotiations_process_skip');
+
+    Route::middleware(['middleware' => 'permission:comm_negociaciones_verificar'])
         ->post('negotiations/approve/{id}', [CommercialNegotiationController::class, 'approve'])
         ->name('comm_negotiations_approve');
 
