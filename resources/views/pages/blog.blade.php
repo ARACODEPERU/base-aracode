@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.textContent = 'Enviando...';
 
         var formData = new FormData(form);
-        var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var csrfToken = form.querySelector('input[name="_token"]').value;
 
         fetch(form.action, {
             method: 'POST',
