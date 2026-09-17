@@ -4,6 +4,15 @@
 @section('meta_description', 'Contáctanos para recibir asesoría personalizada sobre nuestras soluciones de software, automatización e inteligencia artificial.')
 
 @section('content')
+@php
+    // El captcha solo se activa si hay par de claves en el .env. Sin ellas el
+    // formulario funciona igual que antes: ni widget ni validacion.
+    $recaptchaSiteKey = config('services.recaptcha.site_key');
+    $recaptchaSecretKey = config('services.recaptcha.secret_key');
+    $recaptchaActivo = filled($recaptchaSiteKey) && filled($recaptchaSecretKey);
+    $recaptchaVersion = config('services.recaptcha.version', 'v3');
+@endphp
+
     @include('components.v2.navbar')
 
     {{-- Hero --}}
@@ -101,6 +110,19 @@
                             @enderror
                         </div>
                         
+                        @if($recaptchaActivo)
+                            @if($recaptchaVersion === 'v2')
+                                {{-- v2: casilla visible; el widget deja su propio campo g-recaptcha-response --}}
+                                <div class="flex justify-center">
+                                    <div class="g-recaptcha" data-sitekey="{{ $recaptchaSiteKey }}"></div>
+                                </div>
+                            @else
+                                {{-- v3: invisible; el JS escribe aqui el token antes de enviar --}}
+                                <input type="hidden" name="g-recaptcha-response" id="recaptchaResponse"
+                                       data-sitekey="{{ $recaptchaSiteKey }}" value="">
+                            @endif
+                        @endif
+
                         <button type="submit" class="ara-btn ara-btn-primary ara-btn-lg w-full">
                             Enviar Mensaje
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,11 +212,48 @@
 
     @include('components.v2.footer')
 @push('scripts')
+@if($recaptchaActivo)
+    @if($recaptchaVersion === 'v2')
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @else
+<script src="https://www.google.com/recaptcha/api.js?render={{ $recaptchaSiteKey }}"></script>
+    @endif
+@endif
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var form = document.getElementById('contactForm');
     if (!form) return;
+
+    // reCAPTCHA v3: el token es invisible y hay que pedirlo justo antes de enviar,
+    // porque cada token sirve una sola vez. Con v2 la casilla deja su propio campo
+    // g-recaptcha-response en el formulario. Sin claves en el .env, esta funcion
+    // devuelve cadena vacia y todo sigue funcionando igual que siempre.
+    function obtenerTokenCaptcha() {
+        var campo = form.querySelector('#recaptchaResponse');
+        if (!campo || typeof grecaptcha === 'undefined') {
+            return Promise.resolve('');
+        }
+
+        var siteKey = campo.dataset.sitekey;
+
+        return new Promise(function(resolve) {
+            grecaptcha.ready(function() {
+                grecaptcha.execute(siteKey, { action: 'contacto_submit' })
+                    .then(function(token) { resolve(token || ''); })
+                    .catch(function() { resolve(''); });
+            });
+        });
+    }
+
+    // Un token ya usado no vale dos veces: si no se reinicia la casilla, el
+    // siguiente intento enviaria un token gastado y el servidor lo rechazaria.
+    function reiniciarCaptcha() {
+        if (window.grecaptcha && typeof window.grecaptcha.reset === 'function') {
+            try { window.grecaptcha.reset(); } catch (error) { /* v3 no expone reset() */ }
+        }
+    }
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         var btn = form.querySelector('button[type="submit"]');
@@ -202,65 +261,77 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.disabled = true;
         btn.innerHTML = '<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Enviando...';
 
-        var formData = new FormData(form);
-        var csrfToken = form.querySelector('input[name="_token"]').value;
+        obtenerTokenCaptcha().then(function(token) {
+            var campoCaptcha = form.querySelector('#recaptchaResponse');
+            if (campoCaptcha && token) {
+                campoCaptcha.value = token;
+            }
 
-        fetch(form.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            body: formData
-        })
-        .then(function(response) {
-            return response.json().then(function(data) {
-                return { status: response.status, data: data };
-            });
-        })
-        .then(function(result) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            if (result.status === 200 && result.data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Mensaje Enviado!',
-                    text: result.data.message,
-                    confirmButtonColor: '#0188EE',
-                    timer: 4000,
-                    timerProgressBar: true
+            var formData = new FormData(form);
+            var csrfToken = form.querySelector('input[name="_token"]').value;
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { status: response.status, data: data };
                 });
-                form.reset();
-            } else if (result.status === 422) {
-                var errors = result.data.errors || {};
-                var msgs = [];
-                for (var field in errors) {
-                    msgs = msgs.concat(errors[field]);
+            })
+            .then(function(result) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                if (result.status === 200 && result.data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Mensaje Enviado!',
+                        text: result.data.message,
+                        confirmButtonColor: '#0188EE',
+                        timer: 4000,
+                        timerProgressBar: true
+                    });
+                    form.reset();
+                    reiniciarCaptcha();
+                } else if (result.status === 422) {
+                    var errors = result.data.errors || {};
+                    var msgs = [];
+                    for (var field in errors) {
+                        msgs = msgs.concat(errors[field]);
+                    }
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos con errores',
+                        html: msgs.join('<br>'),
+                        confirmButtonColor: '#0188EE'
+                    });
+                    reiniciarCaptcha();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: result.data.message || 'Hubo un error al enviar el mensaje.',
+                        confirmButtonColor: '#0188EE'
+                    });
+                    reiniciarCaptcha();
                 }
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Campos con errores',
-                    html: msgs.join('<br>'),
-                    confirmButtonColor: '#0188EE'
-                });
-            } else {
+            })
+            .catch(function(err) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: result.data.message || 'Hubo un error al enviar el mensaje.',
+                    text: 'No se pudo enviar el mensaje. Intenta nuevamente.',
                     confirmButtonColor: '#0188EE'
                 });
-            }
-        })
-        .catch(function(err) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'No se pudo enviar el mensaje. Intenta nuevamente.',
-                confirmButtonColor: '#0188EE'
+                reiniciarCaptcha();
             });
         });
     });

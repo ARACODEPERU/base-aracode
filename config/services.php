@@ -37,8 +37,13 @@ return [
         'max_installments' => (int) env('MERCADOPAGO_MAX_INSTALLMENTS', 12),
     ],
     'recaptcha' => [
-    'site_key' => env('RECAPTCHA_SITE_KEY'),
-    'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+        // Tipo de widget en /contacto: 'v2' (casilla "No soy un robot") o 'v3'
+        // (invisible, el que pide un token con grecaptcha.execute). Debe coincidir
+        // con el tipo del par de claves: si no coincide, el widget no entrega el
+        // token y el formulario rechaza los envios.
+        'version' => env('RECAPTCHA_VERSION', 'v2'),
     ],
     'email' => [
         'mail_from_address' => env('MAIL_FROM_ADDRESS'),

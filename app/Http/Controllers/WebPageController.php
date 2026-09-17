@@ -8,6 +8,7 @@ use App\Models\SaleProduct;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\CMS\Entities\CmsSection;
@@ -1162,6 +1163,24 @@ class WebPageController extends Controller
             'message.required' => 'El mensaje es obligatorio.',
         ]);
 
+        // El captcha se valida antes de guardar nada: un envio rechazado no debe
+        // dejar el mensaje guardado ni disparar correos.
+        $recaptchaError = $this->recaptchaError($request);
+
+        if ($recaptchaError !== null) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $recaptchaError,
+                    'errors' => ['g-recaptcha-response' => [$recaptchaError]],
+                ], 422);
+            }
+
+            return redirect()->route('contacto')
+                ->with('error', $recaptchaError)
+                ->withErrors(['g-recaptcha-response' => $recaptchaError]);
+        }
+
         try {
             // Guardar en base de datos
             \App\Models\ContactMessage::create($validated);
@@ -1193,6 +1212,61 @@ class WebPageController extends Controller
             return redirect()->route('contacto')
                 ->with('error', 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.');
         }
+    }
+
+    /**
+     * Valida el reCAPTCHA de /contacto.
+     *
+     * - Sin claves en el .env devuelve null: el captcha no existe y el formulario
+     *   se comporta exactamente igual que antes.
+     * - Si Google no responde (timeout, DNS, error 500) tampoco bloquea el envio:
+     *   se registra en el log para saber que ese mensaje paso sin captcha.
+     */
+    private function recaptchaError(Request $request): ?string
+    {
+        $siteKey = config('services.recaptcha.site_key');
+        $secretKey = config('services.recaptcha.secret_key');
+
+        if (blank($siteKey) || blank($secretKey)) {
+            return null;
+        }
+
+        $token = $request->input('g-recaptcha-response');
+
+        if (blank($token)) {
+            return config('services.recaptcha.version', 'v3') === 'v2'
+                ? 'Marca la casilla "No soy un robot" para enviar el mensaje.'
+                : 'No pudimos validar el captcha. Recarga la pagina e intentalo de nuevo.';
+        }
+
+        try {
+            $response = Http::asForm()
+                ->timeout(10)
+                ->post('https://www.google.com/recaptcha/api/siteverify', [
+                    'secret' => $secretKey,
+                    'response' => $token,
+                    'remoteip' => $request->ip(),
+                ]);
+
+            $result = $response->json() ?? [];
+        } catch (\Throwable $e) {
+            \Log::error('Contacto: no se pudo consultar la verificacion del reCAPTCHA, el mensaje pasa sin captcha: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return null;
+        }
+
+        if (($result['success'] ?? false) !== true) {
+            \Log::warning('Contacto: reCAPTCHA rechazado', [
+                'error_codes' => $result['error-codes'] ?? [],
+                'ip' => $request->ip(),
+            ]);
+
+            return 'No pudimos verificar que no eres un robot. Intenta enviar el mensaje nuevamente.';
+        }
+
+        return null;
     }
 
     public function blog_index(Request $request)
