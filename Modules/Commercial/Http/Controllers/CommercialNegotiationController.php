@@ -578,9 +578,29 @@ class CommercialNegotiationController extends Controller
         ];
     }
 
+    /**
+     * Canales por los que puede llegar el cliente.
+     *
+     * Se guarda la etiqueta legible como valor (no un slug) porque el listado,
+     * el detalle, la pagina publica del cliente y el webhook a n8n muestran
+     * contact_channel tal cual, sin mapa de traduccion.
+     */
     private function contactChannels(): array
     {
-        return CommercialNegotiation::contactChannelOptions();
+
+        return [
+            ['value' => 'Ads', 'label' => 'Ads'],
+            ['value' => 'Invitado CPA', 'label' => 'Invitado CPA'],
+            ['value' => 'Masivo Api', 'label' => 'Masivo Api'],
+            ['value' => 'Orgánico', 'label' => 'Orgánico'],
+            ['value' => 'Personal CPA', 'label' => 'Personal CPA'],
+            ['value' => 'Referido', 'label' => 'Referido'],
+            ['value' => 'Reserva', 'label' => 'Reserva'],
+            ['value' => 'Web CPA', 'label' => 'Web CPA'],
+            ['value' => 'Webinar', 'label' => 'Webinar'],
+            ['value' => 'Lead gratuito', 'label' => 'Lead gratuito'],
+        ];
+
     }
 
     /**

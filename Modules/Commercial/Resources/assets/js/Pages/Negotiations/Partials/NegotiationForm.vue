@@ -431,10 +431,10 @@ const submit = () => {
 
             <template v-if="form.payment_type === 'installments'">
                 <div class="col-span-6">
-                    <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div class="flex flex-wrap items-center gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
                         <h3 class="font-semibold text-gray-800 dark:text-white">Cronograma provisional de cuotas</h3>
-                        <button type="button" class="btn btn-outline-primary btn-sm" :disabled="scheduleComplete" :class="{ 'opacity-50 cursor-not-allowed': scheduleComplete }" @click="addScheduleRow">
-                            <FontAwesomeIcon :icon="faCalendarPlus" class="mr-1 h-3 w-3" />
+                        <button type="button" class="btn btn-outline-primary" :disabled="scheduleComplete" :class="{ 'opacity-50 cursor-not-allowed': scheduleComplete }" @click="addScheduleRow">
+                            <FontAwesomeIcon :icon="faCalendarPlus" class="mr-1 h-4 w-4" />
                             {{ scheduleComplete ? "Total cubierto" : "Agregar cuota" }}
                         </button>
                     </div>
@@ -470,7 +470,10 @@ const submit = () => {
                 </div>
             </template>
 
-            <div class="col-span-6 sm:col-span-3">
+            <div
+                class="col-span-6"
+                :class="form.payment_method === 'billetera_digital' ? 'sm:col-span-2' : 'sm:col-span-3'"
+            >
                 <InputLabel value="Medio de pago *" />
                 <Select
                     v-model:value="form.payment_method"
@@ -486,10 +489,11 @@ const submit = () => {
                 <InputError :message="form.errors.payment_link" class="mt-2" />
             </div>
 
-            <div v-if="form.payment_method === 'billetera_digital'" class="col-span-6 sm:col-span-3">
+            <div v-if="form.payment_method === 'billetera_digital'" class="col-span-6 sm:col-span-4">
                 <InputLabel value="Billetera digital *" />
                 <Select
                     v-model:value="form.company_billetera_ids"
+                    class="select-billeteras"
                     mode="multiple"
                     :options="billeteraOptions"
                     :disabled="form.payment_method !== 'billetera_digital'"
@@ -563,3 +567,35 @@ const submit = () => {
         </template>
     </FormSection>
 </template>
+
+<style scoped>
+/*
+ * El select de billeteras es multiple y ant recorta el texto de cada etiqueta
+ * con puntos suspensivos (overflow hidden + text-overflow ellipsis) cuando no
+ * cabe en el recuadro. Le damos una caja mas alta para que las etiquetas bajen
+ * de linea y permitimos que un nombre largo se parta en dos lineas dentro de
+ * la etiqueta en vez de perderse.
+ *
+ * Los estilos de ant se inyectan en tiempo de ejecucion (cssinjs), por eso se
+ * apuntan con :deep() y una clase propia: la especificidad de
+ * .select-billeteras[data-v-*] .ant-select-selector queda por encima de la de
+ * ant sin necesidad de !important.
+ */
+.select-billeteras :deep(.ant-select-selector) {
+    min-height: 3.5rem;
+    padding-block: 0.5rem;
+}
+
+.select-billeteras :deep(.ant-select-selection-item) {
+    height: auto;
+    align-items: center;
+    line-height: 1.35;
+    padding-block: 0.125rem;
+    white-space: normal;
+}
+
+.select-billeteras :deep(.ant-select-selection-item-content) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+</style>
