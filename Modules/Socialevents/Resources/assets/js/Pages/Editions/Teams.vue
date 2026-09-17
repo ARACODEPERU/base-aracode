@@ -29,7 +29,30 @@
             type: Array,
             default: () => [],
         },
+        sanctionAdjustments: {
+            type: Array,
+            default: () => [],
+        },
     });
+
+    // Sanciones administrativas por equipo (para los badges de la tabla)
+    const sanctionsByTeam = computed(() => {
+        const map = {};
+        (props.sanctionAdjustments || []).forEach((adj) => {
+            map[adj.team_id] = map[adj.team_id] || [];
+            map[adj.team_id].push(adj);
+        });
+        return map;
+    });
+
+    const sanctionBadge = (teamId) => {
+        const items = sanctionsByTeam.value[teamId];
+        if (!items || !items.length) return null;
+        const net = items.reduce((sum, a) => sum + (Number(a.points) || 0), 0);
+        const lastReason = items[0]?.reason || '';
+        const lastDate = items[0]?.created_at || '';
+        return { net, lastReason, lastDate };
+    };
 
     const form = useForm({
         edition_id: props.edicion.id,
@@ -453,6 +476,13 @@
                                             </td>
                                             <td class="px-4 py-2 text-center">
                                                 <span class="bg-blue-600 text-white px-3 py-1 rounded-full font-bold text-lg">{{ (Number(team.points) || 0) + (Number(team.bonus_points) || 0) }}</span>
+                                                <span
+                                                    v-if="sanctionBadge(team.team_id)"
+                                                    class="inline-flex items-center ml-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold align-middle"
+                                                    :title="'Sanción administrativa (' + (sanctionBadge(team.team_id).lastReason || '') + ')' + (sanctionBadge(team.team_id).lastDate ? ' — ' + sanctionBadge(team.team_id).lastDate : '')"
+                                                >
+                                                    ⚖ {{ sanctionBadge(team.team_id).net > 0 ? '+' : '' }}{{ sanctionBadge(team.team_id).net }}
+                                                </span>
                                             </td>
                                             <td class="px-4 py-2 text-center">
                                                 <span class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold">{{ team.bonus_points || 0 }}</span>

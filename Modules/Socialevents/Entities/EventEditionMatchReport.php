@@ -28,6 +28,7 @@ class EventEditionMatchReport extends Model
         'closed_by',
         'has_protest',
         'protest_details',
+        'protest_files',
         'protest_status',
         'resolution_details',
         'points_processed',
@@ -40,6 +41,7 @@ class EventEditionMatchReport extends Model
 
     protected $casts = [
         'protest_details' => 'array',
+        'protest_files' => 'array',
         'referees'        => 'array',
     ];
 

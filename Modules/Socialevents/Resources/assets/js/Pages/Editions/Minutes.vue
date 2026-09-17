@@ -4,7 +4,7 @@
     import Swal from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { ref } from "vue";
+    import { ref, computed } from "vue";
     import InputError from '@/Components/InputError.vue';
     import { Empty, AvatarGroup, Avatar, Tooltip } from 'ant-design-vue';
     import ModalLargeX from '@/Components/ModalLargeX.vue';
@@ -97,25 +97,54 @@
             });
 
             return; // Detenemos la ejecución aquí
-        }else{
-            try {
-                loadingId.value = acta.minutes_code; // Indicamos qué acta está cargando
-                const routeName = acta.minutes_type === 'partido' ? 'even_ediciones_actas_pdf' : 'even_ediciones_accordance_pdf';
-                const response = await axios.post(route(routeName), {
-                    acta: acta
-                });
+        }else if(acta.has_protest && acta.protest_status == 'resolved'){
+            // Reclamo ya resuelto: permite editar la resolución (incluida la sanción)
+            Swal.fire({
+                title: 'Reclamo Resuelto',
+                text: 'Este acta ya tiene una resolución registrada.',
+                icon: 'info',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Descargar PDF',
+                denyButtonText: 'Editar Resolución / Sanción',
+                cancelButtonText: 'Cerrar',
+                confirmButtonColor: '#1e3a8a',
+                denyButtonColor: '#b45309',
+                cancelButtonColor: '#6b7280',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    downloadActaPdf(acta);
+                } else if (result.isDenied) {
+                    openModalSolution(acta);
+                }
+            });
 
-                let xpdfUrl = response.data.url;
-                window.open(xpdfUrl, "_blank");
-            } catch (error) {
-                let mensajeError = error.response?.data?.message || "No se pudo generar el archivo PDF";
-                showAlertToast(mensajeError, "error");
-            }finally {
-                // Quitamos el loading siempre (éxito o error)
-                loadingId.value = null;
-            }
+            return;
+        }else{
+            downloadActaPdf(acta);
         }
 
+    }
+
+    const downloadActaPdf = async (acta) => {
+        try {
+            loadingId.value = acta.minutes_code; // Indicamos qué acta está cargando
+            const routeName = acta.minutes_type === 'partido' ? 'even_ediciones_actas_pdf' : 'even_ediciones_accordance_pdf';
+            const response = await axios.post(route(routeName), {
+                acta: acta
+            });
+
+            let xpdfUrl = response.data.url;
+            window.open(xpdfUrl, "_blank");
+        } catch (error) {
+            let mensajeError = error.response?.data?.message || "No se pudo generar el archivo PDF";
+            showAlertToast(mensajeError, "error");
+        }finally {
+            // Quitamos el loading siempre (éxito o error)
+            loadingId.value = null;
+        }
     }
 
     const displayModalSolution = ref(false);
@@ -131,6 +160,20 @@
         change_score: false,
         new_score_h: null,
         new_score_a: null,
+        // Marcador actual del partido (solo lectura, para mostrarlo en el modal)
+        current_score_h: 0,
+        current_score_a: 0,
+        // Evidencias del reclamo
+        existing_files: [],
+        protest_files: [],
+        // Sanción administrativa de puntos (el resultado deportivo se mantiene)
+        apply_sanction: false,
+        sanctioned_team_id: null,
+        sanction_points: 3,
+        sanction_reason: '',
+        team_h_id: null,
+        team_a_id: null,
+        match_status: null,
     });
 
     const openModalSolution = (acta) => {
@@ -141,10 +184,113 @@
         formSolution.minutes_subject_visitor = acta.minutes_subject_visitor;
         formSolution.edition_id = acta.partido.edition_id;
         formSolution.match_id = acta.match_id;
+        formSolution.team_h_id = acta.partido.team_h_id;
+        formSolution.team_a_id = acta.partido.team_a_id;
+        formSolution.match_status = acta.partido?.status || null;
+        formSolution.resolution_details = acta.resolution_details || '';
+        // Marcador actual del partido (para mostrarlo en el modal)
+        formSolution.current_score_h = acta.partido.score_h ?? 0;
+        formSolution.current_score_a = acta.partido.score_a ?? 0;
+        // Precarga los goles corregibles con el marcador actual
+        formSolution.new_score_h = acta.partido.score_h ?? 0;
+        formSolution.new_score_a = acta.partido.score_a ?? 0;
+        // Evidencias ya adjuntadas y reset de las nuevas
+        formSolution.existing_files = acta.protest_files || [];
+        formSolution.protest_files = [];
+        // Precarga la sanción ya registrada en el acta (si se reabre el acuerdo)
+        const sanction = acta.sanction || {};
+        formSolution.apply_sanction = !!sanction.apply_sanction;
+        formSolution.sanctioned_team_id = sanction.sanctioned_team_id || null;
+        formSolution.sanction_points = sanction.sanction_points || 3;
+        formSolution.sanction_reason = '';
         displayModalSolution.value = true;
     };
 
+    const sanctionRivalName = computed(() => {
+        const pts = formSolution.sanction_points || 0;
+        if (formSolution.sanctioned_team_id === formSolution.team_h_id) {
+            return formSolution.minutes_subject_visitor + ' (recibe ' + pts + ' pts)';
+        }
+        if (formSolution.sanctioned_team_id === formSolution.team_a_id) {
+            return formSolution.minutes_subject_local + ' (recibe ' + pts + ' pts)';
+        }
+        return '—';
+    });
+
+    // Resumen en lenguaje natural de lo que hará el sistema al guardar
+    const resolutionSummary = computed(() => {
+        const parts = [];
+        if (formSolution.change_score) {
+            parts.push('el partido se corregirá a "' + formSolution.minutes_subject_local + ' ' + (formSolution.new_score_h ?? 0) + ' - ' + (formSolution.new_score_a ?? 0) + ' ' + formSolution.minutes_subject_visitor + '" y los puntos saldrán de ese resultado');
+        } else {
+            parts.push('el marcador se mantiene "' + formSolution.minutes_subject_local + ' ' + formSolution.current_score_h + ' - ' + formSolution.current_score_a + ' ' + formSolution.minutes_subject_visitor + '"');
+        }
+        if (formSolution.apply_sanction && formSolution.sanctioned_team_id) {
+            const sanctioned = formSolution.sanctioned_team_id === formSolution.team_h_id ? formSolution.minutes_subject_local : formSolution.minutes_subject_visitor;
+            const rival = formSolution.sanctioned_team_id === formSolution.team_h_id ? formSolution.minutes_subject_visitor : formSolution.minutes_subject_local;
+            parts.push(sanctioned + ' perderá ' + (formSolution.sanction_points || 0) + ' punto(s) en la tabla de posiciones y ' + rival + ' los recibirá');
+        } else {
+            parts.push('no se aplicará sanción de puntos');
+        }
+        parts.push('la tabla de posiciones se recalculará automáticamente');
+        return parts.join('; ') + '.';
+    });
+
+    const MAX_PROTEST_FILES = 4;
+
+    const onProtestFilesChange = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        if (formSolution.existing_files.length + files.length > MAX_PROTEST_FILES) {
+            showAlertToast('Solo se permiten hasta ' + MAX_PROTEST_FILES + ' evidencias en total (imágenes y PDF). Ya hay ' + formSolution.existing_files.length + ' adjuntada(s).', 'error');
+            e.target.value = '';
+            return;
+        }
+        const invalid = files.find(f => f.size > 10 * 1024 * 1024);
+        if (invalid) {
+            showAlertToast('El archivo "' + invalid.name + '" supera los 10 MB', 'error');
+            e.target.value = '';
+            return;
+        }
+        formSolution.protest_files = files;
+    };
+
+    const removeExistingFile = async (index) => {
+        const result = await Swal.fire({
+            title: '¿Eliminar esta evidencia?',
+            text: 'El archivo se quitará del reclamo.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const res = await axios.post(route('even_ediciones_actas_protest_file_destroy'), {
+                report_id: formSolution.id,
+                index: index,
+            });
+            if (res.data.success) {
+                formSolution.existing_files.splice(index, 1);
+                showAlertToast('Evidencia eliminada', 'success');
+            }
+        } catch (e) {
+            showAlertToast(e.response?.data?.message || 'No se pudo eliminar la evidencia', 'error');
+        }
+    };
+
     const saveSolution = async () => {
+        if (formSolution.apply_sanction && !formSolution.sanctioned_team_id) {
+            showAlertToast('Seleccione el equipo sancionado para aplicar la sanción', 'error');
+            return;
+        }
+        if (formSolution.change_score && (formSolution.new_score_h === null || formSolution.new_score_a === null)) {
+            showAlertToast('Ingrese los goles corregidos de ambos equipos', 'error');
+            return;
+        }
 
         formSolution.post(route('even_ediciones_actas_solucion_update'), {
             forceFormData: true,
@@ -153,11 +299,13 @@
             onSuccess: () => {
                 Swal.fire({
                     title: 'Enhorabuena',
-                    text: 'El acuerdo se registró y el acta ya puede ser descargada.',
+                    text: 'La resolución se registró correctamente y la tabla de posiciones fue actualizada.',
                     icon: 'success',
                     padding: '2em',
                     customClass: 'sweet-alerts',
                 });
+                displayModalSolution.value = false;
+                router.reload({ only: ['sortedMinutes'] });
             },
         });
     };
@@ -314,6 +462,16 @@
                                                 <IconPencilPaper class="w-5 h-5" />
                                             </Link>
                                             <button
+                                                v-can="'even_ediciones_actas'"
+                                                v-if="item.minutes_type === 'partido'"
+                                                type="button"
+                                                @click="openModalSolution(item)"
+                                                v-tippy="{content: 'Resolución / Sanción administrativa', placement: 'bottom'}"
+                                                class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition"
+                                            >
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"/></svg>
+                                            </button>
+                                            <button
                                                 @click="printPdfDownload(item)"
                                                 :disabled="loadingId === item.minutes_code"
                                                 v-tippy="{content: 'Descargar PDF', placement: 'bottom'}"
@@ -376,6 +534,13 @@
                                         <span v-if="item.status == 'accepted'" class="flex items-center text-blue-600">
                                             <span class="h-2 w-2 rounded-full bg-blue-600 mr-2 animate-pulse"></span>
                                             Firmado
+                                        </span>
+                                        <span
+                                            v-if="item.sanction && item.sanction.apply_sanction"
+                                            class="inline-flex items-center mt-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold"
+                                            :title="'Sanción administrativa: -' + item.sanction.sanction_points + ' punto(s)'"
+                                        >
+                                            ⚖ Sanción −{{ item.sanction.sanction_points }} pts
                                         </span>
                                     </td>
                                     <td class="px-2 py-2.5 text-sm">
@@ -442,7 +607,7 @@
             :icon="'/img/examen.png'"
         >
             <template #title>{{ formSolution.subject }}</template>
-            <template #message>Registrar Acuerdo de Reclamo</template>
+            <template #message>Resolución del reclamo — elige la opción correcta y adjunta las pruebas</template>
             <template #content>
                 <div class="p-4">
                     <div class="mb-4 overflow-hidden rounded-r-md border-l-4 border-red-500 shadow-sm">
@@ -474,50 +639,177 @@
                     <div class="mt-6 border-t pt-4">
                         <h3 class="text-sm font-bold text-gray-800 uppercase mb-4">Resolución Oficial</h3>
 
-                        <div class="flex items-center mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <input
-                                id="change-score"
-                                type="checkbox"
-                                v-model="formSolution.change_score"
-                                class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
-                            >
-                            <label for="change-score" class="ml-3 cursor-pointer">
-                                <span class="block text-sm font-medium text-gray-900">¿Modificar resultado del partido?</span>
-                                <span class="block text-xs text-gray-500">Active esta opción si el reclamo cambia los goles (ej. W.O. 3-0)</span>
-                            </label>
+                        <p v-if="formSolution.match_status === 'closed'" class="mb-4 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                            El partido está <strong>cerrado</strong>: igualmente puedes registrar la resolución y/o la sanción administrativa; la tabla de posiciones se recalculará automáticamente.
+                        </p>
+
+                        <!-- Marcador actual -->
+                        <div class="mb-5 p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200">
+                            <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-2 text-center">Marcador actual del partido</p>
+                            <div class="flex items-center justify-center gap-4">
+                                <div class="text-center flex-1">
+                                    <p class="text-sm font-bold text-gray-800 leading-tight">{{ formSolution.minutes_subject_local }}</p>
+                                    <p class="text-[10px] text-gray-500 uppercase">Local</p>
+                                </div>
+                                <div class="bg-indigo-600 text-white rounded-xl px-4 py-2 text-2xl font-black font-mono shadow">
+                                    {{ formSolution.current_score_h }} - {{ formSolution.current_score_a }}
+                                </div>
+                                <div class="text-center flex-1">
+                                    <p class="text-sm font-bold text-gray-800 leading-tight">{{ formSolution.minutes_subject_visitor }}</p>
+                                    <p class="text-[10px] text-gray-500 uppercase">Visitante</p>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-center text-xs text-gray-500">Goles con los que terminó el partido en la cancha. Puedes corregirlos (Opción 1) o mantenerlos y solo mover puntos (Opción 2).</p>
+                        </div>
+
+                        <!-- OPCIÓN 1: cambiar marcador -->
+                        <div class="mb-4 p-4 rounded-xl border transition-colors" :class="formSolution.change_score ? 'border-indigo-400 bg-indigo-50/50' : 'border-gray-200 bg-gray-50'">
+                            <div class="flex items-start">
+                                <input
+                                    id="change-score"
+                                    type="checkbox"
+                                    v-model="formSolution.change_score"
+                                    class="w-5 h-5 mt-0.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                                >
+                                <label for="change-score" class="ml-3 cursor-pointer">
+                                    <span class="block text-sm font-bold text-gray-900">OPCIÓN 1 — Cambiar el marcador del partido</span>
+                                    <span class="block text-xs text-gray-600 mt-0.5">Solo si el resultado en cancha debe corregirse: <strong>W.O. (un equipo no se presentó, ej. 3-0)</strong> o goles mal contados. Los puntos de la tabla saldrán del marcador nuevo.</span>
+                                </label>
+                            </div>
+                            <transition name="fade">
+                                <div v-if="formSolution.change_score" class="mt-4 grid sm:grid-cols-2 gap-4 animate-fadeIn">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Goles de {{ formSolution.minutes_subject_local }} (Local)</label>
+                                        <input type="number" v-model="formSolution.new_score_h" min="0" class="form-input">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Goles de {{ formSolution.minutes_subject_visitor }} (Visitante)</label>
+                                        <input type="number" v-model="formSolution.new_score_a" min="0" class="form-input">
+                                    </div>
+                                    <p class="sm:col-span-2 text-xs text-gray-500">El marcador pasará de <strong>{{ formSolution.current_score_h }} - {{ formSolution.current_score_a }}</strong> a <strong>{{ formSolution.new_score_h ?? 0 }} - {{ formSolution.new_score_a ?? 0 }}</strong>.</p>
+                                </div>
+                            </transition>
+                        </div>
+
+                        <!-- OPCIÓN 2: sanción de puntos -->
+                        <div class="mb-4 p-4 rounded-xl border transition-colors" :class="formSolution.apply_sanction ? 'border-amber-400 bg-amber-50/50' : 'border-gray-200 bg-gray-50'">
+                            <div class="flex items-start">
+                                <input
+                                    id="apply-sanction"
+                                    type="checkbox"
+                                    v-model="formSolution.apply_sanction"
+                                    class="w-5 h-5 mt-0.5 text-amber-600 border-gray-300 rounded focus:ring-amber-500 cursor-pointer"
+                                >
+                                <label for="apply-sanction" class="ml-3 cursor-pointer">
+                                    <span class="block text-sm font-bold text-gray-900">OPCIÓN 2 — Sanción administrativa de puntos</span>
+                                    <span class="block text-xs text-gray-600 mt-0.5">El <strong>marcador NO cambia</strong>. El partido se queda como se jugó, pero el equipo sancionado pierde puntos en la tabla de posiciones y el rival los recibe (ej. alineación indebida, falta administrativa).</span>
+                                </label>
+                            </div>
                         </div>
 
                         <transition name="fade">
-                            <div v-if="formSolution.change_score" class="grid grid-cols-2 gap-4 mb-4 animate-fadeIn">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Goles Local</label>
-                                    <input
-                                        type="number"
-                                        v-model="formSolution.new_score_h"
-                                        min="0"
-                                        class="form-input"
-                                    >
+                            <div v-if="formSolution.apply_sanction" class="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50/60 animate-fadeIn">
+                                <div class="grid sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Equipo sancionado *</label>
+                                        <select v-model="formSolution.sanctioned_team_id" class="form-select">
+                                            <option :value="null" disabled>Seleccione...</option>
+                                            <option :value="formSolution.team_h_id">{{ formSolution.minutes_subject_local }} (Local)</option>
+                                            <option :value="formSolution.team_a_id">{{ formSolution.minutes_subject_visitor }} (Visitante)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Puntos a quitar *</label>
+                                        <input
+                                            type="number"
+                                            v-model="formSolution.sanction_points"
+                                            min="1"
+                                            max="99"
+                                            class="form-input"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Puntos para el rival</label>
+                                        <input
+                                            type="text"
+                                            class="form-input"
+                                            disabled
+                                            :value="sanctionRivalName"
+                                        >
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Goles Visitante</label>
+                                <div class="mt-3">
+                                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Motivo de la sanción</label>
                                     <input
-                                        type="number"
-                                        v-model="formSolution.new_score_a"
-                                        min="0"
+                                        type="text"
+                                        v-model="formSolution.sanction_reason"
                                         class="form-input"
+                                        placeholder="Ej. Falta administrativa: alineación indebida"
                                     >
                                 </div>
                             </div>
                         </transition>
 
+                        <!-- Fundamento -->
                         <div class="mb-4">
-                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Detalle del acuerdo / fundamento</label>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Detalle del acuerdo / fundamento *</label>
                             <textarea
                                 v-model="formSolution.resolution_details"
                                 rows="3"
                                 class="form-textarea"
                                 placeholder="Explique brevemente por qué se tomó esta decisión..."
                             ></textarea>
+                        </div>
+
+                        <!-- Ayuda: ¿cuál opción usar? -->
+                        <div class="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900">
+                            <p class="font-bold mb-1">¿Cuál opción debo usar?</p>
+                            <p>• <strong>Opción 1</strong>: el resultado del partido está mal y debe corregirse (W.O. por inasistencia, goles mal contados).</p>
+                            <p>• <strong>Opción 2</strong>: el resultado fue correcto, pero un equipo cometió una falta administrativa y pierde los puntos (el marcador no cambia).</p>
+                            <p class="mt-1">Puedes marcar ambas si el caso lo requiere. Si no marcas ninguna, solo se guarda el fundamento.</p>
+                        </div>
+
+                        <!-- Evidencias del reclamo -->
+                        <div class="mb-4 p-4 rounded-xl border border-gray-200 bg-gray-50">
+                            <p class="text-sm font-bold text-gray-900 mb-1">Pruebas / evidencias del reclamo</p>
+                            <p class="text-xs text-gray-600 mb-3">Adjunta fotos o PDF que respalden la decisión (planilla, mensajes, capturas, documento firmado). Máx. 10 MB por archivo.</p>
+
+                            <div v-if="formSolution.existing_files.length" class="mb-3">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase mb-1">Ya adjuntadas</p>
+                                <div v-for="(file, i) in formSolution.existing_files" :key="'existing-'+i" class="flex items-center justify-between gap-2 p-2 mb-1 rounded-lg bg-white border border-gray-200">
+                                    <a :href="file.url" target="_blank" class="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 truncate">
+                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                                        <span class="truncate">{{ file.name }}</span>
+                                    </a>
+                                    <button type="button" @click="removeExistingFile(i)" class="text-red-500 hover:text-red-700 flex-shrink-0" title="Eliminar evidencia">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <label
+                                v-if="formSolution.existing_files.length < MAX_PROTEST_FILES"
+                                class="block cursor-pointer rounded-xl border-2 border-dashed border-gray-300 hover:border-amber-400 hover:bg-amber-50/40 transition-colors p-4 text-center"
+                            >
+                                <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="onProtestFilesChange">
+                                <span class="text-sm font-semibold text-gray-700">+ Agregar imágenes o PDF</span>
+                                <span class="block text-xs text-gray-500 mt-0.5">JPG, PNG, WEBP o PDF — hasta 10 MB cada uno — máx. {{ MAX_PROTEST_FILES }} en total</span>
+                            </label>
+                            <p v-else class="text-center text-xs text-gray-500 italic p-2">Alcanzaste el máximo de {{ MAX_PROTEST_FILES }} evidencias. Elimina una si deseas cargar otra.</p>
+                            <div v-if="formSolution.protest_files.length" class="mt-3">
+                                <p class="text-[10px] font-bold text-amber-600 uppercase mb-1">Nuevas por adjuntar</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span v-for="(f, i) in formSolution.protest_files" :key="'new-'+i" class="inline-flex items-center px-2 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
+                                        {{ f.name }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumen automático -->
+                        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <p class="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1">Resumen de lo que hará el sistema al guardar</p>
+                            <p class="text-sm text-emerald-900">{{ resolutionSummary }}</p>
                         </div>
                     </div>
                 </div>

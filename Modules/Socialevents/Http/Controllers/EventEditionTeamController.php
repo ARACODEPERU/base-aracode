@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Entities\EventEditionPointAdjustment;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionTeamBonusPoint;
 use Modules\Socialevents\Entities\EventTeam;
@@ -41,6 +42,12 @@ class EventEditionTeamController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        // Ajustes administrativos de puntos (sanciones) para los badges.
+        $sanctionAdjustments = EventEditionPointAdjustment::with('team:id,name')
+            ->where('edition_id', $id)
+            ->orderByDesc('id')
+            ->get();
+
         $edicion = EventEdition::find($id);
 
         return Inertia::render('Socialevents::Editions/Teams', [
@@ -48,6 +55,7 @@ class EventEditionTeamController extends Controller
             'currentEquipment' => $currentEquipment,
             'edicion' => $edicion,
             'bonusHistory' => $bonusHistory,
+            'sanctionAdjustments' => $sanctionAdjustments,
         ]);
     }
 
