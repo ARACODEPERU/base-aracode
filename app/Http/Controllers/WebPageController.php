@@ -1170,8 +1170,11 @@ class WebPageController extends Controller
             try {
                 $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
                 Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
-            } catch (Throwable $mailError) {
-                \Log::warning('Error enviando email de contacto: ' . $mailError->getMessage());
+            } catch (\Throwable $mailError) {
+                \Log::error('Contacto: el mensaje se guardo pero no se pudo notificar por correo: ' . $mailError->getMessage(), [
+                    'exception' => $mailError,
+                    'email' => $validated['email'],
+                ]);
             }
 
             if ($request->expectsJson()) {
@@ -1180,6 +1183,10 @@ class WebPageController extends Controller
             return redirect()->route('contacto')
                 ->with('success', '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.');
         } catch (\Throwable $e) {
+            \Log::error('Contacto: no se pudo guardar el mensaje del formulario web: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.'], 500);
             }
@@ -1248,8 +1255,11 @@ class WebPageController extends Controller
                     $subscriber->name ?: 'Suscriptor',
                     $validated['email']
                 ));
-            } catch (Throwable $mailError) {
-                \Log::warning('Error enviando email de bienvenida: ' . $mailError->getMessage());
+            } catch (\Throwable $mailError) {
+                \Log::error('Suscripcion: el suscriptor se guardo pero no se pudo enviar el correo de bienvenida: ' . $mailError->getMessage(), [
+                    'exception' => $mailError,
+                    'email' => $validated['email'],
+                ]);
             }
 
             try {
@@ -1258,14 +1268,21 @@ class WebPageController extends Controller
                     $subscriber->name ?: 'Sin nombre',
                     $validated['email']
                 ));
-            } catch (Throwable $mailError) {
-                \Log::warning('Error enviando email al admin: ' . $mailError->getMessage());
+            } catch (\Throwable $mailError) {
+                \Log::error('Suscripcion: el suscriptor se guardo pero no se pudo avisar al admin: ' . $mailError->getMessage(), [
+                    'exception' => $mailError,
+                    'email' => $validated['email'],
+                ]);
             }
             if ($request->expectsJson()) {
                 return response()->json(['success' => true, 'message' => '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.']);
             }
             return back()->with('success', '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.');
         } catch (\Throwable $e) {
+            \Log::error('Suscripcion: no se pudo guardar el suscriptor del blog: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Hubo un error al procesar tu suscripción. Por favor, intenta nuevamente.'], 500);
             }
