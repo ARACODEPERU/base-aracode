@@ -4,6 +4,7 @@ namespace Modules\Socialevents\Services;
 
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionMedia;
+use Modules\Socialevents\Entities\EventEditionPointAdjustment;
 use Modules\Socialevents\Support\TournamentDateLabels;
 use Modules\Socialevents\Support\TournamentMedia;
 use Modules\Socialevents\Support\TournamentPhaseLabels;
@@ -54,6 +55,7 @@ class TournamentPublicDataService
             'edition' => $edition,
             'matches' => $this->fixtureService->groupedFixture($editionId),
             'currentEquipment' => $this->standingsService->sortedTeams($editionId),
+            'pointAdjustments' => EventEditionPointAdjustment::netByTeam($editionId),
             'playersRanking' => $this->rankingsService->topPlayers($editionId),
             'scorersRanking' => $this->rankingsService->topScorers($editionId),
             'goalkeepersRanking' => $this->rankingsService->topGoalkeepers($editionId),

@@ -3,6 +3,7 @@
 namespace Modules\Socialevents\Services;
 
 use Illuminate\Support\Collection;
+use Modules\Socialevents\Entities\EventEditionPointAdjustment;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Support\TournamentMedia;
 
@@ -47,17 +48,30 @@ class TournamentStandingsService
     }
 
     /**
+     * Ajustes administrativos de puntos (sanciones) por equipo.
+     *
+     * @return array<int, int> team_id => neto con signo
+     */
+    protected function pointAdjustmentsByTeam(int $editionId): array
+    {
+        return EventEditionPointAdjustment::netByTeam($editionId);
+    }
+
+    /**
      * Formato compatible con GET .../standings (Flutter StandingsData).
      *
      * @return array<int, array<string, mixed>>
      */
     public function asStandingsPayload(int $editionId): array
     {
+        $adjustments = $this->pointAdjustmentsByTeam($editionId);
+
         return $this->sortedTeams($editionId)
             ->values()
-            ->map(function (EventEditionTeam $team, int $index) {
+            ->map(function (EventEditionTeam $team, int $index) use ($adjustments) {
                 $equipo = $team->equipo;
                 $position = (int) ($team->rank ?: ($index + 1));
+                $net = (int) ($adjustments[$team->team_id] ?? 0);
 
                 return [
                     'position' => $position,
@@ -68,6 +82,8 @@ class TournamentStandingsService
                     'points' => $team->totalPoints(),
                     'bonus_points' => (int) $team->bonus_points,
                     'base_points' => (int) $team->points,
+                    'point_adjustments' => $net,
+                    'has_sanction' => $net !== 0,
                     'matches_played' => (int) $team->matches_played,
                     'matches_won' => (int) $team->matches_won,
                     'matches_drawn' => (int) $team->matches_drawn,
@@ -87,10 +103,13 @@ class TournamentStandingsService
      */
     public function asRankingsPayload(int $editionId): array
     {
+        $adjustments = $this->pointAdjustmentsByTeam($editionId);
+
         return $this->sortedTeams($editionId)
             ->values()
-            ->map(function (EventEditionTeam $team, int $index) {
+            ->map(function (EventEditionTeam $team, int $index) use ($adjustments) {
                 $equipo = $team->equipo;
+                $net = (int) ($adjustments[$team->team_id] ?? 0);
 
                 return [
                     'rank' => (int) ($team->rank ?: ($index + 1)),
@@ -107,6 +126,8 @@ class TournamentStandingsService
                     'goal_difference' => (int) $team->goal_difference,
                     'points' => $team->totalPoints(),
                     'bonus_points' => (int) $team->bonus_points,
+                    'point_adjustments' => $net,
+                    'has_sanction' => $net !== 0,
                     'is_champion' => (bool) $team->is_champion,
                 ];
             })

@@ -3,6 +3,7 @@
 namespace Modules\Socialevents\Services;
 
 use Modules\Socialevents\Entities\EventEditionMatch;
+use Modules\Socialevents\Entities\EventEditionPointAdjustment;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Support\TournamentLandingCache;
 
@@ -101,7 +102,18 @@ class PositionTableService
             }
             $count++;
         }
-        //dd($count);
+
+        // 4.b Ajustes administrativos de puntos (sanciones de la comision de justicia).
+        // El resultado deportivo de los partidos se mantiene intacto: estos ajustes
+        // solo modifican los puntos de la tabla oficial. Como el recálculo parte
+        // siempre de cero, re-ejecutar nunca duplica la sanción.
+        $adjustments = EventEditionPointAdjustment::netByTeam($editionId);
+        foreach ($adjustments as $adjTeamId => $net) {
+            if (isset($table[$adjTeamId]) && $net !== 0) {
+                $table[$adjTeamId]['points'] = max(0, $table[$adjTeamId]['points'] + $net);
+            }
+        }
+
         // 5. Guardar en BD (Usando el ID de la tabla pivot para mayor precisión)
         foreach ($editionTeams as $teamRecord) {
             $stats = $table[$teamRecord->team_id] ?? null;

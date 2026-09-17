@@ -322,7 +322,7 @@
                                                 {{ $team->equipo->name }}
                                             </div>
                                         </td>
-                                        <td class="pts">{{ (int) $team->points + (int) $team->bonus_points }}</td>
+                                        <td class="pts">{{ (int) $team->points + (int) $team->bonus_points }}@if (($pointAdjustments[$team->team_id] ?? 0) !== 0) <span class="se-sanction-star" title="Incluye sanción administrativa">*</span>@endif</td>
                                         <td style="color:var(--se-amber)">{{ (int) $team->bonus_points }}</td>
                                         <td>{{ $team->matches_played }}</td>
                                         <td style="color:var(--se-green)">{{ $team->matches_won }}</td>
@@ -335,6 +335,11 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        @if (collect($pointAdjustments)->filter(fn ($net) => (int) $net !== 0)->isNotEmpty())
+                            <p class="se-sanction-note" style="font-size:11px;opacity:.75;margin-top:6px;">
+                                * Incluye sanción administrativa; el resultado deportivo de los partidos se mantiene.
+                            </p>
+                        @endif
                     </div>
                 </div>
 
