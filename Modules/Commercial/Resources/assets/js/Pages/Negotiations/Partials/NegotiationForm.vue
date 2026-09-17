@@ -389,7 +389,8 @@ const submit = () => {
                 <InputError :message="form.errors.total_price" class="mt-2" />
             </div>
 
-            <div class="col-span-6 sm:col-span-1">
+            <!-- Moneda fija en PEN (Soles): el combo se oculta pero el valor se envia igual -->
+            <div class="col-span-6 sm:col-span-1" style="display: none">
                 <InputLabel value="Moneda *" />
                 <Select
                     v-model:value="form.currency"
