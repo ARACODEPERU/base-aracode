@@ -45,8 +45,11 @@
                     <li><a href="{{ route('empresa') }}#mision" class="ara-footer-link">Misión y Visión</a></li>
                     <li><a href="{{ route('empresa') }}#valores" class="ara-footer-link">Valores</a></li>
                     <li><a href="{{ route('empresa') }}#clientes" class="ara-footer-link">Nuestros Clientes</a></li>
+                    {{-- <li><a href="{{ route('portafolio') }}" class="ara-footer-link">Portafolio</a></li>
+                    <li><a href="{{ route('precios') }}" class="ara-footer-link">Precios</a></li>
+                    <li><a href="{{ route('equipo') }}" class="ara-footer-link">Nuestro Equipo</a></li>
                     <li><a href="{{ route('casos_exito') }}" class="ara-footer-link">Casos de Éxito</a></li>
-                    <li><a href="{{ route('trabaja_nosotros') }}" class="ara-footer-link">Trabaja con Nosotros</a></li>
+                    <li><a href="{{ route('trabaja_nosotros') }}" class="ara-footer-link">Trabaja con Nosotros</a></li> --}}
                     <li><a href="{{ route('blog_principal') }}" class="ara-footer-link">Blog</a></li>
                 </ul>
             </div>
@@ -92,6 +95,7 @@
                 </p>
                 <div class="flex items-center gap-6">
                     <a href="{{ route('politica_privacidad') }}" class="text-white/50 text-sm hover:text-white transition-colors">Política de Privacidad</a>
+                    <a href="{{ route('politica_cookies') }}" class="text-white/50 text-sm hover:text-white transition-colors">Política de Cookies</a>
                     <a href="{{ route('terminos_condiciones') }}" class="text-white/50 text-sm hover:text-white transition-colors">Términos y Condiciones</a>
                     <a href="{{ route('libro_reclamaciones') }}" class="text-white/50 text-sm hover:text-white transition-colors">Libro de Reclamaciones</a>
                 </div>

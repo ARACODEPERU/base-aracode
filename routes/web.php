@@ -64,6 +64,10 @@ Route::get('/trabaja-con-nosotros', [WebPageController::class, 'trabajaNosotros'
 Route::get('/politica-privacidad', [WebPageController::class, 'politicaPrivacidad'])->name('politica_privacidad');
 Route::get('/terminos-condiciones', [WebPageController::class, 'terminosCondiciones'])->name('terminos_condiciones');
 Route::get('/libro-reclamaciones', [WebPageController::class, 'libroReclamaciones'])->name('libro_reclamaciones');
+Route::get('/politica-cookies', [WebPageController::class, 'politicaCookies'])->name('politica_cookies');
+Route::get('/portafolio', [WebPageController::class, 'portafolio'])->name('portafolio');
+Route::get('/precios', [WebPageController::class, 'precios'])->name('precios');
+Route::get('/equipo', [WebPageController::class, 'equipo'])->name('equipo');
 
 // Redirecciones de rutas antiguas
 Route::get('/nosotros', fn () => redirect()->route('empresa'));

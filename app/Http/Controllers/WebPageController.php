@@ -1323,6 +1323,26 @@ class WebPageController extends Controller
         return view('pages.libro-reclamaciones');
     }
 
+    public function politicaCookies()
+    {
+        return view('pages.politica-cookies');
+    }
+
+    public function portafolio()
+    {
+        return view('pages.portafolio');
+    }
+
+    public function precios()
+    {
+        return view('pages.precios');
+    }
+
+    public function equipo()
+    {
+        return view('pages.equipo');
+    }
+
 
     public function pay()
     {
