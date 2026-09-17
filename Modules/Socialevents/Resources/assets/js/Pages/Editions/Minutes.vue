@@ -236,9 +236,16 @@
         return parts.join('; ') + '.';
     });
 
+    const MAX_PROTEST_FILES = 4;
+
     const onProtestFilesChange = (e) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
+        if (formSolution.existing_files.length + files.length > MAX_PROTEST_FILES) {
+            showAlertToast('Solo se permiten hasta ' + MAX_PROTEST_FILES + ' evidencias en total (imágenes y PDF). Ya hay ' + formSolution.existing_files.length + ' adjuntada(s).', 'error');
+            e.target.value = '';
+            return;
+        }
         const invalid = files.find(f => f.size > 10 * 1024 * 1024);
         if (invalid) {
             showAlertToast('El archivo "' + invalid.name + '" supera los 10 MB', 'error');
@@ -780,11 +787,15 @@
                                 </div>
                             </div>
 
-                            <label class="block cursor-pointer rounded-xl border-2 border-dashed border-gray-300 hover:border-amber-400 hover:bg-amber-50/40 transition-colors p-4 text-center">
+                            <label
+                                v-if="formSolution.existing_files.length < MAX_PROTEST_FILES"
+                                class="block cursor-pointer rounded-xl border-2 border-dashed border-gray-300 hover:border-amber-400 hover:bg-amber-50/40 transition-colors p-4 text-center"
+                            >
                                 <input type="file" multiple accept="image/*,application/pdf" class="hidden" @change="onProtestFilesChange">
                                 <span class="text-sm font-semibold text-gray-700">+ Agregar imágenes o PDF</span>
-                                <span class="block text-xs text-gray-500 mt-0.5">JPG, PNG, WEBP o PDF — hasta 10 MB cada uno</span>
+                                <span class="block text-xs text-gray-500 mt-0.5">JPG, PNG, WEBP o PDF — hasta 10 MB cada uno — máx. {{ MAX_PROTEST_FILES }} en total</span>
                             </label>
+                            <p v-else class="text-center text-xs text-gray-500 italic p-2">Alcanzaste el máximo de {{ MAX_PROTEST_FILES }} evidencias. Elimina una si deseas cargar otra.</p>
                             <div v-if="formSolution.protest_files.length" class="mt-3">
                                 <p class="text-[10px] font-bold text-amber-600 uppercase mb-1">Nuevas por adjuntar</p>
                                 <div class="flex flex-wrap gap-2">

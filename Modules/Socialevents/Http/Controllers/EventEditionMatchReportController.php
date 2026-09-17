@@ -26,6 +26,9 @@ class EventEditionMatchReportController extends Controller
     protected $positionService;
     protected $P000010;
 
+    /** Máximo de evidencias (imágenes + PDF) por reclamo. */
+    const MAX_PROTEST_FILES = 4;
+
     public function __construct()
     {
         $this->positionService = new PositionTableService();
@@ -183,9 +186,10 @@ class EventEditionMatchReportController extends Controller
         $shouldChangeScore = $request->boolean('change_score');
         $shouldApplySanction = $request->boolean('apply_sanction');
 
-        // Evidencias del reclamo (imagenes o PDF) — opcionales.
+        // Evidencias del reclamo (imagenes o PDF) — opcionales, máx. 4 en total.
         $this->validate($request, [
-            'protest_files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
+            'protest_files' => 'nullable|array|max:'.self::MAX_PROTEST_FILES,
+            'protest_files.*' => 'file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
         ]);
 
         try {
@@ -201,9 +205,19 @@ class EventEditionMatchReportController extends Controller
                 ]);
 
                 // Adjuntar las pruebas presentadas (se acumulan con las existentes).
+                // El archivo se guarda en el disco del servidor (storage/app/public)
+                // y en la BD solo se registra la ruta, igual que las demás cargas.
                 if ($request->hasFile('protest_files')) {
                     $existing = $report->protest_files ?? [];
-                    foreach ($request->file('protest_files') as $file) {
+                    $newFiles = $request->file('protest_files');
+
+                    if (count($existing) + count($newFiles) > self::MAX_PROTEST_FILES) {
+                        throw ValidationException::withMessages([
+                            'protest_files' => 'Solo se permiten hasta '.self::MAX_PROTEST_FILES.' evidencias en total (entre imágenes y PDF).',
+                        ]);
+                    }
+
+                    foreach ($newFiles as $file) {
                         $path = $file->store('uploads/eventos/reclamos', 'public');
                         $existing[] = [
                             'name' => $file->getClientOriginalName(),
