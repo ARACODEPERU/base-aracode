@@ -12,6 +12,7 @@ import {
     faEnvelope,
     faUsers
 } from "@fortawesome/free-solid-svg-icons";
+import { menuRoute } from "@/utils/menuRoute";
 
 const menuCMS = {
     status: false,
@@ -21,21 +22,21 @@ const menuCMS = {
     permissions: "cms_dashboard",
     items: [
         {
-            route: route("cms_items_list"),
+            route: menuRoute("cms_items_list"),
             status: false,
             text: "Items",
             permissions: "cms_items",
             icom: faCube,
         },
         {
-            route: route("cms_section_list"),
+            route: menuRoute("cms_section_list"),
             status: false,
             text: "Secciones",
             permissions: "cms_seccion",
             icom: faTable,
         },
         {
-            route: route("cms_pages_list"),
+            route: menuRoute("cms_pages_list"),
             status: false,
             text: "Paginas",
             permissions: "cms_pagina",
@@ -49,49 +50,49 @@ const menuCMS = {
         //     icom: faEarthAmericas,
         // },
         {
-            route: route("blog-category.index"),
+            route: menuRoute("blog-category.index"),
             status: false,
             text: "Blog Categorías",
             permissions: "blog_categorias",
             icom: faFeather,
         },
         {
-            route: route("blog-article.index"),
+            route: menuRoute("blog-article.index"),
             status: false,
             text: "Blog Artículos",
             permissions: "blog_articulos",
             icom: faBlog,
         },
         {
-            route: route("blog_subscriber"),
+            route: menuRoute("blog_subscriber"),
             status: false,
             text: "Descargas de Brochures",
             permissions: "cms_subscribers_list",
             icom: faPeopleGroup
         },
         {
-            route: route("cms_contact_messages_list"),
+            route: menuRoute("cms_contact_messages_list"),
             status: false,
             text: "Mensajes de Contacto",
             permissions: "cms_mensajes_contacto",
             icom: faEnvelope,
         },
         {
-            route: route("cms_blog_subscribers_list"),
+            route: menuRoute("cms_blog_subscribers_list"),
             status: false,
             text: "Suscriptores Blog",
             permissions: "cms_blog_suscriptores",
             icom: faUsers,
         },
         {
-            route: route("cms_testimonies_list"),
+            route: menuRoute("cms_testimonies_list"),
             status: false,
             text: "Testimonios",
             permissions: "cms_testimonios",
             icom: faFaceGrinStars,
         },
         {
-            route: route("cms_advertising_list"),
+            route: menuRoute("cms_advertising_list"),
             status: false,
             text: "Publicidad",
             permissions: "cms_publicidad",
@@ -105,7 +106,7 @@ const menuCMS = {
             icom: faPlaneArrival,
             items: [
                 {
-                    route: route("cms_landing_course_free",'01'),
+                    route: menuRoute("cms_landing_course_free",'01'),
                     status: false,
                     text: "Academico Curso Gratis",
                     permissions: "cms_landing_curso_gratis",
@@ -114,12 +115,14 @@ const menuCMS = {
             ]
         },
         {
-            route: route("cms_sitemap"),
+            route: menuRoute("cms_sitemap"),
             status: false,
             text: "Sitemap",
             permissions: "cms_dashboard",
             icom: faSitemap,
         },
-    ],
+        // Las entradas sin ruta resoluble (ruta inexistente en Ziggy) se omiten;
+        // las que son solo contenedores de subitems se conservan.
+    ].filter((item) => item.route !== null || item.items?.length),
 };
 export default menuCMS;
