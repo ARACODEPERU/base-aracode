@@ -883,8 +883,8 @@ watch(brickFormVisible, async (visible) => {
                                 </p>
                             </div>
                             <div class="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/40">
-                                <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Canal de contacto</p>
-                                <p class="mt-1 text-sm font-semibold dark:text-white">{{ negotiation.contact_channel || '--' }}</p>
+                                <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Fuente de contacto</p>
+                                <p class="mt-1 text-sm font-semibold dark:text-white">{{ negotiation.contact_channel_label || '--' }}</p>
                                 <p v-if="negotiation.contact_detail" class="text-xs text-gray-500">{{ negotiation.contact_detail }}</p>
                             </div>
                         </div>

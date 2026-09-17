@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
             EstablishmentSeeder::class,
             SeriesSeeder::class,
             UserRole::class,
-            ParameterOpenAiSeeder::class
+            ParameterOpenAiSeeder::class,
+            BilleterasDigitalesSeeder::class
         ]);
     }
 }

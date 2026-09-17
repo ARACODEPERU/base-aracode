@@ -5,6 +5,7 @@ namespace Modules\Commercial\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Person;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialContract;
 use Modules\Commercial\Entities\CommercialContractPayment;
@@ -16,6 +17,11 @@ class CommercialController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+        $canClients = $user && $user->can('comm_clientes_listado');
+        $canContracts = $user && $user->can('comm_contratos_listado');
+        $canSchedule = $user && $user->can('comm_contratos_cronograma');
+
         $today = Carbon::today();
         $monthStart = $today->copy()->startOfMonth();
         $monthEnd = $today->copy()->endOfMonth();
@@ -28,14 +34,16 @@ class CommercialController extends Controller
         $projected = [];
         $collected = [];
 
-        for ($index = 5; $index >= 0; $index--) {
-            $date = $today->copy()->subMonths($index);
-            $start = $date->copy()->startOfMonth();
-            $end = $date->copy()->endOfMonth();
+        if ($canSchedule) {
+            for ($index = 5; $index >= 0; $index--) {
+                $date = $today->copy()->subMonths($index);
+                $start = $date->copy()->startOfMonth();
+                $end = $date->copy()->endOfMonth();
 
-            $monthLabels[] = $date->locale('es')->isoFormat('MMM');
-            $projected[] = round((float) CommercialContractPayment::whereBetween('due_date', [$start, $end])->sum('total_amount'), 2);
-            $collected[] = round((float) CommercialContractPayment::whereBetween('paid_at', [$start, $end])->sum('total_amount'), 2);
+                $monthLabels[] = $date->locale('es')->isoFormat('MMM');
+                $projected[] = round((float) CommercialContractPayment::whereBetween('due_date', [$start, $end])->sum('total_amount'), 2);
+                $collected[] = round((float) CommercialContractPayment::whereBetween('paid_at', [$start, $end])->sum('total_amount'), 2);
+            }
         }
 
         $statusLabels = [
@@ -53,88 +61,109 @@ class CommercialController extends Controller
             'rental' => 'Alquiler',
         ];
 
-        $paymentStatus = CommercialContractPayment::selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->get()
-            ->map(fn ($item) => [
-                'label' => $statusLabels[$item->status] ?? $item->status,
-                'value' => (int) $item->total,
-            ])
-            ->values();
+        $paymentStatus = collect();
+        if ($canSchedule) {
+            $paymentStatus = CommercialContractPayment::selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->get()
+                ->map(fn ($item) => [
+                    'label' => $statusLabels[$item->status] ?? $item->status,
+                    'value' => (int) $item->total,
+                ])
+                ->values();
+        }
 
-        $contractTypes = CommercialContract::selectRaw('contract_type, COUNT(*) as total')
-            ->groupBy('contract_type')
-            ->get()
-            ->map(fn ($item) => [
-                'label' => $contractTypeLabels[$item->contract_type] ?? $item->contract_type,
-                'value' => (int) $item->total,
-            ])
-            ->values();
+        $contractTypes = collect();
+        if ($canContracts) {
+            $contractTypes = CommercialContract::selectRaw('contract_type, COUNT(*) as total')
+                ->groupBy('contract_type')
+                ->get()
+                ->map(fn ($item) => [
+                    'label' => $contractTypeLabels[$item->contract_type] ?? $item->contract_type,
+                    'value' => (int) $item->total,
+                ])
+                ->values();
+        }
 
-        $upcomingPayments = CommercialContractPayment::with(['contract.client', 'contract.service'])
-            ->whereIn('status', ['pending', 'partial', 'amortized'])
-            ->whereBetween('due_date', [$today, $nextThirtyDays])
-            ->orderBy('due_date')
-            ->limit(8)
-            ->get()
-            ->map(fn ($payment) => $this->paymentRow($payment));
+        $upcomingPayments = $canSchedule
+            ? CommercialContractPayment::with(['contract.client', 'contract.service'])
+                ->whereIn('status', ['pending', 'partial', 'amortized'])
+                ->whereBetween('due_date', [$today, $nextThirtyDays])
+                ->orderBy('due_date')
+                ->limit(8)
+                ->get()
+                ->map(fn ($payment) => $this->paymentRow($payment))
+            : collect();
 
-        $overduePayments = CommercialContractPayment::with(['contract.client', 'contract.service'])
-            ->whereIn('status', ['pending', 'partial', 'amortized', 'overdue'])
-            ->whereDate('due_date', '<', $today)
-            ->orderBy('due_date')
-            ->limit(8)
-            ->get()
-            ->map(fn ($payment) => $this->paymentRow($payment));
+        $overduePayments = $canSchedule
+            ? CommercialContractPayment::with(['contract.client', 'contract.service'])
+                ->whereIn('status', ['pending', 'partial', 'amortized', 'overdue'])
+                ->whereDate('due_date', '<', $today)
+                ->orderBy('due_date')
+                ->limit(8)
+                ->get()
+                ->map(fn ($payment) => $this->paymentRow($payment))
+            : collect();
 
-        $expiringContracts = CommercialContract::with(['client', 'service'])
-            ->whereNotNull('end_date')
-            ->whereDate('end_date', '>=', $today)
-            ->whereDate('end_date', '<=', $nextThirtyDays)
-            ->orderBy('end_date')
-            ->limit(8)
-            ->get()
-            ->map(fn ($contract) => [
-                'id' => $contract->id,
-                'title' => $contract->title,
-                'client' => $contract->client?->full_name,
-                'service' => $contract->service?->description,
-                'end_date' => $contract->end_date,
-                'days_left' => $today->diffInDays(Carbon::parse($contract->end_date), false),
-            ]);
+        $expiringContracts = $canContracts
+            ? CommercialContract::with(['client', 'service'])
+                ->whereNotNull('end_date')
+                ->whereDate('end_date', '>=', $today)
+                ->whereDate('end_date', '<=', $nextThirtyDays)
+                ->orderBy('end_date')
+                ->limit(8)
+                ->get()
+                ->map(fn ($contract) => [
+                    'id' => $contract->id,
+                    'title' => $contract->title,
+                    'client' => $contract->client?->full_name,
+                    'service' => $contract->service?->description,
+                    'end_date' => $contract->end_date,
+                    'days_left' => $today->diffInDays(Carbon::parse($contract->end_date), false),
+                ])
+            : collect();
 
-        $recentClients = Person::where('is_client', true)
-            ->latest()
-            ->limit(5)
-            ->get(['id', 'full_name', 'number', 'telephone', 'created_at']);
+        $recentClients = $canClients
+            ? Person::where('is_client', true)
+                ->latest()
+                ->limit(5)
+                ->get(['id', 'full_name', 'number', 'telephone', 'created_at'])
+            : collect();
 
-        $recentContracts = CommercialContract::with(['client', 'service'])
-            ->latest()
-            ->limit(5)
-            ->get()
-            ->map(fn ($contract) => [
-                'id' => $contract->id,
-                'title' => $contract->title,
-                'client' => $contract->client?->full_name,
-                'service' => $contract->service?->description,
-                'amount' => (float) $contract->amount,
-                'currency' => $contract->currency,
-                'created_at' => $contract->created_at?->format('Y-m-d'),
-            ]);
+        $recentContracts = $canContracts
+            ? CommercialContract::with(['client', 'service'])
+                ->latest()
+                ->limit(5)
+                ->get()
+                ->map(fn ($contract) => [
+                    'id' => $contract->id,
+                    'title' => $contract->title,
+                    'client' => $contract->client?->full_name,
+                    'service' => $contract->service?->description,
+                    'amount' => (float) $contract->amount,
+                    'currency' => $contract->currency,
+                    'created_at' => $contract->created_at?->format('Y-m-d'),
+                ])
+            : collect();
 
         return Inertia::render('Commercial::Dashboard', [
             'metrics' => [
-                'clients' => Person::where('is_client', true)->count(),
-                'activeContracts' => (clone $contracts)->where('status', true)->count(),
-                'expiringContracts' => CommercialContract::whereNotNull('end_date')
+                'clients' => $canClients ? Person::where('is_client', true)->count() : 0,
+                'activeContracts' => $canContracts ? (clone $contracts)->where('status', true)->count() : 0,
+                'expiringContracts' => $canContracts ? CommercialContract::whereNotNull('end_date')
                     ->whereDate('end_date', '>=', $today)
                     ->whereDate('end_date', '<=', $nextThirtyDays)
-                    ->count(),
-                'pendingAmount' => round((float) CommercialContractPayment::whereIn('status', ['pending', 'partial', 'amortized', 'overdue'])->sum('balance_amount'), 2),
-                'overdueAmount' => round((float) CommercialContractPayment::whereIn('status', ['pending', 'partial', 'amortized', 'overdue'])->whereDate('due_date', '<', $today)->sum('balance_amount'), 2),
-                'collectedThisMonth' => round((float) CommercialContractPayment::where('status', 'paid')->whereBetween('paid_at', [$monthStart, $monthEnd])->sum('total_amount'), 2),
-                'paymentsDueToday' => (clone $payments)->whereIn('status', ['pending', 'partial', 'amortized'])->whereDate('due_date', $today)->count(),
-                'contractsWithoutSchedule' => CommercialContract::doesntHave('payments')->count(),
+                    ->count() : 0,
+                'pendingAmount' => $canSchedule ? round((float) CommercialContractPayment::whereIn('status', ['pending', 'partial', 'amortized', 'overdue'])->sum('balance_amount'), 2) : 0,
+                'overdueAmount' => $canSchedule ? round((float) CommercialContractPayment::whereIn('status', ['pending', 'partial', 'amortized', 'overdue'])->whereDate('due_date', '<', $today)->sum('balance_amount'), 2) : 0,
+                'collectedThisMonth' => $canSchedule ? round((float) CommercialContractPayment::where('status', 'paid')->whereBetween('paid_at', [$monthStart, $monthEnd])->sum('total_amount'), 2) : 0,
+                'paymentsDueToday' => $canSchedule ? (clone $payments)->whereIn('status', ['pending', 'partial', 'amortized'])->whereDate('due_date', $today)->count() : 0,
+                'contractsWithoutSchedule' => $canContracts ? CommercialContract::doesntHave('payments')->count() : 0,
+            ],
+            'permissions' => [
+                'clients' => $canClients,
+                'contracts' => $canContracts,
+                'schedule' => $canSchedule,
             ],
             'charts' => [
                 'cashflow' => [

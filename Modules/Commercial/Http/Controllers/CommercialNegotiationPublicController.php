@@ -498,6 +498,7 @@ class CommercialNegotiationPublicController extends Controller
             'schedule' => $negotiation->schedule,
             'single_payment_days' => $negotiation->single_payment_days,
             'contact_channel' => $negotiation->contact_channel,
+            'contact_channel_label' => $negotiation->contact_channel_label,
             'contact_detail' => $negotiation->contact_detail,
             'payment_method' => $negotiation->payment_method,
             'payment_link' => $negotiation->payment_link,

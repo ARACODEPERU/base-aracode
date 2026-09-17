@@ -60,6 +60,51 @@ class CommercialNegotiation extends Model
         'link_expires_at' => 'datetime',
     ];
 
+    protected $appends = ['contact_channel_label'];
+
+    /**
+     * Opciones del campo "Fuente de Contacto" (antes "Canal de contacto").
+     * Los canales antiguos se mantienen en el mapa para que los registros previos
+     * sigan mostrando una etiqueta legible.
+     */
+    public static function contactChannelOptions(): array
+    {
+        return [
+            ['value' => 'invitado_cpa', 'label' => 'Invitado CPA'],
+            ['value' => 'masivo_api', 'label' => 'Masivo API'],
+            ['value' => 'organico', 'label' => 'Orgánico'],
+            ['value' => 'personal_cpa', 'label' => 'Personal CPA'],
+            ['value' => 'referido', 'label' => 'Referido'],
+            ['value' => 'reserva', 'label' => 'Reserva'],
+            ['value' => 'web_cpa', 'label' => 'Web CPA'],
+            ['value' => 'webinar', 'label' => 'Webinar'],
+        ];
+    }
+
+    public static function contactChannelLabels(): array
+    {
+        return array_merge(
+            array_column(self::contactChannelOptions(), 'label', 'value'),
+            [
+                'telefono' => 'Telefono',
+                'whatsapp' => 'WhatsApp',
+                'instagram' => 'Instagram',
+                'facebook_messenger' => 'Facebook Messenger',
+                'facebook' => 'Facebook',
+                'otro' => 'Otro',
+            ]
+        );
+    }
+
+    public function getContactChannelLabelAttribute(): string
+    {
+        if (! $this->contact_channel) {
+            return '';
+        }
+
+        return self::contactChannelLabels()[$this->contact_channel] ?? $this->contact_channel;
+    }
+
     public function items()
     {
         return $this->hasMany(CommercialNegotiationItem::class, 'negotiation_id');

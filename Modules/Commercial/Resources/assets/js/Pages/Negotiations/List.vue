@@ -220,7 +220,7 @@ const destroy = (negotiation) => {
                                 <td>
                                     <p class="font-semibold">{{ negotiation.title }}</p>
                                     <small class="text-xs text-gray-500">
-                                        {{ negotiation.contact_channel ? `${negotiation.contact_channel} ${negotiation.contact_detail || ''}` : 'Sin canal de contacto' }}
+                                        {{ negotiation.contact_channel ? `${negotiation.contact_channel_label} ${negotiation.contact_detail || ''}` : 'Sin fuente de contacto' }}
                                     </small>
                                 </td>
                                 <td>

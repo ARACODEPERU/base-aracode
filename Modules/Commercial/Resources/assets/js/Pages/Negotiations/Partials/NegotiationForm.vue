@@ -518,7 +518,7 @@ const submit = () => {
             </div>
 
             <div class="col-span-6 sm:col-span-2">
-                <InputLabel value="Canal de contacto" />
+                <InputLabel value="Fuente de Contacto" />
                 <Select
                     v-model:value="form.contact_channel"
                     :options="contactChannelOptions"

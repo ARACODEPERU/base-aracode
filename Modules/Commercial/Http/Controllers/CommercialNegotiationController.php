@@ -273,6 +273,7 @@ class CommercialNegotiationController extends Controller
             'negotiation' => $negotiation,
             'statuses' => $this->statuses(),
             'paymentMethods' => $this->paymentMethods(),
+            'contactChannelLabels' => CommercialNegotiation::contactChannelLabels(),
         ]);
     }
 
@@ -579,14 +580,7 @@ class CommercialNegotiationController extends Controller
 
     private function contactChannels(): array
     {
-        return [
-            ['value' => 'telefono', 'label' => 'Telefono'],
-            ['value' => 'whatsapp', 'label' => 'WhatsApp'],
-            ['value' => 'instagram', 'label' => 'Instagram'],
-            ['value' => 'facebook_messenger', 'label' => 'Facebook Messenger'],
-            ['value' => 'facebook', 'label' => 'Facebook'],
-            ['value' => 'otro', 'label' => 'Otro'],
-        ];
+        return CommercialNegotiation::contactChannelOptions();
     }
 
     /**

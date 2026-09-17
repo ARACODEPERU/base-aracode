@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import Navigation from "@/Components/vristo/layout/Navigation.vue";
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
 import apexchart from "vue3-apexcharts";
 import { useAppStore } from "@/stores/index";
@@ -27,6 +27,18 @@ const props = defineProps({
 
 const store = useAppStore();
 const isDark = computed(() => store.theme === "dark" || store.isDarkMode);
+
+const page = usePage();
+const userPermissions = computed(() => page.props.auth?.permissions || []);
+
+const hasPermission = (permission) => {
+    if (!permission) return true;
+    return userPermissions.value.includes(permission);
+};
+
+const canClients = computed(() => hasPermission("comm_clientes_listado"));
+const canContracts = computed(() => hasPermission("comm_contratos_listado"));
+const canSchedule = computed(() => hasPermission("comm_contratos_cronograma"));
 
 const money = (value, currency = "PEN") => `${currency} ${Number(value || 0).toFixed(2)}`;
 const shortDate = (date) => date ? new Date(`${date}T00:00:00`).toLocaleDateString("es-PE", { day: "2-digit", month: "short" }) : "-";
@@ -138,8 +150,9 @@ const contractTypeSeries = computed(() => [
     },
 ]);
 
-const cards = computed(() => [
-    {
+const cards = computed(() => {
+    const list = [];
+    if (canClients.value) list.push({
         label: "Clientes",
         value: props.metrics.clients || 0,
         detail: "Registrados como clientes",
@@ -152,8 +165,8 @@ const cards = computed(() => [
         iconClass: "bg-white/20 text-white",
         chipClass: "bg-white/20 text-white",
         chip: "Base activa",
-    },
-    {
+    });
+    if (canContracts.value) list.push({
         label: "Contratos activos",
         value: props.metrics.activeContracts || 0,
         detail: `${props.metrics.expiringContracts || 0} vencen en 30 dias`,
@@ -166,8 +179,8 @@ const cards = computed(() => [
         iconClass: "bg-white/20 text-white",
         chipClass: "bg-white/20 text-white",
         chip: `${props.metrics.expiringContracts || 0} por vencer`,
-    },
-    {
+    });
+    if (canSchedule.value) list.push({
         label: "Pendiente por cobrar",
         value: money(props.metrics.pendingAmount),
         detail: "Saldo abierto de cuotas",
@@ -176,8 +189,8 @@ const cards = computed(() => [
         iconClass: "bg-white/20 text-white",
         chipClass: "bg-white/20 text-white",
         chip: "Por cobrar",
-    },
-    {
+    });
+    if (canSchedule.value) list.push({
         label: "Vencido",
         value: money(props.metrics.overdueAmount),
         detail: `${props.metrics.paymentsDueToday || 0} cuotas vencen hoy`,
@@ -186,8 +199,9 @@ const cards = computed(() => [
         iconClass: "bg-white/20 text-white",
         chipClass: "bg-white/20 text-white",
         chip: `${props.metrics.paymentsDueToday || 0} hoy`,
-    },
-]);
+    });
+    return list;
+});
 </script>
 
 <template>
@@ -199,7 +213,7 @@ const cards = computed(() => [
         />
 
         <div class="mt-5 space-y-5">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div v-if="cards.length" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div
                     v-for="card in cards"
                     :key="card.label"
@@ -226,8 +240,17 @@ const cards = computed(() => [
                     </div>
                 </div>
             </div>
+            <div v-else class="panel">
+                <div class="flex flex-col items-center gap-2 py-12 text-center">
+                    <FontAwesomeIcon :icon="faBriefcase" class="h-10 w-10 text-gray-300 dark:text-gray-600" />
+                    <h2 class="text-lg font-semibold dark:text-white">Sin estadisticas disponibles</h2>
+                    <p class="max-w-md text-sm text-gray-500">
+                        No tienes permisos para ver estadisticas del modulo comercial (clientes, contratos o cronograma de pagos). Contacta al administrador para que te asigne los permisos correspondientes.
+                    </p>
+                </div>
+            </div>
 
-            <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+            <div v-if="canSchedule" class="grid grid-cols-1 gap-5 xl:grid-cols-3">
                 <div class="panel xl:col-span-2">
                     <div class="mb-4 flex items-center justify-between">
                         <div>
@@ -252,7 +275,7 @@ const cards = computed(() => [
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+            <div v-if="canContracts" class="grid grid-cols-1 gap-5 xl:grid-cols-3">
                 <div class="panel">
                     <div class="mb-4 flex items-center justify-between">
                         <div>
@@ -303,7 +326,7 @@ const cards = computed(() => [
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <div v-if="canSchedule" class="grid grid-cols-1 gap-5 xl:grid-cols-2">
                 <div class="panel">
                     <div class="mb-4 flex items-center justify-between">
                         <div>
@@ -371,8 +394,8 @@ const cards = computed(() => [
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                <div class="panel">
+            <div v-if="canClients || canContracts" class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                <div v-if="canClients" class="panel">
                     <div class="mb-4 flex items-center justify-between">
                         <h2 class="text-lg font-semibold dark:text-white">Clientes recientes</h2>
                         <Link :href="route('comm_clients')" class="text-sm font-semibold text-sky-600 hover:underline dark:text-sky-300">
@@ -393,7 +416,7 @@ const cards = computed(() => [
                     </div>
                 </div>
 
-                <div class="panel">
+                <div v-if="canContracts" class="panel">
                     <div class="mb-4 flex items-center justify-between">
                         <h2 class="text-lg font-semibold dark:text-white">Contratos recientes</h2>
                         <Link :href="route('comm_contracts')" class="text-sm font-semibold text-sky-600 hover:underline dark:text-sky-300">

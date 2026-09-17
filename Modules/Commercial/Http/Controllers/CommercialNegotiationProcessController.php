@@ -980,7 +980,7 @@ class CommercialNegotiationProcessController extends Controller
                 'monto_inicial' => $negotiation->initial_amount !== null ? (float) $negotiation->initial_amount : null,
                 'cuotas' => $negotiation->schedule ?? [],
                 'estado' => $negotiation->status,
-                'canal_contacto' => $negotiation->contact_channel,
+                'canal_contacto' => $negotiation->contact_channel_label ?: $negotiation->contact_channel,
                 'detalle_contacto' => $negotiation->contact_detail,
                 'metodo_pago' => $negotiation->payment_method,
                 'sale_id' => $negotiation->sale_id,
