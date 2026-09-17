@@ -108,6 +108,8 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->gro
         ->get('contact-messages/{id}', [CmsContactMessageController::class, 'show'])->name('cms_contact_messages_show');
     Route::middleware(['permission:cms_mensajes_contacto_editar'])
         ->put('contact-messages/{id}', [CmsContactMessageController::class, 'update'])->name('cms_contact_messages_update');
+    Route::middleware(['permission:cms_mensajes_contacto_editar'])
+        ->post('contact-messages/{id}/reply', [CmsContactMessageController::class, 'reply'])->name('cms_contact_messages_reply');
 
     // Blog Subscribers (nueva versión Inertia)
     Route::middleware(['permission:cms_blog_suscriptores'])

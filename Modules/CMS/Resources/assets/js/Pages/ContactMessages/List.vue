@@ -1,8 +1,10 @@
 <script setup>
+import { ref } from 'vue';
 import { useForm } from "@inertiajs/vue3";
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
-import { faTimes, faEye, faCheck, faReply, faClock } from "@fortawesome/free-solid-svg-icons";
+import ModalLargeX from '@/Components/ModalLargeX.vue';
+import { faTimes, faEye, faCheck, faReply, faClock, faPaperPlane, faEnvelope, faPhone, faBuilding, faTag, faCalendarAlt, faArrowLeft, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
 import Keypad from '@/Components/Keypad.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import FlatPickr from 'vue-flatpickr-component';
@@ -39,7 +41,11 @@ const configFlatPickr = {
 };
 
 const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '—';
+
     const date = new Date(dateTimeString);
+    if (isNaN(date.getTime())) return '—';
+
     const formattedDate = date.toISOString().slice(0, 10);
     const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     return `${formattedDate} ${formattedTime}`;
@@ -72,37 +78,95 @@ const statusIcon = (status) => {
     return faEye;
 };
 
-const changeStatus = (message, newStatus) => {
-    const labels = {
-        'pending': 'Pendiente',
-        'read': 'Leído',
-        'replied': 'Respondido'
-    };
+// Etiquetas legibles del servicio que eligio la persona en el formulario publico.
+const servicios = {
+    kapta: 'KAPTA LMS',
+    facturacion: 'Facturación Electrónica',
+    desarrollo: 'Desarrollo a Medida',
+    automatizacion: 'Automatización de Procesos',
+    consultoria: 'Consultoría Tecnológica',
+    otro: 'Otro',
+};
 
-    Swal2.fire({
-        title: `¿Cambiar estado a "${labels[newStatus]}"?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Sí, cambiar',
-        cancelButtonText: 'Cancelar',
-    }).then((result) => {
-        if (result.isConfirmed) {
-            router.put(route('cms_contact_messages_update', message.id), {
-                status: newStatus,
-            }, {
-                preserveState: true,
-                onSuccess: () => {
-                    Swal2.fire({
-                        icon: 'success',
-                        title: 'Estado actualizado',
-                        timer: 1500,
-                        showConfirmButton: false,
-                    });
-                }
+const serviceText = (service) => servicios[service] || service || '—';
+
+// Leer la consulta y responderla ocurre en el mismo modal: primero el detalle
+// ordenado y, desde ahi, el formulario de respuesta.
+const showModal = ref(false);
+const mode = ref('detail');
+const selected = ref(null);
+
+const replyForm = useForm({
+    subject: '',
+    message: '',
+});
+
+const openDetail = (message) => {
+    selected.value = message;
+    mode.value = 'detail';
+    showModal.value = true;
+};
+
+const openReply = (message) => {
+    selected.value = message;
+    startReply();
+};
+
+const startReply = () => {
+    const message = selected.value;
+
+    replyForm.clearErrors();
+    replyForm.subject = `Respuesta a tu consulta - ${serviceText(message.service)}`;
+    replyForm.message = [
+        `Hola ${message.name},`,
+        '',
+        'Gracias por escribirnos. ',
+        '',
+        '',
+        '---',
+        `Tu consulta original (${formatDateTime(message.created_at)}):`,
+        message.message,
+    ].join('\n');
+
+    mode.value = 'reply';
+};
+
+const backToDetail = () => {
+    mode.value = 'detail';
+    replyForm.clearErrors();
+};
+
+const closeModal = () => {
+    showModal.value = false;
+    mode.value = 'detail';
+    replyForm.clearErrors();
+};
+
+const sendReply = () => {
+    const email = selected.value?.email;
+
+    replyForm.post(route('cms_contact_messages_reply', selected.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeModal();
+            Swal2.fire({
+                icon: 'success',
+                title: 'Respuesta enviada',
+                text: `El correo salió hacia ${email} y el mensaje quedó como Respondido.`,
+                timer: 2600,
+                showConfirmButton: false,
             });
-        }
+        },
+        onError: () => {
+            // El servidor tambien cae aqui si el correo no pudo salir: en ese caso
+            // el mensaje NO se marca como respondido.
+            Swal2.fire({
+                icon: 'error',
+                title: 'No se pudo enviar',
+                text: 'El correo no salió. Revisa los campos marcados e inténtalo otra vez.',
+                confirmButtonText: 'Entendido',
+            });
+        },
     });
 };
 
@@ -242,16 +306,17 @@ const goTo = (params = {}) => {
                                         </td>
                                         <td>
                                             <div class="flex items-center gap-1">
-                                                <Link :href="route('cms_contact_messages_show', message.id)"
-                                                      title="Ver detalle"
-                                                      class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-indigo-600 dark:hover:bg-indigo-700">
+                                                <button type="button"
+                                                        @click="openDetail(message)"
+                                                        title="Ver detalle"
+                                                        class="text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-indigo-600 dark:hover:bg-indigo-700">
                                                     <font-awesome-icon :icon="faEye" />
-                                                </Link>
-                                                <button v-if="message.status !== 'replied'"
-                                                        @click="changeStatus(message, 'replied')"
-                                                        title="Marcar como respondido"
+                                                </button>
+                                                <button type="button"
+                                                        @click="openReply(message)"
+                                                        title="Responder"
                                                         class="text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:outline-none focus:ring-emerald-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:bg-emerald-600 dark:hover:bg-emerald-700">
-                                                    <font-awesome-icon :icon="faCheck" />
+                                                    <font-awesome-icon :icon="faReply" />
                                                 </button>
                                             </div>
                                         </td>
@@ -263,5 +328,141 @@ const goTo = (params = {}) => {
                 </div>
             </div>
         </div>
+
+        <!-- Modal: detalle ordenado de la consulta y respuesta por correo -->
+        <ModalLargeX :show="showModal"
+                     :on-close="closeModal"
+                     :loading="replyForm.processing"
+                     loading-text="Enviando la respuesta, espera un momento...">
+            <template #title>
+                <span v-if="mode === 'reply'">Responder a {{ selected?.name }}</span>
+                <span v-else>Consulta de {{ selected?.name }}</span>
+            </template>
+
+            <template #message>
+                <span v-if="mode === 'reply'">
+                    El correo saldrá hacia <strong>{{ selected?.email }}</strong> y el mensaje quedará marcado como Respondido.
+                </span>
+                <span v-else>
+                    {{ serviceText(selected?.service) }} · recibido el {{ formatDateTime(selected?.created_at) }}
+                </span>
+            </template>
+
+            <template #content>
+                <!-- Detalle de la consulta -->
+                <div v-if="mode === 'detail'" class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4">
+                            <font-awesome-icon :icon="faEnvelope" class="mt-1 text-indigo-500" />
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Email</p>
+                                <a :href="'mailto:' + (selected?.email || '')"
+                                   class="text-sm break-all text-indigo-600 dark:text-indigo-400 hover:underline">{{ selected?.email }}</a>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4">
+                            <font-awesome-icon :icon="faPhone" class="mt-1 text-emerald-500" />
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Teléfono</p>
+                                <a v-if="selected?.phone" :href="'tel:' + selected.phone"
+                                   class="text-sm text-emerald-600 dark:text-emerald-400 hover:underline">{{ selected.phone }}</a>
+                                <p v-else class="text-sm text-gray-500 dark:text-gray-400">No proporcionado</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4">
+                            <font-awesome-icon :icon="faBuilding" class="mt-1 text-amber-500" />
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Empresa</p>
+                                <p class="text-sm text-gray-900 dark:text-white">{{ selected?.company || 'No proporcionada' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4">
+                            <font-awesome-icon :icon="faTag" class="mt-1 text-blue-500" />
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Servicio</p>
+                                <p class="text-sm text-gray-900 dark:text-white">{{ serviceText(selected?.service) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <span class="text-xs font-medium px-2.5 py-0.5 rounded border"
+                              :class="statusBadgeClass(selected?.status)">
+                            {{ statusText(selected?.status) }}
+                        </span>
+                        <span class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <font-awesome-icon :icon="faCalendarAlt" /> {{ formatDateTime(selected?.created_at) }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-2">Consulta</p>
+                        <div class="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4">
+                            <p class="text-sm leading-relaxed text-gray-800 dark:text-gray-100 whitespace-pre-line">{{ selected?.message }}</p>
+                        </div>
+                    </div>
+
+                    <div v-if="selected" class="text-right">
+                        <Link :href="route('cms_contact_messages_show', selected.id)"
+                              class="inline-flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                            <font-awesome-icon :icon="faExternalLinkAlt" class="mr-2" /> Abrir ficha completa
+                        </Link>
+                    </div>
+                </div>
+
+                <!-- Formulario de respuesta -->
+                <form v-else @submit.prevent="sendReply" class="space-y-4">
+                    <div class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-4">
+                        <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Para</p>
+                        <p class="text-sm text-gray-900 dark:text-white">{{ selected?.name }} · {{ selected?.email }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Asunto</label>
+                        <input v-model="replyForm.subject"
+                               type="text"
+                               maxlength="255"
+                               class="form-input w-full"
+                               :class="replyForm.errors.subject ? 'border-red-500' : ''">
+                        <p v-if="replyForm.errors.subject" class="mt-1 text-sm text-red-600">{{ replyForm.errors.subject }}</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Respuesta</label>
+                        <textarea v-model="replyForm.message"
+                                  rows="9"
+                                  maxlength="5000"
+                                  class="form-input w-full"
+                                  :class="replyForm.errors.message ? 'border-red-500' : ''"></textarea>
+                        <p v-if="replyForm.errors.message" class="mt-1 text-sm text-red-600">{{ replyForm.errors.message }}</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            La consulta original de la persona se cita al final del correo.
+                        </p>
+                    </div>
+                </form>
+            </template>
+
+            <template #buttons>
+                <button v-if="mode === 'detail'"
+                        type="button"
+                        @click="startReply"
+                        class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-emerald-700 focus:outline-none transition duration-150 ease-in-out">
+                    <font-awesome-icon :icon="faReply" class="mr-2" /> Responder
+                </button>
+                <template v-else>
+                    <button type="button"
+                            @click="backToDetail"
+                            class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-gray-700 focus:outline-none transition duration-150 ease-in-out">
+                        <font-awesome-icon :icon="faArrowLeft" class="mr-2" /> Volver
+                    </button>
+                    <button type="button"
+                            @click="sendReply"
+                            :disabled="replyForm.processing"
+                            class="inline-flex items-center px-4 py-2 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 focus:outline-none transition duration-150 ease-in-out disabled:opacity-50">
+                        <font-awesome-icon :icon="faPaperPlane" class="mr-2" /> Enviar respuesta
+                    </button>
+                </template>
+            </template>
+        </ModalLargeX>
     </AppLayout>
 </template>
