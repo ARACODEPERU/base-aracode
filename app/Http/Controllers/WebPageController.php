@@ -1166,13 +1166,23 @@ class WebPageController extends Controller
             // Guardar en base de datos
             \App\Models\ContactMessage::create($validated);
 
-            // Enviar email al admin
-            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-            Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
+            // Email al admin (no bloquea el registro)
+            try {
+                $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
+                Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
+            } catch (Throwable $mailError) {
+                \Log::warning('Error enviando email de contacto: ' . $mailError->getMessage());
+            }
 
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.']);
+            }
             return redirect()->route('contacto')
                 ->with('success', '¡Mensaje enviado correctamente! Nos pondremos en contacto contigo pronto.');
         } catch (\Throwable $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.'], 500);
+            }
             return redirect()->route('contacto')
                 ->with('error', 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.');
         }
@@ -1232,21 +1242,33 @@ class WebPageController extends Controller
                 ]
             );
 
-            // Enviar email de bienvenida
-            Mail::to($validated['email'])->send(new \App\Mail\BlogSubscriberWelcomeMail(
-                $subscriber->name ?: 'Suscriptor',
-                $validated['email']
-            ));
+            // Emails como tarea secundaria (no bloquean el registro)
+            try {
+                Mail::to($validated['email'])->send(new \App\Mail\BlogSubscriberWelcomeMail(
+                    $subscriber->name ?: 'Suscriptor',
+                    $validated['email']
+                ));
+            } catch (Throwable $mailError) {
+                \Log::warning('Error enviando email de bienvenida: ' . $mailError->getMessage());
+            }
 
-            // Notificar al admin
-            $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-            Mail::to($adminEmail)->send(new \App\Mail\BlogSubscriberAdminMail(
-                $subscriber->name ?: 'Sin nombre',
-                $validated['email']
-            ));
-
+            try {
+                $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
+                Mail::to($adminEmail)->send(new \App\Mail\BlogSubscriberAdminMail(
+                    $subscriber->name ?: 'Sin nombre',
+                    $validated['email']
+                ));
+            } catch (Throwable $mailError) {
+                \Log::warning('Error enviando email al admin: ' . $mailError->getMessage());
+            }
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.']);
+            }
             return back()->with('success', '¡Gracias por suscribirte! Revisa tu correo para recibir nuestros mejores artículos.');
         } catch (\Throwable $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Hubo un error al procesar tu suscripción. Por favor, intenta nuevamente.'], 500);
+            }
             return back()->with('error', 'Hubo un error al procesar tu suscripción. Por favor, intenta nuevamente.');
         }
     }

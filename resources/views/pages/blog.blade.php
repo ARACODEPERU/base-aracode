@@ -162,16 +162,6 @@
                     @endif
 
                     {{-- Newsletter --}}
-                    @if(session('success'))
-                        <div class="p-3 rounded-lg bg-green-500/20 border border-green-400/30 text-green-100 text-xs mb-4">
-                            {{ session('success') }}
-                        </div>
-                    @endif
-                    @if(session('error'))
-                        <div class="p-3 rounded-lg bg-red-500/20 border border-red-400/30 text-red-100 text-xs mb-4">
-                            {{ session('error') }}
-                        </div>
-                    @endif
                     <div class="p-5 rounded-xl text-white" style="background: linear-gradient(135deg, #060E2D 0%, #0188EE 100%);">
                         <div class="text-center mb-4">
                             <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center mx-auto mb-3">
@@ -182,7 +172,7 @@
                             <h3 class="text-sm font-bold mb-1">Suscríbete al newsletter</h3>
                             <p class="text-xs text-white/80">Recibe los mejores artículos directo en tu correo.</p>
                         </div>
-                        <form action="{{ route('blog.subscribe') }}" method="POST" class="space-y-3">
+                        <form id="blogNewsletterForm" action="{{ route('blog.subscribe') }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="email" name="email" placeholder="Tu correo electrónico" required
                                    class="w-full px-3 py-2.5 rounded-lg bg-white/15 border border-white/25 text-sm text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all">
@@ -308,4 +298,66 @@
     />
 
     @include('components.v2.footer')
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('blogNewsletterForm');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = form.querySelector('button[type="submit"]');
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+
+        var formData = new FormData(form);
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Suscrito!',
+                    text: data.message,
+                    confirmButtonColor: '#0188EE',
+                    timer: 4000,
+                    timerProgressBar: true
+                });
+                form.reset();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Hubo un error. Intenta nuevamente.',
+                    confirmButtonColor: '#0188EE'
+                });
+            }
+        })
+        .catch(function(err) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo procesar la suscripción. Intenta nuevamente.',
+                confirmButtonColor: '#0188EE'
+            });
+        });
+    });
+});
+</script>
+@endpush
 @endsection
