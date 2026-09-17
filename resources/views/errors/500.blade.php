@@ -1,6 +1,6 @@
 @extends('errors::minimal')
 
-@section('title', __('Server Error'))
+@section('title', __('messages.title500'))
 @section('code', '500')
 @section('message')
     <div class="main-container min-h-screen text-black dark:text-white-dark">
@@ -15,7 +15,7 @@
                     {{-- <img src="{{ url('themes/vristo/images/error/404-light.svg') }}" alt="404"
             class="mx-auto -mt-10 w-full max-w-xs object-cover md:-mt-14 md:max-w-xl" /> --}}
 
-                    <p class="mt-5 text-base dark:text-white">{{ __('messages.401Unauthorized') }}</p>
+                    <p class="mt-5 text-base dark:text-white">{{ __('messages.500ServerError') }}</p>
                     <a href="{{ url()->previous() }}"
                         class="btn btn-gradient mx-auto !mt-7 w-max border-0 uppercase shadow-none">
                         {{ __('messages.btn_go_back') }}

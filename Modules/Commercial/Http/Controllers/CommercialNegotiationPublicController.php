@@ -51,6 +51,8 @@ class CommercialNegotiationPublicController extends Controller
                 ])
                 ->values(),
             'industries' => Industry::select('id', 'description')->orderBy('description')->get(),
+            // Cargos en orden alfabetico: el cliente los busca escribiendo.
+            'occupations' => DB::table('occupations')->select('id', 'description')->orderBy('description')->get(),
             'countries' => Country::where('status', true)->orderBy('description')->get(['id', 'description']),
             'ubigeo' => $this->ubigeo(),
             'paymentMethodCatalog' => PaymentMethod::with('bankAccount.bank')->get(),
@@ -88,7 +90,11 @@ class CommercialNegotiationPublicController extends Controller
             'gender' => ['nullable', 'in:M,F'],
             'email' => ['nullable', 'email', 'max:255'],
             'telephone' => ['nullable', 'string', 'max:20'],
-            'ocupacion' => ['nullable', 'string', 'max:255'],
+            // El multiselect envia el objeto {id, description}: se valida el id por
+            // separado. Un texto suelto (pagina en cache) sigue siendo valido.
+            'ocupacion' => ['nullable'],
+            'ocupacion.id' => ['nullable', 'integer', 'exists:occupations,id'],
+            'ocupacion.description' => ['nullable', 'string', 'max:255'],
             'company' => ['nullable', 'string', 'max:200'],
             'industry_id' => ['nullable'],
             // El multiselect envia el objeto {id, description}: se valida el id por separado.
@@ -135,6 +141,9 @@ class CommercialNegotiationPublicController extends Controller
         $industryId = is_array($industryInput) ? ($industryInput['id'] ?? null) : $industryInput;
         $industry = ! empty($industryId) ? Industry::find($industryId) : null;
 
+        // Cargo u ocupacion: se guarda el texto del catalogo junto a su id.
+        [$occupationId, $occupation] = $this->resolveOccupation($data['ocupacion'] ?? null);
+
         // El cliente extranjero guarda su ubicacion como "Pais - Estado - Ciudad".
         $foreignCountry = ($isForeignLocation && ! empty($data['foreign_country_id']))
             ? Country::where('id', $data['foreign_country_id'])->value('description')
@@ -173,7 +182,8 @@ class CommercialNegotiationPublicController extends Controller
             'gender' => $data['gender'] ?? null,
             'email' => $data['email'] ?? null,
             'telephone' => $data['telephone'] ?? null,
-            'ocupacion' => $data['ocupacion'] ?? null,
+            'ocupacion' => $occupation,
+            'occupation_id' => $occupationId,
             'company' => $data['company'] ?? null,
             'industry_id' => $industry?->id,
             'industry' => $industry?->description,
@@ -482,6 +492,33 @@ class CommercialNegotiationPublicController extends Controller
                 DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS ubigeo_description")
             )
             ->get();
+    }
+
+    /**
+     * Cargo u ocupacion elegido en el formulario publico.
+     *
+     * El multiselect envia {id, description}; el texto guardado sale del
+     * catalogo (no de lo que venga en la peticion) para que la tabla people
+     * quede siempre con el nombre oficial. Un texto suelto (pagina en cache)
+     * se respeta tal cual, sin id.
+     *
+     * @return array{0: ?int, 1: ?string}
+     */
+    private function resolveOccupation($input): array
+    {
+        $id = is_array($input) ? ($input['id'] ?? null) : null;
+        $texto = is_array($input) ? ($input['description'] ?? null) : $input;
+        $description = is_string($texto) ? trim($texto) : null;
+
+        if (! empty($id)) {
+            $oficial = DB::table('occupations')->where('id', $id)->value('description');
+
+            if ($oficial !== null) {
+                return [(int) $id, $oficial];
+            }
+        }
+
+        return [null, $description ?: null];
     }
 
     private function negotiationPayload(CommercialNegotiation $negotiation): array

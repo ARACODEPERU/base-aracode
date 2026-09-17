@@ -1,7 +1,7 @@
 <script setup>
     import { ref } from 'vue';
     import { message } from 'ant-design-vue';
-    import { useForm } from '@inertiajs/vue3';
+    import { Head, useForm } from '@inertiajs/vue3';
     import InputError from '@/Components/InputError.vue';
 
     const props = defineProps({
@@ -48,6 +48,8 @@
 
 </script>
 <template>
+    <Head title="Acceso para pagar | ARACODE Smart Solutions" />
+
     <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
         <!-- Title -->
         <div class="max-w-2xl mx-auto text-center">

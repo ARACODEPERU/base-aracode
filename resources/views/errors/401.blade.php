@@ -1,6 +1,6 @@
 @extends('errors::minimal')
 
-@section('title', __('Unauthorized'))
+@section('title', __('messages.title401'))
 @section('code', '401')
 @section('message')
     <div class="main-container min-h-screen text-black dark:text-white-dark">

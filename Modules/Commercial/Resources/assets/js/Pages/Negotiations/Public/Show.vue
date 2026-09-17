@@ -18,6 +18,7 @@ const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
     identityDocumentTypes: { type: Array, default: () => [] },
     industries: { type: Array, default: () => [] },
+    occupations: { type: Array, default: () => [] },
     countries: { type: Array, default: () => [] },
     ubigeo: { type: Array, default: () => [] },
     paymentMethodCatalog: { type: Array, default: () => [] },
@@ -199,7 +200,14 @@ const fillForm = (person) => {
     form.gender = person.gender ?? form.gender;
     form.email = person.email ?? form.email;
     form.telephone = person.telephone ?? form.telephone;
-    form.ocupacion = person.ocupacion ?? form.ocupacion;
+    // El cargo se muestra por id contra el catalogo: si la persona lo tiene como
+    // texto libre viejo (sin occupation_id) el campo queda vacio para que elija.
+    // La respuesta de RENIEC no trae datos de cargo, asi que no se toca.
+    if ("occupation_id" in person) {
+        form.ocupacion = props.occupations.find(
+            (item) => Number(item.id) === Number(person.occupation_id)
+        ) ?? null;
+    }
     form.company = person.company ?? form.company;
     form.industry_id = person.industry_id ? { id: person.industry_id, description: person.industry } : form.industry_id;
     form.birthdate = person.birthdate ? String(person.birthdate).slice(0, 10) : form.birthdate;
@@ -771,7 +779,11 @@ watch(brickFormVisible, async (visible) => {
 </script>
 
 <template>
-    <GuestLayout title="Negociacion">
+    <GuestLayout
+        :title="negotiation?.title
+            ? `${negotiation.title} | ARACODE Smart Solutions`
+            : 'Propuesta | ARACODE Smart Solutions'"
+    >
         <div class="min-h-screen bg-gray-100 px-4 py-8 dark:bg-[#060818] sm:px-6">
             <div class="mx-auto max-w-4xl">
                 <div class="mb-6 flex items-center gap-3">
@@ -811,9 +823,9 @@ watch(brickFormVisible, async (visible) => {
 
                 <div v-else-if="isConfirmed" class="panel p-8 text-center">
                     <FontAwesomeIcon :icon="faCheckCircle" class="mx-auto mb-4 h-16 w-16 text-emerald-500" />
-                    <h2 class="mb-2 text-2xl font-bold dark:text-white">Tu confirmacion fue registrada</h2>
+                    <h2 class="mb-2 text-2xl font-bold dark:text-white">¡Tu inscripción ha sido registrada con éxito!</h2>
                     <p class="text-gray-600 dark:text-gray-400">
-                        Ya enviaste tus datos correctamente. A partir de ahora el asesor continuara con el proceso de aprobacion. Gracias por tu preferencia.
+                        Hemos recibido tus datos y constancia de pago. Nuestro equipo validará la información y en breve recibirás un correo con la confirmación final y tus accesos y comprobante de pago. <b>¡Gracias por elegir a CPA Academy!</b>
                     </p>
                 </div>
 
@@ -821,7 +833,7 @@ watch(brickFormVisible, async (visible) => {
                     <FontAwesomeIcon :icon="faCheckCircle" class="mx-auto mb-4 h-16 w-16 text-emerald-500" />
                     <h2 class="mb-2 text-2xl font-bold dark:text-white">Proceso finalizado</h2>
                     <p class="text-gray-600 dark:text-gray-400">
-                        Esta negociacion ya fue procesada. Gracias por tu preferencia.
+                        Esta negociacion ya fue procesada. <b>¡Gracias por elegir a CPA Academy!</b>
                     </p>
                 </div>
 
@@ -1013,9 +1025,21 @@ watch(brickFormVisible, async (visible) => {
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
-                                <InputLabel for="ocupacion" value="Ocupacion" />
-                                <TextInput id="ocupacion" v-model="form.ocupacion" type="text" />
-                                <InputError :message="form.errors.ocupacion" class="mt-1" />
+                                <InputLabel for="ocupacion" value="Cargo u Ocupación" />
+                                <multiselect
+                                    id="ocupacion"
+                                    v-model="form.ocupacion"
+                                    :options="occupations"
+                                    class="custom-multiselect"
+                                    :searchable="true"
+                                    placeholder="Buscar cargo u ocupación"
+                                    selected-label="seleccionado"
+                                    select-label="Elegir"
+                                    deselect-label="Quitar"
+                                    label="description"
+                                    track-by="id"
+                                ></multiselect>
+                                <InputError :message="form.errors.ocupacion || form.errors['ocupacion.id']" class="mt-1" />
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">

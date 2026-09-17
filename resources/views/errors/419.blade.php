@@ -1,6 +1,6 @@
 @extends('errors::minimal')
 
-@section('title', __('messages.419PageExpired'))
+@section('title', __('messages.title419'))
 @section('code', '419')
 @section('message')
     <div class="main-container min-h-screen text-black dark:text-white-dark">

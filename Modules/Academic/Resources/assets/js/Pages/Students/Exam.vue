@@ -1,5 +1,5 @@
 <script setup>
-    import { useForm, usePage } from '@inertiajs/vue3';
+    import { Head, useForm, usePage } from '@inertiajs/vue3';
     import { useAppStore } from '@/stores/index';
     import Swal from 'sweetalert2';
     import { onMounted, ref } from 'vue';
@@ -161,6 +161,8 @@
     }
 </script>
 <template>
+    <Head title="Examen | ARACODE Smart Solutions" />
+
     <nav class="bg-white border-gray-200 dark:bg-gray-900">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
             <div class="flex items-center space-x-3 rtl:space-x-reverse">

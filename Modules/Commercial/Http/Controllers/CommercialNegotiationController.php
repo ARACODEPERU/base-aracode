@@ -65,6 +65,7 @@ class CommercialNegotiationController extends Controller
             $negotiation = CommercialNegotiation::create(array_merge($this->payload($data), [
                 'token' => (string) Str::uuid(),
                 'status' => 'pendiente',
+                'contact_detail' => $this->advisorName(),
                 'link_days' => $data['link_days'] ?? $this->defaultLinkDays(),
                 'link_expires_at' => $this->expirationDate($data['link_days'] ?? $this->defaultLinkDays()),
                 'created_by' => auth()->id(),
@@ -452,7 +453,9 @@ class CommercialNegotiationController extends Controller
             'single_payment_days' => ['nullable', 'integer', 'min:1'],
             'link_days' => ['nullable', 'integer', 'min:1'],
             'contact_channel' => ['nullable', 'string', 'max:40'],
-            'contact_detail' => ['required', 'string', 'max:255'],
+            // El asesor se fija en el servidor con el usuario logueado (store);
+            // lo que llegue en la peticion se ignora.
+            'contact_detail' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'payment_method' => ['required', Rule::in(['billetera_digital', 'mercadopago', 'transferencia', 'enlace'])],
             'company_billetera_ids' => ['nullable', 'array'],
@@ -498,6 +501,17 @@ class CommercialNegotiationController extends Controller
         return $validator->validate();
     }
 
+    /**
+     * Asesor de la negociacion: siempre el usuario logueado.
+     *
+     * El campo del formulario es de solo lectura y este valor no se toma de la
+     * peticion, asi que no se puede guardar otro nombre manipulando el envio.
+     */
+    private function advisorName(): string
+    {
+        return (string) (auth()->user()?->name ?? '');
+    }
+
     private function payload(array $data): array
     {
         return [
@@ -511,7 +525,8 @@ class CommercialNegotiationController extends Controller
             'single_payment_days' => $data['single_payment_days'] ?? null,
             'link_days' => $data['link_days'] ?? null,
             'contact_channel' => $data['contact_channel'] ?? null,
-            'contact_detail' => $data['contact_detail'] ?? null,
+            // contact_detail no viaja aqui: se fija al crear (advisorName) y al
+            // editar se conserva el asesor guardado, sin poder cambiarlo.
             'email' => $data['email'] ?? null,
             'payment_method' => $data['payment_method'],
             'payment_link' => $data['payment_link'] ?? null,

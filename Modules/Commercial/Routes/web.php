@@ -205,30 +205,30 @@ Route::middleware(['auth', 'verified'])->prefix('commercial')->group(function ()
         ->name('comm_negotiations_cancel');
 });
 
-Route::get('negotiations/public/{token}', [CommercialNegotiationPublicController::class, 'show'])
+Route::get('negotiations/registro-de-inscripcion/{token}', [CommercialNegotiationPublicController::class, 'show'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_show');
 
-Route::post('negotiations/public/{token}', [CommercialNegotiationPublicController::class, 'store'])
+Route::post('negotiations/registro-de-inscripcion/{token}', [CommercialNegotiationPublicController::class, 'store'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_store');
 
-Route::post('negotiations/public/{token}/search', [CommercialNegotiationPublicController::class, 'searchPerson'])
+Route::post('negotiations/registro-de-inscripcion/{token}/search', [CommercialNegotiationPublicController::class, 'searchPerson'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_search');
 
-Route::post('negotiations/public/{token}/validate-ruc', [CommercialNegotiationPublicController::class, 'validateRuc'])
+Route::post('negotiations/registro-de-inscripcion/{token}/validate-ruc', [CommercialNegotiationPublicController::class, 'validateRuc'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_validate_ruc');
 
-Route::post('negotiations/public/{token}/check-email', [CommercialNegotiationPublicController::class, 'checkEmail'])
+Route::post('negotiations/registro-de-inscripcion/{token}/check-email', [CommercialNegotiationPublicController::class, 'checkEmail'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_check_email');
 
-Route::post('negotiations/public/{token}/validate-dni', [CommercialNegotiationPublicController::class, 'validateDni'])
+Route::post('negotiations/registro-de-inscripcion/{token}/validate-dni', [CommercialNegotiationPublicController::class, 'validateDni'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_validate_dni');
 
-Route::post('negotiations/public/{token}/mercadopago/process', [CommercialNegotiationPaymentController::class, 'processPayment'])
+Route::post('negotiations/registro-de-inscripcion/{token}/mercadopago/process', [CommercialNegotiationPaymentController::class, 'processPayment'])
     ->where('token', '[A-Za-z0-9-]+')
     ->name('comm_negotiations_public_mercadopago_process');
