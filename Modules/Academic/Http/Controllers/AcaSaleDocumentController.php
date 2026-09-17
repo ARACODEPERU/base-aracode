@@ -441,6 +441,9 @@ class AcaSaleDocumentController extends Controller
             }elseif($document->invoice_type_doc == '03'){
                 $boleta = new Boleta();
                 $resb = $boleta->getBoletatDomPdf($id, $format);
+                // El XML tambien se devuelve para las boletas: el correo al cliente
+                // adjunta el PDF y el XML del comprobante.
+                $resF = $boleta->getBoletaXML($id);
             }
 
             // Intentar obtener la boleta

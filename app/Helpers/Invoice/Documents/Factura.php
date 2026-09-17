@@ -435,12 +435,49 @@ class Factura
         try {
             $document = SaleDocument::find($id);
 
+            if (! $document) {
+                return null;
+            }
+
+            $this->ensureXmlFile($document);
+
+            $name = $document->invoice_document_name
+                ?: trim($document->invoice_serie.'-'.$document->invoice_correlative, '-');
+
             return array(
-                'fileName' => $document->invoice_document_name . '.xml',
+                'fileName' => $name . '.xml',
                 'filePath' => $document->invoice_xml
             );
         } catch (Exception $e) {
             var_dump($e);
+        }
+    }
+
+    /**
+     * Se asegura de que el XML del comprobante exista en disco. El XML se guarda
+     * recién al enviar el comprobante a SUNAT; si todavía no fue enviado (o el
+     * archivo ya no está en el servidor) se genera y firma ahora mismo, con el
+     * mismo builder que usa el envío, sin comunicarse con SUNAT, y se registra
+     * en el documento igual que hace create().
+     */
+    private function ensureXmlFile(SaleDocument $document): void
+    {
+        if ($document->invoice_xml && file_exists($document->invoice_xml)) {
+            return;
+        }
+
+        try {
+            $invoice = $this->setDocument($document);
+            $path = $this->util->writeSignedXml($invoice);
+
+            if ($path) {
+                $document->invoice_xml = $path;
+                $document->invoice_document_name = $invoice->getName();
+                $document->save();
+            }
+        } catch (\Throwable $e) {
+            // Sin XML el correo sale igual, solo que sin ese adjunto.
+            Log::warning('No se pudo generar el XML de la factura '.$document->id.': '.$e->getMessage());
         }
     }
     public function getFacturaCDR($id)

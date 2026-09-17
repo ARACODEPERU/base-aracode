@@ -88,7 +88,8 @@
         <p>
             Hola <b>{{ $negotiation->client_data['full_name'] ?? $negotiation->client->full_name ?? 'cliente' }}</b>,
             queremos informarte que el acuerdo <b>{{ $negotiation->title }}</b> fue aprobado.
-            En este correo encontrarás los detalles del acuerdo y adjunto tu comprobante de pago.
+            En este correo encontrarás los detalles del acuerdo y adjuntamos tu comprobante de pago
+            en PDF junto con el XML del comprobante electrónico.
         </p>
 
         @if ($document)
@@ -96,7 +97,7 @@
                 <span class="badge">Comprobante: {{ $document->invoice_type_doc == '01' ? 'FACTURA' : 'BOLETA' }} {{ $document->invoice_serie }}-{{ $document->invoice_correlative }}</span>
             </p>
             <p>
-                Tu comprobante de venta está adjunto en este correo en formato PDF.
+                Tu comprobante de venta está adjunto en este correo en formato PDF y XML.
             </p>
         @endif
 

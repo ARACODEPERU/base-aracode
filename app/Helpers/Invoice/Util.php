@@ -150,6 +150,24 @@ final class Util
         return $this->writeFile($document->getName().'.xml', $xml);
     }
 
+    /**
+     * Genera y firma el XML del comprobante con el mismo builder que usa el
+     * envio a SUNAT, pero sin comunicarse con SUNAT, y lo guarda junto a los
+     * demas archivos (public/storage/invoice). Se usa cuando el comprobante
+     * todavia no fue enviado y el XML hace falta igual, por ejemplo para
+     * adjuntarlo al correo del cliente.
+     */
+    public function writeSignedXml(DocumentInterface $document): ?string
+    {
+        $xml = $this->getSee()->getXmlSigned($document);
+
+        if (! $xml) {
+            return null;
+        }
+
+        return $this->writeXml($document, $xml);
+    }
+
     public function writeCdr(DocumentInterface $document, ?string $zip): string
     {
         return $this->writeFile('R-'.$document->getName().'.zip', $zip);
