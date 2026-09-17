@@ -105,6 +105,31 @@ class CommercialNegotiation extends Model
         return self::contactChannelLabels()[$this->contact_channel] ?? $this->contact_channel;
     }
 
+    /**
+     * Etiqueta legible del medio de pago, para correos y documentos.
+     * Se incluyen los valores antiguos ('yape') para que los registros previos
+     * sigan mostrando un nombre entendible.
+     */
+    public static function paymentMethodLabels(): array
+    {
+        return [
+            'billetera_digital' => 'Billetera digital',
+            'yape' => 'Yape',
+            'mercadopago' => 'Mercado Pago',
+            'transferencia' => 'Transferencia bancaria',
+            'enlace' => 'Enlace de pago',
+        ];
+    }
+
+    public static function paymentMethodLabel(?string $value): string
+    {
+        if (! $value) {
+            return '';
+        }
+
+        return self::paymentMethodLabels()[$value] ?? $value;
+    }
+
     public function items()
     {
         return $this->hasMany(CommercialNegotiationItem::class, 'negotiation_id');
