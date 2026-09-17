@@ -534,9 +534,8 @@ class CommercialNegotiationPublicController extends Controller
             'initial_amount' => $negotiation->initial_amount !== null ? (float) $negotiation->initial_amount : null,
             'schedule' => $negotiation->schedule,
             'single_payment_days' => $negotiation->single_payment_days,
-            'contact_channel' => $negotiation->contact_channel,
-            'contact_channel_label' => $negotiation->contact_channel_label,
-            'contact_detail' => $negotiation->contact_detail,
+            // El canal de contacto y el asesor son datos internos: no viajan al
+            // navegador del cliente para que no puedan verse en el payload.
             'payment_method' => $negotiation->payment_method,
             'payment_link' => $negotiation->payment_link,
             'status' => $negotiation->status,
