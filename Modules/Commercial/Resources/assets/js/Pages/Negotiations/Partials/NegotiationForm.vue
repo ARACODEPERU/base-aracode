@@ -535,7 +535,16 @@ const submit = () => {
 
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="contact_detail" value="Asesor / Persona de contacto *" />
-                <TextInput id="contact_detail" v-model="form.contact_detail" type="text" placeholder="Nombre del asesor que realizo la negociacion" />
+                <!-- Solo lectura: el asesor se registra con el usuario logueado y el
+                     servidor lo fija por su cuenta (no se envia desde aqui). -->
+                <TextInput
+                    id="contact_detail"
+                    :model-value="form.contact_detail"
+                    type="text"
+                    readonly
+                    class="cursor-not-allowed bg-gray-100 dark:bg-gray-800"
+                />
+                <p class="text-xs text-gray-500 mt-1">Se registra automaticamente con el usuario que crea la negociacion.</p>
                 <InputError :message="form.errors.contact_detail" class="mt-2" />
             </div>
 

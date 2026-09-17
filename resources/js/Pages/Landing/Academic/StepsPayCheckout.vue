@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import MercadoPagoForm from "./Partials/MercadoPagoForm.vue";
 
 const page = usePage();
@@ -29,6 +29,8 @@ const props = defineProps({
 </script>
 
 <template>
+    <Head title="Pago seguro | ARACODE Smart Solutions" />
+
         <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
         <!-- Title -->
         <div class="max-w-2xl mx-auto text-center">

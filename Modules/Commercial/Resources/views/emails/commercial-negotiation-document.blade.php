@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ env('APP_NAME', 'Global CPA') }} - Acuerdo aprobado</title>
+    <title>{{ env('APP_NAME', 'Global CPA') }} - Inscripción confirmada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -24,10 +24,24 @@
             text-align: center;
             color: #333;
         }
+        h2 {
+            margin: 24px 0 8px;
+            font-size: 18px;
+            color: #1e293b;
+        }
         p {
             line-height: 22px;
             text-align: justify;
             color: #555;
+        }
+        ul {
+            padding-left: 20px;
+            margin: 0 0 16px;
+            color: #555;
+        }
+        li {
+            line-height: 22px;
+            margin-bottom: 6px;
         }
         table {
             width: 100%;
@@ -58,6 +72,14 @@
         .btn:hover {
             background: #010101;
         }
+        .btn-secondary {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 5px;
+            background-color: #1e293b;
+            color: #ffffff;
+            text-decoration: none;
+        }
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -66,6 +88,28 @@
             color: #065f46;
             font-size: 13px;
             font-weight: bold;
+        }
+        .card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .card p {
+            margin: 0 0 4px;
+            color: #475569;
+        }
+        .muted {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+            font-size: 20px;
+            color: #2c3e50;
+            margin: 0;
         }
         footer {
             padding: 2px 15px;
@@ -81,136 +125,129 @@
 </head>
 
 <body>
+    @php
+        // ============================================================================
+        // AQUI DEBE IR EL ENLACE DEL VIDEO TUTORIAL DE INGRESO.
+        // Pegar la URL dentro de las comillas, por ejemplo:
+        // $tutorialVideoUrl = 'https://www.youtube.com/watch?v=XXXXXXXXXXX';
+        // Mientras este en blanco, el boton "Video tutorial de ingreso" no se muestra.
+        // (Tambien se puede enviar la URL desde el mailable al construir la vista.)
+        // ============================================================================
+        $tutorialVideoUrl = $tutorialVideoUrl ?? '';
+
+        $studentName = $negotiation->client_data['full_name'] ?? $negotiation->client->full_name ?? 'estudiante';
+
+        // Marca que firma el correo. Se deja fija para que la despedida diga siempre
+        // "El equipo de Global CPA"; cambiar aqui si el nombre de marca cambia.
+        $teamName = 'Global CPA';
+
+        $documentType = ($document->invoice_type_doc ?? null) == '01' ? 'FACTURA' : 'BOLETA';
+        $documentNumber = $documentType . ' ' . ($document->invoice_serie ?? '') . '-' . ($document->invoice_correlative ?? '');
+
+        $items = $negotiation->items;
+        $itemNames = $items->pluck('title')->filter()->values()->all();
+        $onlyCourses = $items->every(fn ($item) => ($item->item_type ?? 'course') === 'course');
+
+        $isInstallments = $negotiation->payment_type === 'installments';
+        $schedule = is_array($negotiation->schedule) ? $negotiation->schedule : [];
+        $firstDueDate = ! empty($schedule[0]['due_date'])
+            ? \Illuminate\Support\Carbon::parse($schedule[0]['due_date'])->format('d/m/Y')
+            : null;
+
+        $approvalDate = ($negotiation->verified_at ?? now())->format('d/m/Y H:i');
+        $totalPaid = number_format((float) $negotiation->total_price, 2);
+        $hasCredentials = ! empty($credentials) && ($credentials['username'] ?? null);
+    @endphp
+
     <br>
     <div class="container">
         <img style="width: 100%;" src="{{ asset('img/banner-email.jpg') }}" alt="Encabezado">
-        <h1>¡Tu acuerdo fue aprobado!</h1>
+        <h1>¡Tu inscripción ha sido confirmada! 🎉</h1>
         <p>
-            Hola <b>{{ $negotiation->client_data['full_name'] ?? $negotiation->client->full_name ?? 'cliente' }}</b>,
-            queremos informarte que el acuerdo <b>{{ $negotiation->title }}</b> fue aprobado.
-            En este correo encontrarás los detalles del acuerdo y adjunto tu comprobante de pago.
+            Hola <b>{{ $studentName }}</b>,
+            nos alegra darte la bienvenida. Queremos informarte que tu inscripción ha sido procesada y
+            aprobada con éxito. En este correo encontrarás tus credenciales de acceso y el detalle de tu compra.
         </p>
 
         @if ($document)
             <p style="text-align: center;">
-                <span class="badge">Comprobante: {{ $document->invoice_type_doc == '01' ? 'FACTURA' : 'BOLETA' }} {{ $document->invoice_serie }}-{{ $document->invoice_correlative }}</span>
+                <span class="badge">📄 Comprobante: {{ $documentNumber }}</span>
             </p>
             <p>
-                Tu comprobante de venta está adjunto en este correo en formato PDF.
+                Tu documento en PDF y el XML del comprobante electrónico se encuentran adjuntos a este correo.
             </p>
         @endif
 
-        @if (! empty($credentials) && ($credentials['username'] ?? null))
-            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 20px; margin: 16px 0;">
-                <h2 style="margin: 0 0 8px; font-size: 18px; color: #1e293b;">Acceso a la plataforma</h2>
-                <p style="margin: 0 0 4px; color: #475569;">
-                    Ya puedes ingresar a la plataforma con las siguientes credenciales:
+        @if ($hasCredentials)
+            <div class="card">
+                <h2 style="margin: 0 0 8px;">Acceso a la plataforma</h2>
+                <p>
+                    Ya tienes todo listo para comenzar a aprender. Ingresa con las siguientes credenciales:
                 </p>
                 <p style="margin: 8px 0 2px;">
                     <b>Usuario:</b> {{ $credentials['username'] }}
                 </p>
-                <p style="margin: 2px 0 8px;">
+                <p style="margin: 2px 0 12px;">
                     <b>Contraseña:</b> {{ $credentials['password'] ?? '---' }}
                 </p>
-                <p style="margin: 8px 0 0; text-align: center;">
+                <p style="margin: 0; text-align: center;">
                     <a class="btn" href="{{ url('/login') }}" style="padding: 10px 22px; font-size: 14px;">Ingresar a la plataforma</a>
+                    @if (! empty($tutorialVideoUrl))
+                        <a class="btn-secondary" href="{{ $tutorialVideoUrl }}" target="_blank" rel="noopener" style="padding: 10px 22px; font-size: 14px; margin-left: 8px;">Video tutorial de ingreso</a>
+                    @endif
                 </p>
             </div>
-            <p style="font-size: 13px; color: #64748b;">
-                Te recomendamos cambiar tu contraseña la primera vez que ingreses.
+            <p class="muted" style="text-align: center;">
+                💡 Por tu seguridad, te recomendamos cambiar tu contraseña la primera vez que ingreses.
             </p>
         @endif
 
-        @php
-            $presentationMode = \App\Helpers\Invoice\DocumentPresentation::modeForCount($negotiation->items->count());
-            $presentationNames = \App\Helpers\Invoice\DocumentPresentation::names($negotiation->items);
-            $presentationTotal = number_format((float) $negotiation->total_price, 2);
-        @endphp
+        <h2>Resumen de tu inscripción</h2>
 
-        @if ($presentationMode === 'list')
-            <p style="text-align: left; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 10px;">
-                Cursos adquiridos
-            </p>
-            <ul style="padding-left: 20px; margin: 0 0 20px; color: #555;">
-                @foreach ($presentationNames as $name)
-                    <li style="margin-bottom: 6px;">{{ $name }}</li>
+        <p style="margin: 0 0 8px; font-weight: bold;">
+            {{ $onlyCourses ? 'Cursos adquiridos:' : 'Cursos y servicios adquiridos:' }}
+        </p>
+        @if (! empty($itemNames))
+            <ul>
+                @foreach ($itemNames as $itemName)
+                    <li>{{ $itemName }}</li>
                 @endforeach
             </ul>
-            <p style="text-align: right; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 0;">
-                TOTAL A PAGAR
-            </p>
-            <p style="text-align: right; font-weight: bold; font-size: 20px; color: #2c3e50; margin: 0;">
-                {{ $negotiation->currency }} {{ $presentationTotal }}
-            </p>
-        @elseif ($presentationMode === 'summary')
-            <p style="text-align: left; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 10px;">
-                Compra de Cursos de Capacitacion
-            </p>
-            <p style="text-align: left; color: #555; margin: 0 0 20px;">
-                Cantidad de cursos: <strong>{{ $negotiation->items->count() }}</strong>
-            </p>
-            <p style="text-align: right; font-weight: bold; font-size: 16px; color: #333; margin: 20px 0 0;">
-                TOTAL A PAGAR
-            </p>
-            <p style="text-align: right; font-weight: bold; font-size: 20px; color: #2c3e50; margin: 0;">
-                {{ $negotiation->currency }} {{ $presentationTotal }}
-            </p>
-        @else
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th style="text-align: right;">Precio</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($negotiation->items as $item)
-                        <tr>
-                            <td>{{ $item->title }}</td>
-                            <td style="text-align: right;">
-                                S/ {{ number_format((float) $item->price, 2) }}
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr style="background-color: #2c3e50;">
-                        <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 16px;">TOTAL:</td>
-                        <td style="padding: 15px; text-align: right; color: white; font-weight: bold; font-size: 18px;">
-                            {{ $negotiation->currency }} {{ $presentationTotal }}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
         @endif
 
+        <p style="margin: 16px 0 0; font-weight: bold;">TOTAL PAGADO:</p>
+        <p class="total">{{ $negotiation->currency }} {{ $totalPaid }}</p>
+
+        <h2>Detalles del pago</h2>
         <p>
-            <b>Tipo de pago:</b>
-            {{ $negotiation->payment_type === 'installments' ? 'Pago en cuotas' : 'Pago unico' }}<br>
-            @if ($negotiation->payment_type === 'installments' && is_array($negotiation->schedule) && count($negotiation->schedule) > 0)
-                <b>Primera cuota (vencimiento):</b> {{ $negotiation->schedule[0]['due_date'] }}<br>
-                <b>Cantidad de cuotas:</b> {{ count($negotiation->schedule) }}<br>
-            @elseif ($negotiation->payment_type === 'single')
-                <b>Plazo de pago:</b> {{ $negotiation->single_payment_days ?? '--' }} dias<br>
+            <b>Tipo de pago:</b> {{ $isInstallments ? 'Pago en cuotas' : 'Pago único' }}<br>
+            @if ($isInstallments)
+                <b>Cuotas:</b> {{ count($schedule) }}<br>
+                @if ($firstDueDate)
+                    <b>Primera cuota vence:</b> {{ $firstDueDate }}<br>
+                @endif
+            @else
+                <b>Plazo de pago:</b> {{ $negotiation->single_payment_days ?? '--' }} días<br>
             @endif
-            <b>Medio de pago:</b> {{ $negotiation->payment_method }}<br>
-            <b>Fecha de aprobacion:</b> {{ now()->format('d/m/Y H:i') }}
+            <b>Medio de pago:</b> {{ \Modules\Commercial\Entities\CommercialNegotiation::paymentMethodLabel($negotiation->payment_method) }}<br>
+            <b>Fecha de aprobación:</b> {{ $approvalDate }}
         </p>
 
         @if (($negotiation->invoice->invoice_type ?? null) === 'factura')
+            <h2>Datos de facturación</h2>
             <p>
                 <b>RUC:</b> {{ $negotiation->invoice->ruc ?? 'No registrado' }}<br>
-                <b>Razon social:</b> {{ $negotiation->invoice->razon_social ?? 'No registrado' }}<br>
-                <b>Direccion:</b> {{ $negotiation->invoice->direccion ?? 'No registrado' }}
+                <b>Razón social:</b> {{ $negotiation->invoice->razon_social ?? 'No registrado' }}<br>
+                <b>Dirección:</b> {{ $negotiation->invoice->direccion ?? 'No registrado' }}
             </p>
         @endif
 
+        <h2>¡Éxitos en tu aprendizaje!</h2>
+        <p>El equipo de {{ $teamName }}</p>
+
         <br>
-        <p style="text-align: center; font-size: 14px;">
-            {{ env('APP_NAME', 'Global CPA') }}
-        </p>
         <footer>
-            <p style="text-align: center; font-size: 15px;">
+            <p style="text-align: center; font-size: 15px; color: #fff;">
                 &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por
                 <a href="https://aracodeperu.com/">Aracode Smart Solutions</a>
             </p>

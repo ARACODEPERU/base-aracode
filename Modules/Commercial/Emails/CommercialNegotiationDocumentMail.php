@@ -38,7 +38,7 @@ class CommercialNegotiationDocumentMail extends Mailable
                 env('MAIL_FROM_ADDRESS', 'informes@globalcpaperu.com'),
                 env('MAIL_FROM_NAME', 'CPA Academy')
             ),
-            subject: 'Tu acuerdo y comprobante de pago'
+            subject: '¡Tu inscripción ha sido confirmada! 🎉'
         );
     }
 

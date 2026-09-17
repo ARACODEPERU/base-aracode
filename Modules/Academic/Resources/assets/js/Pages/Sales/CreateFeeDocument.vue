@@ -3,7 +3,7 @@
     import InputError from "@/Components/InputError.vue";
     import IconX from '@/Components/vristo/icon/icon-x.vue';
     import IconSave from '@/Components/vristo/icon/icon-save.vue';
-    import { useForm, Link, router } from "@inertiajs/vue3";
+    import { Head, useForm, Link, router } from "@inertiajs/vue3";
     import Swal2 from 'sweetalert2';
     import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
     import SearchClients from './Partials/SearchClients.vue';
@@ -619,6 +619,8 @@
 </script>
 
 <template>
+    <Head title="Documento de cobro | ARACODE Smart Solutions" />
+
     <div class="px-16 py-8">
         <div class="flex xl:flex-row flex-col">
             <div class="panel px-0 flex-1 py-6 ltr:xl:mr-6 rtl:xl:ml-6">

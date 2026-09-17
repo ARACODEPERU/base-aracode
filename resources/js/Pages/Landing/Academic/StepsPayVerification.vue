@@ -1,7 +1,7 @@
 <script setup>
     import { ref, watch } from 'vue';
     import { message } from 'ant-design-vue';
-    import { useForm, Link } from '@inertiajs/vue3';
+    import { Head, useForm, Link } from '@inertiajs/vue3';
     import Swal from 'sweetalert2';
     import iconXCircle from '@/Components/vristo/icon/icon-x-circle.vue';
     import iconCircleCheck from '@/Components/vristo/icon/icon-circle-check.vue';
@@ -81,6 +81,8 @@
     }
 </script>
 <template>
+    <Head title="Verificando tu pago | ARACODE Smart Solutions" />
+
     <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
         <!-- Title -->
         <div class="max-w-2xl mx-auto text-center">

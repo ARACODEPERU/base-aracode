@@ -1,6 +1,6 @@
 @extends('errors::minimal')
 
-@section('title', __('Service Unavailable'))
+@section('title', __('messages.title503'))
 @section('code', '503')
 @section('message')
     <div class="main-container min-h-screen text-black dark:text-white-dark">

@@ -26,7 +26,7 @@ const company = usePage().props.company;
 </script>
 
 <template>
-    <GuestLayout title="Email Verification">
+    <GuestLayout title="Verifica tu correo | ARACODE Smart Solutions">
 
         <div>
             <div class="absolute inset-0">
