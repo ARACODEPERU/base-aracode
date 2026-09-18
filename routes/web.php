@@ -30,8 +30,8 @@ use App\Http\Controllers\CalendarController;
 // ARACODE Smart Solutions — Website
 // ========================================
 
-// Homepage
-Route::get('/', [WebPageController::class, 'home'])->name('index_main');
+// Homepage — respeta el parametro PW00001 (1 = Aracode Principal, 2 = Aracode Torneos)
+Route::get('/', [WebPageController::class, 'index'])->name('index_main');
 Route::get('/home', fn () => redirect()->route('index_main'));
 
 // Soluciones
