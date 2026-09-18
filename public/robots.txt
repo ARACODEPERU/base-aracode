@@ -17,4 +17,4 @@ Allow: /
 User-agent: Amazonbot
 Allow: /
 
-Sitemap: https://academy.globalcpaperu.com/sitemap.xml
+Sitemap: https://aracodeperu.com/sitemap.xml
