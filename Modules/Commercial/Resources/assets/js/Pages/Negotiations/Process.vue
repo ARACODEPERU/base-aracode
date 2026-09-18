@@ -218,7 +218,11 @@ const runRemaining = async () => {
 
             step.status = res.data.skipped ? "skipped" : "done";
 
-            if (!res.data.skipped) {
+            if (res.data.skipped) {
+                // Un paso que no aplica (por ejemplo el correo sin destinatario) tiene
+                // que verse: antes avanzaba sin aviso y parecia que todo salio bien.
+                toast(res.data.message || `${step.label} omitido`, "warning");
+            } else {
                 toast(res.data.message || `${step.label} completado`);
             }
         } catch (error) {

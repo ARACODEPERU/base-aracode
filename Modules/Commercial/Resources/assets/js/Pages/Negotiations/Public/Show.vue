@@ -69,6 +69,9 @@ const form = useForm({
     boleta_numero: null,
     boleta_nombre: null,
     voucher: null,
+    // Mercado Pago: 'card' (pagar ahora con tarjeta) o 'evidence' (el cliente ya
+    // pago por fuera y adjunta la captura). El metodo de pago sigue siendo mercadopago.
+    payment_option: "card",
 });
 
 const rucLoading = ref(false);
@@ -107,6 +110,14 @@ const paymentData = computed(() => props.negotiation.mercado_payment_data || nul
 const cardPaymentBrickContainer = ref(null);
 const mpBrickController = ref(null);
 let marketplaceMp = null;
+
+// Modalidad dentro de Mercado Pago: pagar con tarjeta o declarar el pago ya hecho.
+const mpPaymentMode = ref("card");
+const isMercadoPagoEvidence = computed(() => isMercadoPago.value && mpPaymentMode.value === "evidence");
+
+// El bloque de voucher (imagen) y el boton de enviar se usan en todos los medios de
+// pago, incluido Mercado Pago cuando el cliente declara que ya pago por fuera.
+const showVoucherUpload = computed(() => props.negotiation.payment_method !== "mercadopago" || isMercadoPagoEvidence.value);
 
 const documentTypeOptions = computed(() => {
     const seen = new Set();
@@ -411,6 +422,21 @@ const clearVoucher = () => {
 
 const openVoucherSelector = () => {
     fileInput.value?.click();
+};
+
+// Cambio de modalidad en Mercado Pago. Al salir de la tarjeta se desmonta el ladrillo
+// para no dejar un formulario de pago a medias; al volver, el watch lo vuelve a crear.
+const setMpPaymentMode = (mode) => {
+    if (mpPaymentMode.value === mode) return;
+
+    if (mode === "evidence" && mpBrickController.value) {
+        mpBrickController.value.unmount();
+        mpBrickController.value = null;
+    }
+
+    mpPaymentMode.value = mode;
+    form.payment_option = mode;
+    form.clearErrors("voucher");
 };
 
 const submit = () => {
@@ -758,7 +784,7 @@ const reloadBrick = async () => {
     await initBrick();
 };
 
-const brickFormVisible = computed(() => isMercadoPago.value && (accepted.value || isRejected.value));
+const brickFormVisible = computed(() => isMercadoPago.value && mpPaymentMode.value === "card" && (accepted.value || isRejected.value));
 
 const initBrick = async () => {
     if (mpBrickController.value) return;
@@ -1268,16 +1294,60 @@ watch(brickFormVisible, async (visible) => {
                             </div>
 
                             <div v-else-if="negotiation.payment_method === 'mercadopago'" class="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/40">
-                                <p class="text-sm font-semibold dark:text-white">Pago con tarjeta (Mercado Pago)</p>
-                                <p class="mt-1 text-xs text-gray-500">Ingresa los datos de tu tarjeta para realizar el pago de <strong>{{ mercadoAmountLabel }}</strong>. Al aprobarse, tu confirmacion se envía automaticamente.</p>
-                                <div id="cardPaymentBrick_container" ref="cardPaymentBrickContainer" class="mt-3"></div>
+                                <p class="text-sm font-semibold dark:text-white">Pago con Mercado Pago</p>
+                                <p class="mt-1 text-xs text-gray-500">Elige como quieres completar el pago de <strong>{{ mercadoAmountLabel }}</strong>.</p>
+
+                                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <button
+                                        type="button"
+                                        class="rounded-md border p-3 text-left transition"
+                                        :class="mpPaymentMode === 'card'
+                                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                            : 'border-gray-300 bg-white hover:border-primary dark:border-gray-700 dark:bg-gray-900/40'"
+                                        @click="setMpPaymentMode('card')"
+                                    >
+                                        <span class="flex items-center gap-2 text-sm font-semibold dark:text-white">
+                                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" :class="mpPaymentMode === 'card' ? 'border-primary' : 'border-gray-400'">
+                                                <span v-if="mpPaymentMode === 'card'" class="h-2 w-2 rounded-full bg-primary"></span>
+                                            </span>
+                                            Pagar ahora con tarjeta
+                                        </span>
+                                        <span class="mt-1 block text-xs text-gray-500">Ingresa los datos de tu tarjeta y el pago se confirma al instante.</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="rounded-md border p-3 text-left transition"
+                                        :class="mpPaymentMode === 'evidence'
+                                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                            : 'border-gray-300 bg-white hover:border-primary dark:border-gray-700 dark:bg-gray-900/40'"
+                                        @click="setMpPaymentMode('evidence')"
+                                    >
+                                        <span class="flex items-center gap-2 text-sm font-semibold dark:text-white">
+                                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" :class="mpPaymentMode === 'evidence' ? 'border-primary' : 'border-gray-400'">
+                                                <span v-if="mpPaymentMode === 'evidence'" class="h-2 w-2 rounded-full bg-primary"></span>
+                                            </span>
+                                            Ya hice el pago, enviar evidencia
+                                        </span>
+                                        <span class="mt-1 block text-xs text-gray-500">Si ya pagaste por Mercado Pago, adjunta la captura o el comprobante.</span>
+                                    </button>
+                                </div>
+
+                                <template v-if="mpPaymentMode === 'card'">
+                                    <p class="mt-3 text-xs text-gray-500">Ingresa los datos de tu tarjeta. Al aprobarse el pago, tu confirmacion se envia automaticamente.</p>
+                                    <div id="cardPaymentBrick_container" ref="cardPaymentBrickContainer" class="mt-3"></div>
+                                </template>
+
+                                <p v-else class="mt-3 text-xs text-gray-600 dark:text-gray-300">
+                                    Ya pagaste por Mercado Pago: adjunta la captura o el comprobante de tu pago y el asesor lo verificara. Recibiras tu confirmacion por correo.
+                                </p>
                             </div>
 
-                            <p v-if="negotiation.payment_method !== 'mercadopago'" class="mt-2 text-xs text-gray-500">Despues de realizar el pago, adjunta el voucher o captura para que el asesor lo verifique.</p>
+                            <p v-if="showVoucherUpload" class="mt-2 text-xs text-gray-500">Despues de realizar el pago, adjunta el voucher o captura para que el asesor lo verifique.</p>
                         </div>
 
-                        <div v-if="negotiation.payment_method !== 'mercadopago'" class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
-                            <InputLabel for="voucher" value="Voucher de pago *" />
+                        <div v-if="showVoucherUpload" class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
+                            <InputLabel for="voucher" :value="isMercadoPagoEvidence ? 'Evidencia de pago *' : 'Voucher de pago *'" />
                             <input ref="fileInput" id="voucher" type="file" accept="image/*" class="hidden" @input="selectVoucher" />
 
                             <div class="mt-2 rounded-md border border-dashed border-gray-300 bg-gray-50 p-4 transition hover:border-primary dark:border-gray-700 dark:bg-gray-900/40">
@@ -1313,7 +1383,7 @@ watch(brickFormVisible, async (visible) => {
                             <InputError :message="form.errors.voucher" class="mt-2" />
                         </div>
 
-                        <div v-if="negotiation.payment_method !== 'mercadopago'" class="mt-6 flex justify-end">
+                        <div v-if="showVoucherUpload" class="mt-6 flex justify-end">
                             <button type="submit" class="btn btn-primary" :class="{ 'opacity-50': form.processing }" :disabled="form.processing">
                                 <IconLoader v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
                                 {{ isRejected ? "Reenviar confirmacion" : "Enviar confirmacion" }}

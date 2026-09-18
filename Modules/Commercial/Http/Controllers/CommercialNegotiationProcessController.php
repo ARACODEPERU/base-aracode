@@ -813,11 +813,13 @@ class CommercialNegotiationProcessController extends Controller
 
         $person = $this->person($negotiation);
 
-        if (! $person->email) {
+        $recipient = $this->recipientEmail($negotiation, $person);
+
+        if (! $recipient) {
             return response()->json([
                 'success' => true,
                 'skipped' => true,
-                'message' => 'El cliente no tiene correo electronico registrado.',
+                'message' => 'El correo no se envio: el cliente no tiene un correo electronico valido en su ficha, en la negociacion ni en su cuenta de alumno.',
             ]);
         }
 
@@ -833,7 +835,7 @@ class CommercialNegotiationProcessController extends Controller
         try {
             $dataFile = app(AcaSaleDocumentController::class)->generateBoletaPDF($document->id);
 
-            Mail::to(trim($person->email))->send(
+            Mail::to($recipient)->send(
                 new CommercialNegotiationDocumentMail($negotiation, $document, $dataFile, $credentials)
             );
 
@@ -935,6 +937,32 @@ class CommercialNegotiationProcessController extends Controller
         }
 
         return $negotiation;
+    }
+
+    /**
+     * Correo del cliente al que se envia el comprobante: se usa el de su ficha y,
+     * si no lo tiene (o es invalido), el que dejo en la negociacion o el de su
+     * cuenta de alumno. Antes el paso se omitia en silencio cuando la ficha no
+     * tenia correo y el cliente nunca recibia nada.
+     */
+    private function recipientEmail(CommercialNegotiation $negotiation, Person $person): ?string
+    {
+        $candidatos = [
+            $person->email,
+            $negotiation->client_data['email'] ?? null,
+            $negotiation->email,
+            User::where('person_id', $person->id)->value('email'),
+        ];
+
+        foreach ($candidatos as $candidato) {
+            $candidato = trim((string) $candidato);
+
+            if ($candidato !== '' && filter_var($candidato, FILTER_VALIDATE_EMAIL)) {
+                return $candidato;
+            }
+        }
+
+        return null;
     }
 
     private function person(CommercialNegotiation $negotiation): Person

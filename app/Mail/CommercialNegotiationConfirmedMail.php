@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -27,10 +28,10 @@ class CommercialNegotiationConfirmedMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                env('MAIL_FROM_ADDRESS', 'contacto@globalcpa.com'),
-                env('MAIL_FROM_NAME', 'CPA Academy')
+                MailSender::address('contacto@globalcpa.com'),
+                MailSender::name()
             ),
-            subject: 'Negociacion confirmada por el cliente - ' . env('APP_NAME', 'Global CPA'),
+            subject: 'Negociacion confirmada por el cliente - ' . config('app.name'),
         );
     }
 
