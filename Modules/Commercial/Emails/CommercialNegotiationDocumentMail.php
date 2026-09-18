@@ -3,6 +3,7 @@
 namespace Modules\Commercial\Emails;
 
 use App\Models\SaleDocument;
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -35,8 +36,8 @@ class CommercialNegotiationDocumentMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                env('MAIL_FROM_ADDRESS', 'informes@globalcpaperu.com'),
-                env('MAIL_FROM_NAME', 'CPA Academy')
+                MailSender::address('informes@globalcpaperu.com'),
+                MailSender::name()
             ),
             subject: '¡Tu inscripción ha sido confirmada! 🎉'
         );

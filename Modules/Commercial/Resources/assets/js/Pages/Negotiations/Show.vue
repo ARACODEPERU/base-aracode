@@ -70,6 +70,10 @@ const clientLocation = computed(() => {
 const isMercadoPago = computed(() => props.negotiation.payment_method === "mercadopago");
 const canReactivate = computed(() => ["pendiente", "sin_respuesta", "rechazada"].includes(props.negotiation.status));
 const mercadoPaymentData = computed(() => props.negotiation.mercado_payment_data || null);
+
+// El cliente declaro que ya pago por Mercado Pago y adjunto su evidencia: no hay una
+// transaccion procesada en el sistema, por eso la evidencia manda sobre los datos de MP.
+const paymentDeclared = computed(() => props.negotiation.client_data?.payment_declared === true);
 const estadoLabel = computed(() => {
     const s = props.negotiation.mercado_payment_status;
     if (s === "approved") return "Aprobado";
@@ -642,7 +646,7 @@ const reactivate = () => {
                 </div>
 
                 <div class="panel">
-                    <template v-if="isMercadoPago && mercadoPaymentData">
+                    <template v-if="isMercadoPago && mercadoPaymentData && !paymentDeclared">
                         <h3 class="mb-4 font-semibold dark:text-white">Pago con tarjeta (Mercado Pago)</h3>
                         <dl class="space-y-2 text-sm">
                             <div>
@@ -680,7 +684,10 @@ const reactivate = () => {
                         </p>
                     </template>
                     <template v-else>
-                        <h3 class="mb-4 font-semibold dark:text-white">Voucher de pago</h3>
+                        <h3 class="mb-4 font-semibold dark:text-white">{{ paymentDeclared ? 'Evidencia de pago' : 'Voucher de pago' }}</h3>
+                        <div v-if="paymentDeclared" class="mb-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+                            El cliente indico que ya pago por Mercado Pago y adjunto esta evidencia. No hay una transaccion procesada en el sistema: verificala antes de aprobar.
+                        </div>
                         <p class="mb-3 text-xs text-gray-500">
                             {{ negotiation.status === 'rechazada' ? 'El voucher fue rechazado; el cliente puede volver a enviar uno.' : (negotiation.status === 'aprobada' || negotiation.status === 'completada') ? 'Voucher aceptado por el asesor.' : 'Voucher enviado por el cliente.' }}
                         </p>
@@ -697,6 +704,12 @@ const reactivate = () => {
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Creado por</dt>
                             <dd class="dark:text-white">{{ negotiation.creator?.name || '--' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Correo al cliente</dt>
+                            <dd :class="negotiation.email_sent_at ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
+                                {{ negotiation.email_sent_at ? `Enviado el ${new Date(negotiation.email_sent_at).toLocaleString()}` : 'Sin enviar' }}
+                            </dd>
                         </div>
                         <div v-if="negotiation.verified_at">
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Verificado por</dt>

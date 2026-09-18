@@ -239,7 +239,7 @@ import BlogAiAssistant from '@/Components/BlogAiAssistant.vue';
                     <input @keydown.enter.stop.prevent="addkeyword" 
                         v-model="inputKeyword" 
                         class="form-input"
-                        :maxlength="22" placeholder="Separar con comas (ej: jovenes, escolares)"
+                        :maxlength="250" placeholder="Separar con comas (ej: jovenes, escolares)"
                     />
                 </div>
                 <InputError :message="form.errors.keywords" class="mt-2" />

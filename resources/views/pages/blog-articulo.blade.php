@@ -58,15 +58,15 @@
                         {{ $article->created_at->format('d \d\e F, Y') }}
                     </time>
                 </span>
-                @if($article->views)
-                    <span class="flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        {{ $article->views }} vistas
-                    </span>
-                @endif
+                {{-- Contador de vistas: el id permite actualizarlo sin recargar cuando
+                     el navegador registra la vista. Oculto mientras no haya ninguna. --}}
+                <span id="articulo-vistas" class="flex items-center gap-2"@if(! $article->views) style="display: none;"@endif>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span id="articulo-vistas-texto">{{ (int) $article->views === 1 ? '1 vista' : $article->views . ' vistas' }}</span>
+                </span>
             </div>
         </div>
     </section>
@@ -321,6 +321,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+
+{{-- Conteo de vistas: se registra una vez por dia por articulo y por navegador.
+     La marca vive en localStorage y el conteo ocurre en esta peticion (no al
+     renderizar la pagina), para que el navegador decida si le toca contarla. --}}
+<script>
+// -- conteo de vistas: inicio --
+(function () {
+    var CLAVE = 'blog_visto_{{ $article->id }}';
+    var UN_DIA = 24 * 60 * 60 * 1000;
+
+    try {
+        var ultima = parseInt(localStorage.getItem(CLAVE), 10);
+
+        // Ya la vio hace menos de 24 horas: no se registra otra vista.
+        if (!isNaN(ultima) && (Date.now() - ultima) < UN_DIA) return;
+    } catch (e) {
+        // Modo privado o almacenamiento bloqueado: se cuenta igual, sin candado.
+    }
+
+    fetch('{{ route('blog_article_view', $article->url) }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(function (respuesta) { return respuesta.ok ? respuesta.json() : Promise.reject(respuesta); })
+    .then(function (data) {
+        if (!data || !data.success) return;
+
+        // La marca se guarda solo si el servidor confirmo el conteo: si falla,
+        // la proxima visita lo vuelve a intentar.
+        try { localStorage.setItem(CLAVE, String(Date.now())); } catch (e) {}
+
+        var contador = document.getElementById('articulo-vistas');
+        var texto = document.getElementById('articulo-vistas-texto');
+
+        if (texto) texto.textContent = data.views === 1 ? '1 vista' : data.views + ' vistas';
+        if (contador) contador.style.display = '';
+    })
+    .catch(function () { /* sin conexion o error del servidor: no se marca y se reintenta luego */ });
+})();
+// -- conteo de vistas: fin --
 </script>
 @endpush
 @endsection

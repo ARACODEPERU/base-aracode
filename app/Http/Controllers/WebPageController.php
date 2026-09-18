@@ -1371,7 +1371,9 @@ class WebPageController extends Controller
             ->where('status', true)
             ->firstOrFail();
 
-        $article->increment('views');
+        // El conteo de vistas NO ocurre al renderizar: se registra en
+        // blog_article_view(), para que el navegador pueda decidir con
+        // localStorage si corresponde contarla (una vez por dia por articulo).
 
         $categories = \Modules\Blog\Entities\BlogCategory::where('status', true)->get();
 
@@ -1403,6 +1405,35 @@ class WebPageController extends Controller
             'latest_articles' => $latest_articles,
             'popular_articles' => $popular_articles,
             'articlesByCategory' => $articlesByCategory,
+        ]);
+    }
+
+    /**
+     * Registra la vista de un articulo del blog.
+     *
+     * Vive aparte del render a proposito: el navegador guarda en localStorage una
+     * marca por articulo (una vez por dia) y solo llama a esta ruta si le toca
+     * contar. Sin la marca (JavaScript desactivado, otro navegador, incognito o
+     * almacenamiento borrado) la vista no se registra.
+     */
+    public function blog_article_view($url)
+    {
+        $article = \Modules\Blog\Entities\BlogArticle::where('url', $url)
+            ->where('status', true)
+            ->first();
+
+        if (! $article) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Articulo no encontrado.',
+            ], 404);
+        }
+
+        $article->increment('views');
+
+        return response()->json([
+            'success' => true,
+            'views' => (int) $article->views,
         ]);
     }
 

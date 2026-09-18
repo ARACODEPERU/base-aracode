@@ -57,6 +57,11 @@ Route::get('/blog/{url}', [WebPageController::class, 'blog_article'])
     ->name('blog_article')
     ->fallback();
 
+// Registro de la vista del articulo. Va aparte del render para que el navegador
+// decida con localStorage si corresponde contarla (una vez por dia por articulo).
+Route::post('/blog/{url}/vista', [WebPageController::class, 'blog_article_view'])
+    ->name('blog_article_view');
+
 // Páginas adicionales
 Route::get('/casos-exito', [WebPageController::class, 'casosExito'])->name('casos_exito');
 Route::get('/faq', [WebPageController::class, 'faq'])->name('faq');
