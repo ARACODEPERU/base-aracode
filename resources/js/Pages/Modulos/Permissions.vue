@@ -1,9 +1,10 @@
 <script setup>
     import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
-    import { onMounted, ref,   } from 'vue';
+    import { onMounted, ref, computed } from 'vue';
     import Keypad from '@/Components/Keypad.vue';
     import Navigation from "@/Components/vristo/layout/Navigation.vue";
     import IconArrowLeft from "@/Components/vristo/icon/icon-arrow-left.vue";
+    import IconArrowRight from "@/Components/vristo/icon/icon-arrow-right.vue";
     import { Link, useForm } from '@inertiajs/vue3';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import Swal2 from "sweetalert2";
@@ -29,6 +30,22 @@
     });
     const itemsFree = ref([]);
     const itemsAdded = ref([]);
+
+    // Buscadores rapidos por nombre para ambas listas
+    const searchFree = ref('');
+    const searchAdded = ref('');
+
+    const filteredFree = computed(() => {
+        const term = searchFree.value.trim().toLowerCase();
+        if (!term) return itemsFree.value;
+        return itemsFree.value.filter((item) => item.name.toLowerCase().includes(term));
+    });
+
+    const filteredAdded = computed(() => {
+        const term = searchAdded.value.trim().toLowerCase();
+        if (!term) return itemsAdded.value;
+        return itemsAdded.value.filter((item) => item.name.toLowerCase().includes(term));
+    });
 
     onMounted(() => {
         itemsFree.value = props.permissions;
@@ -82,9 +99,34 @@
         <div class="mt-5">
             <div class="panel p-0">
                 <div class="p-6">
+                    <div class="flex items-center gap-3 mb-6 p-4 rounded-md bg-primary/10 border border-primary/20">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="shrink-0 text-primary">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                        </svg>
+                        <div>
+                            <div class="text-base font-semibold text-primary">
+                                Módulo: {{ modulo.description }}
+                                <span class="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-primary text-white">{{ modulo.identifier }}</span>
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Los permisos que agregues se aplicarán a este módulo.
+                            </div>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12">
                         <div>
                             <div class="font-semibold text-lg mb-5">Permisos Libres</div>
+                            <div class="mb-3">
+                                <input
+                                    v-model="searchFree"
+                                    type="text"
+                                    placeholder="Buscar permiso..."
+                                    class="form-input"
+                                    autocomplete="off"
+                                />
+                            </div>
                             <div style="max-height: 610px;" class="flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
                                 <perfect-scrollbar
                                     :options="{
@@ -94,14 +136,19 @@
                                     class="relative ltr:pr-3.5 rtl:pl-3.5 ltr:-mr-3.5 rtl:-ml-3.5 h-full grow"
                                 >
                                     <template v-if="itemsFree.length > 0">
-                                        <template v-for="(item, index) in itemsFree">
-                                            <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
-                                                <div>{{ item.name }} </div>
-                                                <button type="button" class="btn btn-sm btn-outline-primary" @click="addItems(item, index)">
-                                                    <icon-arrow-left />
-                                                </button>
-                                            </div>
+                                        <template v-if="filteredFree.length > 0">
+                                            <template v-for="(item, index) in filteredFree">
+                                                <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
+                                                    <div>{{ item.name }} </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="addItems(item, itemsFree.indexOf(item))">
+                                                        <icon-arrow-right />
+                                                    </button>
+                                                </div>
+                                            </template>
                                         </template>
+                                        <div v-else class="px-4 py-6 text-center text-sm text-gray-500">
+                                            Sin resultados para "{{ searchFree }}"
+                                        </div>
                                     </template>
                                 </perfect-scrollbar>
                             </div>
@@ -109,6 +156,15 @@
                         </div>
                         <div>
                             <div class="font-semibold text-lg mb-5">Permisos Agregados</div>
+                            <div class="mb-3">
+                                <input
+                                    v-model="searchAdded"
+                                    type="text"
+                                    placeholder="Buscar permiso..."
+                                    class="form-input"
+                                    autocomplete="off"
+                                />
+                            </div>
                             <div style="max-height: 610px;" class="flex flex-col rounded-md border border-[#e0e6ed] dark:border-[#1b2e4b]">
                                 <perfect-scrollbar
                                     :options="{
@@ -118,14 +174,19 @@
                                     class="h-full"
                                 >
                                     <template v-if="itemsAdded.length > 0">
-                                        <template v-for="(item, index) in itemsAdded">
-                                            <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" @click="removeItems(item, index)">
-                                                    <icon-arrow-left class="transform" style="rotate: 180deg;"  />
-                                                </button>
-                                                <div>{{ item.name }} </div>
-                                            </div>
+                                        <template v-if="filteredAdded.length > 0">
+                                            <template v-for="(item, index) in filteredAdded">
+                                                <div class="flex items-center justify-between space-x-4 rtl:space-x-reverse border-b border-[#e0e6ed] dark:border-[#1b2e4b] px-4 py-2.5 hover:bg-[#eee] dark:hover:bg-[#eee]/10">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" @click="removeItems(item, itemsAdded.indexOf(item))">
+                                                        <icon-arrow-left />
+                                                    </button>
+                                                    <div>{{ item.name }} </div>
+                                                </div>
+                                            </template>
                                         </template>
+                                        <div v-else class="px-4 py-6 text-center text-sm text-gray-500">
+                                            Sin resultados para "{{ searchAdded }}"
+                                        </div>
                                     </template>
                                 </perfect-scrollbar>
                             </div>
