@@ -25,15 +25,17 @@
     {{-- Schema.org JSON-LD --}}
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
-        "@type": "Organization",
+        {{-- El @@ escapa la directiva @context de Blade (Laravel 12): sin esto el JSON-LD
+             abre un if() que nunca cierra y la vista deja de compilar. --}}
+        "@@context": "https://schema.org",
+        "@@type": "Organization",
         "name": "ARACODE Smart Solutions",
         "url": "{{ url('/') }}",
         "logo": "{{ asset('themes/webpage/images/logo.png') }}",
         "image": "{{ asset('themes/webpage/images/logo.png') }}",
         "description": "Empresa peruana especializada en desarrollo de software empresarial, automatización de procesos e inteligencia artificial.",
         "address": {
-            "@type": "PostalAddress",
+            "@@type": "PostalAddress",
             "addressLocality": "Nuevo Chimbote",
             "addressCountry": "PE"
         },
