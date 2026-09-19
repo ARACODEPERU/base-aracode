@@ -601,7 +601,7 @@ class CommercialNegotiationPublicController extends Controller
         }
 
         try {
-            Mail::to($asesor->email)->send(new CommercialNegotiationConfirmedMail($negotiation, $client));
+            Mail::to($asesor->email)->queue(new CommercialNegotiationConfirmedMail($negotiation, $client));
         } catch (\Exception $e) {
             // El aviso por correo no debe interrumpir el registro de la negociacion.
         }
