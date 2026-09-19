@@ -1483,7 +1483,7 @@ section form button[type="submit"]:hover {
     transition: width 0.1s linear;
 }
 
-/* WhatsApp Float Button */
+/* Boton flotante de contacto: telefono moderno con resplandor tipo radar */
 .ara-whatsapp-float {
     position: fixed;
     bottom: 2rem;
@@ -1492,24 +1492,68 @@ section form button[type="submit"]:hover {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: #25D366;
+    background: linear-gradient(140deg, #34e07a 0%, #25D366 48%, #12b76a 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-    transition: all 0.3s ease;
+    box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+    transition: transform 0.3s ease;
     text-decoration: none;
     border: none;
+    animation: ara-phone-glow 2.8s ease-out infinite;
 }
+
+/* Ondas que se expanden desde el boton (efecto radar) */
+.ara-phone-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(37, 211, 102, 0.8);
+    pointer-events: none;
+    animation: ara-radar 2.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+.ara-phone-ring:nth-of-type(2) {
+    animation-delay: 1.4s;
+}
+
+/* Icono de telefono (trazo, no relleno) */
+.ara-phone-icon {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .ara-whatsapp-float:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+    transform: scale(1.08);
 }
-.ara-whatsapp-float svg {
-    width: 28px;
-    height: 28px;
-    fill: #ffffff;
+.ara-whatsapp-float:focus-visible {
+    outline: 3px solid rgba(37, 211, 102, 0.45);
+    outline-offset: 4px;
+}
+
+@keyframes ara-radar {
+    0% { transform: scale(1); opacity: 0.7; }
+    70% { transform: scale(1.9); opacity: 0; }
+    100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes ara-phone-glow {
+    0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5), 0 6px 18px rgba(37, 211, 102, 0.35); }
+    70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0), 0 6px 18px rgba(37, 211, 102, 0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0), 0 6px 18px rgba(37, 211, 102, 0.35); }
+}
+
+/* Accesibilidad: sin animacion si el usuario pide menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .ara-whatsapp-float,
+    .ara-phone-ring {
+        animation: none;
+    }
 }
 
 /* Dark mode - scroll buttons */
@@ -1517,7 +1561,7 @@ section form button[type="submit"]:hover {
     background: rgba(1, 136, 238, 0.9);
 }
 .dark .ara-whatsapp-float {
-    background: #25D366;
+    background: linear-gradient(140deg, #34e07a 0%, #25D366 48%, #12b76a 100%);
 }
 
 /* Hide on small mobile if needed */
@@ -1534,8 +1578,8 @@ section form button[type="submit"]:hover {
         width: 50px;
         height: 50px;
     }
-    .ara-whatsapp-float svg {
-        width: 24px;
-        height: 24px;
+    .ara-phone-icon {
+        width: 23px;
+        height: 23px;
     }
 }
