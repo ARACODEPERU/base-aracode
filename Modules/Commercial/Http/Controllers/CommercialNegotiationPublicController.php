@@ -12,6 +12,7 @@ use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
+use App\Models\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
@@ -272,7 +273,7 @@ class CommercialNegotiationPublicController extends Controller
             throw $e;
         }
 
-        $this->notifyAsesor($negotiation, $person);
+        $this->notifyNegotiationRecipients($negotiation, $person);
 
         return redirect()->back()->with('success', 'Tu acuerdo fue enviado correctamente. El asesor revisara la confirmacion.');
     }
@@ -592,18 +593,33 @@ class CommercialNegotiationPublicController extends Controller
         ];
     }
 
-    private function notifyAsesor(CommercialNegotiation $negotiation, Person $client): void
+    /**
+     * Notifica que el cliente respondio la negociacion al equipo administrador
+     * y al asesor que la creo. Cada destinatario se encola por separado para que
+     * un correo invalido o un fallo puntual no impida notificar a los demas.
+     */
+    private function notifyNegotiationRecipients(CommercialNegotiation $negotiation, Person $client): void
     {
-        $asesor = $negotiation->creator;
+        $administratorEmails = User::role('Administrador')
+            ->whereNotNull('email')
+            ->pluck('email');
 
-        if (! $asesor || ! $asesor->email) {
-            return;
-        }
+        $creatorEmail = $negotiation->creator?->email;
 
-        try {
-            Mail::to($asesor->email)->queue(new CommercialNegotiationConfirmedMail($negotiation, $client));
-        } catch (\Exception $e) {
-            // El aviso por correo no debe interrumpir el registro de la negociacion.
+        $recipients = $administratorEmails
+            ->push($creatorEmail)
+            ->map(fn ($email) => trim((string) $email))
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique(fn ($email) => strtolower($email))
+            ->values();
+
+        foreach ($recipients as $recipient) {
+            try {
+                Mail::to($recipient)->queue(new CommercialNegotiationConfirmedMail($negotiation, $client));
+            } catch (\Throwable $e) {
+                // Un destinatario fallido no debe impedir los demas envios encolados.
+                report($e);
+            }
         }
     }
 }
