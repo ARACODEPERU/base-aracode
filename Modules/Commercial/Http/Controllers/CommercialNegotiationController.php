@@ -89,7 +89,7 @@ class CommercialNegotiationController extends Controller
 
     public function edit($id)
     {
-        $negotiation = CommercialNegotiation::with(['items', 'companyBilleteras'])->findOrFail($id);
+        $negotiation = CommercialNegotiation::with(['items', 'companyBilleteras', 'creator'])->findOrFail($id);
 
         abort_unless(
             $this->canManage($negotiation),
