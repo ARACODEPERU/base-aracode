@@ -12,16 +12,17 @@ use App\Models\Industry;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
 use App\Models\Person;
-use App\Models\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialNegotiation;
 use Modules\Commercial\Entities\CommercialNegotiationInvoice;
+use Modules\Commercial\Support\NegotiationConfirmedRecipients;
 
 class CommercialNegotiationPublicController extends Controller
 {
@@ -594,28 +595,30 @@ class CommercialNegotiationPublicController extends Controller
     }
 
     /**
-     * Notifica que el cliente respondio la negociacion al equipo administrador
-     * y al asesor que la creo. Cada destinatario se encola por separado para que
-     * un correo invalido o un fallo puntual no impida notificar a los demas.
+     * Notifica que el cliente respondio la negociacion al equipo administrador (los
+     * roles del modulo mas el buzon MAIL_ADMIN) y al asesor que la creo. Cada
+     * destinatario se encola por separado para que un correo invalido o un fallo
+     * puntual no impida notificar a los demas.
      */
     private function notifyNegotiationRecipients(CommercialNegotiation $negotiation, Person $client): void
     {
-        $administratorEmails = User::role('Administrador')
-            ->whereNotNull('email')
-            ->pluck('email');
+        // Los destinatarios (roles administradores, buzon MAIL_ADMIN y asesor) se
+        // resuelven en NegotiationConfirmedRecipients, que valida y deduplica.
+        $recipients = NegotiationConfirmedRecipients::forNegotiation($negotiation);
 
-        $creatorEmail = $negotiation->creator?->email;
+        if ($recipients === []) {
+            // Sin destinatarios el aviso no sale: queda registrado para no perderlo
+            // en silencio.
+            Log::warning('Negociacion confirmada sin destinatarios para el aviso por correo.', [
+                'negotiation_id' => $negotiation->id,
+            ]);
 
-        $recipients = $administratorEmails
-            ->push($creatorEmail)
-            ->map(fn ($email) => trim((string) $email))
-            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
-            ->unique(fn ($email) => strtolower($email))
-            ->values();
+            return;
+        }
 
-        foreach ($recipients as $recipient) {
+        foreach ($recipients as $email) {
             try {
-                Mail::to($recipient)->queue(new CommercialNegotiationConfirmedMail($negotiation, $client));
+                Mail::to($email)->queue(new CommercialNegotiationConfirmedMail($negotiation, $client));
             } catch (\Throwable $e) {
                 // Un destinatario fallido no debe impedir los demas envios encolados.
                 report($e);
