@@ -1866,7 +1866,7 @@ class AcaStudentController extends Controller
         }
 
         try {
-            \Mail::to($person->email)->send(new \App\Mail\ThankYouAccessMail($person));
+            \Mail::to($person->email)->queue(new \App\Mail\ThankYouAccessMail($person));
 
             return response()->json([
                 'success' => true,
@@ -1899,7 +1899,7 @@ class AcaStudentController extends Controller
                 ['personId' => $person->id]
             );
 
-            \Mail::to($person->email)->send(new \App\Mail\StudentPasswordRecoveryMail($person, $resetUrl));
+            \Mail::to($person->email)->queue(new \App\Mail\StudentPasswordRecoveryMail($person, $resetUrl));
 
             return response()->json([
                 'success' => true,

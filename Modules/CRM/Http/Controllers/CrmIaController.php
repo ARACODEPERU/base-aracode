@@ -149,7 +149,7 @@ class CrmIaController extends Controller
         if ($conversation && $this->shouldSendChatEmailNotification($conversation)) {
             Mail::to($P000013)
                 ->cc($P000017)
-                ->send(new NotifyChatMessage($data));
+                ->queue(new NotifyChatMessage($data));
 
             $conversation->update([
                 'last_email_notification_at' => now(),

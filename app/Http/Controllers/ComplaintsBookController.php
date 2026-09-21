@@ -112,10 +112,11 @@ class ComplaintsBookController extends Controller
                     'status' => 'RE'
                 ]);
 
-                // Enviar el correo de confirmación
-                // Si esta línea lanza una excepción (ej. problemas de configuración de correo),
-                // la transacción se revertirá y el registro de la DB no se creará.
-                Mail::to($book->email)->send(new SendClaimConfirmationEmail($book));
+                // El correo de confirmación va a la cola: el reclamo ya no depende del
+                // SMTP. Antes, un fallo de correo revertia la transacción y el reclamo
+                // no se guardaba. El job se ejecuta despues del commit, porque la
+                // conexion de cola tiene 'after_commit' => true.
+                Mail::to($book->email)->queue(new SendClaimConfirmationEmail($book));
             });
 
             // Si todo fue exitoso (validación, registro y envío de correo)

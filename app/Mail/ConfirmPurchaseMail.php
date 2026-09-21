@@ -9,11 +9,18 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Address;
+use App\Support\MailSender;
 
 
-class ConfirmPurchaseMail extends Mailable
+class ConfirmPurchaseMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    /** @var int Intentos, compatibles con el worker general. */
+    public int $tries = 3;
+
+    /** @var array<int, int> Demoras entre reintentos, en segundos. */
+    public array $backoff = [60, 300];
 
     public $data;
     public $dni;
@@ -32,11 +39,8 @@ class ConfirmPurchaseMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address(
-                env('MAIL_FROM_ADDRESS', 'contacto@globalcpa.com'),
-                env('MAIL_FROM_NAME', 'CPA Academy')
-            ),
-            subject: 'Gracias por estar con nosotros - ' . env('APP_NAME', 'Global CPA'),
+            from: new Address(MailSender::address('contacto@globalcpa.com'), MailSender::name()),
+            subject: 'Gracias por estar con nosotros - ' . config('app.name'),
         );
     }
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ env('APP_NAME', 'Global CPA') }} - Negociacion confirmada</title>
+    <title>{{ config('app.name', 'Global CPA') }} - Negociacion confirmada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -120,7 +120,7 @@
         </p>
 
         <p style="text-align: center; margin-top: 24px;">
-            <a href="{{ $processUrl }}" class="btn">
+            <a href="{{ $reviewUrl }}" class="btn">
                 Continuar con el proceso
             </a>
         </p>
@@ -128,7 +128,7 @@
             Si el boton no funciona, copia y pega este enlace en tu navegador:
         </p>
         <p style="text-align: center; font-size: 12px; color: #555; word-break: break-all;">
-            {{ $processUrl }}
+            {{ $reviewUrl }}
         </p>
 
         <h2>Datos del cliente</h2>
@@ -237,11 +237,11 @@
 
         <br>
         <p style="text-align: center; font-size: 14px;">
-            {{ env('APP_NAME', 'Global CPA') }}
+            {{ config('app.name', 'Global CPA') }}
         </p>
         <footer>
             <p style="text-align: center; font-size: 15px;">
-                &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por
+                &copy; Derechos Reservados {{ config('app.name') }} | Desarrollado por
                 <a href="https://aracodeperu.com/">Aracode Smart Solutions</a>
             </p>
         </footer>

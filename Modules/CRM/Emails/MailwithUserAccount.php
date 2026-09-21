@@ -2,61 +2,50 @@
 
 namespace Modules\CRM\Emails;
 
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Queue\SerializesModels;
 
-class MailwithUserAccount extends Mailable
+class MailwithUserAccount extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    protected $data;
+    /** @var array<string, mixed> */
+    protected array $data;
 
-    public function __construct($data)
+    public int $tries = 3;
+    public array $backoff = [60, 300];
+
+    /** @param array<string, mixed> $data */
+    public function __construct(array $data)
     {
         $this->data = $data;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
-        $from_mail = $this->data['from_mail'];
-        $from_name = $this->data['from_name'];
-        $title = $this->data['title'];
-        $title = $this->data['title'];
-
         return new Envelope(
-            from: new Address($from_mail, $from_name),
-            subject: $title,
+            from: new Address(MailSender::address(), MailSender::name()),
+            replyTo: MailSender::replyTo($this->data['from_mail'] ?? null, $this->data['from_name'] ?? null),
+            subject: (string) ($this->data['title'] ?? 'Datos de acceso a CPA Academy'),
         );
     }
 
-    public function build()
+    public function content(): Content
     {
-        return $this->view('crm::mails.mailwith-user-account', [
-            'data' => $this->data
-        ]);
+        return new Content(
+            view: 'crm::mails.mailwith-user-account',
+            with: ['data' => $this->data],
+        );
     }
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
-    // public function attachments(): array
-    // {
-    //     $Attachments = [];
-    //     foreach ($this->data[1]->attachments as $file) {
-    //         array_push(
-    //             $Attachments,
-    //             Attachment::fromPath(public_path('storage' . DIRECTORY_SEPARATOR . $file['path']))->as($file['file_name'])
-    //         );
-    //     }
-    //     return $Attachments;
-    // }
+
+    public function attachments(): array
+    {
+        return [];
+    }
 }

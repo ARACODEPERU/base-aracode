@@ -10,9 +10,15 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Address;
 
-class SendClaimConfirmationEmail extends Mailable
+class SendClaimConfirmationEmail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    /** @var int Intentos, compatibles con el worker general. */
+    public int $tries = 3;
+
+    /** @var array<int, int> Demoras entre reintentos, en segundos. */
+    public array $backoff = [60, 300];
 
     protected $data;
 

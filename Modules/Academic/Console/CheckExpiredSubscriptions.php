@@ -71,7 +71,7 @@ class CheckExpiredSubscriptions extends Command
                 $studentName = $this->getStudentName($subscription->student_id);
 
                 if ($studentEmail) {
-                    Mail::to($studentEmail)->send(new SubscriptionExpired($subscription, $studentName));
+                    Mail::to($studentEmail)->queue(new SubscriptionExpired($subscription, $studentName));
                     $notifiedCount++;
                     $this->info("✉️ Correo de notificación enviado a {$studentEmail}.");
                 } else {

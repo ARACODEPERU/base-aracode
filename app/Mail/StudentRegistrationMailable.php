@@ -9,10 +9,17 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use App\Support\MailSender;
 
-class StudentRegistrationMailable extends Mailable
+class StudentRegistrationMailable extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    /** @var int Intentos, compatibles con el worker general. */
+    public int $tries = 3;
+
+    /** @var array<int, int> Demoras entre reintentos, en segundos. */
+    public array $backoff = [60, 300];
 
     /**
      * Create a new message instance.
@@ -31,14 +38,14 @@ class StudentRegistrationMailable extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME')),
+            from: new Address(MailSender::address(), MailSender::name()),
             subject: 'Student Registration Mailable',
         );
     }
 
     public function build()
     {
-        return $this->view('capperu.email.gratitude', [
+        return $this->view('emails.grattitude_landing', [
             'data' => $this->data
         ]);
     }

@@ -4,7 +4,6 @@ namespace Modules\Integrationhub\Console;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
 use Modules\Integrationhub\Jobs\ProcessCarritoAbandonado;
 use Modules\Onlineshop\Entities\OnliCarritoAbandonado;
 
@@ -35,11 +34,10 @@ class CarritoAbandonado extends Command
         $this->info("Encontrados {$records->count()} registros por revisar.");
 
         foreach ($records as $record) {
-            $recipientEmail = $record->email;
-            $recipientEmail = "notiene@correo.com";
+            $phone = ($record->phone_country ? ltrim($record->phone_country, '+') : '') . trim((string) $record->phone);
 
-            if (!$recipientEmail) {
-                $this->warn("Registro {$record->id}: sin email, no se puede enviar correo.");
+            if ($phone === '') {
+                $this->warn("Registro {$record->id}: sin teléfono, no se puede enviar a IntegrationHub.");
                 $record->update([
                     'notification_sent_at' => Carbon::now(),
                     'notification_count' => $record->notification_count + 1,
@@ -47,15 +45,13 @@ class CarritoAbandonado extends Command
                 continue;
             }
 
-            $phone = ($record->phone_country ? ltrim($record->phone_country, '+') : '') . $record->phone;
+            // Reservar el registro antes de encolar para evitar jobs duplicados
+            // mientras el worker procesa la ejecución de IntegrationHub.
+            $record->update(['notification_sent_at' => Carbon::now()]);
 
-          //Activar esto y mas adelante pasar el id de plantilla
-            ProcessCarritoAbandonado::dispatch(
-                $record->id,
-                $phone
-            );
+            ProcessCarritoAbandonado::dispatch($record->id, $phone);
 
-            $this->info("Job encolado para {$recipientEmail} (registro {$record->id}).");
+            $this->info("Job de IntegrationHub encolado para el registro {$record->id}.");
         }
 
         $this->info('Revisión de carritos abandonados completada. Jobs enviados al queue:work.');

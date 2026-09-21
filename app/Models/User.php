@@ -76,7 +76,7 @@ class User extends Authenticatable
 
     public function sendEmailVerificationNotification()
     {
-        Mail::to($this->email)->send(new VerifyEmail($this));
+        Mail::to($this->email)->queue(new VerifyEmail($this));
     }
 
     public function verificationUrl()

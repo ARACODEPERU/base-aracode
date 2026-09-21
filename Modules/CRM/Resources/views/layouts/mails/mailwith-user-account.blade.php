@@ -6,7 +6,7 @@
 
     <head>
         <link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
-        <title>{{ env('APP_NAME', 'Aracode Peru') }}</title>
+        <title>{{ config('app.name', 'Aracode Peru') }}</title>
         <style type="text/css">
             div,
             p,

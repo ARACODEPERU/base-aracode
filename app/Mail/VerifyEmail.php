@@ -9,15 +9,28 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class VerifyEmail extends Mailable
+class VerifyEmail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $user;
 
+    /**
+     * URL firmada, resuelta ANTES de encolar: la URL es temporal y un reintento
+     * no debe emitir un enlace distinto al que ya se envio al usuario.
+     */
+    public string $url;
+
+    /** @var int Intentos, compatibles con el worker general. */
+    public int $tries = 3;
+
+    /** @var array<int, int> Demoras entre reintentos, en segundos. */
+    public array $backoff = [60, 300];
+
     public function __construct($user)
     {
         $this->user = $user;
+        $this->url = $user->verificationUrl();
     }
 
     /**
@@ -38,7 +51,7 @@ class VerifyEmail extends Mailable
         return $this->view('emails.verify')
             ->subject('Verifica tu correo electrónico')
             ->with([
-                'url' => $this->user->verificationUrl(),
+                'url' => $this->url,
             ]);
     }
 

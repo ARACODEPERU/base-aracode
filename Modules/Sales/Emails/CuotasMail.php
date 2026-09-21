@@ -9,10 +9,14 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Address;
+use App\Support\MailSender;
 
-class CuotasMail extends Mailable
+class CuotasMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public array $backoff = [60, 300];
 
     public $data;
     public $person;
@@ -34,10 +38,10 @@ class CuotasMail extends Mailable
     {
         return new Envelope(
             from: new Address(
-                env('MAIL_FROM_ADDRESS', 'informes@globalcpaperu.com'),
-                env('MAIL_FROM_NAME', 'CPA Academy')
+                MailSender::address(),
+                MailSender::name()
             ),
-            subject: 'Gracias por estar con nosotros - ' . env('APP_NAME', 'CPA Academy'),
+            subject: 'Gracias por estar con nosotros - ' . config('app.name'),
         );
     }
 

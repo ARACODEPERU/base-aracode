@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Mail;
 use Modules\Academic\Emails\StudentElectronicTicket;
+use Modules\Academic\Jobs\SendStudentElectronicTicketJob;
 use App\Helpers\Invoice\Documents\Boleta;
 use App\Helpers\NumberLetter;
 use App\Models\Parameter;
@@ -65,16 +66,16 @@ class SendBoletaJob implements ShouldQueue
                 $dataFile = $this->generateBoletaPDF($document->id);
 
                 $emailData = [
-                    'from_mail' => env('MAIL_FROM_ADDRESS', "informes@globalcpaperu.com"),
-                    'from_name' => env('MAIL_FROM_NAME', "CPA Academy"),
+                    'from_mail' => config('mail.from.address'),
+                    'from_name' => config('mail.from.name'),
                     'title' => 'Hola! Llegó tu comprobante electrónico',
                     'for_mail' => $person_email,
                     'for_name' => $person_name,
                     'file_path' => $dataFile['filePath'],
-                    'file_name' => $dataFile['fileName']
+                    'file_name' => $dataFile['fileName'],
+                    'document_id' => $document->id,
                 ];
-                //dd($emailData);
-                Mail::to(trim($person_email))->send(new StudentElectronicTicket($emailData));
+                dispatch(new SendStudentElectronicTicketJob($emailData));
             }
         } catch (\Exception $e) {
             // Lanzar una excepción con un mensaje descriptivo

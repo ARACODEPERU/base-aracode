@@ -49,7 +49,7 @@ class PasswordResetLinkController extends Controller
 
 
         // Envía la notificación personalizada
-        Mail::to($user->email)->send(new ResetPassword($user));
+        Mail::to($user->email)->queue(new ResetPassword($user));
 
         return back()->with('status', __('Se ha enviado el enlace de restablecimiento de contraseña.'));
     }

@@ -841,7 +841,7 @@ class WebPageController extends Controller
 
         try {
             Mail::to($onliSale->email ?: $person->email)
-                ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $onliSale->id)->first()));
+                ->queue(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $onliSale->id)->first()));
         } catch (\Throwable $e) {
             $onliSale->email_sent = false;
             $onliSale->save();
@@ -1188,7 +1188,7 @@ class WebPageController extends Controller
             // Email al admin (no bloquea el registro)
             try {
                 $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-                Mail::to($adminEmail)->send(new \App\Mail\ContactFormMailable($validated));
+                Mail::to($adminEmail)->queue(new \App\Mail\ContactFormMailable($validated));
             } catch (\Throwable $mailError) {
                 \Log::error('Contacto: el mensaje se guardo pero no se pudo notificar por correo: ' . $mailError->getMessage(), [
                     'exception' => $mailError,
@@ -1325,7 +1325,7 @@ class WebPageController extends Controller
 
             // Emails como tarea secundaria (no bloquean el registro)
             try {
-                Mail::to($validated['email'])->send(new \App\Mail\BlogSubscriberWelcomeMail(
+                Mail::to($validated['email'])->queue(new \App\Mail\BlogSubscriberWelcomeMail(
                     $subscriber->name ?: 'Suscriptor',
                     $validated['email']
                 ));
@@ -1338,7 +1338,7 @@ class WebPageController extends Controller
 
             try {
                 $adminEmail = config('mail.admin_email', 'contacto@aracodeperu.com');
-                Mail::to($adminEmail)->send(new \App\Mail\BlogSubscriberAdminMail(
+                Mail::to($adminEmail)->queue(new \App\Mail\BlogSubscriberAdminMail(
                     $subscriber->name ?: 'Sin nombre',
                     $validated['email']
                 ));
@@ -1900,7 +1900,7 @@ class WebPageController extends Controller
 
                     ///enviar correo
                     Mail::to($sale->email)
-                        ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $id)->first()));
+                        ->queue(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $id)->first()));
 
                     $sale->save();
                     $this->enviar_correo_con_cursos($id);
@@ -1983,7 +1983,7 @@ class WebPageController extends Controller
 
         //////////codigo enviar correo /////
         Mail::to($person->email)
-            ->send(new StudentRegistrationMailable([
+            ->queue(new StudentRegistrationMailable([
                 'courses'   => $courses,
                 'names'     => $person->names,
                 'email'      => $person->email,
@@ -2131,7 +2131,7 @@ class WebPageController extends Controller
             ];
 
             //////////codigo enviar correo /////
-            Mail::to($request->email)->send(new StudentRegistrationMailable([
+            Mail::to($request->email)->queue(new StudentRegistrationMailable([
                 'courses'   => $courses,
                 'names'     => $request->nombres,
                 'user'      => $request->email,

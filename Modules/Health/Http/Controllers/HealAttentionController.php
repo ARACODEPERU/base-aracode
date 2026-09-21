@@ -344,7 +344,7 @@ class HealAttentionController extends Controller
         }
 
         $doctor->update(['signature_pin_hash' => null]);
-        Mail::to($user->email)->send(new ResetPassword($user));
+        Mail::to($user->email)->queue(new ResetPassword($user));
 
         HealAttentionAudit::create([
             'actor_user_id' => Auth::id(),

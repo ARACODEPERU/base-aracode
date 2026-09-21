@@ -3,12 +3,14 @@
 namespace Modules\Commercial\Emails;
 
 use App\Models\SaleDocument;
+use App\Support\MailAttachmentResolver;
 use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -18,20 +20,19 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $negotiation;
+    public CommercialNegotiation $negotiation;
+    public SaleDocument $document;
+    /** @var array<string, mixed> */
+    public array $dataFile;
+    /** @var array<string, string>|null */
+    public ?array $credentials;
+    public int $tries = 3;
+    public array $backoff = [60, 300];
 
-    public $document;
-
-    public $dataFile;
-
-    public $credentials;
-
-    /** @var int Número máximo de intentos, compatible con el worker general. */
-    public $tries = 3;
-
-    /** @var array<int, int> Demoras entre reintentos, en segundos. */
-    public $backoff = [60, 300];
-
+    /**
+     * @param array<string, mixed> $dataFile
+     * @param array<string, string>|null $credentials
+     */
     public function __construct(CommercialNegotiation $negotiation, SaleDocument $document, array $dataFile, ?array $credentials = null)
     {
         $this->negotiation = $negotiation;
@@ -43,27 +44,59 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address(
-                MailSender::address('informes@globalcpaperu.com'),
-                MailSender::name()
+            from: new Address(MailSender::address('informes@globalcpaperu.com'), MailSender::name()),
+            replyTo: MailSender::replyTo(
+                $this->negotiation->client?->email,
+                $this->negotiation->client?->full_name,
             ),
-            subject: '¡Tu inscripción ha sido confirmada! 🎉'
+            subject: '¡Tu inscripción ha sido confirmada! 🎉',
         );
     }
 
-    public function build()
+    public function content(): Content
     {
-        return $this->view('commercial::emails.commercial-negotiation-document', [
-            'negotiation' => $this->negotiation,
-            'document' => $this->document,
-            'credentials' => $this->credentials,
-        ]);
+        return new Content(
+            view: 'commercial::emails.commercial-negotiation-document',
+            with: [
+                'negotiation' => $this->negotiation,
+                'document' => $this->document,
+                'credentials' => $this->credentials,
+            ],
+        );
     }
 
-    /**
-     * Si el worker agota los intentos, permite reintentar el paso desde Commercial
-     * en lugar de dejarlo marcado como enviado indefinidamente.
-     */
+    public function attachments(): array
+    {
+        $attachments = [];
+        $pdf = $this->dataFile['pdf'] ?? null;
+
+        if (! is_array($pdf) || empty($pdf['filePath'])) {
+            throw new \RuntimeException('El PDF del comprobante es obligatorio para enviar el correo.');
+        }
+
+        $attachments[] = MailAttachmentResolver::required(
+            (string) $pdf['filePath'],
+            (string) ($pdf['fileName'] ?? 'comprobante.pdf'),
+            $this->diskForPath((string) $pdf['filePath']),
+        );
+
+        $xml = $this->dataFile['xml'] ?? null;
+
+        if (is_array($xml) && ! empty($xml['filePath'])) {
+            $optional = MailAttachmentResolver::optional(
+                (string) $xml['filePath'],
+                (string) ($xml['fileName'] ?? 'comprobante.xml'),
+                $this->diskForPath((string) $xml['filePath']),
+            );
+
+            if ($optional instanceof Attachment) {
+                $attachments[] = $optional;
+            }
+        }
+
+        return $attachments;
+    }
+
     public function failed(\Throwable $exception): void
     {
         $negotiation = $this->negotiation->fresh();
@@ -80,26 +113,13 @@ class CommercialNegotiationDocumentMail extends Mailable implements ShouldQueue
 
         Log::error('CommercialNegotiationDocumentMail failed', [
             'negotiation_id' => $this->negotiation->getKey(),
+            'document_id' => $this->document->getKey(),
             'message' => $exception->getMessage(),
         ]);
     }
 
-    public function attachments(): array
+    private function diskForPath(string $path): string
     {
-        $attachments = [];
-
-        $pdf = $this->dataFile['pdf'] ?? null;
-
-        if (isset($pdf['filePath']) && file_exists($pdf['filePath'])) {
-            $attachments[] = Attachment::fromPath($pdf['filePath'])->as($pdf['fileName']);
-        }
-
-        $xml = $this->dataFile['xml'] ?? null;
-
-        if (isset($xml['filePath']) && file_exists($xml['filePath'])) {
-            $attachments[] = Attachment::fromPath($xml['filePath'])->as($xml['fileName']);
-        }
-
-        return $attachments;
+        return str_contains(str_replace('\\', '/', $path), '/storage/app/') ? 'local' : 'public';
     }
 }

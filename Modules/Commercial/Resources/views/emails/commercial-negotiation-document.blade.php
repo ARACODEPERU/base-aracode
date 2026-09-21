@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ env('APP_NAME', 'Global CPA') }} - Inscripción confirmada</title>
+    <title>{{ config('app.name', 'Global CPA') }} - Inscripción confirmada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -248,7 +248,7 @@
         <br>
         <footer>
             <p style="text-align: center; font-size: 15px; color: #fff;">
-                &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por
+                &copy; Derechos Reservados {{ config('app.name') }} | Desarrollado por
                 <a href="https://aracodeperu.com/">Aracode Smart Solutions</a>
             </p>
         </footer>

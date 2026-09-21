@@ -191,7 +191,7 @@ Detalle de tu compra
                     </th>
                 </tr>
             </thead>
-            @if ($sale->items->count() > 0)
+            @if ($sale && $sale->items->count() > 0)
 
             <!-- Cuerpo de la tabla -->
             <tbody>
@@ -225,7 +225,11 @@ Detalle de tu compra
             </tfoot>
             @else
                     <p style="text-align: center; color: #7f8c8d; font-style: italic; padding: 20px;">
-                        La venta no contiene elementos detallados.
+                        @if ($sale)
+                            La venta no contiene elementos detallados.
+                        @else
+                            El detalle de la venta no está disponible. El comprobante se encuentra adjunto.
+                        @endif
                     </p>
             @endif
         </table>
@@ -285,7 +289,7 @@ academy.globalcpaperu.com<br>
         <br>
         <footer>
             <p style="text-align: center; font-size: 15px;">
-                &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por <a href="https://aracodeperu.com/"
+                &copy; Derechos Reservados {{ config('app.name') }} | Desarrollado por <a href="https://aracodeperu.com/"
                     style="">Aracode Smart Solutions</a>
             </p>
         </footer>

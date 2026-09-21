@@ -2,20 +2,24 @@
 
 namespace Modules\Academic\Emails;
 
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 
-class ConfirmPurchaseSubscription extends Mailable
+class ConfirmPurchaseSubscription extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    protected $data;
+    public mixed $data;
+    public int $tries = 3;
+    public array $backoff = [60, 300];
 
-    public function __construct($data)
+    public function __construct(mixed $data)
     {
         $this->data = $data;
     }
@@ -23,15 +27,21 @@ class ConfirmPurchaseSubscription extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME')),
-            subject: 'Student Registration Mailable',
+            from: new Address(MailSender::address(), MailSender::name()),
+            subject: 'Confirmación de compra de suscripción - ' . config('app.name'),
         );
     }
 
-    public function build()
+    public function content(): Content
     {
-        return $this->view('academic::emails.subscription_gratitude', [
-            'data' => $this->data
-        ]);
+        return new Content(
+            view: 'academic::emails.subscription_gratitude',
+            with: ['data' => $this->data],
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [];
     }
 }

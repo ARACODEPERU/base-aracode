@@ -205,7 +205,7 @@ class StudentSubscription
             ]);
 
             Mail::to($sale->email)
-                ->send(new ConfirmPurchaseSubscription($sale));
+                ->queue(new ConfirmPurchaseSubscription($sale));
 
             return $sale;
         } else {

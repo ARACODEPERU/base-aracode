@@ -2,42 +2,50 @@
 
 namespace Modules\CRM\Emails;
 
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 
-class PersonalizedEmailStudent extends Mailable
+class PersonalizedEmailStudent extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    protected $data;
+    /** @var array<string, mixed> */
+    protected array $data;
 
-    public function __construct($data)
+    public int $tries = 3;
+    public array $backoff = [60, 300];
+
+    /** @param array<string, mixed> $data */
+    public function __construct(array $data)
     {
         $this->data = $data;
     }
+
     public function envelope(): Envelope
     {
-        $from_mail = $this->data['from_mail'];
-        $from_name = $this->data['from_name'];
-        $title = $this->data['title'];
-        $title = $this->data['title'];
-
         return new Envelope(
-            from: new Address($from_mail, $from_name),
-            subject: $title,
+            from: new Address(MailSender::address(), MailSender::name()),
+            replyTo: MailSender::replyTo($this->data['from_mail'] ?? null, $this->data['from_name'] ?? null),
+            subject: (string) ($this->data['title'] ?? 'Mensaje de CPA Academy'),
         );
     }
-    /**
-     * Build the message.
-     */
-    public function build(): self
+
+    public function content(): Content
     {
-        return $this->view('crm::mails.personalize-email-student', [
-            'data' => $this->data
-        ]);
+        return new Content(
+            view: 'crm::mails.personalize-email-student',
+            with: ['data' => $this->data],
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [];
     }
 }
