@@ -14,6 +14,7 @@ use Modules\Socialevents\Http\Controllers\EventEditionMatchController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchReportController;
 use Modules\Socialevents\Http\Controllers\EventEditionMatchSanctionController;
 use Modules\Socialevents\Http\Controllers\EventEditionPlayerExclusionController;
+use Modules\Socialevents\Http\Controllers\EventEditionPlayerSuspensionController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
@@ -129,6 +130,9 @@ Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function 
     Route::middleware(['middleware' => 'permission:even_ediciones_exclusiones'])->get('editions/{id}/exclusions', [EventEditionPlayerExclusionController::class, 'index'])->name('even_ediciones_exclusiones');
     Route::middleware(['middleware' => 'permission:even_ediciones_exclusiones'])->post('editions/{id}/exclusions/store', [EventEditionPlayerExclusionController::class, 'store'])->name('even_ediciones_exclusiones_store');
     Route::middleware(['middleware' => 'permission:even_ediciones_exclusiones'])->delete('editions/{eId}/exclusions/{exclusionId}/destroy', [EventEditionPlayerExclusionController::class, 'destroy'])->name('even_ediciones_exclusiones_destroy');
+    Route::middleware(['middleware' => 'permission:even_ediciones_suspensiones'])->get('editions/{id}/suspensions', [EventEditionPlayerSuspensionController::class, 'index'])->name('even_ediciones_suspensiones');
+    Route::middleware(['middleware' => 'permission:even_ediciones_suspensiones'])->post('editions/{id}/suspensions/store', [EventEditionPlayerSuspensionController::class, 'store'])->name('even_ediciones_suspensiones_store');
+    Route::middleware(['middleware' => 'permission:even_ediciones_suspensiones'])->delete('editions/{eId}/suspensions/{suspensionId}/destroy', [EventEditionPlayerSuspensionController::class, 'destroy'])->name('even_ediciones_suspensiones_destroy');
 });
 
 // Ruta pública para landing de torneos

@@ -313,6 +313,19 @@ class MatchAdminController extends Controller
             'players_a' => 'nullable|array',
         ]);
 
+        // Bloqueo: jugadores suspendidos no pueden participar en el acta
+        $suspendedPlaying = app(\Modules\Socialevents\Services\PlayerSuspensionService::class)
+            ->findSuspendedParticipating($match, $validated['players_h'] ?? null, $validated['players_a'] ?? null);
+
+        if (! empty($suspendedPlaying)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede guardar el acta: ' . implode(', ', $suspendedPlaying)
+                    . ' está suspendido y no puede participar en este partido.',
+                'suspended_players' => $suspendedPlaying,
+            ], 422);
+        }
+
         DB::transaction(function () use ($match, $validated) {
             $match->update([
                 'score_h' => $validated['score_h'],

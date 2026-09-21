@@ -50,12 +50,13 @@
         minutes_subject_visitor: props.accordance.partido.equipovisitante.name,
         participants: [
             {
-                person_id: props.accordance.partido.equipolocal.manager.id,
-                full_name: props.accordance.partido.equipolocal.manager.full_name,
+                // Protegido: un equipo puede no tener delegado asignado
+                person_id: props.accordance.partido.equipolocal.manager?.id ?? null,
+                full_name: props.accordance.partido.equipolocal.manager?.full_name ?? null,
             },
             {
-                person_id: props.accordance.partido.equipovisitante.manager.id,
-                full_name: props.accordance.partido.equipovisitante.manager.full_name,
+                person_id: props.accordance.partido.equipovisitante.manager?.id ?? null,
+                full_name: props.accordance.partido.equipovisitante.manager?.full_name ?? null,
             }
         ],
         has_protest: props.accordance.has_protest || false,

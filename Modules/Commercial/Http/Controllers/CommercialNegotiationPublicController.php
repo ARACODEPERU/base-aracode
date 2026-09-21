@@ -3,7 +3,7 @@
 namespace Modules\Commercial\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Mail\CommercialNegotiationConfirmedMail;
+use App\Jobs\SendNegotiationConfirmedNotification;
 use App\Models\BankAccount;
 use App\Models\Country;
 use App\Models\District;
@@ -16,7 +16,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialNegotiation;
@@ -596,14 +596,23 @@ class CommercialNegotiationPublicController extends Controller
     {
         $asesor = $negotiation->creator;
 
-        if (! $asesor || ! $asesor->email) {
-            return;
-        }
+        $asesorEmail = $asesor->email ?? null;
 
         try {
-            Mail::to($asesor->email)->send(new CommercialNegotiationConfirmedMail($negotiation, $client));
-        } catch (\Exception $e) {
+            // Un solo correo en cola: asesor en "Para" y administradores/vendedores
+            // (parametro PN00001) en copia oculta. Enviar varios correos seguidos
+            // activaba la proteccion del servidor SMTP y solo pasaban 1 o 2.
+            SendNegotiationConfirmedNotification::dispatch(
+                (int) $negotiation->id,
+                (int) $client->id,
+                $asesorEmail
+            );
+        } catch (\Throwable $e) {
             // El aviso por correo no debe interrumpir el registro de la negociacion.
+            Log::error('No se pudo programar la notificacion de negociacion confirmada', [
+                'negotiation_id' => $negotiation->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

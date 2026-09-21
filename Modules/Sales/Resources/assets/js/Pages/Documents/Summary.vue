@@ -15,6 +15,8 @@
     import iconFileCode from '@/Components/vristo/icon/icon-file-code.vue';
     import iconZipFile from '@/Components/vristo/icon/icon-zip-file.vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
+    import ModalSmall from '@/Components/ModalSmall.vue';
+    import IconRefresh from "@/Components/vristo/icon/icon-refresh.vue";
 
     const props = defineProps({
         summaries: {
@@ -301,6 +303,80 @@ const displaySearchLoading = ref(false);
         });
     }
 
+    // ===== Cambiar estado del resumen (volver a consultar aprobación en SUNAT) =====
+    const displayModalChangeStatus = ref(false);
+    const statusTarget = ref(null);
+    const statusForm = useForm({
+        id: null,
+        status: 'Enviado',
+    });
+
+    const allowedStatuses = [
+        { value: 'Enviado', label: 'Enviado (habilita el botón Consultar en SUNAT)' },
+        { value: 'sunat_disponible', label: 'SUNAT no disponible (habilita Reintentar)' },
+        { value: 'fue_enviado', label: 'Ya enviado' },
+        { value: 'Rechazado', label: 'Rechazado' },
+        { value: 'registrado', label: 'Registrado' },
+    ];
+
+    const openChangeStatusModal = (summary) => {
+        statusTarget.value = summary;
+        statusForm.id = summary.id;
+        // Con ticket se puede volver a consultar (Enviado); sin ticket solo reenviar
+        statusForm.status = summary.ticket ? 'Enviado' : 'sunat_disponible';
+        displayModalChangeStatus.value = true;
+    };
+
+    const closeChangeStatusModal = () => {
+        displayModalChangeStatus.value = false;
+    };
+
+    const savingStatus = ref(false);
+
+    const confirmChangeStatus = () => {
+        savingStatus.value = true;
+        axios.post(route('salesummaries_update_status', statusForm.id), {
+            status: statusForm.status,
+        }).then((res) => {
+            if (res.data.success) {
+                Swal.fire({
+                    title: 'Información Importante',
+                    text: res.data.message || 'Estado actualizado correctamente',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+                displayModalChangeStatus.value = false;
+                router.visit(route('salesummaries_list'), {
+                    replace: false,
+                    preserveState: true,
+                    preserveScroll: true,
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: res.data.message || 'No se pudo actualizar el estado',
+                    icon: 'error',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            }
+            savingStatus.value = false;
+        }).catch((err) => {
+            const msg = err?.response?.data?.message
+                || err?.response?.data?.errors?.status?.[0]
+                || 'No se pudo actualizar el estado';
+            Swal.fire({
+                title: 'Error',
+                text: msg,
+                icon: 'error',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            savingStatus.value = false;
+        });
+    };
+
     const  openDownloadTap = (id,type) => {
         window.open(route('salesummaries_download',[id,type]), "_blank");
     }
@@ -314,6 +390,25 @@ const displaySearchLoading = ref(false);
     const cloceModalDetailsDocuments = () => {
         displayModalDetailDocuments.value = false;
     }
+
+    // ===== Detalles del resumen: boletas y documentos afectados =====
+    const docTypeLabel = (code) => {
+        const types = {
+            '01': 'Factura',
+            '03': 'Boleta',
+            '07': 'Nota de Crédito',
+            '08': 'Nota de Débito',
+        };
+        return types[code] ?? code;
+    };
+
+    const detailTotals = computed(() => {
+        const details = detailDocuments.value?.details ?? [];
+        return {
+            count: details.length,
+            total: details.reduce((acc, d) => acc + parseFloat(d.total ?? d.document?.overall_total ?? 0), 0),
+        };
+    });
 
     const displayModalSunatCodes = ref(false);
     const openModalSunatCodes = () => { displayModalSunatCodes.value = true; }
@@ -497,7 +592,7 @@ const displaySearchLoading = ref(false);
                                     <tr :class="summary.status ==='registrado' ? '' : summary.status ==='Rechazado' ? 'text-danger': summary.status ==='Enviado'? 'text-success' : summary.status ==='sunat_disponible' ? 'text-warning' : summary.status ==='fue_enviado' ? 'text-secondary' : 'text-primary'">
                                         <td class="text-center">
                                             <div class="flex space-x-2 items-center justify-center">
-                                                <button :id="'btn-check-summary'+index" @click="statusTicket(summary.id,summary.ticket,index)" v-if="summary.status ==='Enviado'" type="button" class="btn btn-info text-sm btn-sm flex">
+                                                <button :id="'btn-check-summary'+index" @click="statusTicket(summary.id,summary.ticket,index)" v-if="summary.ticket && (summary.status ==='Enviado' || (summary.status ==='Rechazado' && summary.response_code == 'HTTP'))" type="button" class="btn btn-info text-sm btn-sm flex">
                                                     <svg :id="'sp-check-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
@@ -510,6 +605,14 @@ const displaySearchLoading = ref(false);
                                                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
                                                     </svg>
                                                     Reintentar
+                                                </button>
+                                                <button v-if="summary.status !== 'Aceptado'"
+                                                    @click="openChangeStatusModal(summary)"
+                                                    type="button"
+                                                    class="text-primary"
+                                                    v-tippy="{ content: 'Cambiar estado (volver a consultar SUNAT)', placement: 'bottom'}"
+                                                >
+                                                    <IconRefresh class="w-5 h-5" />
                                                 </button>
                                                 <button :id="'btn-delete-summary'+index" @click="deleteSummary(summary.id,index)" v-if="summary.status ==='Rechazado'" type="button" class="btn btn-danger text-sm btn-sm flex">
                                                     <svg :id="'sp-delete-summary'+index" style="display: none;" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -535,11 +638,11 @@ const displaySearchLoading = ref(false);
                                                     <icon-zip-file class="w-5 h-5" />
 
                                                 </button>
-                                                <button v-if="summary.status ==='Aceptado'"
+                                                <button
                                                     @click="openModalDetailsDocuments(summary)"
                                                     type="button"
                                                     class="text-info"
-                                                    v-tippy="{ content: 'Lista de Boletas', placement: 'bottom'}"
+                                                    v-tippy="{ content: 'Ver detalles (boletas afectadas)', placement: 'bottom'}"
                                                 >
                                                     <svg class="w-5 h-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
                                                         <path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM80 64l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L80 96c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm16 96l192 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32L96 352c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32zm0 32l0 64 192 0 0-64L96 256zM240 416l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/>
@@ -731,28 +834,64 @@ const displaySearchLoading = ref(false);
         </ModalLargeX>
         <ModalLarge :show="displayModalDetailDocuments" :onClose="cloceModalDetailsDocuments" :icon="'/img/lupa-documento.png'">
             <template #title>{{ detailDocuments.summary_name }}</template>
-            <template #message>Lista de boletas</template>
+            <template #message>
+                Boletas y documentos incluidos en este resumen
+                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-900/50 dark:text-blue-300">{{ detailDocuments.status }}</span>
+            </template>
             <template #content>
-                <div class="max-h-96 overflow-y-auto">
-                    <table>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-sm">
+                    <div>
+                        <p class="text-xs text-gray-500">Fecha de generación</p>
+                        <p class="font-semibold">{{ detailDocuments.summary_date }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Ticket SUNAT</p>
+                        <p class="font-semibold"><code>{{ detailDocuments.ticket || '—' }}</code></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Documentos</p>
+                        <p class="font-semibold">{{ detailTotals.count }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Total afectado</p>
+                        <p class="font-semibold">S/ {{ detailTotals.total.toFixed(2) }}</p>
+                    </div>
+                </div>
+                <div v-if="detailDocuments.details && detailDocuments.details.length" class="max-h-96 overflow-y-auto">
+                    <table class="w-full">
                         <thead>
                             <tr>
-                                <th>Serie - Numero</th>
+                                <th>Tipo</th>
+                                <th>Serie - Número</th>
                                 <th>Cliente</th>
-                                <th class="text-center">total</th>
+                                <th class="text-right">Total</th>
+                                <th class="text-center">Registro</th>
+                                <th class="text-center">SUNAT</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <template v-for="item in detailDocuments.details">
-                                <tr>
-                                    <td>{{ item.document.invoice_serie }}-{{ item.document.invoice_correlative }}</td>
-                                    <td>{{ item.document.client_rzn_social }}</td>
-                                    <td class="text-right">{{ item.document.overall_total }}</td>
-                                </tr>
-                            </template>
+                            <tr v-for="item in detailDocuments.details" :key="item.id" class="text-sm border-b border-default">
+                                <td>{{ docTypeLabel(item.invoice_type_doc) }}</td>
+                                <td>{{ item.invoice_serie }}-{{ item.invoice_correlative }}</td>
+                                <td>
+                                    {{ item.document?.client_rzn_social ?? '—' }}
+                                    <span v-if="item.document?.client_number" class="block text-xs text-gray-500">{{ item.document.client_number }}</span>
+                                </td>
+                                <td class="text-right">{{ Number(item.total ?? item.document?.overall_total ?? 0).toFixed(2) }}</td>
+                                <td class="text-center">
+                                    <span v-if="item.status == 1" class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-gray-700 dark:text-yellow-300 border border-yellow-300">Registrado</span>
+                                    <span v-else class="bg-red-100 text-red-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-gray-700 dark:text-red-400 border border-red-400">Anulado</span>
+                                </td>
+                                <td class="text-center">
+                                    <span v-if="item.document" class="text-xs">{{ item.document.invoice_status }}</span>
+                                    <span v-else class="text-xs text-gray-400">Sin documento</span>
+                                    <code v-if="item.document?.invoice_response_code" class="block text-[10px] text-gray-500">{{ item.document.invoice_response_code }} - {{ item.document.invoice_response_description }}</code>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
+                <p v-else class="text-sm text-center text-gray-500 py-4">No hay documentos asociados a este resumen.</p>
             </template>
         </ModalLarge>
 
@@ -783,5 +922,47 @@ const displaySearchLoading = ref(false);
                 </div>
             </template>
         </ModalLarge>
+
+        <!-- Modal Cambiar Estado -->
+        <ModalSmall :show="displayModalChangeStatus" :onClose="closeChangeStatusModal" :icon="'/img/lupa-documento.png'">
+            <template #title>
+                Cambiar estado del resumen
+            </template>
+            <template #message>
+                {{ statusTarget ? statusTarget.summary_name : '' }}
+            </template>
+            <template #content>
+                <p v-if="statusTarget" class="text-sm mb-3">
+                    Estado actual: <span class="font-semibold">{{ statusTarget.status }}</span>.
+                    <template v-if="statusTarget.ticket">
+                        Cambia el estado a <span class="font-semibold">Enviado</span> para habilitar el botón
+                        <span class="font-semibold">Consultar</span> y volver a pedir a SUNAT el resultado de
+                        aprobación usando el ticket <code>{{ statusTarget.ticket }}</code>.
+                    </template>
+                    <template v-else>
+                        Este resumen <span class="font-semibold">no tiene ticket</span> (SUNAT nunca procesó el envío,
+                        ej. error HTTP / Bad Request). Cambia el estado a
+                        <span class="font-semibold">SUNAT no disponible</span> y usa el botón
+                        <span class="font-semibold">Reintentar</span> para reenviar el comprobante.
+                    </template>
+                </p>
+                <label class="block text-sm font-medium mb-1">Nuevo estado</label>
+                <select v-model="statusForm.status" class="form-select">
+                    <option v-for="opt in allowedStatuses" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+                <p v-if="statusForm.status === 'Enviado'" class="text-xs text-info mt-2">
+                    Recomendado: habilita la consulta del ticket en SUNAT sin reenviar el comprobante.
+                </p>
+            </template>
+            <template #buttons>
+                <PrimaryButton
+                    class="mr-2"
+                    :class="{ 'opacity-25': savingStatus }" :disabled="savingStatus"
+                    @click="confirmChangeStatus()"
+                >
+                    Guardar
+                </PrimaryButton>
+            </template>
+        </ModalSmall>
     </AppLayout>
 </template>

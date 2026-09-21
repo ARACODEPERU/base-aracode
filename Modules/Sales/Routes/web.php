@@ -167,6 +167,7 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         Route::get('salesummary/destroy/{id}', [SaleSummaryController::class, 'destroySummary'])->name('salesummaries_destroy');
         Route::get('salesummary/download/{id}/{type}', [SaleSummaryController::class, 'downloadFile'])->name('salesummaries_download');
         Route::get('salesummary/retry/{id}', [SaleSummaryController::class, 'retrySummary'])->name('salesummaries_retry');
+        Route::post('salesummary/status/{id}', [SaleSummaryController::class, 'updateStatus'])->name('salesummaries_update_status');
     });
 
     // //rutas de comunicacion de baja

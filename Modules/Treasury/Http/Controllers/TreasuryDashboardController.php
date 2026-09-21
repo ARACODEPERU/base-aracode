@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Modules\Treasury\Entities\TreasuryAccount;
+use Modules\Treasury\Entities\TreasuryCategory;
 use Modules\Treasury\Entities\TreasuryTransaction;
 use Modules\Treasury\Services\TreasuryLedgerService;
 

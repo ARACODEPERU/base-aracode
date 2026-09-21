@@ -17,18 +17,17 @@
                 </div>
             </div>
             <div v-else>
-                <div class="relative">
-                    <input type="file" ref="input" @change="onChange" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                    <div class="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-400 transition-colors bg-gray-50 dark:bg-gray-800">
-                        <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <label
+                    class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
-                            <span class="font-medium">Haz clic para seleccionar</span> o arrastra y suelta
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PNG, JPG, GIF hasta 10MB</p>
+                        <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click para subir</span> o arrastra y suelta</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG o WEBP</p>
                     </div>
-                </div>
+                    <input ref="input" type="file" class="hidden" accept="image/*" @change="onChange" />
+                </label>
                 <p class="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
                     Selecciona una imagen para recortar. Asegúrate de que sea clara y de buena calidad.
                 </p>
@@ -41,6 +40,11 @@ import 'cropperjs/dist/cropper.css';
 import Cropper from 'cropperjs';
 
 const PLACEHOLDER_IMAGE = '/img/image-3@2x.jpg';
+
+// Resolucion maxima del recorte exportado (evita base64 gigantes que revientan el POST)
+const MAX_EXPORT_DIMENSION = 1600;
+// Calidad de exportacion para JPEG/WEBP
+const EXPORT_QUALITY = 0.85;
 
 export default {
   props: {
@@ -55,6 +59,12 @@ export default {
     imgDefault: {
       type: String,
       default: PLACEHOLDER_IMAGE
+    },
+    // Cuando es true, solo emite onCrop cuando el usuario suelta el recorte.
+    // Los usos existentes sin esta prop mantienen el comportamiento anterior.
+    emitOnCropEnd: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -62,6 +72,7 @@ export default {
       imageSrc: '',
       isLoading: false,
       cropper: null,
+      userImage: false,
     };
   },
   mounted() {
@@ -88,6 +99,7 @@ export default {
       const files = event.target.files;
       if (files && files.length > 0) {
         this.isLoading = true;
+        this.userImage = true;
         const reader = new FileReader();
         reader.onload = () => {
           this.loadFromDataUrl(reader.result);
@@ -126,6 +138,23 @@ export default {
         aspectRatio: this.aspectRatio,
         viewMode: this.viewMode,
         crop: () => {
+          // Compatibilidad: si emitOnCropEnd no esta activo, emite en cada
+          // movimiento como antes (los consumidores existentes dependen de eso).
+          if (!this.emitOnCropEnd) {
+            this.cropImage();
+          }
+        },
+        cropend: () => {
+          // Emision unica y confiable al terminar el gesto del usuario.
+          if (this.emitOnCropEnd) {
+            this.cropImage();
+          }
+        },
+        ready: () => {
+          // La imagen precargada (edicion) NO debe llenar logo_path por si sola.
+          if (this.emitOnCropEnd && !this.userImage) {
+            return;
+          }
           this.cropImage();
         },
       });
@@ -137,8 +166,34 @@ export default {
 
       const croppedCanvas = this.cropper.getCroppedCanvas();
       if (croppedCanvas) {
-        this.$emit('onCrop', croppedCanvas.toDataURL());
+        this.$emit('onCrop', this.exportCanvas(croppedCanvas));
       }
+    },
+    exportCanvas(canvas) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const max = Math.max(w, h);
+
+      // Recorte pequeño: PNG como siempre (conserva transparencias)
+      if (max <= MAX_EXPORT_DIMENSION) {
+        return canvas.toDataURL();
+      }
+
+      // Imagen gigante (foto de camara/celular): se reduce y exporta en JPEG
+      // para que el base64 quepa en el POST sin tocar post_max_size
+      const scale = MAX_EXPORT_DIMENSION / max;
+      const scaled = document.createElement('canvas');
+      scaled.width = Math.round(w * scale);
+      scaled.height = Math.round(h * scale);
+
+      const ctx = scaled.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, scaled.width, scaled.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(canvas, 0, 0, scaled.width, scaled.height);
+
+      return scaled.toDataURL('image/jpeg', EXPORT_QUALITY);
     },
     resetCropper() {
       this.imageSrc = '';
