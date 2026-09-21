@@ -134,8 +134,8 @@ class CrmContactsController extends Controller
         $correosFallidos = [];
 
         $data = [
-            'from_mail' => env('MAIL_FROM_ADDRESS'),
-            'from_name' => env('MAIL_FROM_NAME'),
+            'from_mail' => config('mail.from.address'),
+            'from_name' => config('mail.from.name'),
             'title' => $correo['title'],
             'contact' => $correo['contact'],
             'message' => null
@@ -143,12 +143,12 @@ class CrmContactsController extends Controller
 
         try {
             if ($type == 'ccu') {
-                Mail::to(trim($correo['contact']['email']))->send(new MailwithUserAccount($data));
+                Mail::to(trim($correo['contact']['email']))->queue(new MailwithUserAccount($data));
             } elseif ($type == 'cdb') {
             } elseif ($type == 'ccc') {
             } elseif ($type == 'cmp') {
                 $data['message'] =  $message;
-                Mail::to(trim($correo['contact']['email']))->send(new PersonalizedEmailStudent($data));
+                Mail::to(trim($correo['contact']['email']))->queue(new PersonalizedEmailStudent($data));
             }
             $correosEnviados = 1;
         } catch (\Exception $e) {

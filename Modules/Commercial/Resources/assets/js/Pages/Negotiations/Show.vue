@@ -708,7 +708,7 @@ const reactivate = () => {
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Correo al cliente</dt>
                             <dd :class="negotiation.email_sent_at ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
-                                {{ negotiation.email_sent_at ? `Enviado el ${new Date(negotiation.email_sent_at).toLocaleString()}` : 'Sin enviar' }}
+                                {{ negotiation.email_sent_at ? `Encolado el ${new Date(negotiation.email_sent_at).toLocaleString()}` : 'Sin enviar' }}
                             </dd>
                         </div>
                         <div v-if="negotiation.verified_at">

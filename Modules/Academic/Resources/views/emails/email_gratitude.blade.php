@@ -237,7 +237,7 @@
         <br>
         <footer>
             <p style="text-align: center; font-size: 15px;">
-                &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por <a href="https://aracodeperu.com/"
+                &copy; Derechos Reservados {{ config('app.name') }} | Desarrollado por <a href="https://aracodeperu.com/"
                     style="">Aracode Smart Solutions</a>
             </p>
         </footer>

@@ -3,19 +3,27 @@
 namespace Modules\CMS\Emails;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Respuesta que el equipo escribe desde el panel (CMS > Mensajes de Contacto)
  * y que se envia al correo de la persona que lleno el formulario.
  */
-class ContactMessageReplyMail extends Mailable
+class ContactMessageReplyMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    /** @var int Intentos, compatibles con el worker general. */
+    public int $tries = 3;
+
+    /** @var array<int, int> Demoras entre reintentos, en segundos. */
+    public array $backoff = [60, 300];
 
     /**
      * El asunto va en $subjectLine y no en $subject porque Mailable ya declara
@@ -60,5 +68,18 @@ class ContactMessageReplyMail extends Mailable
     public function attachments(): array
     {
         return [];
+    }
+
+    /**
+     * El correo va encolado, asi que el encolado ya no dice nada sobre el envio
+     * real: el mensaje queda marcado como respondido en el panel y si el SMTP
+     * falla tras los 3 intentos el fallo solo se veria como un "FAIL" del worker.
+     * Aqui queda registrado con el correo del destinatario.
+     */
+    public function failed(\Throwable $e): void
+    {
+        Log::error('CMS Contacto: no se pudo enviar la respuesta a ' . ($this->original['email'] ?? 'destinatario desconocido') . '.', [
+            'error' => $e->getMessage(),
+        ]);
     }
 }

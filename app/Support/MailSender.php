@@ -19,6 +19,15 @@ class MailSender
 
     public const FALLBACK_NAME = 'CPA Academy';
 
+    /**
+     * Buzon de administracion usado solo si MAIL_ADMIN no trae un correo util.
+     *
+     * Es el buzon real de la empresa (el mismo que ya se usa en
+     * CmsSubscriberController): el aviso tiene que llegar a alguien aunque el
+     * .env este vacio o mal escrito.
+     */
+    public const FALLBACK_ADMIN_ADDRESS = 'jsuclupe@globalcpaperu.com';
+
     public static function address(?string $fallback = null): string
     {
         $address = trim((string) config('mail.from.address'));
@@ -35,5 +44,22 @@ class MailSender
     public static function name(): string
     {
         return trim((string) config('mail.from.name')) ?: self::FALLBACK_NAME;
+    }
+
+    /**
+     * Correo de administracion (MAIL_ADMIN) listo para usarse como destinatario.
+     *
+     * Se lee de config() y no de env() por el mismo motivo que address(): con la
+     * configuracion cacheada env() deja de leer el .env. Si la variable no esta
+     * definida, viene vacia o no es un correo valido se devuelve el respaldo de la
+     * empresa, de modo que la lista de destinatarios nunca quede incompleta.
+     */
+    public static function adminAddress(): string
+    {
+        $address = trim((string) config('services.email.admin_address'));
+
+        return filter_var($address, FILTER_VALIDATE_EMAIL)
+            ? $address
+            : self::FALLBACK_ADMIN_ADDRESS;
     }
 }

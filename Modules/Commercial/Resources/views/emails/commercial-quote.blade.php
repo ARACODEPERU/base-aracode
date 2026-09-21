@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ env('APP_NAME', 'Global CPA') }} - Tu cotizacion</title>
+    <title>{{ config('app.name', 'Global CPA') }} - Tu cotizacion</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -167,11 +167,11 @@
 
         <br>
         <p style="text-align: center; font-size: 14px;">
-            {{ env('APP_NAME', 'Global CPA') }}
+            {{ config('app.name', 'Global CPA') }}
         </p>
         <footer>
             <p style="text-align: center; font-size: 15px;">
-                &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por
+                &copy; Derechos Reservados {{ config('app.name') }} | Desarrollado por
                 <a href="https://aracodeperu.com/">Aracode Smart Solutions</a>
             </p>
         </footer>

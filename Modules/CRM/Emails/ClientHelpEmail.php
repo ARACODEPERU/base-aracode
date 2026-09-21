@@ -2,61 +2,83 @@
 
 namespace Modules\CRM\Emails;
 
+use App\Support\MailAttachmentResolver;
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
-class ClientHelpEmail extends Mailable
+class ClientHelpEmail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    protected $data;
+    /** @var array<int, mixed> */
+    protected array $data;
 
-    public function __construct($data)
+    public int $tries = 3;
+    public array $backoff = [60, 300];
+
+    /** @param array<int, mixed> $data */
+    public function __construct(array $data)
     {
         $this->data = $data;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
-        $con = $this->data[0];
-        $msg = $this->data[1];
-        $nam = $this->data[2];
+        $conversation = $this->data[0] ?? null;
+        $message = $this->data[1] ?? null;
+        $name = $this->data[2] ?? null;
 
         return new Envelope(
-            from: new Address($msg->email_from, $nam),
-            subject: $con->title,
+            from: new Address(MailSender::address(), MailSender::name()),
+            replyTo: MailSender::replyTo($message?->email_from, $name),
+            subject: (string) ($conversation?->title ?? 'Respuesta de soporte'),
         );
     }
 
-    public function build()
+    public function content(): Content
     {
-        return $this->view('crm::mails.client-help-mail', [
-            'data' => $this->data
-        ]);
+        return new Content(
+            view: 'crm::mails.client-help-mail',
+            with: ['data' => $this->data],
+        );
     }
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
+
     public function attachments(): array
     {
-        //dd($this->data[1]->attachments);
-        $Attachments = [];
-        foreach ($this->data[1]->attachments as $file) {
-            array_push(
-                $Attachments,
-                Attachment::fromPath(public_path('storage' . DIRECTORY_SEPARATOR . $file['path']))->as($file['file_name'])
-            );
+        $attachments = [];
+        $messageAttachments = $this->data[1]?->attachments ?? [];
+
+        foreach ((array) $messageAttachments as $file) {
+            $path = is_array($file) ? ($file['path'] ?? null) : null;
+            $name = is_array($file) ? ($file['file_name'] ?? basename((string) $path)) : null;
+
+            if (! $path) {
+                continue;
+            }
+
+            $attachment = MailAttachmentResolver::optional($path, $name, 'public');
+
+            if ($attachment instanceof Attachment) {
+                $attachments[] = $attachment;
+            }
         }
-        return $Attachments;
+
+        return $attachments;
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ClientHelpEmail failed', [
+            'recipient' => $this->data[1]?->email_for ?? null,
+            'message' => $exception->getMessage(),
+        ]);
     }
 }

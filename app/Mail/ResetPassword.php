@@ -10,18 +10,34 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Password;
 
-class ResetPassword extends Mailable
+class ResetPassword extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    /** @var int Intentos, compatibles con el worker general. */
+    public int $tries = 3;
+
+    /** @var array<int, int> Demoras entre reintentos, en segundos. */
+    public array $backoff = [60, 300];
 
     /**
      * Create a new message instance.
      */
     public $user;
 
+    /**
+     * Enlace de restablecimiento, resuelto ANTES de encolar.
+     *
+     * El token se crea una sola vez: si se generara en build()/content(), cada
+     * reintento del worker emitiria un token nuevo e invalidaria el enlace que ya
+     * se le envio al usuario.
+     */
+    public string $url;
+
     public function __construct($user)
     {
         $this->user = $user;
+        $this->url = route('password.reset', Password::createToken($user));
     }
 
     /**
@@ -39,13 +55,10 @@ class ResetPassword extends Mailable
      */
     public function build()
     {
-        $token = Password::createToken($this->user);
-        $url = route('password.reset', $token);
-
         return $this->view('emails.reset_password')
             ->subject('Restablecer Contraseña')
             ->with([
-                'url' => $url,
+                'url' => $this->url,
                 'user' => $this->user
             ]);
     }

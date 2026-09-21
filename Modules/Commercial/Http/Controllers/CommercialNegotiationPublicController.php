@@ -17,10 +17,14 @@ use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
+use Illuminate\Support\Facades\Mail;
+
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialNegotiation;
 use Modules\Commercial\Entities\CommercialNegotiationInvoice;
+use Modules\Commercial\Support\NegotiationConfirmedRecipients;
 
 class CommercialNegotiationPublicController extends Controller
 {
@@ -272,7 +276,7 @@ class CommercialNegotiationPublicController extends Controller
             throw $e;
         }
 
-        $this->notifyAsesor($negotiation, $person);
+        $this->notifyNegotiationRecipients($negotiation, $person);
 
         return redirect()->back()->with('success', 'Tu acuerdo fue enviado correctamente. El asesor revisara la confirmacion.');
     }
@@ -592,27 +596,36 @@ class CommercialNegotiationPublicController extends Controller
         ];
     }
 
-    private function notifyAsesor(CommercialNegotiation $negotiation, Person $client): void
+    /**
+     * Notifica que el cliente respondio la negociacion al equipo administrador (los
+     * roles del modulo mas el buzon MAIL_ADMIN) y al asesor que la creo. Cada
+     * destinatario se encola por separado para que un correo invalido o un fallo
+     * puntual no impida notificar a los demas.
+     */
+    private function notifyNegotiationRecipients(CommercialNegotiation $negotiation, Person $client): void
     {
-        $asesor = $negotiation->creator;
+        // Los destinatarios (roles administradores, buzon MAIL_ADMIN y asesor) se
+        // resuelven en NegotiationConfirmedRecipients, que valida y deduplica.
+        $recipients = NegotiationConfirmedRecipients::forNegotiation($negotiation);
 
-        $asesorEmail = $asesor->email ?? null;
-
-        try {
-            // Un solo correo en cola: asesor en "Para" y administradores/vendedores
-            // (parametro PN00001) en copia oculta. Enviar varios correos seguidos
-            // activaba la proteccion del servidor SMTP y solo pasaban 1 o 2.
-            SendNegotiationConfirmedNotification::dispatch(
-                (int) $negotiation->id,
-                (int) $client->id,
-                $asesorEmail
-            );
-        } catch (\Throwable $e) {
-            // El aviso por correo no debe interrumpir el registro de la negociacion.
-            Log::error('No se pudo programar la notificacion de negociacion confirmada', [
+        if ($recipients === []) {
+            // Sin destinatarios el aviso no sale: queda registrado para no perderlo
+            // en silencio.
+            Log::warning('Negociacion confirmada sin destinatarios para el aviso por correo.', [
                 'negotiation_id' => $negotiation->id,
-                'error' => $e->getMessage(),
             ]);
+
+            return;
+        }
+
+        foreach ($recipients as $email) {
+            try {
+                Mail::to($email)->queue(new CommercialNegotiationConfirmedMail($negotiation, $client));
+            } catch (\Throwable $e) {
+                // Un destinatario fallido no debe impedir los demas envios encolados.
+                report($e);
+            }
+
         }
     }
 }

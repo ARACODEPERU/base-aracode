@@ -40,7 +40,7 @@ const form = useForm({
     single_payment_days: props.negotiation?.single_payment_days ?? null,
     link_days: props.negotiation?.link_days ?? 2,
     contact_channel: props.negotiation?.contact_channel ?? null,
-    contact_detail: props.negotiation?.contact_detail ?? currentUserName,
+    contact_detail: props.negotiation?.contact_detail ?? props.negotiation?.creator?.name ?? currentUserName,
     email: props.negotiation?.email ?? null,
     payment_method: (props.negotiation?.payment_method === "yape" ? "billetera_digital" : props.negotiation?.payment_method) ?? "billetera_digital",
     payment_link: props.negotiation?.payment_link ?? null,

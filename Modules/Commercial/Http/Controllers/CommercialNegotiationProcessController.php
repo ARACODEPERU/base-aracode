@@ -811,6 +811,18 @@ class CommercialNegotiationProcessController extends Controller
             ], 422);
         }
 
+        // El paso puede ser ejecutado dos veces por doble clic o por una recarga.
+        // email_sent_at representa que el correo ya fue aceptado por la cola;
+        // el job se encarga de los reintentos SMTP posteriores.
+        if ($negotiation->email_sent_at || in_array('email', $negotiation->process_progress ?? [], true)) {
+            return response()->json([
+                'success' => true,
+                'queued' => true,
+                'skipped' => true,
+                'message' => 'El correo del cliente ya fue puesto en cola y no se duplicara.',
+            ]);
+        }
+
         $person = $this->person($negotiation);
 
         $recipient = $this->recipientEmail($negotiation, $person);
@@ -835,17 +847,19 @@ class CommercialNegotiationProcessController extends Controller
         try {
             $dataFile = app(AcaSaleDocumentController::class)->generateBoletaPDF($document->id);
 
-            Mail::to($recipient)->send(
+            Mail::to($recipient)->queue(
                 new CommercialNegotiationDocumentMail($negotiation, $document, $dataFile, $credentials)
             );
 
+            // Se marca al aceptar la cola, no como confirmacion de entrega SMTP.
             $negotiation->update(['email_sent_at' => now()]);
 
             $this->markStepDone($negotiation, 'email');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Correo con los detalles del acuerdo, su comprobante y credenciales de acceso enviado al cliente.',
+                'queued' => true,
+                'message' => 'Correo con los detalles del acuerdo, su comprobante y credenciales de acceso puesto en cola correctamente.',
             ]);
         } catch (\Exception $e) {
             return response()->json([

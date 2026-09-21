@@ -18,6 +18,7 @@ class OnliCarritoAbandonado extends Model
         'cart_total',
         'notification_sent_at',
         'notification_count',
+        'last_success_at',
         'paid',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
         'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source',
@@ -28,5 +29,7 @@ class OnliCarritoAbandonado extends Model
         'cart_total' => 'decimal:2',
         'notification_sent_at' => 'datetime',
         'notification_count' => 'integer',
+        'last_success_at' => 'datetime',
+        'paid' => 'boolean',
     ];
 }

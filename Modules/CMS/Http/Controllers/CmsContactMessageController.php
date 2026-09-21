@@ -88,11 +88,12 @@ class CmsContactMessageController extends Controller
     }
 
     /**
-     * Envia al correo de la persona la respuesta escrita desde el panel (listado
-     * o detalle) y deja el mensaje como respondido.
+     * Encola la respuesta escrita desde el panel (listado o detalle) y deja el
+     * mensaje como respondido.
      *
-     * El estado solo cambia si el correo salio de verdad: marcar respondido
-     * cuando el envio fallo dejaria sin seguimiento a quien nunca recibio nada.
+     * El correo va a la cola, asi que el encolado ya no demuestra que el SMTP
+     * haya entregado: el estado se marca cuando el job entra en la cola y un
+     * fallo posterior queda registrado por failed() del mailable.
      */
     public function reply(Request $request, $id)
     {
@@ -109,7 +110,7 @@ class CmsContactMessageController extends Controller
         ]);
 
         try {
-            Mail::to($contactMessage->email)->send(new ContactMessageReplyMail(
+            Mail::to($contactMessage->email)->queue(new ContactMessageReplyMail(
                 $validated['subject'],
                 $validated['message'],
                 [
@@ -121,12 +122,13 @@ class CmsContactMessageController extends Controller
                 ],
             ));
         } catch (\Throwable $e) {
-            Log::error('Contacto: no se pudo enviar la respuesta a ' . $contactMessage->email . ': ' . $e->getMessage(), [
+            Log::error('Contacto: no se pudo encolar la respuesta a ' . $contactMessage->email . ': ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
 
-            // Un fallo de envio vuelve al front como error del formulario, no como
-            // exito, para que el administrador sepa que el correo no salio.
+            // Con el correo en cola este catch solo se activa si no se pudo ENCOLAR
+            // (conexion de cola caida). Un fallo de SMTP posterior no se ve aqui:
+            // queda en el log por failed() del mailable.
             throw ValidationException::withMessages([
                 'subject' => 'No se pudo enviar el correo a ' . $contactMessage->email
                     . '. Intentalo de nuevo o revisa el log del servidor.',

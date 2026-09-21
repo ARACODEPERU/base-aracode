@@ -32,7 +32,30 @@ class ProcessCarritoAbandonado implements ShouldQueue
             $hub = app(IntegrationhubController::class);
 
             $record = OnliCarritoAbandonado::find($this->recordId);
-            $tracking = $record ? $record->only(TrafficSourceResolver::KEYS) : [];
+
+            if (!$record) {
+                return;
+            }
+
+            $paidItems = collect($record->cart_items ?? [])
+                ->filter(fn ($item) => (float) ($item['price'] ?? 0) > 0)
+                ->values();
+
+            if ($paidItems->isEmpty()) {
+                $record->update([
+                    'notification_sent_at' => Carbon::now(),
+                    'last_success_at' => Carbon::now(),
+                ]);
+
+                return;
+            }
+
+            $tracking = $record->only(TrafficSourceResolver::KEYS);
+            $firstCourseId = (string) ($paidItems->first()['id'] ?? '');
+            $courseNames = $paidItems
+                ->map(fn ($item) => trim((string) ($item['name'] ?? 'Curso')))
+                ->filter()
+                ->implode(' y ');
 
             $actions = array_merge(
                 [
@@ -41,28 +64,31 @@ class ProcessCarritoAbandonado implements ShouldQueue
                         'field_name' => 'Abandono Carrito',
                         'value' => now()->toDateTimeString(),
                     ],
+                    [
+                        'action' => 'set_field_value',
+                        'custom_field_id' => '806813',
+                        'value' => $courseNames,
+                    ],
+                    [
+                        'action' => 'send_flow',
+                        'flow_id' => '1782496265219',
+                    ],
                 ],
                 TrafficSourceResolver::actions($tracking)
             );
 
-            $hub->runEndpoint('create_contact', [
+            $response = $hub->runEndpoint('create_contact', [
                 'phone' => $this->phone,
-                'email' => 'nohay@correo.com',
-                'first_name' => "Usuario Abandonó carrito",
+                'email' => 'nadie_' . $firstCourseId . '@desconocido.com',
+                'first_name' => 'usuario',
                 'actions' => $actions,
             ], [], true);
 
-            // $hub->runEndpoint(
-            //     "set_value_in_custom_fields_for_contact_id",
-            //     [
-            //         // Valores requeridos
-            //     "contact_id" => $this->phone,
-            //     "custom_field_id" => "539161", //el id de custom_field "Correo_electronico"
-            //     "value" => "El correo iría aqui"
-            //     ], [], true);
-
-            //aqui agregar codigo de enviar plantilla endopoint flowid
-
+            if ($response->getStatusCode() < 200 || $response->getStatusCode() >= 300) {
+                throw new \RuntimeException(
+                    'IntegrationHub create_contact respondió con HTTP ' . $response->getStatusCode()
+                );
+            }
 
             if ($record) {
                 $record->update([
@@ -87,5 +113,4 @@ class ProcessCarritoAbandonado implements ShouldQueue
             }
         }
     }
-
 }

@@ -7,8 +7,9 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class BirthdayGreetingMail extends Mailable
+class BirthdayGreetingMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

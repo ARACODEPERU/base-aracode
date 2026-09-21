@@ -89,7 +89,7 @@ class CommercialNegotiationController extends Controller
 
     public function edit($id)
     {
-        $negotiation = CommercialNegotiation::with(['items', 'companyBilleteras'])->findOrFail($id);
+        $negotiation = CommercialNegotiation::with(['items', 'companyBilleteras', 'creator'])->findOrFail($id);
 
         abort_unless(
             $this->canManage($negotiation),
@@ -180,11 +180,12 @@ class CommercialNegotiationController extends Controller
         }
 
         try {
-            Mail::to($email)->send(new CommercialQuoteMail($negotiation->fresh()));
+            Mail::to($email)->queue(new CommercialQuoteMail($negotiation->fresh()));
 
             return response()->json([
                 'success' => true,
-                'message' => 'La cotizacion fue enviada correctamente a ' . $email,
+                'queued' => true,
+                'message' => 'La cotizacion fue puesta en cola correctamente para ' . $email,
             ]);
         } catch (\Exception $e) {
             return response()->json([

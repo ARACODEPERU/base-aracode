@@ -426,7 +426,7 @@ class MercadopagoController extends Controller
                 if($payment->status == 'approved'){
                     ////enviar correo de agradecimiento///
                     Mail::to($sale->email)
-                        ->send(new CratitudeCoursePurchase(OnliSale::with('details.course')->where('id', $sale->id)->first()));
+                        ->queue(new CratitudeCoursePurchase(OnliSale::with('details.course')->where('id', $sale->id)->first()));
 
                 }
 

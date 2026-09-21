@@ -360,7 +360,7 @@ class CrmMessagesController extends Controller
 
     private function sendMail($data)
     {
-        Mail::to($data[1]->email_for)->send(new ClientHelpEmail($data));
+        Mail::to($data[1]->email_for)->queue(new ClientHelpEmail($data));
 
         return true;
     }

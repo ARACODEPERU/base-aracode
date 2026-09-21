@@ -6,8 +6,12 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Support\MailSender;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Content;
 
-class SubscriptionExpired extends Mailable
+class SubscriptionExpired extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -26,9 +30,30 @@ class SubscriptionExpired extends Mailable
     /**
      * Build the message.
      */
-    public function build(): self
+    public int $tries = 3;
+    public array $backoff = [60, 300];
+
+    public function envelope(): Envelope
     {
-        return $this->subject('🔔 Tu suscripción académica ha expirado') // Asunto del correo
-                    ->view('academic::emails.subscription-expired'); // Ruta de la vista del correo dentro del módulo
+        return new Envelope(
+            from: new Address(MailSender::address(), MailSender::name()),
+            subject: '🔔 Tu suscripción académica ha expirado',
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'academic::emails.subscription-expired',
+            with: [
+                'subscription' => $this->subscription,
+                'studentName' => $this->studentName,
+            ],
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [];
     }
 }

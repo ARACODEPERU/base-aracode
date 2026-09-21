@@ -2,53 +2,44 @@
 
 namespace Modules\Academic\Emails;
 
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 
-class CratitudeCoursePurchase extends Mailable
+class CratitudeCoursePurchase extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $data;
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($data)
+    public mixed $data;
+    public int $tries = 3;
+    public array $backoff = [60, 300];
+
+    public function __construct(mixed $data)
     {
         $this->data = $data;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME')),
-            subject: 'Gracias por estar con nosotros - ' . env('APP_NAME'),
+            from: new Address(MailSender::address(), MailSender::name()),
+            subject: 'Gracias por estar con nosotros - ' . config('app.name'),
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
-    public function build()
+    public function content(): Content
     {
-
-        return $this->view('academic::emails.email_gratitude', [
-            'data' => $this->data
-        ]);
+        return new Content(
+            view: 'academic::emails.email_gratitude',
+            with: ['data' => $this->data],
+        );
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
     public function attachments(): array
     {
         return [];

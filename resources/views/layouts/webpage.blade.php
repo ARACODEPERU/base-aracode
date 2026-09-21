@@ -22,6 +22,35 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('og_title', 'ARACODE Smart Solutions')">
     <meta name="twitter:description" content="@yield('og_description', 'Soluciones digitales potenciadas con IA para empresas y organizaciones.')">
+    {{-- Schema.org JSON-LD --}}
+    <script type="application/ld+json">
+    {
+        {{-- El @@ escapa la directiva @context de Blade (Laravel 12): sin esto el JSON-LD
+             abre un if() que nunca cierra y la vista deja de compilar. --}}
+        "@@context": "https://schema.org",
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}",
+        "logo": "{{ asset('themes/webpage/images/logo.png') }}",
+        "image": "{{ asset('themes/webpage/images/logo.png') }}",
+        "description": "Empresa peruana especializada en desarrollo de software empresarial, automatización de procesos e inteligencia artificial.",
+        "address": {
+            "@@type": "PostalAddress",
+            "addressLocality": "Nuevo Chimbote",
+            "addressCountry": "PE"
+        },
+        "telephone": "+51917295856",
+        "email": "contacto@aracodeperu.com",
+        "sameAs": [
+            "https://www.facebook.com/aracodeperu",
+            "https://www.instagram.com/aracode_peru/",
+            "https://www.linkedin.com/in/aracode-smart-solution-0b3663365",
+            "https://www.youtube.com/@AracodePeru"
+        ]
+    }
+    </script>
+    @stack('json-ld')
+
     
     {{-- Favicon --}}
     <link rel="icon" href="{{ asset('themes/webpage/images/icon.png') }}" type="image/png" sizes="32x32">
@@ -176,6 +205,31 @@
     });
     </script>
     
+
+    {{-- Scroll to Top Button --}}
+    <button class="ara-scroll-top" id="araScrollTop" aria-label="Volver arriba">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+        </svg>
+    </button>
+
+    {{-- Scroll Progress Bar --}}
+    <div class="ara-scroll-progress" id="araScrollProgress"></div>
+
+    {{-- WhatsApp Float Button --}}
+    <a href="https://wa.me/51917295856?text=Hola%20ARACODE%2C%20me%20interesa%20una%20asesoría" 
+       class="ara-whatsapp-float" 
+       target="_blank" 
+       rel="noopener"
+       aria-label="Escríbenos por WhatsApp"
+       title="Escríbenos por WhatsApp">
+        <span class="ara-phone-ring" aria-hidden="true"></span>
+        <span class="ara-phone-ring" aria-hidden="true"></span>
+        <svg class="ara-phone-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+    </a>
+
     @stack('scripts')
 </body>
 </html>

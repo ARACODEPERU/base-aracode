@@ -253,7 +253,7 @@ class WebController extends Controller
 
                     ///enviar correo
                     Mail::to($sale->email)
-                        ->send(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $id)->first()));
+                        ->queue(new ConfirmPurchaseMail(OnliSale::with('details.item')->where('id', $id)->first()));
 
 
                     return response()->json([

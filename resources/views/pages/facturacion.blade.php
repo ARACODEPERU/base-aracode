@@ -32,7 +32,7 @@
                     </div>
                 </div>
                 <div class="hidden lg:block reveal reveal-delay-4">
-                    <img src="{{ asset('themes/webpage/images/misc/s2.jpg') }}" alt="Facturación Electrónica" class="rounded-2xl shadow-2xl w-full">
+                    <img src="{{ asset('themes/webpage/images/misc/s2.jpg') }}" alt="Facturación Electrónica" class="rounded-2xl shadow-2xl w-full" loading="lazy">
                 </div>
             </div>
         </div>

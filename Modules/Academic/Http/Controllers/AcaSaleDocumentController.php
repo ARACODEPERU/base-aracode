@@ -31,6 +31,7 @@ use App\Helpers\Invoice\Documents\Factura;
 use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaSubscriptionType;
 use Modules\Academic\Jobs\SendBoletaJob;
+use Modules\Academic\Jobs\SendStudentElectronicTicketJob;
 
 class AcaSaleDocumentController extends Controller
 {
@@ -374,8 +375,8 @@ class AcaSaleDocumentController extends Controller
 
 
         $data = [
-            'from_mail' => env('MAIL_FROM_ADDRESS', "informes@globalcpaperu.com"),
-            'from_name' => env('MAIL_FROM_NAME', "CPA Academy"),
+            'from_mail' => config('mail.from.address'),
+            'from_name' => config('mail.from.name'),
             'title' => 'Hola! Llegó tu comprobante electrónico',
             'for_mail' => $person_email,
             'for_name' => $person_name,
@@ -384,23 +385,14 @@ class AcaSaleDocumentController extends Controller
             'xml_file_path' => $dataFile["xml"] ? $dataFile["xml"]['filePath'] : null,
             'xml_file_name' => $dataFile["xml"] ? $dataFile["xml"]['fileName'] : null,
             'document_id'   => $document_id,
+            'onlisale_id'   => $onlisale_id,
         ];
 
         try {
 
-            Mail::to(trim($person_email))->send(new StudentElectronicTicket($data));
+            dispatch(new SendStudentElectronicTicketJob($data, $onlisale_id ? (int) $onlisale_id : null));
 
             $success = true;
-
-            if ($onlisale_id) {
-                $onlisale = OnliSale::findOrFail($onlisale_id);
-
-                if ($onlisale) {
-                    $onlisale->update([
-                        'email_sent' => true
-                    ]);
-                }
-            }
 
             $correosMessage = [
                 'email' => $person_email,
@@ -441,9 +433,6 @@ class AcaSaleDocumentController extends Controller
             }elseif($document->invoice_type_doc == '03'){
                 $boleta = new Boleta();
                 $resb = $boleta->getBoletatDomPdf($id, $format);
-                // El XML tambien se devuelve para las boletas: el correo al cliente
-                // adjunta el PDF y el XML del comprobante.
-                $resF = $boleta->getBoletaXML($id);
             }
 
             // Intentar obtener la boleta

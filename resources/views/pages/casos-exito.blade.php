@@ -63,7 +63,7 @@
                 {{-- Case 1 --}}
                 <div class="ara-card reveal" data-category="lms">
                     <div class="relative h-48 rounded-xl overflow-hidden mb-6">
-                        <img src="{{ asset('themes/webpage/images/misc/s1.jpg') }}" alt="KAPTA LMS" class="w-full h-full object-cover">
+                        <img src="{{ asset('themes/webpage/images/misc/s1.jpg') }}" alt="KAPTA LMS" class="w-full h-full object-cover" loading="lazy">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <span class="absolute bottom-4 left-4 px-3 py-1 bg-ara-blue text-white text-xs font-medium rounded-full">KAPTA LMS</span>
                     </div>
@@ -77,7 +77,7 @@
                 {{-- Case 2 --}}
                 <div class="ara-card reveal reveal-delay-1" data-category="facturacion">
                     <div class="relative h-48 rounded-xl overflow-hidden mb-6">
-                        <img src="{{ asset('themes/webpage/images/misc/s2.jpg') }}" alt="Facturación Electrónica" class="w-full h-full object-cover">
+                        <img src="{{ asset('themes/webpage/images/misc/s2.jpg') }}" alt="Facturación Electrónica" class="w-full h-full object-cover" loading="lazy">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <span class="absolute bottom-4 left-4 px-3 py-1 bg-ara-blue text-white text-xs font-medium rounded-full">Facturación</span>
                     </div>
@@ -91,7 +91,7 @@
                 {{-- Case 3 --}}
                 <div class="ara-card reveal reveal-delay-2" data-category="desarrollo">
                     <div class="relative h-48 rounded-xl overflow-hidden mb-6">
-                        <img src="{{ asset('themes/webpage/images/about.jpg') }}" alt="Software a Medida" class="w-full h-full object-cover">
+                        <img src="{{ asset('themes/webpage/images/about.jpg') }}" alt="Software a Medida" class="w-full h-full object-cover" loading="lazy">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <span class="absolute bottom-4 left-4 px-3 py-1 bg-ara-blue text-white text-xs font-medium rounded-full">Desarrollo</span>
                     </div>
@@ -120,7 +120,7 @@
                 {{-- Case 5 --}}
                 <div class="ara-card reveal reveal-delay-1" data-category="desarrollo">
                     <div class="relative h-48 rounded-xl overflow-hidden mb-6">
-                        <img src="{{ asset('themes/webpage/images/misc/s1.jpg') }}" alt="Plataforma Digital" class="w-full h-full object-cover">
+                        <img src="{{ asset('themes/webpage/images/misc/s1.jpg') }}" alt="Plataforma Digital" class="w-full h-full object-cover" loading="lazy">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                         <span class="absolute bottom-4 left-4 px-3 py-1 bg-ara-blue text-white text-xs font-medium rounded-full">Desarrollo</span>
                     </div>
