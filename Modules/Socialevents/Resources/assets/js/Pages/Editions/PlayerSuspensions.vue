@@ -3,13 +3,15 @@
     import Swal2 from "sweetalert2";
     import { Link, useForm } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
-    import { ref } from "vue";
+    import { computed, ref } from "vue";
     import iconLoader from '@/Components/vristo/icon/icon-loader.vue';
     import ModalLarge from '@/Components/ModalLarge.vue';
     import { Empty } from 'ant-design-vue';
     import InputLabel from '@/Components/InputLabel.vue';
     import TextInput from '@/Components/TextInput.vue';
     import InputError from '@/Components/InputError.vue';
+    import Multiselect from '@suadelabs/vue3-multiselect';
+    import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
 
     const props = defineProps({
         edicion: {
@@ -42,7 +44,31 @@
         form.reset();
         form.type = 'definitive';
         form.matches_count = 1;
+        selectedPlayer.value = null;
         displayModalAdd.value = true;
+    };
+
+    // Opciones planas para el buscador: "Nombre — Equipo" (el prop players viene agrupado por equipo).
+    const playerOptions = computed(() => {
+        const options = [];
+        for (const [teamName, members] of Object.entries(props.players || {})) {
+            for (const p of members) {
+                options.push({
+                    player_id: p.player_id,
+                    name: p.name,
+                    team_name: teamName,
+                    label: `${p.name} — ${teamName}`,
+                });
+            }
+        }
+        return options;
+    });
+
+    const selectedPlayer = ref(null);
+
+    const onPlayerSelect = (option) => {
+        selectedPlayer.value = option;
+        form.player_id = option ? option.player_id : null;
     };
 
     const closeModalAdd = () => {
@@ -259,26 +285,31 @@
                 <div class="grid gap-4">
                     <div>
                         <InputLabel value="Jugador" />
-                        <div v-if="Object.keys(players).length > 0" class="mt-2">
-                            <div v-for="teamName in Object.keys(players)" :key="teamName" class="mb-4">
-                                <div class="text-xs font-bold uppercase text-gray-500 dark:text-neutral-400 mb-1.5">{{ teamName }}</div>
-                                <div class="grid gap-1.5">
-                                    <label
-                                        v-for="p in players[teamName]"
-                                        :key="p.player_id"
-                                        class="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-neutral-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="player_id"
-                                            class="form-radio text-primary"
-                                            :value="p.player_id"
-                                            v-model="form.player_id"
-                                        />
-                                        <span class="text-sm">{{ p.name }}</span>
-                                    </label>
-                                </div>
-                            </div>
+                        <div v-if="playerOptions.length > 0" class="mt-2">
+                            <Multiselect
+                                v-model="selectedPlayer"
+                                track-by="player_id"
+                                label="label"
+                                placeholder="Buscar jugador por nombre o equipo..."
+                                selected-label="seleccionado"
+                                select-label="Elegir"
+                                deselect-label="Quitar"
+                                :options="playerOptions"
+                                :searchable="true"
+                                :allow-empty="false"
+                                :close-on-select="true"
+                                @update:model-value="onPlayerSelect"
+                            >
+                                <template #option="{ option }">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="text-sm">{{ option.name }}</span>
+                                        <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-neutral-700 text-gray-600 dark:text-neutral-300 whitespace-nowrap">{{ option.team_name }}</span>
+                                    </div>
+                                </template>
+                                <template #noOptions>
+                                    <span class="text-sm text-gray-500 px-3 py-2 block">No hay jugadores inscritos disponibles.</span>
+                                </template>
+                            </Multiselect>
                         </div>
                         <div v-else class="text-sm text-gray-500 dark:text-neutral-400">
                             Todos los jugadores inscritos ya tienen una suspensión registrada o no hay jugadores registrados.
