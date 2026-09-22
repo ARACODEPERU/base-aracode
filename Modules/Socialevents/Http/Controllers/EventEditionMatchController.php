@@ -24,6 +24,7 @@ use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Services\TournamentService;
 use Modules\Socialevents\Services\PositionTableService;
+use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Support\TournamentLandingCache;
 
 
@@ -84,9 +85,21 @@ class EventEditionMatchController extends Controller
                                 ->where('team_id', $team->id)
                                 ->get();
 
+                            // Suspensiones vigentes para este partido (badges en alineaciones)
+                            $suspendedMap = app(PlayerSuspensionService::class)
+                                ->getActiveSuspensionsMap((int) $match->edition_id, $match);
+
                             // Formateamos cada jugador con sus datos específicos de este partido
-                            $formattedPlayers = $players->map(function ($player) use ($match) {
+                            $formattedPlayers = $players->map(function ($player) use ($match, $suspendedMap) {
                                 $pArray = $player->toArray();
+
+                                $suspension = $suspendedMap[$player->person_id] ?? null;
+                                $pArray['is_suspended'] = $suspension !== null;
+                                $pArray['suspension'] = $suspension ? [
+                                    'type' => $suspension->type,
+                                    'type_label' => $suspension->type_label,
+                                    'reason' => $suspension->reason,
+                                ] : null;
 
                                 // Buscamos Stats
                                 $pArray['stats'] = EventEditionMatchPlayerStat::where('match_id', $match->id)
@@ -301,6 +314,20 @@ class EventEditionMatchController extends Controller
 
     public function editionMatchScoreStore(Request $request){
         //dd($request->all());
+        // Bloqueo: jugadores suspendidos no pueden participar en el acta
+        $suspendedPlaying = app(PlayerSuspensionService::class)->findSuspendedParticipating(
+            EventEditionMatch::findOrFail($request->get('id')),
+            $request->get('players_h'),
+            $request->get('players_a')
+        );
+
+        if (! empty($suspendedPlaying)) {
+            return back()->withErrors([
+                'score' => 'No se puede guardar el acta: ' . implode(', ', $suspendedPlaying)
+                    . ' está suspendido y no puede participar en este partido. Quítalo de la alineación o levanta su suspensión.'
+            ]);
+        }
+
         DB::transaction(function () use ($request) {
             $matchId = $request->get('id');
             $edition_id = $request->get('edition_id');

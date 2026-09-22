@@ -194,6 +194,45 @@ class SaleSummaryController extends Controller
         ]);
     }
 
+    /**
+     * Cambia manualmente el estado de un resumen diario.
+     *
+     * Permite a un usuario con permisos poner el resumen en estado 'Enviado'
+     * para que vuelva a estar disponible la opción "Consultar", que es la que
+     * consulta a SUNAT el resultado de aprobación usando el número de ticket.
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => ['required', 'in:Enviado,Rechazado,fue_enviado,sunat_disponible,registrado'],
+        ]);
+
+        try {
+            $summary = SaleSummary::findOrFail($id);
+
+            $summary->update([
+                'status' => $request->input('status'),
+                'response_code' => null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Estado actualizado correctamente.',
+                'status' => $summary->status,
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El resumen no existe.',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function retrySummary($id)
     {
         try {

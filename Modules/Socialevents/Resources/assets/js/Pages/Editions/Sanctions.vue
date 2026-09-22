@@ -21,6 +21,14 @@
         players: {
             type: Object,
             default: () => ({}),
+        },
+        playedMatches: {
+            type: Array,
+            default: () => [],
+        },
+        allPlayers: {
+            type: Object,
+            default: () => ({}),
         }
     });
 
@@ -279,6 +287,79 @@
     const printSanctionsPdf = () => {
         window.open(route('even_ediciones_sanciones_pdf', props.edicion.id), "_blank");
     }
+
+    // ============ Registro manual de tarjetas ============
+    const displayModalCard = ref(false);
+    const cardForm = useForm({
+        match_id: null,
+        player_id: null,
+        type: 'yellow',
+        minute: null,
+        amount_fine: null,
+    });
+
+    const cardTypes = [
+        { value: 'yellow', label: 'Tarjeta amarilla', help: 'Advertencia por infracción. Se registra la multa de amarilla configurada en la edición.', class: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+        { value: 'red', label: 'Tarjeta roja directa', help: 'Expulsión directa. Se registra la multa de roja directa configurada en la edición.', class: 'bg-red-100 text-red-800 border-red-300' },
+        { value: 'double_yellow', label: 'Doble amarilla (expulsión)', help: 'Expulsión por acumulación de 2 amarillas. Registra la doble amarilla (con su multa) + las 2 amarillas en el historial. Solo se cobra la doble amarilla.', class: 'bg-orange-100 text-orange-800 border-orange-300' },
+    ];
+
+    const selectedCardType = computed(() => cardTypes.find(t => t.value === cardForm.type));
+
+    const cardPriceFor = (type) => {
+        const prices = {
+            yellow: props.edicion.yellow_price ?? 0,
+            red: props.edicion.direct_red_price ?? 0,
+            double_yellow: props.edicion.double_yellow_price ?? 0,
+        };
+        return Number(prices[type] ?? 0);
+    };
+
+    const openModalCard = () => {
+        cardForm.reset();
+        cardForm.type = 'yellow';
+        cardForm.minute = null;
+        cardForm.amount_fine = cardPriceFor('yellow');
+        cardForm.match_id = props.playedMatches.length ? props.playedMatches[0].id : null;
+        displayModalCard.value = true;
+    };
+
+    const closeModalCard = () => {
+        displayModalCard.value = false;
+    };
+
+    // Al cambiar el tipo de tarjeta, prellenamos el monto con el precio de la edición.
+    const onCardTypeChange = () => {
+        cardForm.amount_fine = cardPriceFor(cardForm.type);
+    };
+
+    const saveCard = () => {
+        cardForm.post(route('even_ediciones_sanciones_card_store', props.edicion.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                displayModalCard.value = false;
+                Swal2.fire({
+                    title: 'Tarjeta registrada',
+                    text: 'La sanción ya aparece en el listado y suma a la deuda del jugador.',
+                    icon: 'success',
+                    padding: '2em',
+                    customClass: 'sweet-alerts',
+                });
+            },
+            onError: (errors) => {
+                const first = errors && Object.values(errors)[0];
+                if (first) {
+                    Swal2.fire({
+                        title: 'Atención',
+                        text: Array.isArray(first) ? first[0] : String(first),
+                        icon: 'warning',
+                        padding: '2em',
+                        customClass: 'sweet-alerts',
+                    });
+                }
+            },
+        });
+    };
 </script>
 <template>
     <AppLayout title="Ediciones">
@@ -291,6 +372,7 @@
                         { route: route('even_ediciones_fixtures', edicion.id), title: 'Partidos', permissions: 'even_ediciones_fixtures'},
                         { route: route('even_ediciones_pago_sanciones', edicion.id), title: 'Sanciones', permissions: 'even_ediciones_sanciones'},
                         { route: route('even_ediciones_exclusiones', edicion.id), title: 'Exclusiones', permissions: 'even_ediciones_exclusiones'},
+                        { route: route('even_ediciones_suspensiones', edicion.id), title: 'Suspensiones', permissions: 'even_ediciones_suspensiones'},
                         { route: route('even_ediciones_actas_listado', edicion.id), title: 'Actas', permissions: 'even_ediciones_actas'}
                     ]
                 },
@@ -307,6 +389,12 @@
                     <div class="col-span-3 sm:col-span-2">
                         <Keypad>
                             <template #botones>
+                                <button v-can="'even_ediciones_sanciones_registrar'" @click="openModalCard" type="button" class="btn btn-danger uppercase text-xs">
+                                    Registrar tarjeta
+                                </button>
+                                <Link v-can="'even_ediciones_suspensiones'" :href="route('even_ediciones_suspensiones', edicion.id)" class="btn btn-dark uppercase text-xs">
+                                    Suspensiones
+                                </Link>
                                 <button @click="printSanctionsPdf" type="button" class="btn btn-primary uppercase text-xs">
                                     Imprimir PDF
                                 </button>
@@ -465,6 +553,83 @@
                 >
                     <icon-loader v-show="formSanction.processing" class="w-4 h-4 animate-spin mr-1" />
                     Cobrar
+                </button>
+            </template>
+        </ModalLarge>
+
+        <!-- Modal: Registrar tarjeta manualmente -->
+        <ModalLarge :show="displayModalCard" :onClose="closeModalCard" :icon="'/img/pelota-de-futbol.png'">
+            <template #title>Registrar tarjeta</template>
+            <template #message>Registra una amarilla, roja o doble amarilla de un partido ya jugado. Sumará a la deuda del jugador.</template>
+            <template #content>
+                <div class="grid gap-4">
+                    <div>
+                        <InputLabel value="Partido (con resultado registrado)" />
+                        <select v-model="cardForm.match_id" class="form-select mt-1.5" :class="{ 'border-red-500': cardForm.errors.match_id }">
+                            <option :value="null" disabled>Selecciona un partido...</option>
+                            <option v-for="m in playedMatches" :key="m.id" :value="m.id">{{ m.label }}</option>
+                        </select>
+                        <p v-if="playedMatches.length === 0" class="text-xs text-danger mt-1">No hay partidos con resultado registrado en esta edición.</p>
+                        <p v-if="cardForm.errors.match_id" class="text-xs text-danger mt-1">{{ cardForm.errors.match_id }}</p>
+                    </div>
+
+                    <div>
+                        <InputLabel value="Jugador" />
+                        <select v-model="cardForm.player_id" class="form-select mt-1.5" :class="{ 'border-red-500': cardForm.errors.player_id }">
+                            <option :value="null" disabled>Selecciona un jugador...</option>
+                            <optgroup v-for="(members, teamName) in allPlayers" :key="teamName" :label="teamName">
+                                <option v-for="p in members" :key="p.player_id" :value="p.player_id">{{ p.name }}</option>
+                            </optgroup>
+                        </select>
+                        <p v-if="cardForm.errors.player_id" class="text-xs text-danger mt-1">{{ cardForm.errors.player_id }}</p>
+                    </div>
+
+                    <div>
+                        <InputLabel value="Tipo de tarjeta" />
+                        <div class="grid gap-2 mt-1.5">
+                            <label
+                                v-for="t in cardTypes"
+                                :key="t.value"
+                                class="flex items-start gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors"
+                                :class="cardForm.type === t.value ? 'border-primary bg-primary/5' : 'border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800'"
+                            >
+                                <input type="radio" name="card_type" class="form-radio text-primary mt-0.5" :value="t.value" v-model="cardForm.type" @change="onCardTypeChange" />
+                                <span>
+                                    <span class="inline-block px-2 py-0.5 rounded text-xs font-bold border mr-1" :class="t.class">{{ t.label }}</span>
+                                    <span class="block text-xs text-gray-500 dark:text-neutral-400 mt-0.5">{{ t.help }}</span>
+                                </span>
+                            </label>
+                        </div>
+                        <p v-if="cardForm.errors.type" class="text-xs text-danger mt-1">{{ cardForm.errors.type }}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <InputLabel value="Minuto (opcional)" />
+                            <TextInput v-model="cardForm.minute" type="text" maxlength="5" placeholder="Ej. 45+2" class="mt-1.5" />
+                            <p v-if="cardForm.errors.minute" class="text-xs text-danger mt-1">{{ cardForm.errors.minute }}</p>
+                        </div>
+                        <div>
+                            <InputLabel value="Monto de la multa (S/.)" />
+                            <TextInput v-model="cardForm.amount_fine" type="number" step="0.01" min="0" class="mt-1.5" />
+                            <p class="text-xs text-gray-500 mt-1">Prellenado según los precios de la edición. Puedes modificarlo.</p>
+                            <p v-if="cardForm.errors.amount_fine" class="text-xs text-danger mt-1">{{ cardForm.errors.amount_fine }}</p>
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-gray-500 dark:text-neutral-400 border-t border-gray-200 dark:border-neutral-700 pt-3">
+                        La tarjeta queda registrada como <b>pendiente de pago</b> y aparecerá en la columna "Detalle sanciones" del jugador.
+                        Con doble amarilla se registran además las 2 amarillas del historial (sin costo adicional).
+                    </div>
+                </div>
+            </template>
+            <template #buttons>
+                <button @click="saveCard" type="button"
+                    class="btn btn-primary text-xs uppercase"
+                    :class="{ 'opacity-25': cardForm.processing }" :disabled="cardForm.processing || !cardForm.match_id || !cardForm.player_id"
+                >
+                    <icon-loader v-show="cardForm.processing" class="w-4 h-4 animate-spin mr-1" />
+                    Registrar
                 </button>
             </template>
         </ModalLarge>

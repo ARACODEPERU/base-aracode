@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ env('APP_NAME', 'Global CPA') }} - Negociacion confirmada</title>
+    <title>{{ $company->name ?? 'CPA Academy' }} - Negociacion confirmada</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -162,12 +162,14 @@
         </p>
         <br>
         <p style="text-align: center; font-size: 14px;">
-            {{ env('APP_NAME', 'Global CPA') }}
+            {{ $company->name ?? 'CPA Academy' }}
         </p>
         <footer>
             <p style="text-align: center; font-size: 15px;">
-                &copy; Derechos Reservados {{ env('APP_NAME') }} | Desarrollado por
-                <a href="https://aracodeperu.com/">Aracode Smart Solutions</a>
+                &copy; Derechos Reservados {{ $company->name ?? 'CPA Academy' }}
+                @if (!empty($company->fiscal_address))
+                    | {{ $company->fiscal_address }}
+                @endif
             </p>
         </footer>
     </div>

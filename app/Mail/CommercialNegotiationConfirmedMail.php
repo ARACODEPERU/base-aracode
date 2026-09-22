@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\Company;
 use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,7 +19,11 @@ class CommercialNegotiationConfirmedMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public $negotiation;
+
     public $client;
+
+
+    public $company;
 
     /**
      * Enlace a la negociacion dentro del panel: es el "siguiente paso" que el
@@ -37,11 +42,18 @@ class CommercialNegotiationConfirmedMail extends Mailable implements ShouldQueue
     /** @var array<int, int> Demoras entre reintentos, en segundos. */
     public $backoff = [60, 300];
 
+
     public function __construct(CommercialNegotiation $negotiation, $client)
     {
         $this->negotiation = $negotiation;
         $this->client = $client;
+
+        // Nombre/logotipo de la empresa desde la base de datos: si cambia el
+        // nombre de la empresa no hay que tocar el HTML del correo.
+        $this->company = Company::first();
+
         $this->reviewUrl = $this->resolveReviewUrl($negotiation);
+
     }
 
     public function envelope(): Envelope
@@ -51,7 +63,7 @@ class CommercialNegotiationConfirmedMail extends Mailable implements ShouldQueue
                 MailSender::address('contacto@globalcpa.com'),
                 MailSender::name()
             ),
-            subject: 'Negociacion confirmada por el cliente - ' . config('app.name'),
+            subject: 'Negociacion confirmada por el cliente - ' . $this->company->name,
         );
     }
 
@@ -62,9 +74,11 @@ class CommercialNegotiationConfirmedMail extends Mailable implements ShouldQueue
             with: [
                 'negotiation' => $this->negotiation,
                 'client' => $this->client,
+                'company' => $this->company,
             ],
         );
     }
+
 
     public function attachments(): array
     {
@@ -97,4 +111,5 @@ class CommercialNegotiationConfirmedMail extends Mailable implements ShouldQueue
             return url('/commercial/negotiations/show/' . $negotiation->id);
         }
     }
+
 }

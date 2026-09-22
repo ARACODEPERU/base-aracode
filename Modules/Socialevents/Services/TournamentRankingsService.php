@@ -6,20 +6,22 @@ use Illuminate\Support\Collection;
 use Modules\Socialevents\Entities\EventEditionMatchParticipation;
 use Modules\Socialevents\Entities\EventEditionMatchPlayerStat;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
-use Modules\Socialevents\Entities\EventEditionPlayerExclusion;
 
 class TournamentRankingsService
 {
+    public function __construct(private \Modules\Socialevents\Services\PlayerSuspensionService $suspensionService)
+    {
+    }
+
     /**
-     * IDs de jugadores excluidos de los rankings en la edición.
+     * IDs de jugadores ocultos de los rankings en la edición:
+     * excluidos definitivos + suspendidos con suspensión vigente.
      *
      * @return array<int>
      */
     private function getExcludedPlayerIds(int $editionId): array
     {
-        return EventEditionPlayerExclusion::where('edition_id', $editionId)
-            ->pluck('player_id')
-            ->all();
+        return $this->suspensionService->getPlayerIdsHiddenFromRankings($editionId);
     }
     /**
      * Ranking de jugadores de campo (misma fórmula que la landing).

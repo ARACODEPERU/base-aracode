@@ -30,6 +30,25 @@ class Resumen
         $this->igv = Parameter::where('parameter_code', 'P000001')->value('value_default');
     }
 
+    /**
+     * Detecta errores a nivel de transporte HTTP (Greenter los reporta con
+     * código 'HTTP' o mensajes como 'Bad Request', 'connection', 'timeout', 'soap').
+     *
+     * En estos casos SUNAT NO procesó el archivo: no es un rechazo de negocio,
+     * por lo que el resumen debe permanecer reintentable/reconsultable.
+     */
+    private function isHttpTransportError(?string $code, ?string $message): bool
+    {
+        $message = (string) $message;
+
+        return $code === 'HTTP'
+            || stripos($message, 'HTTP') !== false
+            || stripos($message, 'bad request') !== false
+            || stripos($message, 'connection') !== false
+            || stripos($message, 'timeout') !== false
+            || stripos($message, 'soap') !== false;
+    }
+
     public function create($summary, $documents)
     {
         try {
@@ -66,6 +85,10 @@ class Resumen
                     if ($ticket) {
                         $summary->ticket = $ticket;
                     }
+                } elseif ($this->isHttpTransportError($codeError, $messageError)) {
+                    // Error HTTP (ej. "Bad Request"): SUNAT no procesó el archivo.
+                    // No es un rechazo: queda disponible para reenviar.
+                    $status = 'sunat_disponible';
                 } else {
                     $status = 'Rechazado';
                 }
@@ -141,15 +164,14 @@ class Resumen
                 else {
                     $isConnectionError =
                         empty($codeError)
-                        || stripos($messageError, 'connection') !== false
-                        || stripos($messageError, 'timeout') !== false
-                        || stripos($messageError, '505') !== false
-                        || stripos($messageError, 'soap') !== false
-                        || stripos($messageError, 'servidor') !== false
-                        || stripos($messageError, 'HTTP') !== false;
+                        || $this->isHttpTransportError($codeError, $messageError)
+                        || stripos($messageError, 'servidor') !== false;
 
                     if ($isConnectionError || $isProcessing) {
-                        $status = 'Enviado';
+                        // SUNAT no respondió bien: NO se toca el estado.
+                        // El resumen mantiene su estado actual (ej. 'Enviado') y
+                        // el usuario puede volver a Consultar con el mismo ticket.
+                        $status = $summary->status;
                     } else {
                         $status = 'Rechazado';
                     }
@@ -183,7 +205,7 @@ class Resumen
             } elseif (isset($isProcessing) && $isProcessing) {
                 $summary->response_description = 'SUNAT sigue procesando el comprobante. No es un error del sistema; vuelve a consultar más tarde. Detalle: '.$messageError;
             } elseif (isset($isConnectionError) && $isConnectionError) {
-                $summary->response_description = 'Error de conexión con SUNAT. Intenta consultar más tarde. Detalle: '.$messageError;
+                $summary->response_description = 'Error de conexión con SUNAT a nivel HTTP. El comprobante NO fue procesado; puedes volver a consultar más tarde. Detalle: '.$messageError;
             } else {
                 $summary->response_description = $codeError == '0127' ? 'El ticket no existe' : $messageError;
             }

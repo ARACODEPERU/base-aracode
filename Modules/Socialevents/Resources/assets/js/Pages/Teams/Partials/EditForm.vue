@@ -41,8 +41,9 @@
         ubigeo_description: props.team.ubigeo_description,
         logo_path: null,
         preview_logo_path: props.team.logo_path,
-        manager_id: props.team.manager_id,
-        manager_name: props.team.manager.full_name,
+        // Protegido: algunos equipos no tienen delegado asignado (manager null)
+        manager_id: props.team.manager_id ?? null,
+        manager_name: props.team.manager?.full_name ?? null,
         champion: props.team.champion == 1 ? true : false,
         status: props.team.status == 1 ? true : false,
     });
@@ -239,6 +240,7 @@
                             <CropperImage
                                 :aspectRatio="1024 / 1336"
                                 :imgDefault="defaultLogoSrc || undefined"
+                                emit-on-crop-end
                                 ref="cropper"
                                 @onCrop="cropImageAndSave"
                             ></CropperImage>

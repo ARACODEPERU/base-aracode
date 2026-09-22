@@ -50,6 +50,7 @@
                         { route: route('even_ediciones_fixtures', edition.id), title: 'Partidos', permissions: 'even_ediciones_fixtures'},
                         { route: route('even_ediciones_pago_sanciones', edition.id), title: 'Sanciones', permissions: 'even_ediciones_sanciones'},
                         { route: route('even_ediciones_exclusiones', edition.id), title: 'Exclusiones', permissions: 'even_ediciones_exclusiones'},
+                        { route: route('even_ediciones_suspensiones', edition.id), title: 'Suspensiones', permissions: 'even_ediciones_suspensiones'},
                         { route: route('even_ediciones_actas_listado', edition.id), title: 'Actas', permissions: 'even_ediciones_actas'},
                     ]
                 },
