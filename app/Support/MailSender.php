@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Mail\Mailables\Address;
+
 /**
  * Remitente de los correos de la aplicacion.
  *
@@ -44,6 +46,28 @@ class MailSender
     public static function name(): string
     {
         return trim((string) config('mail.from.name')) ?: self::FALLBACK_NAME;
+    }
+
+    /**
+     * Direccion de respuesta (Reply-To) de un correo.
+     *
+     * Varios mailables dejan que quien origina el mensaje reciba las respuestas;
+     * esa direccion sale de datos de negocio (cliente, contacto, formulario) y
+     * puede faltar o venir mal escrita. Si no es un correo valido se devuelve
+     * null y el mensaje sale sin encabezado Reply-To, de modo que las respuestas
+     * caen al remitente configurado en lugar de tumbar el envio.
+     */
+    public static function replyTo(?string $address, ?string $name = null): ?Address
+    {
+        $address = trim((string) $address);
+
+        if (! filter_var($address, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+
+        $name = trim((string) $name);
+
+        return new Address($address, $name !== '' ? $name : null);
     }
 
     /**
