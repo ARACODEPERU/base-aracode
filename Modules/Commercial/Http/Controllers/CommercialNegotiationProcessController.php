@@ -1008,6 +1008,9 @@ class CommercialNegotiationProcessController extends Controller
         $student = AcaStudent::where('person_id', $person->id)->first();
         $invoice = $negotiation->invoice;
         $document = $negotiation->sale_document_id ? SaleDocument::find($negotiation->sale_document_id) : null;
+        $profession = $person->profession_id
+            ? DB::table('professions')->where('id', $person->profession_id)->value('description')
+            : null;
 
         return [
             'evento' => 'negociacion_aprobada',
@@ -1021,7 +1024,11 @@ class CommercialNegotiationProcessController extends Controller
                 'total' => (float) $negotiation->total_price,
                 'tipo_pago' => $negotiation->payment_type,
                 'monto_inicial' => $negotiation->initial_amount !== null ? (float) $negotiation->initial_amount : null,
-                'cuotas' => $negotiation->schedule ?? [],
+                'cuotas' => collect($negotiation->schedule ?? [])->map(fn ($row, $index) => [
+                    'numero' => $index + 1,
+                    'due_date' => $row['due_date'] ?? null,
+                    'amount' => isset($row['amount']) && $row['amount'] !== null ? (float) $row['amount'] : null,
+                ])->values()->toArray(),
                 'estado' => $negotiation->status,
                 'canal_contacto' => $negotiation->contact_channel_label ?: $negotiation->contact_channel,
                 'detalle_contacto' => $negotiation->contact_detail,
@@ -1029,7 +1036,11 @@ class CommercialNegotiationProcessController extends Controller
                 'sale_id' => $negotiation->sale_id,
                 'sale_document_id' => $negotiation->sale_document_id,
                 'creado_por' => $negotiation->creator?->name,
+                'creado_por_id' => $negotiation->creator?->id,
+                'creado_por_email' => $negotiation->creator?->email,
                 'aprobado_por' => $negotiation->verifier?->name,
+                'aprobado_por_id' => $negotiation->verifier?->id,
+                'aprobado_por_email' => $negotiation->verifier?->email,
                 'aprobado_en' => $negotiation->verified_at?->toIso8601String(),
             ],
             'persona' => [
@@ -1045,6 +1056,9 @@ class CommercialNegotiationProcessController extends Controller
                 'genero' => $person->gender,
                 'ocupacion' => $person->ocupacion,
                 'ocupacion_id' => $person->occupation_id,
+                'profesion_id' => $person->profession_id,
+                'profesion' => $profession,
+                'profesion_texto' => $person->profession ?: null,
                 'empresa' => $person->company,
                 'industria' => $person->industry,
                 'industria_id' => $person->industry_id,
