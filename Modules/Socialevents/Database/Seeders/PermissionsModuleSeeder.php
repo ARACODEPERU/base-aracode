@@ -60,6 +60,7 @@ class PermissionsModuleSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_resultado']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_eliminar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_sanciones']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_sanciones_registrar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_partido_acta']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_actas']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'even_ediciones_acta_editar']));

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
+use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 
@@ -66,9 +67,55 @@ class EventEditionMatchSanctionController extends Controller
             return $player;
         });
 
+        // Partidos con resultado registrado de la edición (para el registro manual de tarjetas).
+        $playedMatches = EventEditionMatch::with(['equipolocal:id,name', 'equipovisitante:id,name'])
+            ->where('edition_id', $id)
+            ->whereNotNull('score_h')
+            ->whereNotNull('score_a')
+            ->orderBy('match_date')
+            ->get(['id', 'team_h_id', 'team_a_id', 'round_number', 'match_date', 'score_h', 'score_a'])
+            ->map(function ($match) {
+                return [
+                    'id' => $match->id,
+                    'label' => sprintf(
+                        'Fecha %s · %s %d-%d %s · %s',
+                        $match->round_number ?? '?',
+                        $match->equipolocal?->name ?? 'Local',
+                        $match->score_h,
+                        $match->score_a,
+                        $match->equipovisitante?->name ?? 'Visitante',
+                        $match->match_date?->format('d/m/y') ?? 's/f'
+                    ),
+                ];
+            });
+
+        // Todos los jugadores inscritos en la edición, agrupados por equipo (para el selector).
+        $allPlayers = EventEditionTeamPlayer::with(['team:id,name', 'person:id,names'])
+            ->where('edition_id', $id)
+            ->get()
+            ->groupBy('team_id')
+            ->mapWithKeys(function ($teamPlayers) {
+                $team = $teamPlayers->first()->team;
+                $label = $team?->name ?? 'Equipo';
+
+                $members = $teamPlayers
+                    ->filter(fn ($tp) => $tp->person !== null)
+                    ->map(function ($tp) {
+                        return [
+                            'player_id' => $tp->person_id,
+                            'name' => $tp->person->full_name ?? $tp->person->names ?? 'Jugador sin nombre',
+                        ];
+                    })
+                    ->values();
+
+                return [$label => $members];
+            });
+
         return Inertia::render('Socialevents::Editions/Sanctions',[
             'players' => $players,
-            'edicion' => $edicion
+            'edicion' => $edicion,
+            'playedMatches' => $playedMatches,
+            'allPlayers' => $allPlayers,
         ]);
     }
 
@@ -148,6 +195,89 @@ class EventEditionMatchSanctionController extends Controller
             ]);
 
         return back()->with('message', 'Sanciones regularizadas con éxito');
+    }
+
+    /**
+     * Registra manualmente una tarjeta (amarilla/roja/doble amarilla) a un jugador
+     * de un partido ya jugado, sin pasar por el acta del partido.
+     */
+    public function registerCard(Request $request, int $editionId): RedirectResponse
+    {
+        $validated = $request->validate([
+            'match_id' => 'required|integer|exists:event_edition_matches,id',
+            'player_id' => 'required|integer|exists:people,id',
+            'type' => 'required|in:yellow,red,double_yellow',
+            'minute' => 'nullable|string|max:5',
+            'amount_fine' => 'nullable|numeric|min:0|max:9999.99',
+        ], [
+            'match_id.required' => 'Selecciona el partido.',
+            'match_id.exists' => 'El partido seleccionado no existe.',
+            'player_id.required' => 'Selecciona el jugador.',
+            'player_id.exists' => 'El jugador seleccionado no existe.',
+            'type.required' => 'Selecciona el tipo de tarjeta.',
+            'amount_fine.max' => 'El monto no puede superar S/ 9999.99.',
+        ]);
+
+        // El partido debe pertenecer a la edición y estar jugado (con marcador).
+        $match = EventEditionMatch::where('edition_id', $editionId)
+            ->whereNotNull('score_h')
+            ->whereNotNull('score_a')
+            ->find($validated['match_id']);
+
+        if (! $match) {
+            return back()->withErrors(['match_id' => 'El partido seleccionado no pertenece a esta edición o aún no tiene resultado registrado.']);
+        }
+
+        // El jugador debe estar inscrito en la edición.
+        $exists = EventEditionTeamPlayer::where('edition_id', $editionId)
+            ->where('person_id', $validated['player_id'])
+            ->exists();
+
+        if (! $exists) {
+            return back()->withErrors(['player_id' => 'El jugador seleccionado no está inscrito en esta edición.']);
+        }
+
+        $amount = isset($validated['amount_fine']) && $validated['amount_fine'] !== null
+            ? round((float) $validated['amount_fine'], 2)
+            : (float) match ($validated['type']) {
+                'yellow' => $match->edicion->yellow_price ?? 0,
+                'red' => $match->edicion->direct_red_price ?? 0,
+                'double_yellow' => $match->edicion->double_yellow_price ?? 0,
+            };
+
+        DB::transaction(function () use ($validated, $amount) {
+            if ($validated['type'] === 'double_yellow') {
+                // Mismo comportamiento que el acta: la doble amarilla registra la
+                // expulsión + las 2 amarillas individuales (para el historial).
+                EventEditionMatchSanction::create([
+                    'match_id' => $validated['match_id'],
+                    'player_id' => $validated['player_id'],
+                    'type' => 'double_yellow',
+                    'minute' => $validated['minute'] ?? null,
+                    'amount_fine' => $amount,
+                ]);
+
+                for ($i = 1; $i <= 2; $i++) {
+                    EventEditionMatchSanction::create([
+                        'match_id' => $validated['match_id'],
+                        'player_id' => $validated['player_id'],
+                        'type' => 'yellow',
+                        'minute' => $validated['minute'] ?? null,
+                        'amount_fine' => 0,
+                    ]);
+                }
+            } else {
+                EventEditionMatchSanction::create([
+                    'match_id' => $validated['match_id'],
+                    'player_id' => $validated['player_id'],
+                    'type' => $validated['type'],
+                    'minute' => $validated['minute'] ?? null,
+                    'amount_fine' => $amount,
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Tarjeta registrada correctamente.');
     }
 
     public function paymentStore(Request $request)
