@@ -49,25 +49,33 @@ class MailSender
     }
 
     /**
-     * Direccion de respuesta (Reply-To) de un correo.
+     * Encabezado Reply-To de un correo, listo para el constructor de Envelope.
      *
      * Varios mailables dejan que quien origina el mensaje reciba las respuestas;
      * esa direccion sale de datos de negocio (cliente, contacto, formulario) y
-     * puede faltar o venir mal escrita. Si no es un correo valido se devuelve
-     * null y el mensaje sale sin encabezado Reply-To, de modo que las respuestas
-     * caen al remitente configurado en lugar de tumbar el envio.
+     * puede faltar o venir mal escrita.
+     *
+     * Se devuelve una lista porque Envelope recibe replyTo como arreglo de
+     * direcciones (igual que to/cc/bcc), no como una direccion suelta: pasarle un
+     * Address unico hace que Collection lo castee a arreglo y lo interprete como
+     * dos destinatarios con claves "address" y "name". Si el correo no es valido
+     * se devuelve una lista vacia, de modo que el mensaje sale sin encabezado
+     * Reply-To y las respuestas caen al remitente configurado en lugar de tumbar
+     * el envio.
+     *
+     * @return array<int, Address>
      */
-    public static function replyTo(?string $address, ?string $name = null): ?Address
+    public static function replyTo(?string $address, ?string $name = null): array
     {
         $address = trim((string) $address);
 
         if (! filter_var($address, FILTER_VALIDATE_EMAIL)) {
-            return null;
+            return [];
         }
 
         $name = trim((string) $name);
 
-        return new Address($address, $name !== '' ? $name : null);
+        return [new Address($address, $name !== '' ? $name : null)];
     }
 
     /**
