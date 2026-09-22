@@ -25,7 +25,6 @@ use App\Models\Sale;
 use App\Models\SaleDocumentItem;
 use App\Models\SaleProduct;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Greenter\Model\Sale\FormaPagos\FormaPagoContado;
 use Greenter\Model\Sale\FormaPagos\FormaPagoCredito;
 class Boleta
@@ -89,7 +88,7 @@ class Boleta
 
     public function setDocument($document, $tipDet = '022', $ipMeP = '001')
     {
-        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:i:s'));
+        $broadcast_date = new DateTime($document->invoice_broadcast_date . ' ' . Carbon::parse($document->created_at)->format('H:m:s'));
 
         $client = new Client();
         $client->setTipoDoc($document->client_type_doc)
@@ -241,49 +240,23 @@ class Boleta
         try {
             $document = SaleDocument::find($id);
 
-            if (! $document) {
-                return null;
+            // Las boletas se informan a SUNAT dentro de un resumen diario, que no
+            // guarda el XML de cada comprobante. Si no quedo guardado, se firma aqui.
+            if (! $document->invoice_xml || ! is_file($document->invoice_xml)) {
+                $invoice = $this->setDocument($document);
+                $see = $this->util->getSee();
+
+                $document->invoice_xml = $this->util->writeXml($invoice, $see->getXmlSigned($invoice));
+                $document->invoice_document_name = $invoice->getName();
+                $document->save();
             }
 
-            $this->ensureXmlFile($document);
-
-            $name = $document->invoice_document_name
-                ?: trim($document->invoice_serie.'-'.$document->invoice_correlative, '-');
-
             return array(
-                'fileName' => $name . '.xml',
+                'fileName' => $document->invoice_document_name . '.xml',
                 'filePath' => $document->invoice_xml
             );
         } catch (Exception $e) {
             var_dump($e);
-        }
-    }
-
-    /**
-     * Se asegura de que el XML del comprobante exista en disco. El XML se guarda
-     * recién al enviar el comprobante a SUNAT; si todavía no fue enviado (o el
-     * archivo ya no está en el servidor) se genera y firma ahora mismo, con el
-     * mismo builder que usa el envío, sin comunicarse con SUNAT, y se registra
-     * en el documento igual que hace create().
-     */
-    private function ensureXmlFile(SaleDocument $document): void
-    {
-        if ($document->invoice_xml && file_exists($document->invoice_xml)) {
-            return;
-        }
-
-        try {
-            $invoice = $this->setDocument($document);
-            $path = $this->util->writeSignedXml($invoice);
-
-            if ($path) {
-                $document->invoice_xml = $path;
-                $document->invoice_document_name = $invoice->getName();
-                $document->save();
-            }
-        } catch (\Throwable $e) {
-            // Sin XML el correo sale igual, solo que sin ese adjunto.
-            Log::warning('No se pudo generar el XML de la boleta '.$document->id.': '.$e->getMessage());
         }
     }
     public function getBoletaCDR($id)

@@ -432,11 +432,11 @@ class AcaSaleDocumentController extends Controller
                 $resF = $factura->getFacturaXML($id);
             }elseif($document->invoice_type_doc == '03'){
                 $boleta = new Boleta();
-                $resb = $boleta->getBoletatDomPdf($id, $format);
+                $resb = $boleta->getBoletatDomPdf($id, $format); //metodo para generar pdf
+                $resF = $boleta->getBoletaXML($id);
             }
 
             // Intentar obtener la boleta
-            // para generar el xml
             // Verificar si se obtuvo un resultado válido
             if (!$resb) {
                 throw new \Exception("No se pudo generar la documento de venta.");
