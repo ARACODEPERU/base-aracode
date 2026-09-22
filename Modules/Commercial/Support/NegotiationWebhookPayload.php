@@ -7,7 +7,6 @@ use App\Models\SaleDocument;
 use App\Models\User;
 use App\Services\JobOffersAccess;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Commercial\Entities\CommercialNegotiation;
@@ -34,9 +33,17 @@ class NegotiationWebhookPayload
         $student = AcaStudent::where('person_id', $person->id)->first();
         $invoice = $negotiation->invoice;
         $document = $negotiation->sale_document_id ? SaleDocument::find($negotiation->sale_document_id) : null;
-        $profession = $person->profession_id
-            ? DB::table('professions')->where('id', $person->profession_id)->value('description')
-            : null;
+
+        // Cargo u ocupacion, empresa e industria: manda lo que el cliente declaro en el
+        // formulario de esta negociacion (client_data), que es el dato del acuerdo; la ficha
+        // solo rellena lo que la negociacion dejo vacio, para que ningun campo viaje en null
+        // cuando el sistema ya conoce el dato de la persona.
+        $profile = $negotiation->client_data ?? [];
+        $occupation = ($profile['ocupacion'] ?? null) ?: $person->ocupacion;
+        $occupationId = ($profile['occupation_id'] ?? null) ?: $person->occupation_id;
+        $company = ($profile['company'] ?? null) ?: $person->company;
+        $industry = ($profile['industry'] ?? null) ?: $person->industry;
+        $industryId = ($profile['industry_id'] ?? null) ?: $person->industry_id;
 
         return [
             'evento' => 'negociacion_aprobada',
@@ -80,14 +87,17 @@ class NegotiationWebhookPayload
                 'email' => $person->email,
                 'telefono' => $person->telephone,
                 'genero' => $person->gender,
-                'ocupacion' => $person->ocupacion,
-                'ocupacion_id' => $person->occupation_id,
-                'profesion_id' => $person->profession_id,
-                'profesion' => $profession,
-                'profesion_texto' => $person->profession ?: null,
-                'empresa' => $person->company,
-                'industria' => $person->industry,
-                'industria_id' => $person->industry_id,
+                'ocupacion' => $occupation,
+                'ocupacion_id' => $occupationId,
+                // Los tres campos de profesion llevan el cargo u ocupacion declarado en la
+                // negociacion (mismo id y mismo texto), solo eso: nunca quedan en null si el
+                // cliente lleno su cargo en el formulario.
+                'profesion_id' => $occupationId,
+                'profesion' => $occupation,
+                'profesion_texto' => $occupation,
+                'empresa' => $company,
+                'industria' => $industry,
+                'industria_id' => $industryId,
                 'fecha_nacimiento' => $person->birthdate,
                 'direccion' => $person->address,
                 'ubigeo' => $person->ubigeo,

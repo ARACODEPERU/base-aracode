@@ -199,7 +199,10 @@ const loadVerifiedPerson = (person) => {
     form.father_lastname = person.father_lastname ?? null;
     form.mother_lastname = person.mother_lastname ?? null;
     form.gender = person.gender ?? form.gender;
-    form.email = person.email ?? form.email;
+    // El correo que el cliente ya escribio manda: la ficha puede tener otro (el del
+    // aviso de la negociacion, por ejemplo) y ese no debe pisar el del formulario,
+    // que es con el que se registra su cuenta. Solo se precarga si el campo esta vacio.
+    form.email = form.email || person.email;
     form.telephone = person.telephone ?? form.telephone;
     // El cargo se muestra por id contra el catalogo: si la persona lo tiene como
     // texto libre viejo (sin occupation_id) el campo queda vacio para que elija.
