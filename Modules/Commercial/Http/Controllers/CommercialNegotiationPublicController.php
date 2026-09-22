@@ -3,7 +3,7 @@
 namespace Modules\Commercial\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\SendNegotiationConfirmedNotification;
+use App\Mail\CommercialNegotiationConfirmedMail;
 use App\Models\BankAccount;
 use App\Models\Country;
 use App\Models\District;
@@ -17,9 +17,7 @@ use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
 use Illuminate\Support\Facades\Mail;
-
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialNegotiation;
@@ -625,7 +623,6 @@ class CommercialNegotiationPublicController extends Controller
                 // Un destinatario fallido no debe impedir los demas envios encolados.
                 report($e);
             }
-
         }
     }
 }

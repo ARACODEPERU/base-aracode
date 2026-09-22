@@ -13,6 +13,9 @@ import { Select } from "ant-design-vue";
 import Swal2 from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faCheckCircle, faFileImage, faMagnifyingGlass, faUpload, faXmark, faXmarkCircle } from "@fortawesome/free-solid-svg-icons";
+import SummaryModal from "./Partials/SummaryModal.vue";
+import { useEmailAccountCheck } from "./composables/useEmailAccountCheck.js";
+import { useDniReniecCheck } from "./composables/useDniReniecCheck.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
@@ -77,14 +80,6 @@ const form = useForm({
 const rucLoading = ref(false);
 const rucValidated = ref(false);
 const rucNotice = ref("");
-
-// Validacion DNI del cliente principal (obligatoria para continuar).
-const dniLoading = ref(false);
-const dniValidated = ref(false);
-const dniNotice = ref("");
-
-// Cuenta existente por correo: continuar con la cuenta ya registrada.
-const accountNotice = ref("");
 
 // Boleta a nombre de una tercera persona.
 const boletaTercero = ref(false);
@@ -189,19 +184,14 @@ const onlyNumbers = () => {
     form.number = form.number ? String(form.number).replace(/\D/g, "") : null;
 };
 
-// Al cambiar el DNI manualmente se invalida la validacion anterior.
-const onNumberInput = () => {
-    onlyNumbers();
-    dniValidated.value = false;
-    dniNotice.value = "";
-};
-
 const selectCity = () => {
     form.ubigeo = ubigeoSelected.value?.district_id ?? null;
     form.ubigeo_description = ubigeoSelected.value?.ubigeo_description ?? null;
 };
 
-const fillForm = (person) => {
+// Carga la ficha de una persona (busqueda interna o cuenta existente). Sus datos
+// quedan verificados al venir de una fuente confiable, asi que no se pide RENIEC.
+const loadVerifiedPerson = (person) => {
     form.document_type_id = String(person.document_type_id ?? form.document_type_id);
     form.number = person.number ?? person.document_number ?? form.number;
     form.full_name = person.full_name ?? person.razon_social ?? form.full_name;
@@ -209,7 +199,10 @@ const fillForm = (person) => {
     form.father_lastname = person.father_lastname ?? null;
     form.mother_lastname = person.mother_lastname ?? null;
     form.gender = person.gender ?? form.gender;
-    form.email = person.email ?? form.email;
+    // El correo que el cliente ya escribio manda: la ficha puede tener otro (el del
+    // aviso de la negociacion, por ejemplo) y ese no debe pisar el del formulario,
+    // que es con el que se registra su cuenta. Solo se precarga si el campo esta vacio.
+    form.email = form.email || person.email;
     form.telephone = person.telephone ?? form.telephone;
     // El cargo se muestra por id contra el catalogo: si la persona lo tiene como
     // texto libre viejo (sin occupation_id) el campo queda vacio para que elija.
@@ -233,7 +226,37 @@ const fillForm = (person) => {
         form.ubigeo_description = person.ubigeo_description ?? form.ubigeo_description;
         ubigeoSelected.value = { district_id: person.ubigeo, ubigeo_description: person.ubigeo_description };
     }
+
+    markPersonVerified();
 };
+
+// Verificaciones de identidad del cliente: cada una vive en su propio composable.
+const {
+    dniLoading,
+    dniValidated,
+    dniNotice,
+    dniHint,
+    onNumberInput,
+    validateDni,
+    resetDniCheck,
+    markPersonVerified,
+} = useDniReniecCheck({
+    form,
+    token: props.negotiation.token,
+    isDni,
+    normalizeNumber: onlyNumbers,
+});
+
+const {
+    accountNotice,
+    markSubmitting,
+    markEmailCheckAvailable,
+    checkEmailAccount,
+} = useEmailAccountCheck({
+    form,
+    token: props.negotiation.token,
+    loadPerson: loadVerifiedPerson,
+});
 
 const searchPerson = () => {
     if (searchLoading.value) return;
@@ -257,11 +280,7 @@ const searchPerson = () => {
             return;
         }
 
-        fillForm(res.data.person);
-
-        // Los datos ya estan verificados en la base de datos interna.
-        dniValidated.value = true;
-        dniNotice.value = "";
+        loadVerifiedPerson(res.data.person);
 
         Swal2.fire({
             title: "Cliente encontrado",
@@ -369,8 +388,7 @@ watch(() => form.invoice_type, (value) => {
 watch(() => form.document_type_id, (current, previous) => {
     if (String(current) === String(previous)) return;
 
-    dniValidated.value = false;
-    dniNotice.value = "";
+    resetDniCheck();
 
     if (isForeignLocation.value) {
         form.ubigeo = null;
@@ -439,124 +457,21 @@ const setMpPaymentMode = (mode) => {
     form.clearErrors("voucher");
 };
 
+// Envio: el resumen previo (SummaryModal) es el ultimo paso antes de registrar la
+// negociacion.
+const summaryModal = ref(null);
+
 const submit = () => {
     if (!validateRucBeforeSubmit()) return;
     if (!validateDniBeforeSubmit()) return;
     if (!validateBoletaTerceroBeforeSubmit()) return;
-    confirmNegotiation();
-};
 
-// Verifica si el correo ya tiene cuenta registrada: pregunta y precarga los datos.
-const checkEmailAccount = () => {
-    const email = String(form.email || "").trim();
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
-
-    axios.post(route("comm_negotiations_public_check_email", props.negotiation.token), {
-        email,
-    }).then((res) => {
-        if (!res.data?.exists) {
-            accountNotice.value = "";
-            return;
-        }
-
-        accountNotice.value = res.data.message || "Este correo ya tiene una cuenta registrada.";
-
-        Swal2.fire({
-            title: "Cuenta existente",
-            text: res.data.message || "Este correo ya tiene una cuenta registrada. ¿Deseas continuar con ella?",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "Si, usar mi cuenta",
-            cancelButtonText: "No, seguir como nuevo",
-            padding: "2em",
-            customClass: "sweet-alerts",
-        }).then((result) => {
-            if (result.isConfirmed && res.data.person) {
-                fillForm(res.data.person);
-
-                // Los datos ya estan verificados en la cuenta existente.
-                dniValidated.value = true;
-                dniNotice.value = "";
-
-                Swal2.fire({
-                    title: "Datos cargados",
-                    text: "Continuaras con tu cuenta existente. Revisa que tus datos esten actualizados.",
-                    icon: "success",
-                    padding: "2em",
-                    customClass: "sweet-alerts",
-                });
-            }
-        });
-    }).catch(() => {
-        // Fallo de red: no bloquea el flujo, la cuenta se resuelve al procesar.
-    });
-};
-
-// Consulta el DNI del cliente principal en la API (obligatoria para enviar).
-const validateDni = () => {
-    if (dniLoading.value) return;
-
-    if (!form.number || String(form.number).length !== 8) {
-        Swal2.fire({
-            title: "DNI invalido",
-            text: "El DNI debe tener 8 digitos.",
-            icon: "warning",
-            padding: "2em",
-            customClass: "sweet-alerts",
-        });
-        return;
-    }
-
-    dniLoading.value = true;
-    dniNotice.value = "";
-
-    axios.post(route("comm_negotiations_public_validate_dni", props.negotiation.token), {
-        dni: form.number,
-    }).then((res) => {
-        if (!res.data?.success) {
-            dniValidated.value = false;
-            dniNotice.value = res.data?.error || "No se pudo validar el DNI. Intenta nuevamente.";
-            return;
-        }
-
-        const person = res.data.person || {};
-        if (person.names) form.names = person.names;
-        if (person.father_lastname) form.father_lastname = person.father_lastname;
-        if (person.mother_lastname) form.mother_lastname = person.mother_lastname;
-
-        // Fallback (migo): devuelve "APELLIDOS NOMBRES" en un solo campo; se reparte.
-        if (!person.names && person.full_name) {
-            const parts = String(person.full_name).trim().split(/\s+/);
-            if (parts.length >= 3) {
-                form.father_lastname = parts[0];
-                form.mother_lastname = parts[1];
-                form.names = parts.slice(2).join(" ");
-            } else if (parts.length === 2) {
-                form.father_lastname = parts[0];
-                form.names = parts[1];
-            } else {
-                form.names = person.full_name;
-            }
-        }
-
-        dniValidated.value = true;
-        dniNotice.value = "";
-
-        Swal2.fire({
-            title: "DNI validado",
-            text: "Tus datos fueron cargados desde RENIEC. Verificalos antes de continuar.",
-            icon: "success",
-            padding: "2em",
-            customClass: "sweet-alerts",
-        });
-    }).catch(() => {
-        dniValidated.value = false;
-        dniNotice.value = "No se pudo validar el DNI en este momento. Intenta nuevamente.";
-    }).finally(() => {
-        dniLoading.value = false;
-    });
+    // Enviar silencia el aviso del correo (el resumen toma el foco; con el boton pulsado
+    // ya se silencio) y deja el correo enfocado: el resumen devuelve el foco al campo que
+    // estaba activo al abrirse, asi que al volver el formulario queda listo para corregir.
+    markSubmitting();
+    document.getElementById("email")?.focus();
+    summaryModal.value?.show();
 };
 
 // Consulta el DNI de la tercera persona para la boleta.
@@ -979,6 +894,10 @@ watch(brickFormVisible, async (visible) => {
                                 </div>
                                 <TextInput v-else id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" @input="onlyNumbers" />
                                 <InputError :message="form.errors.number" class="mt-1" />
+                                <p v-if="isDni && dniHint" class="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                    {{ dniHint }}
+                                    <button type="button" class="underline" @click="validateDni">Rellenar con RENIEC</button>
+                                </p>
                                 <p v-if="isDni && dniNotice" class="mt-1 text-xs text-danger">{{ dniNotice }}</p>
                             </div>
 
@@ -1384,7 +1303,7 @@ watch(brickFormVisible, async (visible) => {
                         </div>
 
                         <div v-if="showVoucherUpload" class="mt-6 flex justify-end">
-                            <button type="submit" class="btn btn-primary" :class="{ 'opacity-50': form.processing }" :disabled="form.processing">
+                            <button type="submit" class="btn btn-primary" :class="{ 'opacity-50': form.processing }" :disabled="form.processing" @mousedown="markSubmitting">
                                 <IconLoader v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" />
                                 {{ isRejected ? "Reenviar confirmacion" : "Enviar confirmacion" }}
                             </button>
@@ -1393,5 +1312,18 @@ watch(brickFormVisible, async (visible) => {
                 </template>
             </div>
         </div>
+        <SummaryModal
+            ref="summaryModal"
+            :form="form"
+            :negotiation="negotiation"
+            :document-type-options="documentTypeOptions"
+            :countries="countries"
+            :foreign-location="isForeignLocation"
+            :boleta-tercero="boletaTercero"
+            :payment-evidence="isMercadoPagoEvidence"
+            :total-label="totalAmount"
+            @confirm="confirmNegotiation"
+            @cancel="markEmailCheckAvailable"
+        />
     </GuestLayout>
 </template>
