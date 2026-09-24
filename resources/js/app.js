@@ -22,6 +22,10 @@ import Popper from 'vue3-popper';
 import * as Maska from 'maska';
 import VueKonva from 'vue-konva';
 import { setCsrfToken } from '@/utils/csrf';
+import {
+    initSuperEditorState,
+    syncSuperEditorFromPage,
+} from 'Modules/Security/Resources/assets/js/stores/superEditor';
 
 const appName =
     window.document.getElementsByTagName("title")[0]?.innerText || "Laravel";
@@ -69,11 +73,11 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(pinia)
             .use(ZiggyVue, Ziggy)
             .use(VueTheMask)
             .use(VueGates)
             .use(Permissions, props.initialPage?.props)
-            .use(pinia)
             .use(i18n)
             .use(head)
             .use(TippyPlugin)
@@ -98,11 +102,21 @@ createInertiaApp({
         appSetting.init();
 
         router.on('success', (event) => {
-            const token = event.detail?.page?.props?.csrf_token ?? event.page?.props?.csrf_token;
+            const page = event.detail?.page ?? event.page;
+            const token = page?.props?.csrf_token;
             setCsrfToken(token);
+
+            // Segundo punto de sincronización del Modo Super Editor: se ejecuta
+            // justo después de actualizar la página y antes de que Vue repinte,
+            // así que las directivas que se vuelvan a montar ya ven el modo.
+            syncSuperEditorFromPage(page?.props);
         });
 
         setCsrfToken(props.initialPage?.props?.csrf_token);
+
+        // Primer punto de sincronización: antes de montar, porque las directivas
+        // v-can de la primera página se montan antes que cualquier componente.
+        initSuperEditorState(pinia, props.initialPage?.props?.superEditor);
 
         return app.mount(el);
     },

@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use Modules\Security\Http\Controllers\PermissionController;
 use Modules\Security\Http\Controllers\RolesController;
 use Modules\Security\Http\Controllers\SecurityController;
+use Modules\Security\Http\Controllers\SuperEditorController;
 use Modules\Security\Http\Controllers\UserActivityLogsController;
 
 Route::middleware(['auth','user_activity_log'])->prefix('security')->group(function () {
@@ -35,4 +36,31 @@ Route::middleware(['auth','user_activity_log'])->prefix('security')->group(funct
 
     Route::get('user/activity/logs', [UserActivityLogsController::class, 'index'])->name('user_activity_logs');
     Route::get('user/activity/logs/data', [UserActivityLogsController::class, 'getData'])->name('user_activity_logs_data');
+
+    /*
+    |----------------------------------------------------------------------
+    | Modo Super Editor
+    |----------------------------------------------------------------------
+    | 'enter' solo exige ser el rol autorizado; el resto de acciones exigen
+    | además una sesión de edición abierta y vigente (middleware
+    | super.editor). La contraseña se confirma en enter y en exit, con
+    | throttle para frenar intentos por fuerza bruta.
+    */
+    Route::prefix('super-editor')->name('super_editor_')->group(function () {
+        Route::middleware(['role:admin', 'throttle:10,1'])->group(function () {
+            Route::post('enter', [SuperEditorController::class, 'enter'])->name('enter');
+            Route::post('exit', [SuperEditorController::class, 'exit'])->name('exit');
+        });
+
+        Route::middleware('role:admin')->get('status', [SuperEditorController::class, 'status'])->name('status');
+        Route::middleware('role:admin')->get('log', [SuperEditorController::class, 'log'])->name('log');
+        Route::middleware('role:admin')->get('log/data', [SuperEditorController::class, 'logData'])->name('log_data');
+
+        Route::middleware(['role:admin', 'super.editor'])->group(function () {
+            Route::get('element', [SuperEditorController::class, 'element'])->name('element');
+            Route::post('permission', [SuperEditorController::class, 'createPermission'])->name('permission');
+            Route::post('stage', [SuperEditorController::class, 'stage'])->name('stage');
+            Route::delete('stage', [SuperEditorController::class, 'revert'])->name('revert');
+        });
+    });
 });

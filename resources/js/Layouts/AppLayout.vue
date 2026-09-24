@@ -5,6 +5,10 @@ import Sidebar from '@/Components/Sidebar.vue';
 import Header from '@/Components/Header.vue';
 import Preloader from '@/Components/Preloader.vue';
 import BannerMessage from '../../../Modules/Academic/Resources/assets/js/Components/BannerMessage.vue';
+// Modo Super Editor
+import SuperEditorGear from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Gear.vue';
+import SuperEditorPanel from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Panel.vue';
+import SuperEditorPasswordModal from 'Modules/Security/Resources/assets/js/Components/SuperEditor/PasswordModal.vue';
 const sidebarToggle = ref(false);
 
 const eventSidebarToggle = (parmt) => {
@@ -30,4 +34,9 @@ defineProps({
             </main>
         </div>
     </div>
+
+    <!-- Modo Super Editor -->
+    <SuperEditorGear />
+    <SuperEditorPanel />
+    <SuperEditorPasswordModal />
 </template>

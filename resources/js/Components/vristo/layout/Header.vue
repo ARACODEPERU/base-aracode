@@ -20,6 +20,7 @@
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
 
     import { faCartPlus, faUserGroup, faChartPie } from  '@fortawesome/free-solid-svg-icons';
+    import SuperEditorToggle from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Toggle.vue';
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
     import menuData from './MenuData.js'
@@ -167,6 +168,10 @@
                                 <icon-calendar class="w-4 h-4 mr-2" />
                                 <span>Calendario</span>
                             </Link>
+                        </li>
+                        <!-- Modo Super Editor (solo rol admin; el servidor decide) -->
+                        <li>
+                            <SuperEditorToggle />
                         </li>
                         <!-- <li v-can="'empresa'">
                             <Link :href="route('company_show')"

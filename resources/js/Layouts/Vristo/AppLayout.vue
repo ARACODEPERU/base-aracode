@@ -12,6 +12,11 @@
     import SidebarStudent from '@/Components/vristo/layout/Sidebar-Student.vue';
     import ChatBox from 'Modules/CRM/Resources/assets/js/Components/ChatBox.vue';
     import ForcePinChange from 'Modules/Health/Resources/assets/js/Components/ForcePinChange.vue';
+    // Modo Super Editor: el engrane y el panel son únicos para toda la app; el
+    // modal de contraseña se monta aquí para que exista en cualquier pantalla.
+    import SuperEditorGear from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Gear.vue';
+    import SuperEditorPanel from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Panel.vue';
+    import SuperEditorPasswordModal from 'Modules/Security/Resources/assets/js/Components/SuperEditor/PasswordModal.vue';
 
     const store = useAppStore();
     const userData = usePage().props.auth.user;
@@ -140,6 +145,11 @@
         </div>
         <ChatBox />
         <ForcePinChange />
+
+        <!-- Modo Super Editor -->
+        <SuperEditorGear />
+        <SuperEditorPanel />
+        <SuperEditorPasswordModal />
     </div>
 </template>
 

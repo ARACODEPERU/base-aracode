@@ -1,0 +1,58 @@
+/*
+ * Modo Super Editor — estilos globales.
+ *
+ * No se apoya en `position: relative` del elemento marcado para no alterar el
+ * layout de las páginas: el toggle flotante se posiciona con coordenadas fijas
+ * calculadas desde getBoundingClientRect().
+ */
+
+.super-editor-element {
+    transition: outline-color 120ms ease, background-color 120ms ease;
+}
+
+/* Elemento bajo el puntero: queda marcado, pero el click y el cursor siguen
+   siendo los suyos (el editor no cambia cómo se comporta la página). */
+.super-editor-element.super-editor-hover {
+    outline: 2px dashed rgba(37, 99, 235, 0.65) !important;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.super-editor-element.super-editor-hover[data-super-granted='0'] {
+    outline-color: rgba(249, 115, 22, 0.75) !important;
+}
+
+/* Elemento al que el rol admin no tiene acceso: se muestra para poder
+   configurarlo, pero queda visualmente marcado. */
+.super-editor-locked {
+    opacity: 0.5;
+}
+
+/*
+ * Base del toggle (GearToggle.vue). El toggle nunca captura el puntero: su caja
+ * se dibuja al lado del elemento pero los clicks pasan al elemento que decora
+ * (o al de al lado). Su propio click lo reconoce useGearClick por geometría y
+ * `z-index` es solo el respaldo: el valor real lo calcula Gear.vue para quedar
+ * por encima del menú desplegable que contenga al elemento.
+ */
+.super-editor-gear {
+    position: fixed;
+    z-index: 90;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.super-editor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 9999px;
+    padding: 1px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
