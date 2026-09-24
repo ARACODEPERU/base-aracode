@@ -22,7 +22,11 @@ class PermissionsTableSeeder extends Seeder
     {
         $admin = Role::find(1);
 
-        $modulo = Modulo::create(['identifier' => 'M001', 'description' => 'Compras']);
+        // firstOrCreate por identificador: el seeder se puede reejecutar sin duplicar.
+        $modulo = Modulo::firstOrCreate(
+            ['identifier' => 'M001'],
+            ['description' => 'Compras']
+        );
 
         $permissions = [];
 
@@ -35,7 +39,7 @@ class PermissionsTableSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $admin->givePermissionTo($permission->name);
-            DB::table('model_has_permissions')->insert([
+            DB::table('model_has_permissions')->insertOrIgnore([
                 'permission_id' => $permission->id,
                 'model_type' => Modulo::class,
                 'model_id' => $modulo->identifier

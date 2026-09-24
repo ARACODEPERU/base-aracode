@@ -17,7 +17,11 @@ class PermissionHelpdeskSeeder extends Seeder
     {
         $role = Role::find(1);
 
-        $modulo = Modulo::create(['identifier' => 'M011', 'description' => 'Helpdesk']);
+        // firstOrCreate por identificador: el seeder se puede reejecutar sin duplicar.
+        $modulo = Modulo::firstOrCreate(
+            ['identifier' => 'M011'],
+            ['description' => 'Helpdesk']
+        );
 
         $permissions = [];
 
@@ -41,7 +45,7 @@ class PermissionHelpdeskSeeder extends Seeder
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
 
-            DB::table('model_has_permissions')->insert([
+            DB::table('model_has_permissions')->insertOrIgnore([
                 'permission_id' => $permission->id,
                 'model_type' => Modulo::class,
                 'model_id' => $modulo->identifier

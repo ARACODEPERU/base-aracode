@@ -22,6 +22,7 @@
     import ExchangeRateButton from '@/Components/vristo/layout/ExchangeRateButton.vue';
 
     import { faCartPlus, faUserGroup, faChartPie } from  '@fortawesome/free-solid-svg-icons';
+    import SuperEditorToggle from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Toggle.vue';
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
     import ShoppingCartMenu from 'Modules/Onlineshop/Resources/assets/js/Components/ShoppingCartMenu.vue';
     import menuData from './MenuData.js'
@@ -176,6 +177,7 @@
                                 <span>Calendario</span>
                             </Link>
                         </li>
+
                         <li v-can="'invo_tipo_cambio'">
                             <button type="button"
                                 class="flex items-center px-4 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-full hover:bg-white hover:text-blue-600 hover:shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 transition-all"
@@ -183,6 +185,7 @@
                                 <icon-dollar-sign-circle class="w-4 h-4 mr-2" />
                                 <span>Cambio de moneda</span>
                             </button>
+
                         </li>
                         <!-- <li v-can="'empresa'">
                             <Link :href="route('company_show')"

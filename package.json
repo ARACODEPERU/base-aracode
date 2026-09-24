@@ -3,6 +3,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build && vite build --ssr",
+        "test:js": "node --test \"tests/js/**/*.test.mjs\"",
         "editor:build": "npm run build --prefix ../editor-aracode",
         "prebuild": "npm run editor:build"
     },

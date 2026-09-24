@@ -2,6 +2,8 @@
 
 namespace Modules\Security\Providers;
 
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
 
@@ -24,6 +26,22 @@ class SecurityServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // Al cerrar sesión en la aplicación se cierra también la sesión del Modo
+        // Super Editor: el borrador se descarta (nunca se aplica solo) y queda
+        // registrado en la bitácora.
+        Event::listen(Logout::class, function (Logout $event) {
+            if (! $event->user) {
+                return;
+            }
+
+            try {
+                app(\Modules\Security\Services\SuperEditorService::class)
+                    ->closeOpenForUser($event->user, \Modules\Security\Services\SuperEditorService::CLOSE_LOGOUT);
+            } catch (\Throwable $e) {
+                // El cierre del modo editor nunca debe impedir el logout.
+            }
+        });
+
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();

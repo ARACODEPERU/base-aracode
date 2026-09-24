@@ -21,7 +21,12 @@ class SeedPermissionsTableSeeder extends Seeder
     {
         $role = Role::find(1);
 
-        $modulo = Modulo::firstOrCreate(['identifier' => 'M006', 'description' => 'Blog']);
+        // firstOrCreate por identificador (no por descripción): si la descripción cambió,
+        // buscar por ambas columnas intentaría insertar otra vez la misma clave primaria.
+        $modulo = Modulo::firstOrCreate(
+            ['identifier' => 'M006'],
+            ['description' => 'Blog']
+        );
 
         $permissions = [];
 
@@ -37,7 +42,7 @@ class SeedPermissionsTableSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
-            DB::table('model_has_permissions')->insert([
+            DB::table('model_has_permissions')->insertOrIgnore([
                 'permission_id' => $permission->id,
                 'model_type' => Modulo::class,
                 'model_id' => $modulo->identifier

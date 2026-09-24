@@ -1,4 +1,5 @@
 import { usePage } from "@inertiajs/vue3";
+import registerSuperEditorDirectives from "Modules/Security/Resources/assets/js/Plugins/superEditorDirectives";
 
 const getAuth = (fallbackProps = null) => {
     return usePage()?.props?.auth ?? fallbackProps?.auth ?? null;
@@ -31,5 +32,12 @@ export default {
                 syncGates(this, initialProps);
             }
         })
+
+        // Modo Super Editor: reemplaza v-can / v-permission después de que
+        // VueGates registró las suyas (este plugin se instala después de
+        // app.use(VueGates)), de modo que con el modo activo los elementos no se
+        // oculten sino que queden marcados para el engrane. Con el modo apagado
+        // el comportamiento es el mismo de siempre.
+        registerSuperEditorDirectives(app);
     }
 }

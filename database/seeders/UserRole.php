@@ -16,7 +16,12 @@ class UserRole extends Seeder
     /**
      * Run the database seeds.
      *
-     * @return void
+     * El rol 'admin' y sus permisos base ya existen (RolesSeeder corre antes),
+     * así que aquí solo se completan y se crea el usuario administrador.
+     *
+     * Email y contraseña salen del .env para que una instalación nueva no quede
+     * con credenciales fijas conocidas: ADMIN_EMAIL / ADMIN_PASSWORD. Sin esas
+     * variables se usan los valores históricos.
      */
     public function run()
     {
@@ -40,21 +45,28 @@ class UserRole extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'parametros_editar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'parametros_eliminar']));
 
-
-
-
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
         }
 
-        $user = User::create([
-            'name' => 'Admin',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('12345678'),
-            'email_verified_at' => Carbon::now(),
-            'local_id' => 1,
-            'company_id' => 1
-        ]);
+        $email = (string) env('ADMIN_EMAIL', 'admin@gmail.com');
+
+        // firstOrCreate (no updateOrCreate): reejecutar el seed nunca debe
+        // sobrescribir la contraseña que el cliente ya cambió.
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name'              => 'Admin',
+                'password'          => Hash::make((string) env('ADMIN_PASSWORD', '12345678')),
+                'email_verified_at' => Carbon::now(),
+                'local_id'          => 1,
+                'company_id'        => 1,
+            ]
+        );
+
+        if ($user->wasRecentlyCreated) {
+            $this->command?->info("Usuario administrador creado: {$email}.");
+        }
 
         $user->assignRole('admin');
     }

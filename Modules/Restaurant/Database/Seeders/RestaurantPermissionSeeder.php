@@ -17,7 +17,11 @@ class RestaurantPermissionSeeder extends Seeder
     {
         $role = Role::find(1);
 
-        $modulo = Modulo::create(['identifier' => 'M012', 'description' => 'Restaurante']);
+        // firstOrCreate por identificador: el seeder se puede reejecutar sin duplicar.
+        $modulo = Modulo::firstOrCreate(
+            ['identifier' => 'M012'],
+            ['description' => 'Restaurante']
+        );
 
         $permissions = [];
 
@@ -51,7 +55,7 @@ class RestaurantPermissionSeeder extends Seeder
 
         foreach ($permissions as $permission) {
             $role->givePermissionTo($permission->name);
-            DB::table('model_has_permissions')->insert([
+            DB::table('model_has_permissions')->insertOrIgnore([
                 'permission_id' => $permission->id,
                 'model_type' => Modulo::class,
                 'model_id' => $modulo->identifier
