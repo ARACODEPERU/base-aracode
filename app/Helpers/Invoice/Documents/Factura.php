@@ -264,7 +264,7 @@ class Factura
             ->setCorrelativo($document->invoice_correlative)
             ->setFechaEmision($broadcast_date)
             ->setFecVencimiento($due_date)
-            ->setTipoMoneda('PEN')
+            ->setTipoMoneda($document->invoice_type_currency ?: 'PEN')
             ->setCompany($company)
             ->setClient($client)
             ->setMtoOperGravadas($document->invoice_mto_oper_taxed)

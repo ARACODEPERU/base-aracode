@@ -43,6 +43,7 @@ use Modules\Sales\Support\ElectronicDiscountMode;
 class SaleDocumentController extends Controller
 {
     use ValidatesRequests;
+    use \Modules\Sales\Services\Concerns\ResolvesDocumentCurrency;
 
     /**
      * Display a listing of the resource.
@@ -62,6 +63,7 @@ class SaleDocumentController extends Controller
     public function __construct(
         private readonly QuickSaleItemCalculator $calculator,
         private readonly SaleStockService $stockService,
+        private readonly \Modules\Sales\Services\ExchangeRateService $exchangeRateService,
     ) {
         $this->ubl = Parameter::where('parameter_code', 'P000003')->value('value_default');
         $this->igv = Parameter::where('parameter_code', 'P000001')->value('value_default');
@@ -188,6 +190,7 @@ class SaleDocumentController extends Controller
             ],
             'electronicDiscountMode' => $this->electronicDiscountMode,
             'healthBillingDraft' => $healthBillingDraft,
+            'multiCurrency' => $this->getCurrencyContext(),
         ]);
     }
 
@@ -283,6 +286,10 @@ class SaleDocumentController extends Controller
 
                 $serie = Serie::find($request->get('serie'));
 
+                // Moneda del comprobante: PEN por defecto; USD requiere PTM0004
+                // activo y TC vigente (resuelto por el servidor).
+                [$currency, $exchangeRate] = $this->resolveDocumentCurrency($request);
+
                 // /se convierte el total de la venta a letras
                 $numberletters = new NumberLetter;
                 $tido = SaleDocumentType::find($request->get('sale_documenttype_id'));
@@ -311,12 +318,13 @@ class SaleDocumentController extends Controller
                     'invoice_type_doc' => $tido->sunat_id,
                     'invoice_serie' => $serie->description,
                     'invoice_correlative' => $serie->number,
-                    'invoice_type_currency' => 'PEN',
+                    'invoice_type_currency' => $currency,
+                    'exchange_rate' => $exchangeRate,
                     'invoice_broadcast_date' => $request->get('date_issue'),
                     'invoice_due_date' => $request->get('date_end'),
                     'invoice_send_date' => Carbon::now()->format('Y-m-d'),
                     'invoice_legend_code' => '1000',
-                    'invoice_legend_description' => $numberletters->convertToLetter($request->get('total')),
+                    'invoice_legend_description' => $numberletters->convertToLetter($request->get('total'), $this->currencyLetterDescription($currency)),
                     'invoice_status' => 'registrado',
                     'user_id' => Auth::id(),
                     'additional_description' => $request->get('additional_description'),
@@ -383,6 +391,16 @@ class SaleDocumentController extends Controller
                             ]);
                         }
                         $item = $new_product;
+                    }
+
+                    // Conversion de moneda: los precios llegan en soles; si el
+                    // comprobante es en USD se convierte el precio unitario con
+                    // el TC del servidor antes de calcular impuestos.
+                    if ($exchangeRate !== null) {
+                        $produc['unit_price'] = $this->convertUnitPrice((float) $produc['unit_price'], $exchangeRate);
+                        if (isset($produc['discount'])) {
+                            $produc['discount'] = $this->convertUnitPrice((float) $produc['discount'], $exchangeRate);
+                        }
                     }
 
                     $tax = $this->calculateElectronicItemTaxes($produc);
@@ -615,6 +633,11 @@ class SaleDocumentController extends Controller
         $res = DB::transaction(function () use ($request) {
             $document = SaleDocument::find($request->get('id'));
 
+            // El documento conserva su moneda original; los precios llegan ya
+            // en la moneda del documento (el frontend los recalcula con el TC).
+            $currency = $document->invoice_type_currency;
+            $exchangeRate = $document->exchange_rate !== null ? (float) $document->exchange_rate : null;
+
             $items = $request->get('items');
             // dd($items);
             // /totales de la cabecera
@@ -749,7 +772,7 @@ class SaleDocumentController extends Controller
                 'invoice_mto_imp_sale' => $ttotal,
                 'invoice_sunat_points' => null,
                 'invoice_status' => 'Pendiente',
-                'invoice_legend_description' => $numberletters->convertToLetter($ttotal),
+                'invoice_legend_description' => $numberletters->convertToLetter($ttotal, $this->currencyLetterDescription($currency ?? 'PEN')),
             ]);
 
             Sale::where('id', $document->sale_id)->update([
@@ -986,6 +1009,9 @@ class SaleDocumentController extends Controller
 
                 $serie = Serie::find($request->get('serie'));
 
+                // Moneda del comprobante (mismo criterio que el flujo principal)
+                [$currency, $exchangeRate] = $this->resolveDocumentCurrency($request);
+
                 // /se convierte el total de la venta a letras
                 $numberletters = new NumberLetter;
                 $tido = SaleDocumentType::find($request->get('sale_documenttype_id'));
@@ -1008,12 +1034,13 @@ class SaleDocumentController extends Controller
                     'invoice_type_doc' => $tido->sunat_id,
                     'invoice_serie' => $serie->description,
                     'invoice_correlative' => $serie->number,
-                    'invoice_type_currency' => 'PEN',
+                    'invoice_type_currency' => $currency,
+                    'exchange_rate' => $exchangeRate,
                     'invoice_broadcast_date' => $request->get('date_issue'),
                     'invoice_due_date' => $request->get('date_end'),
                     'invoice_send_date' => Carbon::now()->format('Y-m-d'),
                     'invoice_legend_code' => '1000',
-                    'invoice_legend_description' => $numberletters->convertToLetter($request->get('total')),
+                    'invoice_legend_description' => $numberletters->convertToLetter($request->get('total'), $this->currencyLetterDescription($currency)),
                     'invoice_status' => 'registrado',
                     'additional_description' => $request->get('additional_description'),
                     'overall_total' => $request->get('total'),
@@ -1035,6 +1062,16 @@ class SaleDocumentController extends Controller
 
                     $product_id = $produc['id'];
                     $interne = $produc['interne'];
+
+                    // Conversion de moneda: los precios llegan en soles; si el
+                    // comprobante es en USD se convierte el precio unitario con
+                    // el TC del servidor antes de calcular impuestos.
+                    if ($exchangeRate !== null) {
+                        $produc['unit_price'] = $this->convertUnitPrice((float) $produc['unit_price'], $exchangeRate);
+                        if (isset($produc['discount'])) {
+                            $produc['discount'] = $this->convertUnitPrice((float) $produc['discount'], $exchangeRate);
+                        }
+                    }
 
                     $tax = $this->calculateElectronicItemTaxes($produc);
                     $quantity = $produc['quantity'];

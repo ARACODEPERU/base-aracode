@@ -30,6 +30,7 @@ use Modules\Sales\Http\Controllers\SalePaymentQuotaController;
 use Modules\Sales\Http\Controllers\SalePhysicalDocumentController;
 use Modules\Sales\Http\Controllers\SaleProductBrandController;
 use Modules\Sales\Http\Controllers\SaleProductCategoryController;
+use Modules\Sales\Http\Controllers\SaleExchangeRateController;
 use Modules\Sales\Http\Controllers\SalesController;
 use Modules\Sales\Http\Controllers\SalesPrintTemplateController;
 use Modules\Sales\Http\Controllers\SaleSummaryController;
@@ -168,6 +169,12 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('sales')->g
         Route::get('salesummary/download/{id}/{type}', [SaleSummaryController::class, 'downloadFile'])->name('salesummaries_download');
         Route::get('salesummary/retry/{id}', [SaleSummaryController::class, 'retrySummary'])->name('salesummaries_retry');
         Route::post('salesummary/status/{id}', [SaleSummaryController::class, 'updateStatus'])->name('salesummaries_update_status');
+    });
+
+    // //tipo de cambio SUNAT (via Migo): consulta y estado, con permiso propio
+    Route::middleware(['permission:invo_tipo_cambio'])->group(function () {
+        Route::get('sale/exchange-rates/current', [SaleExchangeRateController::class, 'current'])->name('sale_exchange_rates_current');
+        Route::post('sale/exchange-rates/fetch', [SaleExchangeRateController::class, 'fetch'])->name('sale_exchange_rates_fetch');
     });
 
     // //rutas de comunicacion de baja

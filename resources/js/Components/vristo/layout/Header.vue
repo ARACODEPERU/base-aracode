@@ -18,6 +18,8 @@
     import IconSettings from '@/Components/vristo/icon/icon-settings.vue';
 
     import IconCaretDown from '@/Components/vristo/icon/icon-caret-down.vue';
+    import IconDollarSignCircle from '@/Components/vristo/icon/icon-dollar-sign-circle.vue';
+    import ExchangeRateButton from '@/Components/vristo/layout/ExchangeRateButton.vue';
 
     import { faCartPlus, faUserGroup, faChartPie } from  '@fortawesome/free-solid-svg-icons';
     import ChatNotifications from 'Modules/CRM/Resources/assets/js/Components/ChatNotifications.vue';
@@ -47,6 +49,12 @@
 
 
     const search = ref(false);
+
+    // Modal de tipo de cambio (Cambio de moneda)
+    const showExchangeRateModal = ref(false);
+    const closeExchangeRateModal = () => {
+        showExchangeRateModal.value = false;
+    };
 
     // multi language
     const i18n = reactive(useI18n());
@@ -167,6 +175,14 @@
                                 <icon-calendar class="w-4 h-4 mr-2" />
                                 <span>Calendario</span>
                             </Link>
+                        </li>
+                        <li v-can="'invo_tipo_cambio'">
+                            <button type="button"
+                                class="flex items-center px-4 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-full hover:bg-white hover:text-blue-600 hover:shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 transition-all"
+                                @click="showExchangeRateModal = true">
+                                <icon-dollar-sign-circle class="w-4 h-4 mr-2" />
+                                <span>Cambio de moneda</span>
+                            </button>
                         </li>
                         <!-- <li v-can="'empresa'">
                             <Link :href="route('company_show')"
@@ -385,5 +401,6 @@
                 </template>
             </ul>
         </div>
+        <ExchangeRateButton :show="showExchangeRateModal" :on-close="closeExchangeRateModal" />
     </header>
 </template>

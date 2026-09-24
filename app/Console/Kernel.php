@@ -35,6 +35,13 @@ class Kernel extends ConsoleKernel
                     ->dailyAt('01:00')
                     ->timezone('America/Lima');
 
+        // Tipo de cambio SUNAT (vía Migo) para ventas y facturación en dólares.
+        // Corre 1 vez al día (después de las 06:00 cuando Migo ya tiene el dato
+        // del día actualizado) y el valor queda activo todo el día.
+        $schedule->command('sales:fetch-exchange-rate')
+                    ->dailyAt('07:30')
+                    ->timezone('America/Lima');
+
     }
 
     /**

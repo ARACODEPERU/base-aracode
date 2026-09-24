@@ -276,12 +276,17 @@ class Resumen
         }
 
         $sum = new Summary;
+        // Moneda del resumen: SUNAT agrupa por moneda; se toma la del documento
+        // (los resumenes se generan por documento, sea PEN o USD segun corresponda)
+        $first = $documents->first();
+        $summaryCurrency = is_array($first) ? ($first['invoice_type_currency'] ?? 'PEN') : ($first?->invoice_type_currency ?? 'PEN');
         // Fecha Generacion menor que Fecha Resumen
         $generation_date = new DateTime($summary->generation_date);
         $summary_date = new DateTime($summary->summary_date);
         $sum->setFecGeneracion($generation_date)
             ->setFecResumen($summary_date)
             ->setCorrelativo($summary->correlative)
+            ->setMoneda($summaryCurrency)
             ->setCompany($company)
             ->setDetails($items);
 

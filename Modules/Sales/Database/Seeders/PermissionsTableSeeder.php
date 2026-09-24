@@ -88,6 +88,7 @@ class PermissionsTableSeeder extends Seeder
         array_push($permissionsFE, Permission::firstOrCreate(['name' => 'invo_comunicacion_baja']));
         array_push($permissionsFE, Permission::firstOrCreate(['name' => 'invo_nota_credito']));
         array_push($permissionsFE, Permission::firstOrCreate(['name' => 'invo_reportes']));
+        array_push($permissionsFE, Permission::firstOrCreate(['name' => 'invo_tipo_cambio']));
 
         array_push($permissionsAC, Permission::firstOrCreate(['name' => 'acco_dashboard']));
         array_push($permissionsAC, Permission::firstOrCreate(['name' => 'acco_documento_listado']));
@@ -118,14 +119,14 @@ class PermissionsTableSeeder extends Seeder
             $exists = DB::table('model_has_permissions')
                 ->where('permission_id', $permission->id)
                 ->where('model_type', Modulo::class)
-                ->where('model_id', $modulo->identifier)
+                ->where('model_id', $moduloFE->identifier)
                 ->exists();
 
             if (!$exists) {
                 DB::table('model_has_permissions')->insert([
                     'permission_id' => $permission->id,
                     'model_type' => Modulo::class,
-                    'model_id' => $modulo->identifier,
+                    'model_id' => $moduloFE->identifier,
                 ]);
             }
         }
@@ -136,14 +137,14 @@ class PermissionsTableSeeder extends Seeder
             $exists = DB::table('model_has_permissions')
                 ->where('permission_id', $permission->id)
                 ->where('model_type', Modulo::class)
-                ->where('model_id', $modulo->identifier)
+                ->where('model_id', $moduloAC->identifier)
                 ->exists();
 
             if (!$exists) {
                 DB::table('model_has_permissions')->insert([
                     'permission_id' => $permission->id,
                     'model_type' => Modulo::class,
-                    'model_id' => $modulo->identifier,
+                    'model_id' => $moduloAC->identifier,
                 ]);
             }
         }

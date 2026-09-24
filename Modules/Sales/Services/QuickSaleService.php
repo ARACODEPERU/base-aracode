@@ -15,12 +15,15 @@ use App\Models\SaleProduct;
 use App\Models\Serie;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Modules\Sales\Services\Concerns\ResolvesDocumentCurrency;
 use Modules\Sales\Support\ElectronicDiscountMode;
 use Modules\Treasury\Services\TreasuryHooks;
 use RuntimeException;
 
 class QuickSaleService
 {
+    use ResolvesDocumentCurrency;
+
     private float $igv;
 
     private string $ubl;
@@ -160,7 +163,11 @@ class QuickSaleService
         $sale->payments = json_encode($this->mapPaymentsForSale($data['payments']));
         $sale->save();
 
-        $typeOperation = $total > 700 ? '1001' : $this->top;
+        // Moneda del comprobante: PEN por defecto; USD requiere PTM0004 activo.
+        // El TC lo resuelve el servidor y se aplica a cada linea del carrito.
+        [$currency, $exchangeRate] = $this->resolveDocumentCurrency(null, $data);
+
+        $typeOperation = $this->totalInSoles($total, $exchangeRate) > 700 ? '1001' : $this->top;
         $numberLetters = new NumberLetter;
 
         $document = SaleDocument::create([
@@ -181,12 +188,13 @@ class QuickSaleService
             'invoice_type_doc' => $sunatId,
             'invoice_serie' => $serie->description,
             'invoice_correlative' => $serie->number,
-            'invoice_type_currency' => 'PEN',
+            'invoice_type_currency' => $currency,
+            'exchange_rate' => $exchangeRate,
             'invoice_broadcast_date' => $today,
             'invoice_due_date' => $today,
             'invoice_send_date' => $today,
             'invoice_legend_code' => '1000',
-            'invoice_legend_description' => $numberLetters->convertToLetter($total),
+            'invoice_legend_description' => $numberLetters->convertToLetter($total, $this->currencyLetterDescription($currency)),
             'invoice_status' => 'Pendiente',
             'user_id' => Auth::id(),
             'overall_total' => $total,
@@ -204,6 +212,16 @@ class QuickSaleService
         foreach ($data['items'] as $item) {
             $line = $this->resolveSaleLineItem($item);
             $produc = $this->mapCartItemToDocumentLine($line);
+
+            // Conversion de moneda: el carrito llega en soles; si el comprobante
+            // es USD se convierte el precio unitario con el TC del servidor.
+            if ($exchangeRate !== null) {
+                $produc['unit_price'] = $this->convertUnitPrice((float) $produc['unit_price'], $exchangeRate);
+                if (isset($produc['discount'])) {
+                    $produc['discount'] = $this->convertUnitPrice((float) $produc['discount'], $exchangeRate);
+                }
+            }
+
             $tax = $this->calculator->calculateTaxedLine(
                 $produc,
                 $this->igv,
