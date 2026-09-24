@@ -60,8 +60,9 @@ class SedesChurchcommunitySeeder extends Seeder
             ],
         ];
 
+        // firstOrCreate por descripción: el seeder se puede reejecutar sin duplicar sedes.
         foreach ($data as $record) {
-            Sede::create($record);
+            Sede::firstOrCreate(['description' => $record['description']], $record);
         }
 
         $levels = [
@@ -76,8 +77,9 @@ class SedesChurchcommunitySeeder extends Seeder
             ['description' => 'Apóstol'] //(Padre espiritual)
         ];
 
+        // firstOrCreate por descripción: el seeder se puede reejecutar sin duplicar niveles.
         foreach ($levels as $level) {
-            CigleMemberType::create($level);
+            CigleMemberType::firstOrCreate(['description' => $level['description']], $level);
         }
     }
 

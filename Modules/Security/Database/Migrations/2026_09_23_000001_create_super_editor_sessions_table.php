@@ -25,8 +25,8 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
             $table->string('ip', 45)->nullable();
             $table->string('user_agent', 255)->nullable();
-            $table->timestamp('started_at');
-            $table->timestamp('expires_at');
+            $table->timestamp('started_at')->useCurrent(); // o ->nullable()
+            $table->timestamp('expires_at')->nullable();
             $table->timestamp('ended_at')->nullable();
             // applied | discarded | expired | logout | superseded
             $table->string('close_reason', 40)->nullable();

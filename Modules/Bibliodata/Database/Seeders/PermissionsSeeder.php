@@ -20,7 +20,12 @@ class PermissionsSeeder extends Seeder
        $biblioAdmin = Role::firstOrCreate(['name' => 'BiblioAdmin']);
        $biblioLector = Role::firstOrCreate(['name' => 'Lector']);
 
-        $modulo = Modulo::firstOrCreate(['identifier' => 'M017', 'description' => 'Biblio Data']);
+        // firstOrCreate por identificador (no por descripción): si la descripción cambió,
+        // buscar por ambas columnas intentaría insertar otra vez la misma clave primaria.
+        $modulo = Modulo::firstOrCreate(
+            ['identifier' => 'M017'],
+            ['description' => 'Biblio Data']
+        );
 
         $permissions = [];
 
