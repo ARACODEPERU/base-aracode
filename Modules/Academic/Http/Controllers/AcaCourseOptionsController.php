@@ -112,11 +112,11 @@ class AcaCourseOptionsController extends Controller
             return redirect()->route('aca_course_options', ['in_use' => 'modality', 'id' => $modality->id]);
         }
 
-        // La FK de aca_registrations y aca_cap_registrations es ON DELETE
-        // CASCADE: sin cursos apuntandole pero con inscripciones historicas,
-        // borrar la fila eliminaria datos de alumnos, asi que se bloquea.
-        $usedByRegistrations = DB::table('aca_registrations')->where('modality_id', $modality->id)->exists()
-            || DB::table('aca_cap_registrations')->where('modality_id', $modality->id)->exists();
+        // La FK de aca_cap_registrations (la tabla real de inscripciones) es
+        // ON DELETE CASCADE: sin cursos apuntandole pero con inscripciones
+        // historicas, borrar la fila eliminaria datos de alumnos, asi que se bloquea.
+        $usedByRegistrations = DB::table('aca_cap_registrations')
+            ->where('modality_id', $modality->id)->exists();
 
         if ($usedByRegistrations) {
             return redirect()->route('aca_course_options', ['in_use' => 'modality', 'id' => $modality->id]);
@@ -285,7 +285,6 @@ class AcaCourseOptionsController extends Controller
                 $modality->id,
                 $modality->description,
                 AcaCourse::where('modality_id', $modality->id)->count()
-                    + DB::table('aca_registrations')->where('modality_id', $modality->id)->count()
                     + DB::table('aca_cap_registrations')->where('modality_id', $modality->id)->count()
             ))
             ->all();
@@ -362,8 +361,8 @@ class AcaCourseOptionsController extends Controller
             }
 
             // Sin cursos pero con inscripciones historicas (FK en cascade).
-            $usedByRegistrations = DB::table('aca_registrations')->where('modality_id', $modality->id)->exists()
-                || DB::table('aca_cap_registrations')->where('modality_id', $modality->id)->exists();
+            $usedByRegistrations = DB::table('aca_cap_registrations')
+                ->where('modality_id', $modality->id)->exists();
 
             if (! $usedByRegistrations) {
                 return null;
