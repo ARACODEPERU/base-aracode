@@ -84,7 +84,11 @@ class HandleInertiaRequests extends Middleware
                 ]);
             },
             'flash' => [
-                'message' => fn () => $request->session()->get('message')
+                'message' => fn () => $request->session()->get('message'),
+                // Mensajes de error de acciones del mantenedor (por ejemplo
+                // duplicados en Categorias/Tipo/Sector): BackWithError usa
+                // la misma llave de sesion.
+                'error' => fn () => $request->session()->get('error'),
             ],
             // Estado del Modo Super Editor (activo, borrador pendiente, vencimiento).
             // El frontend no guarda este estado: lo recibe en cada respuesta, así

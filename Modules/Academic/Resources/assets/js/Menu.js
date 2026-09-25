@@ -12,7 +12,8 @@ import {
     faGraduationCap,
     faClock,
     faGavel,
-    faHand
+    faHand,
+    faTags
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -93,6 +94,13 @@ const menuAcademic = {
             text: "Cursos",
             icom: faBook,
             permissions: "aca_cursos_listado",
+        },
+        {
+            route: route("aca_course_options"),
+            status: false,
+            text: "Categorías/Tipo/Sector",
+            icom: faTags,
+            permissions: "aca_category_sector_type_modality",
         },
         {
             route: route("aca_certificate_list"),
