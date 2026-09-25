@@ -124,7 +124,7 @@
             const hasLanding = course.url_slug && (course.landing_published === true || course.landing_published === 1);
             const url = hasLanding
                 ? route('course_url_slug', course.url_slug)
-                : route('web_course_description', course.id);
+                : route('web_curso_descripcion', course.slug ?? course.id);
 
             window.open(url, '_blank');
         });

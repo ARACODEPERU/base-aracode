@@ -46,6 +46,35 @@ class AcaCourseController extends Controller
         $this->P000018 = Parameter::where('parameter_code', 'P000018')->value('value_default');
     }
 
+    /**
+     * El formulario de cursos oculta los campos de certificado (titulo,
+     * descripcion y descuento) cuando el parametro P000018 no esta activo
+     * (ver Courses/Partials/CreateForm.vue), asi que el servidor no puede
+     * exigirlos siempre: era la causa de que guardar un curso devolviera 302 en
+     * silencio, porque el unico mensaje de error se pintaba dentro del bloque
+     * oculto.
+     */
+    private function certificateDataEnabled(): bool
+    {
+        return filter_var($this->P000018, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * aca_courses.certificate_title es NOT NULL: cuando el campo viene vacio (o no
+     * se envia) se guarda el nombre del curso, que es lo que ya usa el render de
+     * certificados como respaldo ($course->certificate_title ?? $course->description).
+     */
+    private function certificateTitleFrom(Request $request, ?string $fallback = null): string
+    {
+        $title = trim((string) $request->get('certificate_title'));
+
+        if ($title !== '') {
+            return $title;
+        }
+
+        return trim((string) ($fallback ?: $request->get('description')));
+    }
+
     public function index()
     {
         // dd(request()->all('status'));
@@ -130,7 +159,7 @@ class AcaCourseController extends Controller
                 'image' => 'required',
                 'modality_id' => 'required',
                 'type_description' => 'required',
-                'certificate_title' => 'required',
+                'certificate_title' => $this->certificateDataEnabled() ? 'required' : 'nullable',
             ]
         );
 
@@ -148,11 +177,12 @@ class AcaCourseController extends Controller
             'type_description' => $request->get('type_description'),
             'sector_description' => $request->get('sector_description'),
             'price' => $request->get('price') ?? 0,
-            'certificate_description' => trim($request->get('certificate_description')) ?? null,
-            'certificate_title' => trim($request->get('certificate_title')) ?? null,
-            'discount' => $request->get('discount'),
-            'discount_applies' => $request->get('discount_applies'),
+            'certificate_description' => $request->filled('certificate_description') ? trim($request->get('certificate_description')) : null,
+            'certificate_title' => $this->certificateTitleFrom($request),
+            'discount' => $request->get('discount') ?? 0,
+            'discount_applies' => $request->get('discount_applies') ?? null,
             'auto_certificate' => $request->get('auto_certificate') ? true : false,
+            'round_grades' => $request->boolean('round_grades'),
         ]);
 
         $path = null;
@@ -253,7 +283,7 @@ class AcaCourseController extends Controller
                 'category_id' => 'required',
                 'modality_id' => 'required',
                 'type_description' => 'required',
-                'certificate_title' => 'required',
+                'certificate_title' => $this->certificateDataEnabled() ? 'required' : 'nullable',
             ]
         );
 
@@ -272,8 +302,8 @@ class AcaCourseController extends Controller
         $course->type_description = $request->get('type_description');
         $course->sector_description = $request->get('sector_description');
         $course->price = $request->get('price') ?? 0;
-        $course->certificate_description = trim($request->get('certificate_description')) ?? null;
-        $course->certificate_title = trim($request->get('certificate_title')) ?? null;
+        $course->certificate_description = $request->filled('certificate_description') ? trim($request->get('certificate_description')) : null;
+        $course->certificate_title = $this->certificateTitleFrom($request, $course->certificate_title);
         $course->discount = $request->get('discount') ?? 0;
         $course->discount_applies = $request->get('discount_applies') ?? null;
         $course->auto_certificate = $request->get('auto_certificate') ? true : false;
