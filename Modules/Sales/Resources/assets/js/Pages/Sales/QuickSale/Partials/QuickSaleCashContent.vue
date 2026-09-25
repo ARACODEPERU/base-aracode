@@ -5,6 +5,9 @@ const props = defineProps({
     total: { type: Number, default: 0 },
     /** Vista táctil / panel amplio: botones grandes y rejilla acotada */
     touchMode: { type: Boolean, default: false },
+    currencySymbol: { type: String, default: 'S/' },
+    /** TC vigente (soles por unidad de la moneda del comprobante); null = venta en soles */
+    exchangeRate: { type: Number, default: null },
 });
 
 const emit = defineEmits(['confirm', 'cancel']);
@@ -29,7 +32,7 @@ const cashDenominations = ref([]);
 const cashChange = computed(() => Math.max(0, cashTendered.value - props.total));
 const cashInsufficient = computed(() => cashTendered.value > 0 && cashTendered.value < props.total);
 
-const formatMoney = (n) => `S/ ${Number(n || 0).toFixed(2)}`;
+const formatMoney = (n) => `${props.currencySymbol} ${Number(n || 0).toFixed(2)}`;
 
 const addDenomination = (denom) => {
     cashTendered.value = Math.round((cashTendered.value + denom.value) * 100) / 100;
@@ -40,6 +43,23 @@ const addDenomination = (denom) => {
         cashDenominations.value.push({ value: denom.value, label: denom.label, count: 1 });
     }
 };
+
+/**
+ * Denominaciones peruanas adaptadas a la moneda del comprobante:
+ * en USD cada billete/moneda en soles se muestra convertido al tipo de
+ * cambio vigente. En soles (rate null) se usan los valores originales.
+ */
+const denominations = computed(() => {
+    const rate = Number(props.exchangeRate);
+    if (!rate || rate <= 0) {
+        return PERU_DENOMINATIONS;
+    }
+    return PERU_DENOMINATIONS.map((denom) => {
+        const converted = Math.round((denom.value / rate) * 100) / 100;
+        const label = `${props.currencySymbol} ${converted.toFixed(2)}`;
+        return { value: converted, label, type: denom.type };
+    });
+});
 
 const setExactCash = () => {
     cashTendered.value = props.total;
@@ -132,11 +152,11 @@ defineExpose({ reset });
         </div>
 
         <div>
-            <p class="qs-section-title">Monedas y billetes</p>
+            <p class="qs-section-title">Monedas y billetes (SUNAT USD)</p>
             <div class="qs-denom-grid">
                 <button
-                    v-for="denom in PERU_DENOMINATIONS"
-                    :key="denom.value"
+                    v-for="denom in denominations"
+                    :key="denom.label"
                     type="button"
                     @click="addDenomination(denom)"
                     class="qs-denom-btn"

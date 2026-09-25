@@ -171,12 +171,14 @@ class ExchangeRateService
             return null;
         }
 
+        $rateDate = Carbon::parse($rate->rate_date);
+
         return [
             'rate' => $rate->sale_rate,
             'purchase' => $rate->purchase_rate,
             'sale' => $rate->sale_rate,
-            'date' => $rate->rate_date,
-            'is_stale' => $rate->rate_date !== $today,
+            'date' => $rateDate->format('Y-m-d'),
+            'is_stale' => $rateDate->toDateString() !== $today,
             'source' => $rate->source,
         ];
     }

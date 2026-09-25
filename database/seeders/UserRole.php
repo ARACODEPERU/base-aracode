@@ -7,6 +7,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -51,21 +52,45 @@ class UserRole extends Seeder
 
         $email = (string) env('ADMIN_EMAIL', 'admin@gmail.com');
 
-        // firstOrCreate (no updateOrCreate): reejecutar el seed nunca debe
-        // sobrescribir la contraseña que el cliente ya cambió.
-        $user = User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name'              => 'Admin',
-                'password'          => Hash::make((string) env('ADMIN_PASSWORD', '12345678')),
-                'email_verified_at' => Carbon::now(),
-                'local_id'          => 1,
-                'company_id'        => 1,
-            ]
-        );
+        // Búsqueda explícita e insensible a mayúsculas: si la collation de la
+        // columna es sensible a mayúsculas (utf8mb4_bin, *_as_cs), un `where`
+        // directo no encontraría 'Admin@Gmail.com' frente a 'admin@gmail.com'
+        // y el INSERT posterior fallaría con Duplicate entry.
+        $findByEmail = function (string $value) {
+            return User::query()
+                ->whereRaw('LOWER(email) = ?', [mb_strtolower($value)])
+                ->first();
+        };
+
+        $user = $findByEmail($email);
+
+        if (! $user) {
+            try {
+                $user = User::create([
+                    'email'             => $email,
+                    'name'              => 'Admin',
+                    'password'          => Hash::make((string) env('ADMIN_PASSWORD', '12345678')),
+                    'email_verified_at' => Carbon::now(),
+                    'local_id'          => 1,
+                    'company_id'        => 1,
+                ]);
+            } catch (UniqueConstraintViolationException $e) {
+                // El correo ya existe (p. ej. otra variante de mayúsculas que
+                // el LOWER no normalizó por espacios, o un proceso concurrente).
+                $user = User::query()
+                    ->whereRaw('LOWER(email) = ?', [mb_strtolower($email)])
+                    ->first();
+
+                if (! $user) {
+                    throw $e;
+                }
+            }
+        }
 
         if ($user->wasRecentlyCreated) {
             $this->command?->info("Usuario administrador creado: {$email}.");
+        } else {
+            $this->command?->info("Usuario administrador ya existe: {$email}. No se vuelve a crear.");
         }
 
         $user->assignRole('admin');

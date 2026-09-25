@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\Sales\Jobs\ExportInventoryKardexExcel;
 use Modules\Sales\Services\InventoryKardexQueryService;
+use Modules\Sales\Services\PettyCashReportService;
 use Inertia\Inertia;
 use PDF;
 use Illuminate\Routing\Controller;
@@ -186,72 +187,17 @@ class ReportController extends Controller
     {
         $petty_cash = PettyCash::find($petty_cash_id);
 
-        $tickets = Sale::with('establishment')
-            ->with('document.serie.documentType')
-            ->where('sales.petty_cash_id', '=', $petty_cash_id)
-            ->where('sales.status', '=', 1)
-            ->where('physical', 1)
-            ->whereHas('document', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
-                $query->whereIn('invoice_type_doc', ['80'])
-                    ->where('status', 1);
-            })
-            ->orderBy('id', 'desc')
-            ->get();
-
-        $physicals = Sale::with('establishment')
-            ->with('physicalDocument.saleDocumentType')
-            ->where('sales.petty_cash_id', '=', $petty_cash_id)
-            ->where('sales.status', '=', 1)
-            ->where('physical', 3)
-            ->whereHas('physicalDocument', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
-                $query->whereIn('document_type', ['1','2'])
-                    ->where('status', '<>', 'A');
-            })
-            ->orderBy('id', 'desc')
-            ->get();
-
-        $documents = Sale::with('establishment')
-            ->with('document.serie.documentType')
-            ->where('sales.petty_cash_id', '=', $petty_cash_id)
-            ->where('sales.status', '=', 1)
-            ->orderBy('id', 'desc')
-            ->where('physical', 2)
-            ->whereHas('document', function ($query) { // 'document' es el nombre de tu relación en el modelo Sale
-                $query->whereIn('invoice_type_doc', ['03','01'])
-                    ->where('status', 1)
-                        ->whereNotIn('invoice_status', ['Rechazada']); // Estado de la factura
-            })
-            ->get();
-
-
-
-        $total = 0;
-
-        foreach ($tickets as $ticket) {
-            $total = $total + $ticket->total;
-        }
-        foreach ($physicals as $physical) {
-            $total = $total + $physical->total;
-        }
-
-        foreach ($documents as $document) {
-            $total = $total + $document->total;
-        }
-
-
-        $expenses = Expense::where('petty_cash_id', $petty_cash_id)->get();
+        // Montos netos: bases (facturas, boletas, tickets, fisicos)
+        // - notas de credito + notas de debito, excluyendo anulados y rechazados.
+        $report = app(PettyCashReportService::class)->build($petty_cash_id);
 
         return Inertia::render('Sales::Reports/PettyCashReport', [
             'locals' => LocalSale::all(),
-            'tickets' => $tickets,
-            'physicals' => $physicals,
-            'documents' => $documents,
+            'report' => $report,
             'petty_cash' => $petty_cash,
             'date' => $petty_cash->date_opening . $petty_cash->time_opening,
             'start' => $petty_cash->date_closed,
             'end' => $petty_cash->date_opening,
-            'expenses' => $expenses,
-            'total' => number_format($total, 2, '.', '')
         ]);
     }
 

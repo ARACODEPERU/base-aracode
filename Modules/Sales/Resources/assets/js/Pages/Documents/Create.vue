@@ -7,7 +7,7 @@
     import { faPlus, faXmark, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
     import { useForm } from '@inertiajs/vue3';
     import InputError from '@/Components/InputError.vue';
-    import { ref, onMounted, watch } from 'vue';
+    import { ref, onMounted, watch, computed } from 'vue';
     import Swal2 from 'sweetalert2';
     import { Link, router } from '@inertiajs/vue3';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
@@ -58,6 +58,10 @@
         healthBillingDraft: {
             type: Object,
             default: null,
+        },
+        multiCurrency: {
+            type: Object,
+            default: () => ({ enabled: false, currencies: [] }),
         }
     });
 
@@ -74,6 +78,7 @@
         client_email: props.client.email,
         sale_documenttype_id: 2,
         type_operation: props.type_operation,
+        currency: 'PEN',
         serie: null,
         date_issue: null,
         date_end: null,
@@ -149,6 +154,68 @@
         }
         taxes.value = xa;
     }
+
+    // ===== Moneda del comprobante (PTM0004) =====
+    // Los precios del catalogo viven en soles: en pantalla se muestran en la
+    // moneda seleccionada y al servidor se envian en soles + currency
+    // (el TC vigente lo resuelve el servidor con ExchangeRateService).
+    const baseCurrency = (props.multiCurrency?.currencies || []).find((c) => c.base) || { code: 'PEN', symbol: 'S/', base: true };
+    const selectedCurrency = ref('PEN');
+    const previousCurrency = ref('PEN');
+    const currentCurrency = computed(() =>
+        (props.multiCurrency?.currencies || []).find((c) => c.code === selectedCurrency.value) || baseCurrency
+    );
+    const currencySymbol = computed(() => currentCurrency.value.symbol || 'S/');
+    const isBaseCurrency = computed(() => !!currentCurrency.value.base);
+    const activeExchangeRate = computed(() => (isBaseCurrency.value ? null : currentCurrency.value.exchange_rate || null));
+
+    // Convierte un precio entre monedas (rate null = moneda base PEN).
+    // Solo redondea a 2 decimales cuando realmente hay conversion.
+    const convertPrice = (value, rateFrom, rateTo) => {
+        let v = parseFloat(value);
+        if (isNaN(v)) v = 0;
+        const inSoles = rateFrom ? v * rateFrom : v;
+        const converted = rateTo ? inSoles / rateTo : inSoles;
+        return rateFrom || rateTo ? parseFloat(converted.toFixed(2)) : converted;
+    };
+
+    const recalculateAllItems = () => {
+        formDocument.items.forEach((item, index) => calculateTotals(index));
+    };
+
+    const onCurrencyChange = () => {
+        const next = selectedCurrency.value;
+        const prev = previousCurrency.value;
+        if (next === prev) {
+            return;
+        }
+
+        const nextCurrency = currentCurrency.value;
+        if (!nextCurrency.base && !nextCurrency.exchange_rate) {
+            Swal2.fire({
+                title: 'Tipo de cambio no disponible',
+                text: 'No hay tipo de cambio vigente para dólares. Usa el botón «Cambio de moneda» del header para consultarlo a SUNAT.',
+                icon: 'warning',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+            selectedCurrency.value = prev;
+            return;
+        }
+
+        const rateFrom = prev === baseCurrency.code
+            ? null
+            : ((props.multiCurrency?.currencies || []).find((c) => c.code === prev)?.exchange_rate || null);
+        const rateTo = nextCurrency.base ? null : nextCurrency.exchange_rate;
+
+        formDocument.items.forEach((item) => {
+            item.unit_price = convertPrice(item.unit_price, rateFrom, rateTo);
+            item.discount = convertPrice(item.discount, rateFrom, rateTo);
+        });
+
+        previousCurrency.value = next;
+        recalculateAllItems();
+    };
 
     const applyHealthBillingDraft = () => {
         if (!props.healthBillingDraft?.items?.length) {
@@ -358,6 +425,8 @@
 
             }
 
+            formDocument.currency = selectedCurrency.value;
+
             axios.post(route('saledocuments_store'), formDocument ).then((res) => {
                 console.log(res)
                 if (res.data?.success === false) {
@@ -383,6 +452,9 @@
                 formDocument.client_email = props.client.email,
                 formDocument.sale_documenttype_id = 2,
                 formDocument.type_operation = props.type_operation,
+                formDocument.currency = 'PEN',
+                selectedCurrency.value = 'PEN';
+                previousCurrency.value = 'PEN';
                 formDocument.serie = null
                 formDocument.items = [];
                 formDocument.total_discount = 0;
@@ -540,6 +612,13 @@
     }
 
     const getDataTable = async (data) => {
+        // El catalogo trae precios en soles: si el comprobante esta en otra
+        // moneda, convertimos a la moneda de visualizacion actual.
+        if (!isBaseCurrency.value && activeExchangeRate.value) {
+            data.unit_price = convertPrice(data.unit_price, null, activeExchangeRate.value);
+            data.discount = convertPrice(data.discount ?? 0, null, activeExchangeRate.value);
+        }
+
         let c = parseFloat(data.quantity) ?? 0;
         let p = parseFloat(data.unit_price) ?? 0;
         let d = parseFloat(data.discount) ?? 0;
@@ -834,7 +913,7 @@
                                     <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Producto</th>
                                     <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Tipo de Unidad</th>
                                     <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Cantidad</th>
-                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Precio unitario</th>
+                                    <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Precio unitario ({{ currencySymbol }})</th>
                                     <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Descuento</th>
                                     <th class="text-center text-xs uppercase px-2 py-1 dark:text-white-dark">Total</th>
                                 </tr>
@@ -933,22 +1012,22 @@
                             <tfoot class="dark:text-gray-300">
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right uppercase pt-4"><b>OP. GRAVADAS: S/</b></td>
+                                    <td colspan="4" class="text-right uppercase pt-4"><b>OP. GRAVADAS: {{ currencySymbol }}</b></td>
                                     <td class="text-right pr-8">{{ formDocument.total_taxed }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right uppercase"><b>descuento: S/</b></td>
+                                    <td colspan="4" class="text-right uppercase"><b>descuento: {{ currencySymbol }}</b></td>
                                     <td class="text-right pr-8">{{ formDocument.total_discount  }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right uppercase"><b>IGV: S/</b></td>
+                                    <td colspan="4" class="text-right uppercase"><b>IGV: {{ currencySymbol }}</b></td>
                                     <td class="text-right pr-8">{{ formDocument.total_igv }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="3"></td>
-                                    <td colspan="4" class="text-right uppercase pb-4"><b>TOTAL A PAGAR: S/</b></td>
+                                    <td colspan="4" class="text-right uppercase pb-4"><b>TOTAL A PAGAR: {{ currencySymbol }}</b></td>
                                     <td class="text-right font-bold pr-8">
                                         {{ formDocument.total }}
                                         <InputError :message="formDocument.errors.total" class="mt-2" />
@@ -966,6 +1045,23 @@
                                     <option value="Contado">Al contado</option>
                                     <option value="Credito">Al crédito</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div v-if="multiCurrency.enabled" class="grid sm:grid-cols-2 items-center gap-6 mt-3">
+                            <div></div>
+                            <div class="flex sm:flex-row flex-col items-center">
+                                <label class="mb-0 sm:w-3/5 sm:ltr:mr-2 rtl:ml-2 text-right uppercase">Tipo de moneda</label>
+                                <select v-model="selectedCurrency" @change="onCurrencyChange" class="form-select form-select-sm flex-1">
+                                    <option v-for="currency in multiCurrency.currencies" :key="currency.code" :value="currency.code">
+                                        {{ currency.label }} ({{ currency.symbol }})
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div v-if="multiCurrency.enabled && !isBaseCurrency" class="grid sm:grid-cols-2 mt-1">
+                            <div></div>
+                            <div class="text-xs text-blue-600 dark:text-blue-400 sm:pl-2">
+                                TC aplicado: {{ activeExchangeRate }} · fecha SUNAT: {{ currentCurrency.rate_date || 'n/d' }}<template v-if="currentCurrency.is_stale"> — TC del último día disponible</template>
                             </div>
                         </div>
                         <table class="w-full ltr:text-left rtl:text-right text-gray-600">

@@ -182,6 +182,12 @@ class TreasuryLedgerService
         }
 
         $categoryId = $this->systemCategoryId('Cobro de venta');
+
+        // La caja de tesoreria opera en soles: si el comprobante se emitio en
+        // otra moneda (p. ej. USD con PTM0004 activo), cada pago se convierte
+        // con el tipo de cambio guardado en el documento de venta.
+        [$currency, $exchangeRate] = $this->resolveSaleDocumentCurrency($sale);
+
         $count = 0;
 
         foreach ($payments as $payment) {
@@ -191,15 +197,25 @@ class TreasuryLedgerService
                 continue;
             }
 
+            $amount = (float) $payment['amount'];
+            $reference = $payment['reference'];
+            $description = 'Cobro de venta';
+
+            if ($currency !== 'PEN' && $exchangeRate !== null && $exchangeRate > 0) {
+                $amount = round($amount * $exchangeRate, 2);
+                $reference = trim((string) $reference);
+                $reference = ($reference !== '' ? $reference.' · ' : '').sprintf('TC %s %s', $currency, rtrim(rtrim(number_format($exchangeRate, 4, '.', ''), '0'), '.'));
+            }
+
             $created = $this->registerIncome(
                 $account,
                 $sale->sale_date ?? now(),
-                (float) $payment['amount'],
+                $amount,
                 $categoryId,
                 'sale',
                 $sale->id,
-                $payment['reference'],
-                'Cobro de venta',
+                $reference,
+                $description,
                 $payment['payment_method_id'],
                 TreasuryTransaction::SOURCE_AUTO,
                 $sale->user_id,
@@ -211,6 +227,44 @@ class TreasuryLedgerService
         }
 
         return $count;
+    }
+
+    /**
+     * Moneda y tipo de cambio del documento de venta (el mas reciente asociado
+     * a la venta). Devuelve ['PEN', null] para las ventas en soles.
+     *
+     * @return array{0: string, 1: ?float}
+     */
+    private function resolveSaleDocumentCurrency(Sale $sale): array
+    {
+        $document = SaleDocument::query()
+            ->where('sale_id', $sale->id)
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $document) {
+            return ['PEN', null];
+        }
+
+        $currency = strtoupper((string) $document->invoice_type_currency);
+
+        if ($currency === '' || $currency === 'PEN') {
+            return ['PEN', null];
+        }
+
+        $exchangeRate = $document->exchange_rate !== null ? (float) $document->exchange_rate : null;
+
+        if ($exchangeRate === null || $exchangeRate <= 0) {
+            // Respaldo: TC vigente del servicio (no debe bloquear el registro).
+            try {
+                $current = app(\Modules\Sales\Services\ExchangeRateService::class)->getCurrentRate($currency);
+                $exchangeRate = $current ? (float) $current['rate'] : null;
+            } catch (\Throwable $e) {
+                $exchangeRate = null;
+            }
+        }
+
+        return [$currency, $exchangeRate];
     }
 
     /**

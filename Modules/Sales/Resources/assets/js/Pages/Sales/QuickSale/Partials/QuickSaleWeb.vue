@@ -6,8 +6,10 @@ const props = defineProps({
     products: { type: Array, default: () => [] },
     cart: { type: Array, default: () => [] },
     total: { type: Number, default: 0 },
-    saving: { type: Boolean, default: false },
+    saving: { type: Boolean, default: false, },
     paymentMethods: { type: Array, default: () => [] },
+    currencySymbol: { type: String, default: 'S/' },
+    exchangeRate: { type: Number, default: null },
 });
 
 const emit = defineEmits(['add-to-cart', 'update-qty', 'update-discount', 'remove-item', 'checkout']);
@@ -74,7 +76,7 @@ const getItemTotal = (item) => Math.max(0, (Number(item?.price ?? 0) - getItemDi
                     </div>
                     <div class="text-center flex-1 flex flex-col justify-between">
                         <div class="text-2xl font-bold text-primary mb-3">
-                            S/ {{ getProductPrice(product) }}
+                            {{ currencySymbol }} {{ getProductPrice(product) }}
                         </div>
                         <div class="text-base text-gray-700 dark:text-gray-300 line-clamp-2 min-h-[3rem]">{{ product.description }}</div>
                         <div v-if="product.presentations == 1 || product.presentations === true" class="text-xs text-primary font-medium mt-1">
@@ -102,12 +104,12 @@ const getItemTotal = (item) => Math.max(0, (Number(item?.price ?? 0) - getItemDi
                                 <div class="font-medium text-gray-900 dark:text-white text-sm truncate">{{ item.description }}</div>
                                 <div v-if="item.size" class="text-xs text-primary font-medium">Talla: {{ item.size }}</div>
                                 <div class="text-xs text-gray-500 dark:text-zinc-400">
-                                    S/ {{ Number(item.price).toFixed(2) }} c/u
+                                    {{ currencySymbol }} {{ Number(item.price).toFixed(2) }} c/u
                                 </div>
                             </div>
                             <div class="text-right shrink-0">
                                 <div class="text-[11px] text-gray-500 dark:text-zinc-400">Total</div>
-                                <div class="font-semibold text-gray-900 dark:text-white">S/ {{ getItemTotal(item).toFixed(2) }}</div>
+                                <div class="font-semibold text-gray-900 dark:text-white">{{ currencySymbol }} {{ getItemTotal(item).toFixed(2) }}</div>
                             </div>
                         </div>
                         <div class="flex items-end gap-3">
@@ -143,6 +145,8 @@ const getItemTotal = (item) => Math.max(0, (Number(item?.price ?? 0) - getItemDi
                         :cart-length="cart.length"
                         :saving="saving"
                         :payment-methods="paymentMethods"
+                        :currency-symbol="currencySymbol"
+                        :exchange-rate="exchangeRate"
                         @checkout="(payload) => emit('checkout', payload)"
                     />
                 </div>

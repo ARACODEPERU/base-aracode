@@ -9,6 +9,9 @@ const props = defineProps({
     saving: { type: Boolean, default: false },
     paymentMethods: { type: Array, default: () => [] },
     compact: { type: Boolean, default: false },
+    currencySymbol: { type: String, default: 'S/' },
+    /** TC vigente (soles por USD); null cuando se cobra en soles */
+    exchangeRate: { type: Number, default: null },
 });
 
 const emit = defineEmits(['checkout', 'cash-panel-toggle']);
@@ -45,7 +48,7 @@ const otherPaymentsRemaining = computed(() =>
     Math.round((props.total - otherPaymentsTotal.value) * 100) / 100
 );
 
-const formatMoney = (n) => `S/ ${Number(n || 0).toFixed(2)}`;
+const formatMoney = (n) => `${props.currencySymbol} ${Number(n || 0).toFixed(2)}`;
 
 const buildPayload = (mode, payments, extra = {}) => ({
     mode,
@@ -210,6 +213,8 @@ watch(() => props.total, (t) => {
                 ref="cashContentRef"
                 :total="total"
                 :touch-mode="compact"
+                :currency-symbol="currencySymbol"
+                :exchange-rate="exchangeRate"
                 @confirm="onCashConfirm"
                 @cancel="closeCashModal"
             />
@@ -333,6 +338,8 @@ watch(() => props.total, (t) => {
                     <QuickSaleCashContent
                         ref="cashContentRef"
                         :total="total"
+                        :currency-symbol="currencySymbol"
+                        :exchange-rate="exchangeRate"
                         @confirm="onCashConfirm"
                         @cancel="closeCashModal"
                     />

@@ -198,6 +198,10 @@
 </head>
 @php
     $company = \App\Models\Company::first();
+
+    // Simbolo de moneda del comprobante (PEN -> S/, USD -> US$)
+    $currencySymbol = ($document->getTipoMoneda() ?? 'PEN') === 'USD' ? 'US$' : 'S/';
+
     $logo = '';
     if ($company->logo_document == '/img/logo176x32.png') {
         $logo = public_path($company->logo_document);
@@ -326,11 +330,11 @@
                             <td align="left" style="padding: 4px 0px 4px 0px">
                                 {{ $item->getCodProducto() }} - {{ $item->getDescripcion() }}
                                 @if ($itemDiscount > 0)
-                                    <br><span style="font-size: 10px">Desc. SUNAT: S/ {{ number_format($itemDiscount, 2, '.', ',') }}</span>
+                                    <br><span style="font-size: 10px">Desc. SUNAT: {{ $currencySymbol }} {{ number_format($itemDiscount, 2, '.', ',') }}</span>
                                 @endif
                             </td>
                             <td align="right" style="padding: 4px 0px 4px 0px">
-                                S/ {{ number_format($item->getMtoPrecioUnitario(), 2, '.', ',') }}
+                                {{ $currencySymbol }} {{ number_format($item->getMtoPrecioUnitario(), 2, '.', ',') }}
                             </td>
                         </tr>
                     @endforeach
@@ -345,27 +349,27 @@
                         </td>
                         <td style="border-top: 1px solid black !important; padding: 4px 0px 1px 0px;" width="30%"
                             align="right">
-                            S/ {{ number_format($document->getMtoOperGravadas(), 2, '.', ',') }}
+                            {{ $currencySymbol }} {{ number_format($document->getMtoOperGravadas(), 2, '.', ',') }}
                         </td>
                     </tr>
                     <tr>
                         <td width="70%" align="right"><strong>I.G.V.:</strong></td>
                         <td width="30%" align="right">
-                            S/ {{ number_format($document->getMtoIGV(), 2, '.', ',') }}
+                            {{ $currencySymbol }} {{ number_format($document->getMtoIGV(), 2, '.', ',') }}
                         </td>
                     </tr>
                     @if ($documentDiscountTotal > 0)
                         <tr>
                             <td width="70%" align="right"><strong>Descuento:</strong></td>
                             <td width="30%" align="right">
-                                S/ {{ number_format($documentDiscountTotal, 2, '.', ',') }}
+                                {{ $currencySymbol }} {{ number_format($documentDiscountTotal, 2, '.', ',') }}
                             </td>
                         </tr>
                     @endif
                     <tr>
                         <td width="70%" align="right"><strong>Precio Venta:</strong></td>
                         <td width="30%" align="right">
-                            S/ {{ number_format($document->getMtoImpVenta(), 2, '.', ',') }}
+                            {{ $currencySymbol }} {{ number_format($document->getMtoImpVenta(), 2, '.', ',') }}
                         </td>
                     </tr>
                 </tbody>

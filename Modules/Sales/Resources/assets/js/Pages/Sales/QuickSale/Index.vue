@@ -17,6 +17,7 @@ const props = defineProps({
     saleDocumentTypes: { type: Array, default: () => [] },
     documentTypes: { type: Array, default: () => [] },
     departments: { type: Array, default: () => [] },
+    multiCurrency: { type: Object, default: () => ({ enabled: false, currencies: [] }) },
 });
 
 const isMobile = ref(window.innerWidth < 768 || 'ontouchstart' in window);
@@ -31,6 +32,65 @@ const selectedClient = ref({
 
 const displayModalClient = ref(false);
 const saleDocumentTypesId = ref(null);
+
+// ===== Moneda del comprobante (PTM0004) =====
+// El catalogo vive en soles: en pantalla se muestra en la moneda seleccionada
+// y al servidor se envia en soles + currency (el TC vigente lo resuelve el
+// servidor con ExchangeRateService).
+const baseCurrency = computed(() =>
+    (props.multiCurrency?.currencies || []).find((c) => c.base) || { code: 'PEN', symbol: 'S/', base: true }
+);
+const selectedCurrency = ref('PEN');
+const previousCurrency = ref('PEN');
+const currentCurrency = computed(() =>
+    (props.multiCurrency?.currencies || []).find((c) => c.code === selectedCurrency.value) || baseCurrency.value
+);
+const currencySymbol = computed(() => currentCurrency.value.symbol || 'S/');
+const isBaseCurrency = computed(() => !!currentCurrency.value.base);
+const activeExchangeRate = computed(() => (isBaseCurrency.value ? null : currentCurrency.value.exchange_rate || null));
+
+const onCurrencyChange = () => {
+    const next = selectedCurrency.value;
+    const prev = previousCurrency.value;
+    if (next === prev) {
+        return;
+    }
+
+    const nextCurrency = currentCurrency.value;
+    if (!nextCurrency.base && !nextCurrency.exchange_rate) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Tipo de cambio no disponible',
+            text: 'No hay tipo de cambio vigente para dólares. Usa el botón «Cambio de moneda» del header para consultarlo a SUNAT.',
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+        selectedCurrency.value = prev;
+        return;
+    }
+
+    // Convierte precios entre monedas: a soles con el TC anterior, luego a la
+    // moneda nueva con el TC nuevo (null = moneda base PEN).
+    const rateFrom = prev === baseCurrency.value.code
+        ? null
+        : ((props.multiCurrency?.currencies || []).find((c) => c.code === prev)?.exchange_rate || null);
+    const rateTo = nextCurrency.base ? null : nextCurrency.exchange_rate;
+
+    const convertPrice = (value, from, to) => {
+        let v = parseFloat(value);
+        if (isNaN(v)) v = 0;
+        const inSoles = from ? v * from : v;
+        const converted = to ? inSoles / to : inSoles;
+        return from || to ? parseFloat(converted.toFixed(2)) : converted;
+    };
+
+    cart.value.forEach((item) => {
+        item.price = convertPrice(item.price, rateFrom, rateTo);
+        item.discount = convertPrice(item.discount, rateFrom, rateTo);
+    });
+
+    previousCurrency.value = next;
+};
 
 const clientLabel = computed(() => {
     const name = selectedClient.value?.full_name ?? 'Cliente genérico';
@@ -311,10 +371,10 @@ const handlePrintAfterSale = async (saleResult) => {
 
 const formatPaymentsSummary = (paymentPayload) => {
     const lines = (paymentPayload.payments || []).map(
-        (p) => `• ${paymentMethodLabel(p.payment_method_id)}: S/ ${Number(p.amount).toFixed(2)}${p.reference ? ` (${p.reference})` : ''}`
+        (p) => `• ${paymentMethodLabel(p.payment_method_id)}: ${currencySymbol.value} ${Number(p.amount).toFixed(2)}${p.reference ? ` (${p.reference})` : ''}`
     );
     if (paymentPayload.cash?.change > 0) {
-        lines.push(`• Vuelto: S/ ${Number(paymentPayload.cash.change).toFixed(2)}`);
+        lines.push(`• Vuelto: ${currencySymbol.value} ${Number(paymentPayload.cash.change).toFixed(2)}`);
     }
     return lines.join('<br>');
 };
@@ -340,6 +400,7 @@ const checkout = async (paymentPayload) => {
         payment_amount: total.value,
         client_id: selectedClient.value.id,
         document_type_id: documentType.value,
+        currency: selectedCurrency.value,
         payment_mode: paymentPayload?.mode ?? 'quick',
         payments: paymentPayload?.payments ?? [],
         cash: paymentPayload?.cash ?? null,
@@ -476,6 +537,12 @@ const closeMobileMenu = () => {
                         </option>
                     </select>
 
+                    <select v-if="multiCurrency.enabled" v-model="selectedCurrency" @change="onCurrencyChange" class="form-select p-2 text-sm border rounded-lg">
+                        <option v-for="currency in multiCurrency.currencies" :key="currency.code" :value="currency.code">
+                            {{ currency.label }} ({{ currency.symbol }})
+                        </option>
+                    </select>
+
                     <select v-model="printOption" @change="closeMobileMenu" class="form-select p-2 text-sm border rounded-lg">
                         <option value="auto">Imprimir al cobrar</option>
                         <option value="ask">Preguntar antes</option>
@@ -504,6 +571,9 @@ const closeMobileMenu = () => {
                         Volver
                     </button>
                 </div>
+                <div v-if="multiCurrency.enabled && !isBaseCurrency" class="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                    TC aplicado: {{ activeExchangeRate }} · fecha SUNAT: {{ currentCurrency.rate_date || 'n/d' }}<template v-if="currentCurrency.is_stale"> — TC del último día disponible</template>
+                </div>
             </div>
 
             <!-- Vista según modo -->
@@ -514,6 +584,8 @@ const closeMobileMenu = () => {
                 :total="total"
                 :saving="saving"
                 :payment-methods="paymentMethods"
+                :currency-symbol="currencySymbol"
+                :exchange-rate="activeExchangeRate"
                 @add-to-cart="addToCart"
                 @update-qty="updateQty"
                 @update-discount="updateDiscount"
@@ -527,6 +599,8 @@ const closeMobileMenu = () => {
                 :total="total"
                 :saving="saving"
                 :payment-methods="paymentMethods"
+                :currency-symbol="currencySymbol"
+                :exchange-rate="activeExchangeRate"
                 @add-to-cart="addToCart"
                 @update-qty="updateQty"
                 @update-discount="updateDiscount"

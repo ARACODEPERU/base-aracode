@@ -3,8 +3,9 @@
     // y lo guarda en sales_exchange_rates. Requiere permiso invo_tipo_cambio.
     import { ref } from 'vue';
     import axios from 'axios';
-    import { route } from 'ziggy-js';
     import ModalSmall from '@/Components/ModalSmall.vue';
+
+    // route() es la funcion global de Ziggy (inyectada via @routes en app.blade.php)
 
     const props = defineProps({
         show: { type: Boolean, default: false },

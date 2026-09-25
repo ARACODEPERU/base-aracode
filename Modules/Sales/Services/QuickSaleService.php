@@ -167,7 +167,9 @@ class QuickSaleService
         // El TC lo resuelve el servidor y se aplica a cada linea del carrito.
         [$currency, $exchangeRate] = $this->resolveDocumentCurrency(null, $data);
 
-        $typeOperation = $this->totalInSoles($total, $exchangeRate) > 700 ? '1001' : $this->top;
+        // Umbral de detraccion (S/ 700) evaluado en soles: el carrito llega
+        // en soles y $total aun no ha sido convertido a la moneda del comprobante.
+        $typeOperation = $total > 700 ? '1001' : $this->top;
         $numberLetters = new NumberLetter;
 
         $document = SaleDocument::create([

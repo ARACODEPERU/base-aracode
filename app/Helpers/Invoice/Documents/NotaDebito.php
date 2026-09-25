@@ -150,10 +150,12 @@ class NotaDebito
             // ])
             ->setCompany($company)
             ->setClient($client)
-            ->setMtoOperGravadas($invoice->invoice_mto_oper_taxed)
-            ->setMtoIGV($invoice->invoice_mto_igv)
-            ->setTotalImpuestos($invoice->invoice_total_taxes)
-            ->setMtoImpVenta($invoice->invoice_mto_imp_sale);
+            // Totales de la NOTA (deben corresponder a la suma de sus lineas;
+            // usar los del documento afectado genera rechazo 3277)
+            ->setMtoOperGravadas($document->invoice_mto_oper_taxed)
+            ->setMtoIGV($document->invoice_mto_igv)
+            ->setTotalImpuestos($document->invoice_total_taxes)
+            ->setMtoImpVenta($document->invoice_mto_imp_sale);
 
 
         $details = SaleDocumentItem::where('document_id', $document->id)->get();

@@ -62,14 +62,24 @@ class NotaCredito
                 $notes = json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE);
                 if ($cdr->getCode() == 0) {
                     $status = 'Aceptada';
-                    $invoice->status = 3;
-                    $invoice->invoice_status = 'Por anular';
-                    $invoice->save();
 
-                    Sale::find($invoice->sale_id)->update([
-                        'status' => 0
-                    ]);
+                    // Catalogo 09: solo los motivos que modifican la operacion completa
+                    // (01 Anulacion, 02 Error RUC, 03 Error descripcion, 06 Devolucion total)
+                    // por el total del documento dejan el comprobante afectado "Por anular".
+                    // Los motivos parciales (04, 05, 07-12) no alteran su estado.
+                    $codMotivo = (string) $document->note_type_operation_id;
+                    $isFullMotivo = in_array($codMotivo, ['01', '02', '03', '06']);
+                    $notaCubreTotal = abs((float) $document->invoice_mto_imp_sale - (float) $invoice->invoice_mto_imp_sale) < 0.01;
 
+                    if ($isFullMotivo && $notaCubreTotal) {
+                        $invoice->status = 3;
+                        $invoice->invoice_status = 'Por anular';
+                        $invoice->save();
+
+                        Sale::find($invoice->sale_id)->update([
+                            'status' => 0
+                        ]);
+                    }
                 } elseif ($cdr->getCode() == 2325) {
                     $status = 'Pendiente';
                 }
@@ -171,10 +181,12 @@ class NotaCredito
             // ])
             ->setCompany($company)
             ->setClient($client)
-            ->setMtoOperGravadas($invoice->invoice_mto_oper_taxed)
-            ->setMtoIGV($invoice->invoice_mto_igv)
-            ->setTotalImpuestos($invoice->invoice_total_taxes)
-            ->setMtoImpVenta($invoice->invoice_mto_imp_sale);
+            // Totales de la NOTA (deben corresponder a la suma de sus lineas;
+            // usar los del documento afectado genera rechazo 3277 en notas parciales)
+            ->setMtoOperGravadas($document->invoice_mto_oper_taxed)
+            ->setMtoIGV($document->invoice_mto_igv)
+            ->setTotalImpuestos($document->invoice_total_taxes)
+            ->setMtoImpVenta($document->invoice_mto_imp_sale);
 
 
         $details = SaleDocumentItem::where('document_id', $document->id)->get();

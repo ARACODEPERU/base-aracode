@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Routing\Controller;
 use Inertia\Inertia;
+use Modules\Sales\Services\ExchangeRateService;
 
 class QuickSaleController extends Controller
 {
@@ -69,6 +70,8 @@ class QuickSaleController extends Controller
             )
             ->get();
 
+        $exchangeRateService = app(ExchangeRateService::class);
+
         return Inertia::render('Sales::Sales/QuickSale/Index', [
             'products' => $products,
             'clientDefault' => $client,
@@ -76,6 +79,10 @@ class QuickSaleController extends Controller
             'saleDocumentTypes' => $saleDocumentTypes,
             'documentTypes' => $documentTypes,
             'departments' => $ubigeo,
+            'multiCurrency' => [
+                'enabled' => $exchangeRateService->isMultiCurrencyEnabled(),
+                'currencies' => $exchangeRateService->getEnabledCurrencies(),
+            ],
         ]);
     }
 }

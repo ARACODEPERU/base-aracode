@@ -120,7 +120,7 @@ class SaleCreditNotesController extends Controller
     public function create()
     {
         $saleDocumentTypes = SaleDocumentType::whereIn('id', [3, 4])->get();
-        $typeCreditNote = DB::table('sunat_note_credit_types')->whereIn('id', ['01', '02'])->get();
+        $typeCreditNote = DB::table('sunat_note_credit_types')->get();
         $typeDebitNote = DB::table('sunat_note_debit_types')->get();
         $series = Serie::whereIn('document_type_id', [1, 2, 4])->get();
         $noteSeries = Serie::where('document_type_id', 3)->get();
@@ -191,6 +191,15 @@ class SaleCreditNotesController extends Controller
 
         try {
             if ($request->get('note_type') == 3) {
+                // Catalogo 09: 01, 02, 03 y 06 modifican la operacion completa
+                // (la nota debe cubrir el total del documento afectado).
+                if (in_array($request->get('note_operation_type'), ['01', '02', '03', '06'])) {
+                    if (round((float) $request->get('note_overall_total'), 2) !== round((float) $request->get('document_mto_total'), 2)) {
+                        throw new Exception("Para el motivo seleccionado la nota de crédito debe ser por el total del documento afectado.");
+                    }
+                } elseif ((float) $request->get('note_overall_total') <= 0) {
+                    throw new Exception("El monto total de la nota de crédito debe ser mayor a cero.");
+                }
                 $result = $this->store($request);
                 return response()->json($result);
             } elseif ($request->get('note_type') == 4) {
@@ -222,7 +231,7 @@ class SaleCreditNotesController extends Controller
                 $mto_oper_taxed = 0;
                 $mto_igv = 0;
                 $total_icbper = 0;
-                $porcentage_icbper = 0.20;
+                $porcentage_icbper = (float) $this->icbper; // monto ICBPER por unidad (parametro P000004)
                 $total_discount = 0;
                 $total = 0;
 
@@ -248,7 +257,6 @@ class SaleCreditNotesController extends Controller
                     'invoice_due_date'              => $request->get('note_due_date') ?? Carbon::now()->format('Y-m-d'),
                     'invoice_send_date'             => Carbon::now()->format('Y-m-d'),
                     'invoice_legend_code'           => '1000',
-                    'invoice_legend_description'    => $numberletters->convertToLetter($request->get('document_mto_total')),
                     'user_id'                       => Auth::id(),
                     'reason_cancellation'           => $request->get('note_reason_cancellation'),
                     'overall_total'                 => $request->get('document_overall_total'),
@@ -258,17 +266,26 @@ class SaleCreditNotesController extends Controller
                 foreach ($request->get('document_items') as $item) {
 
                     $afe_igv = $item['type_afe_igv'];
-                    $price_sale = $item['price_sale'];
+                    $price_sale = floatval($item['price_sale']);
                     $quantity = $item['quantity'];
                     $descuento = isset($item['descuento']) ? floatval($item['descuento']) : 0;
                     $igv = isset($item['igv']) ? floatval($item['igv']) : 0;
                     $mto_total = isset($item['mto_total']) ? floatval($item['mto_total']) : 0;
                     $mto_value_unit = isset($item['mto_value_unit']) ? floatval($item['mto_value_unit']) : 0;
-                    $mto_discount = $descuento * $quantity;
                     $value_unit = $mto_value_unit;
-                    $value_sale = $mto_value_unit * $quantity;
+
+                    // Mismo criterio que la facturacion (QuickSaleItemCalculator):
+                    // el descuento se aplica sobre la escala sin IGV y el precio
+                    // unitario efectivo es el tras descuento. Sin esto la base no
+                    // cuadra con el IGV de la linea y SUNAT rechaza (3277).
+                    $factor_descuento = $price_sale > 0 ? ($descuento / $price_sale) : 0;
+                    $mto_descuento_base = $factor_descuento * $value_unit * $quantity;
+                    $mto_discount = round($mto_descuento_base, 2);
+                    $value_sale = round(($value_unit * $quantity) - $mto_descuento_base, 2);
                     $mto_base_igv = $value_sale;
-                    $unit_price = $price_sale;
+                    $unit_price = ($descuento > 0 && $quantity > 0)
+                        ? round(($value_sale + $igv) / $quantity, 2)
+                        : $price_sale;
 
                     $porcentage_item_icbper = 0;
                     $icbper = 0;
@@ -290,8 +307,8 @@ class SaleCreditNotesController extends Controller
                         $array_discounts[0] = array(
                             'value'     => $descuento,
                             'type'      => '00',
-                            'base'      => round($price_sale * $quantity, 2),
-                            'factor'    => round($descuento / $price_sale, 4),
+                            'base'      => round($value_unit * $quantity, 2),
+                            'factor'    => round($price_sale > 0 ? $descuento / $price_sale : 0, 4),
                             'monto'     => round($mto_discount, 2)
                         );
                     }
@@ -342,6 +359,7 @@ class SaleCreditNotesController extends Controller
                     'invoice_subtotal'          => $subtotal,
                     'invoice_rounding'          => $rounding,
                     'invoice_mto_imp_sale'      => $ttotal,
+                    'invoice_legend_description' => $numberletters->convertToLetter($ttotal, $invoice->invoice_type_currency === 'USD' ? 'DÓLARES AMERICANOS' : 'SOLES'),
                     'invoice_sunat_points'      => null,
                     'invoice_status'            => 'Pendiente',
                 ]);

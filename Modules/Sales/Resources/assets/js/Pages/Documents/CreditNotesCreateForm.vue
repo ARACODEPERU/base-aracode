@@ -4,7 +4,7 @@
     import DangerButton from '@/Components/DangerButton.vue';
     import SearchClients from './Partials/SearchClients.vue';
     import SearchProducts from './Partials/SearchProducts.vue';
-    import { faPlus, faXmark, faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+    import { faPlus, faXmark, faMagnifyingGlass, faCircleInfo, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
     import { useForm } from '@inertiajs/vue3';
     import InputError from '@/Components/InputError.vue';
     import InputLabel from '@/Components/InputLabel.vue';
@@ -95,6 +95,7 @@
         document_mto_total: null,
         document_total_taxes: null,
         document_overall_total: null,
+        document_currency: null,
         note_type: 3,
         note_operation_type: null,
         note_id: null,
@@ -129,6 +130,8 @@
                 formNote.document_client_email = res.data.document.client_email;
                 formNote.document_total_taxes = res.data.document.invoice_total_taxes;
                 formNote.document_overall_total = res.data.document.overall_total;
+                formNote.document_currency = res.data.document.invoice_type_currency || 'PEN';
+                noteCurrencySymbol.value = formNote.document_currency === 'USD' ? '$' : 'S/';
                 formNote.note_overall_total = res.data.document.invoice_mto_imp_sale;
                 formNote.note_discount_total = res.data.document.invoice_mto_discount;
                 formNote.note_mto_taxed = res.data.document.invoice_mto_oper_taxed;
@@ -157,6 +160,22 @@
     const dataTypeNote = ref([]);
     const dataNoteSeries = ref([]);
     const allNoteSeries = ref([]);
+    const noteCurrencySymbol = ref('S/');
+
+    // Catalogo 09: motivos que modifican la operacion completa (01 Anulación,
+    // 02 Error RUC, 03 Error descripción, 06 Devolución total). La nota debe
+    // cubrir el total del documento afectado y sus items no son editables.
+    const FULL_CREDIT_NOTE_MOTIVES = ['01', '02', '03', '06'];
+
+    const isFullCreditNoteMotivo = computed(() =>
+        formNote.note_type == 3 && FULL_CREDIT_NOTE_MOTIVES.includes(formNote.note_operation_type)
+    );
+
+    const selectedMotivo = computed(() =>
+        (props.typeCreditNote || []).find((m) => m.id === formNote.note_operation_type)
+    );
+
+    const itemsLocked = computed(() => isFullCreditNoteMotivo.value);
 
     const getAllowedNoteSeriePrefixes = () => {
         if (formNote.note_type == 4 || formSeDoc.value.docType === 'debit_note') {
@@ -182,6 +201,8 @@
 
     const selectTypeNote = () => {
         dataTypeNote.value = [];
+        formNote.note_operation_type = null;
+        formNote.note_reason_cancellation = null;
         if(formNote.note_type == 3){
             dataTypeNote.value = props.typeCreditNote;
         }else{
@@ -259,7 +280,22 @@
                 let okey = false;
                 let msg = null;
                 if(formNote.note_type == 3){
-                    okey = true;
+                    let totalNota = parseFloat(formNote.note_overall_total) || 0;
+                    let totalDocumento = parseFloat(formNote.document_mto_total) || 0;
+                    if(FULL_CREDIT_NOTE_MOTIVES.includes(formNote.note_operation_type)){
+                        // Motivos de modificación total: la nota debe cubrir el total del documento afectado
+                        if(Math.abs(totalNota - totalDocumento) > 0.009){
+                            okey = false;
+                            msg = 'El monto total de la nota de crédito debe ser igual al del documento afectado para el motivo seleccionado.';
+                        }else{
+                            okey = true;
+                        }
+                    }else if(totalNota > 0){
+                        okey = true;
+                    }else{
+                        okey = false;
+                        msg = 'El monto total de la nota de crédito debe ser mayor a cero.';
+                    }
                 }else if(formNote.note_type == 4){
                     console.log('nota',formNote.note_overall_total)
                     console.log('factura',formNote.document_mto_total)
@@ -374,11 +410,14 @@
 
         formNote.document_items[key].igv = mi.toFixed(2);
         formNote.document_items[key].mto_total = st.toFixed(2);
-        formNote.document_items[key].mto_value_unit = vs.toFixed(2);
+        // Valor unitario sin IGV (base real del item, sin multiplicar por cantidad);
+        // el backend recalcula la base de la linea a partir de este valor.
+        formNote.document_items[key].mto_value_unit = vu.toFixed(2);
 
         // Calcular la suma de los totales de todos los items
         formNote.note_overall_total = formNote.document_items.reduce((acc, item) => acc + parseFloat(item.mto_total), 0).toFixed(2);
-        formNote.note_discount_total = formNote.document_items.reduce((acc, item) => acc + (parseFloat(item.mto_discount)*c), 0).toFixed(2);
+        // "descuento" es el descuento unitario; el total por linea es descuento * cantidad
+        formNote.note_discount_total = formNote.document_items.reduce((acc, item) => acc + ((parseFloat(item.descuento) || 0) * (parseFloat(item.quantity) || 0)), 0).toFixed(2);
         formNote.note_mto_taxed = formNote.document_items.reduce((acc, item) => acc + parseFloat(item.mto_value_unit), 0).toFixed(2);
         formNote.note_total_igv = formNote.document_items.reduce((acc, item) => acc + parseFloat(item.igv), 0).toFixed(2);
 
@@ -448,6 +487,17 @@
                             </select>
                             <InputError :message="formNote.errors.note_operation_type" class="mt-2" />
                         </div>
+                        <div v-if="formNote.note_type == 3 && formNote.note_operation_type" class="col-span-4" >
+                            <div class="flex items-start gap-2 rounded-md bg-[#f1f2f3] p-3 text-[13px] dark:bg-[#1b2e4b]" :class="isFullCreditNoteMotivo ? 'text-warning' : 'text-info'">
+                                <font-awesome-icon :icon="isFullCreditNoteMotivo ? faTriangleExclamation : faCircleInfo" class="mt-0.5 shrink-0" />
+                                <span v-if="isFullCreditNoteMotivo">
+                                    <b>{{ selectedMotivo?.description }}:</b> motivo de modificación total. La nota se emitirá por el <b>total del documento afectado</b> y, al ser aceptada por SUNAT, lo dejará en estado "Por anular". Los importes no son editables.
+                                </span>
+                                <span v-else>
+                                    <b>{{ selectedMotivo?.description }}:</b> motivo parcial. Puedes <b>modificar cantidades, precios y descuentos</b> para emitir la nota por un monto menor o distinto al documento afectado. El documento afectado no cambia de estado.
+                                </span>
+                            </div>
+                        </div>
                         <div class="col-span-4 sm:col-span-1">
                             <InputLabel for="note_issue_date" value="Fec. Emisión" />
                             <flat-pickr v-model="formNote.note_issue_date" id="note_issue_date" class="form-input" :config="basic"></flat-pickr>
@@ -482,7 +532,7 @@
                                             <tr class="bg-dark-dark-light border-dark-dark-light">
                                                 <td>
                                                     <div class="flex gap-4 items-center justify-center">
-                                                        <button @click="item.editar = !item.editar" type="button" class="btn btn-sm btn-outline-primary text-xs">
+                                                        <button @click="item.editar = !item.editar" type="button" class="btn btn-sm btn-outline-primary text-xs" :disabled="itemsLocked" :title="itemsLocked ? 'Los importes no son editables para este motivo' : 'Editar'">
                                                             <icon-pencil class="w-4 h-4" />
                                                         </button>
                                                     </div>
@@ -544,22 +594,22 @@
 
                                         <tr class="border-none">
                                             <td colspan="4"></td>
-                                            <td colspan="2" class="text-right text-xs uppercase border-b"><b>OP. GRAVADAS: S/</b></td>
+                                            <td colspan="2" class="text-right text-xs uppercase border-b"><b>OP. GRAVADAS: {{ noteCurrencySymbol }}</b></td>
                                             <td class="text-right border-b">{{ formNote.note_mto_taxed }}</td>
                                         </tr>
                                         <tr v-if="formNote.note_discount_total" class="border-none">
                                             <td colspan="4"></td>
-                                            <td colspan="2" class="text-right text-xs uppercase border-b"><b>descuento: S/</b></td>
+                                            <td colspan="2" class="text-right text-xs uppercase border-b"><b>descuento: {{ noteCurrencySymbol }}</b></td>
                                             <td class="text-right border-b">{{ formNote.note_discount_total ?? 0 }}</td>
                                         </tr>
                                         <tr class="border-none">
                                             <td colspan="4"></td>
-                                            <td colspan="2" class="text-right text-xs uppercase border-b"><b>IGV: S/</b></td>
+                                            <td colspan="2" class="text-right text-xs uppercase border-b"><b>IGV: {{ noteCurrencySymbol }}</b></td>
                                             <td class="text-right border-b">{{ formNote.note_total_igv }}</td>
                                         </tr>
                                         <tr class="border-none">
                                             <td colspan="4"></td>
-                                            <td colspan="2" class="text-right text-xs uppercase"><b>TOTAL A PAGAR: S/</b></td>
+                                            <td colspan="2" class="text-right text-xs uppercase"><b>TOTAL A PAGAR: {{ noteCurrencySymbol }}</b></td>
                                             <td class="text-right font-bold">
                                                 {{ formNote.note_overall_total }}
                                             </td>

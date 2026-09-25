@@ -8,6 +8,8 @@ const props = defineProps({
     total: { type: Number, default: 0 },
     saving: { type: Boolean, default: false },
     paymentMethods: { type: Array, default: () => [] },
+    currencySymbol: { type: String, default: 'S/' },
+    exchangeRate: { type: Number, default: null },
 });
 
 const emit = defineEmits(['add-to-cart', 'update-qty', 'update-discount', 'remove-item', 'checkout']);
@@ -81,7 +83,7 @@ const openCartCheckout = () => {
                 </div>
                 <div class="text-center flex-1 flex flex-col justify-between">
                     <div class="text-lg md:text-xl font-bold text-primary mb-2">
-                        S/ {{ getProductPrice(product) }}
+                        {{ currencySymbol }} {{ getProductPrice(product) }}
                     </div>
                     <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 min-h-[2.5rem]">{{ product.description }}</div>
                     <div v-if="product.presentations == 1 || product.presentations === true" class="text-xs text-primary font-medium mt-1">
@@ -98,7 +100,7 @@ const openCartCheckout = () => {
         <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-800 shadow-lg border-t border-gray-200 dark:border-zinc-700 z-40">
             <div class="p-3 flex justify-between items-center">
                 <div>
-                    <span class="text-lg font-bold text-gray-900 dark:text-white">S/ {{ total.toFixed(2) }}</span>
+                    <span class="text-lg font-bold text-gray-900 dark:text-white">{{ currencySymbol }} {{ total.toFixed(2) }}</span>
                     <button @click="showCart = !showCart" class="ml-2 text-sm text-primary">
                         {{ cart.length }} item(s)
                     </button>
@@ -133,13 +135,13 @@ const openCartCheckout = () => {
                                     <div class="font-medium truncate">{{ item.description }}</div>
                                     <div v-if="item.size" class="text-xs text-primary font-medium">Talla: {{ item.size }}</div>
                                     <div class="text-xs text-gray-500 dark:text-zinc-400">
-                                        S/ {{ Number(item.price).toFixed(2) }} × {{ item.qty }}
+                                        {{ currencySymbol }} {{ Number(item.price).toFixed(2) }} × {{ item.qty }}
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
                                     <div class="text-xs text-gray-500 dark:text-zinc-400">Total</div>
                                     <div class="font-semibold text-gray-900 dark:text-white">
-                                        S/ {{ getItemTotal(item).toFixed(2) }}
+                                        {{ currencySymbol }} {{ getItemTotal(item).toFixed(2) }}
                                     </div>
                                 </div>
                             </div>
@@ -172,6 +174,8 @@ const openCartCheckout = () => {
                         :cart-length="cart.length"
                         :saving="saving"
                         :payment-methods="paymentMethods"
+                        :currency-symbol="currencySymbol"
+                        :exchange-rate="exchangeRate"
                         @cash-panel-toggle="cashPanelOpen = $event"
                         @checkout="(payload) => { emit('checkout', payload); showCart = false; cashPanelOpen = false; }"
                     />

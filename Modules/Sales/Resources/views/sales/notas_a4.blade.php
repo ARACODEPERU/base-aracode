@@ -765,6 +765,10 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 </head>
 @php
     $company = \App\Models\Company::first();
+
+    // Simbolo de moneda del comprobante (PEN -> S/, USD -> US$)
+    $currencySymbol = ($document->getTipoMoneda() ?? 'PEN') === 'USD' ? 'US$' : 'S/';
+
     $logo = '';
     if ($company->logo_document == '/img/logo176x32.png') {
         $logo = public_path($company->logo_document);
@@ -935,7 +939,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                     {{ $item->getDescripcion() }}
                                 </td>
                                 <td class="border-b py-2 pl-2 pr-3 text-right">
-                                    S/ {{ number_format($item->getMtoPrecioUnitario(), 2, '.', ',') }}
+                                    {{ $currencySymbol }} {{ number_format($item->getMtoPrecioUnitario(), 2, '.', ',') }}
                                 </td>
                             </tr>
                         @endforeach
@@ -957,7 +961,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
                                                             <td class="border-b py-2 pl-2 pr-3 text-right">
                                                                 <div class="whitespace-nowrap font-bold text-main">
-                                                                    S/
+{{ $currencySymbol }}
                                                                     {{ number_format($document->getMtoOperGravadas(), 2, '.', ',') }}
                                                                 </div>
                                                             </td>
@@ -970,7 +974,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                                             </td>
                                                             <td class="py-2 pl-2 pr-3 text-right">
                                                                 <div class="whitespace-nowrap font-bold text-main">
-                                                                    S/
+{{ $currencySymbol }}
                                                                     {{ number_format($document->getMtoIGV(), 2, '.', ',') }}
                                                                 </div>
                                                             </td>
@@ -983,7 +987,7 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
                                                             </td>
                                                             <td class="bg-main py-2 pl-2 pr-3 text-right">
                                                                 <div class="whitespace-nowrap font-bold text-white">
-                                                                    S/
+{{ $currencySymbol }}
                                                                     {{ number_format($document->getMtoImpVenta(), 2, '.', ',') }}
                                                                 </div>
                                                             </td>
