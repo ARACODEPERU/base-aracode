@@ -169,12 +169,12 @@ const esImageBase64 = (cadena) => {
         </template>
 
         <template #description>
-            Crear nuevo Grupo en el CMS y configurar que items tendra, Los campos con * son obligatorios
+            Crear nuevo grupo en el CMS y configurar qué items tendrá. Los campos con * son obligatorios
         </template>
 
         <template #form>
             <div class="col-span-6 sm:col-span-6 ">
-                <InputLabel for="description" value="Descripción o Nombre del Grupo*" />
+                <InputLabel for="description" value="Descripción o nombre del grupo *" />
                 <TextInput
                     id="description"
                     v-model="form.description"
@@ -185,15 +185,15 @@ const esImageBase64 = (cadena) => {
                 <InputError :message="form.errors.description" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-3 ">
-                CONTENIDO
+                <InputLabel value="Contenido del grupo" />
             </div>
             <div class="col-span-6 sm:col-span-3 ">
-                <button @click="addItemInSection" type="button" class="px-3 py-2 text-xs font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Agregar</button>
+                <button @click="addItemInSection" type="button" class="btn btn-sm btn-primary">Agregar</button>
             </div>
             <div class="col-span-6 p-4 border border-stroke">
                 <div v-for="(item, ke) in form.contents" class="grid grid-cols-6 gap-6 ">
                     <div class="col-span-6 sm:col-span-1 ">
-                        <button @click="removeIItemInSection(ke)" type="button" class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">
+                        <button @click="removeIItemInSection(ke)" type="button" class="btn btn-sm btn-outline-danger me-2 mb-2">
                             <font-awesome-icon :icon="faTrashAlt" />
                         </button>
                     </div>
@@ -246,7 +246,7 @@ const esImageBase64 = (cadena) => {
             <template v-if="gr.group">
                 <div class="max-w-sm bg-white p-4 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
                     <div class="flex justify-end px-4 pt-4">
-                        <button @click="destroyGroup(gr.group.id)" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                        <button @click="destroyGroup(gr.group.id)" type="button" title="Eliminar grupo" class="btn btn-sm btn-outline-danger">
                             <font-awesome-icon :icon="faTrashAlt" />
                         </button>
                     </div>

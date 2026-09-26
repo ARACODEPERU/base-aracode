@@ -61,11 +61,11 @@ const xassetUrl = assetUrl;
 <template>
     <FormSection @submitted="createItem" class="">
         <template #title>
-            Items Detalles
+            Nuevo item
         </template>
 
         <template #description>
-            Crear nuevo Items, Los campos con * son obligatorios
+            Crear un nuevo item. Los campos con * son obligatorios
         </template>
 
         <template #form>

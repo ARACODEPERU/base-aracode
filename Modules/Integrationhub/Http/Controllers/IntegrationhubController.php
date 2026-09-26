@@ -9,6 +9,7 @@ use Illuminate\View\View;
 use Inertia\Inertia;
 use Modules\Integrationhub\Entities\Integration;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Integrationhub\Entities\IntegrationAuth;
 use Modules\Integrationhub\Entities\IntegrationEndpoint;
@@ -101,7 +102,26 @@ class IntegrationhubController extends Controller
         return Inertia::render('Integrationhub::Integration/Edit', [
             'integration' => $integration,
             'apiRoutes' => $this->integrationhubApiRoutes(),
+            'scheduler' => $this->schedulerState(),
         ]);
+    }
+
+    /**
+     * Estado del scheduler de programaciones para la pantalla de Programaciones:
+     * la última señal de vida del comando `integrationhub:run-scheduled` y si
+     * está fresca (se ejecuta cada minuto). Sin esta señal las programaciones no
+     * corren, aunque estén bien configuradas.
+     */
+    private function schedulerState(): array
+    {
+        $lastTick = Cache::get(\App\Console\Commands\RunScheduledIntegrations::HEARTBEAT_CACHE_KEY);
+        $lastTickAt = $lastTick ? Carbon::parse($lastTick) : null;
+
+        return [
+            'last_tick_at' => $lastTickAt?->toIso8601String(),
+            // Dos minutos de tolerancia: el scheduler corre cada minuto.
+            'running' => $lastTickAt ? $lastTickAt->gt(now()->subMinutes(2)) : false,
+        ];
     }
 
     private function integrationhubApiRoutes(): array
@@ -1341,8 +1361,18 @@ class IntegrationhubController extends Controller
             }
         }
 
-        // Calcular próxima ejecución
-        $nextExecution = app(IntegrationhubCronExpression::class)->nextRunDate($request->cron_expression);
+        // Calcular próxima ejecución. Una expresión inválida se rechaza aquí:
+        // si se guardara, la programación quedaría muda para siempre (el
+        // scheduler nunca la tomaría) sin decir por qué.
+        $cron = app(IntegrationhubCronExpression::class);
+
+        if (!$cron->isValid($request->cron_expression)) {
+            throw ValidationException::withMessages([
+                'cron_expression' => 'La expresión cron no es válida. Usa el formato minuto hora día mes día_semana.',
+            ]);
+        }
+
+        $nextExecution = $cron->nextRunDate($request->cron_expression);
 
         if ($request->input('schedule_id')) {
             $schedule = IntegrationSchedule::where('id', $request->schedule_id)->firstOrFail();

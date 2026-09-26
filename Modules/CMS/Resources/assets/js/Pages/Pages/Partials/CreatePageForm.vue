@@ -56,11 +56,11 @@ const setCountry = (id, text, icon) => {
 <template>
     <FormSection @submitted="createPage" class="">
         <template #title>
-            Pagina Detalles
+            Nueva página
         </template>
 
         <template #description>
-            Crear nuevo pagina, Los campos con * son obligatorios
+            Crear nueva página. Los campos con * son obligatorios
         </template>
 
         <template #form>
@@ -120,17 +120,17 @@ const setCountry = (id, text, icon) => {
                 <InputError :message="form.errors.route" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-6 ">
-                <InputLabel for="route" value="¿Esta será la página de inicio?" />
+                <InputLabel for="main" value="¿Esta será la página de inicio?" />
                 <div class="flex items-center mt-1">
-                    <input v-model="form.main" id="inline-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="inline-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">SI</label>
+                    <input v-model="form.main" id="main" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="main" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Sí</label>
                 </div>
             </div>
             <div class="col-span-6 sm:col-span-6 ">
-                <InputLabel for="route" value="Activo" />
+                <InputLabel for="status" value="Activo" />
                 <div class="flex items-center mt-1">
-                    <input v-model="form.status" id="status" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="status" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">SI</label>
+                    <input v-model="form.status" id="status" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="status" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Sí</label>
                 </div>
             </div>
         </template>

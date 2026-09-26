@@ -22,12 +22,7 @@ class CmsItemController extends Controller
      */
     public function index()
     {
-        $types = CmsItemType::all();
-
-        return Inertia::render('CMS::Items/List', [
-            'types' => $types,
-
-        ]);
+        return Inertia::render('CMS::Items/List');
     }
 
     /**
@@ -198,9 +193,23 @@ class CmsItemController extends Controller
 
     public function getData()
     {
-        $model = CmsItem::query();
-        $model = $model->select('id', 'type_id', 'content', 'description');
+        $model = CmsItem::query()->with('type');
+        $model = $model->select('id', 'type_id', 'position', 'content', 'description');
 
-        return DataTables::of($model)->toJson();
+        return DataTables::of($model)
+            ->addColumn('type', function ($item) {
+                return $item->type->description ?? null;
+            })
+            // "type" es una columna calculada: sin estos manejadores Yajra
+            // intentaría filtrar/ordenar por una columna inexistente en la tabla.
+            ->filterColumn('type', function ($query, $keyword) {
+                $query->whereHas('type', function ($q) use ($keyword) {
+                    $q->where('description', 'like', '%' . $keyword . '%');
+                });
+            })
+            ->orderColumn('type', function ($query, $direction) {
+                $query->orderBy('type_id', $direction);
+            })
+            ->toJson();
     }
 }

@@ -1,10 +1,11 @@
 <script setup>
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import Keypad from '@/Components/Keypad.vue';
     import ModalSmall from '@/Components/ModalSmall.vue';
     import Swal2 from "sweetalert2";
     import { Link, router, useForm } from '@inertiajs/vue3';
-    import { faPencilAlt, faCheck, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+    import { faPencilAlt, faCheck, faTrashAlt, faPlus } from "@fortawesome/free-solid-svg-icons";
     import { ref } from 'vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import InputError from '@/Components/InputError.vue';
@@ -116,18 +117,6 @@ import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
     const getSectionItems = (id, description) => {
         idSection.value = id;
         descriptionSection.value = description;
-        const element = document.getElementById('link-section-'+id);
-        // Obtén todas las etiquetas <a> que tienen las clases y son diferentes al elemento con el ID
-        const todasLasEtiquetasA = document.querySelectorAll('a.bg-red-500.text-white:not(#link-section-' + id + ')');
-
-        // Itera a través de las etiquetas <a> y elimina las clases
-        todasLasEtiquetasA.forEach(etiquetaA => {
-            etiquetaA.classList.remove('bg-red-500');
-            etiquetaA.classList.remove('text-white');
-        });
-        
-        element.classList.add('bg-red-500');
-        element.classList.add('text-white');
         axios.get(route('cms_pages_section_items_data', id)).then((res) => {
             res.data.items.forEach((it, index) => {
                 if (it.item.type_id == 5) {
@@ -310,45 +299,17 @@ const esImageBase64 = (cadena) => {
 </script>
 
 <template>
-    <AppLayout title="Resumen">
-        <div class="max-w-screen-2xl  mx-auto p-4 md:p-6 2xl:p-10">
-            <!-- Breadcrumb Start -->
-            <nav class="flex px-4 py-3 border border-stroke text-gray-700 mb-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <Link :href="route('dashboard')" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white">
-                        <svg aria-hidden="true" class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
-                        Inicio
-                        </Link>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                        <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                        <!-- <a href="#" class="ml-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ml-2 dark:text-gray-400 dark:hover:text-white">Productos</a> -->
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">CMS</span>
-                        </div>
-                    </li>
-                    
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <Link :href="route('cms_pages_list')"><span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Paginas</span></Link>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg aria-hidden="true" class="w-6 h-6 text-gray-800" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <span class="ml-1 text-sm font-medium text-gray-8   00 md:ml-2 dark:text-gray-400">{{ page.description }}</span>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <svg aria-hidden="true" class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2 dark:text-gray-400">Secciones</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
+    <AppLayout title="Secciones de la página">
+        <div class="mt-5">
+            <Navigation
+                :routeModule="route('cms_dashboard')"
+                :titleModule="'CMS'"
+                :data="[
+                    { title: 'Páginas', route: route('cms_pages_list') },
+                    { title: page.description || '' },
+                    { title: 'Secciones' }
+                ]"
+            />
             <!-- ====== Table Section Start -->
             <div class="flex flex-col gap-10">
                 <!-- ====== Table One Start -->
@@ -357,18 +318,37 @@ const esImageBase64 = (cadena) => {
                         <div class="col-span-4 md:col-span-1 p-4">
                             <div class="w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 
-                                <a v-can="'cms_pagina_seccion_items'" @click="openModalSections" href="#" aria-current="true" class="block w-full px-4 py-2 text-white bg-blue-700 border-b border-gray-200 rounded-t-lg cursor-pointer dark:bg-gray-800 dark:border-gray-600">
-                                    Secciones
-                                </a>
-                                
-                                <template v-for="(section, ke) in xsections">
-                                    <a @click="getSectionItems(section.id,section.page_sections_description)" :id="'link-section-'+section.id" href="#" class="block w-full px-4 py-2 border-b border-gray-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white dark:focus:ring-gray-500 dark:focus:text-white">
+                                <button v-can="'cms_pagina_seccion_items'" type="button" @click="openModalSections" class="flex items-center justify-between w-full px-4 py-2 text-white bg-blue-700 border-b border-gray-200 cursor-pointer dark:bg-gray-800 dark:border-gray-600">
+                                    <span>Secciones</span>
+                                    <font-awesome-icon :icon="faPlus" />
+                                </button>
+
+                                <div
+                                    v-for="(section, ke) in xsections"
+                                    :key="section.page_sections_id"
+                                    class="flex items-center border-b border-gray-200 dark:border-gray-600"
+                                >
+                                    <a
+                                        :id="'link-section-' + section.id"
+                                        href="#"
+                                        class="flex-1 block px-4 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-700 dark:focus:ring-gray-500"
+                                        :class="idSection === section.id
+                                            ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                            : 'text-gray-700 hover:bg-gray-50 hover:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white'"
+                                        @click.prevent="getSectionItems(section.id, section.page_sections_description)"
+                                    >
                                         {{ section.description }}
                                     </a>
-                                    <button type="button" @click="destroySection(section.page_sections_id)" v-can="'cms_pagina_seccion_items_delete'">
-                                        Eliminar
+                                    <button
+                                        v-can="'cms_pagina_seccion_items_delete'"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger mr-2"
+                                        title="Quitar sección de la página"
+                                        @click="destroySection(section.page_sections_id)"
+                                    >
+                                        <font-awesome-icon :icon="faTrashAlt" />
                                     </button>
-                                </template>
+                                </div>
                             </div>
                         </div>
                         <div class="col-span-4 sm:col-span-3 p-4">
@@ -423,11 +403,11 @@ const esImageBase64 = (cadena) => {
                                         
                                         <template v-if="it.item.type_id == 5">
                                            <div>
-                                                <div class="flex justify-end px-4 pt-4">
-                                                    <button @click="saveChangesGroupItems(ky)" title="Guardar Cambios" type="button" class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                                                <div class="flex justify-end px-4 pt-4 gap-1">
+                                                    <button @click="saveChangesGroupItems(ky)" title="Guardar cambios" type="button" class="btn btn-sm btn-primary">
                                                         <font-awesome-icon :icon="faCheck" />
                                                     </button>
-                                                    <button @click="destroyGroup(it.item.id)" title="Eliminar" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                                                    <button @click="destroyGroup(it.item.id)" title="Eliminar grupo" type="button" class="btn btn-sm btn-outline-danger">
                                                         <font-awesome-icon :icon="faTrashAlt" />
                                                     </button>
                                                 </div>
@@ -493,7 +473,7 @@ const esImageBase64 = (cadena) => {
                                         </svg>
                                         <span class="sr-only">Info</span>
                                         <div>
-                                            <span class="font-medium">Esta seccion aun no tiene items</span> comuniquese con el administrador del sistema
+                                            <span class="font-medium">Esta sección aún no tiene items.</span> Selecciona una sección del panel izquierdo o comunícate con el administrador del sistema.
                                         </div>
                                     </div>
                                 </template>

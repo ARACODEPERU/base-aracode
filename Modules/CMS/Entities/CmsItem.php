@@ -29,6 +29,11 @@ class CmsItem extends Model
         return $this->belongsTo(CmsItem::class, 'item_id');
     }
 
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(CmsItemType::class, 'type_id');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(CmsItem::class, 'item_id');

@@ -12,6 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // CREATE EVENT es exclusivo de MySQL: en sqlite (suite de tests con
+        // RefreshDatabase) la migracion se omite para no romper el refill.
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::unprepared("
             CREATE EVENT IF NOT EXISTS marcar_suscripciones_vencidas
             ON SCHEDULE EVERY 1 DAY
@@ -29,6 +35,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::unprepared("DROP EVENT IF EXISTS marcar_suscripciones_vencidas");
     }
 };

@@ -78,9 +78,11 @@ return new class extends Migration
 
     private function uniqueIndexExists(): bool
     {
+        // Schema::getIndexes es portable (SHOW INDEX es exclusivo de MySQL y
+        // en sqlite devolvia false, provocando "index already exists").
         try {
-            foreach (DB::select('SHOW INDEX FROM ' . self::TABLE) as $index) {
-                if ($index->Key_name === self::UNIQUE_INDEX) {
+            foreach (Schema::getIndexes(self::TABLE) as $index) {
+                if (($index['unique'] ?? false) && ($index['name'] ?? '') === self::UNIQUE_INDEX) {
                     return true;
                 }
             }

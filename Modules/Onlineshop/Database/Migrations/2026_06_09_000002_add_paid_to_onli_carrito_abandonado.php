@@ -14,9 +14,13 @@ return new class extends Migration
                 $table->boolean('paid')->default(false)->after('notification_count');
             }
 
-            $indexes = collect(DB::select('SHOW INDEXES FROM onli_carrito_abandonado'))
-                ->pluck('Key_name')
-                ->toArray();
+            // SHOW INDEXES es exclusivo de MySQL; en sqlite (suite de tests)
+            // se consultan los indices de forma portable con Schema::getIndexes.
+            $indexes = DB::getDriverName() === 'mysql'
+                ? collect(DB::select('SHOW INDEXES FROM onli_carrito_abandonado'))
+                    ->pluck('Key_name')
+                    ->toArray()
+                : array_column(Schema::getIndexes('onli_carrito_abandonado'), 'name');
 
             if (!in_array('onli_carrito_abandonado_paid_index', $indexes)) {
                 $table->index('paid');

@@ -13,6 +13,11 @@ class UserActivityLogMiddleware
     {
         // Solo registrar si hay usuario autenticado
         if (Auth::check()) {
+            // Capturar el id ANTES de ejecutar la solicitud: flujos como el
+            // borrado de la propia cuenta cierran sesion dentro de $next y
+            // Auth::id() quedaria en null, violando el NOT NULL de user_id.
+            $userId = Auth::id();
+
             // Verificar si ya se registraron datos extras (para casos especiales)
             $detailsData = $request->input('activity_details_data');
 
@@ -20,9 +25,13 @@ class UserActivityLogMiddleware
             $response = $next($request);
             $statusCode = $response->getStatusCode();
 
+            if ($userId === null) {
+                return $response;
+            }
+
             // Crear el registro
             UserActivityLog::create([
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'method' => $request->method(),
                 'url' => $request->fullUrl(),
                 'request_payload' => $this->compressPayload($this->filterPayload($request->all())),

@@ -5,6 +5,9 @@ import { faStarAndCrescent, faSun } from "@fortawesome/free-solid-svg-icons";
 import { Link } from '@inertiajs/vue3';
 import GLobalRegister from '../../../resources/js/Pages/Helpdesk/Tickets/GlobalRegister.vue';
 import { Switch } from 'ant-design-vue';
+// Modo Super Editor: la píldora de entrada se autogatea con store.canUse
+// (solo el rol admin, que decide el servidor).
+import SuperEditorToggle from 'Modules/Security/Resources/assets/js/Components/SuperEditor/Toggle.vue';
 const dropdownOpen = ref(false)
 
 const props = defineProps({
@@ -108,6 +111,10 @@ const xhttp =  assetUrl;
                 <!-- boton de ayuda y registro de insidencias en el sistema -->
                 <GLobalRegister />
                 <ul class="flex items-center gap-2 2xsm:gap-4">
+                    <!-- Modo Super Editor (solo rol admin; el servidor decide) -->
+                    <li>
+                        <SuperEditorToggle />
+                    </li>
                     <li>
                         <!-- Dark Mode Toggler -->
                         <Switch v-model:checked="darkMode" @change="darkModeActive" class="bg-gray-600">

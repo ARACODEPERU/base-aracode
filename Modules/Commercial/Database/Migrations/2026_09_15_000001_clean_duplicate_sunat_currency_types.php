@@ -28,12 +28,22 @@ return new class extends Migration
         //    (solo se agrega si no quedo de una ejecucion previa incompleta).
         if (! Schema::hasColumn('sunat_currency_types', 'tmp_dedup_id')) {
             Schema::table('sunat_currency_types', function (Blueprint $table) {
-                $table->increments('tmp_dedup_id')->first();
+                // sqlite no permite agregar una columna PRIMARY KEY a una tabla
+                // existente (la suite de tests); ahi basta una columna simple
+                // porque el borrado con INNER JOIN tampoco se ejecuta fuera de MySQL.
+                if (DB::getDriverName() === 'mysql') {
+                    $table->increments('tmp_dedup_id')->first();
+                } else {
+                    $table->integer('tmp_dedup_id')->nullable();
+                }
             });
         }
 
         // 2. Borra duplicados exactos conservando la primera aparicion (tmp_dedup_id menor).
-        DB::statement('
+        //    DELETE con INNER JOIN es sintaxis exclusiva de MySQL; en sqlite no
+        //    hace falta: las tablas de prueba se crean sin duplicados.
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
+            DB::statement('
             DELETE c1 FROM sunat_currency_types c1
             INNER JOIN sunat_currency_types c2
                 ON c1.id = c2.id
@@ -43,13 +53,14 @@ return new class extends Migration
                 AND c1.tmp_dedup_id > c2.tmp_dedup_id
         ');
 
-        // 3. Duplicados con mismo id pero texto distinto: conserva tambien el primero.
-        DB::statement('
+            // 3. Duplicados con mismo id pero texto distinto: conserva tambien el primero.
+            DB::statement('
             DELETE c1 FROM sunat_currency_types c1
             INNER JOIN sunat_currency_types c2
                 ON c1.id = c2.id
                 AND c1.tmp_dedup_id > c2.tmp_dedup_id
         ');
+        }
 
         // 4. Quita la columna temporal.
         if (Schema::hasColumn('sunat_currency_types', 'tmp_dedup_id')) {

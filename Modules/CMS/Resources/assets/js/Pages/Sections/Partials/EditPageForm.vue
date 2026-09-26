@@ -41,7 +41,7 @@ const updatePage = () => {
         </template>
 
         <template #description>
-            Editar sección, Los campos con * son obligatorios
+            Editar sección. Los campos con * son obligatorios
         </template>
 
         <template #form>

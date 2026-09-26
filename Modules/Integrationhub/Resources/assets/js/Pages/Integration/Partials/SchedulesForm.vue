@@ -24,6 +24,10 @@ const props = defineProps({
     apiRoutes: {
         type: Array,
         default: () => []
+    },
+    scheduler: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -50,6 +54,38 @@ const newSchedule = ref({
 
 const showModal = ref(false);
 const saving = ref(false);
+
+// Pestañas de la pantalla de Programaciones: la configuración y el resumen de
+// cómo levantar el scheduler + la cola (sin esos dos procesos, nada corre).
+const scheduleTab = ref('schedules');
+
+/**
+ * El scheduler corre cada minuto y deja una señal de vida; sin señal fresca
+ * las programaciones no se ejecutan aunque estén bien configuradas.
+ */
+const schedulerRunning = computed(() => !!props.scheduler?.running);
+
+const schedulerLastTickLabel = computed(() => {
+    if (!props.scheduler?.last_tick_at) {
+        return 'nunca';
+    }
+
+    return formatDate(props.scheduler.last_tick_at);
+});
+
+const statusClass = (status) => ({
+    success: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+    failed: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    running: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+}[status] || 'bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400');
+
+const statusLabel = (status) => ({
+    success: 'Exitosa',
+    failed: 'Falló',
+    running: 'En ejecución',
+    pending: 'Pendiente',
+}[status] || 'Sin ejecutar');
 const togglingId = ref(null);
 const minutesInterval = ref(5);
 const apiPayloadJson = ref('{\n  "variables": {}\n}');
@@ -294,7 +330,7 @@ const refreshSchedules = async () => {
         replace: true,
         preserveState: true,
         preserveScroll: true,
-        only: ['integration'],
+        only: ['integration', 'scheduler'],
     });
 };
 
@@ -332,12 +368,43 @@ const middlewareLabel = (middleware = []) => {
 </script>
 
 <template>
-    <div class="mb-4">
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <button
+                type="button"
+                @click="scheduleTab = 'schedules'"
+                :class="scheduleTab === 'schedules' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition"
+            >
+                Programaciones
+            </button>
+            <button
+                type="button"
+                @click="scheduleTab = 'howto'"
+                :class="scheduleTab === 'howto' ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition"
+            >
+                Cómo ejecutar
+            </button>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400">
             Configura la ejecución automática de la integración usando expresiones cron.
         </p>
     </div>
 
+    <div v-if="!schedulerRunning" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700/60 dark:bg-amber-900/20 px-4 py-3">
+        <p class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+            El programador de tareas no está corriendo: las programaciones NO se ejecutarán.
+        </p>
+        <p class="text-xs text-amber-700 dark:text-amber-400 mt-1">
+            Última señal del scheduler: {{ schedulerLastTickLabel }}.
+            <button type="button" @click="scheduleTab = 'howto'" class="underline font-semibold">
+                Ver cómo ejecutarlo
+            </button>
+        </p>
+    </div>
+
+    <template v-if="scheduleTab === 'schedules'">
     <div class="mb-6 rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
         <div class="px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
             <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">APIs REST disponibles del módulo</h4>
@@ -399,6 +466,7 @@ const middlewareLabel = (middleware = []) => {
                     <th class="px-4 py-3">Expresión Cron</th>
                     <th class="px-4 py-3">Próxima Ejecución</th>
                     <th class="px-4 py-3">Última Ejecución</th>
+                    <th class="px-4 py-3">Estado</th>
                     <th class="px-4 py-3 text-right">Acciones</th>
                 </tr>
             </thead>
@@ -440,6 +508,14 @@ const middlewareLabel = (middleware = []) => {
                     <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
                         {{ formatDate(schedule.last_executed_at) }}
                     </td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded" :class="statusClass(schedule.last_status)">
+                            {{ statusLabel(schedule.last_status) }}
+                        </span>
+                        <p v-if="schedule.last_error" class="text-xs text-red-500 dark:text-red-400 mt-1 max-w-[240px] truncate" :title="schedule.last_error">
+                            {{ schedule.last_error }}
+                        </p>
+                    </td>
                     <td class="px-4 py-3 text-right">
                         <button @click="editSchedule(schedule)" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 mr-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -469,6 +545,81 @@ const middlewareLabel = (middleware = []) => {
             <li><strong>mes:</strong> 1-12</li>
             <li><strong>día_semana:</strong> 0-7 (0 y 7 son domingo)</li>
         </ul>
+    </div>
+    </template>
+
+    <!-- Cómo ejecutar: resumen de lo que necesita la programación para correr -->
+    <div v-else class="space-y-4">
+        <div class="rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Resumen</h4>
+            </div>
+            <div class="p-4 text-sm text-gray-700 dark:text-gray-300 space-y-3">
+                <p>
+                    Las programaciones se ejecutan con <strong>jobs de Laravel</strong> en la cola
+                    <code>database</code>. Para que corran hacen falta <strong>dos procesos vivos</strong>;
+                    si falta alguno, las programaciones se quedan en «Pendiente» y nunca se ejecutan.
+                </p>
+                <ol class="list-decimal ml-5 space-y-2">
+                    <li>
+                        <strong>El programador (scheduler)</strong>: cada minuto detecta lo vencido y lo encola.<br />
+                        Local / pm2: <code class="bg-gray-100 dark:bg-zinc-700 px-1 rounded">php artisan schedule:work</code><br />
+                        Linux (cron): <code class="bg-gray-100 dark:bg-zinc-700 px-1 rounded">* * * * * php artisan schedule:run</code>
+                    </li>
+                    <li>
+                        <strong>El worker de la cola</strong>: ejecuta los jobs (con reintentos).<br />
+                        <code class="bg-gray-100 dark:bg-zinc-700 px-1 rounded">php artisan queue:work --sleep=1 --tries=3</code>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Local (Windows / macOS)</h4>
+            </div>
+            <div class="p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                <p>Dos terminales en la raíz del proyecto:</p>
+                <pre class="bg-gray-100 dark:bg-zinc-700 rounded p-3 text-xs overflow-x-auto">php artisan schedule:work
+php artisan queue:work --sleep=1 --tries=3</pre>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Producción con pm2</h4>
+            </div>
+            <div class="p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                <p>El archivo <code>ecosystem.config.js</code> de la raíz ya define los dos procesos:</p>
+                <pre class="bg-gray-100 dark:bg-zinc-700 rounded p-3 text-xs overflow-x-auto">pm2 start ecosystem.config.js
+pm2 save</pre>
+                <p class="text-xs text-gray-500">
+                    Crea <code>integration-scheduler</code> (schedule:work) e <code>integration-queue</code> (queue:work).
+                    Logs: <code>pm2 logs integration-scheduler</code> / <code>pm2 logs integration-queue</code>.
+                </p>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+                <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Producción con cron de Linux</h4>
+            </div>
+            <div class="p-4 text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                <p>Si el servidor ya tiene cron, reemplaza al schedule:work:</p>
+                <pre class="bg-gray-100 dark:bg-zinc-700 rounded p-3 text-xs overflow-x-auto">* * * * * cd /ruta-del-proyecto && php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1</pre>
+                <p>Y deja el worker de la cola bajo supervisor o systemd:</p>
+                <pre class="bg-gray-100 dark:bg-zinc-700 rounded p-3 text-xs overflow-x-auto">php artisan queue:work --sleep=1 --tries=3</pre>
+            </div>
+        </div>
+
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-400 space-y-1">
+            <p><strong>Notas</strong></p>
+            <ul class="list-disc ml-5 space-y-1">
+                <li>La cola es <code>database</code> (<code>QUEUE_CONNECTION=database</code>): los jobs esperan en la tabla <code>jobs</code> hasta que el worker los tome.</li>
+                <li>Si una ejecución falla, se reintenta (3 intentos) y el motivo queda en la columna <strong>Estado</strong> de esta misma pantalla.</li>
+                <li>Al agotarse los reintentos, el fallo queda también en la bitácora de errores del módulo.</li>
+            </ul>
+        </div>
     </div>
 
     <!-- Modal Schedule -->

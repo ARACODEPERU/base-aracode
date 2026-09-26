@@ -5,6 +5,9 @@ import {
     faHandshake,
     faUsers,
 } from "@fortawesome/free-solid-svg-icons";
+// menuRoute() no lanza cuando la ruta no esta en el listado de Ziggy (modulo
+// deshabilitado o nombre desincronizado).
+import { menuRoute } from "@/utils/menuRoute";
 
 const menuCommercial = {
     status: false,
@@ -14,7 +17,7 @@ const menuCommercial = {
     permissions: "comm_dashboard",
     items: [
         {
-            route: route("comm_dashboard"),
+            route: menuRoute("comm_dashboard"),
             status: false,
             text: "Dashboard",
             icom: faGauge,
@@ -22,21 +25,21 @@ const menuCommercial = {
             dashboard: true,
         },
         {
-            route: route("comm_clients"),
+            route: menuRoute("comm_clients"),
             status: false,
             text: "Clientes",
             icom: faUsers,
             permissions: "comm_clientes_listado",
         },
         {
-            route: route("comm_contracts"),
+            route: menuRoute("comm_contracts"),
             status: false,
             text: "Contratos",
             icom: faFileSignature,
             permissions: "comm_contratos_listado",
         },
         {
-            route: route("comm_negotiations"),
+            route: menuRoute("comm_negotiations"),
             status: false,
             text: "Negociaciones",
             icom: faHandshake,

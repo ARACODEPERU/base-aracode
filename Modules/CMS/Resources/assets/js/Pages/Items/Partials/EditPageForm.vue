@@ -66,11 +66,11 @@ const updateItem = () => {
 <template>
     <FormSection @submitted="updateItem" class="">
         <template #title>
-            Items Detalles
+            Editar item
         </template>
 
         <template #description>
-            Crear nuevo Items, Los campos con * son obligatorios
+            Editar item. Los campos con * son obligatorios
         </template>
 
         <template #form>

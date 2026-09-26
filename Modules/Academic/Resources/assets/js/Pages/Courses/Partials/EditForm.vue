@@ -1,6 +1,7 @@
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3';
 import FormSection from '@/Components/FormSection.vue';
+import FormErrorsSummary from '@/Components/FormErrorsSummary.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -63,6 +64,17 @@ const form = useForm({
     discount_applies: props.course.discount_applies,
     auto_certificate: props.course.auto_certificate == 1 ? true : false,
     round_grades: props.course.round_grades == 1 ? true : false
+
+});
+
+// image_preview solo alimenta la vista previa local: se enviaba tambien al
+// servidor, duplicando la imagen (base64, cientos de KB) en cada guardado sin
+// que el backend la use.
+form.transform((data) => {
+    delete data.image_preview;
+
+    return data;
+
 });
 
 const updateCourse = () => {
@@ -113,6 +125,9 @@ const handleImageCompressed = (file) => {
         </template>
 
         <template #form>
+            <!-- Motivo visible cuando el servidor rechaza el guardado (antes el
+                 unico mensaje podia quedar dentro de un bloque oculto). -->
+            <FormErrorsSummary :errors="form.errors" />
             <div class="col-span-6 sm:col-span-2 ">
                 <InputLabel for="category_id" value="Categoría *" />
                 <select v-model="form.category_id" id="category_id" class="form-select text-white-dark">
