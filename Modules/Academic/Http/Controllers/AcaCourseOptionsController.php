@@ -174,16 +174,30 @@ class AcaCourseOptionsController extends Controller
             return $this->backWithError("El valor ya existe en {$label}.");
         }
 
-        DB::transaction(function () use ($column, $oldValue, $newValue, $values) {
-            $this->modifyEnum(
-                $column,
-                array_map(fn (string $current) => strcasecmp($current, $oldValue) === 0 ? $newValue : $current, $values)
-            );
+        // Nada de transacciones aqui: ALTER TABLE es DDL y MySQL lo confirma
+        // implicitamente, lo que rompe la transaccion ("no active transaction").
+        // Ademas el MODIFY no puede quitar el valor viejo antes de mover los
+        // cursos: con sql_mode estricto MySQL fallaria con "Data truncated".
+        // Secuencia segura: 1) agregar el valor nuevo junto al viejo,
+        // 2) mover los cursos, 3) retirar el valor viejo.
+        $final = array_map(
+            fn (string $current) => strcasecmp($current, $oldValue) === 0 ? $newValue : $current,
+            $values
+        );
 
-            if (strcasecmp($newValue, $oldValue) !== 0) {
-                AcaCourse::where($column, $oldValue)->update([$column => $newValue]);
-            }
-        });
+        $newValueExists = collect($values)
+            ->contains(fn (string $current) => strcasecmp($current, $newValue) === 0);
+
+        if ($newValueExists) {
+            // Renombre dentro de la misma palabra (mayus/minus): el ALTER con la
+            // lista final conserva los cursos por la colacion case-insensitive.
+            $this->modifyEnum($column, $final);
+            AcaCourse::where($column, $oldValue)->update([$column => $newValue]);
+        } else {
+            $this->modifyEnum($column, array_merge($values, [$newValue]));
+            AcaCourse::where($column, $oldValue)->update([$column => $newValue]);
+            $this->modifyEnum($column, $final);
+        }
 
         return $this->backWithMessage(ucfirst($label).' actualizado correctamente.');
     }

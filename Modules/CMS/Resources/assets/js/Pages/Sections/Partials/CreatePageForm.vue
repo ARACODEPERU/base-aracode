@@ -31,11 +31,11 @@ const createPage = () => {
 <template>
     <FormSection @submitted="createPage" class="">
         <template #title>
-            Crear Nueva Sección
+            Nueva sección
         </template>
 
         <template #description>
-            Crear nueva sección en el CMS, Los campos con * son obligatorios
+            Crear nueva sección en el CMS. Los campos con * son obligatorios
         </template>
 
         <template #form>

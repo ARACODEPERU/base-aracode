@@ -238,6 +238,13 @@ const deleteOption = (option) => {
     }
 };
 
+// ---------------------------------------------------------------- reasignar
+// Declarados ANTES del watch con immediate: si no, el callback accede a la
+// ref antes de inicializarla y Vue lanza "Cannot access ... before
+// initialization" en la consola.
+const assignSelections = ref({});
+const assignSavingId = ref(false);
+
 // Si el backend redirige con in_use (opcion en uso), el prop llega y el aviso
 // se abre solo; aqui se sincroniza la pestaña activa con la opcion afectada.
 const tabKeyByKind = {
@@ -257,10 +264,6 @@ watch(
     },
     { immediate: true }
 );
-
-// ---------------------------------------------------------------- reasignar
-const assignSelections = ref({});
-const assignSavingId = ref(false);
 
 const inUseOptions = computed(() => {
     if (!props.inUse) {
@@ -326,6 +329,15 @@ const inUseTabLabel = computed(() => {
     }
 
     return tabConfig[tabKeyByKind[props.inUse.kind]]?.label ?? props.inUse.section;
+});
+
+// "Reasigna cada curso a otro sector/tipo" vs "otra categoría/modalidad":
+// el artículo depende del género de la sección.
+const inUseTargetPhrase = computed(() => {
+    const label = (inUseTabLabel.value || props.inUse?.section || '').toLowerCase();
+    const feminine = ['categoría', 'modalidad'].some((word) => label.startsWith(word));
+
+    return `${feminine ? 'otra' : 'otro'} ${label}`;
 });
 </script>
 
@@ -467,7 +479,7 @@ const inUseTabLabel = computed(() => {
             </template>
             <template #content>
                 <p class="mb-3 text-sm text-gray-600 dark:text-gray-300">
-                    Reasigna cada curso a otra {{ (inUseTabLabel || '').toLowerCase() }} y vuelve a intentar la
+                    Reasigna cada curso a {{ inUseTargetPhrase }} y vuelve a intentar la
                     eliminación, o abre el curso para editarlo completo.
                 </p>
 

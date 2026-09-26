@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Modules\CMS\Entities\CmsPage;
+use DataTables;
 
 class CmsPageController extends Controller
 {
@@ -22,27 +23,18 @@ class CmsPageController extends Controller
      */
     public function index()
     {
-        $pages = (new CmsPage())->newQuery();
-        if (request()->has('search')) {
-            $pages->where('description', 'like', '%' . request()->input('search') . '%');
-        }
-        if (request()->query('sort')) {
-            $attribute = request()->query('sort');
-            $sort_order = 'ASC';
-            if (strncmp($attribute, '-', 1) === 0) {
-                $sort_order = 'DESC';
-                $attribute = substr($attribute, 1);
-            }
-            $pages->orderBy($attribute, $sort_order);
-        } else {
-            $pages->latest();
-        }
+        return Inertia::render('CMS::Pages/List');
+    }
 
-        $pages = $pages->paginate(20)->onEachSide(2);
+    /**
+     * Data para la tabla DataTables del listado.
+     */
+    public function getData()
+    {
+        $model = CmsPage::query();
+        $model = $model->select('id', 'icon', 'description', 'route', 'main', 'status');
 
-        return Inertia::render('CMS::Pages/List', [
-            'pages' => $pages
-        ]);
+        return DataTables::of($model)->toJson();
     }
 
     /**

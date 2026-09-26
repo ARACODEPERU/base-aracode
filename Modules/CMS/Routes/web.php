@@ -28,6 +28,7 @@ use Modules\CMS\Http\Controllers\CmsBlogSubscribersController;
 Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->group(function () {
     Route::get('dashboard', [CMSController::class, 'dashboard'])->name('cms_dashboard');
     Route::get('pages', [CmsPageController::class, 'index'])->name('cms_pages_list');
+    Route::get('pages/data', [CmsPageController::class, 'getData'])->name('cms_pages_data');
     Route::get('pages/create', [CmsPageController::class, 'create'])->name('cms_pages_create');
     Route::post('pages/store', [CmsPageController::class, 'store'])->name('cms_pages_store');
     Route::get('pages/edit/{id}', [CmsPageController::class, 'edit'])->name('cms_pages_edit');
@@ -42,6 +43,7 @@ Route::middleware(['auth', 'verified', 'user_activity_log'])->prefix('cms')->gro
     Route::post('pages/section_group_create', [CmsPageSectionController::class, 'groupSectionStore'])->name('cms_pages_section_group_save');
 
     Route::get('sections', [CmsSectionController::class, 'index'])->name('cms_section_list');
+    Route::get('sections/data', [CmsSectionController::class, 'getData'])->name('cms_sections_data');
     Route::get('sections/create', [CmsSectionController::class, 'create'])->name('cms_section_create');
     Route::post('sections/store', [CmsSectionController::class, 'store'])->name('cms_section_store');
     Route::get('sections/edit/{id}', [CmsSectionController::class, 'edit'])->name('cms_section_edit');

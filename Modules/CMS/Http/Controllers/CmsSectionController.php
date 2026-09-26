@@ -10,6 +10,7 @@ use Modules\CMS\Entities\CmsSection;
 
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use DataTables;
 
 class CmsSectionController extends Controller
 {
@@ -20,28 +21,18 @@ class CmsSectionController extends Controller
      */
     public function index()
     {
+        return Inertia::render('CMS::Sections/List');
+    }
 
-        $sections = (new CmsSection())->newQuery();
-        if (request()->has('search')) {
-            $sections->where('description', 'like', '%' . request()->input('search') . '%');
-        }
-        if (request()->query('sort')) {
-            $attribute = request()->query('sort');
-            $sort_order = 'ASC';
-            if (strncmp($attribute, '-', 1) === 0) {
-                $sort_order = 'DESC';
-                $attribute = substr($attribute, 1);
-            }
-            $sections->orderBy($attribute, $sort_order);
-        } else {
-            $sections->latest();
-        }
+    /**
+     * Data para la tabla DataTables del listado.
+     */
+    public function getData()
+    {
+        $model = CmsSection::query();
+        $model = $model->select('id', 'description', 'component_id');
 
-        $sections = $sections->paginate(20)->onEachSide(2);
-
-        return Inertia::render('CMS::Sections/List', [
-            'sections' => $sections
-        ]);
+        return DataTables::of($model)->toJson();
     }
 
     /**

@@ -25,13 +25,22 @@ class ProfileController extends Controller
     {
         $person = Person::find(Auth::user()->person_id);
         $document_types = DB::table('identity_document_type')->get();
+        // CONCAT(...) es SQL exclusivo de MySQL; se traen los nombres por
+        // separado y se concatena en PHP para que la consulta funcione en
+        // cualquier motor (la suite de tests corre sobre sqlite).
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
                 'districts.id AS district_id',
-                DB::raw("CONCAT(departments.name,'-',provinces.name,'-',districts.name) AS name_city")
+                'departments.name AS department_name',
+                'provinces.name AS province_name',
+                'districts.name AS district_name'
             )
-            ->get();
+            ->get()
+            ->map(fn ($row) => [
+                'district_id' => $row->district_id,
+                'name_city' => $row->department_name . '-' . $row->province_name . '-' . $row->district_name,
+            ]) ->values();
 
         $countries = Country::where('status', true)->orderBy('description')->get();
 

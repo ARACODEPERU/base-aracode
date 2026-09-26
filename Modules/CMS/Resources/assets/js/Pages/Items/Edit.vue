@@ -1,35 +1,32 @@
 <script setup>
-import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
-import EditPageForm from './Partials/EditPageForm.vue';
-import { Link } from '@inertiajs/vue3';
-import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
+    import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    import EditPageForm from './Partials/EditPageForm.vue';
 
-const props = defineProps({
-    types: {
-        type: Object,
-        default: () => ({}),
-    },
-    item: {
-        type: Object,
-        default: () => ({}),
-    }
-});
-
+    const props = defineProps({
+        types: {
+            type: Object,
+            default: () => ({}),
+        },
+        item: {
+            type: Object,
+            default: () => ({}),
+        }
+    });
 </script>
 
 <template>
-    <AppLayout title="Crear Producto">
-        
-        <Navigation :routeModule="route('cms_dashboard')" :titleModule="'CMS'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <Link :href="route('cms_items_list')">Items</Link>
-            </li>
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Editar</span>
-            </li>
-        </Navigation>
+    <AppLayout title="Editar Item">
+        <Navigation
+            :routeModule="route('cms_dashboard')"
+            :titleModule="'CMS'"
+            :data="[
+                { title: 'Items', route: route('cms_items_list') },
+                { title: 'Editar' }
+            ]"
+        />
         <div class="mt-5">
-            <EditPageForm :types="types" :item="item" /> 
+            <EditPageForm :types="types" :item="item" />
         </div>
     </AppLayout>
 </template>

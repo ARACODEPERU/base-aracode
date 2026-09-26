@@ -11,21 +11,9 @@
 
     DataTable.use(DataTablesCore);
 
-    import { useForm } from '@inertiajs/vue3';
-    import Keypad from '@/Components/Keypad.vue';
-    import Pagination from '@/Components/Pagination.vue';
-
     import Swal2 from "sweetalert2";
     import { Link, router } from '@inertiajs/vue3';
-    import { faPencil, faCheck, faTrash } from "@fortawesome/free-solid-svg-icons";
-
-    const props = defineProps({
-        types: {
-            type: Object,
-            default: () => ({}),
-        },
-    });
-
+    import { faPencilAlt, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 
     const destroyItem = (id) => {
         Swal2.fire({
@@ -63,58 +51,65 @@
         });
     }
 
+    // El contenido viene escapado desde el servidor, solo se recorta para la vista.
+    const truncateContent = (data, type) => {
+        if (!data) return '';
+        if (type !== 'display') return data;
+        return data.length > 80 ? data.substring(0, 80) + '…' : data;
+    };
+
     const columns = [
         {
             data: null,
             render: '#action',
-            title: 'Action'
+            title: 'Acciones',
+            className: 'text-center',
+            orderable: false,
+            searchable: false,
         },
+        { data: 'type', title: 'Tipo' },
         { data: 'description', title: 'Descripción' },
-        { data: 'content', title: 'Contenido' },
+        { data: 'content', title: 'Contenido', render: truncateContent },
+        { data: 'position', title: 'Posición', className: 'text-center' },
     ];
-    const options = { language: es_PE }
+
+    const options = {
+        responsive: true,
+        language: {
+            ...es_PE,
+            paginate: { first: 'Primero', last: 'Último', next: 'Siguiente', previous: 'Anterior' },
+        },
+        order: [[4, 'asc']],
+    };
 </script>
 
 <template>
     <AppLayout title="Items">
-        <Navigation :routeModule="route('cms_dashboard')" :titleModule="'CMS'">
-            <li class="before:content-['/'] ltr:before:mr-2 rtl:before:ml-2">
-                <span>Items</span>
-            </li>
-        </Navigation>
+        <Navigation :routeModule="route('cms_dashboard')" :titleModule="'CMS'" :data="[{ title: 'Items' }]" />
         <div class="mt-5">
             <div class="flex items-center justify-between flex-wrap gap-4">
                 <h2 class="text-xl">Items</h2>
                 <div class="flex sm:flex-row flex-col sm:items-center sm:gap-3 gap-4 w-full sm:w-auto">
-                    <div class="flex gap-3">
-                        <div>
-                            <Link v-can="'cms_items'" :href="route('cms_items_create')" type="button" class="btn btn-primary">
-                                <icon-plus class="ltr:mr-2 rtl:ml-2" />
-                                Nuevo
-                            </Link>
-                        </div>
-
-                    </div>
+                    <Link v-can="'cms_items'" :href="route('cms_items_create')" type="button" class="btn btn-primary">
+                        <icon-plus class="ltr:mr-2 rtl:ml-2" />
+                        Nuevo
+                    </Link>
                 </div>
             </div>
             <div class="panel pb-1.5 mt-6">
                 <DataTable :options="options" :ajax="route('cms_items_data')" :columns="columns">
                     <template #action="props">
                         <div class="flex gap-1 items-center justify-center">
-                            <Link v-tippy:bottom :href="route('cms_items_edit',props.rowData.id)" type="button" class="btn btn-sm btn-outline-primary">
-                                <font-awesome-icon  :icon="faPencil" class="m-0" />
+                            <Link v-can="'cms_items'" :href="route('cms_items_edit', props.rowData.id)" type="button" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <font-awesome-icon :icon="faPencilAlt" class="m-0" />
                             </Link>
-                            <tippy target="bottom" placement="bottom">Editar</tippy>
-                            <button v-tippy:bottom type="button" class="btn btn-sm btn-outline-danger" @click="destroyItem(props.rowData.id)">
-                                <font-awesome-icon :icon="faTrash" />
+                            <button v-can="'cms_items'" type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" @click="destroyItem(props.rowData.id)">
+                                <font-awesome-icon :icon="faTrashAlt" />
                             </button>
-                            <tippy target="bottom" placement="bottom">Eliminar</tippy>
                         </div>
                     </template>
                 </DataTable>
             </div>
-            
         </div>
-        
     </AppLayout>
 </template>
