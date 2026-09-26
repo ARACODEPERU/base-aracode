@@ -16,6 +16,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    scheduler: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 </script>
@@ -29,7 +33,7 @@ const props = defineProps({
             ]"
         />
         <div class="pt-5">
-            <EditForm :integration="integration" :api-routes="apiRoutes" />
+            <EditForm :integration="integration" :api-routes="apiRoutes" :scheduler="scheduler" />
         </div>
     </AppLayout>
 </template>

@@ -21,7 +21,9 @@ class IntegrationSchedule extends Model
         'payload',
         'is_active',
         'last_executed_at',
-        'next_execution_at'
+        'next_execution_at',
+        'last_status',
+        'last_error',
     ];
 
     protected $casts = [

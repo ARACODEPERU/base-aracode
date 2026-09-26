@@ -31,6 +31,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    scheduler: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const activeTab = ref('general');
@@ -195,6 +199,7 @@ const tabs = [
             :schedules="integration.schedules || []" 
             :endpoints="integration.endpoints || []"
             :api-routes="apiRoutes"
+            :scheduler="scheduler"
         />
     </div>
 
