@@ -416,6 +416,7 @@ class OnliItemController extends Controller
             'aca_teachers.id as teacher_id',
             'users.avatar as avatar',
             'onli_items.description as description',
+            'aca_courses.slug as slug',
             'aca_course_landings.url_slug as url_slug',
             'aca_course_landings.is_published as landing_published'
         )

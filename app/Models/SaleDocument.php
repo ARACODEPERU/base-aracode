@@ -34,6 +34,7 @@ class SaleDocument extends Model
         'invoice_serie',
         'invoice_correlative',
         'invoice_type_currency',
+        'exchange_rate',
         'invoice_broadcast_date',
         'invoice_due_date',
         'invoice_send_date',

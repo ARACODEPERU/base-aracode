@@ -89,7 +89,32 @@ Route::get('/news', [LandingController::class, 'blog'])->name('blog_main');
 Route::get('/terms', [LandingController::class, 'terms'])->name('terms_main');
 Route::get('/computer/store', [LandingController::class, 'computerStore'])->name('index_computer_store');
 Route::get('/prices/academic', [LandingController::class, 'academicPrices'])->name('academic_prices');
-Route::get('/curso-descripcion/{id}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
+// Ruta amigable por slug; si llega un id numerico antiguo redirige a su slug.
+Route::get('/curso-descripcion/{slug}', [WebPageController::class, 'cursodescripcion'])->name('web_curso_descripcion');
+
+// Landing publica por slug del curso (usada por catalogo, carrito y panel del alumno).
+Route::get('/curso/{slug}', [WebPageController::class, 'course_url_slug'])->name('course_url_slug');
+
+// Carrito de compras publico (la landing y la descripcion redirigen aqui).
+Route::get('/carrito', [WebPageController::class, 'shopcart'])->name('web_carrito');
+
+// Flujo de compra del carrito (checkout de MercadoPago).
+Route::post('/carrito/preferencia', [WebPageController::class, 'cartPreference'])->name('web_cart_preference');
+Route::post('/carrito/pago', [WebPageController::class, 'cartProcessPayment'])->name('web_cart_process_payment');
+Route::post('/carrito/finalizar', [WebPageController::class, 'cartFinalize'])->name('web_cart_finalize');
+Route::post('/carrito/abandonado', [WebPageController::class, 'cartAbandonedStore'])->name('web_cart_abandoned');
+
+// Pagina de pago de una venta online (back_url de MercadoPago y retorno tras crear la venta).
+Route::get('/pagar/{sale}', [WebPageController::class, 'pay'])->name('web_pagar');
+
+// Gracias por la compra de cursos (venta online).
+Route::get('/gracias-cursos/{id}', [WebPageController::class, 'thanks'])->name('web_gracias_por_cursos');
+
+// Procesamiento del pago con tarjeta (checkout de la vista pagar).
+Route::put('/pagar-proceso/{sale}/{student}', [WebPageController::class, 'processPayment'])->name('web_process_payment');
+
+// Alias para plantillas de email antiguas (evita duplicar el path /).
+Route::get('/inicio', function () { return redirect()->route('index_main'); })->name('web_inicio');
 
 Route::get('/academy/{slug}', [Modules\Academic\Http\Controllers\AcaCourseLandingController::class, 'show'])
     ->name('academy_landing');

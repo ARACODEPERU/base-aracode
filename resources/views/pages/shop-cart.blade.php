@@ -90,8 +90,22 @@
                                     </div>
                                     <div class="checkout-total-row d-flex justify-content-between align-items-center mb-4">
                                         <span>Total</span>
-                                        <strong id="totalid">S/ 0.00</strong>
+                                        <span class="text-right">
+                                            <strong id="totalid">S/ 0.00</strong>
+                                            @if($multiCurrencyEnabled)
+                                                <small id="cart-currency-hint" style="display:none" class="d-block text-muted"></small>
+                                            @endif
+                                        </span>
                                     </div>
+                                    @if($multiCurrencyEnabled)
+                                    <div class="mb-3">
+                                        <label for="cart_currency_select" style="font-size:.85rem">Moneda de pago</label>
+                                        <select id="cart_currency_select" class="form-select" onchange="onCartCurrencyChange(this.value)">
+                                            <option value="PEN" selected>Soles (S/)</option>
+                                            <option value="USD">Dólares ($)</option>
+                                        </select>
+                                    </div>
+                                    @endif
                                     <div class="mercadopago-shell">
                                         <div id="payment-phone-field-home">
                                         <div id="payment-phone-field" class="checkout-field mb-3">
@@ -3088,6 +3102,44 @@
             description: "{{ url('curso-descripcion') }}",
             slug: "{{ url('curso') }}"
         };
+        // Moneda del carrito: selector visible solo con PTM0004 activo. El TC
+        // lo confirma el servidor al crear la preferencia y al procesar el pago.
+        const multiCurrencyEnabled = {{ $multiCurrencyEnabled ? 'true' : 'false' }};
+        let serverExchangeRate = {{ $exchangeRate !== null ? number_format($exchangeRate, 4, '.', '') : 'null' }};
+        let cartCurrency = 'PEN';
+
+        // Muestra el total con el simbolo de la moneda elegida y, en USD,
+        // el equivalente aproximado en soles con el TC aplicado.
+        function currencySymbol() {
+            return cartCurrency === 'USD' ? '$' : 'S/ ';
+        }
+
+        function updateCartTotalDisplay() {
+            const el = document.getElementById('totalid');
+            if (!el) return;
+            el.textContent = `${currencySymbol()}${money(checkoutTotal)}`;
+
+            const hint = document.getElementById('cart-currency-hint');
+            if (hint) {
+                if (cartCurrency === 'USD' && serverExchangeRate > 0 && checkoutTotal > 0) {
+                    hint.textContent = `≈ S/ ${money(checkoutTotal * serverExchangeRate)} (TC: ${serverExchangeRate.toFixed(4)})`;
+                    hint.style.display = 'block';
+                } else {
+                    hint.style.display = 'none';
+                }
+            }
+        }
+
+        function onCartCurrencyChange(value) {
+            cartCurrency = value;
+            const hint = document.getElementById('cart-currency-hint');
+            if (hint) hint.style.display = 'none';
+            // La preferencia de MercadoPago se recalcula en la moneda elegida.
+            if (cartIds.length && !freeCheckout) {
+                startPayment();
+            }
+        }
+
         const pendingPaidCartKey = 'pending_paid_cart_checkout';
 
         let cartIds = [];
@@ -3179,7 +3231,7 @@
                             </div>
                             <div class="cart-summary-content">
                                 <strong class="cart-summary-name">
-                                    <a href="${item.url_slug && item.landing_published == 1 ? routes.slug + '/' + item.url_slug : routes.description + '/' + item.id}" target="_blank">${item.name}</a>
+                                    <a href="${item.url_slug && item.landing_published == 1 ? routes.slug + '/' + item.url_slug : routes.description + '/' + (item.slug || item.id)}" target="_blank">${item.name}</a>
                                 </strong>
                                 <div class="cart-summary-meta">
                                     <span><i class="fa fa-calendar" aria-hidden="true"></i> Modalidad: ${item.additional || 'Online'}</span>
@@ -3204,13 +3256,13 @@
                 <td colspan="4">
                     <div class="cart-total-summary">
                         <span>Total a pagar</span>
-                        <strong>S/ ${money(checkoutTotal)}</strong>
+                        <strong>${currencySymbol()}${money(checkoutTotal)}</strong>
                     </div>
                 </td>
             `;
             tbody.appendChild(totalRow);
 
-            document.getElementById('totalid').textContent = `S/ ${money(checkoutTotal)}`;
+            updateCartTotalDisplay();
             document.getElementById('total_productos').textContent = `${cartItems.length} ${cartItems.length === 1 ? 'curso seleccionado' : 'cursos seleccionados'}`;
             updateFreeCheckoutView();
         }
@@ -3218,7 +3270,7 @@
         function renderEmptyCart() {
             resetPaymentState();
             document.getElementById('cart').innerHTML = '<tr><td colspan="4" class="px-4 py-5 text-center">No has elegido ningun curso.</td></tr>';
-            document.getElementById('totalid').textContent = 'S/ 0.00';
+            updateCartTotalDisplay();
             document.getElementById('total_productos').textContent = 'Sin cursos seleccionados';
             parkPaymentPhoneField();
             document.getElementById('cardPaymentBrick_container').innerHTML = '<div class="mp-loading-message p-4 text-center">Agrega cursos para cargar el pago.</div>';
@@ -3258,7 +3310,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify({ item_id: cartIds })
+                body: JSON.stringify({ item_id: cartIds, currency: cartCurrency })
             }, 20000)
                 .then(async (data) => {
                     if (currentPaymentVersion !== paymentVersion) {
@@ -3269,7 +3321,10 @@
                     mercadoPublicKey = data.public_key;
                     checkoutTotal = Number(data.total);
                     cartItems = data.products;
-                    document.getElementById('totalid').textContent = `S/ ${money(checkoutTotal)}`;
+                    // El servidor confirma la moneda y el TC aplicado a este pago.
+                    cartCurrency = data.currency || 'PEN';
+                    serverExchangeRate = data.exchange_rate != null ? Number(data.exchange_rate) : null;
+                    updateCartTotalDisplay();
                     await renderMercadoPago(currentPaymentVersion);
                 })
                 .catch(error => {
@@ -3453,6 +3508,7 @@
                                 },
                                 body: JSON.stringify({
                                     item_id: cartIds,
+                                    currency: cartCurrency,
                                     cardFormData: Object.assign({}, cardFormData, JSON.parse(localStorage.getItem('traffic_tracking') || '{}'))
                                 })
                             }, 30000)

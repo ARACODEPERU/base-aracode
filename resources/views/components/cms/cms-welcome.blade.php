@@ -28,7 +28,7 @@
                         y con integración directa a tu <b>KAPTA LMS o servicios digitales</b>.
                     </p>
                     <a class="btn-main fx-slide mb10 mb-3 wow fadeInUp" data-wow-delay=".6s"
-                        href="{{ route('web_lms') }}#planes"><span>Ver Planes</span></a>
+                        href="{{ route('solucion_kapta') }}#planes"><span>Ver Planes</span></a>
                 </div>
             </div>
         </div>

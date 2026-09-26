@@ -12,6 +12,8 @@ defineProps({
     paymentMethods: Array,
     contactChannels: Array,
     companyBilleteras: { type: Array, default: () => [] },
+    multiCurrencyEnabled: { type: Boolean, default: false },
+    exchangeRate: { type: Number, default: null },
 });
 </script>
 
@@ -34,6 +36,8 @@ defineProps({
                 :payment-methods="paymentMethods"
                 :contact-channels="contactChannels"
                 :company-billeteras="companyBilleteras"
+                :multi-currency-enabled="multiCurrencyEnabled"
+                :exchange-rate="exchangeRate"
             />
         </div>
     </AppLayout>

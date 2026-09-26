@@ -123,6 +123,8 @@ class OnliSaleController extends Controller
         return Inertia::render('Onlineshop::Sales/List', [
             'sales' => $sales,
             'filters' => request()->all('search'),
+            // La columna de moneda solo se muestra con el modo multi-moneda (PTM0004) activo.
+            'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
         ]);
     }
 

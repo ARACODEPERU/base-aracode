@@ -266,7 +266,7 @@
                 var name = respuesta.name;
                 var price = respuesta.price;
                 var modalidad = respuesta.additional;
-                var url_descripcion_programa = "/curso-descripcion/" + id;
+                var url_descripcion_programa = "/curso-descripcion/" + (respuesta.slug || id);
 
                 cart.innerHTML += `
                     <tr class="border-y border-transparent border-b-slate-200 dark:border-b-navy-500" id="${id}_pc">

@@ -670,7 +670,6 @@
             showCancelButton: true,
             confirmButtonText: 'Enviar',
             showLoaderOnConfirm: true,
-            clickOutside: false,
             padding: '2em',
             customClass: 'sweet-alerts',
             preConfirm: () => {
@@ -692,7 +691,8 @@
                     Swal2.showValidationMessage(msg);
                 });
             },
-            allowOutsideClick: () => !Swal2.isLoading()
+            allowOutsideClick: () => !Swal2.isLoading(),
+            backdrop: true
         }).then((result) => {
             if (result.isConfirmed && result.value && result.value.data && result.value.data.success) {
                 var cadena = "";

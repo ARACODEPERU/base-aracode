@@ -11,6 +11,16 @@
     import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogOverlay } from '@headlessui/vue';
     import textWriting from '@/Components/loader/text-writing.vue';
 
+    // La columna de moneda solo aparece con el modo multi-moneda (PTM0004) activo:
+    // desactivado, todas las ventas son en soles y no hace falta especificarlo.
+    const multiCurrencyEnabled = usePage().props.multiCurrencyEnabled === true;
+    const currencyBadge = (sale) => {
+        if (String(sale.currency || 'PEN').toUpperCase() === 'USD') {
+            return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">$ USD</span>';
+        }
+        return '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">S/ PEN</span>';
+    };
+
     const trafficColors = {
         facebook_ads: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-400',
         google_ads: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-400',
@@ -286,6 +296,9 @@
                                     <th >
                                         Total
                                     </th>
+                                    <th v-if="multiCurrencyEnabled">
+                                        Moneda
+                                    </th>
                                     <th >
                                         Fecha
                                     </th>
@@ -340,6 +353,7 @@
                                         <td >
                                             {{ item.total }}
                                         </td>
+                                        <td v-if="multiCurrencyEnabled" v-html="currencyBadge(item)"></td>
                                         <td >
                                             {{ item.created_at }}
                                         </td>

@@ -23,6 +23,9 @@ const props = defineProps({
     paymentMethods: { type: Array, default: () => [] },
     contactChannels: { type: Array, default: () => [] },
     companyBilleteras: { type: Array, default: () => [] },
+    // Combo de moneda visible solo con PTM0004 activo; TC vigente para la conversion.
+    multiCurrencyEnabled: { type: Boolean, default: false },
+    exchangeRate: { type: Number, default: null },
 });
 
 const isEdit = computed(() => !!props.negotiation?.id);
@@ -84,6 +87,19 @@ const paymentMethodOptions = computed(() => props.paymentMethods.map((item) => (
     value: item.value,
     label: item.label,
 })));
+
+// Equivalente en soles del monto ingresado, para que el asesor vea a cuanto
+// equivale el precio total (y cada cuota) cuando elige trabajar en dolares.
+const isUsd = computed(() => String(form.currency).toUpperCase() === 'USD');
+const tcValido = computed(() => Number(props.exchangeRate) > 0);
+const equivalentPenTotal = computed(() => {
+    if (!isUsd.value || !tcValido.value) return null;
+    return (Number(form.total_price || 0) * Number(props.exchangeRate)).toFixed(2);
+});
+const equivalentPenSchedule = computed(() => {
+    if (!isUsd.value || !tcValido.value) return null;
+    return (Number(scheduleSum.value || 0) * Number(props.exchangeRate)).toFixed(2);
+});
 
 const billeteraOptions = computed(() => props.companyBilleteras.map((item) => ({
     value: item.id,
@@ -389,8 +405,9 @@ const submit = () => {
                 <InputError :message="form.errors.total_price" class="mt-2" />
             </div>
 
-            <!-- Moneda fija en PEN (Soles): el combo se oculta pero el valor se envia igual -->
-            <div class="col-span-6 sm:col-span-1" style="display: none">
+            <!-- Moneda: el combo solo aparece con el modo multi-moneda (PTM0004) activo;
+                 desactivado la negociacion siempre es en soles (PEN). -->
+            <div v-if="multiCurrencyEnabled" class="col-span-6 sm:col-span-1">
                 <InputLabel value="Moneda *" />
                 <Select
                     v-model:value="form.currency"
@@ -400,6 +417,15 @@ const submit = () => {
                     style="width: 100%"
                 />
                 <InputError :message="form.errors.currency" class="mt-2" />
+            </div>
+            <div v-if="multiCurrencyEnabled && isUsd && tcValido && equivalentPenTotal !== null" class="col-span-6 sm:col-span-3">
+                <div class="rounded-md bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 px-3 py-2 text-xs text-blue-800 dark:text-blue-300">
+                    💱 Cambio a soles: <strong>S/ {{ equivalentPenTotal }}</strong>
+                    <span class="block mt-0.5">(TC SUNAT: S/ {{ Number(props.exchangeRate).toFixed(4) }} por $1)</span>
+                    <span v-if="form.payment_type === 'installments' && equivalentPenSchedule !== null" class="block mt-0.5">
+                        Suma de cuotas: S/ {{ equivalentPenSchedule }}
+                    </span>
+                </div>
             </div>
 
             <div class="col-span-6 sm:col-span-2">

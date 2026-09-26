@@ -29,7 +29,12 @@
 
 
     const userData = usePage().props.auth.user;
+    const pageProps = usePage().props;
     const store = useAppStore();
+
+    // Interruptor multi-moneda (PTM0004): sin dólares no se muestra el botón
+    // "Cambio de moneda" en el header.
+    const multiCurrencyEnabled = computed(() => pageProps.multiCurrencyEnabled === true);
 
     const hasAnyRole = (rolesToCheck) => {
         return userData.roles.some(role => rolesToCheck.includes(role.name))
@@ -178,7 +183,7 @@
                             </Link>
                         </li>
 
-                        <li v-can="'invo_tipo_cambio'">
+                        <li v-can="'invo_tipo_cambio'" v-show="multiCurrencyEnabled">
                             <button type="button"
                                 class="flex items-center px-4 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-full hover:bg-white hover:text-blue-600 hover:shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700 transition-all"
                                 @click="showExchangeRateModal = true">

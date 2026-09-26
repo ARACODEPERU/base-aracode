@@ -400,7 +400,6 @@
             showCancelButton: true,
             confirmButtonText: 'Enviar',
             showLoaderOnConfirm: true,
-            clickOutside: false,
             preConfirm: () => {
                 return axios.get(route('saledocuments_send', [document.id,document.invoice_type_doc])).then((res) => {
                     if (!res.data.success) {

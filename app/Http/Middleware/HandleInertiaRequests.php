@@ -86,6 +86,9 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'message' => fn () => $request->session()->get('message')
             ],
+            // Interruptor multi-moneda (PTM0004): el header oculta el botón
+            // "Cambio de moneda" cuando el sistema opera solo en soles.
+            'multiCurrencyEnabled' => fn () => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
             // Estado del Modo Super Editor (activo, borrador pendiente, vencimiento).
             // El frontend no guarda este estado: lo recibe en cada respuesta, así
             // que sobrevive a los reloads que vuelven a montar las directivas.

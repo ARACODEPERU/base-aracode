@@ -27,7 +27,7 @@
                         <b>vender 24/7</b>.
                     </p>
                     <a class="btn-main fx-slide mb10 mb-3 wow fadeInUp" data-wow-delay=".6s"
-                        href="{{ route('web_store_online') }}#planes"><span>Ver Planes</span></a>
+                        href="{{ route('soluciones') }}#planes"><span>Ver Planes</span></a>
                 </div>
             </div>
         </div>

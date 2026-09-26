@@ -22,6 +22,9 @@ const props = defineProps({
     paymentMethods: { type: Array, default: () => [] },
     stepsStatus: { type: Object, default: () => ({}) },
     existingAccount: { type: Object, default: () => ({}) },
+    // TC vigente para el equivalente en soles cuando la negociacion es USD.
+    multiCurrencyEnabled: { type: Boolean, default: false },
+    exchangeRate: { type: Number, default: null },
 });
 
 const hasCourses = computed(() => props.negotiation.items?.some((item) => item.item_type === "course") ?? false);
@@ -323,6 +326,12 @@ const run = () => {
                         {{ statusByValue(negotiation.status)?.label || negotiation.status }}
                     </span>
                     <span class="text-sm text-gray-500">{{ negotiation.currency }} {{ negotiation.total_price }}</span>
+                    <span
+                        v-if="String(negotiation.currency || '').toUpperCase() === 'USD' && Number(exchangeRate) > 0"
+                        class="text-sm text-blue-600 dark:text-blue-400"
+                    >
+                        ≈ S/ {{ (Number(negotiation.total_price || 0) * Number(exchangeRate)).toFixed(2) }} (TC: {{ Number(exchangeRate).toFixed(4) }})
+                    </span>
                     <span class="text-sm text-gray-500">{{ clientName }}</span>
                 </div>
             </div>

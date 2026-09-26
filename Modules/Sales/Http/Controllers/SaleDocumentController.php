@@ -86,6 +86,7 @@ class SaleDocumentController extends Controller
         return Inertia::render('Sales::Documents/List', [
             'affectations' => $affectations,
             'unitTypes' => $unitTypes,
+            'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
             'taxes' => [
                 'igv' => $this->igv,
                 'icbper' => $this->icbper,
@@ -129,6 +130,7 @@ class SaleDocumentController extends Controller
                 'sale_documents.invoice_response_code',
                 'sale_documents.invoice_notes',
                 'sale_documents.invoice_type_operation',
+                'sale_documents.invoice_type_currency',
                 'sale_documents.created_at AS created_date'
             )
             ->whereIn('series.document_type_id', [1, 2])

@@ -26,6 +26,9 @@ const props = defineProps({
     ubigeo: { type: Array, default: () => [] },
     paymentMethodCatalog: { type: Array, default: () => [] },
     bankAccounts: { type: Array, default: () => [] },
+    // TC vigente para mostrar el equivalente en soles cuando la negociacion es USD.
+    multiCurrencyEnabled: { type: Boolean, default: false },
+    exchangeRate: { type: Number, default: null },
 });
 
 const company = usePage().props.company;
@@ -179,6 +182,21 @@ const mercadoAmount = computed(() => {
 });
 
 const mercadoAmountLabel = computed(() => `${props.negotiation.currency} ${mercadoAmount.value.toFixed(2)}`);
+
+// Equivalente en soles: cuando la negociacion esta en dolares el cliente debe
+// ver a cuanto equivale lo que va a pagar (total y primera cuota en cuotas).
+const isUsdNegotiation = computed(() => String(props.negotiation.currency || '').toUpperCase() === 'USD');
+const hasValidRate = computed(() => Number(props.exchangeRate) > 0);
+const totalInSoles = computed(() => {
+    if (!isUsdNegotiation.value || !hasValidRate.value) return null;
+    return (Number(props.negotiation.total_price || 0) * Number(props.exchangeRate)).toFixed(2);
+});
+const firstInstallmentInSoles = computed(() => {
+    if (!isUsdNegotiation.value || !hasValidRate.value) return null;
+    if (props.negotiation.payment_type !== 'installments') return null;
+    const first = Number(props.negotiation.schedule?.[0]?.amount || 0);
+    return first > 0 ? (first * Number(props.exchangeRate)).toFixed(2) : null;
+});
 
 const onlyNumbers = () => {
     form.number = form.number ? String(form.number).replace(/\D/g, "") : null;
@@ -796,6 +814,12 @@ watch(brickFormVisible, async (visible) => {
                             <div class="text-right">
                                 <p class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Total</p>
                                 <p class="text-2xl font-bold text-primary">{{ totalAmount }}</p>
+                                <p v-if="totalInSoles" class="text-xs text-gray-500 dark:text-gray-400">
+                                    ≈ S/ {{ totalInSoles }} <span class="whitespace-nowrap">(TC: {{ Number(props.exchangeRate).toFixed(4) }})</span>
+                                </p>
+                                <p v-if="firstInstallmentInSoles" class="text-xs text-gray-500 dark:text-gray-400">
+                                    1ra cuota ≈ S/ {{ firstInstallmentInSoles }}
+                                </p>
                             </div>
                         </div>
 
@@ -1313,6 +1337,8 @@ watch(brickFormVisible, async (visible) => {
             </div>
         </div>
         <SummaryModal
+            :total-soles-label="totalInSoles ? `≈ S/ ${totalInSoles}` : null"
+            :first-installment-soles-label="firstInstallmentInSoles ? `≈ S/ ${firstInstallmentInSoles}` : null"
             ref="summaryModal"
             :form="form"
             :negotiation="negotiation"

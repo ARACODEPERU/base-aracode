@@ -34,7 +34,8 @@ class OnliSale extends Model
         'nota_sale_id',
         'email_sent',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
-        'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source'
+        'fbclid', 'gclid', 'referer', 'landing_url', 'traffic_source',
+        'currency', 'exchange_rate'
     ];
 
     protected static function newFactory()

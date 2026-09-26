@@ -110,8 +110,14 @@ class CrmConversationController extends Controller
      */
     private function notificacionAgregadaAsistentes()
     {
+        // whereHas en lugar de role('Asistente') para que este endpoint (que el
+        // header consulta en todas las paginas) nunca explote con
+        // RoleDoesNotExist si el rol aun no existe en alguna base de datos.
         $asistentesPersonIds = User::query()
-            ->role('Asistente')
+            ->whereHas('roles', function ($query) {
+                $query->where('roles.name', 'Asistente')
+                    ->where('roles.guard_name', 'web');
+            })
             ->pluck('person_id')
             ->filter()
             ->unique()

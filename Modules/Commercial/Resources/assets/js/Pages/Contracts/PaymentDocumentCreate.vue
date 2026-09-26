@@ -580,7 +580,6 @@
             showCancelButton: true,
             confirmButtonText: 'Enviar',
             showLoaderOnConfirm: true,
-            clickOutside: false,
             padding: '2em',
             customClass: 'sweet-alerts',
             preConfirm: () => {

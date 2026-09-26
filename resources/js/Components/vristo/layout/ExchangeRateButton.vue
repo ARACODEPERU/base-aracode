@@ -1,8 +1,9 @@
 <script setup>
     // Botón "Cambio de moneda" del header: consulta el TC SUNAT (via Migo)
     // y lo guarda en sales_exchange_rates. Requiere permiso invo_tipo_cambio.
-    import { ref } from 'vue';
+    import { ref, watch } from 'vue';
     import axios from 'axios';
+    import Swal from 'sweetalert2';
     import ModalSmall from '@/Components/ModalSmall.vue';
 
     // route() es la funcion global de Ziggy (inyectada via @routes en app.blade.php)
@@ -76,6 +77,15 @@
         loadCurrent();
     };
 
+    // Cargar el estado real (TC vigente + interruptor multi-moneda) cada vez
+    // que se abre el modal: sin esto multiCurrencyEnabled quedaba en false y
+    // el aviso "modo solo soles" aparecia aunque PTM0004 estuviera activado.
+    watch(() => props.show, (show) => {
+        if (show) {
+            loadCurrent();
+        }
+    });
+
     const formatRate = (value) => {
         if (value === null || value === undefined) return '-';
         return parseFloat(value).toFixed(4);
@@ -84,7 +94,7 @@
     defineExpose({ loadCurrent });
 </script>
 <template>
-    <ModalSmall :show="show" :onClose="onClose">
+    <ModalSmall :show="show" :onClose="onClose" :icon="'/img/dolares.png'">
         <template #title>
             <h3 class="text-lg font-semibold dark:text-white">Cambio actual de moneda</h3>
         </template>
@@ -124,8 +134,11 @@
                             </div>
                             <div>
                                 <span class="text-slate-500 dark:text-slate-400">Fuente:</span>
-                                <span class="font-medium text-slate-800 dark:text-white ml-1 capitalize">{{ currentRate.source }}</span>
+                                <span class="font-medium text-slate-800 dark:text-white ml-1">{{ currentRate.source_label || currentRate.source }}</span>
                             </div>
+                        </div>
+                        <div class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                            📡 Fuente de la información: {{ currentRate.source_label || currentRate.source }}.
                         </div>
                         <div v-if="currentRate.is_stale" class="mt-3 text-xs text-amber-600 dark:text-amber-400">
                             ⚠️ Este tipo de cambio es del último día disponible (SUNAT aún no publica el de hoy).

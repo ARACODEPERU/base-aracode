@@ -14,7 +14,7 @@
     import DangerButton from '@/Components/DangerButton.vue';
     import DialogModal from '@/Components/DialogModal.vue';
     import Swal from "sweetalert2";
-    import { Link, router } from '@inertiajs/vue3';
+    import { Link, router, usePage } from '@inertiajs/vue3';
 
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
     import DataTable from 'datatables.net-vue3';
@@ -102,7 +102,8 @@
                     Swal.showValidationMessage(msg);
                 });
             },
-            allowOutsideClick: () => !Swal.isLoading()
+            allowOutsideClick: () => !Swal.isLoading(),
+            backdrop: true
         }).then((result) => {
             if (result.isConfirmed && result.value && result.value.data && result.value.data.success) {
                 var cadena = "";
@@ -375,6 +376,9 @@
         { data: 'invoice_due_date', title: 'Fecha de vencimiento' },
         { data: 'full_name', title: 'Cliente' },
         { data: 'overall_total', title: 'Total' },
+        // Moneda del comprobante: solo se muestra con el modo multi-moneda
+        // activo (PTM0004); si no, todo es soles y no hace falta especificar.
+        { data: null, render: '#currency', title: 'Moneda', visible: usePage().props.multiCurrencyEnabled === true, orderable: false, searchable: false },
         { data: null, render: '#status', title: 'Estado' },
         {
             data: null,
@@ -514,6 +518,10 @@
                     </template>
                     <template #created_date="props">
                         {{ formatDate(props.rowData.created_date) }}
+                    </template>
+                    <template #currency="props">
+                        <span v-if="props.rowData.invoice_type_currency === 'USD'" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">$ USD</span>
+                        <span v-else class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">S/ PEN</span>
                     </template>
                     <template #status="props">
                         <div>

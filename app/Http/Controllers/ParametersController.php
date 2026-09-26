@@ -41,13 +41,20 @@ class ParametersController extends Controller
             // Verificar estado de sincronizacion para archivos (P000026, P000027)
             $sync_status = $this->getFileSyncStatus($parameter);
 
+            // Interruptores (chx): normalizar a '1'/'0' para que el checkbox
+            // refleje el estado real guardado en BD ('true', '1', etc.).
+            $value_default = $parameter->value_default;
+            if ($parameter->control_type == 'chx') {
+                $value_default = in_array(strtolower(trim((string) $value_default)), ['1', 'true']) ? '1' : '0';
+            }
+
             array_push($formatted, [
                 'id' => $parameter->id,
                 'parameter_code' => $parameter->parameter_code,
                 'description' => $parameter->description,
                 'control_type' => $parameter->control_type,
                 'json_query_data' => $json_query_data,
-                'value_default' => $parameter->value_default,
+                'value_default' => $value_default,
                 'sync_status' => $sync_status,
             ]);
         }

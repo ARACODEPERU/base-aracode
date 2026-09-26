@@ -44,6 +44,17 @@ class CommercialNegotiationPublicController extends Controller
 
         return Inertia::render('Commercial::Negotiations/Public/Show', [
             'negotiation' => $this->negotiationPayload($negotiation),
+            // Equivalente en soles para el cliente cuando la negociacion esta en USD.
+            'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
+            'exchangeRate' => (function () {
+                try {
+                    $rate = app(\Modules\Sales\Services\ExchangeRateService::class)->getCurrentRate('USD');
+
+                    return $rate ? (float) $rate['rate'] : null;
+                } catch (\Throwable $e) {
+                    return null;
+                }
+            })(),
             'identityDocumentTypes' => IdentityDocumentType::orderBy('id')->get()
                 ->map(fn ($type) => [
                     'id' => $type->id,

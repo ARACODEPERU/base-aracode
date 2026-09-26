@@ -21,10 +21,18 @@
         search: props.filters.search,
     });
 
+    // Valor con el que llego cada parametro (ultimo guardado confirmado).
+    // Sirve para no re-guardar ni avisar cuando el valor no cambio realmente.
+    const lastSavedValues = Object.fromEntries(props.parameters.map((p) => [p.id, p.value_default]));
+
     const updateDefaultValue = (id, value) => {
+        if (String(value) === String(lastSavedValues[id] ?? '')) {
+            return; // sin cambio real: no golpear el endpoint ni mostrar el aviso
+        }
         axios.post(route('parameters_update_default_value',[id]),{
             value_default: value
         }).then(()=>{
+            lastSavedValues[id] = value;
             message.success('Se actualizó correctamente');
         });
     }
@@ -191,7 +199,8 @@
                                                     type="checkbox"
                                                     class="custom_switch absolute w-full h-full opacity-0 z-10 cursor-pointer peer"
                                                     :id="`custom_switch_checkbox-${index}`"
-                                                    :value="1"
+                                                    true-value="1"
+                                                    false-value="0"
                                                     @change="updateDefaultValue(parameter.id, parameter.value_default)"
                                                 />
                                                 <span :for="`custom_switch_checkbox-${index}`" class="bg-[#ebedf2] dark:bg-dark block h-full before:absolute before:left-1 before:bg-white dark:before:bg-white-dark dark:peer-checked:before:bg-white before:bottom-1 before:w-4 before:h-4 peer-checked:before:left-7 peer-checked:bg-primary before:transition-all before:duration-300 "></span>

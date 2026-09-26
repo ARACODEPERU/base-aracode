@@ -421,6 +421,18 @@ class CommercialNegotiationController extends Controller
                 ->get(['id', 'symbol', 'description'])
                 ->unique('id')
                 ->values(),
+            // Combo de moneda visible solo con el modo multi-moneda (PTM0004) activo;
+            // con TC vigente para mostrar la conversion en la interfaz.
+            'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
+            'exchangeRate' => (function () {
+                try {
+                    $rate = app(\Modules\Sales\Services\ExchangeRateService::class)->getCurrentRate('USD');
+
+                    return $rate ? (float) $rate['rate'] : null;
+                } catch (\Throwable $e) {
+                    return null;
+                }
+            })(),
             'paymentMethods' => $this->paymentMethods(),
             'contactChannels' => $this->contactChannels(),
             'companyBilleteras' => \App\Models\CompanyBilletera::with('billetera')

@@ -22,7 +22,7 @@
                             <li class="wow fadeInUp" data-wow-delay="1s">Mejore la experiencia de sus usuarios</li>
                             <li class="wow fadeInUp" data-wow-delay="1.1s">Crezca de manera escalable y eficiente</li>
                         </ul>
-                        <a class="btn-main mx-2 fx-slide wow fadeInUp" data-wow-delay="1.2s" href="{{ route('web_about') }}">
+                        <a class="btn-main mx-2 fx-slide wow fadeInUp" data-wow-delay="1.2s" href="{{ route('empresa') }}">
                             <span>Saber más</span>
                         </a>
                     </div>

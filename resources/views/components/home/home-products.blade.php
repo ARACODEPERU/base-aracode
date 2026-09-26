@@ -49,7 +49,7 @@
                                 </div>
                             </div>
 
-                            <a class="btn-main fx-slide w-100" href="{{ route('web_lms') }}"><span>Más Información</span></a>
+                            <a class="btn-main fx-slide w-100" href="{{ route('solucion_kapta') }}"><span>Más Información</span></a>
                         </div>
                         <!-- ticket item end -->
                         
@@ -81,7 +81,7 @@
                                     </ul>
                                 </div>
 
-                                <a class="btn-main fx-slide w-100" href="{{ route('web_cms') }}"><span>Más Información</span></a>
+                                <a class="btn-main fx-slide w-100" href="{{ route('solucion_kapta') }}"><span>Más Información</span></a>
 
                             </div>
                         </div>
@@ -112,7 +112,7 @@
                                     </ul>
                                 </div>
 
-                                <a class="btn-main fx-slide w-100" href="{{ route('web_billing') }}"><span>Más Información</span></a>
+                                <a class="btn-main fx-slide w-100" href="{{ route('solucion_facturacion') }}"><span>Más Información</span></a>
 
                             </div>
                         </div>

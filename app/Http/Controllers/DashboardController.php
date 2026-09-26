@@ -112,6 +112,7 @@ class DashboardController extends Controller
                 'onli_items.id AS onitem_id',
                 'onli_items.price AS onitem_price',
                 'aca_courses.*',
+                'aca_courses.slug AS slug',
                 'people.names AS person_names',
                 'people.father_lastname',
                 'people.image AS person_image',

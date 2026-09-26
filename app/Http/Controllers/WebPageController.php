@@ -17,6 +17,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaCategoryCourse;
 use Modules\Onlineshop\Entities\OnliSale;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
+use Modules\Onlineshop\Entities\OnliCarritoAbandonado;
 use Modules\Academic\Entities\AcaTeacher;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
@@ -312,12 +313,28 @@ class WebPageController extends Controller
 
     }
 
-    public function course_url_slug($id){
+    public function course_url_slug($slug)
+    {
+        // Ruta amigable de la landing publica: /curso/{slug}.
         $landing = AcaCourseLanding::with('course')
             ->with('course.category')
             ->with('course.modality')
             ->with('course.brochure')
-            ->where('url_slug', $id)->first();
+            ->where('url_slug', $slug)
+            ->where('is_published', true)
+            ->first();
+
+        // Si la landing no esta publicada, ofrecer la descripcion del curso en
+        // lugar de fallar: los enlaces al slug siempre deben llevar a algo util.
+        if (! $landing) {
+            $fallbackCourse = AcaCourse::where('slug', $slug)->first();
+
+            if ($fallbackCourse && filled($fallbackCourse->slug)) {
+                return redirect()->route('web_curso_descripcion', $fallbackCourse->slug);
+            }
+
+            abort(404);
+        }
 
         $teachersPremium = [];
 
@@ -472,9 +489,21 @@ class WebPageController extends Controller
         ]);
     }
 
-    public function cursodescripcion($id)
+    public function cursodescripcion($slug)
     {
-        $item = OnliItem::find($id);
+        // Ruta amigable: /curso-descripcion/{slug}. El slug es el de aca_courses;
+        // se mantiene compatibilidad: si llega un id numerico antiguo redirige 301
+        // a su slug amigable para no romper enlaces ya indexados.
+        if (is_numeric($slug) && (int) $slug > 0) {
+            $legacyItem = OnliItem::find((int) $slug);
+            $legacyCourse = $legacyItem ? AcaCourse::find($legacyItem->item_id) : null;
+
+            if ($legacyCourse && filled($legacyCourse->slug)) {
+                return redirect()->route('web_curso_descripcion', $legacyCourse->slug, 301);
+            }
+
+            abort(404);
+        }
 
         $course = AcaCourse::with('category')
             ->with('modality')
@@ -482,12 +511,16 @@ class WebPageController extends Controller
             ->with('teachers.teacher.person.resumes')
             ->with('brochure')
             ->with('agreements')
-            ->where('id', $item->item_id)
+            ->where('slug', $slug)
+            ->firstOrFail();
+
+        $item = OnliItem::where('item_id', $course->id)
+            ->where('entitie', 'Modules-Academic-Entities-AcaCourse')
             ->first();
 
         $latest_courses = OnliItem::with('course')
             ->orderBy('id', 'desc')
-            ->where('id', '!=', $id)
+            ->where('id', '!=', $item?->id)
             ->take(10)
             ->get()
             ->shuffle()
@@ -496,6 +529,7 @@ class WebPageController extends Controller
         return view('pages.course-description', [
             'course' => $course,
             'item' => $item,
+            'onli_item_id' => $item?->id,
             'latest_courses' => $latest_courses
         ]);
     }
@@ -504,14 +538,28 @@ class WebPageController extends Controller
 
     public function shopcart()
     {
-        return view('pages.shop-cart');
+        // El checkout de la vista necesita el catalogo de tipos de documento.
+        // El selector de moneda solo aparece con el modo multi-moneda (PTM0004) activo.
+        try {
+            $rate = app(\Modules\Sales\Services\ExchangeRateService::class)->getCurrentRate('USD');
+            $exchangeRate = $rate ? (float) $rate['rate'] : null;
+        } catch (\Throwable $e) {
+            $exchangeRate = null;
+        }
+
+        return view('pages.shop-cart', [
+            'documentTypes' => DB::table('identity_document_type')->get(),
+            'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
+            'exchangeRate' => $exchangeRate,
+        ]);
     }
 
     public function cartPreference(Request $request)
     {
         $validated = $request->validate([
             'item_id' => 'required|array|min:1',
-            'item_id.*' => 'integer|distinct'
+            'item_id.*' => 'integer|distinct',
+            'currency' => ['nullable', 'string', Rule::in(['PEN', 'USD'])],
         ]);
 
         if (!config('services.mercadopago.token') || !config('services.mercadopago.key')) {
@@ -520,6 +568,26 @@ class WebPageController extends Controller
 
         MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
 
+        // Moneda del pago: PEN por defecto; USD requiere PTM0004 activo y TC vigente.
+        $currency = strtoupper((string) ($validated['currency'] ?? 'PEN'));
+        $exchangeRate = null;
+
+        if ($currency !== 'PEN') {
+            $exchangeService = app(\Modules\Sales\Services\ExchangeRateService::class);
+
+            if (! $exchangeService->isMultiCurrencyEnabled()) {
+                return response()->json(['error' => 'El sistema está configurado para operar solo en soles (parámetro PTM0004 desactivado).'], 422);
+            }
+
+            $rate = $exchangeService->getCurrentRate($currency);
+
+            if (! $rate || (float) $rate['rate'] <= 0) {
+                return response()->json(['error' => "No hay tipo de cambio vigente para {$currency}. Intentalo mas tarde."], 422);
+            }
+
+            $exchangeRate = (float) $rate['rate'];
+        }
+
         $items = $this->cartItemsFromIds($validated['item_id']);
         $mercadoItems = [];
         $products = [];
@@ -527,11 +595,18 @@ class WebPageController extends Controller
 
         foreach ($items as $item) {
             $price = round((float) $item->price, 2);
+
+            // En USD los precios del catalogo (en soles) se convierten con el TC
+            // del dia de la compra; ese TC queda guardado en la venta.
+            if ($exchangeRate !== null) {
+                $price = round($price / $exchangeRate, 2);
+            }
+
             $mercadoItems[] = [
                 'id' => $item->id,
                 'title' => $item->name,
                 'quantity' => 1,
-                'currency_id' => 'PEN',
+                'currency_id' => $currency,
                 'unit_price' => $price
             ];
 
@@ -571,6 +646,8 @@ class WebPageController extends Controller
             'products' => $products,
             'total' => round($total, 2),
             'public_key' => config('services.mercadopago.key'),
+            'currency' => $currency,
+            'exchange_rate' => $exchangeRate,
         ]);
     }
 
@@ -580,11 +657,41 @@ class WebPageController extends Controller
             'item_id' => 'required|array|min:1',
             'item_id.*' => 'integer|distinct',
             'cardFormData' => 'required|array',
+            'currency' => ['nullable', 'string', Rule::in(['PEN', 'USD'])],
         ]);
 
         $cardData = $validated['cardFormData'];
         $items = $this->cartItemsFromIds($validated['item_id']);
+
+        // Moneda del pago: el JS envia la elegida en el carrito; USD requiere
+        // PTM0004 activo. El TC se vuelve a resolver en el SERVIDOR (no se
+        // confia en el enviado) y es el que quedara guardado en la venta.
+        $currency = strtoupper((string) ($validated['currency'] ?? 'PEN'));
+        $exchangeRate = null;
+
+        if ($currency !== 'PEN') {
+            $exchangeService = app(\Modules\Sales\Services\ExchangeRateService::class);
+
+            if (! $exchangeService->isMultiCurrencyEnabled()) {
+                return response()->json(['error' => 'El sistema está configurado para operar solo en soles (parámetro PTM0004 desactivado).'], 422);
+            }
+
+            $rate = $exchangeService->getCurrentRate($currency);
+
+            if (! $rate || (float) $rate['rate'] <= 0) {
+                return response()->json(['error' => "No hay tipo de cambio vigente para {$currency}. Intentalo mas tarde."], 422);
+            }
+
+            $exchangeRate = (float) $rate['rate'];
+        }
+
         $expectedTotal = $this->cartTotal($items);
+
+        // En USD el total esperado es el catalogo convertido con el TC del dia.
+        if ($exchangeRate !== null) {
+            $expectedTotal = round($expectedTotal / $exchangeRate, 2);
+        }
+
         $sentTotal = round((float) ($cardData['transaction_amount'] ?? 0), 2);
 
         if (abs($expectedTotal - $sentTotal) > 0.01) {
@@ -639,6 +746,8 @@ class WebPageController extends Controller
                 'email' => $payer['email'] ?? null,
                 'total' => $expectedTotal,
                 'transaction_amount' => $expectedTotal,
+                'currency' => $currency,
+                'exchange_rate' => $exchangeRate,
                 'installments' => $cardData['installments'] ?? 1,
                 'identification_type' => $identification['type'] ?? null,
                 'identification_number' => $identification['number'] ?? null,
@@ -655,11 +764,14 @@ class WebPageController extends Controller
             $sale->mercado_payment = json_encode($payment);
 
             foreach ($items as $item) {
+                // El detalle guarda el precio en la moneda del pago (convertido si USD).
+                $detailPrice = $exchangeRate !== null ? round((float) $item->price / $exchangeRate, 2) : (float) $item->price;
+
                 OnliSaleDetail::create([
                     'sale_id' => $sale->id,
                     'item_id' => $item->item_id,
                     'entitie' => $item->entitie,
-                    'price' => $item->price,
+                    'price' => $detailPrice,
                     'quantity' => 1,
                     'onli_item_id' => $item->id,
                 ]);
@@ -1488,9 +1600,46 @@ class WebPageController extends Controller
     }
 
 
-    public function pay()
+    public function pay($sale = null)
     {
-        return view('pages.pay');
+        // Ruta web_pagar: retorno tras crear una venta online. La vista
+        // pages/pay no existe; se resuelve con el flujo actual del checkout.
+        $sale = $sale ? OnliSale::find($sale) : null;
+
+        if (! $sale) {
+            return redirect()->route('web_carrito');
+        }
+
+        if ($sale->response_status === 'approved') {
+            return redirect()->route('web_gracias_por_cursos', $sale->id);
+        }
+
+        // Venta pendiente: el carrito permite reintentar el pago con el
+        // checkout de MercadoPago activo.
+        return redirect()->route('web_carrito');
+    }
+
+    /**
+     * Registra/actualiza el carrito abandonado desde el checkout publico.
+     */
+    public function cartAbandonedStore(Request $request)
+    {
+        $data = $request->only([
+            'client_id', 'phone_country', 'phone', 'name', 'email',
+            'cart_items', 'cart_total',
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+        ]);
+
+        if (blank($data['client_id'] ?? null) || (blank($data['phone'] ?? null) && blank($data['email'] ?? null))) {
+            return response()->json(['ok' => false], 422);
+        }
+
+        $cart = OnliCarritoAbandonado::updateOrCreate(
+            ['client_id' => $data['client_id']],
+            $data + ['paid' => false]
+        );
+
+        return response()->json(['ok' => true, 'id' => $cart->id]);
     }
 
     public function pagar_auth(Request $request){ //pago cuando es usuario autenticado

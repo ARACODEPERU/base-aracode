@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 use Modules\Onlineshop\Entities\OnliItem;
 
 class AcaCourse extends Model
@@ -16,6 +17,7 @@ class AcaCourse extends Model
     protected $fillable = [
         'status',
         'description',
+        'slug',
         'usine',
         'course_day',
         'course_month',
@@ -38,6 +40,44 @@ class AcaCourse extends Model
     protected $casts = [
         'round_grades' => 'boolean',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Ruta amigable: el slug se deriva de la descripcion al crear y se
+        // regenera al editar si la descripcion cambio y no se definio uno a mano.
+        static::creating(function (self $course) {
+            if (blank($course->slug)) {
+                $course->slug = $course->generateUniqueSlug($course->description);
+            }
+        });
+
+        static::updating(function (self $course) {
+            if (blank($course->slug) || ($course->isDirty('description') && ! $course->isDirty('slug'))) {
+                $course->slug = $course->generateUniqueSlug($course->description, $course->id);
+            }
+        });
+    }
+
+    public function generateUniqueSlug(string $source, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($source);
+
+        if ($base === '') {
+            $base = 'curso' . ($ignoreId ? '-' . $ignoreId : '');
+        }
+
+        $slug = $base;
+        $i = 2;
+
+        while (self::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $slug = $base . '-' . $i;
+            $i++;
+        }
+
+        return $slug;
+    }
 
     public function category(): BelongsTo
     {

@@ -49,6 +49,17 @@ class CommercialNegotiationProcessController extends Controller
             'paymentMethods' => $this->paymentMethods(),
             'stepsStatus' => $this->stepStatuses($negotiation),
             'existingAccount' => $this->existingAccountInfo($negotiation),
+            // Equivalente en soles cuando la negociacion esta en USD (PTM0004).
+            'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
+            'exchangeRate' => (function () {
+                try {
+                    $rate = app(\Modules\Sales\Services\ExchangeRateService::class)->getCurrentRate('USD');
+
+                    return $rate ? (float) $rate['rate'] : null;
+                } catch (\Throwable $e) {
+                    return null;
+                }
+            })(),
         ]);
     }
 
@@ -709,6 +720,9 @@ class CommercialNegotiationProcessController extends Controller
                     'documenttypeId' => $isFactura ? 1 : 2,
                     'userId' => Auth::id(),
                     'enline' => true,
+                    // Moneda del comprobante: la elegida en la negociacion (PTM0004
+                    // y el TC se validan dentro de generateBoleta).
+                    'currency' => strtoupper((string) ($negotiation->currency ?? 'PEN')),
                 ];
 
                 // La boleta se emite con los datos del tercero indicado por el cliente.

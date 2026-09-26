@@ -31,7 +31,11 @@ class ExchangeRateService
     /** Codigo de parametro del token de Migo (ya usado por ApisnetPeController). */
     public const MIGO_TOKEN_PARAMETER = 'P000023';
 
+    /** Codigo de parametro del token de decolecta.com (RENIEC/SUNAT, P000012). */
+    public const DECOLECTA_TOKEN_PARAMETER = 'P000012';
+
     public const BASE_MIGO = 'https://api.migo.pe/api';
+    public const BASE_DECOLECTA = 'https://api.decolecta.com';
 
     public const SOURCE_MIGO = 'migo';
     public const SOURCE_MANUAL = 'manual';
@@ -79,6 +83,9 @@ class ExchangeRateService
 
     /**
      * Consulta el tipo de cambio a Migo (SUNAT) y lo guarda en la tabla.
+     * Si Migo no responde, rechaza el token ("Unauthenticated.") o devuelve
+     * una respuesta invalida, se reintenta automaticamente con decolecta.com
+     * (token P000012) informandolo en el message de la respuesta.
      *
      * @param  string|null  $date  Fecha Y-m-d; null usa el endpoint /ultimo.
      * @param  User|int|null  $user  Usuario que origino la consulta (para el boton manual).
@@ -90,21 +97,19 @@ class ExchangeRateService
         $token = Parameter::where('parameter_code', self::MIGO_TOKEN_PARAMETER)->value('value_default');
 
         if (empty($token)) {
-            return [
-                'success' => false,
-                'message' => 'El token de Migo no está configurado (parámetro P000023). Configúralo en Parámetros del sistema.',
-            ];
+            // Sin token de Migo configurado: intentar directamente con decolecta.
+            return $this->fetchFromDecolectaAndStore($date, $user);
         }
 
         $endpoint = $date ? '/v2/tipo-cambio/sunat?fecha='.$date : '/v2/tipo-cambio/sunat/ultimo';
 
-        $client = new Client([
-            'base_uri' => self::BASE_MIGO,
-            'timeout' => 15,
-        ]);
+        // URL completa: Guzzle con base_uri sin slash final y ruta absoluta
+        // descarta el segmento /api del host (RFC 3986), dejando de golpear
+        // https://api.migo.pe/api/v2/... y produciendo 404 "Recurso no encontrado".
+        $client = new Client(['timeout' => 15]);
 
         try {
-            $response = $client->get($endpoint, [
+            $response = $client->get(self::BASE_MIGO.$endpoint, [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Authorization' => 'Bearer '.$token,
@@ -116,20 +121,21 @@ class ExchangeRateService
             $body = json_decode($e->getResponse()->getBody()->getContents(), true);
             $message = $body['message'] ?? 'Error de la API de Migo (HTTP '.$e->getResponse()->getStatusCode().')';
 
-            Log::warning('ExchangeRateService: Migo rechazo la consulta de tipo de cambio', ['error' => $message]);
+            Log::warning('ExchangeRateService: Migo rechazo la consulta de tipo de cambio, se intenta con decolecta.com', ['error' => $message]);
 
-            return ['success' => false, 'message' => 'Migo respondió: '.$message];
+            return $this->fetchFromDecolectaAndStore($date, $user, 'primera consulta no se encontro cambios en MIGO.PE');
         } catch (\Exception $e) {
-            Log::error('ExchangeRateService: no se pudo contactar a Migo', ['error' => $e->getMessage()]);
+            Log::error('ExchangeRateService: no se pudo contactar a Migo, se intenta con decolecta.com', ['error' => $e->getMessage()]);
 
-            return ['success' => false, 'message' => 'No se pudo conectar con el servicio de tipo de cambio (Migo): '.$e->getMessage()];
+            return $this->fetchFromDecolectaAndStore($date, $user, 'primera consulta no se encontro cambios en MIGO.PE');
         }
 
+        // Respuesta invalida de Migo (token rechazado devuelve "Unauthenticated."):
+        // usar la alternativa decolecta.com.
         if (empty($data['success']) || empty($data['fecha'])) {
-            return [
-                'success' => false,
-                'message' => 'La respuesta de Migo no contiene un tipo de cambio válido: '.json_encode($data, JSON_UNESCAPED_UNICODE),
-            ];
+            Log::warning('ExchangeRateService: respuesta de Migo invalida, se intenta con decolecta.com', ['respuesta' => $data]);
+
+            return $this->fetchFromDecolectaAndStore($date, $user, 'primera consulta no se encontro cambios en MIGO.PE');
         }
 
         $rate = SaleExchangeRate::updateOrCreate(
@@ -147,8 +153,90 @@ class ExchangeRateService
 
         return [
             'success' => true,
-            'message' => 'Tipo de cambio actualizado correctamente.',
+            'message' => 'Tipo de cambio actualizado correctamente. Fuente: '.self::friendlySource($source),
             'data' => $rate->toArray(),
+            'source_label' => self::friendlySource($source),
+        ];
+    }
+
+    /**
+     * Consulta el tipo de cambio SUNAT a decolecta.com (alternativa cuando Migo
+     * no responde o rechaza el token) y lo guarda en la tabla.
+     *
+     * curl -H 'Accept: application/json' -H "Authorization: Bearer $TOKEN" \
+     *   https://api.decolecta.com/v1/tipo-cambio/sunat?date=2024-03-18
+     *
+     * @param  string|null  $date  Fecha Y-m-d; null usa el dia actual.
+     * @param  mixed  $user  Usuario que origino la consulta (para el boton manual).
+     * @param  string  $notaInicial  Prefijo informativo cuando la falla de Migo ya se detecto antes.
+     * @return array{success: bool, message: string, data?: array}
+     */
+    public function fetchFromDecolectaAndStore(?string $date = null, $user = null, string $notaInicial = ''): array
+    {
+        $prefix = $notaInicial !== '' ? $notaInicial.', ' : '';
+
+        $token = Parameter::where('parameter_code', self::DECOLECTA_TOKEN_PARAMETER)->value('value_default');
+
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'message' => 'No hay alternativa disponible: falta el token de decolecta.com (parámetro P000012) y Migo no respondió.',
+            ];
+        }
+
+        $endpoint = $date ? '/v1/tipo-cambio/sunat?date='.$date : '/v1/tipo-cambio/sunat';
+
+        // URL completa por la misma razon que en fetchAndStore(): evitar la
+        // union base_uri+ruta de Guzzle.
+        $client = new Client(['timeout' => 15]);
+
+        try {
+            $response = $client->get(self::BASE_DECOLECTA.$endpoint, [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer '.$token,
+                ],
+            ]);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+        } catch (ClientException $e) {
+            $body = json_decode($e->getResponse()->getBody()->getContents(), true);
+            $message = $body['message'] ?? 'Error de la API de decolecta.com (HTTP '.$e->getResponse()->getStatusCode().')';
+
+            Log::error('ExchangeRateService: decolecta.com rechazo la consulta', ['error' => $message]);
+
+            return ['success' => false, 'message' => $prefix.'decolecta.com respondió: '.$message];
+        } catch (\Exception $e) {
+            Log::error('ExchangeRateService: no se pudo contactar a decolecta.com', ['error' => $e->getMessage()]);
+
+            return ['success' => false, 'message' => $prefix.'No se pudo conectar con la alternativa decolecta.com: '.$e->getMessage()];
+        }
+
+        if (empty($data['sell_price']) || empty($data['date'])) {
+            return [
+                'success' => false,
+                'message' => $prefix.'La respuesta de decolecta.com no contiene un tipo de cambio válido: '.json_encode($data, JSON_UNESCAPED_UNICODE),
+            ];
+        }
+
+        $rate = SaleExchangeRate::updateOrCreate(
+            [
+                'currency_code' => $data['base_currency'] ?? 'USD',
+                'rate_date' => Carbon::parse($data['date'])->format('Y-m-d'),
+            ],
+            [
+                'purchase_rate' => (float) $data['buy_price'],
+                'sale_rate' => (float) $data['sell_price'],
+                'source' => 'decolecta',
+                'fetched_by' => $user instanceof User ? $user->id : $user,
+            ]
+        );
+
+        return [
+            'success' => true,
+            'message' => $prefix.'haciendo consulta alternativa a SUNAT en decolecta.com, tipo de cambio guardado correctamente.',
+            'data' => $rate->toArray(),
+            'source_label' => self::friendlySource('decolecta'),
         ];
     }
 
@@ -157,7 +245,7 @@ class ExchangeRateService
      * marcado como desactualizado. Nunca devuelve null sin informacion si
      * existe historial (para no bloquear ventas).
      *
-     * @return array{rate: string, date: string, purchase: string, sale: string, is_stale: bool, source: string}|null
+     * @return array{rate: string, date: string, purchase: string, sale: string, is_stale: bool, source: string, source_label: string}|null
      */
     public function getCurrentRate(string $currencyCode = 'USD'): ?array
     {
@@ -180,6 +268,53 @@ class ExchangeRateService
             'date' => $rateDate->format('Y-m-d'),
             'is_stale' => $rateDate->toDateString() !== $today,
             'source' => $rate->source,
+            'source_label' => self::friendlySource($rate->source),
+        ];
+    }
+
+    /**
+     * Etiqueta legible del origen del dato, para mostrar al usuario de donde
+     * viene la informacion (SUNAT via Migo, SUNAT via decolecta.com, etc.).
+     */
+    public static function friendlySource(?string $source): string
+    {
+        return match ($source) {
+            self::SOURCE_MIGO => 'SUNAT vía Migo (migo.pe)',
+            'decolecta' => 'SUNAT vía decolecta.com',
+            self::SOURCE_MANUAL => 'SUNAT vía Migo (consulta manual)',
+            default => (string) $source,
+        };
+    }
+
+    /**
+     * TC vigente EN una fecha dada (el ultimo publicado con fecha <= a esa dia).
+     * Sirve para comprobantes que se emiten dias despues de la compra: se usa
+     * el TC que estaba activo cuando el cliente pago.
+     *
+     * @return array{rate: string, date: string, purchase: string, sale: string, is_stale: bool, source: string, source_label: string}|null
+     */
+    public function getCurrentRateForDate(string $currencyCode, ?string $date = null): ?array
+    {
+        $target = $date ? Carbon::parse($date)->toDateString() : Carbon::today()->toDateString();
+
+        $rate = SaleExchangeRate::where('currency_code', $currencyCode)
+            ->whereDate('rate_date', '<=', $target)
+            ->orderByDesc('rate_date')
+            ->first();
+
+        // Si no hay registro historico anterior a esa fecha, usar el ultimo conocido.
+        if (! $rate) {
+            return $this->getCurrentRate($currencyCode);
+        }
+
+        return [
+            'rate' => $rate->sale_rate,
+            'purchase' => $rate->purchase_rate,
+            'sale' => $rate->sale_rate,
+            'date' => Carbon::parse($rate->rate_date)->toDateString(),
+            'is_stale' => Carbon::parse($rate->rate_date)->toDateString() !== $target,
+            'source' => $rate->source,
+            'source_label' => self::friendlySource($rate->source),
         ];
     }
 
