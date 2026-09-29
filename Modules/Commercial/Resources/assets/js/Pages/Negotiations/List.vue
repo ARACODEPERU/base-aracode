@@ -34,6 +34,28 @@ const isNegotiationManager = computed(() => authRoles.value.some((role) => ["Adm
 const canManage = (negotiation) =>
     isNegotiationManager.value || negotiation.created_by === page.props.auth?.user?.id;
 
+// Estados posteriores a la confirmacion del alumno: ahi ya pueden existir la persona, su
+// cuenta de usuario, el alumno, la venta y el comprobante, asi que el borrado es sensible
+// y pide la contrasena de quien lo ejecuta. Una negociacion confirmada ademas solo la puede
+// borrar un administrador.
+const protectedStatuses = ["confirmada", "aprobada", "completada"];
+
+const requiresPassword = (negotiation) => protectedStatuses.includes(negotiation.status);
+
+const deleteBlocked = (negotiation) => negotiation.status === "confirmada" && !isNegotiationManager.value;
+
+const deleteTooltip = (negotiation) => {
+    if (deleteBlocked(negotiation)) {
+        return "Solo un administrador puede eliminar: el alumno confirmo sus datos";
+    }
+
+    if (requiresPassword(negotiation)) {
+        return "Eliminar (pide tu contrasena)";
+    }
+
+    return "Eliminar";
+};
+
 const statusByValue = (value) => props.statuses.find((item) => item.value === value);
 
 const paymentMethodLabel = (value) => props.paymentMethods.find((item) => item.value === value)?.label || value;
@@ -76,10 +98,18 @@ const copyLink = (negotiation) => {
 };
 
 const destroy = (negotiation) => {
+    const needsPassword = requiresPassword(negotiation);
+
     Swal2.fire({
         title: "Estas seguro?",
-        text: `Esta accion eliminara permanentemente la negociacion ${negotiation.title}.`,
+        text: needsPassword
+            ? `Se eliminara la negociacion ${negotiation.title}. Se conservan el cliente, su cuenta de usuario, la venta, la boleta o comprobante y los registros del proceso: solo se elimina la negociacion. Ingresa tu contrasena para confirmar.`
+            : `Esta accion eliminara permanentemente la negociacion ${negotiation.title}.`,
         icon: "warning",
+        input: needsPassword ? "password" : undefined,
+        inputLabel: needsPassword ? "Contrasena del usuario que elimina" : undefined,
+        inputPlaceholder: needsPassword ? "Contrasena" : undefined,
+        inputAttributes: needsPassword ? { autocomplete: "current-password" } : undefined,
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
@@ -88,15 +118,28 @@ const destroy = (negotiation) => {
         showLoaderOnConfirm: true,
         padding: "2em",
         customClass: "sweet-alerts",
-        preConfirm: () => {
-            return axios.delete(route("comm_negotiations_destroy", negotiation.id)).then((res) => {
+        preConfirm: (password) => {
+            if (needsPassword && !password) {
+                Swal2.showValidationMessage("Ingresa tu contrasena para confirmar la eliminacion.");
+                return false;
+            }
+
+            return axios.delete(route("comm_negotiations_destroy", negotiation.id), {
+                data: needsPassword ? { password } : {},
+            }).then((res) => {
                 if (res.data && !res.data.success) {
                     Swal2.showValidationMessage(res.data.message || "Error al eliminar");
+                    return false;
                 }
 
-                return res;
+                return res.data;
             }).catch((error) => {
-                Swal2.showValidationMessage(error.response?.data?.message || "Error de conexion");
+                const message = error.response?.data?.errors?.password?.[0]
+                    || error.response?.data?.message
+                    || "Error de conexion";
+
+                Swal2.showValidationMessage(message);
+                return false;
             });
         },
         allowOutsideClick: () => !Swal2.isLoading(),
@@ -105,7 +148,7 @@ const destroy = (negotiation) => {
 
         Swal2.fire({
             title: "Enhorabuena",
-            text: "Se elimino correctamente",
+            text: result.value?.message || "Se elimino correctamente",
             icon: "success",
             padding: "2em",
             customClass: "sweet-alerts",
@@ -209,8 +252,8 @@ const destroy = (negotiation) => {
                                             v-can="'comm_negociaciones_eliminar'"
                                             type="button"
                                             class="btn btn-danger btn-sm"
-                                            :disabled="negotiation.status === 'confirmada'"
-                                            v-tippy="{ content: negotiation.status === 'confirmada' ? 'No se puede eliminar: el alumno confirmo sus datos' : 'Eliminar', placement: 'bottom'}"
+                                            :disabled="deleteBlocked(negotiation)"
+                                            v-tippy="{ content: deleteTooltip(negotiation), placement: 'bottom'}"
                                             @click="destroy(negotiation)"
                                         >
                                             <font-awesome-icon :icon="faTrashAlt" />

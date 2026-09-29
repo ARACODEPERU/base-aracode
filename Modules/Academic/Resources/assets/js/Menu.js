@@ -13,7 +13,8 @@ import {
     faClock,
     faGavel,
     faHand,
-    faTags
+    faTags,
+    faBell
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuAcademic = {
@@ -101,6 +102,13 @@ const menuAcademic = {
             text: "Categorías/Tipo/Sector",
             icom: faTags,
             permissions: "aca_category_sector_type_modality",
+        },
+        {
+            route: route("aca_notifications"),
+            status: false,
+            text: "Notificaciones",
+            icom: faBell,
+            permissions: "aca_send_notifications",
         },
         {
             route: route("aca_certificate_list"),

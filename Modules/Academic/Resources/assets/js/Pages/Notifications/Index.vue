@@ -1,0 +1,744 @@
+<script setup>
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
+import Navigation from '@/Components/vristo/layout/Navigation.vue';
+import InputError from '@/Components/InputError.vue';
+import Swal2 from 'sweetalert2';
+import axios from 'axios';
+
+/**
+ * Notificaciones masivas de un programa de especializacion.
+ *
+ * El envio real ocurre en la cola (un mensaje cada 280 ms), asi que aqui solo
+ * se prepara la campana y se sigue su avance por sondeo: si se cierra el aviso
+ * o se sale de la pantalla, el proceso continua y al volver se retoma la
+ * campana que quedo en curso.
+ */
+const props = defineProps({
+    courses: { type: Array, default: () => [] },
+    channels: { type: Object, default: () => ({ vonage: false, whatsapp: false }) },
+    timeSuggestions: { type: Array, default: () => [] },
+    countryCode: { type: String, default: '51' },
+    intervalMs: { type: Number, default: 280 },
+    // Costo por SMS a Peru (USD) configurado en el modulo.
+    smsPricePeru: { type: Number, default: 0 },
+    activeCampaign: { type: Object, default: null },
+});
+
+/** Frecuencia del sondeo del avance (ms). */
+const POLL_MS = 1500;
+
+const form = ref({
+    course_id: '',
+    channel: props.channels.vonage ? 'sms' : 'whatsapp',
+    is_test: false,
+    message: '',
+    time_label: '',
+    test_numbers: '',
+});
+
+const errors = ref({});
+const audience = ref(null);
+const loadingAudience = ref(false);
+const submitting = ref(false);
+
+const campaign = ref(props.activeCampaign);
+const progressVisible = ref(Boolean(props.activeCampaign));
+const widgetHidden = ref(false);
+
+let pollTimer = null;
+
+const availableChannels = computed(() => {
+    const list = [];
+
+    if (props.channels.vonage) {
+        list.push({
+            value: 'sms',
+            label: 'SMS vía Vonage',
+            description: 'Mensaje de texto por la Messages API de Vonage (parametro SC-00001).',
+        });
+    }
+
+    if (props.channels.whatsapp) {
+        list.push({
+            value: 'whatsapp',
+            label: 'WhatsApp',
+            description: 'Inicia el flujo configurado en Plantillas / Flujos.',
+        });
+    }
+
+    return list;
+});
+
+const hasChannel = computed(() => availableChannels.value.length > 0);
+
+const channelLabel = computed(
+    () => availableChannels.value.find((channel) => channel.value === form.value.channel)?.label ?? '—'
+);
+
+const selectedCourse = computed(
+    () => props.courses.find((course) => String(course.id) === String(form.value.course_id))?.description ?? ''
+);
+
+/**
+ * Numeros del modo prueba detectados en el input, con la misma regla que el
+ * backend: cada uno debe venir completo con su codigo de pais.
+ */
+const testParsed = computed(() => {
+    const valid = [];
+    const invalid = [];
+
+    // Igual que el backend: se separa por coma y los espacios internos no
+    // parten la entrada ("+51 944 614 034" es un solo numero).
+    (form.value.test_numbers.split(/[,;\n\r]+/) ?? []).forEach((raw) => {
+        const token = raw.trim();
+
+        if (token === '') {
+            return;
+        }
+
+        let clean = token.replace(/\D+/g, '');
+
+        if (clean.startsWith('00')) {
+            clean = clean.substring(2);
+        }
+
+        if (clean.length < 8 || clean.length > 15) {
+            invalid.push(token);
+            return;
+        }
+
+        if (!valid.includes(clean)) {
+            valid.push(clean);
+        }
+    });
+
+    return { valid, invalid };
+});
+
+/** Total estimado de mensajes: numeros de prueba o audiencia del programa. */
+const estimatedTotal = computed(() =>
+    form.value.is_test ? testParsed.value.valid.length : audience.value?.total ?? 0
+);
+
+/** Tarifa unitaria del SMS en Peru, con los decimales que publica Vonage. */
+const smsPriceLabel = computed(() => Number(props.smsPricePeru || 0).toFixed(5));
+
+/** Costo referencial de la campana con la tarifa de Peru. */
+const estimatedCost = computed(() => (estimatedTotal.value * Number(props.smsPricePeru || 0)).toFixed(2));
+
+/** Texto exacto que saldria por SMS (mensaje + curso + tiempo). */
+const smsPreview = computed(() =>
+    [
+        form.value.message.trim(),
+        selectedCourse.value ? `Curso: ${selectedCourse.value}` : null,
+        form.value.time_label.trim() ? `Tiempo: ${form.value.time_label.trim()}` : null,
+    ]
+        .filter(Boolean)
+        .join('\n')
+);
+
+const smsLength = computed(() => smsPreview.value.length);
+
+const smsTooLong = computed(() => form.value.channel === 'sms' && smsLength.value > 160);
+
+const campaignActive = computed(() => campaign.value && !['completed', 'failed'].includes(campaign.value.status));
+
+const progressPercent = computed(() => campaign.value?.percent ?? 0);
+
+const showWidget = computed(() => Boolean(campaign.value) && !widgetHidden.value && !progressVisible.value);
+
+const notify = (title, text, icon) => {
+    Swal2.fire({ title, text, icon, padding: '2em', customClass: 'sweet-alerts' });
+};
+
+const fetchAudience = async () => {
+    audience.value = null;
+
+    // En modo prueba no se consulta la audiencia del programa: se envia
+    // unicamente a los numeros escritos a mano.
+    if (form.value.is_test || !form.value.course_id) {
+        return;
+    }
+
+    loadingAudience.value = true;
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_audience'), {
+            course_id: form.value.course_id,
+        });
+        audience.value = data;
+    } catch (error) {
+        errors.value.course_id = error.response?.data?.message || 'No se pudo calcular la audiencia.';
+    } finally {
+        loadingAudience.value = false;
+    }
+};
+
+const stopPolling = () => {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+};
+
+const poll = async () => {
+    if (!campaign.value) {
+        return;
+    }
+
+    try {
+        const { data } = await axios.get(route('aca_notifications_progress', campaign.value.id));
+        campaign.value = data;
+
+        if (!campaignActive.value) {
+            stopPolling();
+
+            if (data.status === 'completed') {
+                notify(
+                    'Envío finalizado',
+                    `${data.sent} enviado(s) y ${data.failed} fallido(s) de ${data.total}.`,
+                    data.failed > 0 ? 'warning' : 'success'
+                );
+            } else {
+                notify('Envío interrumpido', data.error_message || 'La campaña no pudo completarse.', 'error');
+            }
+        }
+    } catch (error) {
+        // Un fallo puntual del sondeo no cancela la campana: se reintenta luego.
+    }
+};
+
+const startPolling = () => {
+    stopPolling();
+    poll();
+
+    if (campaignActive.value) {
+        pollTimer = setInterval(poll, POLL_MS);
+    }
+};
+
+const submit = async () => {
+    errors.value = {};
+
+    if (!form.value.channel) {
+        errors.value.channel = 'Elige el canal de envío.';
+        return;
+    }
+
+    if (form.value.channel === 'whatsapp' && !form.value.time_label.trim()) {
+        errors.value.time_label = 'Indica el tiempo para el flujo de WhatsApp.';
+        return;
+    }
+
+    if (form.value.is_test) {
+        if (testParsed.value.valid.length === 0 && testParsed.value.invalid.length === 0) {
+            errors.value.test_numbers = 'Escribe al menos un número de prueba.';
+            return;
+        }
+
+        if (testParsed.value.invalid.length > 0) {
+            errors.value.test_numbers =
+                'Revisa estos números, deben ir completos con el código de país: ' + testParsed.value.invalid.join(', ');
+            return;
+        }
+    } else if (!form.value.course_id) {
+        errors.value.course_id = 'Elige el programa de especialización.';
+        return;
+    }
+
+    const confirmation = await Swal2.fire({
+        title: form.value.is_test ? 'Enviar notificaciones de prueba' : 'Enviar notificaciones',
+        html:
+            `Se enviarán <b>${estimatedTotal.value}</b> mensaje(s) por <b>${channelLabel.value}</b>` +
+            ` cada ${props.intervalMs} ms.` +
+            (form.value.is_test
+                ? '<br><br>Es un <b>envío de prueba</b>: solo llegarán a los números que escribiste.'
+                : '') +
+            '<br><br><b>Este proceso continuará aunque salgas.</b>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, enviar',
+        cancelButtonText: 'Cancelar',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+
+    if (!confirmation.isConfirmed) {
+        return;
+    }
+
+    submitting.value = true;
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_store'), {
+            course_id: form.value.course_id || null,
+            channel: form.value.channel,
+            is_test: form.value.is_test,
+            message: form.value.message,
+            time_label: form.value.time_label,
+            test_numbers: form.value.test_numbers,
+        });
+
+        campaign.value = data.campaign;
+        widgetHidden.value = false;
+        progressVisible.value = true;
+        startPolling();
+
+        Swal2.fire({
+            title: 'Envío encolado',
+            text: data.message,
+            icon: 'success',
+            timer: 3000,
+            showConfirmButton: false,
+            padding: '2em',
+            customClass: 'sweet-alerts',
+        });
+    } catch (error) {
+        if (error.response?.status === 422) {
+            errors.value = error.response.data.errors ?? {};
+            notify('Revisa el formulario', Object.values(errors.value)[0]?.[0] ?? 'Hay datos incompletos.', 'warning');
+        } else {
+            notify('Error', error.response?.data?.message || 'No se pudo iniciar el envío.', 'error');
+        }
+    } finally {
+        submitting.value = false;
+    }
+};
+
+const closeProgress = () => {
+    progressVisible.value = false;
+};
+
+const openProgress = () => {
+    widgetHidden.value = false;
+    progressVisible.value = true;
+};
+
+const hideWidget = () => {
+    widgetHidden.value = true;
+};
+
+watch(
+    () => form.value.course_id,
+    () => fetchAudience()
+);
+
+// Al activar el modo prueba se ignora la audiencia del programa (y al
+// desactivarlo se vuelve a calcular para el programa elegido).
+watch(
+    () => form.value.is_test,
+    (isTest) => {
+        audience.value = null;
+        errors.value = {};
+
+        if (!isTest) {
+            fetchAudience();
+        }
+    }
+);
+
+onMounted(() => {
+    if (!availableChannels.value.some((channel) => channel.value === form.value.channel)) {
+        form.value.channel = availableChannels.value[0]?.value ?? '';
+    }
+
+    if (campaign.value) {
+        startPolling();
+    }
+});
+
+onBeforeUnmount(() => {
+    stopPolling();
+});
+</script>
+
+<template>
+    <AppLayout title="Notificaciones">
+        <Navigation
+            :routeModule="route('aca_dashboard')"
+            :titleModule="'Académico'"
+            :data="[{ title: 'Notificaciones' }]"
+        />
+
+        <div class="pt-5">
+            <div class="mb-5">
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Notificaciones masivas</h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Envía un aviso a los alumnos matriculados en un programa de especialización y a quienes tienen
+                    suscripción activa y vigente hoy. Los mensajes salen en segundo plano, uno cada
+                    {{ intervalMs }} ms.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                <!-- Formulario de la campaña -->
+                <div class="panel lg:col-span-2">
+                    <div class="mb-5">
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Programa de especialización
+                            <span v-if="form.is_test" class="font-normal text-gray-400">(opcional en modo prueba)</span>
+                        </label>
+                        <select v-model="form.course_id" class="form-select w-full">
+                            <option value="">Selecciona un programa...</option>
+                            <option v-for="course in courses" :key="course.id" :value="course.id">
+                                {{ course.description }}
+                            </option>
+                        </select>
+                        <InputError :message="errors.course_id?.[0] ?? errors.course_id" class="mt-1" />
+                        <p v-if="!courses.length" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                            No hay cursos de tipo "Programas de Especialización" registrados.
+                        </p>
+                    </div>
+
+                    <!-- Modo prueba -->
+                    <div class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 dark:border-zinc-700">
+                        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <input v-model="form.is_test" type="checkbox" class="form-checkbox" />
+                            <span>Modo prueba (enviar solo a números específicos)</span>
+                        </label>
+
+                        <div v-if="form.is_test" class="mt-3">
+                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Números de prueba
+                            </label>
+                            <input
+                                v-model="form.test_numbers"
+                                type="text"
+                                class="form-input w-full"
+                                placeholder="51944614034, 51943781122, 5298765432156"
+                            />
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Escribe los números completos, con su código de país, separados por coma. Para el envío se
+                                usan tal cual: no se les agrega ni quita ningún código.
+                            </p>
+
+                            <p class="mt-2 text-xs font-medium text-primary">
+                                {{ testParsed.valid.length }} número(s) detectado(s)
+                            </p>
+                            <p v-if="testParsed.invalid.length" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                Revisa: {{ testParsed.invalid.join(', ') }} (incompletos o sin código de país).
+                            </p>
+
+                            <InputError :message="errors.test_numbers?.[0] ?? errors.test_numbers" class="mt-1" />
+                        </div>
+                    </div>
+
+                    <!-- Audiencia estimada -->
+                    <div v-if="form.is_test" class="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                        <b>Modo prueba.</b> El mensaje se enviará únicamente a los
+                        {{ testParsed.valid.length }} número(s) de prueba indicado(s), no a los alumnos del programa.
+                        El programa, si lo eliges, solo aporta el nombre del curso.
+                    </div>
+
+                    <div v-else-if="loadingAudience" class="mb-5 text-sm text-gray-500 dark:text-gray-400">
+                        Calculando la audiencia...
+                    </div>
+
+                    <div
+                        v-else-if="audience"
+                        class="mb-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                    >
+                        <p class="font-medium text-gray-700 dark:text-gray-200">Audiencia de esta campaña</p>
+                        <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <div>
+                                <span class="block text-lg font-semibold text-gray-900 dark:text-white">{{ audience.program }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Del programa</span>
+                            </div>
+                            <div>
+                                <span class="block text-lg font-semibold text-gray-900 dark:text-white">{{ audience.subscriptions }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Suscripción activa</span>
+                            </div>
+                            <div>
+                                <span class="block text-lg font-semibold text-primary">{{ audience.total }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Mensajes a enviar</span>
+                            </div>
+                            <div>
+                                <span class="block text-lg font-semibold text-gray-900 dark:text-white">{{ audience.skipped }}</span>
+                                <span class="text-xs text-gray-500 dark:text-gray-400">Quedan fuera</span>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            "Quedan fuera": sin teléfono válido, teléfono repetido o personas que ya estaban en el otro grupo.
+                        </p>
+                    </div>
+
+                    <!-- Canal -->
+                    <div class="mb-5">
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Canal de envío
+                        </label>
+
+                        <div v-if="hasChannel" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <button
+                                v-for="channel in availableChannels"
+                                :key="channel.value"
+                                type="button"
+                                class="rounded-lg border p-4 text-left transition"
+                                :class="
+                                    form.channel === channel.value
+                                        ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                        : 'border-gray-200 hover:border-primary/60 dark:border-zinc-700'
+                                "
+                                @click="form.channel = channel.value"
+                            >
+                                <span class="block text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ channel.label }}
+                                </span>
+                                <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                                    {{ channel.description }}
+                                </span>
+                            </button>
+                        </div>
+
+                        <div
+                            v-else
+                            class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+                        >
+                            No hay ningún canal disponible. Configura las credenciales de Vonage en el parámetro
+                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, o el ID del flujo en
+                            <b>Plantillas / Flujos</b> para habilitar WhatsApp.
+                        </div>
+
+                        <InputError :message="errors.channel?.[0] ?? errors.channel" class="mt-1" />
+                    </div>
+
+                    <!-- Mensaje -->
+                    <div class="mb-5">
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Mensaje
+                        </label>
+                        <textarea
+                            v-model="form.message"
+                            class="form-textarea w-full"
+                            rows="4"
+                            maxlength="480"
+                            placeholder="Escribe el mensaje que recibirán los alumnos..."
+                        ></textarea>
+                        <div class="mt-1 flex items-center justify-between">
+                            <InputError :message="errors.message?.[0] ?? errors.message" />
+                            <span
+                                class="text-xs"
+                                :class="smsTooLong ? 'font-semibold text-amber-600 dark:text-amber-400' : 'text-gray-400'"
+                            >
+                                {{ form.message.length }}/480 caracteres
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Tiempo -->
+                    <div class="mb-5">
+                        <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Tiempo
+                            <span v-if="form.channel === 'whatsapp'" class="text-red-500">*</span>
+                        </label>
+                        <input
+                            v-model="form.time_label"
+                            type="text"
+                            class="form-input w-full"
+                            list="aca-notification-times"
+                            maxlength="60"
+                            placeholder="Ej: 15 minutos"
+                        />
+                        <datalist id="aca-notification-times">
+                            <option v-for="suggestion in timeSuggestions" :key="suggestion" :value="suggestion"></option>
+                        </datalist>
+                        <InputError :message="errors.time_label?.[0] ?? errors.time_label" class="mt-1" />
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Se envía como la variable <b>tiempo</b> del flujo de WhatsApp y se agrega al final del SMS.
+                        </p>
+                    </div>
+
+                    <!-- Previsualización del SMS -->
+                    <div
+                        v-if="form.channel === 'sms' && smsPreview"
+                        class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-zinc-700"
+                    >
+                        <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Vista previa del SMS</p>
+                        <pre class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-200">{{ smsPreview }}</pre>
+                        <p v-if="smsTooLong" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                            Con {{ smsLength }} caracteres el SMS se enviará en varios segmentos.
+                        </p>
+                    </div>
+
+                    <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+                        El código de país de cada alumno se toma de su país registrado (incluido el país de los alumnos
+                        extranjeros) y se evita duplicarlo cuando el número ya lo trae. Solo si el alumno no tiene país
+                        registrado se asume {{ countryCode }}, y los números viajan siempre sin el símbolo "+".
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            :disabled="submitting || !hasChannel || campaignActive"
+                            @click="submit"
+                        >
+                            {{ submitting ? 'Enviando...' : 'Enviar notificaciones' }}
+                        </button>
+
+                        <span v-if="campaignActive" class="text-sm text-gray-500 dark:text-gray-400">
+                            Ya hay una campaña en curso (#{{ campaign.id }}): espera a que termine.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Aviso de continuidad -->
+                <div class="panel">
+                    <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">Cómo funciona</h2>
+                    <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                        <li>
+                            Los mensajes se encolan y salen <b>uno cada {{ intervalMs }} ms</b> para no saturar el
+                            servidor ni las APIs externas.
+                        </li>
+                        <li>
+                            <b>Este proceso continuará aunque salgas</b> de la pantalla o cierres el aviso: se ejecuta en
+                            la cola del servidor.
+                        </li>
+                        <li>Al volver a esta pantalla se retoma el avance de la campaña en curso.</li>
+                        <li>Al finalizar se muestra cuántos mensajes se enviaron y cuáles fallaron.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Pie de página: aviso de costos según el canal elegido -->
+            <div v-if="hasChannel" class="panel mt-5">
+                <div v-if="form.channel === 'sms'" class="flex items-start gap-3">
+                    <span class="text-xl leading-none">💵</span>
+                    <div class="text-sm">
+                        <p class="font-medium text-gray-900 dark:text-white">Costo del SMS vía Vonage</p>
+                        <p class="mt-1 text-gray-600 dark:text-gray-300">
+                            Cada SMS enviado por Vonage cuesta <b>${{ smsPriceLabel }}</b> para números de Perú; en otros
+                            países el precio varía según el destino.
+                        </p>
+                        <p v-if="estimatedTotal > 0" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Referencial con la tarifa de Perú (los números de otros países pueden costar distinto):
+                            {{ estimatedTotal }} mensaje(s) ≈ <b>${{ estimatedCost }}</b>.
+                        </p>
+                    </div>
+                </div>
+
+                <div v-else-if="form.channel === 'whatsapp'" class="flex items-start gap-3">
+                    <span class="text-xl leading-none">💬</span>
+                    <div class="text-sm">
+                        <p class="font-medium text-gray-900 dark:text-white">Costo del mensaje de WhatsApp</p>
+                        <p class="mt-1 text-gray-600 dark:text-gray-300">
+                            El costo por mensaje depende de tu proveedor de la API de WhatsApp: verifica la tarifa con tu
+                            proveedor antes de enviar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de progreso -->
+        <div v-if="progressVisible && campaign" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 p-4">
+            <div class="w-full max-w-xl rounded-lg bg-white p-6 shadow-lg dark:bg-[#0e1726]">
+                <div class="mb-4 flex items-start justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            {{ campaignActive ? 'Enviando notificaciones' : 'Resultado del envío' }}
+                        </h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {{ campaign.channel === 'sms' ? 'SMS vía Vonage' : 'WhatsApp' }} ·
+                            {{ campaign.course || 'Sin programa seleccionado' }}
+                        </p>
+                        <span
+                            v-if="campaign.is_test"
+                            class="mt-2 inline-block rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                        >
+                            Modo prueba
+                        </span>
+                    </div>
+                    <button type="button" class="text-2xl leading-none text-gray-400 hover:text-gray-600" @click="closeProgress">
+                        &times;
+                    </button>
+                </div>
+
+                <div
+                    class="mb-4 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm font-medium text-primary dark:bg-primary/20"
+                >
+                    Este proceso continuará aunque salgas.
+                </div>
+
+                <div class="mb-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
+                    <span>Avance</span>
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ progressPercent }}%</span>
+                </div>
+                <div class="mb-4 h-2.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-700">
+                    <div
+                        class="h-full rounded-full bg-primary transition-all duration-500"
+                        :style="{ width: progressPercent + '%' }"
+                    ></div>
+                </div>
+
+                <div class="mb-4 grid grid-cols-3 gap-3 text-center text-sm">
+                    <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800">
+                        <span class="block text-lg font-semibold text-gray-900 dark:text-white">{{ campaign.sent }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Enviados</span>
+                    </div>
+                    <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800">
+                        <span class="block text-lg font-semibold text-red-500">{{ campaign.failed }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Fallidos</span>
+                    </div>
+                    <div class="rounded-lg bg-gray-50 p-3 dark:bg-zinc-800">
+                        <span class="block text-lg font-semibold text-gray-900 dark:text-white">{{ campaign.total }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                    </div>
+                </div>
+
+                <div v-if="campaignActive" class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                    Enviando a:
+                    <span class="font-semibold text-gray-900 dark:text-white">{{ campaign.current_phone || 'preparando el envío...' }}</span>
+                </div>
+
+                <div v-if="!campaignActive && campaign.errors?.length" class="mb-4 max-h-40 overflow-auto rounded-lg bg-gray-50 p-3 dark:bg-zinc-800">
+                    <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Números con error</p>
+                    <ul class="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                        <li v-for="(item, index) in campaign.errors" :key="index">
+                            <b>{{ item.phone }}</b> — {{ item.error }}
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button v-if="campaignActive" type="button" class="btn btn-outline-primary" @click="closeProgress">
+                        Cerrar aviso (continúa en segundo plano)
+                    </button>
+                    <button v-else type="button" class="btn btn-primary" @click="closeProgress">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Widget flotante: la campaña sigue viva aunque se cierre el aviso -->
+        <div
+            v-if="showWidget"
+            class="fixed bottom-5 right-5 z-[998] w-72 rounded-lg border border-gray-200 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-[#0e1726]"
+        >
+            <div class="mb-2 flex items-start justify-between gap-2">
+                <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ campaignActive ? 'Envío en curso' : 'Envío finalizado' }}{{ campaign.is_test ? ' (prueba)' : '' }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ campaign.sent }} enviados · {{ campaign.failed }} fallidos de {{ campaign.total }}
+                    </p>
+                </div>
+                <button type="button" class="text-lg leading-none text-gray-400 hover:text-gray-600" @click="hideWidget">
+                    &times;
+                </button>
+            </div>
+
+            <div class="mb-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-zinc-700">
+                <div class="h-full rounded-full bg-primary transition-all duration-500" :style="{ width: progressPercent + '%' }"></div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500 dark:text-gray-400">{{ progressPercent }}%</span>
+                <button type="button" class="text-xs font-medium text-primary hover:underline" @click="openProgress">
+                    Ver detalle
+                </button>
+            </div>
+        </div>
+    </AppLayout>
+</template>

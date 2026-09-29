@@ -315,6 +315,22 @@ class IntegrationhubController extends Controller
             $url = str_replace('{' . $key . '}', rawurlencode((string) $value), $url);
         }
 
+        // Placeholders que no tienen un campo de "Ruta URL" configurado pero si
+        // llegan en field_values (ej: contact_id y flow_id del flujo de
+        // Chatlevel). Sin esto la peticion viaja con las llaves literales, la
+        // API responde 404 y el flujo nunca arranca.
+        foreach ($fieldValueOverrides as $key => $value) {
+            if (!is_string($key) || $key === '' || !is_scalar($value)) {
+                continue;
+            }
+
+            $placeholder = '{' . $key . '}';
+
+            if (str_contains($url, $placeholder)) {
+                $url = str_replace($placeholder, rawurlencode((string) $value), $url);
+            }
+        }
+
         // Query parameters
         $queryParams = [];
 
@@ -608,10 +624,14 @@ class IntegrationhubController extends Controller
                 'headers' => $e->getResponse()->getHeaders(),
                 'body' => $responseBody,
             ];
+            // Algunas APIs devuelven "message" o "error" como objeto o arreglo
+            // (ej: Chatlevel: {"error":{"code":404,"message":"..."}}). La
+            // columna error_message es de texto, asi que un arreglo lanzaba
+            // "Array to string conversion" y escondia el error real.
             $externalMessage = is_array($responseBody)
                 ? ($responseBody['message'] ?? $responseBody['error'] ?? null)
                 : trim(preg_replace('/\s+/', ' ', strip_tags((string) $responseBody)));
-            $externalMessage = $externalMessage ?: $e->getMessage();
+            $externalMessage = $this->stringifyExternalMessage($externalMessage) ?: $e->getMessage();
 
             // Save failed log
             $logData['status'] = 'failed';
@@ -820,6 +840,17 @@ class IntegrationhubController extends Controller
             [
                 'flow_id' => '1780844285916',
                 'label' => 'Saludo de cumpleaños para Docentes',
+            ]
+        );
+
+        // Auto-crear el registro para las notificaciones de cursos del modulo
+        // Academico si no existe. Se crea con el ID vacio a proposito: mientras
+        // no se defina, la opcion de WhatsApp no se ofrece en esa pantalla.
+        IntegrationFlowId::firstOrCreate(
+            ['key' => 'aca_course_notification'],
+            [
+                'flow_id' => '',
+                'label' => 'Notificación de curso (Académico)',
             ]
         );
 
@@ -1638,6 +1669,28 @@ class IntegrationhubController extends Controller
             || str_contains($keyLower, 'api_key')
             || str_contains($keyLower, 'apikey')
             || str_contains($keyLower, 'authorization');
+    }
+
+    /**
+     * Convierte a texto el mensaje devuelto por una API externa.
+     *
+     * Algunas APIs responden "message" o "error" como objeto o arreglo; guardar
+     * ese valor directo en error_message lanzaba "Array to string conversion" y
+     * el error original de la API nunca llegaba a verse.
+     */
+    private function stringifyExternalMessage(mixed $value): string
+    {
+        if (is_null($value)) {
+            return '';
+        }
+
+        if (is_scalar($value)) {
+            return trim(preg_replace('/\s+/', ' ', strip_tags((string) $value)) ?? '');
+        }
+
+        $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return $encoded === false ? '' : $encoded;
     }
 
     /**

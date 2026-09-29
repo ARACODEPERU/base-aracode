@@ -29,6 +29,7 @@ use Modules\Academic\Http\Controllers\AcaExamQuestionController;
 use Modules\Academic\Http\Controllers\AcaGradeManagementController;
 use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
+use Modules\Academic\Http\Controllers\AcaNotificationController;
 use Modules\Academic\Http\Controllers\AcaReportsController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
@@ -437,6 +438,27 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->name('test2');
     Route::get('test3', [AcaCertificateController::class, 'test3'])
         ->name('test3');
+
+    /*
+     * Notificaciones masivas de programas de especializacion (SMS via Vonage o
+     * WhatsApp por Integrationhub). Solo admin y Administrador tienen el
+     * permiso al inicio (migracion
+     * 2026_09_28_000001_add_aca_send_notifications_permission).
+     */
+    Route::middleware(['middleware' => 'permission:aca_send_notifications'])
+        ->group(function () {
+            Route::get('notifications', [AcaNotificationController::class, 'index'])
+                ->name('aca_notifications');
+
+            Route::post('notifications/audience', [AcaNotificationController::class, 'audience'])
+                ->name('aca_notifications_audience');
+
+            Route::post('notifications/store', [AcaNotificationController::class, 'store'])
+                ->name('aca_notifications_store');
+
+            Route::get('notifications/{id}/progress', [AcaNotificationController::class, 'progress'])
+                ->name('aca_notifications_progress');
+        });
 
     // ////////////fin de suscripciones
 
