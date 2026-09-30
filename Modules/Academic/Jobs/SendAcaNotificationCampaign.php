@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaNotificationCampaign;
 use Modules\Academic\Entities\AcaNotificationCampaignRecipient;
+use Modules\Academic\Services\TelegramCourseNotifier;
 use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;
 
@@ -46,7 +47,11 @@ class SendAcaNotificationCampaign implements ShouldQueue
     {
     }
 
-    public function handle(VonageSmsService $vonage, WhatsappCourseNotifier $whatsapp): void
+    public function handle(
+        VonageSmsService $vonage,
+        WhatsappCourseNotifier $whatsapp,
+        TelegramCourseNotifier $telegram
+    ): void
     {
         $campaign = AcaNotificationCampaign::with('course')->find($this->campaignId);
 
@@ -75,7 +80,8 @@ class SendAcaNotificationCampaign implements ShouldQueue
                 ->get();
 
             foreach ($recipients as $recipient) {
-                $campaign->update(['current_phone' => $recipient->phone]);
+                // En Telegram no hay telefono: el avance muestra el chat_id.
+                $campaign->update(['current_phone' => $recipient->phone ?: $recipient->chat_id]);
 
                 try {
                     if ($campaign->channel === 'whatsapp') {
@@ -88,8 +94,13 @@ class SendAcaNotificationCampaign implements ShouldQueue
                             $time,
                             $recipient->student_id ? $recipient->name : 'Prueba'
                         );
+                    } elseif ($campaign->channel === 'telegram') {
+                        $telegram->send(
+                            (string) $recipient->chat_id,
+                            $this->messageText($campaign->message, $courseName, $time)
+                        );
                     } else {
-                        $vonage->send($recipient->phone, $this->smsText($campaign->message, $courseName, $time));
+                        $vonage->send($recipient->phone, $this->messageText($campaign->message, $courseName, $time));
                     }
 
                     $recipient->update([
@@ -144,9 +155,10 @@ class SendAcaNotificationCampaign implements ShouldQueue
     }
 
     /**
-     * Texto del SMS: mensaje del administrador mas el curso y el tiempo.
+     * Texto que sale por SMS y por Telegram: mensaje del administrador mas el
+     * curso y el tiempo.
      */
-    public function smsText(?string $message, string $courseName, ?string $time): string
+    public function messageText(?string $message, string $courseName, ?string $time): string
     {
         $courseName = trim($courseName);
         $time = trim((string) $time);
@@ -158,6 +170,14 @@ class SendAcaNotificationCampaign implements ShouldQueue
         ], fn (?string $part) => $part !== null && $part !== '');
 
         return implode("\n", $parts);
+    }
+
+    /**
+     * Alias del texto del SMS (nombre con el que se publico originalmente).
+     */
+    public function smsText(?string $message, string $courseName, ?string $time): string
+    {
+        return $this->messageText($message, $courseName, $time);
     }
 
     /**

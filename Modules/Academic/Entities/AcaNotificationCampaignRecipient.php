@@ -25,6 +25,7 @@ class AcaNotificationCampaignRecipient extends Model
         'person_id',
         'name',
         'phone',
+        'chat_id',
         'source',
         'status',
         'error_message',

@@ -650,7 +650,7 @@ class IntegrationhubController extends Controller
                 'status_code' => $statusCode,
                 'request' => $requestData ?? [
                     'method' => $endpoint->http_method,
-                    'url' => $url,
+                    'url' => $maskedUrl,
                     'headers' => $headers,
                     'query' => $queryParams,
                     'body_type' => $endpoint->body_type,
@@ -680,7 +680,7 @@ class IntegrationhubController extends Controller
                 'status_code' => 500,
                 'request' => $requestData ?? [
                     'method' => $endpoint->http_method,
-                    'url' => $url,
+                    'url' => $maskedUrl,
                     'headers' => $headers,
                     'query' => $queryParams,
                     'body_type' => $endpoint->body_type,
@@ -1624,6 +1624,11 @@ class IntegrationhubController extends Controller
      */
     private function maskUrlSensitiveParams(string $url, array $sensitiveKeys = []): string
     {
+        // El token de un bot de Telegram viaja en la ruta (api.telegram.org/bot<id>:<secreto>),
+        // donde parse_url no lo reconoce como parametro: se enmascara siempre
+        // para que el Historial no guarde la credencial del bot.
+        $url = preg_replace('#(/bot)\d+:[A-Za-z0-9_\-]+#', '$1***', $url) ?? $url;
+
         $parts = parse_url($url);
         if (empty($parts['query'])) {
             return $url;

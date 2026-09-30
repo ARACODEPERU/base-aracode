@@ -13,7 +13,7 @@ return [
     ],
 
     /*
-     * Notificaciones masivas de cursos (SMS via Vonage y WhatsApp por
+     * Notificaciones masivas de cursos (SMS via Vonage, WhatsApp y Telegram por
      * Integrationhub) enviadas desde la pestana Notificaciones del Academico.
      */
     'notifications' => [
@@ -55,5 +55,12 @@ return [
             'create_contact_endpoint' => 'create_contact',
             'endpoint' => 'Inicio_contacto_con_flow_id',
         ],
+
+        /*
+         * Telegram: se envia por la integracion Telegram_bot de Integrationhub
+         * usando el chat_id que cada alumno registro con el bot. El token y los
+         * endpoints viven en la configuracion del modulo Integrationhub
+         * (integrationhub.telegram), para no duplicar el parametro del sistema.
+         */
     ],
 ];

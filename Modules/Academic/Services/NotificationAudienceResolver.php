@@ -9,6 +9,7 @@ use Modules\Academic\Entities\AcaCourse;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Academic\Support\PhoneNumberFormatter;
+use Modules\Integrationhub\Entities\IntegrationTelegramContact;
 
 /**
  * Arma el publico de una campana de notificaciones de un programa de
@@ -19,6 +20,10 @@ use Modules\Academic\Support\PhoneNumberFormatter;
  *
  * Se deduplica por persona (gana la fila del programa) y por telefono ya
  * normalizado; quien no tiene un telefono utilizable queda fuera del envio.
+ *
+ * Telegram es la excepcion: no se envia por telefono sino por el chat_id que el
+ * alumno registro con el bot, asi que ese canal tiene sus propios metodos
+ * (resolveTelegram / countsTelegram / pendingTelegram).
  */
 class NotificationAudienceResolver
 {
@@ -58,6 +63,67 @@ class NotificationAudienceResolver
             // Sin telefono valido, con telefono repetido o personas que ya
             // venian en el otro grupo.
             'skipped' => max(0, $persons - $recipients->count()),
+        ];
+    }
+
+    /**
+     * Padron de una campana de Telegram.
+     *
+     * Son los mismos alumnos del programa mas los de suscripcion vigente, pero
+     * en lugar del telefono se entrega el chat_id que registraron con el bot.
+     * Quien no tiene chat activo queda fuera (por eso Telegram suele alcanzar a
+     * menos personas que el SMS o el WhatsApp).
+     *
+     * @return Collection<int, array{student_id: int|null, person_id: int|null, name: string, phone: null, chat_id: string, source: string}>
+     */
+    public function resolveTelegram(AcaCourse $course): Collection
+    {
+        return $this->normalizeTelegram(
+            $this->telegramProgramRows($course)->concat($this->telegramSubscriptionRows())
+        );
+    }
+
+    /**
+     * Personas del padron que todavia no registraron su chat_id de Telegram.
+     *
+     * Son las que necesitan un enlace de registro; una vez que abren el bot
+     * pasan al padron de resolveTelegram().
+     *
+     * @return Collection<int, array{student_id: int|null, person_id: int, name: string}>
+     */
+    public function pendingTelegram(AcaCourse $course): Collection
+    {
+        return $this->normalizeTelegramPending(
+            $this->telegramProgramRows($course)->concat($this->telegramSubscriptionRows())
+        );
+    }
+
+    /**
+     * Conteos de Telegram para la previsualizacion previa al envio.
+     *
+     * "skipped" es la diferencia entre el padron del curso y quienes tienen
+     * chat_id: esas personas quedan fuera del envio hasta que se registren.
+     *
+     * @return array{program: int, subscriptions: int, total: int, skipped: int}
+     */
+    public function countsTelegram(AcaCourse $course): array
+    {
+        $program = $this->telegramProgramRows($course);
+        $subscriptions = $this->telegramSubscriptionRows();
+
+        $recipients = $this->normalizeTelegram($program->concat($subscriptions));
+
+        $programPersons = $program->pluck('person_id')->filter()->unique();
+        $subscriptionPersons = $subscriptions->pluck('person_id')->filter()->unique();
+        $allPersons = $programPersons->concat($subscriptionPersons)->unique();
+
+        $subscribed = $this->subscribedChatsByPerson($allPersons->all());
+
+        return [
+            'program' => $programPersons->filter(fn ($id) => isset($subscribed[(int) $id]))->count(),
+            'subscriptions' => $subscriptionPersons->filter(fn ($id) => isset($subscribed[(int) $id]))->count(),
+            'total' => $recipients->count(),
+            'skipped' => max(0, $allPersons->count() - $recipients->count()),
         ];
     }
 
@@ -111,9 +177,27 @@ class NotificationAudienceResolver
      */
     private function subscriptionRows(): Collection
     {
+        $studentIds = $this->subscriptionStudentIds();
+
+        if ($studentIds === []) {
+            return collect();
+        }
+
+        return $this->peopleRows($studentIds)
+            ->map(fn ($row) => $this->withSource($row, 'suscripcion'));
+    }
+
+    /**
+     * Alumnos con suscripcion activa (status true) o vigente por fechas,
+     * replicando la regla de App\Services\JobOffersAccess::hasActiveSubscription().
+     *
+     * @return array<int, int>
+     */
+    private function subscriptionStudentIds(): array
+    {
         $today = Carbon::today();
 
-        $studentIds = AcaStudentSubscription::query()
+        return AcaStudentSubscription::query()
             ->where(function ($query) use ($today) {
                 $query->where('status', true)
                     ->orWhere(function ($q) use ($today) {
@@ -124,13 +208,6 @@ class NotificationAudienceResolver
             ->pluck('student_id')
             ->unique()
             ->all();
-
-        if ($studentIds === []) {
-            return collect();
-        }
-
-        return $this->peopleRows($studentIds)
-            ->map(fn ($row) => $this->withSource($row, 'suscripcion'));
     }
 
     /**
@@ -226,5 +303,150 @@ class NotificationAudienceResolver
         }
 
         return $name !== '' ? $name : 'Alumno ' . $personId;
+    }
+
+    /**
+     * Alumnos matriculados en el programa (aca_cap_registrations activas), sin
+     * exigir telefono: para Telegram lo que importa es el chat_id.
+     */
+    private function telegramProgramRows(AcaCourse $course): Collection
+    {
+        $studentIds = AcaCapRegistration::query()
+            ->where('course_id', $course->id)
+            ->where('status', true)
+            ->pluck('student_id')
+            ->unique()
+            ->all();
+
+        if ($studentIds === []) {
+            return collect();
+        }
+
+        return $this->telegramRows($studentIds)
+            ->map(fn ($row) => $this->withSource($row, 'programa'));
+    }
+
+    /**
+     * Alumnos con suscripcion activa o vigente, sin exigir telefono.
+     */
+    private function telegramSubscriptionRows(): Collection
+    {
+        $studentIds = $this->subscriptionStudentIds();
+
+        if ($studentIds === []) {
+            return collect();
+        }
+
+        return $this->telegramRows($studentIds)
+            ->map(fn ($row) => $this->withSource($row, 'suscripcion'));
+    }
+
+    /**
+     * Datos basicos de los alumnos (sin el telefono, que en Telegram es opcional).
+     */
+    private function telegramRows(array $studentIds): Collection
+    {
+        return AcaStudent::query()
+            ->join('people', 'people.id', '=', 'aca_students.person_id')
+            ->whereIn('aca_students.id', $studentIds)
+            ->get([
+                'aca_students.id as student_id',
+                'aca_students.person_id',
+                'people.short_name',
+                'people.full_name',
+            ]);
+    }
+
+    /**
+     * Chats activos por persona ({person_id: chat_id}) para las personas dadas.
+     *
+     * @param  array<int, int|string> $personIds
+     * @return array<int, string>
+     */
+    private function subscribedChatsByPerson(array $personIds): array
+    {
+        $personIds = array_values(array_unique(array_filter(array_map('intval', $personIds))));
+
+        if ($personIds === []) {
+            return [];
+        }
+
+        return IntegrationTelegramContact::query()
+            ->subscribed()
+            ->whereIn('person_id', $personIds)
+            ->pluck('chat_id', 'person_id')
+            ->mapWithKeys(fn ($chatId, $personId) => [(int) $personId => (string) $chatId])
+            ->all();
+    }
+
+    /**
+     * Deduplica por persona y devuelve solo a quienes no tienen chat activo.
+     */
+    private function normalizeTelegramPending(Collection $rows): Collection
+    {
+        $personIds = $rows->pluck('person_id')->filter()->unique()->all();
+        $chats = $this->subscribedChatsByPerson($personIds);
+
+        $seenPersons = [];
+        $pending = collect();
+
+        foreach ($rows as $row) {
+            $personId = (int) $row->person_id;
+
+            if ($personId === 0 || isset($seenPersons[$personId]) || isset($chats[$personId])) {
+                continue;
+            }
+
+            $seenPersons[$personId] = true;
+
+            $pending->push([
+                'student_id' => ((int) $row->student_id) ?: null,
+                'person_id' => $personId,
+                'name' => $this->name($row, $personId),
+            ]);
+        }
+
+        return $pending->values();
+    }
+
+    /**
+     * Deduplica por persona y por chat, y descarta a quien no tiene chat activo.
+     */
+    private function normalizeTelegram(Collection $rows): Collection
+    {
+        $personIds = $rows->pluck('person_id')->filter()->unique()->all();
+        $chats = $this->subscribedChatsByPerson($personIds);
+
+        $seenPersons = [];
+        $seenChats = [];
+        $recipients = collect();
+
+        foreach ($rows as $row) {
+            $personId = (int) $row->person_id;
+
+            if ($personId === 0 || isset($seenPersons[$personId])) {
+                continue;
+            }
+
+            $chatId = trim((string) ($chats[$personId] ?? ''));
+
+            if ($chatId === '' || isset($seenChats[$chatId])) {
+                continue;
+            }
+
+            $seenPersons[$personId] = true;
+            $seenChats[$chatId] = true;
+
+            $recipients->push([
+                'student_id' => ((int) $row->student_id) ?: null,
+                'person_id' => $personId,
+                'name' => $this->name($row, $personId),
+                'phone' => null,
+                'chat_id' => $chatId,
+                'source' => (string) ($row->source ?? 'programa'),
+            ]);
+        }
+
+        return $recipients->values();
     }
 }

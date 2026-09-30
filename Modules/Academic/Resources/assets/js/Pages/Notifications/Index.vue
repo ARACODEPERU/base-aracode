@@ -16,7 +16,9 @@ import axios from 'axios';
  */
 const props = defineProps({
     courses: { type: Array, default: () => [] },
-    channels: { type: Object, default: () => ({ vonage: false, whatsapp: false }) },
+    channels: { type: Object, default: () => ({ vonage: false, whatsapp: false, telegram: false }) },
+    // Usuario publico del bot de Telegram (@) cuando el canal esta habilitado.
+    telegramBotUsername: { type: String, default: null },
     timeSuggestions: { type: Array, default: () => [] },
     countryCode: { type: String, default: '51' },
     intervalMs: { type: Number, default: 280 },
@@ -30,7 +32,13 @@ const POLL_MS = 1500;
 
 const form = ref({
     course_id: '',
-    channel: props.channels.vonage ? 'sms' : 'whatsapp',
+    channel: props.channels.vonage
+        ? 'sms'
+        : props.channels.whatsapp
+          ? 'whatsapp'
+          : props.channels.telegram
+            ? 'telegram'
+            : '',
     is_test: false,
     message: '',
     time_label: '',
@@ -67,8 +75,20 @@ const availableChannels = computed(() => {
         });
     }
 
+    if (props.channels.telegram) {
+        list.push({
+            value: 'telegram',
+            label: 'Telegram',
+            description: 'Bot de Telegram (parámetro SC-00002): llega solo a los alumnos que registraron su chat_id.',
+        });
+    }
+
     return list;
 });
+
+/** Nombre visible del canal de una campana. */
+const channelNames = { sms: 'SMS vía Vonage', whatsapp: 'WhatsApp', telegram: 'Telegram' };
+const channelName = (value) => channelNames[value] ?? value;
 
 const hasChannel = computed(() => availableChannels.value.length > 0);
 
@@ -148,9 +168,20 @@ const progressPercent = computed(() => campaign.value?.percent ?? 0);
 
 const showWidget = computed(() => Boolean(campaign.value) && !widgetHidden.value && !progressVisible.value);
 
+/** Todos los enlaces en una sola cadena, para el boton "Copiar todos". */
+const allLinksText = computed(() =>
+    telegramLinks.value.map((item) => `${item.name}: ${item.link}`).join('\n')
+);
+
 const notify = (title, text, icon) => {
     Swal2.fire({ title, text, icon, padding: '2em', customClass: 'sweet-alerts' });
 };
+
+/** Enlaces de registro de Telegram generados para el programa elegido. */
+const telegramLinks = ref([]);
+const linksVisible = ref(false);
+const loadingTelegramLinks = ref(false);
+const registeringWebhook = ref(false);
 
 const fetchAudience = async () => {
     audience.value = null;
@@ -164,14 +195,81 @@ const fetchAudience = async () => {
     loadingAudience.value = true;
 
     try {
+        // El canal cambia el padron: Telegram cuenta por chat_id registrado.
         const { data } = await axios.post(route('aca_notifications_audience'), {
             course_id: form.value.course_id,
+            channel: form.value.channel,
         });
         audience.value = data;
     } catch (error) {
         errors.value.course_id = error.response?.data?.message || 'No se pudo calcular la audiencia.';
     } finally {
         loadingAudience.value = false;
+    }
+};
+
+/**
+ * Genera un enlace de registro de un solo uso por cada alumno del programa que
+ * todavia no tiene chat_id de Telegram registrado.
+ */
+const generateTelegramLinks = async () => {
+    errors.value = {};
+
+    if (!form.value.course_id) {
+        errors.value.course_id = 'Elige el programa de especialización.';
+        return;
+    }
+
+    loadingTelegramLinks.value = true;
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_telegram_links'), {
+            course_id: form.value.course_id,
+        });
+
+        telegramLinks.value = data.links ?? [];
+        linksVisible.value = true;
+
+        if (!telegramLinks.value.length) {
+            notify('Sin pendientes', data.message, 'info');
+        }
+    } catch (error) {
+        if (error.response?.status === 422) {
+            errors.value = error.response.data.errors ?? {};
+            notify('Revisa el formulario', Object.values(errors.value)[0]?.[0] ?? 'Hay datos incompletos.', 'warning');
+        } else {
+            notify('Error', error.response?.data?.message || 'No se pudieron generar los enlaces.', 'error');
+        }
+    } finally {
+        loadingTelegramLinks.value = false;
+    }
+};
+
+/** Alta del webhook del bot en Telegram (apunta a este sistema). */
+const registerTelegramWebhook = async () => {
+    registeringWebhook.value = true;
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_telegram_webhook'));
+        notify('Webhook registrado', `Telegram enviará los mensajes al bot a: ${data.url}`, 'success');
+    } catch (error) {
+        notify(
+            'Error',
+            error.response?.data?.errors?.webhook?.[0] || error.response?.data?.message || 'No se pudo registrar el webhook.',
+            'error'
+        );
+    } finally {
+        registeringWebhook.value = false;
+    }
+};
+
+/** Copia un texto al portapapeles (con aviso al usuario). */
+const copyToClipboard = async (text, message) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        notify('Copiado', message, 'success');
+    } catch (error) {
+        notify('No se pudo copiar', 'Copia el texto manualmente desde el listado.', 'warning');
     }
 };
 
@@ -229,6 +327,19 @@ const submit = async () => {
     if (form.value.channel === 'whatsapp' && !form.value.time_label.trim()) {
         errors.value.time_label = 'Indica el tiempo para el flujo de WhatsApp.';
         return;
+    }
+
+    if (form.value.channel === 'telegram') {
+        if (form.value.is_test) {
+            errors.value.is_test = 'El modo prueba solo aplica a SMS y WhatsApp.';
+            return;
+        }
+
+        if (audience.value && audience.value.total === 0) {
+            errors.value.course_id =
+                'Ningún alumno de este programa tiene su chat_id de Telegram registrado todavía. Genera los enlaces de registro y compártelos.';
+            return;
+        }
     }
 
     if (form.value.is_test) {
@@ -338,6 +449,21 @@ watch(
     }
 );
 
+// Cambiar de canal cambia el padron (Telegram cuenta por chat_id) y descarta
+// el modo prueba, que no aplica a Telegram.
+watch(
+    () => form.value.channel,
+    (channel) => {
+        errors.value = {};
+
+        if (channel === 'telegram' && form.value.is_test) {
+            form.value.is_test = false;
+        }
+
+        fetchAudience();
+    }
+);
+
 onMounted(() => {
     if (!availableChannels.value.some((channel) => channel.value === form.value.channel)) {
         form.value.channel = availableChannels.value[0]?.value ?? '';
@@ -393,10 +519,22 @@ onBeforeUnmount(() => {
 
                     <!-- Modo prueba -->
                     <div class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 dark:border-zinc-700">
-                        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                            <input v-model="form.is_test" type="checkbox" class="form-checkbox" />
+                        <label
+                            class="flex items-center gap-2 text-sm font-medium"
+                            :class="form.channel === 'telegram' ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'"
+                        >
+                            <input
+                                v-model="form.is_test"
+                                type="checkbox"
+                                class="form-checkbox"
+                                :disabled="form.channel === 'telegram'"
+                            />
                             <span>Modo prueba (enviar solo a números específicos)</span>
                         </label>
+                        <p v-if="form.channel === 'telegram'" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            No aplica a Telegram: ese canal envía al chat_id que cada alumno registró con el bot.
+                        </p>
+                        <InputError :message="errors.is_test?.[0] ?? errors.is_test" class="mt-1" />
 
                         <div v-if="form.is_test" class="mt-3">
                             <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -459,7 +597,12 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            "Quedan fuera": sin teléfono válido, teléfono repetido o personas que ya estaban en el otro grupo.
+                            <template v-if="form.channel === 'telegram'">
+                                "Quedan fuera": alumnos que todavía no registraron su chat de Telegram con el bot.
+                            </template>
+                            <template v-else>
+                                "Quedan fuera": sin teléfono válido, teléfono repetido o personas que ya estaban en el otro grupo.
+                            </template>
                         </p>
                     </div>
 
@@ -469,7 +612,7 @@ onBeforeUnmount(() => {
                             Canal de envío
                         </label>
 
-                        <div v-if="hasChannel" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div v-if="hasChannel" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <button
                                 v-for="channel in availableChannels"
                                 :key="channel.value"
@@ -496,11 +639,63 @@ onBeforeUnmount(() => {
                             class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                         >
                             No hay ningún canal disponible. Configura las credenciales de Vonage en el parámetro
-                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, o el ID del flujo en
-                            <b>Plantillas / Flujos</b> para habilitar WhatsApp.
+                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, el ID del flujo en
+                            <b>Plantillas / Flujos</b> para habilitar WhatsApp, o el token del bot en el parámetro
+                            <b>SC-00002</b> para habilitar Telegram.
                         </div>
 
                         <InputError :message="errors.channel?.[0] ?? errors.channel" class="mt-1" />
+                    </div>
+
+                    <!-- Registro de chat_id de Telegram -->
+                    <div
+                        v-if="form.channel === 'telegram'"
+                        class="mb-5 rounded-lg border border-sky-300 bg-sky-50 p-4 text-sm dark:border-sky-700 dark:bg-sky-900/20"
+                    >
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="text-gray-700 dark:text-gray-200">
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    Registro de Telegram
+                                    <span v-if="telegramBotUsername" class="font-normal text-gray-500 dark:text-gray-400">
+                                        (bot @{{ telegramBotUsername }})
+                                    </span>
+                                </p>
+                                <p class="mt-1">
+                                    Solo reciben por Telegram los alumnos que registraron su chat con el bot.
+                                    <template v-if="audience">
+                                        <b>{{ audience.total }}</b> del padrón ya están registrados y
+                                        <b>{{ audience.skipped }}</b> todavía no.
+                                    </template>
+                                    Genera un enlace personal (de un solo uso) para cada pendiente y compártelo.
+                                </p>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-primary"
+                                    :disabled="!form.course_id || loadingTelegramLinks"
+                                    @click="generateTelegramLinks"
+                                >
+                                    {{ loadingTelegramLinks ? 'Generando...' : 'Generar enlaces de registro' }}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-primary"
+                                    :disabled="registeringWebhook"
+                                    @click="registerTelegramWebhook"
+                                >
+                                    {{ registeringWebhook ? 'Registrando...' : 'Registrar webhook con Telegram' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            El webhook necesita que este sistema sea accesible por HTTPS público: es la dirección a la que
+                            Telegram entrega los mensajes que los alumnos le escriben al bot.
+                        </p>
+                        <InputError :message="errors.course_id?.[0] ?? errors.course_id" class="mt-1" />
                     </div>
 
                     <!-- Mensaje -->
@@ -545,16 +740,19 @@ onBeforeUnmount(() => {
                         </datalist>
                         <InputError :message="errors.time_label?.[0] ?? errors.time_label" class="mt-1" />
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Se envía como la variable <b>tiempo</b> del flujo de WhatsApp y se agrega al final del SMS.
+                            Se envía como la variable <b>tiempo</b> del flujo de WhatsApp y se agrega al final del SMS y
+                            del mensaje de Telegram.
                         </p>
                     </div>
 
-                    <!-- Previsualización del SMS -->
+                    <!-- Previsualización del mensaje (SMS y Telegram comparten texto) -->
                     <div
-                        v-if="form.channel === 'sms' && smsPreview"
+                        v-if="['sms', 'telegram'].includes(form.channel) && smsPreview"
                         class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-zinc-700"
                     >
-                        <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Vista previa del SMS</p>
+                        <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                            {{ form.channel === 'telegram' ? 'Vista previa del mensaje de Telegram' : 'Vista previa del SMS' }}
+                        </p>
                         <pre class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-200">{{ smsPreview }}</pre>
                         <p v-if="smsTooLong" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
                             Con {{ smsLength }} caracteres el SMS se enviará en varios segmentos.
@@ -628,6 +826,19 @@ onBeforeUnmount(() => {
                         </p>
                     </div>
                 </div>
+
+                <div v-else-if="form.channel === 'telegram'" class="flex items-start gap-3">
+                    <span class="text-xl leading-none">✈️</span>
+                    <div class="text-sm">
+                        <p class="font-medium text-gray-900 dark:text-white">Costo del mensaje de Telegram</p>
+                        <p class="mt-1 text-gray-600 dark:text-gray-300">
+                            La API de bots de Telegram no cobra por mensaje: solo hay límites de frecuencia de envío.
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Los alumnos que no registraron su chat con el bot no reciben el aviso.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -640,7 +851,7 @@ onBeforeUnmount(() => {
                             {{ campaignActive ? 'Enviando notificaciones' : 'Resultado del envío' }}
                         </h2>
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            {{ campaign.channel === 'sms' ? 'SMS vía Vonage' : 'WhatsApp' }} ·
+                            {{ channelName(campaign.channel) }} ·
                             {{ campaign.course || 'Sin programa seleccionado' }}
                         </p>
                         <span
@@ -696,7 +907,7 @@ onBeforeUnmount(() => {
                     <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Números con error</p>
                     <ul class="space-y-1 text-xs text-gray-600 dark:text-gray-300">
                         <li v-for="(item, index) in campaign.errors" :key="index">
-                            <b>{{ item.phone }}</b> — {{ item.error }}
+                            <b>{{ item.phone || (item.chat_id ? 'Chat ' + item.chat_id : '—') }}</b> — {{ item.error }}
                         </li>
                     </ul>
                 </div>
@@ -738,6 +949,73 @@ onBeforeUnmount(() => {
                 <button type="button" class="text-xs font-medium text-primary hover:underline" @click="openProgress">
                     Ver detalle
                 </button>
+            </div>
+        </div>
+
+        <!-- Modal de enlaces de registro de Telegram -->
+        <div v-if="linksVisible" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 p-4">
+            <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg bg-white p-6 shadow-lg dark:bg-[#0e1726]">
+                <div class="mb-4 flex items-start justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Enlaces de registro de Telegram</h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Un enlace por alumno, de un solo uso. Compártelo con cada uno: al abrirlo y pulsar Iniciar, el
+                            bot guarda su chat_id y desde ahí recibe las notificaciones.
+                        </p>
+                    </div>
+                    <button type="button" class="text-2xl leading-none text-gray-400 hover:text-gray-600" @click="linksVisible = false">
+                        &times;
+                    </button>
+                </div>
+
+                <div class="mb-3 flex justify-end">
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        @click="copyToClipboard(allLinksText, 'Todos los enlaces quedaron en el portapapeles.')"
+                    >
+                        Copiar todos
+                    </button>
+                </div>
+
+                <div class="max-h-80 overflow-auto rounded-lg border border-gray-200 dark:border-zinc-700">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-zinc-800 dark:text-gray-400">
+                            <tr>
+                                <th class="px-3 py-2">Alumno</th>
+                                <th class="px-3 py-2">Enlace</th>
+                                <th class="px-3 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="item in telegramLinks"
+                                :key="item.person_id"
+                                class="border-t border-gray-100 dark:border-zinc-800"
+                            >
+                                <td class="px-3 py-2 text-gray-700 dark:text-gray-200">{{ item.name }}</td>
+                                <td class="px-3 py-2">
+                                    <span class="block max-w-xs truncate text-xs text-gray-500 dark:text-gray-400">
+                                        {{ item.link }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-2 text-right">
+                                    <button
+                                        type="button"
+                                        class="text-xs font-medium text-primary hover:underline"
+                                        @click="copyToClipboard(item.link, 'Enlace copiado.')"
+                                    >
+                                        Copiar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                    <button type="button" class="btn btn-primary" @click="linksVisible = false">Cerrar</button>
+                </div>
             </div>
         </div>
     </AppLayout>

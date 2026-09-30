@@ -41,6 +41,7 @@ class IntegrationhubServiceProvider extends ServiceProvider
         $this->commands([
             \Modules\Integrationhub\Console\CarritoAbandonado::class,
             \Modules\Integrationhub\Console\BirthdayWhatsappSend::class,
+            \Modules\Integrationhub\Console\TelegramSetWebhook::class,
         ]);
     }
 
