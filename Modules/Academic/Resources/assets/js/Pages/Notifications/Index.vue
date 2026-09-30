@@ -177,6 +177,48 @@ const notify = (title, text, icon) => {
 };
 
 /**
+ * Mensaje de error legible.
+ *
+ * Los errores llegan de dos formas: como texto cuando los valida la pantalla y
+ * como lista cuando responde el servidor (422). Antes se leia siempre [0], y
+ * sobre un texto eso devolvia su primera letra: el error se pintaba como "N" y
+ * el boton parecia no hacer nada.
+ */
+const errorText = (key) => {
+    const value = errors.value[key];
+
+    if (!value) {
+        return '';
+    }
+
+    if (Array.isArray(value)) {
+        return value[0] ?? '';
+    }
+
+    return typeof value === 'string' ? value : value[0] ?? '';
+};
+
+/** Primer error del formulario, en texto legible. */
+const firstErrorText = () => {
+    const found = Object.keys(errors.value)
+        .map((key) => errorText(key))
+        .find((message) => Boolean(message));
+
+    return found || 'Hay datos incompletos.';
+};
+
+/**
+ * Marca un error y lo muestra.
+ *
+ * Sin el aviso, un envio bloqueado (por ejemplo, Telegram sin alumnos
+ * registrados) parecia un boton roto en lugar de una advertencia.
+ */
+const failWith = (key, message) => {
+    errors.value[key] = message;
+    notify('No se puede enviar todavía', message, 'warning');
+};
+
+/**
  * Enlace unico de registro del bot (t.me/<bot>): es el mismo para todos, lo que
  * cambia es el documento que cada alumno escribe en el chat.
  */
@@ -394,7 +436,7 @@ const fetchTelegramLink = async () => {
     } catch (error) {
         if (error.response?.status === 422) {
             errors.value = error.response.data.errors ?? {};
-            notify('Revisa el formulario', Object.values(errors.value)[0]?.[0] ?? 'Hay datos incompletos.', 'warning');
+            notify('Revisa el formulario', firstErrorText(), 'warning');
         } else {
             notify('Error', error.response?.data?.message || 'No se pudo obtener el enlace de registro.', 'error');
         }
@@ -478,41 +520,46 @@ const submit = async () => {
     errors.value = {};
 
     if (!form.value.channel) {
-        errors.value.channel = 'Elige el canal de envío.';
+        failWith('channel', 'Elige el canal de envío.');
         return;
     }
 
     if (form.value.channel === 'whatsapp' && !form.value.time_label.trim()) {
-        errors.value.time_label = 'Indica el tiempo para el flujo de WhatsApp.';
+        failWith('time_label', 'Indica el tiempo para el flujo de WhatsApp.');
         return;
     }
 
     if (form.value.channel === 'telegram') {
         if (form.value.is_test) {
-            errors.value.is_test = 'El modo prueba solo aplica a SMS y WhatsApp.';
+            failWith('is_test', 'El modo prueba solo aplica a SMS y WhatsApp.');
             return;
         }
 
         if (audience.value && audience.value.total === 0) {
-            errors.value.course_id =
-                'Ningún alumno de este programa tiene su chat_id de Telegram registrado todavía. Genera los enlaces de registro y compártelos.';
+            failWith(
+                'course_id',
+                'Ningún alumno de este programa tiene su chat de Telegram registrado todavía. Comparte el enlace de ' +
+                    'registro y pide a cada alumno que abra el bot y escriba su número de documento.'
+            );
             return;
         }
     }
 
     if (form.value.is_test) {
         if (testParsed.value.valid.length === 0 && testParsed.value.invalid.length === 0) {
-            errors.value.test_numbers = 'Escribe al menos un número de prueba.';
+            failWith('test_numbers', 'Escribe al menos un número de prueba.');
             return;
         }
 
         if (testParsed.value.invalid.length > 0) {
-            errors.value.test_numbers =
-                'Revisa estos números, deben ir completos con el código de país: ' + testParsed.value.invalid.join(', ');
+            failWith(
+                'test_numbers',
+                'Revisa estos números, deben ir completos con el código de país: ' + testParsed.value.invalid.join(', ')
+            );
             return;
         }
     } else if (!form.value.course_id) {
-        errors.value.course_id = 'Elige el programa de especialización.';
+        failWith('course_id', 'Elige el programa de especialización.');
         return;
     }
 
@@ -566,7 +613,7 @@ const submit = async () => {
     } catch (error) {
         if (error.response?.status === 422) {
             errors.value = error.response.data.errors ?? {};
-            notify('Revisa el formulario', Object.values(errors.value)[0]?.[0] ?? 'Hay datos incompletos.', 'warning');
+            notify('Revisa el formulario', firstErrorText(), 'warning');
         } else {
             notify('Error', error.response?.data?.message || 'No se pudo iniciar el envío.', 'error');
         }
@@ -699,7 +746,7 @@ onBeforeUnmount(() => {
                                 {{ course.description }}
                             </option>
                         </select>
-                        <InputError :message="errors.course_id?.[0] ?? errors.course_id" class="mt-1" />
+                        <InputError :message="errorText('course_id')" class="mt-1" />
                         <p v-if="!courses.length" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
                             No hay cursos de tipo "Programas de Especialización" registrados.
                         </p>
@@ -722,7 +769,7 @@ onBeforeUnmount(() => {
                         <p v-if="form.channel === 'telegram'" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             No aplica a Telegram: ese canal envía al chat_id que cada alumno registró con el bot.
                         </p>
-                        <InputError :message="errors.is_test?.[0] ?? errors.is_test" class="mt-1" />
+                        <InputError :message="errorText('is_test')" class="mt-1" />
 
                         <div v-if="form.is_test" class="mt-3">
                             <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -746,7 +793,7 @@ onBeforeUnmount(() => {
                                 Revisa: {{ testParsed.invalid.join(', ') }} (incompletos o sin código de país).
                             </p>
 
-                            <InputError :message="errors.test_numbers?.[0] ?? errors.test_numbers" class="mt-1" />
+                            <InputError :message="errorText('test_numbers')" class="mt-1" />
                         </div>
                     </div>
 
@@ -832,7 +879,7 @@ onBeforeUnmount(() => {
                             <b>SC-00002</b> para habilitar Telegram.
                         </div>
 
-                        <InputError :message="errors.channel?.[0] ?? errors.channel" class="mt-1" />
+                        <InputError :message="errorText('channel')" class="mt-1" />
                     </div>
 
                     <!-- Registro de chat_id de Telegram -->
@@ -915,7 +962,7 @@ onBeforeUnmount(() => {
                             El webhook necesita que este sistema sea accesible por HTTPS público: es la dirección a la que
                             Telegram entrega los mensajes que los alumnos le escriben al bot.
                         </p>
-                        <InputError :message="errors.course_id?.[0] ?? errors.course_id" class="mt-1" />
+                        <InputError :message="errorText('course_id')" class="mt-1" />
                     </div>
 
                     <!-- Mensaje -->
@@ -931,7 +978,7 @@ onBeforeUnmount(() => {
                             placeholder="Escribe el mensaje que recibirán los alumnos..."
                         ></textarea>
                         <div class="mt-1 flex items-center justify-between">
-                            <InputError :message="errors.message?.[0] ?? errors.message" />
+                            <InputError :message="errorText('message')" />
                             <span
                                 class="text-xs"
                                 :class="smsTooLong ? 'font-semibold text-amber-600 dark:text-amber-400' : 'text-gray-400'"
@@ -958,7 +1005,7 @@ onBeforeUnmount(() => {
                         <datalist id="aca-notification-times">
                             <option v-for="suggestion in timeSuggestions" :key="suggestion" :value="suggestion"></option>
                         </datalist>
-                        <InputError :message="errors.time_label?.[0] ?? errors.time_label" class="mt-1" />
+                        <InputError :message="errorText('time_label')" class="mt-1" />
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Se envía como la variable <b>tiempo</b> del flujo de WhatsApp y se agrega al final del SMS y
                             del mensaje de Telegram.
@@ -1014,6 +1061,15 @@ onBeforeUnmount(() => {
 
                         <span v-if="campaignActive" class="text-sm text-gray-500 dark:text-gray-400">
                             Ya hay una campaña en curso (#{{ campaign.id }}): espera a que termine.
+                        </span>
+
+                        <!-- Motivo a la vista: sin chats registrados el envío no tiene destinatarios. -->
+                        <span
+                            v-if="form.channel === 'telegram' && audience && audience.total === 0"
+                            class="text-sm text-amber-600 dark:text-amber-400"
+                        >
+                            Ningún alumno de este programa ha registrado su chat todavía: comparte el enlace de registro
+                            antes de enviar.
                         </span>
                     </div>
                 </div>
