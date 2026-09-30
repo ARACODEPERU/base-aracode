@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import InputError from '@/Components/InputError.vue';
@@ -21,6 +21,8 @@ const props = defineProps({
     telegramBotUsername: { type: String, default: null },
     // Enlace unico de registro del bot (el mismo para todos los alumnos).
     telegramLink: { type: String, default: null },
+    // Textos configurables del bot (catalogo con su valor vigente y default).
+    telegramMessages: { type: Array, default: () => [] },
     timeSuggestions: { type: Array, default: () => [] },
     countryCode: { type: String, default: '51' },
     intervalMs: { type: Number, default: 280 },
@@ -182,6 +184,17 @@ const registrationLink = ref(props.telegramLink);
 const loadingTelegramLink = ref(false);
 const registeringWebhook = ref(false);
 
+/** Copia editable de los textos del bot (se guarda al pulsar Guardar). */
+const messagesDraft = ref([]);
+const messagesVisible = ref(false);
+const savingMessages = ref(false);
+const messageInputs = {};
+
+/** Vista previa del aviso de Telegram, armada en el servidor. */
+const telegramPreview = ref('');
+const telegramPreviewHtml = ref(true);
+let previewTimer = null;
+
 const fetchAudience = async () => {
     audience.value = null;
 
@@ -205,6 +218,161 @@ const fetchAudience = async () => {
     } finally {
         loadingAudience.value = false;
     }
+};
+
+/**
+ * Abre el modal de textos: usa el catalogo que ya vino con la pantalla y, si
+ * por algun motivo viene vacio, lo consulta al servidor.
+ */
+const openTelegramMessages = async () => {
+    messagesDraft.value = props.telegramMessages.map((message) => ({ ...message }));
+    messagesVisible.value = true;
+
+    if (!messagesDraft.value.length) {
+        await loadTelegramMessages();
+    }
+};
+
+const applyMessages = (data) => {
+    messagesDraft.value = (data.messages ?? []).map((message) => ({ ...message }));
+};
+
+const loadTelegramMessages = async () => {
+    try {
+        const { data } = await axios.get(route('aca_notifications_telegram_messages'));
+        applyMessages(data);
+    } catch (error) {
+        notify('Error', error.response?.data?.message || 'No se pudieron cargar los textos del bot.', 'error');
+    }
+};
+
+const saveTelegramMessages = async () => {
+    savingMessages.value = true;
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_telegram_messages_save'), {
+            messages: messagesDraft.value.map(({ code, body, format }) => ({ code, body, format })),
+        });
+
+        applyMessages(data);
+        notify('Textos guardados', data.message, 'success');
+        scheduleTelegramPreview();
+    } catch (error) {
+        if (error.response?.status === 422) {
+            const first = Object.values(error.response.data.errors ?? {})[0];
+            notify('Revisa los textos', first?.[0] ?? 'Hay textos con problemas.', 'warning');
+        } else {
+            notify('Error', error.response?.data?.message || 'No se pudieron guardar los textos.', 'error');
+        }
+    } finally {
+        savingMessages.value = false;
+    }
+};
+
+/** Restaura un texto al valor de fabrica. */
+const resetTelegramMessage = async (code) => {
+    try {
+        const { data } = await axios.post(route('aca_notifications_telegram_messages_reset'), { code });
+
+        applyMessages(data);
+        notify('Texto restaurado', data.message, 'success');
+        scheduleTelegramPreview();
+    } catch (error) {
+        notify('Error', error.response?.data?.message || 'No se pudo restaurar el texto.', 'error');
+    }
+};
+
+/** Restaura todos los textos al valor de fabrica. */
+const resetTelegramMessages = async () => {
+    const confirmation = await Swal2.fire({
+        title: 'Restaurar todos los textos',
+        text: 'Todos los mensajes del bot volverán al texto de fábrica.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, restaurar',
+        cancelButtonText: 'Cancelar',
+        padding: '2em',
+        customClass: 'sweet-alerts',
+    });
+
+    if (!confirmation.isConfirmed) {
+        return;
+    }
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_telegram_messages_reset'), {});
+
+        applyMessages(data);
+        notify('Textos restaurados', data.message, 'success');
+        scheduleTelegramPreview();
+    } catch (error) {
+        notify('Error', error.response?.data?.message || 'No se pudieron restaurar los textos.', 'error');
+    }
+};
+
+const registerMessageInput = (code, element) => {
+    if (element) {
+        messageInputs[code] = element;
+    }
+};
+
+/** Inserta una variable en la posicion del cursor del textarea. */
+const insertVariable = (code, variable) => {
+    const message = messagesDraft.value.find((item) => item.code === code);
+
+    if (!message) {
+        return;
+    }
+
+    const input = messageInputs[code];
+    const start = input && typeof input.selectionStart === 'number' ? input.selectionStart : message.body.length;
+    const end = input && typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+
+    message.body = message.body.slice(0, start) + variable + message.body.slice(end);
+
+    nextTick(() => {
+        if (!input) {
+            return;
+        }
+
+        input.focus();
+        input.setSelectionRange(start + variable.length, start + variable.length);
+    });
+};
+
+/**
+ * Vista previa del mensaje de campana por Telegram.
+ *
+ * Se pide al servidor porque el texto sale de una plantilla configurable: asi lo
+ * que se ve es exactamente lo que recibira el alumno (el nombre es de ejemplo).
+ */
+const fetchTelegramPreview = async () => {
+    if (form.value.channel !== 'telegram') {
+        telegramPreview.value = '';
+        return;
+    }
+
+    try {
+        const { data } = await axios.post(route('aca_notifications_telegram_preview'), {
+            course_id: form.value.course_id || null,
+            message: form.value.message,
+            time_label: form.value.time_label,
+        });
+
+        telegramPreview.value = data.text ?? '';
+        telegramPreviewHtml.value = Boolean(data.html);
+    } catch (error) {
+        telegramPreview.value = '';
+    }
+};
+
+/** La vista previa espera a que el administrador termine de escribir. */
+const scheduleTelegramPreview = () => {
+    if (previewTimer) {
+        clearTimeout(previewTimer);
+    }
+
+    previewTimer = setTimeout(fetchTelegramPreview, 400);
 };
 
 /**
@@ -458,13 +626,30 @@ watch(
     }
 );
 
+// La vista previa de Telegram depende del mensaje, el curso y el tiempo: se
+// recalcula (con una pequeña espera) cada vez que cambian.
+watch(
+    () => [form.value.channel, form.value.message, form.value.time_label, form.value.course_id],
+    () => {
+        if (form.value.channel === 'telegram') {
+            scheduleTelegramPreview();
+        } else {
+            telegramPreview.value = '';
+        }
+    }
+);
+
 onMounted(() => {
     if (!availableChannels.value.some((channel) => channel.value === form.value.channel)) {
         form.value.channel = availableChannels.value[0]?.value ?? '';
     }
 
-    if (form.value.channel === 'telegram' && !registrationLink.value) {
-        fetchTelegramLink();
+    if (form.value.channel === 'telegram') {
+        if (!registrationLink.value) {
+            fetchTelegramLink();
+        }
+
+        scheduleTelegramPreview();
     }
 
     if (campaign.value) {
@@ -474,6 +659,11 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     stopPolling();
+
+    if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+    }
 });
 </script>
 
@@ -687,6 +877,10 @@ onBeforeUnmount(() => {
                                 >
                                     {{ registeringWebhook ? 'Registrando...' : 'Registrar webhook con Telegram' }}
                                 </button>
+
+                                <button type="button" class="btn btn-outline-primary" @click="openTelegramMessages">
+                                    Configurar parámetros de Telegram
+                                </button>
                             </div>
                         </div>
 
@@ -771,17 +965,34 @@ onBeforeUnmount(() => {
                         </p>
                     </div>
 
-                    <!-- Previsualización del mensaje (SMS y Telegram comparten texto) -->
+                    <!-- Previsualización del SMS -->
                     <div
-                        v-if="['sms', 'telegram'].includes(form.channel) && smsPreview"
+                        v-if="form.channel === 'sms' && smsPreview"
                         class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-zinc-700"
                     >
-                        <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                            {{ form.channel === 'telegram' ? 'Vista previa del mensaje de Telegram' : 'Vista previa del SMS' }}
-                        </p>
+                        <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Vista previa del SMS</p>
                         <pre class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-200">{{ smsPreview }}</pre>
                         <p v-if="smsTooLong" class="mt-2 text-xs text-amber-600 dark:text-amber-400">
                             Con {{ smsLength }} caracteres el SMS se enviará en varios segmentos.
+                        </p>
+                    </div>
+
+                    <!-- Previsualización del Telegram: la arma el servidor con la plantilla configurable -->
+                    <div
+                        v-if="form.channel === 'telegram'"
+                        class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-zinc-700"
+                    >
+                        <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                            Vista previa del mensaje de Telegram
+                            <span class="font-normal">(con la plantilla configurable y un nombre de ejemplo)</span>
+                        </p>
+                        <pre
+                            v-if="telegramPreview"
+                            class="whitespace-pre-wrap font-sans text-gray-700 dark:text-gray-200"
+                        >{{ telegramPreview }}</pre>
+                        <p v-else class="text-xs text-gray-400">Escribe el mensaje para ver la vista previa...</p>
+                        <p v-if="telegramPreview && telegramPreviewHtml" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Las etiquetas como &lt;b&gt; se ven en negrita en Telegram; aquí se muestran escritas.
                         </p>
                     </div>
 
@@ -978,5 +1189,111 @@ onBeforeUnmount(() => {
             </div>
         </div>
 
+        <!-- Modal: textos configurables del bot de Telegram -->
+        <div v-if="messagesVisible" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 p-4">
+            <div class="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-lg bg-white p-6 shadow-lg dark:bg-[#0e1726]">
+                <div class="mb-4 flex items-start justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            Configurar parámetros de Telegram
+                        </h2>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Estos son los textos que envía el bot. Admiten emojis y las etiquetas de Telegram
+                            (<b>&lt;b&gt;</b>, <b>&lt;i&gt;</b>, <b>&lt;u&gt;</b>, <b>&lt;s&gt;</b>, <b>&lt;code&gt;</b>,
+                            <b>&lt;a href="..."&gt;</b>): puedes copiarlos directamente desde Telegram y pegarlos aquí.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="text-2xl leading-none text-gray-400 hover:text-gray-600"
+                        @click="messagesVisible = false"
+                    >
+                        &times;
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3 dark:border-zinc-800">
+                    <p class="max-w-xl text-xs text-gray-500 dark:text-gray-400">
+                        Una línea que usa una variable vacía no se envía: así desaparecen solos el curso, el tiempo o los
+                        programas cuando no corresponden. Deja un texto vacío para volver al de fábrica.
+                    </p>
+                    <button type="button" class="btn btn-outline-primary" @click="resetTelegramMessages">
+                        Restaurar todos
+                    </button>
+                </div>
+
+                <div class="mt-4 max-h-[55vh] space-y-4 overflow-auto pr-1">
+                    <div
+                        v-for="message in messagesDraft"
+                        :key="message.code"
+                        class="rounded-lg border border-gray-200 p-4 dark:border-zinc-700"
+                    >
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ message.name }}
+                                    <span
+                                        v-if="message.is_customized"
+                                        class="ml-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                                    >
+                                        Modificado
+                                    </span>
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ message.description }}</p>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="shrink-0 text-xs font-medium text-primary hover:underline"
+                                @click="resetTelegramMessage(message.code)"
+                            >
+                                Restaurar
+                            </button>
+                        </div>
+
+                        <div v-if="message.variables?.length" class="mt-2 flex flex-wrap items-center gap-1">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Variables:</span>
+                            <button
+                                v-for="variable in message.variables"
+                                :key="variable"
+                                type="button"
+                                class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-700 hover:bg-primary/10 dark:bg-zinc-800 dark:text-gray-200"
+                                @click="insertVariable(message.code, variable)"
+                            >
+                                {{ variable }}
+                            </button>
+                        </div>
+
+                        <textarea
+                            :ref="(element) => registerMessageInput(message.code, element)"
+                            v-model="message.body"
+                            rows="6"
+                            maxlength="4096"
+                            class="form-textarea mt-2 w-full font-mono text-xs"
+                        ></textarea>
+
+                        <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+                            <select v-model="message.format" class="form-select w-auto text-xs">
+                                <option value="html">HTML de Telegram (interpreta etiquetas)</option>
+                                <option value="text">Texto plano (las etiquetas se ven escritas)</option>
+                            </select>
+                            <span class="text-xs text-gray-400">{{ (message.body || '').length }}/4096</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap justify-end gap-3">
+                    <button type="button" class="btn btn-outline-primary" @click="messagesVisible = false">Cerrar</button>
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        :disabled="savingMessages || !messagesDraft.length"
+                        @click="saveTelegramMessages"
+                    >
+                        {{ savingMessages ? 'Guardando...' : 'Guardar textos' }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </AppLayout>
 </template>

@@ -11,7 +11,9 @@ use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationTelegramContact;
 use Modules\Integrationhub\Entities\IntegrationTelegramRegistrationSession;
 use Modules\Integrationhub\Services\TelegramBotService;
+use Modules\Integrationhub\Services\TelegramMessageService;
 use Modules\Integrationhub\Services\TelegramRegistrationService;
+use Modules\Integrationhub\Support\TelegramMessages;
 
 /**
  * Recepcion de los mensajes que las personas le escriben al bot de Telegram.
@@ -29,16 +31,19 @@ use Modules\Integrationhub\Services\TelegramRegistrationService;
  *   - /baja (o /stop) da de baja el chat para que deje de recibir campanas.
  *   - /ayuda recuerda como registrarse.
  *
- * Siempre se responde HTTP 200: ante un error Telegram reintenta el update una
- * y otra vez, y un fallo de negocio (documento desconocido) no debe provocar
- * eso.
+ * Todo el texto que sale de aqui proviene del catalogo configurable
+ * (Support\TelegramMessages + el servicio de mensajes): nada de copy escrito en
+ * el controlador. Siempre se responde HTTP 200: ante un error Telegram reintenta
+ * el update una y otra vez, y un fallo de negocio (documento desconocido) no
+ * debe provocar eso.
  */
 class TelegramWebhookController extends Controller
 {
     public function __invoke(
         Request $request,
         TelegramBotService $bot,
-        TelegramRegistrationService $registration
+        TelegramRegistrationService $registration,
+        TelegramMessageService $messages
     ): JsonResponse {
         $secret = $bot->secret();
         $received = (string) $request->header('X-Telegram-Bot-Api-Secret-Token', '');
@@ -71,7 +76,7 @@ class TelegramWebhookController extends Controller
         $firstName = $message['from']['first_name'] ?? null;
 
         try {
-            $this->handleMessage($bot, $registration, $chatId, $text, $username, $firstName);
+            $this->handleMessage($bot, $registration, $messages, $chatId, $text, $username, $firstName);
         } catch (\Throwable $exception) {
             Log::error('Bot de Telegram: fallo al procesar un mensaje', [
                 'chat_id' => $chatId,
@@ -93,6 +98,7 @@ class TelegramWebhookController extends Controller
     private function handleMessage(
         TelegramBotService $bot,
         TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
         string $chatId,
         string $text,
         ?string $username,
@@ -102,19 +108,19 @@ class TelegramWebhookController extends Controller
         $command = $this->command($text);
 
         if (in_array($command, ['/baja', '/stop', '/cancelar'], true)) {
-            $this->handleOptOut($bot, $registration, $chatId);
+            $this->handleOptOut($bot, $registration, $messages, $chatId);
 
             return;
         }
 
         if (in_array($command, ['/ayuda', '/help'], true)) {
-            $bot->sendMessage($chatId, $this->helpMessage());
+            $this->reply($bot, $messages, $chatId, TelegramMessages::HELP);
 
             return;
         }
 
         if ($command === '/start') {
-            $this->handleStart($bot, $registration, $chatId, $username, $firstName);
+            $this->handleStart($bot, $registration, $messages, $chatId, $username, $firstName);
 
             return;
         }
@@ -125,12 +131,12 @@ class TelegramWebhookController extends Controller
         $session = $registration->sessionFor($chatId);
 
         if ($session === null) {
-            $bot->sendMessage($chatId, $this->startHint());
+            $this->reply($bot, $messages, $chatId, TelegramMessages::START_HINT);
 
             return;
         }
 
-        $this->handleDocument($bot, $registration, $session, $chatId, $text, $username, $firstName);
+        $this->handleDocument($bot, $registration, $messages, $session, $chatId, $text, $username, $firstName);
     }
 
     /**
@@ -139,13 +145,27 @@ class TelegramWebhookController extends Controller
     private function handleStart(
         TelegramBotService $bot,
         TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
         string $chatId,
         ?string $username,
         ?string $firstName
     ): void {
         $registration->beginSession($chatId, $username, $firstName);
 
-        $bot->sendMessage($chatId, $this->documentMessage($registration->findByChatId($chatId)));
+        $contact = $registration->findByChatId($chatId);
+        $registered = $contact !== null && trim((string) $contact->chat_id) !== '';
+
+        if (! $registered) {
+            $this->reply($bot, $messages, $chatId, TelegramMessages::START_NEW);
+
+            return;
+        }
+
+        $contact->loadMissing('person');
+
+        $this->reply($bot, $messages, $chatId, TelegramMessages::START_REGISTERED, [
+            'nombre' => (string) ($contact->person?->short_name ?? ''),
+        ]);
     }
 
     /**
@@ -154,6 +174,7 @@ class TelegramWebhookController extends Controller
     private function handleDocument(
         TelegramBotService $bot,
         TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
         IntegrationTelegramRegistrationSession $session,
         string $chatId,
         string $text,
@@ -166,9 +187,11 @@ class TelegramWebhookController extends Controller
             $this->rejectDocument(
                 $bot,
                 $registration,
+                $messages,
                 $session,
                 $chatId,
-                'No reconocimos ese dato como un documento de identidad. Escribe solo el número, sin espacios ni guiones.'
+                TelegramMessages::DOCUMENT_UNRECOGNIZED,
+                'El mensaje no parece un documento de identidad.'
             );
 
             return;
@@ -178,7 +201,7 @@ class TelegramWebhookController extends Controller
 
         if ($resolver === null) {
             $registration->closeSession($chatId);
-            $bot->sendMessage($chatId, 'El registro por Telegram no está habilitado en este momento. Contacta a la institución.');
+            $this->reply($bot, $messages, $chatId, TelegramMessages::REGISTRATION_DISABLED);
 
             return;
         }
@@ -189,9 +212,11 @@ class TelegramWebhookController extends Controller
             $this->rejectDocument(
                 $bot,
                 $registration,
+                $messages,
                 $session,
                 $chatId,
-                'No encontramos ese documento en el padrón.'
+                TelegramMessages::DOCUMENT_NOT_FOUND,
+                'El documento no esta en el padron.'
             );
 
             return;
@@ -202,14 +227,11 @@ class TelegramWebhookController extends Controller
             (array) ($registrant['programs'] ?? [])
         )));
 
-        if ($programs === [] && empty($registrant['subscription'])) {
-            $registration->closeSession($chatId);
+        $hasSubscription = ! empty($registrant['subscription']);
 
-            $bot->sendMessage(
-                $chatId,
-                'Encontramos tu ficha, pero no tiene un programa activo ni una suscripción vigente. '
-                . 'Contacta a la institución para revisar tu matrícula.'
-            );
+        if ($programs === [] && ! $hasSubscription) {
+            $registration->closeSession($chatId);
+            $this->reply($bot, $messages, $chatId, TelegramMessages::DOCUMENT_NO_PROGRAMS);
 
             return;
         }
@@ -223,7 +245,11 @@ class TelegramWebhookController extends Controller
 
         $registration->closeSession($chatId);
 
-        $bot->sendMessage($chatId, $this->registeredMessage($registrant, $programs));
+        $this->reply($bot, $messages, $chatId, TelegramMessages::REGISTERED, [
+            'nombre' => (string) ($registrant['name'] ?? ''),
+            'programas' => implode(', ', $programs),
+            'suscripcion' => $hasSubscription ? 'Suscripción activa' : '',
+        ]);
     }
 
     /**
@@ -233,8 +259,10 @@ class TelegramWebhookController extends Controller
     private function rejectDocument(
         TelegramBotService $bot,
         TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
         IntegrationTelegramRegistrationSession $session,
         string $chatId,
+        string $code,
         string $reason
     ): void {
         $attempts = $registration->countAttempt($session);
@@ -248,32 +276,50 @@ class TelegramWebhookController extends Controller
 
         if ($attempts >= $max) {
             $registration->closeSession($chatId);
-
-            $bot->sendMessage(
-                $chatId,
-                "Demasiados intentos seguidos.\n\nVerifica tu documento y escribe /start para volver a intentarlo."
-            );
+            $this->reply($bot, $messages, $chatId, TelegramMessages::TOO_MANY_ATTEMPTS);
 
             return;
         }
 
-        $bot->sendMessage(
-            $chatId,
-            $reason . "\n\nVuelve a escribirlo o pide ayuda a la institución. (Intento {$attempts} de {$max})"
-        );
+        $this->reply($bot, $messages, $chatId, $code, [
+            'intentos' => "Intento {$attempts} de {$max}",
+        ]);
     }
 
     private function handleOptOut(
         TelegramBotService $bot,
         TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
         string $chatId
     ): void {
         $registration->closeSession($chatId);
         $deactivated = $registration->deactivate($chatId);
 
-        $bot->sendMessage($chatId, $deactivated
-            ? 'Listo, ya no recibirás avisos por este chat. Si quieres volver a activarlo, escribe /start y tu número de documento.'
-            : 'Este chat no estaba registrado, así que no había nada que dar de baja.');
+        $this->reply(
+            $bot,
+            $messages,
+            $chatId,
+            $deactivated ? TelegramMessages::OPTOUT_DONE : TelegramMessages::OPTOUT_NONE
+        );
+    }
+
+    /**
+     * Renderiza un mensaje del catalogo y lo envia con su formato configurado.
+     *
+     * @param array<string, string|null> $variables
+     */
+    private function reply(
+        TelegramBotService $bot,
+        TelegramMessageService $messages,
+        string $chatId,
+        string $code,
+        array $variables = []
+    ): void {
+        $bot->sendFormatted(
+            $chatId,
+            $messages->render($code, $variables),
+            $messages->isHtml($code)
+        );
     }
 
     /**
@@ -326,59 +372,5 @@ class TelegramWebhookController extends Controller
         }
 
         return strlen($document) >= 5 && strlen($document) <= 20 ? $document : '';
-    }
-
-    private function documentMessage(?IntegrationTelegramContact $contact): string
-    {
-        $lines = ['Hola, soy el bot de avisos de la institución.'];
-
-        if ($contact !== null && trim((string) $contact->chat_id) !== '') {
-            $contact->loadMissing('person');
-            $name = trim((string) ($contact->person?->short_name ?? ''));
-
-            $lines[] = $name !== ''
-                ? 'Este chat ya está registrado a nombre de ' . $name . '. Si escribes otro documento, el registro se actualizará.'
-                : 'Este chat ya está registrado. Si escribes otro documento, el registro se actualizará.';
-        }
-
-        $lines[] = 'Para activar los avisos en este chat, escribe tu número de documento (DNI), solo el número.';
-        $lines[] = 'Si ya no quieres recibir avisos, escribe /baja.';
-
-        return implode("\n\n", $lines);
-    }
-
-    /**
-     * @param array{person_id: int, name: string, subscription: bool} $registrant
-     * @param array<int, string> $programs
-     */
-    private function registeredMessage(array $registrant, array $programs): string
-    {
-        $name = trim((string) ($registrant['name'] ?? ''));
-        $lines = [
-            ($name !== '' ? 'Listo, ' . $name . '. ' : 'Listo. ')
-            . 'Tu chat quedó registrado y desde ahora recibirás por aquí los avisos de la institución.',
-        ];
-
-        if ($programs !== []) {
-            $lines[] = 'Programas: ' . implode(', ', $programs) . '.';
-        } elseif (! empty($registrant['subscription'])) {
-            $lines[] = 'Recibirás los avisos de los programas que tienes habilitados con tu suscripción activa.';
-        }
-
-        $lines[] = 'Si quieres dejar de recibirlos, escribe /baja.';
-
-        return implode("\n\n", $lines);
-    }
-
-    private function startHint(): string
-    {
-        return 'Para activar los avisos en este chat escribe /start y luego tu número de documento (DNI).';
-    }
-
-    private function helpMessage(): string
-    {
-        return "Soy el bot de avisos de la institución.\n\n"
-            . "Para activar los avisos en este chat: escribe /start y luego tu número de documento (DNI).\n\n"
-            . "Para dejar de recibir avisos: /baja.";
     }
 }

@@ -20,6 +20,8 @@ use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;
 use Modules\Academic\Support\PhoneNumberFormatter;
 use Modules\Integrationhub\Services\TelegramBotService;
+use Modules\Integrationhub\Services\TelegramMessageService;
+use Modules\Integrationhub\Support\TelegramMessages;
 
 /**
  * Notificaciones masivas de un programa de especializacion.
@@ -43,6 +45,8 @@ class AcaNotificationController extends Controller
         private readonly VonageSmsService $vonage,
         private readonly WhatsappCourseNotifier $whatsapp,
         private readonly TelegramBotService $telegramBot,
+        private readonly TelegramMessageService $telegramMessages,
+        private readonly TelegramCourseNotifier $telegramCourseNotifier,
     ) {
     }
 
@@ -76,6 +80,9 @@ class AcaNotificationController extends Controller
             // Enlace unico de registro del bot, ya armado si el usuario del bot
             // esta cacheado (la pantalla puede refrescarlo con su boton).
             'telegramLink' => $telegramConfigured ? $this->telegramBot->cachedRegistrationLink() : null,
+            // Textos que envia el bot (y plantilla de las campanas), para el
+            // modal de configuracion.
+            'telegramMessages' => $telegramConfigured ? $this->telegramMessages->catalog() : [],
             'timeSuggestions' => ['5 minutos', '10 minutos', '15 minutos', '30 minutos'],
             'countryCode' => (string) config('academic.notifications.country_code', '51'),
             'intervalMs' => (int) config('academic.notifications.interval_ms', 280),
@@ -288,6 +295,117 @@ class AcaNotificationController extends Controller
             'username' => $this->telegramBot->cachedUsername(),
             'registered' => $registered,
             'pending' => $pending,
+        ]);
+    }
+
+    /**
+     * Textos que envia el bot de Telegram.
+     *
+     * Se devuelven con su valor vigente, su nombre, sus variables disponibles y
+     * el texto de fabrica (para poder restaurarlo o compararlo).
+     */
+    public function telegramMessages(Request $request)
+    {
+        return response()->json([
+            'messages' => $this->telegramMessages->catalog(),
+            'configured' => $this->telegramBot->isConfigured(),
+        ]);
+    }
+
+    /**
+     * Guarda los textos editados.
+     *
+     * Un texto vacio vuelve al de fabrica, igual que el boton Restaurar: no se
+     * guarda una version en blanco que dejaria al bot sin respuesta.
+     */
+    public function telegramMessagesSave(Request $request)
+    {
+        $validated = $request->validate([
+            'messages' => ['required', 'array'],
+            'messages.*.code' => ['required', 'string', 'max:60'],
+            'messages.*.body' => ['nullable', 'string', 'max:4096'],
+            'messages.*.format' => ['nullable', Rule::in([TelegramMessages::FORMAT_HTML, TelegramMessages::FORMAT_TEXT])],
+        ]);
+
+        try {
+            foreach ($validated['messages'] as $message) {
+                $this->telegramMessages->save(
+                    (string) $message['code'],
+                    $message['body'] ?? null,
+                    $message['format'] ?? null,
+                    (int) $request->user()->id,
+                );
+            }
+        } catch (\Throwable $exception) {
+            throw ValidationException::withMessages([
+                'messages' => 'No se pudieron guardar los textos: ' . $exception->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Textos de Telegram guardados. Se aplican a los próximos mensajes que envíe el bot.',
+            'messages' => $this->telegramMessages->catalog(),
+        ]);
+    }
+
+    /**
+     * Restaura un texto (o todos) al valor de fabrica.
+     */
+    public function telegramMessagesReset(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        $code = trim((string) ($validated['code'] ?? ''));
+
+        try {
+            if ($code !== '') {
+                $this->telegramMessages->reset($code);
+            } else {
+                $this->telegramMessages->resetAll();
+            }
+        } catch (\Throwable $exception) {
+            throw ValidationException::withMessages([
+                'code' => 'No se pudo restaurar el texto: ' . $exception->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => $code !== ''
+                ? 'Texto restaurado al valor de fábrica.'
+                : 'Todos los textos volvieron al valor de fábrica.',
+            'messages' => $this->telegramMessages->catalog(),
+        ]);
+    }
+
+    /**
+     * Vista previa del aviso de Telegram.
+     *
+     * Se arma en el servidor con la misma plantilla que usa la campana, para
+     * que lo que se ve en pantalla sea exactamente lo que recibira el alumno
+     * (el nombre es un dato de ejemplo: en el envio real es el de cada alumno).
+     */
+    public function telegramPreview(Request $request)
+    {
+        $validated = $request->validate([
+            'course_id' => ['nullable', 'integer', 'exists:aca_courses,id'],
+            'message' => ['nullable', 'string', 'max:480'],
+            'time_label' => ['nullable', 'string', 'max:60'],
+        ]);
+
+        $course = empty($validated['course_id'])
+            ? null
+            : AcaCourse::find((int) $validated['course_id']);
+
+        return response()->json([
+            'text' => $this->telegramCourseNotifier->renderCampaignText(
+                (string) ($validated['message'] ?? ''),
+                (string) ($course?->description ?? ''),
+                $validated['time_label'] ?? null,
+                'Alumno de ejemplo'
+            ),
+            'html' => $this->telegramCourseNotifier->campaignIsHtml(),
         ]);
     }
 

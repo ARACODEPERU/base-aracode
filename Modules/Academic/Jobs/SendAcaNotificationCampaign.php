@@ -95,9 +95,18 @@ class SendAcaNotificationCampaign implements ShouldQueue
                             $recipient->student_id ? $recipient->name : 'Prueba'
                         );
                     } elseif ($campaign->channel === 'telegram') {
+                        // El aviso de Telegram se arma con la plantilla
+                        // configurable: el curso y el tiempo son variables que
+                        // salen de este mismo formulario.
                         $telegram->send(
                             (string) $recipient->chat_id,
-                            $this->messageText($campaign->message, $courseName, $time)
+                            $telegram->renderCampaignText(
+                                (string) $campaign->message,
+                                $courseName,
+                                $time,
+                                (string) $recipient->name
+                            ),
+                            $telegram->campaignIsHtml()
                         );
                     } else {
                         $vonage->send($recipient->phone, $this->messageText($campaign->message, $courseName, $time));
@@ -155,8 +164,11 @@ class SendAcaNotificationCampaign implements ShouldQueue
     }
 
     /**
-     * Texto que sale por SMS y por Telegram: mensaje del administrador mas el
-     * curso y el tiempo.
+     * Texto que sale por SMS: mensaje del administrador mas el curso y el
+     * tiempo.
+     *
+     * El SMS conserva esta composicion a proposito (es un canal pagado por
+     * segmentos y su formato no depende de la plantilla de Telegram).
      */
     public function messageText(?string $message, string $courseName, ?string $time): string
     {

@@ -41,10 +41,14 @@ class TelegramStudentDirectory implements TelegramRegistrantResolver
 
         // El numero se guarda tal cual lo registro la persona, asi que la
         // comparacion no distingue mayusculas (un carnet de extranjeria puede
-        // llevar letras).
+        // llevar letras): se buscan las dos formas, siempre por el indice unico
+        // del documento, sin recorrer la tabla entera.
         $person = Person::query()
-            ->whereRaw('UPPER(number) = ?', [mb_strtoupper($document)])
-            ->first(['id', 'short_name', 'full_name', 'number']);
+            ->where('number', $document)
+            ->first(['id', 'short_name', 'full_name', 'number'])
+            ?? Person::query()
+                ->where('number', mb_strtolower($document))
+                ->first(['id', 'short_name', 'full_name', 'number']);
 
         if ($person === null) {
             return null;

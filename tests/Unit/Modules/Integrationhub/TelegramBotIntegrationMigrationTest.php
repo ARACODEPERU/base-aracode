@@ -35,6 +35,10 @@ class TelegramBotIntegrationMigrationTest extends TestCase
 
     private const CLEANUP_MIGRATION = 'Modules/Integrationhub/Database/Migrations/2026_09_30_000013_drop_registration_code_from_telegram_contacts.php';
 
+    private const PARSE_MODE_MIGRATION = 'Modules/Integrationhub/Database/Migrations/2026_09_30_000014_add_parse_mode_to_telegram_send_message.php';
+
+    private const MESSAGES_MIGRATION = 'Modules/Integrationhub/Database/Migrations/2026_09_30_000015_create_integration_telegram_messages_table.php';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -83,12 +87,20 @@ class TelegramBotIntegrationMigrationTest extends TestCase
         $this->assertTrue((bool) $maps['chat_id']->is_required);
         $this->assertSame('body', $maps['text']->field_location);
         $this->assertTrue((bool) $maps['text']->is_required);
+
+        // El formato viaja fijo en HTML: el texto sale escapado desde PHP (ver
+        // Support\TelegramHtml), asi que Telegram nunca recibe simbolos sueltos.
+        $this->assertSame('body', $maps['parse_mode']->field_location);
+        $this->assertSame('HTML', $maps['parse_mode']->field_value);
+        $this->assertFalse((bool) $maps['parse_mode']->is_required);
+        $this->assertTrue((bool) $maps['parse_mode']->is_enabled);
     }
 
     public function test_crea_el_parametro_del_token_y_las_tablas_del_bot(): void
     {
         $this->assertTrue(Schema::hasTable('integration_telegram_contacts'));
         $this->assertTrue(Schema::hasTable('integration_telegram_registration_sessions'));
+        $this->assertTrue(Schema::hasTable('integration_telegram_messages'));
 
         $parameter = Parameter::where('parameter_code', 'SC-00002')->first();
 
@@ -116,14 +128,31 @@ class TelegramBotIntegrationMigrationTest extends TestCase
         $this->rerunTelegramMigration(self::INTEGRATION_MIGRATION);
         $this->rerunTelegramMigration(self::SESSIONS_MIGRATION);
         $this->rerunTelegramMigration(self::CLEANUP_MIGRATION);
+        $this->rerunTelegramMigration(self::PARSE_MODE_MIGRATION);
+        $this->rerunTelegramMigration(self::MESSAGES_MIGRATION);
 
         $integration = Integration::where('name', 'Telegram_bot')->first();
 
         $this->assertSame(1, Integration::where('name', 'Telegram_bot')->count());
         $this->assertSame(6, IntegrationEndpoint::where('integration_id', $integration->id)->count());
-        $this->assertSame(13, IntegrationFieldMap::count());
+        $this->assertSame(14, IntegrationFieldMap::count());
         $this->assertSame(1, Parameter::where('parameter_code', 'SC-00002')->count());
         $this->assertSame($parameterTotal, Parameter::count());
+    }
+
+    public function test_repetir_la_migracion_del_formato_respeta_lo_configurado(): void
+    {
+        $endpoint = IntegrationEndpoint::where('name', 'telegram_send_message')->first();
+        $field = IntegrationFieldMap::where('endpoint_id', $endpoint->id)->where('field_key', 'parse_mode')->first();
+        $field->update(['field_value' => 'MarkdownV2']);
+
+        $this->rerunTelegramMigration(self::PARSE_MODE_MIGRATION);
+
+        $this->assertSame(
+            'MarkdownV2',
+            IntegrationFieldMap::where('endpoint_id', $endpoint->id)->where('field_key', 'parse_mode')->value('field_value')
+        );
+        $this->assertSame(1, IntegrationFieldMap::where('endpoint_id', $endpoint->id)->where('field_key', 'parse_mode')->count());
     }
 
     public function test_repetir_la_migracion_respeta_el_token_configurado(): void

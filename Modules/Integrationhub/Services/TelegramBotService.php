@@ -4,7 +4,9 @@ namespace Modules\Integrationhub\Services;
 
 use App\Models\Parameter;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
+use Modules\Integrationhub\Support\TelegramHtml;
 use RuntimeException;
 
 /**
@@ -207,6 +209,35 @@ class TelegramBotService
             'chat_id' => $chatId,
             'text' => $text,
         ]);
+    }
+
+    /**
+     * Envia un mensaje con el formato indicado en los textos configurables.
+     *
+     * El texto se prepara con TelegramHtml: en modo HTML se respetan solo las
+     * etiquetas que Telegram entiende (y se escapan los simbolos sueltos) y en
+     * modo texto no se interpreta ninguna. Si Telegram rechaza el formato se
+     * reintenta como texto plano: un aviso no se pierde por una etiqueta mal
+     * escrita.
+     *
+     * @throws RuntimeException cuando falta el token o el envio falla de verdad.
+     */
+    public function sendFormatted(string $chatId, string $text, bool $html = true): array
+    {
+        try {
+            return $this->sendMessage($chatId, TelegramHtml::prepare($text, $html));
+        } catch (RuntimeException $exception) {
+            if (! $html) {
+                throw $exception;
+            }
+
+            Log::warning('Telegram rechazo el formato del mensaje; se reenvia como texto plano', [
+                'chat_id' => $chatId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return $this->sendMessage($chatId, TelegramHtml::prepare($text, false));
+        }
     }
 
     /**

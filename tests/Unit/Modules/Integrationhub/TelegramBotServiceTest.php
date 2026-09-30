@@ -147,6 +147,53 @@ class TelegramBotServiceTest extends TestCase
         $this->assertSame(['start', 'baja', 'ayuda'], array_column($commands, 'command'));
     }
 
+    public function test_send_formatted_conserva_el_html_y_reintenta_en_texto_plano(): void
+    {
+        $this->setToken(self::TOKEN);
+
+        $attempts = 0;
+
+        $hub = $this->bindHub(function (string $endpoint, array $values) use (&$attempts) {
+            $attempts++;
+
+            // El primer intento lo rechaza Telegram (formato no parseable).
+            return $attempts === 1
+                ? response()->json([
+                    'message' => "Error en la solicitud externa: Bad Request: can't parse entities",
+                    'response' => ['ok' => false, 'description' => "Bad Request: can't parse entities"],
+                ], 400)
+                : response()->json(['response' => ['ok' => true, 'result' => ['message_id' => 3]]]);
+        });
+
+        $result = app(TelegramBotService::class)->sendFormatted('555', '<b>Cursos & Diplomados</b>', true);
+
+        $this->assertSame(3, $result['result']['message_id']);
+        // Con formato: la etiqueta se respeta y el "&" suelto se escapa.
+        $this->assertSame('<b>Cursos &amp; Diplomados</b>', $hub->calls[0]['values']['text']);
+        // Respaldo: todo el texto va escapado, asi que ya no puede fallar.
+        $this->assertSame('&lt;b&gt;Cursos &amp; Diplomados&lt;/b&gt;', $hub->calls[1]['values']['text']);
+    }
+
+    public function test_send_formatted_en_texto_plano_no_reintenta(): void
+    {
+        $this->setToken(self::TOKEN);
+
+        $hub = $this->bindHub(fn () => response()->json([
+            'message' => 'Error en la solicitud externa: chat not found',
+            'response' => ['ok' => false, 'description' => 'chat not found'],
+        ], 400));
+
+        try {
+            app(TelegramBotService::class)->sendFormatted('555', '<b>x</b>', false);
+            $this->fail('Un envio rechazado debia lanzar excepcion.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('HTTP 400', $exception->getMessage());
+        }
+
+        $this->assertCount(1, $hub->calls);
+        $this->assertSame('&lt;b&gt;x&lt;/b&gt;', $hub->calls[0]['values']['text']);
+    }
+
     public function test_registra_el_webhook_con_el_secreto_derivado(): void
     {
         $this->setToken(self::TOKEN);

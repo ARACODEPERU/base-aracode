@@ -3,13 +3,16 @@
 namespace Tests\Unit\Modules\Integrationhub;
 
 use App\Models\Parameter;
+use Illuminate\Support\Facades\DB;
 use Modules\Integrationhub\Contracts\TelegramRegistrantResolver;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationTelegramContact;
 use Modules\Integrationhub\Entities\IntegrationTelegramRegistrationSession;
 use Modules\Integrationhub\Http\Controllers\IntegrationhubController;
 use Modules\Integrationhub\Services\TelegramBotService;
+use Modules\Integrationhub\Services\TelegramMessageService;
 use Modules\Integrationhub\Services\TelegramRegistrationService;
+use Modules\Integrationhub\Support\TelegramMessages;
 use Tests\TestCase;
 use Tests\Unit\Modules\Integrationhub\Concerns\BuildsTelegramBotSchema;
 
@@ -172,7 +175,7 @@ class TelegramWebhookControllerTest extends TestCase
         $this->postJson(self::URI, $this->message('buenas'), $this->secretHeader())->assertOk();
 
         $this->assertSame(1, (int) IntegrationTelegramRegistrationSession::where('chat_id', '555')->value('attempts'));
-        $this->assertStringContainsString('No reconocimos ese dato', $hub->calls[1]['values']['text']);
+        $this->assertStringContainsString('No reconocí eso', $hub->calls[1]['values']['text']);
     }
 
     public function test_tras_cinco_intentos_se_cierra_la_conversacion(): void
@@ -208,6 +211,47 @@ class TelegramWebhookControllerTest extends TestCase
         $this->assertSame(0, IntegrationTelegramContact::count());
         $this->assertSame(0, IntegrationTelegramRegistrationSession::count());
         $this->assertStringContainsString('no tiene un programa activo', $hub->calls[1]['values']['text']);
+    }
+
+    public function test_start_en_un_chat_ya_registrado_menciona_al_titular(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindDirectory();
+
+        DB::table('people')->insert([
+            'id' => 100,
+            'short_name' => 'Ana',
+            'full_name' => 'Ana Pérez',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        app(TelegramRegistrationService::class)->attach(100, '555');
+
+        $this->postJson(self::URI, $this->message('/start'), $this->secretHeader())->assertOk();
+
+        $text = $hub->calls[0]['values']['text'];
+
+        $this->assertStringContainsString('Ana', $text);
+        $this->assertStringContainsString('ya está registrado', $text);
+    }
+
+    public function test_el_bot_usa_el_texto_configurado_por_el_administrador(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindDirectory();
+
+        // El administrador reescribe la ayuda desde la pantalla de Notificaciones:
+        // el bot debe usar ese texto, con sus simbolos escapados para Telegram.
+        app(TelegramMessageService::class)->save(
+            TelegramMessages::HELP,
+            'Avisos & <b>novedades</b> de la institución',
+            TelegramMessages::FORMAT_HTML
+        );
+
+        $this->postJson(self::URI, $this->message('/ayuda'), $this->secretHeader())->assertOk();
+
+        $this->assertSame('Avisos &amp; <b>novedades</b> de la institución', $hub->calls[0]['values']['text']);
     }
 
     public function test_un_texto_suelto_sin_sesion_recibe_un_recordatorio_corto(): void

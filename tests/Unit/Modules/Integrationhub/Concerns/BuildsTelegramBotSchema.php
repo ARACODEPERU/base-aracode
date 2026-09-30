@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Schema;
  * migraciones de la aplicación sobre sqlite, así que aquí se ejecutan solo las
  * migraciones reales que toca el bot (parámetros del sistema, integraciones,
  * endpoints, field maps, bitácora de errores y las tablas de Telegram: contactos,
- * sesiones de registro y la limpieza de los códigos personales), más una tabla
+ * sesiones de registro, textos configurables y la limpieza de los códigos
+ * personales), más una tabla
  * `people` mínima: el bot saluda por el nombre de la persona y esa consulta debe
  * funcionar como en producción.
  */
@@ -37,6 +38,8 @@ trait BuildsTelegramBotSchema
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000011_create_telegram_bot_integration.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000012_create_telegram_registration_sessions_table.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000013_drop_registration_code_from_telegram_contacts.php',
+        'Modules/Integrationhub/Database/Migrations/2026_09_30_000014_add_parse_mode_to_telegram_send_message.php',
+        'Modules/Integrationhub/Database/Migrations/2026_09_30_000015_create_integration_telegram_messages_table.php',
     ];
 
     private const TELEGRAM_TABLES = [
@@ -46,6 +49,7 @@ trait BuildsTelegramBotSchema
         'integrations',
         'integration_telegram_contacts',
         'integration_telegram_registration_sessions',
+        'integration_telegram_messages',
         'integration_errors',
         'parameters',
     ];

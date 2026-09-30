@@ -466,6 +466,20 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
 
             Route::post('notifications/telegram/webhook', [AcaNotificationController::class, 'telegramWebhook'])
                 ->name('aca_notifications_telegram_webhook');
+
+            // Textos del bot (y plantilla de las campanas) mas la vista previa
+            // del aviso de Telegram.
+            Route::get('notifications/telegram/messages', [AcaNotificationController::class, 'telegramMessages'])
+                ->name('aca_notifications_telegram_messages');
+
+            Route::post('notifications/telegram/messages', [AcaNotificationController::class, 'telegramMessagesSave'])
+                ->name('aca_notifications_telegram_messages_save');
+
+            Route::post('notifications/telegram/messages/reset', [AcaNotificationController::class, 'telegramMessagesReset'])
+                ->name('aca_notifications_telegram_messages_reset');
+
+            Route::post('notifications/telegram/preview', [AcaNotificationController::class, 'telegramPreview'])
+                ->name('aca_notifications_telegram_preview');
         });
 
     // ////////////fin de suscripciones
