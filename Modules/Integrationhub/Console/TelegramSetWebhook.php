@@ -43,6 +43,7 @@ class TelegramSetWebhook extends Command
             if ($action === 'status') {
                 $this->line('Usuario del bot: ' . ($bot->username(true) ?? 'no disponible'));
                 $this->line('URL del webhook: ' . $bot->webhookUrl());
+                $this->line('Enlace de registro: ' . ($bot->registrationLink() ?? 'no disponible'));
 
                 return self::SUCCESS;
             }
