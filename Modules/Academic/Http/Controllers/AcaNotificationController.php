@@ -32,8 +32,9 @@ use Modules\Integrationhub\Support\TelegramMessages;
  * el token del bot (en ese caso el aviso viaja al chat_id que cada alumno
  * registro con el bot). El envio real lo hace SendAcaNotificationCampaign en la
  * cola, espaciando los mensajes cada 280 ms; esta pantalla solo lanza la
- * campana, consulta su avance por sondeo y entrega el enlace unico de registro
- * del bot de Telegram.
+ * campana, consulta su avance por sondeo, entrega el enlace unico de registro
+ * del bot de Telegram y permite reescribir los textos que ese bot envia (y la
+ * plantilla de las campanas de Telegram).
  */
 class AcaNotificationController extends Controller
 {

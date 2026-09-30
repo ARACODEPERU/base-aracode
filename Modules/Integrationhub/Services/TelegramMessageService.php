@@ -214,8 +214,14 @@ class TelegramMessageService
         $this->loaded = true;
         $this->overrides = [];
 
-        foreach (IntegrationTelegramMessage::query()->get() as $message) {
-            $this->overrides[(string) $message->code] = $message;
+        try {
+            foreach (IntegrationTelegramMessage::query()->get() as $message) {
+                $this->overrides[(string) $message->code] = $message;
+            }
+        } catch (\Throwable) {
+            // Con la migracion todavia pendiente (codigo desplegado antes de
+            // migrar) el bot trabaja con los textos de fabrica en lugar de
+            // quedarse sin responder.
         }
     }
 
