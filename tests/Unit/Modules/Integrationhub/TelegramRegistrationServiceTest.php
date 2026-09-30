@@ -3,17 +3,18 @@
 namespace Tests\Unit\Modules\Integrationhub;
 
 use Modules\Integrationhub\Entities\IntegrationTelegramContact;
+use Modules\Integrationhub\Entities\IntegrationTelegramRegistrationSession;
 use Modules\Integrationhub\Services\TelegramRegistrationService;
 use RuntimeException;
 use Tests\TestCase;
 use Tests\Unit\Modules\Integrationhub\Concerns\BuildsTelegramBotSchema;
 
 /**
- * Altas y bajas del vinculo persona <-> chat de Telegram.
+ * Altas, bajas y conversacion de registro del vinculo persona <-> chat.
  *
- * La promesa: el codigo del enlace es de un solo uso y caduca; un chat no puede
- * quedar vinculado a dos personas a la vez; y la baja (/baja) apaga el contacto
- * sin borrarlo, para poder reactivarlo con un enlace nuevo.
+ * La promesa: /start abre una conversacion que caduca y se puede cerrar; un
+ * chat no puede quedar vinculado a dos personas a la vez; y la baja (/baja)
+ * apaga el contacto sin borrarlo, para poder reactivarlo escribiendo /start.
  */
 class TelegramRegistrationServiceTest extends TestCase
 {
@@ -38,93 +39,98 @@ class TelegramRegistrationServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_emite_un_codigo_de_un_solo_uso_con_vigencia(): void
+    public function test_abre_una_sesion_de_registro_con_vigencia(): void
     {
-        $contact = $this->service->issueCode(10, 'Ana Perez');
+        $session = $this->service->beginSession('555', 'ana_tg', 'Ana');
 
-        $this->assertNotNull($contact);
-        $this->assertSame(10, (int) $contact->person_id);
-        $this->assertNull($contact->chat_id);
-        $this->assertSame(48, strlen((string) $contact->registration_code));
-        $this->assertTrue($contact->code_expires_at->isFuture());
-        $this->assertSame('Ana Perez', $contact->telegram_first_name);
+        $this->assertSame('555', $session->chat_id);
+        $this->assertSame('awaiting_document', $session->step);
+        $this->assertSame(0, $session->attempts);
+        $this->assertSame('ana_tg', $session->telegram_username);
+        $this->assertTrue($session->expires_at->isFuture());
     }
 
-    public function test_no_emite_codigo_si_la_persona_ya_tiene_chat_activo(): void
+    public function test_volver_a_empezar_reinicia_la_sesion(): void
     {
-        $this->service->attach(10, '555');
+        $this->service->beginSession('555');
+        $session = $this->service->sessionFor('555');
+        $this->service->countAttempt($session);
 
-        $this->assertNull($this->service->issueCode(10));
+        $reiniciada = $this->service->beginSession('555', 'ana_tg', 'Ana');
+
+        $this->assertSame(1, IntegrationTelegramRegistrationSession::count());
+        $this->assertSame(0, $reiniciada->attempts);
     }
 
-    public function test_vuelve_a_emitir_codigo_tras_una_baja(): void
+    public function test_una_sesion_vencida_se_descarta(): void
     {
-        $this->service->attach(10, '555');
-        $this->service->deactivate('555');
+        $this->service->beginSession('555');
+        IntegrationTelegramRegistrationSession::where('chat_id', '555')
+            ->update(['expires_at' => now()->subMinute()]);
 
-        $contact = $this->service->issueCode(10);
+        $this->assertNull($this->service->sessionFor('555'));
 
-        $this->assertNotNull($contact);
-        $this->assertNotNull($contact->registration_code);
+        // Se borra al pasar: el siguiente mensaje suelto no se lee como documento.
+        $this->assertSame(0, IntegrationTelegramRegistrationSession::count());
     }
 
-    public function test_link_consume_el_codigo_y_guarda_el_chat(): void
+    public function test_cuenta_los_intentos_y_tiene_un_tope(): void
     {
-        $contact = $this->service->issueCode(20, 'Luis');
-        $code = (string) $contact->registration_code;
+        $session = $this->service->beginSession('555');
 
-        $linked = $this->service->link($code, '123456', 'luis_tg', 'Luis');
-
-        $this->assertSame('123456', $linked->chat_id);
-        $this->assertSame('luis_tg', $linked->telegram_username);
-        $this->assertSame('active', $linked->status);
-        $this->assertNull($linked->registration_code);
-        $this->assertNull($linked->code_expires_at);
-        $this->assertNotNull($linked->registered_at);
-
-        // El codigo ya no sirve dos veces.
-        $this->expectException(RuntimeException::class);
-        $this->service->link($code, '999999');
+        $this->assertSame(1, $this->service->countAttempt($session));
+        $this->assertSame(2, $this->service->countAttempt($session));
+        $this->assertSame(5, $this->service->maxAttempts());
     }
 
-    public function test_un_codigo_inexistente_no_vincula_nada(): void
+    public function test_cerrar_la_sesion_la_elimina(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('no existe o ya fue usado');
+        $this->service->beginSession('555');
 
-        $this->service->link('codigo-inventado', '123456');
+        $this->service->closeSession('555');
+
+        $this->assertNull($this->service->sessionFor('555'));
     }
 
-    public function test_un_codigo_vencido_no_vincula_y_se_limpia(): void
+    public function test_attach_guarda_el_chat_de_la_persona(): void
     {
-        $contact = $this->service->issueCode(30);
-        $contact->update(['code_expires_at' => now()->subMinute()]);
+        $contact = $this->service->attach(60, '999', 'pepe', 'Pepe');
 
-        try {
-            $this->service->link((string) $contact->registration_code, '123456');
-            $this->fail('Un codigo vencido no debia permitir el registro.');
-        } catch (RuntimeException $exception) {
-            $this->assertStringContainsString('expiró', $exception->getMessage());
-        }
+        $this->assertSame('999', $contact->chat_id);
+        $this->assertSame('active', $contact->status);
+        $this->assertNotNull($contact->registered_at);
 
-        $contact->refresh();
-
-        $this->assertNull($contact->chat_id);
-        $this->assertNull($contact->registration_code);
+        $this->assertSame(60, (int) $this->service->findByChatId('999')->person_id);
     }
 
     public function test_un_chat_no_puede_quedar_en_dos_personas(): void
     {
         $anterior = $this->service->attach(40, '777');
 
-        $contact = $this->service->issueCode(41);
-        $this->service->link((string) $contact->registration_code, '777', 'nuevo', 'Nuevo');
+        $this->service->attach(41, '777', 'nuevo', 'Nuevo');
 
         $anterior->refresh();
 
         $this->assertNull($anterior->chat_id);
         $this->assertSame('inactive', $anterior->status);
         $this->assertSame('777', IntegrationTelegramContact::where('person_id', 41)->value('chat_id'));
+    }
+
+    public function test_una_persona_que_vuelve_a_registrarse_reemplaza_su_chat(): void
+    {
+        $this->service->attach(50, '111');
+
+        $contact = $this->service->attach(50, '222');
+
+        $this->assertSame('222', $contact->chat_id);
+        $this->assertSame(1, IntegrationTelegramContact::where('person_id', 50)->count());
+    }
+
+    public function test_attach_exige_persona_y_chat(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        $this->service->attach(0, '555');
     }
 
     public function test_la_baja_marca_el_contacto_como_inactivo(): void
@@ -135,16 +141,6 @@ class TelegramRegistrationServiceTest extends TestCase
         $this->assertSame('inactive', IntegrationTelegramContact::where('person_id', 50)->value('status'));
 
         $this->assertFalse($this->service->deactivate('888999'));
-    }
-
-    public function test_attach_es_una_alternativa_directa_sin_codigo(): void
-    {
-        $contact = $this->service->attach(60, '999', 'pepe', 'Pepe');
-
-        $this->assertSame('999', $contact->chat_id);
-        $this->assertSame('active', $contact->status);
-        $this->assertNotNull($contact->registered_at);
-        $this->assertNull($contact->registration_code);
     }
 
     public function test_solo_los_contactos_activos_con_chat_estan_suscritos(): void

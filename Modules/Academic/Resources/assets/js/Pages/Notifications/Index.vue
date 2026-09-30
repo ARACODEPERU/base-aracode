@@ -19,6 +19,8 @@ const props = defineProps({
     channels: { type: Object, default: () => ({ vonage: false, whatsapp: false, telegram: false }) },
     // Usuario publico del bot de Telegram (@) cuando el canal esta habilitado.
     telegramBotUsername: { type: String, default: null },
+    // Enlace unico de registro del bot (el mismo para todos los alumnos).
+    telegramLink: { type: String, default: null },
     timeSuggestions: { type: Array, default: () => [] },
     countryCode: { type: String, default: '51' },
     intervalMs: { type: Number, default: 280 },
@@ -168,19 +170,16 @@ const progressPercent = computed(() => campaign.value?.percent ?? 0);
 
 const showWidget = computed(() => Boolean(campaign.value) && !widgetHidden.value && !progressVisible.value);
 
-/** Todos los enlaces en una sola cadena, para el boton "Copiar todos". */
-const allLinksText = computed(() =>
-    telegramLinks.value.map((item) => `${item.name}: ${item.link}`).join('\n')
-);
-
 const notify = (title, text, icon) => {
     Swal2.fire({ title, text, icon, padding: '2em', customClass: 'sweet-alerts' });
 };
 
-/** Enlaces de registro de Telegram generados para el programa elegido. */
-const telegramLinks = ref([]);
-const linksVisible = ref(false);
-const loadingTelegramLinks = ref(false);
+/**
+ * Enlace unico de registro del bot (t.me/<bot>): es el mismo para todos, lo que
+ * cambia es el documento que cada alumno escribe en el chat.
+ */
+const registrationLink = ref(props.telegramLink);
+const loadingTelegramLink = ref(false);
 const registeringWebhook = ref(false);
 
 const fetchAudience = async () => {
@@ -209,39 +208,30 @@ const fetchAudience = async () => {
 };
 
 /**
- * Genera un enlace de registro de un solo uso por cada alumno del programa que
- * todavia no tiene chat_id de Telegram registrado.
+ * Trae el enlace unico de registro (refrescando el usuario del bot en Telegram).
+ *
+ * El enlace no depende del programa: se comparte el mismo con los alumnos,
+ * tambien cuando la pantalla cambia de programa.
  */
-const generateTelegramLinks = async () => {
+const fetchTelegramLink = async () => {
     errors.value = {};
-
-    if (!form.value.course_id) {
-        errors.value.course_id = 'Elige el programa de especialización.';
-        return;
-    }
-
-    loadingTelegramLinks.value = true;
+    loadingTelegramLink.value = true;
 
     try {
-        const { data } = await axios.post(route('aca_notifications_telegram_links'), {
-            course_id: form.value.course_id,
+        const { data } = await axios.get(route('aca_notifications_telegram_link'), {
+            params: { course_id: form.value.course_id || null },
         });
 
-        telegramLinks.value = data.links ?? [];
-        linksVisible.value = true;
-
-        if (!telegramLinks.value.length) {
-            notify('Sin pendientes', data.message, 'info');
-        }
+        registrationLink.value = data.link ?? registrationLink.value;
     } catch (error) {
         if (error.response?.status === 422) {
             errors.value = error.response.data.errors ?? {};
             notify('Revisa el formulario', Object.values(errors.value)[0]?.[0] ?? 'Hay datos incompletos.', 'warning');
         } else {
-            notify('Error', error.response?.data?.message || 'No se pudieron generar los enlaces.', 'error');
+            notify('Error', error.response?.data?.message || 'No se pudo obtener el enlace de registro.', 'error');
         }
     } finally {
-        loadingTelegramLinks.value = false;
+        loadingTelegramLink.value = false;
     }
 };
 
@@ -460,6 +450,10 @@ watch(
             form.value.is_test = false;
         }
 
+        if (channel === 'telegram' && !registrationLink.value) {
+            fetchTelegramLink();
+        }
+
         fetchAudience();
     }
 );
@@ -467,6 +461,10 @@ watch(
 onMounted(() => {
     if (!availableChannels.value.some((channel) => channel.value === form.value.channel)) {
         form.value.channel = availableChannels.value[0]?.value ?? '';
+    }
+
+    if (form.value.channel === 'telegram' && !registrationLink.value) {
+        fetchTelegramLink();
     }
 
     if (campaign.value) {
@@ -666,7 +664,8 @@ onBeforeUnmount(() => {
                                         <b>{{ audience.total }}</b> del padrón ya están registrados y
                                         <b>{{ audience.skipped }}</b> todavía no.
                                     </template>
-                                    Genera un enlace personal (de un solo uso) para cada pendiente y compártelo.
+                                    <b>El enlace es el mismo para todos</b>: compártelo y cada alumno escribe su número
+                                    de documento en el chat.
                                 </p>
                             </div>
 
@@ -674,10 +673,10 @@ onBeforeUnmount(() => {
                                 <button
                                     type="button"
                                     class="btn btn-outline-primary"
-                                    :disabled="!form.course_id || loadingTelegramLinks"
-                                    @click="generateTelegramLinks"
+                                    :disabled="loadingTelegramLink"
+                                    @click="fetchTelegramLink"
                                 >
-                                    {{ loadingTelegramLinks ? 'Generando...' : 'Generar enlaces de registro' }}
+                                    {{ loadingTelegramLink ? 'Consultando...' : 'Obtener enlace de registro' }}
                                 </button>
 
                                 <button
@@ -690,6 +689,33 @@ onBeforeUnmount(() => {
                                 </button>
                             </div>
                         </div>
+
+                        <div v-if="registrationLink" class="mt-3 flex flex-wrap items-center gap-2">
+                            <input
+                                :value="registrationLink"
+                                type="text"
+                                readonly
+                                class="form-input w-full max-w-sm bg-white dark:bg-zinc-900"
+                            />
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                @click="copyToClipboard(registrationLink, 'Enlace de registro copiado. Es el mismo para todos los alumnos.')"
+                            >
+                                Copiar enlace
+                            </button>
+                        </div>
+
+                        <p v-else class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                            Pulsa <b>Obtener enlace de registro</b> para consultar el usuario del bot en Telegram y armar
+                            el enlace.
+                        </p>
+
+                        <ol class="mt-3 list-decimal space-y-1 pl-5 text-xs text-gray-500 dark:text-gray-400">
+                            <li>Comparte el enlace con los alumnos: es el mismo para todos.</li>
+                            <li>El alumno lo abre y pulsa <b>Iniciar</b>; el bot le pide su número de documento.</li>
+                            <li>Si está en el padrón, el bot confirma y desde ahí recibe las notificaciones.</li>
+                        </ol>
 
                         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                             El webhook necesita que este sistema sea accesible por HTTPS público: es la dirección a la que
@@ -952,71 +978,5 @@ onBeforeUnmount(() => {
             </div>
         </div>
 
-        <!-- Modal de enlaces de registro de Telegram -->
-        <div v-if="linksVisible" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 p-4">
-            <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-lg bg-white p-6 shadow-lg dark:bg-[#0e1726]">
-                <div class="mb-4 flex items-start justify-between">
-                    <div>
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Enlaces de registro de Telegram</h2>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Un enlace por alumno, de un solo uso. Compártelo con cada uno: al abrirlo y pulsar Iniciar, el
-                            bot guarda su chat_id y desde ahí recibe las notificaciones.
-                        </p>
-                    </div>
-                    <button type="button" class="text-2xl leading-none text-gray-400 hover:text-gray-600" @click="linksVisible = false">
-                        &times;
-                    </button>
-                </div>
-
-                <div class="mb-3 flex justify-end">
-                    <button
-                        type="button"
-                        class="btn btn-outline-primary"
-                        @click="copyToClipboard(allLinksText, 'Todos los enlaces quedaron en el portapapeles.')"
-                    >
-                        Copiar todos
-                    </button>
-                </div>
-
-                <div class="max-h-80 overflow-auto rounded-lg border border-gray-200 dark:border-zinc-700">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-zinc-800 dark:text-gray-400">
-                            <tr>
-                                <th class="px-3 py-2">Alumno</th>
-                                <th class="px-3 py-2">Enlace</th>
-                                <th class="px-3 py-2"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr
-                                v-for="item in telegramLinks"
-                                :key="item.person_id"
-                                class="border-t border-gray-100 dark:border-zinc-800"
-                            >
-                                <td class="px-3 py-2 text-gray-700 dark:text-gray-200">{{ item.name }}</td>
-                                <td class="px-3 py-2">
-                                    <span class="block max-w-xs truncate text-xs text-gray-500 dark:text-gray-400">
-                                        {{ item.link }}
-                                    </span>
-                                </td>
-                                <td class="px-3 py-2 text-right">
-                                    <button
-                                        type="button"
-                                        class="text-xs font-medium text-primary hover:underline"
-                                        @click="copyToClipboard(item.link, 'Enlace copiado.')"
-                                    >
-                                        Copiar
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="mt-4 flex justify-end">
-                    <button type="button" class="btn btn-primary" @click="linksVisible = false">Cerrar</button>
-                </div>
-            </div>
-        </div>
     </AppLayout>
 </template>

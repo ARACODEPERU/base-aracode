@@ -21,8 +21,12 @@ return [
         // Minutos de espera antes de volver a consultar getMe por el usuario del bot.
         'username_cache_minutes' => (int) env('TELEGRAM_USERNAME_CACHE_MINUTES', 1440),
 
-        // Dias de vigencia del codigo del enlace de registro.
-        'registration_code_ttl_days' => (int) env('TELEGRAM_REGISTRATION_TTL_DAYS', 7),
+        // Minutos que el bot espera el documento despues de /start antes de
+        // abandonar la conversacion a medias.
+        'registration_session_minutes' => (int) env('TELEGRAM_REGISTRATION_SESSION_MINUTES', 30),
+
+        // Documentos errados que se toleran antes de cerrar la conversacion.
+        'registration_max_attempts' => (int) env('TELEGRAM_REGISTRATION_MAX_ATTEMPTS', 5),
 
         'endpoints' => [
             'get_me' => 'telegram_get_me',

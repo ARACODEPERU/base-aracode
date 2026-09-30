@@ -20,7 +20,6 @@ use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;
 use Modules\Academic\Support\PhoneNumberFormatter;
 use Modules\Integrationhub\Services\TelegramBotService;
-use Modules\Integrationhub\Services\TelegramRegistrationService;
 
 /**
  * Notificaciones masivas de un programa de especializacion.
@@ -31,8 +30,8 @@ use Modules\Integrationhub\Services\TelegramRegistrationService;
  * el token del bot (en ese caso el aviso viaja al chat_id que cada alumno
  * registro con el bot). El envio real lo hace SendAcaNotificationCampaign en la
  * cola, espaciando los mensajes cada 280 ms; esta pantalla solo lanza la
- * campana, consulta su avance por sondeo y gestiona los enlaces de registro de
- * Telegram.
+ * campana, consulta su avance por sondeo y entrega el enlace unico de registro
+ * del bot de Telegram.
  */
 class AcaNotificationController extends Controller
 {
@@ -44,7 +43,6 @@ class AcaNotificationController extends Controller
         private readonly VonageSmsService $vonage,
         private readonly WhatsappCourseNotifier $whatsapp,
         private readonly TelegramBotService $telegramBot,
-        private readonly TelegramRegistrationService $telegramRegistration,
     ) {
     }
 
@@ -73,8 +71,11 @@ class AcaNotificationController extends Controller
             // Usuario publico del bot (@) para mostrar de que bot se trata. Se
             // lee solo de cache: consultar Telegram al pintar la pantalla la
             // expondria a un timeout de red. Lo llenan las acciones explicitas
-            // (generar enlaces / registrar webhook).
+            // (obtener el enlace / registrar el webhook).
             'telegramBotUsername' => $telegramConfigured ? $this->telegramBot->cachedUsername() : null,
+            // Enlace unico de registro del bot, ya armado si el usuario del bot
+            // esta cacheado (la pantalla puede refrescarlo con su boton).
+            'telegramLink' => $telegramConfigured ? $this->telegramBot->cachedRegistrationLink() : null,
             'timeSuggestions' => ['5 minutos', '10 minutos', '15 minutos', '30 minutos'],
             'countryCode' => (string) config('academic.notifications.country_code', '51'),
             'intervalMs' => (int) config('academic.notifications.interval_ms', 280),
@@ -242,17 +243,18 @@ class AcaNotificationController extends Controller
     }
 
     /**
-     * Genera los enlaces de registro de Telegram para los alumnos del programa
-     * que todavia no registraron su chat_id.
+     * Enlace unico de registro del bot de Telegram.
      *
-     * El enlace es un deep link (t.me/<bot>?start=<codigo>) de un solo uso: al
-     * abrirlo y pulsar Iniciar, el webhook del bot guarda el chat_id de la
-     * persona y desde ese momento entra en las campanas de Telegram.
+     * Es el mismo enlace para todas las personas (t.me/<bot>): al abrirlo y
+     * pulsar Iniciar, el bot pide el numero de documento y, si la persona esta
+     * en el padron (matricula en un programa de especializacion o suscripcion
+     * vigente), guarda su chat_id. Aqui solo se entrega el enlace y, si se
+     * indica el programa, cuantos alumnos de ese programa ya estan registrados.
      */
-    public function telegramLinks(Request $request)
+    public function telegramRegistrationLink(Request $request)
     {
         $validated = $request->validate([
-            'course_id' => ['required', 'integer', 'exists:aca_courses,id'],
+            'course_id' => ['nullable', 'integer', 'exists:aca_courses,id'],
         ]);
 
         if (! $this->telegramBot->isConfigured()) {
@@ -261,41 +263,31 @@ class AcaNotificationController extends Controller
             ]);
         }
 
-        $course = $this->specializationCourseOrFail((int) $validated['course_id']);
-
-        // Se refresca el usuario del bot: sin el no se puede armar el deep link.
+        // Se refresca el usuario del bot: sin el no se puede armar el enlace, y
+        // de paso queda cacheado para el resto de la pantalla.
         if ($this->telegramBot->username(true) === null) {
             throw ValidationException::withMessages([
                 'course_id' => 'No se pudo consultar el usuario del bot en Telegram. Revisa el token del parámetro SC-00002.',
             ]);
         }
 
-        $links = [];
-        $skipped = 0;
+        $registered = null;
+        $pending = null;
 
-        foreach ($this->audienceResolver->pendingTelegram($course) as $person) {
-            $contact = $this->telegramRegistration->issueCode((int) $person['person_id'], $person['name']);
-            $link = $contact ? $this->telegramBot->registrationLink((string) $contact->registration_code) : null;
+        if (! empty($validated['course_id'])) {
+            $course = $this->specializationCourseOrFail((int) $validated['course_id']);
+            $counts = $this->audienceResolver->countsTelegram($course);
 
-            if ($link === null) {
-                $skipped++;
-                continue;
-            }
-
-            $links[] = [
-                'person_id' => $person['person_id'],
-                'name' => $person['name'],
-                'link' => $link,
-                'expires_at' => $contact->code_expires_at?->toIso8601String(),
-            ];
+            $registered = $counts['total'];
+            $pending = $counts['skipped'];
         }
 
         return response()->json([
-            'message' => count($links) === 0
-                ? 'Todos los alumnos de este programa ya tienen su chat de Telegram registrado.'
-                : 'Enlaces generados. Compártelos con cada alumno (uno por uno): el enlace es personal y de un solo uso.',
-            'links' => $links,
-            'skipped' => $skipped,
+            'message' => 'Enlace de registro listo. Es el mismo para todos: compártelo y pide a cada alumno que lo abra, pulse Iniciar y escriba su número de documento.',
+            'link' => $this->telegramBot->registrationLink(),
+            'username' => $this->telegramBot->cachedUsername(),
+            'registered' => $registered,
+            'pending' => $pending,
         ]);
     }
 
@@ -358,7 +350,7 @@ class AcaNotificationController extends Controller
         }
 
         if ($channel === 'telegram') {
-            return 'Ningún alumno de este programa tiene su chat_id de Telegram registrado todavía. Genera los enlaces de registro y compártelos.';
+            return 'Ningún alumno de este programa tiene su chat_id de Telegram registrado todavía. Comparte el enlace de registro del bot y pide a cada alumno que escriba su número de documento.';
         }
 
         return 'El programa no tiene alumnos con un telefono valido para notificar.';

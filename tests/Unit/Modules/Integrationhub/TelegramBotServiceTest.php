@@ -119,7 +119,7 @@ class TelegramBotServiceTest extends TestCase
         app(TelegramBotService::class)->sendMessage('555123', 'Hola');
     }
 
-    public function test_arma_el_enlace_de_registro_con_el_usuario_del_bot(): void
+    public function test_arma_el_enlace_unico_de_registro_con_el_usuario_del_bot(): void
     {
         $this->setToken(self::TOKEN);
 
@@ -127,12 +127,24 @@ class TelegramBotServiceTest extends TestCase
             'response' => ['ok' => true, 'result' => ['username' => 'cpa_academy_bot']],
         ]));
 
-        $link = app(TelegramBotService::class)->registrationLink('ABC123');
+        $bot = app(TelegramBotService::class);
 
-        $this->assertSame('https://t.me/cpa_academy_bot?start=ABC123', $link);
+        $this->assertSame('https://t.me/cpa_academy_bot', $bot->registrationLink());
+        // El enlace es el mismo para todos y no lleva ningun dato del alumno.
+        $this->assertStringNotContainsString('?', (string) $bot->registrationLink());
         $this->assertSame('telegram_get_me', $hub->calls[0]['endpoint']);
         // getMe se consulta sin registrar bitacora: es solo un dato de apoyo.
         $this->assertFalse($hub->calls[0]['track']);
+        // El usuario queda cacheado: la pantalla lo reusa sin volver a la red.
+        $this->assertCount(1, $hub->calls);
+        $this->assertSame('https://t.me/cpa_academy_bot', $bot->cachedRegistrationLink());
+    }
+
+    public function test_publica_los_comandos_del_bot(): void
+    {
+        $commands = app(TelegramBotService::class)->defaultCommands();
+
+        $this->assertSame(['start', 'baja', 'ayuda'], array_column($commands, 'command'));
     }
 
     public function test_registra_el_webhook_con_el_secreto_derivado(): void

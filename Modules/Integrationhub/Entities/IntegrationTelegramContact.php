@@ -11,9 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Vinculo entre una persona del sistema y su chat de Telegram.
  *
- * La fila puede existir sin chat_id (cuando el administrador genero el enlace
- * de registro) y se completa cuando la persona abre el deep link y le da
- * Iniciar al bot. El estado inactive corresponde a quienes escribieron /baja.
+ * Se crea cuando la persona escribe su documento en el chat del bot y el padron
+ * la reconoce. El estado inactive corresponde a quienes escribieron /baja.
  */
 class IntegrationTelegramContact extends Model
 {
@@ -27,14 +26,11 @@ class IntegrationTelegramContact extends Model
         'telegram_username',
         'telegram_first_name',
         'status',
-        'registration_code',
-        'code_expires_at',
         'registered_at',
         'last_seen_at',
     ];
 
     protected $casts = [
-        'code_expires_at' => 'datetime',
         'registered_at' => 'datetime',
         'last_seen_at' => 'datetime',
     ];

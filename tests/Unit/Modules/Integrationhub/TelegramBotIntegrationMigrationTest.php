@@ -6,6 +6,7 @@ use App\Models\Parameter;
 use Modules\Integrationhub\Entities\Integration;
 use Modules\Integrationhub\Entities\IntegrationEndpoint;
 use Modules\Integrationhub\Entities\IntegrationFieldMap;
+use Illuminate\Support\Facades\Schema;
 use Modules\Integrationhub\Entities\IntegrationTelegramContact;
 use Tests\TestCase;
 use Tests\Unit\Modules\Integrationhub\Concerns\BuildsTelegramBotSchema;
@@ -14,9 +15,11 @@ use Tests\Unit\Modules\Integrationhub\Concerns\BuildsTelegramBotSchema;
  * Migraciones del bot de Telegram.
  *
  * La promesa: la integración "Telegram_bot" nace con sus seis endpoints y sus
- * field maps (token en la ruta, chat_id y texto en el body) y, sobre todo, las
- * migraciones se pueden re-ejecutar sin duplicar nada ni pisar lo que el
- * administrador ya configuró (incluido el token del parámetro SC-00002).
+ * field maps (token en la ruta, chat_id y texto en el body); las tablas del bot
+ * existen (contactos y sesiones de registro) y quedan sin las columnas del
+ * registro con código personal; y, sobre todo, las migraciones se pueden
+ * re-ejecutar sin duplicar nada ni pisar lo que el administrador ya configuró
+ * (incluido el token del parámetro SC-00002).
  */
 class TelegramBotIntegrationMigrationTest extends TestCase
 {
@@ -27,6 +30,10 @@ class TelegramBotIntegrationMigrationTest extends TestCase
     private const CONTACTS_MIGRATION = 'Modules/Integrationhub/Database/Migrations/2026_09_30_000010_create_integration_telegram_contacts_table.php';
 
     private const PARAMETER_MIGRATION = 'database/migrations/2026_09_30_000001_add_telegram_bot_token_parameter.php';
+
+    private const SESSIONS_MIGRATION = 'Modules/Integrationhub/Database/Migrations/2026_09_30_000012_create_telegram_registration_sessions_table.php';
+
+    private const CLEANUP_MIGRATION = 'Modules/Integrationhub/Database/Migrations/2026_09_30_000013_drop_registration_code_from_telegram_contacts.php';
 
     protected function setUp(): void
     {
@@ -78,9 +85,10 @@ class TelegramBotIntegrationMigrationTest extends TestCase
         $this->assertTrue((bool) $maps['text']->is_required);
     }
 
-    public function test_crea_el_parametro_del_token_y_la_tabla_de_contactos(): void
+    public function test_crea_el_parametro_del_token_y_las_tablas_del_bot(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('integration_telegram_contacts'));
+        $this->assertTrue(Schema::hasTable('integration_telegram_contacts'));
+        $this->assertTrue(Schema::hasTable('integration_telegram_registration_sessions'));
 
         $parameter = Parameter::where('parameter_code', 'SC-00002')->first();
 
@@ -91,6 +99,14 @@ class TelegramBotIntegrationMigrationTest extends TestCase
         $this->assertInstanceOf(IntegrationTelegramContact::class, new IntegrationTelegramContact());
     }
 
+    public function test_retira_las_columnas_del_registro_con_codigo(): void
+    {
+        // El registro ahora es con el enlace unico del bot y el documento que la
+        // persona escribe: los codigos personales ya no tienen columnas.
+        $this->assertFalse(Schema::hasColumn('integration_telegram_contacts', 'registration_code'));
+        $this->assertFalse(Schema::hasColumn('integration_telegram_contacts', 'code_expires_at'));
+    }
+
     public function test_repetir_las_migraciones_no_duplica_nada(): void
     {
         $parameterTotal = Parameter::count();
@@ -98,6 +114,8 @@ class TelegramBotIntegrationMigrationTest extends TestCase
         $this->rerunTelegramMigration(self::PARAMETER_MIGRATION);
         $this->rerunTelegramMigration(self::CONTACTS_MIGRATION);
         $this->rerunTelegramMigration(self::INTEGRATION_MIGRATION);
+        $this->rerunTelegramMigration(self::SESSIONS_MIGRATION);
+        $this->rerunTelegramMigration(self::CLEANUP_MIGRATION);
 
         $integration = Integration::where('name', 'Telegram_bot')->first();
 

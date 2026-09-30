@@ -3,115 +3,101 @@
 namespace Modules\Integrationhub\Services;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Modules\Integrationhub\Entities\IntegrationTelegramContact;
+use Modules\Integrationhub\Entities\IntegrationTelegramRegistrationSession;
 use RuntimeException;
 
 /**
  * Altas y bajas del vinculo persona <-> chat de Telegram.
  *
- * El registro es por enlace: el administrador emite un codigo de un solo uso
- * para una persona (issueCode) y comparte el deep link del bot. Cuando la
- * persona abre el enlace, Telegram entrega /start <codigo> al webhook, que
- * consume el codigo con link() y guarda el chat_id.
+ * El registro es conversacional: la persona entra por el enlace unico del bot
+ * (t.me/<bot>), escribe /start y el bot abre una sesion (beginSession) en la
+ * que espera su documento. Con el documento ya validado por quien conoce el
+ * padron, el webhook llama a attach() y guarda el chat_id.
  */
 class TelegramRegistrationService
 {
     /**
-     * Emite (o reemplaza) el codigo de registro de una persona.
+     * Abre (o reinicia) la conversacion de registro de un chat.
      *
-     * Devuelve null cuando la persona ya tiene un chat activo: no tiene sentido
-     * pedirle que se registre otra vez.
+     * Es idempotente a proposito: si la persona ya habia empezado o ya estaba
+     * registrada, /start vuelve a pedir el documento desde cero.
      */
-    public function issueCode(int $personId, ?string $fallbackName = null): ?IntegrationTelegramContact
+    public function beginSession(string $chatId, ?string $username = null, ?string $firstName = null): IntegrationTelegramRegistrationSession
     {
-        if ($personId <= 0) {
-            throw new RuntimeException('No se puede emitir un código sin una persona válida.');
+        $chatId = trim($chatId);
+
+        if ($chatId === '') {
+            throw new RuntimeException('No se puede abrir un registro sin el chat de Telegram.');
         }
 
-        $contact = IntegrationTelegramContact::firstOrNew(['person_id' => $personId]);
+        $minutes = max(1, (int) config('integrationhub.telegram.registration_session_minutes', 30));
 
-        if ($contact->exists && $contact->status === 'active' && trim((string) $contact->chat_id) !== '') {
+        $session = IntegrationTelegramRegistrationSession::firstOrNew(['chat_id' => $chatId]);
+
+        $session->fill([
+            'telegram_username' => $this->clean($username),
+            'telegram_first_name' => $this->clean($firstName),
+            'step' => 'awaiting_document',
+            'attempts' => 0,
+            'expires_at' => now()->addMinutes($minutes),
+        ])->save();
+
+        return $session->refresh();
+    }
+
+    /**
+     * Sesion vigente de un chat, o null si no hay ninguna o ya vencio.
+     *
+     * Las vencidas se borran al pasar: asi una conversacion abandonada no deja
+     * basura y, sobre todo, el siguiente mensaje suelto no se interpreta como
+     * un documento.
+     */
+    public function sessionFor(string $chatId): ?IntegrationTelegramRegistrationSession
+    {
+        $session = IntegrationTelegramRegistrationSession::where('chat_id', trim($chatId))->first();
+
+        if ($session === null) {
             return null;
         }
 
-        $ttlDays = max(1, (int) config('integrationhub.telegram.registration_code_ttl_days', 7));
+        if ($session->expires_at === null || $session->expires_at->isPast()) {
+            $session->delete();
 
-        $contact->registration_code = $this->generateCode();
-        $contact->code_expires_at = now()->addDays($ttlDays);
-
-        // El nombre de Telegram solo se conoce al registrarse; se guarda el de
-        // la persona como referencia provisional para poder ubicarla.
-        if (trim((string) $contact->telegram_first_name) === '' && trim((string) $fallbackName) !== '') {
-            $contact->telegram_first_name = trim((string) $fallbackName);
+            return null;
         }
 
-        $contact->save();
-
-        return $contact;
+        return $session;
     }
 
     /**
-     * Consume un codigo de registro y vincula el chat a la persona.
-     *
-     * @throws RuntimeException cuando el codigo no existe, ya se uso o expiro.
+     * Suma un intento fallido y devuelve el total acumulado.
      */
-    public function link(string $code, string $chatId, ?string $username = null, ?string $firstName = null): IntegrationTelegramContact
+    public function countAttempt(IntegrationTelegramRegistrationSession $session): int
     {
-        $code = trim($code);
-        $chatId = trim($chatId);
+        $session->increment('attempts');
 
-        if ($code === '' || $chatId === '') {
-            throw new RuntimeException('El código de registro y el chat_id son obligatorios.');
-        }
-
-        // La vigencia se revisa fuera de la transaccion: si el codigo caduco se
-        // limpia y, al lanzar la excepcion, la transaccion habria revertido esa
-        // limpieza.
-        $existing = IntegrationTelegramContact::where('registration_code', $code)->first();
-
-        if (! $existing) {
-            throw new RuntimeException('El código de registro no existe o ya fue usado.');
-        }
-
-        if ($existing->code_expires_at && $existing->code_expires_at->isPast()) {
-            $existing->update(['registration_code' => null, 'code_expires_at' => null]);
-
-            throw new RuntimeException('El código de registro ya expiró. Pide un enlace nuevo.');
-        }
-
-        return DB::transaction(function () use ($code, $chatId, $username, $firstName) {
-            // Se vuelve a leer bajo bloqueo: entre el chequeo previo y aqui otra
-            // peticion pudo consumir el mismo codigo.
-            $contact = IntegrationTelegramContact::where('registration_code', $code)->lockForUpdate()->first();
-
-            if (! $contact) {
-                throw new RuntimeException('El código de registro no existe o ya fue usado.');
-            }
-
-            // Un mismo chat no puede pertenecer a dos personas: si el chat ya
-            // estaba vinculado a otro registro, se libera del anterior.
-            IntegrationTelegramContact::where('chat_id', $chatId)
-                ->where('id', '!=', $contact->id)
-                ->update(['chat_id' => null, 'status' => 'inactive']);
-
-            $contact->update([
-                'chat_id' => $chatId,
-                'telegram_username' => $this->clean($username),
-                'telegram_first_name' => $this->clean($firstName) ?? $contact->telegram_first_name,
-                'status' => 'active',
-                'registration_code' => null,
-                'code_expires_at' => null,
-                'registered_at' => now(),
-                'last_seen_at' => now(),
-            ]);
-
-            return $contact->refresh();
-        });
+        return (int) $session->refresh()->attempts;
     }
 
     /**
-     * Alta directa (sin codigo), para altas manuales o pruebas.
+     * Documentos errados que se toleran antes de cerrar la conversacion.
+     */
+    public function maxAttempts(): int
+    {
+        return max(1, (int) config('integrationhub.telegram.registration_max_attempts', 5));
+    }
+
+    /**
+     * Cierra la conversacion de registro (al vincular, dar de baja o rendirse).
+     */
+    public function closeSession(string $chatId): void
+    {
+        IntegrationTelegramRegistrationSession::where('chat_id', trim($chatId))->delete();
+    }
+
+    /**
+     * Alta directa (sin conversacion), para altas manuales o pruebas.
      */
     public function attach(int $personId, string $chatId, ?string $username = null, ?string $firstName = null): IntegrationTelegramContact
     {
@@ -133,8 +119,6 @@ class TelegramRegistrationService
                 'telegram_username' => $this->clean($username),
                 'telegram_first_name' => $this->clean($firstName),
                 'status' => 'active',
-                'registration_code' => null,
-                'code_expires_at' => null,
                 'registered_at' => now(),
                 'last_seen_at' => now(),
             ])->save();
@@ -171,15 +155,6 @@ class TelegramRegistrationService
     {
         IntegrationTelegramContact::where('chat_id', trim($chatId))
             ->update(['last_seen_at' => now()]);
-    }
-
-    private function generateCode(): string
-    {
-        do {
-            $code = Str::random(48);
-        } while (IntegrationTelegramContact::where('registration_code', $code)->exists());
-
-        return $code;
     }
 
     private function clean(?string $value): ?string

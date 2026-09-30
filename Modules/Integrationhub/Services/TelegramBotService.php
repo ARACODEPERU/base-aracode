@@ -136,17 +136,38 @@ class TelegramBotService
     }
 
     /**
-     * Enlace de registro (deep link) que abre el bot y envia /start <codigo>.
+     * Enlace unico de registro: el mismo para todas las personas.
+     *
+     * No lleva ningun codigo: al abrirlo, Telegram abre el chat del bot y la
+     * persona pulsa Iniciar (o escribe /start); el bot le pide su documento y lo
+     * valida contra el padron antes de guardar el chat_id.
      */
-    public function registrationLink(string $code): ?string
+    public function registrationLink(): ?string
     {
         $username = $this->username();
 
-        if ($username === null || trim($code) === '') {
-            return null;
-        }
+        return $username === null ? null : $this->link($username);
+    }
 
-        return 'https://t.me/' . ltrim($username, '@') . '?start=' . rawurlencode($code);
+    /**
+     * Enlace de registro ya conocido, sin consultar Telegram.
+     *
+     * Lo usa la pantalla de notificaciones para mostrarlo sin exponerse a un
+     * timeout de red cuando el usuario del bot ya esta cacheado.
+     */
+    public function cachedRegistrationLink(): ?string
+    {
+        $username = $this->cachedUsername();
+
+        return $username === null ? null : $this->link($username);
+    }
+
+    /**
+     * Arma el deep link del bot para el usuario indicado.
+     */
+    private function link(string $username): string
+    {
+        return 'https://t.me/' . ltrim($username, '@');
     }
 
     /**
@@ -239,8 +260,9 @@ class TelegramBotService
     public function defaultCommands(): array
     {
         return [
-            ['command' => 'start', 'description' => 'Registrar este chat para recibir avisos'],
+            ['command' => 'start', 'description' => 'Registrar este chat con tu documento'],
             ['command' => 'baja', 'description' => 'Dejar de recibir mensajes del bot'],
+            ['command' => 'ayuda', 'description' => 'Cómo activar los avisos en este chat'],
         ];
     }
 

@@ -459,10 +459,10 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
             Route::get('notifications/{id}/progress', [AcaNotificationController::class, 'progress'])
                 ->name('aca_notifications_progress');
 
-            // Registro de chat_id de Telegram: enlaces personales de un solo uso
-            // y alta del webhook del bot en Telegram.
-            Route::post('notifications/telegram/links', [AcaNotificationController::class, 'telegramLinks'])
-                ->name('aca_notifications_telegram_links');
+            // Registro de chat_id de Telegram: enlace unico del bot (el alumno
+            // escribe su documento en el chat) y alta del webhook en Telegram.
+            Route::get('notifications/telegram/link', [AcaNotificationController::class, 'telegramRegistrationLink'])
+                ->name('aca_notifications_telegram_link');
 
             Route::post('notifications/telegram/webhook', [AcaNotificationController::class, 'telegramWebhook'])
                 ->name('aca_notifications_telegram_webhook');

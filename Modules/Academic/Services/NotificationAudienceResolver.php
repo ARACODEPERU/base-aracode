@@ -23,7 +23,7 @@ use Modules\Integrationhub\Entities\IntegrationTelegramContact;
  *
  * Telegram es la excepcion: no se envia por telefono sino por el chat_id que el
  * alumno registro con el bot, asi que ese canal tiene sus propios metodos
- * (resolveTelegram / countsTelegram / pendingTelegram).
+ * (resolveTelegram / countsTelegram).
  */
 class NotificationAudienceResolver
 {
@@ -79,21 +79,6 @@ class NotificationAudienceResolver
     public function resolveTelegram(AcaCourse $course): Collection
     {
         return $this->normalizeTelegram(
-            $this->telegramProgramRows($course)->concat($this->telegramSubscriptionRows())
-        );
-    }
-
-    /**
-     * Personas del padron que todavia no registraron su chat_id de Telegram.
-     *
-     * Son las que necesitan un enlace de registro; una vez que abren el bot
-     * pasan al padron de resolveTelegram().
-     *
-     * @return Collection<int, array{student_id: int|null, person_id: int, name: string}>
-     */
-    public function pendingTelegram(AcaCourse $course): Collection
-    {
-        return $this->normalizeTelegramPending(
             $this->telegramProgramRows($course)->concat($this->telegramSubscriptionRows())
         );
     }
@@ -195,19 +180,41 @@ class NotificationAudienceResolver
      */
     private function subscriptionStudentIds(): array
     {
-        $today = Carbon::today();
-
         return AcaStudentSubscription::query()
-            ->where(function ($query) use ($today) {
-                $query->where('status', true)
-                    ->orWhere(function ($q) use ($today) {
-                        $q->whereDate('date_start', '<=', $today)
-                            ->whereDate('date_end', '>=', $today);
-                    });
-            })
+            ->where($this->activeSubscriptionFilter())
             ->pluck('student_id')
             ->unique()
             ->all();
+    }
+
+    /**
+     * Misma regla de suscripcion, para una sola persona.
+     *
+     * La usa el registro del bot de Telegram, que valida a un alumno a la vez.
+     */
+    public function studentHasActiveSubscription(int $studentId): bool
+    {
+        return AcaStudentSubscription::query()
+            ->where('student_id', $studentId)
+            ->where($this->activeSubscriptionFilter())
+            ->exists();
+    }
+
+    /**
+     * Condicion compartida de suscripcion vigente: activa por estado o por
+     * fechas.
+     */
+    private function activeSubscriptionFilter(): \Closure
+    {
+        $today = Carbon::today();
+
+        return function ($query) use ($today) {
+            $query->where('status', true)
+                ->orWhere(function ($q) use ($today) {
+                    $q->whereDate('date_start', '<=', $today)
+                        ->whereDate('date_end', '>=', $today);
+                });
+        };
     }
 
     /**
@@ -377,36 +384,6 @@ class NotificationAudienceResolver
             ->pluck('chat_id', 'person_id')
             ->mapWithKeys(fn ($chatId, $personId) => [(int) $personId => (string) $chatId])
             ->all();
-    }
-
-    /**
-     * Deduplica por persona y devuelve solo a quienes no tienen chat activo.
-     */
-    private function normalizeTelegramPending(Collection $rows): Collection
-    {
-        $personIds = $rows->pluck('person_id')->filter()->unique()->all();
-        $chats = $this->subscribedChatsByPerson($personIds);
-
-        $seenPersons = [];
-        $pending = collect();
-
-        foreach ($rows as $row) {
-            $personId = (int) $row->person_id;
-
-            if ($personId === 0 || isset($seenPersons[$personId]) || isset($chats[$personId])) {
-                continue;
-            }
-
-            $seenPersons[$personId] = true;
-
-            $pending->push([
-                'student_id' => ((int) $row->student_id) ?: null,
-                'person_id' => $personId,
-                'name' => $this->name($row, $personId),
-            ]);
-        }
-
-        return $pending->values();
     }
 
     /**
