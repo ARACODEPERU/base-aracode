@@ -140,7 +140,9 @@ class TelegramWebhookControllerTest extends TestCase
         $this->postJson(self::URI, $this->message('87654321'), $this->secretHeader())->assertOk();
 
         $this->assertSame('555', IntegrationTelegramContact::where('person_id', 101)->value('chat_id'));
-        $this->assertStringContainsString('suscripción', $hub->calls[1]['values']['text']);
+        $this->assertStringContainsString('Suscripción activa', $hub->calls[1]['values']['text']);
+        // Sin programas, su linea no se envia.
+        $this->assertStringNotContainsString('Programas:', $hub->calls[1]['values']['text']);
     }
 
     public function test_un_documento_desconocido_se_reintenta_y_no_registra(): void
