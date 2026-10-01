@@ -18,18 +18,20 @@
 module.exports = {
     apps: [
         {
-            name: 'integration-scheduler',
-            script: 'php',
-            args: 'artisan schedule:work',
+            name: 'Aracode-integration-scheduler',
+            script: 'artisan',
+            interpreter: '/usr/bin/php8.3',
+            args: 'schedule:work',
             cwd: __dirname,
             autorestart: true,
             max_restarts: 10,
             restart_delay: 5000,
         },
         {
-            name: 'integration-queue',
-            script: 'php',
-            args: 'artisan queue:work --sleep=1 --tries=3 --max-time=3600',
+            name: 'Aracode-integration-queue',
+            script: 'artisan',
+            interpreter: '/usr/bin/php8.3',
+            args: 'queue:work --sleep=1 --tries=3 --max-time=3600',
             cwd: __dirname,
             autorestart: true,
             max_restarts: 10,
