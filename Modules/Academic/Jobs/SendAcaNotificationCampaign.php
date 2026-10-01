@@ -13,6 +13,7 @@ use Modules\Academic\Entities\AcaNotificationCampaignRecipient;
 use Modules\Academic\Services\TelegramCourseNotifier;
 use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;
+use Modules\Academic\Support\NotificationMessageText;
 
 /**
  * Envia una campana de notificaciones completa dentro de la cola.
@@ -64,6 +65,13 @@ class SendAcaNotificationCampaign implements ShouldQueue
             'started_at' => $campaign->started_at ?? now(),
             'error_message' => null,
         ]);
+
+        // SMSGate es pull: la aplicacion recoge los mensajes del webhook del
+        // sistema y reporta los estados. Aqui no se envia nada; el avance lo
+        // mueven SmsgateService::pendingMessages() y reportStatus().
+        if ($campaign->channel === 'smsgate') {
+            return;
+        }
 
         $courseName = (string) ($campaign->course?->description ?? '');
         $time = $campaign->time_label;
@@ -172,16 +180,7 @@ class SendAcaNotificationCampaign implements ShouldQueue
      */
     public function messageText(?string $message, string $courseName, ?string $time): string
     {
-        $courseName = trim($courseName);
-        $time = trim((string) $time);
-
-        $parts = array_filter([
-            trim((string) $message),
-            $courseName !== '' ? 'Curso: ' . $courseName : null,
-            $time !== '' ? 'Tiempo: ' . $time : null,
-        ], fn (?string $part) => $part !== null && $part !== '');
-
-        return implode("\n", $parts);
+        return NotificationMessageText::compose($message, $courseName, $time);
     }
 
     /**

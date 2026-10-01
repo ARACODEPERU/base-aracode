@@ -16,7 +16,14 @@ import axios from 'axios';
  */
 const props = defineProps({
     courses: { type: Array, default: () => [] },
-    channels: { type: Object, default: () => ({ vonage: false, whatsapp: false, telegram: false }) },
+    channels: { type: Object, default: () => ({ vonage: false, smsgate: false, whatsapp: false, telegram: false }) },
+    // Webhook publico del canal SMSGate (modo pull) y, solo para quien puede ver
+    // la guia, su bearer. La URL la llama la app; el bearer es un secreto.
+    smsgate: { type: Object, default: () => ({ configured: false, webhook_url: null, bearer: null }) },
+    // La guia paso a paso de SMSGate: por defecto solo el rol admin.
+    canViewSmsgateGuide: { type: Boolean, default: false },
+    // Permiso para configurar y usar el canal SMSGate.
+    canConfigureSmsgate: { type: Boolean, default: false },
     // Usuario publico del bot de Telegram (@) cuando el canal esta habilitado.
     telegramBotUsername: { type: String, default: null },
     // Enlace unico de registro del bot (el mismo para todos los alumnos).
@@ -38,11 +45,13 @@ const form = ref({
     course_id: '',
     channel: props.channels.vonage
         ? 'sms'
-        : props.channels.whatsapp
-          ? 'whatsapp'
-          : props.channels.telegram
-            ? 'telegram'
-            : '',
+        : props.channels.smsgate
+          ? 'smsgate'
+          : props.channels.whatsapp
+            ? 'whatsapp'
+            : props.channels.telegram
+              ? 'telegram'
+              : '',
     is_test: false,
     message: '',
     time_label: '',
@@ -71,6 +80,14 @@ const availableChannels = computed(() => {
         });
     }
 
+    if (props.channels.smsgate) {
+        list.push({
+            value: 'smsgate',
+            label: 'SMS vía SMSGate',
+            description: 'La app SMSGate consulta el webhook del sistema (parámetro SC-00004) y envía los mensajes desde el teléfono.',
+        });
+    }
+
     if (props.channels.whatsapp) {
         list.push({
             value: 'whatsapp',
@@ -91,7 +108,7 @@ const availableChannels = computed(() => {
 });
 
 /** Nombre visible del canal de una campana. */
-const channelNames = { sms: 'SMS vía Vonage', whatsapp: 'WhatsApp', telegram: 'Telegram' };
+const channelNames = { sms: 'SMS vía Vonage', smsgate: 'SMS vía SMSGate', whatsapp: 'WhatsApp', telegram: 'Telegram' };
 const channelName = (value) => channelNames[value] ?? value;
 
 const hasChannel = computed(() => availableChannels.value.length > 0);
@@ -164,7 +181,9 @@ const smsPreview = computed(() =>
 
 const smsLength = computed(() => smsPreview.value.length);
 
-const smsTooLong = computed(() => form.value.channel === 'sms' && smsLength.value > 160);
+const isSmsLike = computed(() => form.value.channel === 'sms' || form.value.channel === 'smsgate');
+
+const smsTooLong = computed(() => isSmsLike.value && smsLength.value > 160);
 
 const campaignActive = computed(() => campaign.value && !['completed', 'failed'].includes(campaign.value.status));
 
@@ -874,7 +893,8 @@ onBeforeUnmount(() => {
                             class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                         >
                             No hay ningún canal disponible. Configura las credenciales de Vonage en el parámetro
-                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, el ID del flujo en
+                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, el bearer y la URL del
+                            webhook en <b>SC-00003</b> y <b>SC-00004</b> para habilitar SMSGate, el ID del flujo en
                             <b>Plantillas / Flujos</b> para habilitar WhatsApp, o el token del bot en el parámetro
                             <b>SC-00002</b> para habilitar Telegram.
                         </div>
@@ -1014,7 +1034,7 @@ onBeforeUnmount(() => {
 
                     <!-- Previsualización del SMS -->
                     <div
-                        v-if="form.channel === 'sms' && smsPreview"
+                        v-if="isSmsLike && smsPreview"
                         class="mb-5 rounded-lg border border-dashed border-gray-300 p-4 text-sm dark:border-zinc-700"
                     >
                         <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">Vista previa del SMS</p>
@@ -1074,21 +1094,119 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <!-- Aviso de continuidad -->
-                <div class="panel">
-                    <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">Cómo funciona</h2>
-                    <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
-                        <li>
-                            Los mensajes se encolan y salen <b>uno cada {{ intervalMs }} ms</b> para no saturar el
-                            servidor ni las APIs externas.
-                        </li>
-                        <li>
-                            <b>Este proceso continuará aunque salgas</b> de la pantalla o cierres el aviso: se ejecuta en
-                            la cola del servidor.
-                        </li>
-                        <li>Al volver a esta pantalla se retoma el avance de la campaña en curso.</li>
-                        <li>Al finalizar se muestra cuántos mensajes se enviaron y cuáles fallaron.</li>
-                    </ul>
+                <!-- Aviso de continuidad + guia de SMSGate (solo admin) -->
+                <div class="space-y-5">
+                    <div class="panel">
+                        <h2 class="mb-3 text-base font-semibold text-gray-900 dark:text-white">Cómo funciona</h2>
+                        <ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                            <li>
+                                Los mensajes se encolan y salen <b>uno cada {{ intervalMs }} ms</b> para no saturar el
+                                servidor ni las APIs externas.
+                            </li>
+                            <li>
+                                <b>Este proceso continuará aunque salgas</b> de la pantalla o cierres el aviso: se ejecuta
+                                en la cola del servidor.
+                            </li>
+                            <li>Al volver a esta pantalla se retoma el avance de la campaña en curso.</li>
+                            <li>Al finalizar se muestra cuántos mensajes se enviaron y cuáles fallaron.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Configuracion del canal para quien tiene
+                         aca_smsgate_configuracion (admin y Administrador). -->
+                    <div
+                        v-if="form.channel === 'smsgate' && canConfigureSmsgate && !canViewSmsgateGuide"
+                        class="panel border border-gray-200 dark:border-zinc-700"
+                    >
+                        <h2 class="mb-2 text-base font-semibold text-gray-900 dark:text-white">
+                            Configuración de SMSGate
+                        </h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                            El canal se habilita cuando están presentes la URL del webhook en <b>SC-00004</b> y el bearer
+                            en <b>SC-00003</b> (Parámetros del sistema). La guía paso a paso para conectar la app la ve
+                            el rol admin.
+                        </p>
+                    </div>
+
+                    <!-- Guia paso a paso para conectar SMSGate con el sistema.
+                         Solo la ve quien tiene aca_smsgate_guia (por defecto, admin). -->
+                    <div
+                        v-if="form.channel === 'smsgate' && canViewSmsgateGuide"
+                        class="panel border border-sky-300 dark:border-sky-700"
+                    >
+                        <h2 class="mb-1 text-base font-semibold text-gray-900 dark:text-white">
+                            Cómo conectar SMSGate con el sistema
+                        </h2>
+                        <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                            Guía paso a paso (visible solo para el rol admin). El sistema no llama a SMSGate: la app
+                            consulta este webhook y envía los mensajes desde el teléfono.
+                        </p>
+
+                        <ol class="list-decimal space-y-2 pl-5 text-sm text-gray-600 dark:text-gray-300">
+                            <li>
+                                Instala <b>SMS Gateway for Android</b> en el teléfono y registra el dispositivo (inicia
+                                sesión con tu cuenta de SMSGate).
+                            </li>
+                            <li>
+                                En <b>Parámetros del sistema</b>, define el <b>bearer</b> en el parámetro
+                                <b>SC-00003</b> (es el secreto que usará la app para autenticarse).
+                            </li>
+                            <li>
+                                En la app, configura la consulta periódica de mensajes apuntando a la URL del webhook
+                                (<b>SC-00004</b>).
+                            </li>
+                            <li>
+                                Indica el bearer en la app dentro del encabezado
+                                <code>Authorization: Bearer &lt;SC-00003&gt;</code>.
+                            </li>
+                            <li>
+                                Prueba con <b>Modo prueba</b> en esta pantalla y comprueba que los mensajes llegan y el
+                                avance se actualiza.
+                            </li>
+                        </ol>
+
+                        <div v-if="smsgate.webhook_url" class="mt-4">
+                            <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                URL del webhook (SC-00004)
+                            </p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input
+                                    :value="smsgate.webhook_url"
+                                    type="text"
+                                    readonly
+                                    class="form-input w-full max-w-sm bg-white text-xs dark:bg-zinc-900"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-primary"
+                                    @click="copyToClipboard(smsgate.webhook_url, 'URL del webhook copiada.')"
+                                >
+                                    Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-if="smsgate.bearer" class="mt-3">
+                            <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                Bearer (SC-00003)
+                            </p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <input
+                                    :value="smsgate.bearer"
+                                    type="text"
+                                    readonly
+                                    class="form-input w-full max-w-sm bg-white text-xs dark:bg-zinc-900"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-primary"
+                                    @click="copyToClipboard(smsgate.bearer, 'Bearer copiado. Trátalo como una contraseña.')"
+                                >
+                                    Copiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1105,6 +1223,21 @@ onBeforeUnmount(() => {
                         <p v-if="estimatedTotal > 0" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             Referencial con la tarifa de Perú (los números de otros países pueden costar distinto):
                             {{ estimatedTotal }} mensaje(s) ≈ <b>${{ estimatedCost }}</b>.
+                        </p>
+                    </div>
+                </div>
+
+                <div v-else-if="form.channel === 'smsgate'" class="flex items-start gap-3">
+                    <span class="text-xl leading-none">📲</span>
+                    <div class="text-sm">
+                        <p class="font-medium text-gray-900 dark:text-white">Costo del SMS vía SMSGate</p>
+                        <p class="mt-1 text-gray-600 dark:text-gray-300">
+                            El mensaje sale del teléfono de la app SMSGate: el costo depende de tu operador y tu plan de
+                            SMS. SMSGate no cobra por mensaje.
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Requiere que la app esté encendida y con el bearer (SC-00003) configurado para recoger los
+                            mensajes pendientes.
                         </p>
                     </div>
                 </div>

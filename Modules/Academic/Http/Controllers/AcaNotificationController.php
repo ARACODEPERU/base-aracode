@@ -15,6 +15,7 @@ use Modules\Academic\Entities\AcaNotificationCampaign;
 use Modules\Academic\Entities\AcaNotificationCampaignRecipient;
 use Modules\Academic\Jobs\SendAcaNotificationCampaign;
 use Modules\Academic\Services\NotificationAudienceResolver;
+use Modules\Academic\Services\SmsgateService;
 use Modules\Academic\Services\TelegramCourseNotifier;
 use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;
@@ -28,10 +29,12 @@ use Modules\Integrationhub\Support\TelegramMessages;
  * Notificaciones masivas de un programa de especializacion.
  *
  * El canal se ofrece solo si esta configurado: SMS via Vonage cuando el
- * parametro del sistema SC-00001 tiene credenciales, WhatsApp cuando hay un ID
- * de flujo en Plantillas / Flujos y Telegram cuando el parametro SC-00002 tiene
- * el token del bot (en ese caso el aviso viaja al chat_id que cada alumno
- * registro con el bot). El envio real lo hace SendAcaNotificationCampaign en la
+ * parametro del sistema SC-00001 tiene credenciales, SMS via SMSGate cuando el
+ * bearer y la URL del webhook (SC-00003 y SC-00004) estan presentes, WhatsApp
+ * cuando hay un ID de flujo en Plantillas / Flujos y Telegram cuando el
+ * parametro SC-00002 tiene el token del bot (en ese caso el aviso viaja al
+ * chat_id que cada alumno registro con el bot). El envio real lo hace
+ * SendAcaNotificationCampaign en la
  * cola, espaciando los mensajes cada 280 ms; esta pantalla solo lanza la
  * campana, consulta su avance por sondeo, entrega el enlace unico de registro
  * del bot de Telegram y permite reescribir los textos que ese bot envia (y la
@@ -40,11 +43,12 @@ use Modules\Integrationhub\Support\TelegramMessages;
 class AcaNotificationController extends Controller
 {
     /** Canales que puede usar una campana. */
-    private const CHANNELS = ['sms', 'whatsapp', 'telegram'];
+    private const CHANNELS = ['sms', 'smsgate', 'whatsapp', 'telegram'];
 
     public function __construct(
         private readonly NotificationAudienceResolver $audienceResolver,
         private readonly VonageSmsService $vonage,
+        private readonly SmsgateService $smsgate,
         private readonly WhatsappCourseNotifier $whatsapp,
         private readonly TelegramBotService $telegramBot,
         private readonly TelegramMessageService $telegramMessages,
@@ -67,14 +71,30 @@ class AcaNotificationController extends Controller
 
         $activeCampaign = $this->activeCampaign($request);
         $telegramConfigured = TelegramCourseNotifier::isConfigured();
+        $smsgateConfigured = $this->smsgate->isConfigured();
+
+        // La guia paso a paso de SMSGate es solo para quien puede verla (por
+        // defecto, el rol admin): ni la URL se le abre al resto. El bearer es un
+        // secreto, asi que solo viaja a quien puede ver la guia.
+        $canViewSmsgateGuide = $this->userCan($request, 'aca_smsgate_guia');
 
         return Inertia::render('Academic::Notifications/Index', [
             'courses' => $courses,
             'channels' => [
                 'vonage' => $this->vonage->isConfigured(),
+                'smsgate' => $smsgateConfigured,
                 'whatsapp' => WhatsappCourseNotifier::isConfigured(),
                 'telegram' => $telegramConfigured,
             ],
+            // Webhook publico de SMSGate (modo pull) y su bearer. El bearer solo
+            // se entrega a quien puede ver la guia.
+            'smsgate' => [
+                'configured' => $smsgateConfigured,
+                'webhook_url' => $smsgateConfigured ? $this->smsgate->webhookUrl() : null,
+                'bearer' => $canViewSmsgateGuide ? $this->smsgate->bearer() : null,
+            ],
+            'canViewSmsgateGuide' => $canViewSmsgateGuide,
+            'canConfigureSmsgate' => $this->userCan($request, 'aca_smsgate_configuracion'),
             // Usuario publico del bot (@) para mostrar de que bot se trata. Se
             // lee solo de cache: consultar Telegram al pintar la pantalla la
             // expondria a un timeout de red. Lo llenan las acciones explicitas
@@ -178,6 +198,12 @@ class AcaNotificationController extends Controller
                     'time_label' => 'Indica el tiempo que se enviara al alumno por WhatsApp.',
                 ]);
             }
+        }
+
+        if ($channel === 'smsgate' && ! $this->smsgate->isConfigured()) {
+            throw ValidationException::withMessages([
+                'channel' => 'El envío por SMSGate no está disponible: falta el bearer en el parámetro SC-00003.',
+            ]);
         }
 
         if ($channel === 'telegram' && ! TelegramCourseNotifier::isConfigured()) {
@@ -491,6 +517,16 @@ class AcaNotificationController extends Controller
             ->where('created_at', '>=', now()->subHours(3))
             ->latest('id')
             ->first();
+    }
+
+    /**
+     * true si el usuario autenticado tiene el permiso indicado.
+     */
+    private function userCan(Request $request, string $permission): bool
+    {
+        $user = $request->user();
+
+        return $user !== null && method_exists($user, 'can') && $user->can($permission);
     }
 
     /**

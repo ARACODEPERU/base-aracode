@@ -91,6 +91,8 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_cursos_examen_final_crear']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_category_sector_type_modality']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_send_notifications']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_smsgate_configuracion']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_smsgate_guia']));
 
         foreach ($permissions as $permission) {
 
@@ -118,5 +120,11 @@ class PermissionTableSeeder extends Seeder
         $docente = Role::firstOrCreate(['name' => 'Docente']);
         $docente->givePermissionTo('aca_dashboard');
         $docente->givePermissionTo('aca_cursos_listado');
+
+        // El canal SMSGate lo configuran y usan admin y Administrador; la guia
+        // paso a paso queda solo para admin (aca_smsgate_guia ya se concedio
+        // arriba, dentro del bloque de $permissions).
+        $administrador = Role::firstOrCreate(['name' => 'Administrador']);
+        $administrador->givePermissionTo('aca_smsgate_configuracion');
     }
 }

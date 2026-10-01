@@ -57,6 +57,23 @@ return [
         ],
 
         /*
+         * SMSGate: modelo pull. La aplicacion consulta el webhook de este mismo
+         * sistema (parametro SC-00004) enviando el bearer (parametro SC-00003)
+         * y recoge los mensajes pendientes; luego reporta el estado de cada
+         * mensaje. El sistema nunca llama a SMSGate.
+         */
+        'smsgate' => [
+            // Parametro del sistema con el bearer (secreto) que valida el webhook.
+            'bearer_parameter' => env('SMSGATE_BEARER_PARAMETER', 'SC-00003'),
+            // Parametro del sistema con la URL del webhook de este sistema.
+            'webhook_parameter' => env('SMSGATE_WEBHOOK_PARAMETER', 'SC-00004'),
+            // Ruta publica del webhook (se usa si el parametro SC-00004 esta vacio).
+            'webhook_path' => env('SMSGATE_WEBHOOK_PATH', '/api/academic/smsgate/webhook'),
+            // Cuantos mensajes pendientes entrega a la app en cada consulta.
+            'pending_limit' => (int) env('SMSGATE_PENDING_LIMIT', 50),
+        ],
+
+        /*
          * Telegram: se envia por la integracion Telegram_bot de Integrationhub
          * usando el chat_id que cada alumno registro con el bot. El token y los
          * endpoints viven en la configuracion del modulo Integrationhub
