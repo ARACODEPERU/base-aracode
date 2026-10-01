@@ -57,20 +57,23 @@ return [
         ],
 
         /*
-         * SMSGate: modelo pull. La aplicacion consulta el webhook de este mismo
-         * sistema (parametro SC-00004) enviando el bearer (parametro SC-00003)
-         * y recoge los mensajes pendientes; luego reporta el estado de cada
-         * mensaje. El sistema nunca llama a SMSGate.
+         * SMSGate: el sistema envia por el API externo del servidor de SMSGate
+         * (POST {servidor}/3rdparty/v1/messages) con Basic auth (usuario y
+         * contrasena). La aplicacion movil se conecta al mismo servidor por
+         * /mobile/v1; guardamos su URL y se normaliza al path externo.
          */
         'smsgate' => [
-            // Parametro del sistema con el bearer (secreto) que valida el webhook.
-            'bearer_parameter' => env('SMSGATE_BEARER_PARAMETER', 'SC-00003'),
-            // Parametro del sistema con la URL del webhook de este sistema.
-            'webhook_parameter' => env('SMSGATE_WEBHOOK_PARAMETER', 'SC-00004'),
-            // Ruta publica del webhook (se usa si el parametro SC-00004 esta vacio).
-            'webhook_path' => env('SMSGATE_WEBHOOK_PATH', '/api/academic/smsgate/webhook'),
-            // Cuantos mensajes pendientes entrega a la app en cada consulta.
-            'pending_limit' => (int) env('SMSGATE_PENDING_LIMIT', 50),
+            // Parametro del sistema con la URL del servidor de SMSGate.
+            'url_parameter' => env('SMSGATE_URL_PARAMETER', 'SC-00003'),
+            // Parametro del sistema con el usuario de la cuenta.
+            'username_parameter' => env('SMSGATE_USERNAME_PARAMETER', 'SC-00004'),
+            // Parametro del sistema con la contrasena de la cuenta.
+            'password_parameter' => env('SMSGATE_PASSWORD_PARAMETER', 'SC-00005'),
+            // URL por defecto: la que usa la aplicacion movil de SMSGate.
+            'default_url' => env('SMSGATE_URL', 'https://api.sms-gate.app/mobile/v1'),
+            // Ruta del API externo de envio, sobre la URL base normalizada.
+            'messages_path' => env('SMSGATE_MESSAGES_PATH', '/3rdparty/v1/messages'),
+            'timeout' => (int) env('SMSGATE_TIMEOUT', 30),
         ],
 
         /*

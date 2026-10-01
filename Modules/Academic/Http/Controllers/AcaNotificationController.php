@@ -30,7 +30,7 @@ use Modules\Integrationhub\Support\TelegramMessages;
  *
  * El canal se ofrece solo si esta configurado: SMS via Vonage cuando el
  * parametro del sistema SC-00001 tiene credenciales, SMS via SMSGate cuando el
- * bearer y la URL del webhook (SC-00003 y SC-00004) estan presentes, WhatsApp
+ * URL, usuario y contrasena (SC-00003, SC-00004 y SC-00005) estan presentes, WhatsApp
  * cuando hay un ID de flujo en Plantillas / Flujos y Telegram cuando el
  * parametro SC-00002 tiene el token del bot (en ese caso el aviso viaja al
  * chat_id que cada alumno registro con el bot). El envio real lo hace
@@ -86,12 +86,11 @@ class AcaNotificationController extends Controller
                 'whatsapp' => WhatsappCourseNotifier::isConfigured(),
                 'telegram' => $telegramConfigured,
             ],
-            // Webhook publico de SMSGate (modo pull) y su bearer. El bearer solo
+            // Datos del canal SMSGate. La URL del servidor (no es secreto) solo
             // se entrega a quien puede ver la guia.
             'smsgate' => [
                 'configured' => $smsgateConfigured,
-                'webhook_url' => $smsgateConfigured ? $this->smsgate->webhookUrl() : null,
-                'bearer' => $canViewSmsgateGuide ? $this->smsgate->bearer() : null,
+                'url' => $canViewSmsgateGuide ? $this->smsgate->url() : null,
             ],
             'canViewSmsgateGuide' => $canViewSmsgateGuide,
             'canConfigureSmsgate' => $this->userCan($request, 'aca_smsgate_configuracion'),
@@ -202,7 +201,7 @@ class AcaNotificationController extends Controller
 
         if ($channel === 'smsgate' && ! $this->smsgate->isConfigured()) {
             throw ValidationException::withMessages([
-                'channel' => 'El envío por SMSGate no está disponible: falta el bearer en el parámetro SC-00003.',
+                'channel' => 'El envío por SMSGate no está disponible: falta el usuario y la contraseña en los parámetros SC-00004 y SC-00005.',
             ]);
         }
 

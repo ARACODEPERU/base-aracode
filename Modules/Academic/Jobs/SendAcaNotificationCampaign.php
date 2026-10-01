@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaNotificationCampaign;
 use Modules\Academic\Entities\AcaNotificationCampaignRecipient;
+use Modules\Academic\Services\SmsgateService;
 use Modules\Academic\Services\TelegramCourseNotifier;
 use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;
@@ -50,6 +51,7 @@ class SendAcaNotificationCampaign implements ShouldQueue
 
     public function handle(
         VonageSmsService $vonage,
+        SmsgateService $smsgate,
         WhatsappCourseNotifier $whatsapp,
         TelegramCourseNotifier $telegram
     ): void
@@ -65,13 +67,6 @@ class SendAcaNotificationCampaign implements ShouldQueue
             'started_at' => $campaign->started_at ?? now(),
             'error_message' => null,
         ]);
-
-        // SMSGate es pull: la aplicacion recoge los mensajes del webhook del
-        // sistema y reporta los estados. Aqui no se envia nada; el avance lo
-        // mueven SmsgateService::pendingMessages() y reportStatus().
-        if ($campaign->channel === 'smsgate') {
-            return;
-        }
 
         $courseName = (string) ($campaign->course?->description ?? '');
         $time = $campaign->time_label;
@@ -115,6 +110,13 @@ class SendAcaNotificationCampaign implements ShouldQueue
                                 (string) $recipient->name
                             ),
                             $telegram->campaignIsHtml()
+                        );
+                    } elseif ($campaign->channel === 'smsgate') {
+                        // SMSGate usa el mismo texto que el SMS (mensaje + curso +
+                        // tiempo) y envia por el API externo del servidor.
+                        $smsgate->send(
+                            $recipient->phone,
+                            $this->messageText($campaign->message, $courseName, $time)
                         );
                     } else {
                         $vonage->send($recipient->phone, $this->messageText($campaign->message, $courseName, $time));

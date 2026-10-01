@@ -75,6 +75,5 @@ class Kernel extends HttpKernel
         'internal.api' => \App\Http\Middleware\ValidateInternalApiSecret::class,
         'socialevents.admin' => \Modules\Socialevents\Http\Middleware\EnsureSocialeventsAdmin::class,
         'super.editor' => \Modules\Security\Http\Middleware\EnsureSuperEditorSession::class,
-        'smsgate.bearer' => \Modules\Academic\Http\Middleware\EnsureSmsgateBearer::class,
     ];
 }

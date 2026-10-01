@@ -17,9 +17,8 @@ import axios from 'axios';
 const props = defineProps({
     courses: { type: Array, default: () => [] },
     channels: { type: Object, default: () => ({ vonage: false, smsgate: false, whatsapp: false, telegram: false }) },
-    // Webhook publico del canal SMSGate (modo pull) y, solo para quien puede ver
-    // la guia, su bearer. La URL la llama la app; el bearer es un secreto.
-    smsgate: { type: Object, default: () => ({ configured: false, webhook_url: null, bearer: null }) },
+    // Datos del canal SMSGate: URL del servidor (solo para quien ve la guia).
+    smsgate: { type: Object, default: () => ({ configured: false, url: null }) },
     // La guia paso a paso de SMSGate: por defecto solo el rol admin.
     canViewSmsgateGuide: { type: Boolean, default: false },
     // Permiso para configurar y usar el canal SMSGate.
@@ -84,7 +83,7 @@ const availableChannels = computed(() => {
         list.push({
             value: 'smsgate',
             label: 'SMS vía SMSGate',
-            description: 'La app SMSGate consulta el webhook del sistema (parámetro SC-00004) y envía los mensajes desde el teléfono.',
+            description: 'Envía por el API de SMSGate con usuario y contraseña (parámetros SC-00004 y SC-00005).',
         });
     }
 
@@ -893,8 +892,8 @@ onBeforeUnmount(() => {
                             class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                         >
                             No hay ningún canal disponible. Configura las credenciales de Vonage en el parámetro
-                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, el bearer y la URL del
-                            webhook en <b>SC-00003</b> y <b>SC-00004</b> para habilitar SMSGate, el ID del flujo en
+                            <b>SC-00001</b> (Parámetros del sistema) para habilitar el SMS, el usuario y la contraseña
+                            en <b>SC-00004</b> y <b>SC-00005</b> para habilitar SMSGate, el ID del flujo en
                             <b>Plantillas / Flujos</b> para habilitar WhatsApp, o el token del bot en el parámetro
                             <b>SC-00002</b> para habilitar Telegram.
                         </div>
@@ -1122,9 +1121,9 @@ onBeforeUnmount(() => {
                             Configuración de SMSGate
                         </h2>
                         <p class="text-sm text-gray-600 dark:text-gray-300">
-                            El canal se habilita cuando están presentes la URL del webhook en <b>SC-00004</b> y el bearer
-                            en <b>SC-00003</b> (Parámetros del sistema). La guía paso a paso para conectar la app la ve
-                            el rol admin.
+                            El canal se habilita cuando están presentes el usuario en <b>SC-00004</b> y la contraseña en
+                            <b>SC-00005</b> (Parámetros del sistema). La guía paso a paso para conectar la app la ve el
+                            rol admin.
                         </p>
                     </div>
 
@@ -1138,26 +1137,25 @@ onBeforeUnmount(() => {
                             Cómo conectar SMSGate con el sistema
                         </h2>
                         <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                            Guía paso a paso (visible solo para el rol admin). El sistema no llama a SMSGate: la app
-                            consulta este webhook y envía los mensajes desde el teléfono.
+                            Guía paso a paso (visible solo para el rol admin). El sistema envía por el API del servidor
+                            de SMSGate con las credenciales de la cuenta.
                         </p>
 
                         <ol class="list-decimal space-y-2 pl-5 text-sm text-gray-600 dark:text-gray-300">
                             <li>
-                                Instala <b>SMS Gateway for Android</b> en el teléfono y registra el dispositivo (inicia
-                                sesión con tu cuenta de SMSGate).
+                                Instala <b>SMS Gateway for Android</b> en el teléfono, conéctala al servidor
+                                <b>{{ smsgate.url || 'https://api.sms-gate.app/mobile/v1' }}</b> y registra el dispositivo.
                             </li>
                             <li>
-                                En <b>Parámetros del sistema</b>, define el <b>bearer</b> en el parámetro
-                                <b>SC-00003</b> (es el secreto que usará la app para autenticarse).
+                                Crea (o revisa) la cuenta de SMSGate y anota su <b>usuario</b> y <b>contraseña</b>.
                             </li>
                             <li>
-                                En la app, configura la consulta periódica de mensajes apuntando a la URL del webhook
-                                (<b>SC-00004</b>).
+                                En <b>Parámetros del sistema</b>, define el usuario en <b>SC-00004</b> y la contraseña en
+                                <b>SC-00005</b>. El canal se habilita al completarlos.
                             </li>
                             <li>
-                                Indica el bearer en la app dentro del encabezado
-                                <code>Authorization: Bearer &lt;SC-00003&gt;</code>.
+                                Verifica en <b>SC-00003</b> la URL del servidor (por defecto
+                                <code>https://api.sms-gate.app/mobile/v1</code>).
                             </li>
                             <li>
                                 Prueba con <b>Modo prueba</b> en esta pantalla y comprueba que los mensajes llegan y el
@@ -1165,13 +1163,13 @@ onBeforeUnmount(() => {
                             </li>
                         </ol>
 
-                        <div v-if="smsgate.webhook_url" class="mt-4">
+                        <div v-if="smsgate.url" class="mt-4">
                             <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                                URL del webhook (SC-00004)
+                                URL del servidor (SC-00003)
                             </p>
                             <div class="flex flex-wrap items-center gap-2">
                                 <input
-                                    :value="smsgate.webhook_url"
+                                    :value="smsgate.url"
                                     type="text"
                                     readonly
                                     class="form-input w-full max-w-sm bg-white text-xs dark:bg-zinc-900"
@@ -1179,28 +1177,7 @@ onBeforeUnmount(() => {
                                 <button
                                     type="button"
                                     class="btn btn-outline-primary"
-                                    @click="copyToClipboard(smsgate.webhook_url, 'URL del webhook copiada.')"
-                                >
-                                    Copiar
-                                </button>
-                            </div>
-                        </div>
-
-                        <div v-if="smsgate.bearer" class="mt-3">
-                            <p class="mb-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-                                Bearer (SC-00003)
-                            </p>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <input
-                                    :value="smsgate.bearer"
-                                    type="text"
-                                    readonly
-                                    class="form-input w-full max-w-sm bg-white text-xs dark:bg-zinc-900"
-                                />
-                                <button
-                                    type="button"
-                                    class="btn btn-outline-primary"
-                                    @click="copyToClipboard(smsgate.bearer, 'Bearer copiado. Trátalo como una contraseña.')"
+                                    @click="copyToClipboard(smsgate.url, 'URL del servidor copiada.')"
                                 >
                                     Copiar
                                 </button>
@@ -1236,8 +1213,7 @@ onBeforeUnmount(() => {
                             SMS. SMSGate no cobra por mensaje.
                         </p>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                            Requiere que la app esté encendida y con el bearer (SC-00003) configurado para recoger los
-                            mensajes pendientes.
+                            Requiere el usuario (SC-00004) y la contraseña (SC-00005) de la cuenta de SMSGate.
                         </p>
                     </div>
                 </div>

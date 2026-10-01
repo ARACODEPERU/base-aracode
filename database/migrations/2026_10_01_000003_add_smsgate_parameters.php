@@ -6,31 +6,30 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /** Bearer (secreto) que la app SMSGate envia al webhook del sistema. */
-    private const BEARER_CODE = 'SC-00003';
+    /** URL del servidor de SMSGate (la misma que configura la aplicacion movil). */
+    private const URL_CODE = 'SC-00003';
 
-    /** URL del webhook de este mismo sistema a la que la app SMSGate consulta. */
-    private const WEBHOOK_CODE = 'SC-00004';
+    /** Usuario de la cuenta de SMSGate. */
+    private const USER_CODE = 'SC-00004';
 
-    /** Ruta publica del webhook de SMSGate dentro de este sistema. */
-    private const WEBHOOK_PATH = '/api/academic/smsgate/webhook';
+    /** Contrasena de la cuenta de SMSGate. */
+    private const PASSWORD_CODE = 'SC-00005';
+
+    /** URL por defecto: la que usa la aplicacion movil de SMSGate. */
+    private const DEFAULT_URL = 'https://api.sms-gate.app/mobile/v1';
 
     /**
      * Crea los parametros que alimentan el canal SMSGate.
      *
-     * SC-00003 guarda el bearer (secreto) que la aplicacion SMSGate debe enviar
-     * en el encabezado Authorization al consultar el webhook del sistema; si el
-     * parametro esta vacio, la opcion "SMS via SMSGate" no se muestra en la
-     * pantalla de Notificaciones del modulo Academico.
+     * El sistema envia por el API externo del servidor de SMSGate
+     * (POST {servidor}/3rdparty/v1/messages) autenticandose con usuario y
+     * contrasena. La aplicacion movil se conecta al mismo servidor por
+     * /mobile/v1; guardamos esa URL (SC-00003) y se normaliza al path externo.
      *
-     * SC-00004 guarda la URL del webhook de este sistema (la misma a la que
-     * apunta la app), analogo al webhook del bot de Telegram. Al crearse se
-     * precarga con la URL publica derivada de config('app.url') y puede
-     * sobrescribirse.
+     * Si falta el usuario o la contrasena, la opcion "SMS via SMSGate" no se
+     * muestra en la pantalla de Notificaciones del modulo Academico.
      *
-     * Idempotente: si la fila ya existe no se toca el valor (asi un
-     * administrador conserva lo que configuro); solo se completa la descripcion
-     * o la URL cuando estaban vacias.
+     * Idempotente: crea lo que falta y completa descripcion/valor vacios.
      */
     public function up(): void
     {
@@ -39,16 +38,21 @@ return new class extends Migration
         }
 
         $this->createOrFill(
-            self::BEARER_CODE,
-            'SMSGate: bearer (secreto) que la aplicacion envia al webhook del sistema para las notificaciones por SMS',
+            self::URL_CODE,
+            'SMSGate: URL del servidor (la misma que usa la aplicacion movil; por defecto ' . self::DEFAULT_URL . ')',
+            self::DEFAULT_URL
+        );
+
+        $this->createOrFill(
+            self::USER_CODE,
+            'SMSGate: usuario (username) de la cuenta para enviar los SMS por el API externo',
             null
         );
 
         $this->createOrFill(
-            self::WEBHOOK_CODE,
-            'SMSGate: URL del webhook de este sistema a la que la aplicacion consulta los mensajes pendientes (por defecto '
-                . $this->defaultWebhookUrl() . ')',
-            $this->defaultWebhookUrl()
+            self::PASSWORD_CODE,
+            'SMSGate: contrasena (password) de la cuenta para enviar los SMS por el API externo',
+            null
         );
     }
 
@@ -59,55 +63,51 @@ return new class extends Migration
         }
 
         // Revertir solo las filas propias (por descripcion, para no borrar datos ajenos).
-        Parameter::where('parameter_code', self::BEARER_CODE)
-            ->where('description', 'like', 'SMSGate:%')
-            ->delete();
-
-        Parameter::where('parameter_code', self::WEBHOOK_CODE)
+        Parameter::whereIn('parameter_code', [self::URL_CODE, self::USER_CODE, self::PASSWORD_CODE])
             ->where('description', 'like', 'SMSGate:%')
             ->delete();
     }
 
     /**
-     * Crea el parametro; si ya existe, solo rellena la descripcion o el valor
-     * cuando estaban vacios.
+     * Crea el parametro; si ya existe, completa la descripcion/valor vacios y
+     * reescribe la descripcion del modelo anterior (webhook pull) al nuevo.
      */
     private function createOrFill(string $code, string $description, ?string $default): void
     {
         $parameter = Parameter::where('parameter_code', $code)->first();
 
-        if ($parameter) {
-            $changes = [];
-
-            if (trim((string) $parameter->description) === '') {
-                $changes['description'] = $description;
-            }
-
-            if ($default !== null && trim((string) $parameter->value_default) === '') {
-                $changes['value_default'] = $default;
-            }
-
-            if ($changes !== []) {
-                $parameter->update($changes);
-            }
+        if (! $parameter) {
+            Parameter::create([
+                'parameter_code'  => $code,
+                'description'     => $description,
+                'control_type'    => 'tx',
+                'json_query_data' => null,
+                'value_default'   => $default,
+            ]);
 
             return;
         }
 
-        Parameter::create([
-            'parameter_code'  => $code,
-            'description'     => $description,
-            'control_type'    => 'tx',
-            'json_query_data' => null,
-            'value_default'   => $default,
-        ]);
-    }
+        $changes = [];
 
-    /**
-     * URL publica por defecto del webhook de SMSGate.
-     */
-    private function defaultWebhookUrl(): string
-    {
-        return rtrim((string) config('app.url'), '/') . self::WEBHOOK_PATH;
+        // Nuestras descripciones anteriores empiezan con "SMSGate:"; se
+        // reescriben porque el parametro cambio de significado.
+        if (trim((string) $parameter->description) === '' || str_starts_with((string) $parameter->description, 'SMSGate:')) {
+            $changes['description'] = $description;
+        }
+
+        if ($default !== null && trim((string) $parameter->value_default) === '') {
+            $changes['value_default'] = $default;
+        }
+
+        // Valor del modelo pull anterior (URL del webhook del sistema): se
+        // reemplaza por la URL del servidor de SMSGate.
+        if ($code === self::URL_CODE && str_contains((string) $parameter->value_default, '/academic/smsgate/webhook')) {
+            $changes['value_default'] = $default;
+        }
+
+        if ($changes !== []) {
+            $parameter->update($changes);
+        }
     }
 };

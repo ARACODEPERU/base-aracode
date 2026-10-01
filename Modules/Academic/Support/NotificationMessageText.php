@@ -6,8 +6,8 @@ namespace Modules\Academic\Support;
  * Texto que viaja en un SMS (y sirve de base para el canal SMSGate).
  *
  * Es la composicion historica del SMS: mensaje del administrador, mas el curso
- * y el tiempo como lineas propias. Vive aqui para que la campana en cola y el
- * canal pull de SMSGate compongan exactamente el mismo texto.
+ * y el tiempo como lineas propias. Vive aqui para que la campana en cola y los
+ * canales SMS (Vonage y SMSGate) compongan exactamente el mismo texto.
  */
 class NotificationMessageText
 {
