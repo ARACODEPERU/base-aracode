@@ -42,16 +42,25 @@ class ErrorAlertService
     /** true mientras el propio servicio está enviando: evita la recursión. */
     private static bool $suppressed = false;
 
+    /** Ajustes resueltos en esta petición (el servicio es singleton). */
+    private ?SecurityAlertSetting $settingsMemo = null;
+
+    /** Destinatarios activos resueltos en esta petición. */
+    private ?\Illuminate\Support\Collection $recipientsMemo = null;
+
+    /** true si resolver la configuración falló: no se reintenta en la misma petición. */
+    private bool $memoFailed = false;
+
     /**
      * Entrada del listener: evalúa el evento y, si corresponde, encola la alerta.
      */
     public function handle(MessageLogged $event): void
     {
-        try {
-            if (self::$suppressed || $this->isInternal($event)) {
-                return;
-            }
+        if (self::$suppressed || $this->memoFailed || $this->isInternal($event)) {
+            return;
+        }
 
+        try {
             $settings = $this->settings();
 
             if (! $settings->isEnabled() || ! $settings->levelReaches((string) $event->level)) {
@@ -72,7 +81,9 @@ class ErrorAlertService
 
             SendSecurityErrorAlert::dispatch($chatIds, $this->renderMessage($payload));
         } catch (Throwable) {
-            // Una alerta jamás puede tumbar la aplicación.
+            // Una alerta jamás puede tumbar la aplicación. Se recuerda el fallo
+            // para no repetir consultas que fallen en cada línea de log.
+            $this->memoFailed = true;
         }
     }
 
@@ -139,20 +150,24 @@ class ErrorAlertService
      */
     public function settings(): SecurityAlertSetting
     {
+        if ($this->settingsMemo instanceof SecurityAlertSetting) {
+            return $this->settingsMemo;
+        }
+
         $minutes = $this->cacheMinutes();
 
         if ($minutes <= 0) {
-            return SecurityAlertSetting::current();
+            return $this->settingsMemo = SecurityAlertSetting::current();
         }
 
         try {
-            return Cache::remember(
+            return $this->settingsMemo = Cache::remember(
                 self::SETTINGS_CACHE_KEY,
                 now()->addMinutes($minutes),
                 fn () => SecurityAlertSetting::current()
             );
         } catch (Throwable) {
-            return SecurityAlertSetting::current();
+            return $this->settingsMemo = SecurityAlertSetting::current();
         }
     }
 
@@ -161,6 +176,10 @@ class ErrorAlertService
      */
     public function forgetCache(): void
     {
+        $this->settingsMemo = null;
+        $this->recipientsMemo = null;
+        $this->memoFailed = false;
+
         try {
             Cache::forget(self::SETTINGS_CACHE_KEY);
             Cache::forget(self::RECIPIENTS_CACHE_KEY);
@@ -187,20 +206,24 @@ class ErrorAlertService
      */
     public function activeRecipients()
     {
+        if ($this->recipientsMemo instanceof \Illuminate\Support\Collection) {
+            return $this->recipientsMemo;
+        }
+
         $minutes = $this->cacheMinutes();
 
         if ($minutes <= 0) {
-            return $this->queryActiveRecipients();
+            return $this->recipientsMemo = $this->queryActiveRecipients();
         }
 
         try {
-            return Cache::remember(
+            return $this->recipientsMemo = Cache::remember(
                 self::RECIPIENTS_CACHE_KEY,
                 now()->addMinutes($minutes),
                 fn () => $this->queryActiveRecipients()
             );
         } catch (Throwable) {
-            return $this->queryActiveRecipients();
+            return $this->recipientsMemo = $this->queryActiveRecipients();
         }
     }
 

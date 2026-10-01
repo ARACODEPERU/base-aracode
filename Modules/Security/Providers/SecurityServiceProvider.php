@@ -80,6 +80,11 @@ class SecurityServiceProvider extends ServiceProvider
         // Métricas de almacenamiento: singleton para que la caché en memoria
         // sirva la medición durante toda la petición sin re-escanear.
         $this->app->singleton(\Modules\Security\Services\StorageMetricsService::class);
+
+        // Alertas de error: singleton para que ajustes y destinatarios se
+        // resuelvan una sola vez por petición aunque el logger emita muchas
+        // líneas (el listener se dispara con cada una).
+        $this->app->singleton(\Modules\Security\Services\ErrorAlertService::class);
     }
 
     /**
