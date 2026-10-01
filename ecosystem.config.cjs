@@ -8,7 +8,11 @@
  *   - integration-queue: `php artisan queue:work`, el worker de la cola
  *     `database` donde viven los jobs de cada programación.
  *
- * Uso:  pm2 start ecosystem.config.js && pm2 save
+ * El archivo usa CommonJS (module.exports) y por eso la extension es .cjs: con
+ * "type": "module" en package.json, un .js se trataria como ESM y pm2 fallaria
+ * al cargarlo ("module is not defined in ES module scope").
+ *
+ * Uso:  pm2 start ecosystem.config.cjs && pm2 save
  * Logs: pm2 logs integration-scheduler / pm2 logs integration-queue
  *
  * Si en el servidor ya existe el cron de Linux (`* * * * * php artisan
