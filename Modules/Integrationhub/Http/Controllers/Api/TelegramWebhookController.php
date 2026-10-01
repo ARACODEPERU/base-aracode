@@ -192,7 +192,9 @@ class TelegramWebhookController extends Controller
         $registered = $contact !== null && trim((string) $contact->chat_id) !== '';
 
         if (! $registered) {
-            $this->reply($bot, $messages, $chatId, TelegramMessages::START_NEW);
+            $this->reply($bot, $messages, $chatId, TelegramMessages::START_NEW, [
+                'menu' => $messages->render(TelegramMessages::MENU),
+            ]);
 
             return;
         }
@@ -201,6 +203,7 @@ class TelegramWebhookController extends Controller
 
         $this->reply($bot, $messages, $chatId, TelegramMessages::START_REGISTERED, [
             'nombre' => (string) ($contact->person?->short_name ?? ''),
+            'menu' => $messages->render(TelegramMessages::MENU),
         ]);
     }
 
@@ -375,7 +378,11 @@ class TelegramWebhookController extends Controller
     }
 
     /**
-     * Certificados del alumno, cada uno con su enlace de descarga.
+     * Certificados del alumno: se listan, pero no se descargan desde el bot.
+     *
+     * El archivo se baja en la plataforma, asi que el cierre del mensaje lleva
+     * el enlace de ingreso (platform_url) en lugar del enlace de cada
+     * certificado.
      *
      * @param array<string, mixed> $account
      */
@@ -396,7 +403,6 @@ class TelegramWebhookController extends Controller
                     'modulo' => $module !== ''
                         ? $messages->render(TelegramMessages::CERTIFICATE_MODULE, ['modulo' => $module])
                         : '',
-                    'url' => (string) ($certificate['url'] ?? ''),
                 ]);
             },
             $certificates
@@ -413,6 +419,7 @@ class TelegramWebhookController extends Controller
         $this->reply($bot, $messages, $chatId, TelegramMessages::CERTIFICATES, [
             'nombre' => (string) ($account['name'] ?? ''),
             'certificados' => implode("\n\n", $lines),
+            'enlace' => (string) ($account['platform_url'] ?? ''),
         ]);
     }
 

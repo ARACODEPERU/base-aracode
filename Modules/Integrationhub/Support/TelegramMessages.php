@@ -58,6 +58,9 @@ class TelegramMessages
     /** Recordatorio para un mensaje suelto sin /start. */
     public const START_HINT = 'bot_start_hint';
 
+    /** Bloque con lo que el bot puede hacer (se incluye en el saludo). */
+    public const MENU = 'bot_menu';
+
     /** Ayuda (/ayuda). */
     public const HELP = 'bot_help';
 
@@ -129,27 +132,27 @@ class TelegramMessages
             self::START_NEW => [
                 'name' => 'Pedido del documento (/start)',
                 'description' => 'Primer mensaje cuando alguien abre el bot o reinicia el registro.',
-                'variables' => [],
+                'variables' => ['{menu}'],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
                 👋 ¡Hola! Soy el bot de avisos de la institución.
 
                 Para activar los avisos en este chat, escríbeme tu <b>número de documento (DNI)</b>, solo el número.
 
-                Si ya no quieres recibir avisos, escribe /baja.
+                {menu}
                 TXT,
             ],
             self::START_REGISTERED => [
                 'name' => 'Pedido del documento (chat ya registrado)',
                 'description' => 'Se envia en lugar del anterior cuando ese chat ya figura como registrado.',
-                'variables' => ['{nombre}'],
+                'variables' => ['{nombre}', '{menu}'],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
                 👋 Hola {nombre}, este chat ya está registrado.
 
                 Si quieres asociarlo a otro documento, escríbelo aquí.
 
-                Si ya no quieres recibir avisos, escribe /baja.
+                {menu}
                 TXT,
             ],
             self::DOCUMENT_UNRECOGNIZED => [
@@ -249,6 +252,22 @@ class TelegramMessages
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
                 👉 Para activar los avisos en este chat escribe /start y luego tu número de documento (DNI).
+                TXT,
+            ],
+            self::MENU => [
+                'name' => 'Menú de opciones',
+                'description' => 'Lista de lo que el bot puede hacer. Se incluye en el saludo y en el mensaje de un chat ya registrado.',
+                'variables' => [],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                Estas son las opciones de este bot:
+
+                /start – Registrar o actualizar tu documento.
+                /cursos – Ver tus cursos de pago disponibles.
+                /certificados – Ver los certificados que tienes emitidos.
+                /chatid – Ver el identificador de este chat.
+                /ayuda – Ver esta ayuda.
+                /baja – Dejar de recibir avisos.
                 TXT,
             ],
             self::HELP => [
@@ -428,13 +447,12 @@ class TelegramMessages
             ],
             self::CERTIFICATE_LINE => [
                 'name' => 'Consulta: línea de certificado',
-                'description' => 'Cada certificado de la lista. {modulo} es la línea del módulo (vacía en los certificados de curso) y {url} el enlace de descarga.',
-                'variables' => ['{curso}', '{modulo}', '{url}'],
+                'description' => 'Cada certificado de la lista. {modulo} es la línea del módulo (vacía en los certificados de curso). El bot solo informa: la descarga se hace desde la plataforma.',
+                'variables' => ['{curso}', '{modulo}'],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
                 • <b>{curso}</b>
                 {modulo}
-                  <a href="{url}">Descargar certificado</a>
                 TXT,
             ],
             self::CERTIFICATE_MODULE => [
@@ -448,15 +466,15 @@ class TelegramMessages
             ],
             self::CERTIFICATES => [
                 'name' => 'Consulta: lista de certificados',
-                'description' => 'Cierre de /certificados. {certificados} son las líneas del catálogo de certificados.',
-                'variables' => ['{nombre}', '{certificados}'],
+                'description' => 'Cierre de /certificados. {certificados} son las líneas del catálogo de certificados y {enlace} el enlace a la plataforma donde se descargan: el bot los lista, pero no entrega el archivo.',
+                'variables' => ['{nombre}', '{certificados}', '{enlace}'],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
-                🎓 Hola {nombre}, estos son tus certificados:
+                🎓 Hola {nombre}, estos son los certificados que tienes emitidos:
 
                 {certificados}
 
-                Puedes descargarlos con el enlace de cada uno.
+                🔒 Para descargarlos, <a href="{enlace}">ingresa a la plataforma</a>.
                 TXT,
             ],
             self::CERTIFICATES_EMPTY => [

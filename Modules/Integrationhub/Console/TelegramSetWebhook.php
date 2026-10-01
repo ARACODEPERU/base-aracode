@@ -4,6 +4,7 @@ namespace Modules\Integrationhub\Console;
 
 use Illuminate\Console\Command;
 use Modules\Integrationhub\Services\TelegramBotService;
+use Modules\Integrationhub\Services\TelegramWebhookRegistrar;
 
 /**
  * Registra (o retira) el webhook del bot de Telegram apuntando a esta
@@ -18,9 +19,9 @@ class TelegramSetWebhook extends Command
 
     protected $description = 'Registra, retira o consulta el webhook del bot de Telegram';
 
-    public function handle(TelegramBotService $bot): int
+    public function handle(TelegramBotService $bot, TelegramWebhookRegistrar $registrar): int
     {
-        if (! $bot->isConfigured()) {
+        if (! $registrar->isConfigured()) {
             $this->error(
                 'Falta el token del bot en el parámetro '
                 . config('integrationhub.telegram.parameter', 'SC-00002')
@@ -48,9 +49,7 @@ class TelegramSetWebhook extends Command
                 return self::SUCCESS;
             }
 
-            $url = $bot->webhookUrl();
-            $bot->setWebhook($url, true);
-            $bot->setMyCommands($bot->defaultCommands());
+            $url = $registrar->register(true);
 
             $this->info('Webhook registrado en: ' . $url);
             $this->line('Usuario del bot: ' . ($bot->username(true) ?? 'no disponible'));

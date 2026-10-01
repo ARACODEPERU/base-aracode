@@ -485,7 +485,7 @@ class TelegramWebhookControllerTest extends TestCase
         $this->assertStringContainsString('2026-12-31', $text);
     }
 
-    public function test_certificados_lista_con_enlace_de_descarga(): void
+    public function test_certificados_lista_sin_descarga_y_manda_a_la_plataforma(): void
     {
         $hub = $this->bindHub();
         $this->bindAccountDirectory([
@@ -501,9 +501,9 @@ class TelegramWebhookControllerTest extends TestCase
                             'id' => 7,
                             'course' => 'Especialización',
                             'module' => null,
-                            'url' => 'https://ejemplo.test/academic/certificate/image/7/download',
                         ],
                     ],
+                    'platform_url' => 'https://ejemplo.test/login',
                 ],
             ],
         ]);
@@ -515,8 +515,26 @@ class TelegramWebhookControllerTest extends TestCase
         $text = $hub->calls[2]['values']['text'];
 
         $this->assertStringContainsString('Especialización', $text);
-        $this->assertStringContainsString('Descargar certificado', $text);
-        $this->assertStringContainsString('https://ejemplo.test/academic/certificate/image/7/download', $text);
+        $this->assertStringContainsString('ingresa a la plataforma', $text);
+        $this->assertStringContainsString('https://ejemplo.test/login', $text);
+
+        // El bot no entrega el certificado: ni el archivo ni un enlace directo.
+        $this->assertStringNotContainsString('Descargar certificado', $text);
+        $this->assertStringNotContainsString('/download', $text);
+    }
+
+    public function test_start_menciona_todas_las_opciones_del_bot(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindDirectory();
+
+        $this->postJson(self::URI, $this->message('/start'), $this->secretHeader())->assertOk();
+
+        $text = $hub->calls[0]['values']['text'];
+
+        foreach (['/start', '/cursos', '/certificados', '/chatid', '/ayuda', '/baja'] as $command) {
+            $this->assertStringContainsString($command, $text);
+        }
     }
 
     public function test_sin_padron_de_consulta_el_bot_avisa(): void

@@ -33,7 +33,8 @@ class TelegramStudentAccount implements TelegramAccountResolver
      *     name: string,
      *     courses: array<int, array{description: string, type: string|null, time_limit: string|null}>,
      *     subscription: array{vip: bool, ends_at: string|null}|null,
-     *     certificates: array<int, array{id: int, course: string, module: string|null, url: string}>
+     *     certificates: array<int, array{id: int, course: string, module: string|null}>,
+     *     platform_url: string
      * }|null
      */
     public function resolveAccount(string $document, string $email): ?array
@@ -63,6 +64,7 @@ class TelegramStudentAccount implements TelegramAccountResolver
                 'courses' => [],
                 'subscription' => null,
                 'certificates' => [],
+                'platform_url' => $this->platformUrl(),
             ];
         }
 
@@ -74,6 +76,7 @@ class TelegramStudentAccount implements TelegramAccountResolver
             'courses' => $this->paidCourses($studentId),
             'subscription' => $this->subscription($studentId),
             'certificates' => $this->certificates($studentId),
+            'platform_url' => $this->platformUrl(),
         ];
     }
 
@@ -237,9 +240,12 @@ class TelegramStudentAccount implements TelegramAccountResolver
     }
 
     /**
-     * Certificados del alumno, con el enlace publico de descarga.
+     * Certificados del alumno: solo el curso y el modulo al que pertenecen.
      *
-     * @return array<int, array{id: int, course: string, module: string|null, url: string}>
+     * La descarga no la hace el bot: la persona entra a la plataforma (ver
+     * platformUrl) para bajar el archivo.
+     *
+     * @return array<int, array{id: int, course: string, module: string|null}>
      */
     private function certificates(int $studentId): array
     {
@@ -259,9 +265,17 @@ class TelegramStudentAccount implements TelegramAccountResolver
                 'id' => (int) $row->id,
                 'course' => trim((string) $row->course_description) ?: 'Curso',
                 'module' => trim((string) $row->module_description) ?: null,
-                'url' => url('academic/certificate/image/' . (int) $row->id . '/download'),
             ])
             ->all();
+    }
+
+    /**
+     * Enlace publico a la plataforma, donde la persona inicia sesion y descarga
+     * lo que el bot solo le informa (hoy: los certificados).
+     */
+    private function platformUrl(): string
+    {
+        return url('/login');
     }
 
     private function normalizeEmail(string $email): string

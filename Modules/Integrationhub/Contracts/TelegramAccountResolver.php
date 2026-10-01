@@ -29,8 +29,13 @@ interface TelegramAccountResolver
      *     name: string,
      *     courses: array<int, array{description: string, type: string|null, time_limit: string|null}>,
      *     subscription: array{vip: bool, ends_at: string|null}|null,
-     *     certificates: array<int, array{id: int, course: string, module: string|null, url: string}>
+     *     certificates: array<int, array{id: int, course: string, module: string|null}>,
+     *     platform_url: string
      * }|null
+     *
+     * Ojo: los certificados vienen sin enlace de descarga a proposito. El bot
+     * solo informa cuales existen y manda a la persona a la plataforma
+     * (platform_url) para bajar el archivo.
      */
     public function resolveAccount(string $document, string $email): ?array;
 }

@@ -13,7 +13,7 @@ use Tests\Unit\Modules\Academic\Concerns\BuildsTelegramStudentSchema;
  * La promesa: solo responde cuando el correo pertenece a la persona dueña del
  * documento; los cursos son los de pago vigentes con matrícula activa; la
  * suscripción activa se informa y se marca si es Premium VIP; y los certificados
- * salen con su enlace de descarga.
+ * se listan sin enlace de descarga, con el enlace de la plataforma para bajarlos.
  */
 class TelegramStudentAccountTest extends TestCase
 {
@@ -124,7 +124,7 @@ class TelegramStudentAccountTest extends TestCase
         $this->assertNull($this->account->resolveAccount('12345678', 'ana@correo.com')['subscription']);
     }
 
-    public function test_los_certificados_salen_con_su_enlace_de_descarga(): void
+    public function test_los_certificados_se_listan_sin_enlace_de_descarga(): void
     {
         $studentId = $this->student('12345678', 'Ana', 'ana@correo.com');
         $courseId = $this->course('Especialización', 'Programas de Especialización', 200, 1);
@@ -139,10 +139,10 @@ class TelegramStudentAccountTest extends TestCase
         $this->assertSame('Especialización', $result['certificates'][0]['course']);
         $this->assertNull($result['certificates'][0]['module']);
         $this->assertSame('Módulo introductorio', $result['certificates'][1]['module']);
-        $this->assertStringContainsString(
-            'academic/certificate/image/' . $result['certificates'][0]['id'] . '/download',
-            $result['certificates'][0]['url']
-        );
+
+        // El bot no entrega el archivo: solo informa y manda a la plataforma.
+        $this->assertArrayNotHasKey('url', $result['certificates'][0]);
+        $this->assertStringContainsString('/login', $result['platform_url']);
     }
 
     public function test_una_persona_que_no_es_alumno_existe_pero_sin_datos(): void

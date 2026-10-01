@@ -21,6 +21,7 @@ use Modules\Academic\Services\WhatsappCourseNotifier;
 use Modules\Academic\Support\PhoneNumberFormatter;
 use Modules\Integrationhub\Services\TelegramBotService;
 use Modules\Integrationhub\Services\TelegramMessageService;
+use Modules\Integrationhub\Services\TelegramWebhookRegistrar;
 use Modules\Integrationhub\Support\TelegramMessages;
 
 /**
@@ -48,6 +49,7 @@ class AcaNotificationController extends Controller
         private readonly TelegramBotService $telegramBot,
         private readonly TelegramMessageService $telegramMessages,
         private readonly TelegramCourseNotifier $telegramCourseNotifier,
+        private readonly TelegramWebhookRegistrar $telegramWebhookRegistrar,
     ) {
     }
 
@@ -423,9 +425,9 @@ class AcaNotificationController extends Controller
         }
 
         try {
-            $url = $this->telegramBot->webhookUrl();
-            $this->telegramBot->setWebhook($url, true);
-            $this->telegramBot->setMyCommands($this->telegramBot->defaultCommands());
+            // El registro vive en TelegramWebhookRegistrar: el mismo camino que
+            // usan el comando del modulo y la migracion de despliegue.
+            $url = $this->telegramWebhookRegistrar->register(true);
             $username = $this->telegramBot->username(true);
         } catch (\Throwable $exception) {
             throw ValidationException::withMessages([
