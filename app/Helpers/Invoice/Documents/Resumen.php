@@ -233,6 +233,13 @@ class Resumen
     {
         $items = [];
 
+        // Los llamadores entregan los documentos como array (p. ej. ->toArray()
+        // o el payload del request). Se normaliza a colección para poder usar
+        // $documents->first() sin importar el origen.
+        if (! $documents instanceof \Illuminate\Support\Collection) {
+            $documents = collect($documents);
+        }
+
         $company = new Company;
 
         $province = $this->mycompany->district->province;
