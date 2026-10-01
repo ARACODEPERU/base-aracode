@@ -3,6 +3,7 @@
 namespace Modules\Security\Providers;
 
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
@@ -29,6 +30,18 @@ class SecurityServiceProvider extends ServiceProvider
         // Al cerrar sesión en la aplicación se cierra también la sesión del Modo
         // Super Editor: el borrador se descarta (nunca se aplica solo) y queda
         // registrado en la bitácora.
+        // Alertas de error por Telegram: cada mensaje que registra el logger
+        // pasa por aquí y, si el nivel alcanza el umbral configurado en
+        // Seguridad → Alertas, se encola el aviso a los chat_id activos. El
+        // servicio nunca lanza, así que el listener no afecta a la petición.
+        Event::listen(MessageLogged::class, function (MessageLogged $event) {
+            try {
+                app(\Modules\Security\Services\ErrorAlertService::class)->handle($event);
+            } catch (\Throwable) {
+                // Una alerta jamás debe interferir con la aplicación.
+            }
+        });
+
         Event::listen(Logout::class, function (Logout $event) {
             if (! $event->user) {
                 return;

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Security\Http\Controllers\PermissionController;
 use Modules\Security\Http\Controllers\RolesController;
+use Modules\Security\Http\Controllers\SecurityAlertController;
 use Modules\Security\Http\Controllers\SecurityController;
 use Modules\Security\Http\Controllers\SuperEditorController;
 use Modules\Security\Http\Controllers\UserActivityLogsController;
@@ -36,6 +37,23 @@ Route::middleware(['auth','user_activity_log'])->prefix('security')->group(funct
 
     Route::get('user/activity/logs', [UserActivityLogsController::class, 'index'])->name('user_activity_logs');
     Route::get('user/activity/logs/data', [UserActivityLogsController::class, 'getData'])->name('user_activity_logs_data');
+
+    /*
+    |----------------------------------------------------------------------
+    | Alertas de error por Telegram
+    |----------------------------------------------------------------------
+    | Administra los chat_id que reciben los avisos cuando un error se
+    | registra en los logs, sus ajustes y el envío de una alerta de prueba.
+    | Se protege con el permiso conf_alertas.
+    */
+    Route::middleware('permission:conf_alertas')->prefix('alerts')->group(function () {
+        Route::get('/', [SecurityAlertController::class, 'index'])->name('security_alerts');
+        Route::post('recipients', [SecurityAlertController::class, 'storeRecipient'])->name('security_alerts_recipients_store');
+        Route::put('recipients/{id}', [SecurityAlertController::class, 'updateRecipient'])->name('security_alerts_recipients_update');
+        Route::delete('recipients/{id}', [SecurityAlertController::class, 'destroyRecipient'])->name('security_alerts_recipients_destroy');
+        Route::put('settings', [SecurityAlertController::class, 'updateSettings'])->name('security_alerts_settings_update');
+        Route::post('test', [SecurityAlertController::class, 'sendTest'])->name('security_alerts_test');
+    });
 
     /*
     |----------------------------------------------------------------------

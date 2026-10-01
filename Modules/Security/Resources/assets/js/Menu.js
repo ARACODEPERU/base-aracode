@@ -6,7 +6,8 @@ import {
     faLockOpen,
     faUser,
     faDna,
-    faClock
+    faClock,
+    faBell
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuConfig = {
@@ -64,6 +65,13 @@ const menuConfig = {
             text: "Historial de Actividades",
             icom: faClock,
             permissions: "conf_historial_actividades",
+        },
+        {
+            route: route("security_alerts"),
+            status: false,
+            text: "Alertas",
+            icom: faBell,
+            permissions: "conf_alertas",
         },
 
     ],
