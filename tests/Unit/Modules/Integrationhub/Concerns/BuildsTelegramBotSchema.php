@@ -37,6 +37,7 @@ trait BuildsTelegramBotSchema
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000010_create_integration_telegram_contacts_table.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000011_create_telegram_bot_integration.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000012_create_telegram_registration_sessions_table.php',
+        'Modules/Integrationhub/Database/Migrations/2026_10_01_000001_add_context_to_telegram_registration_sessions.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000013_drop_registration_code_from_telegram_contacts.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000014_add_parse_mode_to_telegram_send_message.php',
         'Modules/Integrationhub/Database/Migrations/2026_09_30_000015_create_integration_telegram_messages_table.php',

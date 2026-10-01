@@ -61,6 +61,60 @@ class TelegramMessages
     /** Ayuda (/ayuda). */
     public const HELP = 'bot_help';
 
+    /** Identificador del chat (/chatid). */
+    public const CHAT_ID = 'bot_chat_id';
+
+    /** La consulta empieza pidiendo el correo. */
+    public const QUERY_EMAIL = 'bot_query_email';
+
+    /** El texto recibido no parece un correo. */
+    public const QUERY_EMAIL_INVALID = 'bot_query_email_invalid';
+
+    /** Con el correo ya recibido, la consulta pide el documento. */
+    public const QUERY_DOCUMENT = 'bot_query_document';
+
+    /** El texto recibido no parece un documento. */
+    public const QUERY_DOCUMENT_INVALID = 'bot_query_document_invalid';
+
+    /** El correo y el documento no coinciden con el padron. */
+    public const QUERY_MISMATCH = 'bot_query_mismatch';
+
+    /** Se agotaron los intentos de una consulta. */
+    public const QUERY_TOO_MANY_ATTEMPTS = 'bot_query_too_many_attempts';
+
+    /** El padron de consulta no esta disponible. */
+    public const QUERY_DISABLED = 'bot_query_disabled';
+
+    /** Linea de la lista de cursos. */
+    public const COURSE_LINE = 'bot_course_line';
+
+    /** Cierre de la lista cuando hay mas cursos de los que caben en el mensaje. */
+    public const COURSES_MORE = 'bot_courses_more';
+
+    /** Lista de cursos de pago disponibles. */
+    public const COURSES = 'bot_courses';
+
+    /** La persona existe, pero no tiene cursos de pago vigentes. */
+    public const COURSES_EMPTY = 'bot_courses_empty';
+
+    /** Nota de suscripcion activa (sin los programas de especializacion). */
+    public const COURSES_SUBSCRIPTION = 'bot_courses_subscription';
+
+    /** Nota de suscripcion Premium VIP (incluye especializacion). */
+    public const COURSES_SUBSCRIPTION_VIP = 'bot_courses_subscription_vip';
+
+    /** Linea de la lista de certificados. */
+    public const CERTIFICATE_LINE = 'bot_certificate_line';
+
+    /** Linea que agrega el modulo a un certificado de modulo. */
+    public const CERTIFICATE_MODULE = 'bot_certificate_module';
+
+    /** Lista de certificados. */
+    public const CERTIFICATES = 'bot_certificates';
+
+    /** La persona existe, pero no tiene certificados. */
+    public const CERTIFICATES_EMPTY = 'bot_certificates_empty';
+
     /** Plantilla con la que se arma el mensaje de una campana de Telegram. */
     public const CAMPAIGN = 'campaign_telegram';
 
@@ -199,7 +253,7 @@ class TelegramMessages
             ],
             self::HELP => [
                 'name' => 'Ayuda (/ayuda)',
-                'description' => 'Explica cómo registrarse y cómo darse de baja.',
+                'description' => 'Explica cómo registrarse, consultar datos y darse de baja.',
                 'variables' => [],
                 'format' => self::FORMAT_HTML,
                 'body' => <<<'TXT'
@@ -207,7 +261,213 @@ class TelegramMessages
 
                 Para activar los avisos en este chat: escribe /start y luego tu número de documento (DNI).
 
+                Para consultar tus cursos de pago: /cursos.
+
+                Para consultar tus certificados: /certificados.
+
+                Para ver el identificador de este chat: /chatid.
+
                 Para dejar de recibir avisos: /baja.
+                TXT,
+            ],
+            self::CHAT_ID => [
+                'name' => 'Identificador del chat (/chatid)',
+                'description' => 'Devuelve el chat_id de Telegram de quien consulta, para compartirlo con la institución.',
+                'variables' => ['{chat_id}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🆔 El identificador de este chat es:
+
+                <code>{chat_id}</code>
+
+                Compártelo con la institución si necesitas ayuda con tus avisos.
+                TXT,
+            ],
+            self::QUERY_EMAIL => [
+                'name' => 'Consulta: pedido del correo',
+                'description' => 'Primer paso de /cursos y /certificados: pide el correo registrado.',
+                'variables' => [],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🔒 Para consultar tu información necesito confirmar tu identidad.
+
+                Escríbeme el <b>correo electrónico</b> que registraste con la institución.
+                TXT,
+            ],
+            self::QUERY_EMAIL_INVALID => [
+                'name' => 'Consulta: correo no reconocido',
+                'description' => 'El mensaje no parece un correo electrónico.',
+                'variables' => ['{intentos}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🤔 No reconocí eso como un correo electrónico.
+
+                Escríbelo completo, por ejemplo: nombre@correo.com. ({intentos})
+                TXT,
+            ],
+            self::QUERY_DOCUMENT => [
+                'name' => 'Consulta: pedido del documento',
+                'description' => 'Segundo paso de /cursos y /certificados: ya recibió el correo y pide el documento.',
+                'variables' => [],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                Gracias. Ahora escríbeme tu <b>número de documento (DNI)</b>, solo el número.
+                TXT,
+            ],
+            self::QUERY_DOCUMENT_INVALID => [
+                'name' => 'Consulta: documento no reconocido',
+                'description' => 'El mensaje no parece un número de documento.',
+                'variables' => ['{intentos}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🤔 No reconocí eso como un número de documento.
+
+                Escríbeme solo el número, sin espacios ni guiones. ({intentos})
+                TXT,
+            ],
+            self::QUERY_MISMATCH => [
+                'name' => 'Consulta: datos que no coinciden',
+                'description' => 'El correo y el documento no pertenecen a la misma persona del padrón. No se distingue cuál falló.',
+                'variables' => ['{intentos}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🔒 El correo y el documento no coinciden con nuestros registros.
+
+                Verifícalos y vuelve a intentarlo. ({intentos})
+                TXT,
+            ],
+            self::QUERY_TOO_MANY_ATTEMPTS => [
+                'name' => 'Consulta: demasiados intentos',
+                'description' => 'Se agotaron los intentos de verificación y el bot cierra la consulta.',
+                'variables' => [],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🚫 Demasiados intentos seguidos.
+
+                Escribe /cursos o /certificados para volver a intentarlo.
+                TXT,
+            ],
+            self::QUERY_DISABLED => [
+                'name' => 'Consulta: no disponible',
+                'description' => 'No hay padrón vinculado para validar el correo y el documento (módulo no disponible).',
+                'variables' => [],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                ⚠️ La consulta por Telegram no está habilitada en este momento.
+
+                Contacta a la institución.
+                TXT,
+            ],
+            self::COURSE_LINE => [
+                'name' => 'Consulta: línea de curso',
+                'description' => 'Cada curso de la lista. {tipo} y {vigencia} son opcionales: si vienen vacíos, su línea no se envía.',
+                'variables' => ['{curso}', '{tipo}', '{vigencia}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                • <b>{curso}</b>
+                {tipo}
+                {vigencia}
+                TXT,
+            ],
+            self::COURSES_MORE => [
+                'name' => 'Consulta: cursos adicionales',
+                'description' => 'Se agrega al final de la lista cuando hay más cursos que el máximo configurado.',
+                'variables' => ['{total}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                …y {total} cursos más.
+                TXT,
+            ],
+            self::COURSES => [
+                'name' => 'Consulta: lista de cursos',
+                'description' => 'Cierre de /cursos. {cursos} son los cursos de pago vigentes y {suscripcion} la nota de suscripción; si vienen vacíos, su línea no se envía.',
+                'variables' => ['{nombre}', '{cursos}', '{suscripcion}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                ✅ Hola {nombre}, estos son tus cursos de pago disponibles:
+
+                {cursos}
+
+                {suscripcion}
+
+                Recuerda que puedes escribir /certificados para ver tus certificados.
+                TXT,
+            ],
+            self::COURSES_EMPTY => [
+                'name' => 'Consulta: sin cursos',
+                'description' => 'La persona existe, pero no tiene cursos de pago vigentes ni suscripción.',
+                'variables' => ['{nombre}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                😕 Hola {nombre}, no encontramos cursos de pago vigentes a tu nombre.
+
+                Si crees que es un error, contacta a la institución.
+                TXT,
+            ],
+            self::COURSES_SUBSCRIPTION => [
+                'name' => 'Consulta: nota de suscripción',
+                'description' => 'Se antepone a la lista cuando la persona tiene suscripción activa. La suscripción no incluye los Programas de Especialización; solo el plan Premium VIP los incluye.',
+                'variables' => ['{hasta}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                💳 Tienes una suscripción activa: incluye todos los cursos de pago, excepto los Programas de Especialización.
+
+                📅 Vigencia: {hasta}
+                TXT,
+            ],
+            self::COURSES_SUBSCRIPTION_VIP => [
+                'name' => 'Consulta: nota de suscripción Premium VIP',
+                'description' => 'Se antepone a la lista cuando la suscripción es Premium VIP, que sí incluye los Programas de Especialización.',
+                'variables' => ['{hasta}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                💳 Tu plan Premium VIP está activo e incluye también los Programas de Especialización.
+
+                📅 Vigencia: {hasta}
+                TXT,
+            ],
+            self::CERTIFICATE_LINE => [
+                'name' => 'Consulta: línea de certificado',
+                'description' => 'Cada certificado de la lista. {modulo} es la línea del módulo (vacía en los certificados de curso) y {url} el enlace de descarga.',
+                'variables' => ['{curso}', '{modulo}', '{url}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                • <b>{curso}</b>
+                {modulo}
+                  <a href="{url}">Descargar certificado</a>
+                TXT,
+            ],
+            self::CERTIFICATE_MODULE => [
+                'name' => 'Consulta: línea de módulo',
+                'description' => 'Se usa dentro de la línea del certificado cuando corresponde a un módulo.',
+                'variables' => ['{modulo}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                  📘 Módulo: {modulo}
+                TXT,
+            ],
+            self::CERTIFICATES => [
+                'name' => 'Consulta: lista de certificados',
+                'description' => 'Cierre de /certificados. {certificados} son las líneas del catálogo de certificados.',
+                'variables' => ['{nombre}', '{certificados}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                🎓 Hola {nombre}, estos son tus certificados:
+
+                {certificados}
+
+                Puedes descargarlos con el enlace de cada uno.
+                TXT,
+            ],
+            self::CERTIFICATES_EMPTY => [
+                'name' => 'Consulta: sin certificados',
+                'description' => 'La persona existe, pero todavía no tiene certificados emitidos.',
+                'variables' => ['{nombre}'],
+                'format' => self::FORMAT_HTML,
+                'body' => <<<'TXT'
+                😕 Hola {nombre}, todavía no tienes certificados emitidos.
+
+                Cuando completes un curso con certificado, aparecerá aquí.
                 TXT,
             ],
             self::CAMPAIGN => [

@@ -48,7 +48,8 @@ class TelegramMessageServiceTest extends TestCase
             $this->assertContains($definition['format'], [TelegramMessages::FORMAT_HTML, TelegramMessages::FORMAT_TEXT]);
         }
 
-        $this->assertSame(13, count($this->messages->catalog()));
+        // El catalogo completo queda disponible para la pantalla de configuracion.
+        $this->assertCount(count(TelegramMessages::codes()), $this->messages->catalog());
     }
 
     public function test_reemplaza_las_variables_del_mensaje(): void

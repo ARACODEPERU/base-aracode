@@ -28,6 +28,17 @@ return [
         // Documentos errados que se toleran antes de cerrar la conversacion.
         'registration_max_attempts' => (int) env('TELEGRAM_REGISTRATION_MAX_ATTEMPTS', 5),
 
+        // Minutos que el bot espera el correo/documento de una consulta (/cursos,
+        // /certificados) antes de abandonar la conversacion a medias.
+        'query_session_minutes' => (int) env('TELEGRAM_QUERY_SESSION_MINUTES', 30),
+
+        // Verificaciones erradas que se toleran en una consulta antes de cerrarla.
+        'query_max_attempts' => (int) env('TELEGRAM_QUERY_MAX_ATTEMPTS', 5),
+
+        // Cursos que se listan como maximo en un mensaje (Telegram limita el
+        // largo del texto); si hay mas, se indica cuantos quedaron fuera.
+        'courses_max_items' => (int) env('TELEGRAM_COURSES_MAX_ITEMS', 25),
+
         'endpoints' => [
             'get_me' => 'telegram_get_me',
             'send_message' => 'telegram_send_message',

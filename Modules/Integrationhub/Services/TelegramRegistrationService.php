@@ -17,6 +17,15 @@ use RuntimeException;
  */
 class TelegramRegistrationService
 {
+    /** El bot espera el documento para registrar el chat (conversacion de /start). */
+    public const STEP_DOCUMENT = 'awaiting_document';
+
+    /** El bot espera el correo de una consulta (/cursos, /certificados). */
+    public const STEP_QUERY_EMAIL = 'awaiting_query_email';
+
+    /** El bot espera el documento que confirma la consulta. */
+    public const STEP_QUERY_DOCUMENT = 'awaiting_query_document';
+
     /**
      * Abre (o reinicia) la conversacion de registro de un chat.
      *
@@ -25,25 +34,87 @@ class TelegramRegistrationService
      */
     public function beginSession(string $chatId, ?string $username = null, ?string $firstName = null): IntegrationTelegramRegistrationSession
     {
+        return $this->openStep($chatId, self::STEP_DOCUMENT, [], $username, $firstName);
+    }
+
+    /**
+     * Abre una conversacion en el paso indicado, con su contexto.
+     *
+     * Es la version general de beginSession: la usan el registro (que espera el
+     * documento) y las consultas de cursos y certificados, que empiezan pidiendo
+     * el correo. Es idempotente: reinicia la conversacion anterior de ese chat.
+     *
+     * @param array<string, mixed> $context
+     */
+    public function openStep(
+        string $chatId,
+        string $step,
+        array $context = [],
+        ?string $username = null,
+        ?string $firstName = null
+    ): IntegrationTelegramRegistrationSession {
         $chatId = trim($chatId);
 
         if ($chatId === '') {
             throw new RuntimeException('No se puede abrir un registro sin el chat de Telegram.');
         }
 
-        $minutes = max(1, (int) config('integrationhub.telegram.registration_session_minutes', 30));
-
         $session = IntegrationTelegramRegistrationSession::firstOrNew(['chat_id' => $chatId]);
 
         $session->fill([
             'telegram_username' => $this->clean($username),
             'telegram_first_name' => $this->clean($firstName),
-            'step' => 'awaiting_document',
+            'step' => $step,
+            'context' => $context,
             'attempts' => 0,
-            'expires_at' => now()->addMinutes($minutes),
+            'expires_at' => now()->addMinutes($this->minutes($step)),
         ])->save();
 
         return $session->refresh();
+    }
+
+    /**
+     * Avanza la conversacion a otro paso, conservando o reemplazando el contexto
+     * y renovando su vigencia.
+     *
+     * @param array<string, mixed> $context
+     */
+    public function advanceStep(
+        IntegrationTelegramRegistrationSession $session,
+        string $step,
+        array $context = []
+    ): IntegrationTelegramRegistrationSession {
+        $session->fill([
+            'step' => $step,
+            'context' => $context,
+            'expires_at' => now()->addMinutes($this->minutes($step)),
+        ])->save();
+
+        return $session->refresh();
+    }
+
+    /**
+     * Contexto guardado de una conversacion (vacio si no hay ninguno).
+     *
+     * @return array<string, mixed>
+     */
+    public function context(IntegrationTelegramRegistrationSession $session): array
+    {
+        $context = $session->context;
+
+        return is_array($context) ? $context : [];
+    }
+
+    /**
+     * Minutos de vigencia segun el tipo de conversacion.
+     */
+    private function minutes(string $step): int
+    {
+        $key = str_starts_with($step, 'awaiting_query')
+            ? 'integrationhub.telegram.query_session_minutes'
+            : 'integrationhub.telegram.registration_session_minutes';
+
+        return max(1, (int) config($key, 30));
     }
 
     /**
@@ -86,6 +157,17 @@ class TelegramRegistrationService
     public function maxAttempts(): int
     {
         return max(1, (int) config('integrationhub.telegram.registration_max_attempts', 5));
+    }
+
+    /**
+     * Intentos de verificacion que se toleran en una consulta de cursos.
+     *
+     * Se separa del registro para poder endurecer la consulta (que expone datos
+     * privados) sin afectar el alta del chat_id.
+     */
+    public function maxQueryAttempts(): int
+    {
+        return max(1, (int) config('integrationhub.telegram.query_max_attempts', 5));
     }
 
     /**

@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Modules\Integrationhub\Contracts\TelegramAccountResolver;
 use Modules\Integrationhub\Contracts\TelegramRegistrantResolver;
 use Modules\Integrationhub\Entities\IntegrationError;
-use Modules\Integrationhub\Entities\IntegrationTelegramContact;
 use Modules\Integrationhub\Entities\IntegrationTelegramRegistrationSession;
 use Modules\Integrationhub\Services\TelegramBotService;
 use Modules\Integrationhub\Services\TelegramMessageService;
@@ -29,7 +29,13 @@ use Modules\Integrationhub\Support\TelegramMessages;
  *     documento: se resuelve contra el padron y, si corresponde, se guarda el
  *     chat_id.
  *   - /baja (o /stop) da de baja el chat para que deje de recibir campanas.
- *   - /ayuda recuerda como registrarse.
+ *
+ * Consultas (/cursos y /certificados): piden primero el correo registrado y
+ * luego el documento; solo si ambos pertenecen a la misma persona se responde
+ * con la informacion. Nunca se revela si fallo el correo o el documento.
+ *
+ * Otros comandos: /chatid devuelve el identificador del chat y /ayuda recuerda
+ * como registrarse y darse de baja.
  *
  * Todo el texto que sale de aqui proviene del catalogo configurable
  * (Support\TelegramMessages + el servicio de mensajes): nada de copy escrito en
@@ -39,6 +45,12 @@ use Modules\Integrationhub\Support\TelegramMessages;
  */
 class TelegramWebhookController extends Controller
 {
+    /** Consulta de cursos de pago. */
+    private const INTENT_COURSES = 'courses';
+
+    /** Consulta de certificados. */
+    private const INTENT_CERTIFICATES = 'certificates';
+
     public function __invoke(
         Request $request,
         TelegramBotService $bot,
@@ -125,9 +137,29 @@ class TelegramWebhookController extends Controller
             return;
         }
 
-        // Cualquier texto libre: si hay una conversacion abierta es el documento;
-        // si no, un recordatorio corto (no la ayuda completa, que confunde a
-        // quien solo escribio "hola").
+        if (in_array($command, ['/chatid', '/miid'], true)) {
+            $this->reply($bot, $messages, $chatId, TelegramMessages::CHAT_ID, [
+                'chat_id' => $chatId,
+            ]);
+
+            return;
+        }
+
+        if (in_array($command, ['/cursos', '/cursospagados'], true)) {
+            $this->handleQueryStart($bot, $registration, $messages, $chatId, self::INTENT_COURSES, $username, $firstName);
+
+            return;
+        }
+
+        if (in_array($command, ['/certificados', '/certificado'], true)) {
+            $this->handleQueryStart($bot, $registration, $messages, $chatId, self::INTENT_CERTIFICATES, $username, $firstName);
+
+            return;
+        }
+
+        // Cualquier texto libre: si hay una conversacion abierta continua su
+        // paso; si no, un recordatorio corto (no la ayuda completa, que confunde
+        // a quien solo escribio "hola").
         $session = $registration->sessionFor($chatId);
 
         if ($session === null) {
@@ -136,7 +168,11 @@ class TelegramWebhookController extends Controller
             return;
         }
 
-        $this->handleDocument($bot, $registration, $messages, $session, $chatId, $text, $username, $firstName);
+        match ($session->step) {
+            TelegramRegistrationService::STEP_QUERY_EMAIL => $this->handleQueryEmail($bot, $registration, $messages, $session, $chatId, $text),
+            TelegramRegistrationService::STEP_QUERY_DOCUMENT => $this->handleQueryDocument($bot, $registration, $messages, $session, $chatId, $text),
+            default => $this->handleDocument($bot, $registration, $messages, $session, $chatId, $text, $username, $firstName),
+        };
     }
 
     /**
@@ -165,6 +201,234 @@ class TelegramWebhookController extends Controller
 
         $this->reply($bot, $messages, $chatId, TelegramMessages::START_REGISTERED, [
             'nombre' => (string) ($contact->person?->short_name ?? ''),
+        ]);
+    }
+
+    /**
+     * /cursos o /certificados: abre la consulta y pide el correo.
+     */
+    private function handleQueryStart(
+        TelegramBotService $bot,
+        TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
+        string $chatId,
+        string $intent,
+        ?string $username,
+        ?string $firstName
+    ): void {
+        $registration->openStep(
+            $chatId,
+            TelegramRegistrationService::STEP_QUERY_EMAIL,
+            ['intent' => $intent],
+            $username,
+            $firstName
+        );
+
+        $this->reply($bot, $messages, $chatId, TelegramMessages::QUERY_EMAIL);
+    }
+
+    /**
+     * Consulta, primer paso: guarda el correo y pasa a pedir el documento.
+     */
+    private function handleQueryEmail(
+        TelegramBotService $bot,
+        TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
+        IntegrationTelegramRegistrationSession $session,
+        string $chatId,
+        string $text
+    ): void {
+        $email = trim($text);
+
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            $this->rejectQuery(
+                $bot,
+                $registration,
+                $messages,
+                $session,
+                $chatId,
+                TelegramMessages::QUERY_EMAIL_INVALID,
+                'El mensaje no parece un correo electrónico.'
+            );
+
+            return;
+        }
+
+        $context = $registration->context($session);
+        $context['email'] = mb_substr($email, 0, 255);
+
+        $registration->advanceStep($session, TelegramRegistrationService::STEP_QUERY_DOCUMENT, $context);
+
+        $this->reply($bot, $messages, $chatId, TelegramMessages::QUERY_DOCUMENT);
+    }
+
+    /**
+     * Consulta, segundo paso: valida correo + documento y responde la consulta.
+     */
+    private function handleQueryDocument(
+        TelegramBotService $bot,
+        TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
+        IntegrationTelegramRegistrationSession $session,
+        string $chatId,
+        string $text
+    ): void {
+        $document = $this->document($text);
+
+        if ($document === '') {
+            $this->rejectQuery(
+                $bot,
+                $registration,
+                $messages,
+                $session,
+                $chatId,
+                TelegramMessages::QUERY_DOCUMENT_INVALID,
+                'El mensaje no parece un documento de identidad.'
+            );
+
+            return;
+        }
+
+        $resolver = $this->accountResolver();
+
+        if ($resolver === null) {
+            $registration->closeSession($chatId);
+            $this->reply($bot, $messages, $chatId, TelegramMessages::QUERY_DISABLED);
+
+            return;
+        }
+
+        $context = $registration->context($session);
+        $email = trim((string) ($context['email'] ?? ''));
+
+        $account = $resolver->resolveAccount($document, $email);
+
+        if ($account === null) {
+            $this->rejectQuery(
+                $bot,
+                $registration,
+                $messages,
+                $session,
+                $chatId,
+                TelegramMessages::QUERY_MISMATCH,
+                'El correo y el documento no coinciden con el padrón.'
+            );
+
+            return;
+        }
+
+        $registration->closeSession($chatId);
+
+        if (($context['intent'] ?? self::INTENT_COURSES) === self::INTENT_CERTIFICATES) {
+            $this->replyWithCertificates($bot, $messages, $chatId, $account);
+
+            return;
+        }
+
+        $this->replyWithCourses($bot, $messages, $chatId, $account);
+    }
+
+    /**
+     * Cursos de pago disponibles, con la nota de suscripcion cuando la hay.
+     *
+     * @param array<string, mixed> $account
+     */
+    private function replyWithCourses(
+        TelegramBotService $bot,
+        TelegramMessageService $messages,
+        string $chatId,
+        array $account
+    ): void {
+        $courses = (array) ($account['courses'] ?? []);
+        $subscription = $account['subscription'] ?? null;
+
+        $lines = array_map(
+            fn ($course) => $messages->render(TelegramMessages::COURSE_LINE, [
+                'curso' => (string) ($course['description'] ?? ''),
+                'tipo' => (string) ($course['type'] ?? ''),
+                'vigencia' => (string) ($course['time_limit'] ?? ''),
+            ]),
+            array_slice($courses, 0, max(1, (int) config('integrationhub.telegram.courses_max_items', 25)))
+        );
+
+        if (count($courses) > count($lines)) {
+            $lines[] = $messages->render(TelegramMessages::COURSES_MORE, [
+                'total' => (string) (count($courses) - count($lines)),
+            ]);
+        }
+
+        $note = is_array($subscription) ? $this->subscriptionNote($messages, $subscription) : '';
+
+        if ($lines === [] && $note === '') {
+            $this->reply($bot, $messages, $chatId, TelegramMessages::COURSES_EMPTY, [
+                'nombre' => (string) ($account['name'] ?? ''),
+            ]);
+
+            return;
+        }
+
+        $this->reply($bot, $messages, $chatId, TelegramMessages::COURSES, [
+            'nombre' => (string) ($account['name'] ?? ''),
+            'cursos' => implode("\n\n", $lines),
+            'suscripcion' => $note,
+        ]);
+    }
+
+    /**
+     * Certificados del alumno, cada uno con su enlace de descarga.
+     *
+     * @param array<string, mixed> $account
+     */
+    private function replyWithCertificates(
+        TelegramBotService $bot,
+        TelegramMessageService $messages,
+        string $chatId,
+        array $account
+    ): void {
+        $certificates = (array) ($account['certificates'] ?? []);
+
+        $lines = array_map(
+            function (array $certificate) use ($messages) {
+                $module = trim((string) ($certificate['module'] ?? ''));
+
+                return $messages->render(TelegramMessages::CERTIFICATE_LINE, [
+                    'curso' => (string) ($certificate['course'] ?? ''),
+                    'modulo' => $module !== ''
+                        ? $messages->render(TelegramMessages::CERTIFICATE_MODULE, ['modulo' => $module])
+                        : '',
+                    'url' => (string) ($certificate['url'] ?? ''),
+                ]);
+            },
+            $certificates
+        );
+
+        if ($lines === []) {
+            $this->reply($bot, $messages, $chatId, TelegramMessages::CERTIFICATES_EMPTY, [
+                'nombre' => (string) ($account['name'] ?? ''),
+            ]);
+
+            return;
+        }
+
+        $this->reply($bot, $messages, $chatId, TelegramMessages::CERTIFICATES, [
+            'nombre' => (string) ($account['name'] ?? ''),
+            'certificados' => implode("\n\n", $lines),
+        ]);
+    }
+
+    /**
+     * Nota de suscripcion: el texto cambia segun sea Premium VIP o no.
+     *
+     * @param array{vip?: bool, ends_at?: string|null} $subscription
+     */
+    private function subscriptionNote(TelegramMessageService $messages, array $subscription): string
+    {
+        $code = ! empty($subscription['vip'])
+            ? TelegramMessages::COURSES_SUBSCRIPTION_VIP
+            : TelegramMessages::COURSES_SUBSCRIPTION;
+
+        return $messages->render($code, [
+            'hasta' => (string) ($subscription['ends_at'] ?? ''),
         ]);
     }
 
@@ -286,6 +550,42 @@ class TelegramWebhookController extends Controller
         ]);
     }
 
+    /**
+     * Verificacion de consulta errada: cuenta el intento y, agotados, la cierra.
+     *
+     * La bitacora no guarda el correo ni el documento en claro: se registra el
+     * hecho y el chat, no la credencial que se probo.
+     */
+    private function rejectQuery(
+        TelegramBotService $bot,
+        TelegramRegistrationService $registration,
+        TelegramMessageService $messages,
+        IntegrationTelegramRegistrationSession $session,
+        string $chatId,
+        string $code,
+        string $reason
+    ): void {
+        $attempts = $registration->countAttempt($session);
+        $max = $registration->maxQueryAttempts();
+
+        IntegrationError::create([
+            'message' => 'Consulta de Telegram (chat ' . $chatId . '): ' . $reason
+                . ' Intento ' . $attempts . ' de ' . $max . '.',
+            'source' => 'telegram_query',
+        ]);
+
+        if ($attempts >= $max) {
+            $registration->closeSession($chatId);
+            $this->reply($bot, $messages, $chatId, TelegramMessages::QUERY_TOO_MANY_ATTEMPTS);
+
+            return;
+        }
+
+        $this->reply($bot, $messages, $chatId, $code, [
+            'intentos' => "Intento {$attempts} de {$max}",
+        ]);
+    }
+
     private function handleOptOut(
         TelegramBotService $bot,
         TelegramRegistrationService $registration,
@@ -323,19 +623,40 @@ class TelegramWebhookController extends Controller
     }
 
     /**
-     * Implementacion del padron, si algun modulo la vinculo.
+     * Implementacion del padron de registro, si algun modulo la vinculo.
      */
     private function resolver(): ?TelegramRegistrantResolver
     {
-        if (! app()->bound(TelegramRegistrantResolver::class)) {
+        return $this->resolveContract(TelegramRegistrantResolver::class);
+    }
+
+    /**
+     * Implementacion del padron de consulta, si algun modulo la vinculo.
+     */
+    private function accountResolver(): ?TelegramAccountResolver
+    {
+        return $this->resolveContract(TelegramAccountResolver::class);
+    }
+
+    /**
+     * Resuelve un contrato del contenedor tratando como "no disponible" tanto la
+     * ausencia de vinculacion como un padron que no se puede construir.
+     *
+     * @template T of object
+     * @param  class-string<T> $contract
+     * @return T|null
+     */
+    private function resolveContract(string $contract): ?object
+    {
+        if (! app()->bound($contract)) {
             return null;
         }
 
         try {
-            return app(TelegramRegistrantResolver::class);
+            return app($contract);
         } catch (\Throwable) {
             // Un padron que no se puede construir (modulo no instalado o sin
-            // configuracion) se trata como registro no disponible.
+            // configuracion) se trata como consulta no disponible.
             return null;
         }
     }

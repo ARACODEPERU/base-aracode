@@ -4,6 +4,7 @@ namespace Tests\Unit\Modules\Integrationhub;
 
 use App\Models\Parameter;
 use Illuminate\Support\Facades\DB;
+use Modules\Integrationhub\Contracts\TelegramAccountResolver;
 use Modules\Integrationhub\Contracts\TelegramRegistrantResolver;
 use Modules\Integrationhub\Entities\IntegrationError;
 use Modules\Integrationhub\Entities\IntegrationTelegramContact;
@@ -334,6 +335,206 @@ class TelegramWebhookControllerTest extends TestCase
         $this->assertSame([], $hub->calls);
     }
 
+    public function test_chatid_devuelve_el_identificador_del_chat(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindDirectory();
+
+        $this->postJson(self::URI, $this->message('/chatid'), $this->secretHeader())->assertOk();
+
+        $this->assertStringContainsString('555', $hub->calls[0]['values']['text']);
+    }
+
+    public function test_la_consulta_de_cursos_pide_correo_y_documento_y_lista(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory([
+            '12345678' => [
+                'email' => 'ana@correo.com',
+                'account' => [
+                    'person_id' => 100,
+                    'name' => 'Ana Pérez',
+                    'courses' => [
+                        ['description' => 'Curso pagado', 'type' => 'Cursos', 'time_limit' => 'Acceso ilimitado'],
+                    ],
+                    'subscription' => null,
+                    'certificates' => [],
+                ],
+            ],
+        ]);
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('ana@correo.com'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('12345678'), $this->secretHeader())->assertOk();
+
+        $this->assertStringContainsString('correo electrónico', $hub->calls[0]['values']['text']);
+        $this->assertStringContainsString('documento', $hub->calls[1]['values']['text']);
+        $this->assertStringContainsString('Curso pagado', $hub->calls[2]['values']['text']);
+        $this->assertSame(0, IntegrationTelegramRegistrationSession::count());
+    }
+
+    public function test_la_consulta_avisa_cuando_los_datos_no_coinciden(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory([
+            '12345678' => [
+                'email' => 'ana@correo.com',
+                'account' => [
+                    'person_id' => 100,
+                    'name' => 'Ana',
+                    'courses' => [],
+                    'subscription' => null,
+                    'certificates' => [],
+                ],
+            ],
+        ]);
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('otro@correo.com'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('12345678'), $this->secretHeader())->assertOk();
+
+        $this->assertStringContainsString('no coinciden', $hub->calls[2]['values']['text']);
+        $this->assertSame(1, (int) IntegrationTelegramRegistrationSession::where('chat_id', '555')->value('attempts'));
+
+        // La credencial probada no se guarda en la bitacora.
+        $error = IntegrationError::where('source', 'telegram_query')->first();
+
+        $this->assertNotNull($error);
+        $this->assertStringNotContainsString('12345678', (string) $error->message);
+        $this->assertStringNotContainsString('otro@correo.com', (string) $error->message);
+    }
+
+    public function test_un_correo_invalido_cuenta_intento(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory();
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('no-es-un-correo'), $this->secretHeader())->assertOk();
+
+        $this->assertStringContainsString('No reconocí eso como un correo', $hub->calls[1]['values']['text']);
+        $this->assertSame(1, (int) IntegrationTelegramRegistrationSession::where('chat_id', '555')->value('attempts'));
+    }
+
+    public function test_tras_cinco_intentos_se_cierra_la_consulta(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory();
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+
+        foreach (range(1, 5) as $intento) {
+            $this->postJson(self::URI, $this->message('no-es-un-correo'), $this->secretHeader())->assertOk();
+        }
+
+        $this->assertSame(0, IntegrationTelegramRegistrationSession::count());
+        $this->assertStringContainsString('Demasiados intentos', end($hub->calls)['values']['text']);
+    }
+
+    public function test_la_consulta_informa_la_suscripcion_sin_especializacion(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory([
+            '12345678' => [
+                'email' => 'ana@correo.com',
+                'account' => [
+                    'person_id' => 100,
+                    'name' => 'Ana',
+                    'courses' => [],
+                    'subscription' => ['vip' => false, 'ends_at' => null],
+                    'certificates' => [],
+                ],
+            ],
+        ]);
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('ana@correo.com'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('12345678'), $this->secretHeader())->assertOk();
+
+        $text = $hub->calls[2]['values']['text'];
+
+        $this->assertStringContainsString('excepto los Programas de Especialización', $text);
+        // Sin fecha de vigencia, su linea no se envia.
+        $this->assertStringNotContainsString('Vigencia:', $text);
+    }
+
+    public function test_la_consulta_informa_la_suscripcion_premium_vip(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory([
+            '12345678' => [
+                'email' => 'ana@correo.com',
+                'account' => [
+                    'person_id' => 100,
+                    'name' => 'Ana',
+                    'courses' => [],
+                    'subscription' => ['vip' => true, 'ends_at' => '2026-12-31'],
+                    'certificates' => [],
+                ],
+            ],
+        ]);
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('ana@correo.com'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('12345678'), $this->secretHeader())->assertOk();
+
+        $text = $hub->calls[2]['values']['text'];
+
+        $this->assertStringContainsString('Premium VIP', $text);
+        $this->assertStringContainsString('Programas de Especialización', $text);
+        $this->assertStringContainsString('2026-12-31', $text);
+    }
+
+    public function test_certificados_lista_con_enlace_de_descarga(): void
+    {
+        $hub = $this->bindHub();
+        $this->bindAccountDirectory([
+            '12345678' => [
+                'email' => 'ana@correo.com',
+                'account' => [
+                    'person_id' => 100,
+                    'name' => 'Ana',
+                    'courses' => [],
+                    'subscription' => null,
+                    'certificates' => [
+                        [
+                            'id' => 7,
+                            'course' => 'Especialización',
+                            'module' => null,
+                            'url' => 'https://ejemplo.test/academic/certificate/image/7/download',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->postJson(self::URI, $this->message('/certificados'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('ana@correo.com'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('12345678'), $this->secretHeader())->assertOk();
+
+        $text = $hub->calls[2]['values']['text'];
+
+        $this->assertStringContainsString('Especialización', $text);
+        $this->assertStringContainsString('Descargar certificado', $text);
+        $this->assertStringContainsString('https://ejemplo.test/academic/certificate/image/7/download', $text);
+    }
+
+    public function test_sin_padron_de_consulta_el_bot_avisa(): void
+    {
+        $hub = $this->bindHub();
+
+        $this->app->bind(TelegramAccountResolver::class, function () {
+            throw new \RuntimeException('padron no disponible');
+        });
+
+        $this->postJson(self::URI, $this->message('/cursos'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('ana@correo.com'), $this->secretHeader())->assertOk();
+        $this->postJson(self::URI, $this->message('12345678'), $this->secretHeader())->assertOk();
+
+        $this->assertSame(0, IntegrationTelegramRegistrationSession::count());
+        $this->assertStringContainsString('no está habilitada', $hub->calls[2]['values']['text']);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -382,6 +583,42 @@ class TelegramWebhookControllerTest extends TestCase
                 $this->asked[] = $document;
 
                 return $this->people[$document] ?? null;
+            }
+        });
+    }
+
+    /**
+     * Padron falso de consulta: cada documento declara su correo y la ficha.
+     *
+     * Devuelve null cuando el correo no coincide, igual que la implementacion
+     * real, para poder probar el mensaje generico de datos que no coinciden.
+     *
+     * @param array<string, array{email: string, account: array<string, mixed>}> $people
+     */
+    private function bindAccountDirectory(array $people = []): void
+    {
+        $this->app->instance(TelegramAccountResolver::class, new class($people) implements TelegramAccountResolver {
+            /** @var array<string, array{email: string, account: array<string, mixed>}> */
+            private array $people;
+
+            public function __construct(array $people)
+            {
+                $this->people = $people;
+            }
+
+            public function resolveAccount(string $document, string $email): ?array
+            {
+                $person = $this->people[$document] ?? null;
+
+                if ($person === null) {
+                    return null;
+                }
+
+                if (strcasecmp(trim($person['email']), trim($email)) !== 0) {
+                    return null;
+                }
+
+                return $person['account'];
             }
         });
     }

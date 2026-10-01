@@ -144,7 +144,10 @@ class TelegramBotServiceTest extends TestCase
     {
         $commands = app(TelegramBotService::class)->defaultCommands();
 
-        $this->assertSame(['start', 'baja', 'ayuda'], array_column($commands, 'command'));
+        $this->assertSame(
+            ['start', 'cursos', 'certificados', 'chatid', 'baja', 'ayuda'],
+            array_column($commands, 'command')
+        );
     }
 
     public function test_send_formatted_conserva_el_html_y_reintenta_en_texto_plano(): void

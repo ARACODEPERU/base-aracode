@@ -292,6 +292,9 @@ class TelegramBotService
     {
         return [
             ['command' => 'start', 'description' => 'Registrar este chat con tu documento'],
+            ['command' => 'cursos', 'description' => 'Consultar tus cursos de pago'],
+            ['command' => 'certificados', 'description' => 'Consultar tus certificados'],
+            ['command' => 'chatid', 'description' => 'Ver el identificador de este chat'],
             ['command' => 'baja', 'description' => 'Dejar de recibir mensajes del bot'],
             ['command' => 'ayuda', 'description' => 'Cómo activar los avisos en este chat'],
         ];

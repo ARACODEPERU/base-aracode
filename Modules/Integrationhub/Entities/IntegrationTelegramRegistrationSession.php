@@ -21,11 +21,13 @@ class IntegrationTelegramRegistrationSession extends Model
         'telegram_username',
         'telegram_first_name',
         'step',
+        'context',
         'attempts',
         'expires_at',
     ];
 
     protected $casts = [
+        'context' => 'array',
         'attempts' => 'integer',
         'expires_at' => 'datetime',
     ];
