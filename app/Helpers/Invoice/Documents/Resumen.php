@@ -49,6 +49,72 @@ class Resumen
             || stripos($message, 'soap') !== false;
     }
 
+    /**
+     * Cuando SUNAT responde 2223 (el archivo ya fue presentado) intenta recuperar
+     * la constancia (CDR) consultando el ticket: el devuelto por el envío, el que
+     * venga dentro del mensaje de SUNAT o el ya guardado en el resumen.
+     *
+     * Devuelve null si no hay ticket con el que consultar. En otro caso devuelve
+     * ['status' => ..., 'code' => ..., 'message' => ..., 'notes' => ..., 'ticket' => ..., 'recovered' => bool]
+     */
+    private function recoverCdrFromTicket($see, $sum, $summary, $response, $codeError, $messageError)
+    {
+        $ticket = $response ? $response->getTicket() : null;
+
+        if (! $ticket) {
+            preg_match('/ticket[:\s]+([A-Z0-9\-]+)/i', (string) $messageError, $matches);
+            $ticket = $matches[1] ?? null;
+        }
+
+        if (! $ticket) {
+            $ticket = $summary->ticket;
+        }
+
+        if (! $ticket) {
+            return null;
+        }
+
+        $summary->ticket = $ticket;
+
+        try {
+            $statusResult = $see->getStatus($ticket);
+        } catch (\Exception $e) {
+            return [
+                'status' => 'Enviado',
+                'code' => $codeError,
+                'message' => 'El archivo ya fue presentado a SUNAT pero no se pudo recuperar la constancia: '.$e->getMessage(),
+                'notes' => null,
+                'ticket' => $ticket,
+                'recovered' => false,
+            ];
+        }
+
+        if (! $statusResult->isSuccess()) {
+            return [
+                'status' => 'Enviado',
+                'code' => $codeError,
+                'message' => 'El archivo ya fue recibido por SUNAT pero aún no se pudo obtener la constancia. Ticket: '.$ticket.'. Puede volver a Consultar.',
+                'notes' => null,
+                'ticket' => $ticket,
+                'recovered' => false,
+            ];
+        }
+
+        $cdr = $statusResult->getCdrResponse();
+        $notes = $cdr->getNotes() ? json_encode($cdr->getNotes(), JSON_UNESCAPED_UNICODE) : null;
+
+        $summary->cdr = $this->util->writeCdr($sum, $statusResult->getCdrZip());
+
+        return [
+            'status' => $cdr->getCode() == 0 ? 'Aceptado' : 'Rechazado',
+            'code' => $cdr->getCode(),
+            'message' => $cdr->getDescription(),
+            'notes' => $notes,
+            'ticket' => $ticket,
+            'recovered' => true,
+        ];
+    }
+
     public function create($summary, $documents)
     {
         try {
@@ -64,6 +130,7 @@ class Resumen
             $status = null;
             $codeError = null;
             $messageError = null;
+            $cdrRecovered = false;
 
             if ($res->isSuccess()) {
 
@@ -79,11 +146,23 @@ class Resumen
                 if ($codeError === '0109' || stripos($messageError, '0109') !== false) {
                     $status = 'sunat_disponible';
                 } elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
-                    $status = 'fue_enviado';
+                    // El archivo ya fue presentado (mismo resumen). No es un rechazo:
+                    // se intenta recuperar la constancia (CDR) con el ticket disponible.
+                    $recovery = $this->recoverCdrFromTicket($see, $sum, $summary, $res, $codeError, $messageError);
 
-                    $ticket = $res->getTicket();
-                    if ($ticket) {
-                        $summary->ticket = $ticket;
+                    if ($recovery && $recovery['recovered']) {
+                        $status = $recovery['status'];
+                        $codeError = $recovery['code'];
+                        $messageError = $recovery['message'];
+                        $notes = $recovery['notes'];
+                        $cdrRecovered = true;
+                    } else {
+                        // Sin constancia recuperable: queda como "ya enviado", pero
+                        // guardando el ticket (si el mensaje lo trae) para poder consultar.
+                        $status = 'fue_enviado';
+                        if ($recovery) {
+                            $messageError = $recovery['message'];
+                        }
                     }
                 } elseif ($this->isHttpTransportError($codeError, $messageError)) {
                     // Error HTTP (ej. "Bad Request"): SUNAT no procesó el archivo.
@@ -104,12 +183,13 @@ class Resumen
             $isAlreadySent = $status === 'fue_enviado';
 
             return [
-                'success' => $res->isSuccess(),
+                'success' => $res->isSuccess() || $cdrRecovered,
                 'code' => $codeError,
                 'message' => $messageError,
                 'notes' => $notes,
                 'is_sunat_unavailable' => $isSunatUnavailable,
                 'is_already_sent' => $isAlreadySent,
+                'cdr_recovered' => $cdrRecovered,
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'code' => 0, 'message' => $e->getMessage(), 'notes' => 'Error de falta de datos en el sistema'];
@@ -155,10 +235,34 @@ class Resumen
                     $isSunatUnavailable = true;
                     $status = 'sunat_disponible';
                 }
-                // Error 2223 - Archivo ya presentado previamente
+                // Error 2223 - Archivo ya presentado previamente: intentar recuperar el CDR
                 elseif ($codeError === '2223' || stripos($messageError, '2223') !== false) {
-                    $isAlreadySent = true;
-                    $status = 'fue_enviado';
+                    $recovery = $this->recoverCdrFromTicket($see, $sum, $summary, $res, $codeError, $messageError);
+
+                    if ($recovery && $recovery['recovered']) {
+                        $codeError = $recovery['code'];
+                        $messageError = $recovery['message'];
+                        $notes = $recovery['notes'];
+                        $status = $recovery['status'];
+                        $isAlreadySent = false;
+
+                        if ($status === 'Aceptado') {
+                            foreach ($documents as $document) {
+                                SaleDocument::where('id', $document['id'])
+                                    ->update([
+                                        'invoice_status' => 'Aceptada',
+                                        'invoice_response_code' => 0,
+                                        'invoice_response_description' => 'Enviado en resumen '.$summary->summary_name.' Número ticket: '.$recovery['ticket'],
+                                    ]);
+                            }
+                        }
+                    } else {
+                        $isAlreadySent = true;
+                        $status = 'fue_enviado';
+                        if ($recovery) {
+                            $messageError = $recovery['message'];
+                        }
+                    }
                 }
                 // Otros errores - detectar conexión, "en proceso" o rechazo real
                 else {
