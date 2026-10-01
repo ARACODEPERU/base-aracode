@@ -222,7 +222,7 @@
             <div class="panel p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h3 class="text-base font-semibold text-gray-800 dark:text-white">Destinatarios</h3>
-                    <button type="button" class="btn btn-primary btn-sm" @click="openCreate">
+                    <button type="button" class="btn btn-primary" @click="openCreate">
                         <font-awesome-icon :icon="faPlus" class="mr-1" /> Agregar destinatario
                     </button>
                 </div>
@@ -245,10 +245,10 @@
                         </div>
                     </div>
                     <div class="mt-3 flex gap-2">
-                        <button type="button" class="btn btn-primary btn-sm" :disabled="savingRecipient" @click="saveRecipient">
+                        <button type="button" class="btn btn-primary" :disabled="savingRecipient" @click="saveRecipient">
                             {{ form.id ? 'Actualizar' : 'Agregar' }}
                         </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @click="cancelForm">
+                        <button type="button" class="btn btn-outline-secondary" @click="cancelForm">
                             <font-awesome-icon :icon="faXmark" class="mr-1" /> Cancelar
                         </button>
                     </div>
@@ -274,15 +274,21 @@
                                 <td class="font-medium text-gray-800 dark:text-gray-100">{{ recipient.name || '—' }}</td>
                                 <td class="font-mono text-sm text-gray-600 dark:text-gray-300">{{ recipient.chat_id }}</td>
                                 <td class="text-center">
-                                    <button type="button" class="badge" :class="recipient.is_active ? 'bg-success/10 text-success' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-300'" :disabled="togglingId === recipient.id" @click="toggleActive(recipient)">
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium"
+                                        :class="recipient.is_active ? 'bg-success/10 text-success' : 'bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-300'"
+                                        :disabled="togglingId === recipient.id"
+                                        @click="toggleActive(recipient)"
+                                    >
                                         {{ recipient.is_active ? 'Activo' : 'Inactivo' }}
                                     </button>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-primary mr-1" @click="openEdit(recipient)">
+                                    <button type="button" class="mr-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-primary/40 text-primary hover:bg-primary/10" @click="openEdit(recipient)">
                                         <font-awesome-icon :icon="faPencil" />
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" @click="removeRecipient(recipient)">
+                                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-danger/40 text-danger hover:bg-danger/10" @click="removeRecipient(recipient)">
                                         <font-awesome-icon :icon="faTrash" />
                                     </button>
                                 </td>

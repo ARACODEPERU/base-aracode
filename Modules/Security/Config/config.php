@@ -60,7 +60,6 @@ return [
     | 'message_limit'  recorte del mensaje/traza (límite de Telegram: 4096).
     | 'cache_minutes'  minutos que se cachean ajustes y destinatarios para no
     |                  consultar la base en cada línea de log.
-    | 'timeout'        segundos de espera de la llamada a Telegram.
     |
     */
 
@@ -83,6 +82,5 @@ return [
         'trace_lines' => (int) env('SECURITY_ALERT_TRACE_LINES', 0),
         'message_limit' => (int) env('SECURITY_ALERT_MESSAGE_LIMIT', 3000),
         'cache_minutes' => (int) env('SECURITY_ALERT_CACHE_MINUTES', 5),
-        'timeout' => (int) env('SECURITY_ALERT_TIMEOUT', 15),
     ],
 ];
