@@ -48,6 +48,7 @@ class CommercialNegotiation extends Model
         'created_by',
         'verified_by',
         'verified_at',
+        'document_emission_date',
     ];
 
     protected $casts = [
@@ -55,6 +56,7 @@ class CommercialNegotiation extends Model
         'client_data' => 'array',
         'mercado_payment_data' => 'array',
         'verified_at' => 'datetime',
+        'document_emission_date' => 'date',
         'email_sent_at' => 'datetime',
         'process_progress' => 'array',
         'link_expires_at' => 'datetime',

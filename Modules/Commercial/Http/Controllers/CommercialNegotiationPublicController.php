@@ -60,6 +60,7 @@ class CommercialNegotiationPublicController extends Controller
                     'id' => $type->id,
                     'description' => $type->description,
                     'sunat_code' => $type->sunat_code,
+                    'number_characters' => $type->number_characters,
                     'requires_foreign_location' => $type->requiresForeignLocation(),
                 ])
                 ->values(),
@@ -247,6 +248,9 @@ class CommercialNegotiationPublicController extends Controller
                     'payment_declared' => $this->paymentDeclared($negotiation, $data['payment_option'] ?? null),
                 ]),
                 'voucher_path' => $voucherPath ?: $negotiation->voucher_path,
+                // La fecha de emision del comprobante por defecto es la fecha en que el
+                // cliente registro sus datos y su evidencia (el admin puede ajustarla luego).
+                'document_emission_date' => now()->toDateString(),
                 'rejected_reason' => null,
                 'verified_by' => null,
                 'verified_at' => null,

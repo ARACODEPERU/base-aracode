@@ -27,6 +27,7 @@ trait BuildsCommercialNegotiationSchema
         'Modules/Commercial/Database/Migrations/2026_08_11_100000_create_commercial_negotiation_invoices_table.php',
         'Modules/Commercial/Database/Migrations/2026_08_11_120000_add_sale_columns_to_commercial_negotiations_table.php',
         'Modules/Commercial/Database/Migrations/2026_08_19_000000_create_commercial_negotiation_company_billetera_table.php',
+        'Modules/Commercial/Database/Migrations/2026_10_02_000000_add_document_emission_date_to_commercial_negotiations_table.php',
     ];
 
     private function createCommercialSchema(): void

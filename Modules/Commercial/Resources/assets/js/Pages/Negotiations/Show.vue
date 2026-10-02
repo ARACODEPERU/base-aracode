@@ -100,6 +100,61 @@ const estadoClase = computed(() => {
 
 const canVerify = computed(() => props.negotiation.status === "confirmada");
 
+// Fecha de emision del comprobante: por defecto la fecha en que el cliente registro sus
+// datos; el administrador puede ajustarla antes de aprobar (por ejemplo si el pago fue el
+// dia anterior). Se guarda al cambiarla y el proceso de aprobacion la usa para la venta y
+// el comprobante.
+const emissionDate = ref(
+    props.negotiation.document_emission_date
+        ? String(props.negotiation.document_emission_date).slice(0, 10)
+        : ""
+);
+const emissionSaving = ref(false);
+const emissionLocked = computed(() => Boolean(props.negotiation.sale_document_id));
+
+const saveEmissionDate = () => {
+    if (emissionLocked.value || !emissionDate.value) return;
+
+    emissionSaving.value = true;
+
+    axios.post(route("comm_negotiations_process_emission_date", props.negotiation.id), {
+        emission_date: emissionDate.value,
+    }).then((res) => {
+        if (!res.data?.success) {
+            Swal2.fire({
+                title: "No se pudo guardar",
+                text: res.data?.message || "Error al guardar la fecha de emision.",
+                icon: "error",
+                padding: "2em",
+                customClass: "sweet-alerts",
+            });
+            return;
+        }
+
+        Swal2.fire({
+            toast: true,
+            position: "top-end",
+            title: res.data.message || "Fecha actualizada",
+            icon: "success",
+            timer: 2200,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            padding: "1em",
+            customClass: "sweet-alerts",
+        });
+    }).catch((error) => {
+        Swal2.fire({
+            title: "No se pudo guardar",
+            text: error.response?.data?.message || "Error de conexion",
+            icon: "error",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+    }).finally(() => {
+        emissionSaving.value = false;
+    });
+};
+
 const saleDocument = computed(() => props.negotiation.sale_document || null);
 
 const documentNumber = computed(() => {
@@ -517,6 +572,35 @@ const reactivate = () => {
                         <p class="text-sm text-amber-700 dark:text-amber-300">
                             Revisa el voucher y los datos del cliente para aprobar o rechazar.
                         </p>
+
+                        <div class="mt-3">
+                            <label for="emission_date" class="block text-xs font-semibold uppercase text-amber-800 dark:text-amber-200">
+                                Fecha de emision del comprobante
+                            </label>
+                            <div class="mt-1 flex flex-wrap items-center gap-2">
+                                <input
+                                    id="emission_date"
+                                    v-model="emissionDate"
+                                    type="date"
+                                    class="form-input w-auto"
+                                    :disabled="emissionLocked || emissionSaving"
+                                    @change="saveEmissionDate"
+                                />
+                                <button
+                                    v-if="!emissionLocked"
+                                    type="button"
+                                    class="btn btn-outline-primary btn-sm"
+                                    :disabled="emissionSaving"
+                                    @click="saveEmissionDate"
+                                >
+                                    <IconLoader v-if="emissionSaving" class="mr-2 h-4 w-4 animate-spin" />
+                                    Guardar fecha
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                                Por defecto, la fecha en que el cliente registro sus datos. Ajustala si el pago fue otro dia.
+                            </p>
+                        </div>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button type="button" class="btn btn-success" v-can="'comm_negociaciones_verificar'" :disabled="processing" @click="approve">
