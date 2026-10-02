@@ -32,6 +32,16 @@ const canCancelNegotiation = computed(
     () => isNegotiationManager.value || props.negotiation.created_by === page.props.auth?.user?.id
 );
 
+// Estados posteriores a la confirmacion del alumno: ahi ya pueden existir la persona, su
+// cuenta de usuario, el alumno, la venta y el comprobante, asi que el borrado es sensible
+// y pide la contrasena de quien lo ejecuta. Una negociacion confirmada ademas solo la puede
+// borrar un administrador.
+const protectedStatuses = ["confirmada", "aprobada", "completada"];
+
+const requiresPassword = computed(() => protectedStatuses.includes(props.negotiation.status));
+
+const deleteBlocked = computed(() => props.negotiation.status === "confirmada" && !isNegotiationManager.value);
+
 const statusByValue = (value) => props.statuses.find((item) => item.value === value);
 
 const paymentMethodLabel = (value) => props.paymentMethods.find((item) => item.value === value)?.label || value;
@@ -353,6 +363,68 @@ const cancel = () => {
         });
 
         refresh();
+    });
+};
+
+const destroy = () => {
+    const needsPassword = requiresPassword.value;
+    const preserved = documentNumber.value
+        ? `Se conservan el cliente, su cuenta de usuario, la venta y el comprobante ${documentNumber.value}, ademas de los registros del proceso.`
+        : "Se conservan el cliente, su cuenta de usuario, la venta, el comprobante y los registros del proceso.";
+
+    Swal2.fire({
+        title: "Eliminar negociacion?",
+        text: `Se eliminara permanentemente la negociacion ${props.negotiation.title}. ${preserved}${needsPassword ? " Ingresa tu contrasena para confirmar." : ""}`,
+        icon: "warning",
+        input: needsPassword ? "password" : undefined,
+        inputLabel: needsPassword ? "Contrasena del usuario que elimina" : undefined,
+        inputPlaceholder: needsPassword ? "Contrasena" : undefined,
+        inputAttributes: needsPassword ? { autocomplete: "current-password" } : undefined,
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Eliminar",
+        cancelButtonText: "Cancelar",
+        showLoaderOnConfirm: true,
+        padding: "2em",
+        customClass: "sweet-alerts",
+        preConfirm: (password) => {
+            if (needsPassword && !password) {
+                Swal2.showValidationMessage("Ingresa tu contrasena para confirmar la eliminacion.");
+                return false;
+            }
+
+            return axios.delete(route("comm_negotiations_destroy", props.negotiation.id), {
+                data: needsPassword ? { password } : {},
+            }).then((res) => {
+                if (res.data && !res.data.success) {
+                    Swal2.showValidationMessage(res.data.message || "Error al eliminar");
+                    return false;
+                }
+
+                return res.data;
+            }).catch((error) => {
+                const message = error.response?.data?.errors?.password?.[0]
+                    || error.response?.data?.message
+                    || "Error de conexion";
+
+                Swal2.showValidationMessage(message);
+                return false;
+            });
+        },
+        allowOutsideClick: () => !Swal2.isLoading(),
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        Swal2.fire({
+            title: "Negociacion eliminada",
+            text: result.value?.message || "Se elimino correctamente.",
+            icon: "success",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+
+        router.visit(route("comm_negotiations"));
     });
 };
 
@@ -741,6 +813,19 @@ const reactivate = () => {
                     >
                         <FontAwesomeIcon :icon="faTrashAlt" class="mr-2 h-4 w-4" />
                         Cancelar negociacion
+                    </button>
+
+                    <button
+                        v-if="canCancelNegotiation"
+                        type="button"
+                        v-can="'comm_negociaciones_eliminar'"
+                        class="btn btn-outline-danger btn-sm mt-3 w-full"
+                        :disabled="deleteBlocked"
+                        :title="deleteBlocked ? 'Solo un administrador puede eliminar: el alumno confirmo sus datos' : 'Eliminar la negociacion y conservar sus registros'"
+                        @click="destroy"
+                    >
+                        <FontAwesomeIcon :icon="faTrashAlt" class="mr-2 h-4 w-4" />
+                        Eliminar negociacion
                     </button>
                 </div>
             </div>

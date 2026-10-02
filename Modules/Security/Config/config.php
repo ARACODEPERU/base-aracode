@@ -43,4 +43,44 @@ return [
             'super_editor',
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alertas de error por Telegram
+    |--------------------------------------------------------------------------
+    |
+    | Cuando un error se registra en los logs (nivel mínimo configurable en la
+    | pestaña Alertas), se envía un aviso por la integración Telegram_bot a los
+    | chat_id activos. Aquí viven los valores de fábrica que la pantalla no
+    | expone.
+    |
+    | 'template'       plantilla del mensaje; las líneas cuya variable llegue
+    |                  vacía no se envían.
+    | 'trace_lines'    líneas de la traza que se incluyen (0 para omitirla).
+    | 'message_limit'  recorte del mensaje/traza (límite de Telegram: 4096).
+    | 'cache_minutes'  minutos que se cachean ajustes y destinatarios para no
+    |                  consultar la base en cada línea de log.
+    |
+    */
+
+    'alerts' => [
+        'template' => env('SECURITY_ALERT_TEMPLATE', <<<'TXT'
+        🚨 <b>Alerta de error</b>
+
+        <b>Nivel:</b> {nivel}
+        <b>Mensaje:</b> {mensaje}
+
+        <b>Origen:</b> {clase}
+        <b>Archivo:</b> {archivo}:{linea}
+
+        <b>Entorno:</b> {entorno}
+        <b>Ruta:</b> {metodo} {ruta}
+        <b>Usuario:</b> {usuario}
+        <b>IP:</b> {ip}
+        <b>Fecha:</b> {fecha}
+        TXT),
+        'trace_lines' => (int) env('SECURITY_ALERT_TRACE_LINES', 0),
+        'message_limit' => (int) env('SECURITY_ALERT_MESSAGE_LIMIT', 3000),
+        'cache_minutes' => (int) env('SECURITY_ALERT_CACHE_MINUTES', 5),
+    ],
 ];

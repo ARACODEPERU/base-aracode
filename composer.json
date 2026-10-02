@@ -27,6 +27,7 @@
         "spatie/image": "^3.9",
         "spatie/laravel-permission": "^6.0",
         "tightenco/ziggy": "^1.0",
+        "vonage/client": "^4.3",
         "yajra/laravel-datatables-oracle": "^12.0"
     },
     "require-dev": {

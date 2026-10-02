@@ -204,7 +204,7 @@ class SaleSummaryController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => ['required', 'in:Enviado,Rechazado,fue_enviado,sunat_disponible,registrado'],
+            'status' => ['required', 'in:Enviado,Aceptado,Rechazado,fue_enviado,sunat_disponible,registrado'],
         ]);
 
         try {

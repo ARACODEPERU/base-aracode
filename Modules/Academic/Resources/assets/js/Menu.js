@@ -19,7 +19,9 @@ import {
     faSitemap,
     faFileSignature,
     faChalkboardUser,
-    faLayerGroup
+    faLayerGroup,
+    faBell
+
 } from "@fortawesome/free-solid-svg-icons";
 
 /**
@@ -128,6 +130,13 @@ const capacitacionGroup = {
             text: "Categorías/Tipo/Sector",
             icom: faTags,
             permissions: "aca_category_sector_type_modality",
+        },
+        {
+            route: route("aca_notifications"),
+            status: false,
+            text: "Notificaciones",
+            icom: faBell,
+            permissions: "aca_send_notifications",
         },
         {
             route: route("aca_certificate_list"),

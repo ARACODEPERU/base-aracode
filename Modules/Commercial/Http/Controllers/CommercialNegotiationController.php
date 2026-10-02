@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\IdentityDocumentType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +22,16 @@ use Modules\Commercial\Entities\CommercialNegotiation;
 
 class CommercialNegotiationController extends Controller
 {
+    /**
+     * Estados posteriores a la confirmacion del alumno.
+     *
+     * Desde ahi ya pueden existir registros del proceso (persona, cuenta de usuario,
+     * alumno, venta y comprobante), por eso el borrado es sensible: exige la
+     * contrasena de quien lo ejecuta y solo un administrador puede forzarlo cuando
+     * la negociacion esta 'confirmada'.
+     */
+    private const PROTECTED_STATUSES = ['confirmada', 'aprobada', 'completada'];
+
     public function index()
     {
         $this->expireOverdueNegotiations();
@@ -195,7 +207,19 @@ class CommercialNegotiationController extends Controller
         }
     }
 
-    public function destroy($id)
+    /**
+     * Elimina la negociacion y solo sus datos propios.
+     *
+     * Se borran los items, los datos de facturacion capturados en el formulario publico
+     * y las billeteras seleccionadas (el pivote no tiene clave foranea, asi que sin el
+     * detach quedarian filas huerfanas). NO se toca nada mas: el cliente (persona), su
+     * cuenta de usuario, el alumno, las matriculas, las suscripciones, las cuotas, la
+     * venta y el comprobante ya emitido se conservan intactos.
+     *
+     * En los estados protegidos el borrado es sensible: exige la contrasena del usuario
+     * que elimina y solo el administrador puede forzar el de una negociacion confirmada.
+     */
+    public function destroy(Request $request, $id)
     {
         $negotiation = CommercialNegotiation::findOrFail($id);
 
@@ -203,26 +227,63 @@ class CommercialNegotiationController extends Controller
             return $this->forbiddenManageResponse();
         }
 
-        if ($negotiation->status === 'confirmada') {
+        $isProtected = in_array($negotiation->status, self::PROTECTED_STATUSES, true);
+
+        if ($negotiation->status === 'confirmada' && ! $this->isAdmin()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No se puede eliminar una negociacion que el alumno ya confirmo.',
+                'message' => 'Solo un administrador puede eliminar una negociacion que el alumno ya confirmo.',
             ], 422);
+        }
+
+        if ($isProtected && ($passwordError = $this->passwordError($request, $negotiation))) {
+            return $passwordError;
         }
 
         try {
             DB::beginTransaction();
 
-            if ($negotiation->voucher_path) {
+            // El pivote no tiene clave foranea: hay que desvincularlo a mano.
+            $negotiation->companyBilleteras()->detach();
+
+            // Hijos directos de la negociacion. Se borran de forma explicita para no
+            // depender de las cascadas de MySQL (que sqlite de las pruebas no aplica).
+            $negotiation->items()->delete();
+            $negotiation->invoice()->delete();
+
+            // En el borrado sensible el voucher se conserva: es la evidencia de pago del
+            // cliente y la venta con su comprobante siguen existiendo.
+            if (! $isProtected && $negotiation->voucher_path) {
                 Storage::disk('public')->delete($negotiation->voucher_path);
             }
+
+            $snapshot = [
+                'negotiation_id' => $negotiation->id,
+                'title' => $negotiation->title,
+                'status' => $negotiation->status,
+                'client_id' => $negotiation->client_id,
+                'sale_id' => $negotiation->sale_id,
+                'sale_document_id' => $negotiation->sale_document_id,
+                'deleted_by' => auth()->id(),
+            ];
 
             $negotiation->delete();
             DB::commit();
 
+            Log::info('Negociacion eliminada; sus registros asociados se conservaron.', $snapshot + [
+                'source' => 'CommercialNegotiationController::destroy',
+            ]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Negociacion eliminada correctamente',
+                'message' => $isProtected
+                    ? 'Negociacion eliminada. Se conservaron el cliente, la venta, el comprobante y los registros del proceso.'
+                    : 'Negociacion eliminada correctamente',
+                'preserved' => [
+                    'client_id' => $snapshot['client_id'],
+                    'sale_id' => $snapshot['sale_id'],
+                    'sale_document_id' => $snapshot['sale_document_id'],
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -232,6 +293,45 @@ class CommercialNegotiationController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    /**
+     * Valida la contrasena del usuario que ejecuta el borrado sensible.
+     * Devuelve la respuesta 422 cuando falta o no coincide, y null cuando es correcta.
+     */
+    private function passwordError(Request $request, CommercialNegotiation $negotiation)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => ['required', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Debes ingresar tu contrasena para eliminar esta negociacion.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = auth()->user();
+
+        if (! $user || ! Hash::check((string) $request->input('password'), $user->getAuthPassword())) {
+            // Queda constancia del intento fallido para poder auditar el borrado sensible.
+            Log::warning('Intento de eliminar una negociacion con contrasena incorrecta.', [
+                'negotiation_id' => $negotiation->id,
+                'status' => $negotiation->status,
+                'user_id' => $user?->id,
+                'source' => 'CommercialNegotiationController::destroy',
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'La contrasena no es correcta.',
+                'errors' => ['password' => ['La contrasena no es correcta.']],
+            ], 422);
+        }
+
+        return null;
     }
 
     public function show($id)
@@ -350,6 +450,17 @@ class CommercialNegotiationController extends Controller
     }
 
     /**
+     * Roles administradores: gestionan cualquier negociacion, incluso el borrado
+     * forzado de las que ya pasaron por la confirmacion del alumno.
+     */
+    private function isAdmin(): bool
+    {
+        $user = auth()->user();
+
+        return $user ? $user->hasAnyRole(['Administrador', 'admin']) : false;
+    }
+
+    /**
      * Los roles administradores gestionan cualquier negociacion; el resto (por ejemplo Ventas)
      * solo las que creo. Se usa en show, edit, update, sendQuote, destroy y cancel.
      */
@@ -361,7 +472,7 @@ class CommercialNegotiationController extends Controller
             return false;
         }
 
-        if ($user->hasAnyRole(['Administrador', 'admin'])) {
+        if ($this->isAdmin()) {
             return true;
         }
 

@@ -38,6 +38,46 @@ class AcademicServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->register(RouteServiceProvider::class);
+
+        $this->registerTelegramRegistrantResolver();
+        $this->registerTelegramAccountResolver();
+    }
+
+    /**
+     * Vincula el padron academico al registro del bot de Telegram.
+     *
+     * Integrationhub no conoce alumnos: define el contrato y aqui se le dice
+     * quien responde por el documento que alguien escribe en el chat del bot.
+     * El enlace es condicional para que el modulo siga funcionando sin
+     * Integrationhub instalado.
+     */
+    protected function registerTelegramRegistrantResolver()
+    {
+        $contract = \Modules\Integrationhub\Contracts\TelegramRegistrantResolver::class;
+
+        if (! interface_exists($contract)) {
+            return;
+        }
+
+        $this->app->singleton($contract, \Modules\Academic\Services\TelegramStudentDirectory::class);
+    }
+
+    /**
+     * Vincula el padron academico a la consulta de cursos del bot de Telegram.
+     *
+     * Es el mismo padron del registro, pero para la consulta de cursos,
+     * certificados y suscripcion con correo y documento. Condicional, para que el
+     * modulo siga funcionando sin Integrationhub instalado.
+     */
+    protected function registerTelegramAccountResolver()
+    {
+        $contract = \Modules\Integrationhub\Contracts\TelegramAccountResolver::class;
+
+        if (! interface_exists($contract)) {
+            return;
+        }
+
+        $this->app->singleton($contract, \Modules\Academic\Services\TelegramStudentAccount::class);
     }
 
     /**

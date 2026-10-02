@@ -33,6 +33,7 @@ class SecurityDatabaseSeeder extends Seeder
         $permissionNames = [
             'conf_dashboard',
             'conf_historial_actividades',
+            'conf_alertas',
             'configuracion',
             'empresa',
             'modulos',
