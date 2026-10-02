@@ -16,6 +16,7 @@ import { faCheckCircle, faFileImage, faMagnifyingGlass, faUpload, faXmark, faXma
 import SummaryModal from "./Partials/SummaryModal.vue";
 import { useEmailAccountCheck } from "./composables/useEmailAccountCheck.js";
 import { useDniReniecCheck } from "./composables/useDniReniecCheck.js";
+import { useRucSunatCheck } from "./composables/useRucSunatCheck.js";
 
 const props = defineProps({
     negotiation: { type: Object, default: () => ({}) },
@@ -92,6 +93,10 @@ const boletaDniNotice = ref("");
 
 const isRuc = computed(() => String(form.document_type_id) === "6");
 const isDni = computed(() => String(form.document_type_id) === "1");
+// Los nombres/apellidos (o razon social) quedan bloqueados hasta validar la identidad
+// con RENIEC (L.E/DNI) o SUNAT (RUC); despues se habilitan para editar.
+const clientIdentityValidated = computed(() => (isRuc.value ? rucClientValidated.value : dniValidated.value));
+const namesLocked = computed(() => (isDni.value || isRuc.value) && !clientIdentityValidated.value);
 const isBoleta = computed(() => form.invoice_type === "boleta");
 const isFactura = computed(() => form.invoice_type === "factura");
 const rucLengthOk = computed(() => Boolean(form.ruc) && String(form.ruc).length === 11);
@@ -246,6 +251,9 @@ const loadVerifiedPerson = (person) => {
     }
 
     markPersonVerified();
+    // La ficha cargada viene de una fuente confiable (busqueda interna o cuenta
+    // existente): con RUC no hace falta volver a consultar SUNAT para desbloquear.
+    markClientVerified();
 };
 
 // Verificaciones de identidad del cliente: cada una vive en su propio composable.
@@ -263,6 +271,21 @@ const {
     token: props.negotiation.token,
     isDni,
     normalizeNumber: onlyNumbers,
+    // La longitud del numero la define el catalogo (8 en L.E/DNI) para autodisparar la consulta.
+    numberLength: () => selectedDocumentType.value?.number_characters,
+});
+
+const {
+    rucClientLoading,
+    rucClientValidated,
+    rucClientNotice,
+    validateClientRuc,
+    onRucClientInput,
+    resetClientRucCheck,
+    markClientVerified,
+} = useRucSunatCheck({
+    form,
+    token: props.negotiation.token,
 });
 
 const {
@@ -407,6 +430,7 @@ watch(() => form.document_type_id, (current, previous) => {
     if (String(current) === String(previous)) return;
 
     resetDniCheck();
+    resetClientRucCheck();
 
     if (isForeignLocation.value) {
         form.ubigeo = null;
@@ -482,6 +506,7 @@ const summaryModal = ref(null);
 const submit = () => {
     if (!validateRucBeforeSubmit()) return;
     if (!validateDniBeforeSubmit()) return;
+    if (!validateClientRucBeforeSubmit()) return;
     if (!validateBoletaTerceroBeforeSubmit()) return;
 
     // Enviar silencia el aviso del correo (el resumen toma el foco; con el boton pulsado
@@ -520,7 +545,7 @@ const validateBoletaDni = () => {
         }
 
         const person = res.data.person || {};
-        form.boleta_nombre = person.full_name || [person.father_lastname, person.mother_lastname, person.names].filter(Boolean).join(" ") || form.boleta_nombre;
+        form.boleta_nombre = person.full_name || [person.names, person.father_lastname, person.mother_lastname].filter(Boolean).join(" ") || form.boleta_nombre;
         boletaDniValidated.value = true;
         boletaDniNotice.value = "";
     }).catch(() => {
@@ -542,12 +567,15 @@ const toggleBoletaTercero = (checked) => {
 
     if (checked) {
         // Precarga con los datos del cliente, editables (o reemplazables por otro DNI).
+        // El nombre completo se arma concatenando nombres + apellido paterno + apellido
+        // materno de los datos ya validados del cliente.
         form.boleta_documento_tipo = "1";
         form.boleta_numero = form.number;
-        form.boleta_nombre = [form.father_lastname, form.mother_lastname, form.names].filter(Boolean).join(" ")
+        form.boleta_nombre = [form.names, form.father_lastname, form.mother_lastname].filter(Boolean).join(" ")
             || form.full_name
             || null;
-        boletaDniValidated.value = dniValidated.value && String(form.number) === String(form.boleta_numero);
+        // Si el cliente ya validó su identidad y es la misma persona, el nombre ya viene verificado.
+        boletaDniValidated.value = clientIdentityValidated.value && String(form.number) === String(form.boleta_numero);
     } else {
         form.boleta_documento_tipo = "1";
         form.boleta_numero = null;
@@ -598,6 +626,21 @@ const validateDniBeforeSubmit = () => {
         Swal2.fire({
             title: "DNI no validado",
             text: dniNotice.value || "Debes validar tu DNI con la API para continuar (el boton RENIEC junto al numero de documento).",
+            icon: "warning",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+        return false;
+    }
+    return true;
+};
+
+// El RUC del cliente (cuando ese es su tipo de documento) debe estar validado por SUNAT.
+const validateClientRucBeforeSubmit = () => {
+    if (isRuc.value && !rucClientValidated.value) {
+        Swal2.fire({
+            title: "RUC no validado",
+            text: rucClientNotice.value || "Debes validar tu RUC con la API para continuar (el boton Buscar en SUNAT junto al numero de documento).",
             icon: "warning",
             padding: "2em",
             customClass: "sweet-alerts",
@@ -908,21 +951,26 @@ watch(brickFormVisible, async (visible) => {
 
                             <div class="col-span-6 sm:col-span-2">
                                 <InputLabel for="number" value="Numero de documento *" />
-                                <div v-if="isDni" class="flex">
-                                    <TextInput id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" class="ltr:rounded-r-none rtl:rounded-l-none" @input="onNumberInput" />
-                                    <button type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': dniLoading }" :disabled="dniLoading" @click="validateDni">
+                                <div v-if="isDni || isRuc" class="flex">
+                                    <TextInput id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" class="ltr:rounded-r-none rtl:rounded-l-none" @input="isRuc ? onRucClientInput() : onNumberInput()" />
+                                    <button v-if="isDni" type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': dniLoading }" :disabled="dniLoading" @click="validateDni">
                                         <IconLoader v-if="dniLoading" class="w-4 h-4 mr-2 animate-spin" />
                                         <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
                                         RENIEC
+                                    </button>
+                                    <button v-else type="button" class="btn btn-secondary ltr:rounded-l-none rtl:rounded-r-none" :class="{ 'opacity-50': rucClientLoading }" :disabled="rucClientLoading" @click="validateClientRuc">
+                                        <IconLoader v-if="rucClientLoading" class="w-4 h-4 mr-2 animate-spin" />
+                                        <FontAwesomeIcon v-else :icon="faMagnifyingGlass" class="mr-2 h-4 w-4" />
+                                        Buscar en SUNAT
                                     </button>
                                 </div>
                                 <TextInput v-else id="number" v-model="form.number" type="text" inputmode="numeric" pattern="[0-9]*" @input="onlyNumbers" />
                                 <InputError :message="form.errors.number" class="mt-1" />
                                 <p v-if="isDni && dniHint" class="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
                                     {{ dniHint }}
-                                    <button type="button" class="underline" @click="validateDni">Rellenar con RENIEC</button>
                                 </p>
                                 <p v-if="isDni && dniNotice" class="mt-1 text-xs text-danger">{{ dniNotice }}</p>
+                                <p v-if="isRuc && rucClientNotice" class="mt-1 text-xs text-danger">{{ rucClientNotice }}</p>
                             </div>
 
                             <div class="col-span-6 sm:col-span-2">
@@ -938,26 +986,30 @@ watch(brickFormVisible, async (visible) => {
                             <template v-if="isRuc">
                                 <div class="col-span-6">
                                     <InputLabel for="full_name" value="Razon social *" />
-                                    <TextInput id="full_name" v-model="form.full_name" type="text" />
+                                    <TextInput id="full_name" v-model="form.full_name" type="text" :disabled="namesLocked" />
+                                    <p v-if="namesLocked" class="mt-1 text-xs text-gray-500">Se completara al buscar tu RUC en SUNAT.</p>
                                     <InputError :message="form.errors.full_name" class="mt-1" />
                                 </div>
                             </template>
                             <template v-else>
                                 <div class="col-span-6 sm:col-span-2">
                                     <InputLabel for="names" value="Nombres *" />
-                                    <TextInput id="names" v-model="form.names" type="text" />
+                                    <TextInput id="names" v-model="form.names" type="text" :disabled="namesLocked" />
                                     <InputError :message="form.errors.names" class="mt-1" />
                                 </div>
                                 <div class="col-span-6 sm:col-span-2">
                                     <InputLabel for="father_lastname" value="Apellido paterno *" />
-                                    <TextInput id="father_lastname" v-model="form.father_lastname" type="text" />
+                                    <TextInput id="father_lastname" v-model="form.father_lastname" type="text" :disabled="namesLocked" />
                                     <InputError :message="form.errors.father_lastname" class="mt-1" />
                                 </div>
                                 <div class="col-span-6 sm:col-span-2">
                                     <InputLabel for="mother_lastname" value="Apellido materno *" />
-                                    <TextInput id="mother_lastname" v-model="form.mother_lastname" type="text" />
+                                    <TextInput id="mother_lastname" v-model="form.mother_lastname" type="text" :disabled="namesLocked" />
                                     <InputError :message="form.errors.mother_lastname" class="mt-1" />
                                 </div>
+                                <p v-if="namesLocked" class="col-span-6 -mt-2 text-xs text-gray-500">
+                                    Tus nombres y apellidos se completaran al validar tu DNI con RENIEC.
+                                </p>
                             </template>
 
                             <div class="col-span-6 sm:col-span-2">
@@ -1140,7 +1192,9 @@ watch(brickFormVisible, async (visible) => {
 
                                                 <div class="col-span-6 sm:col-span-3">
                                                     <InputLabel for="boleta_nombre" value="Nombre completo *" />
-                                                    <TextInput id="boleta_nombre" v-model="form.boleta_nombre" type="text" />
+                                                    <TextInput id="boleta_nombre" v-model="form.boleta_nombre" type="text" :disabled="!boletaDniValidated" />
+                                                    <p v-if="!boletaDniValidated" class="mt-1 text-xs text-gray-500">Se completara al buscar el DNI en RENIEC.</p>
+                                                    <p v-else class="mt-1 text-xs text-gray-500">La consulta autollena el nombre; puedes editarlo despues.</p>
                                                     <InputError :message="form.errors.boleta_nombre" class="mt-1" />
                                                 </div>
                                             </div>

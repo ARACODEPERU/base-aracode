@@ -185,6 +185,54 @@ class CommercialNegotiationProcessController extends Controller
     }
 
     /**
+     * Guarda la fecha de emision del comprobante elegida por el administrador antes de
+     * aprobar. Por defecto viene con la fecha en que el cliente registro sus datos; el
+     * administrador puede ajustarla, por ejemplo si el pago fue el dia anterior.
+     */
+    public function saveEmissionDate(Request $request, $id)
+    {
+        $negotiation = CommercialNegotiation::findOrFail($id);
+
+        if (! in_array($negotiation->status, ['confirmada', 'aprobada'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se puede ajustar la fecha de emision de una negociacion confirmada.',
+            ], 422);
+        }
+
+        if ($negotiation->sale_document_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El comprobante ya fue generado: la fecha de emision ya no puede cambiarse.',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'emission_date' => ['required', 'date'],
+        ]);
+
+        $negotiation->update([
+            'document_emission_date' => $data['emission_date'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Fecha de emision del comprobante actualizada.',
+            'document_emission_date' => $negotiation->document_emission_date?->format('Y-m-d'),
+        ]);
+    }
+
+    /**
+     * Fecha de emision del comprobante (y de la venta) para esta negociacion: la que el
+     * administrador dejo antes de aprobar o, si no se ajusto, la fecha en que el cliente
+     * registro sus datos. Como ultimo respaldo usa la fecha actual.
+     */
+    private function emissionDate(CommercialNegotiation $negotiation): string
+    {
+        return $negotiation->document_emission_date?->format('Y-m-d') ?? Carbon::now()->format('Y-m-d');
+    }
+
+    /**
      * Marca un paso del proceso como ejecutado en process_progress.
      */
     private function markStepDone(CommercialNegotiation $negotiation, string $key): void
@@ -509,7 +557,9 @@ class CommercialNegotiationProcessController extends Controller
                 }
 
                 $sale = Sale::create([
-                    'sale_date' => Carbon::now()->format('Y-m-d'),
+                    // La venta se registra con la fecha de emision del comprobante (fecha en
+                    // que el cliente registro sus datos, ajustable por el administrador).
+                    'sale_date' => $this->emissionDate($negotiation),
                     'user_id' => Auth::id(),
                     'client_id' => $person->id,
                     'local_id' => $localId,
@@ -612,7 +662,9 @@ class CommercialNegotiationProcessController extends Controller
 
                 if (! $isInstallments) {
                     $sale = Sale::create([
-                        'sale_date' => Carbon::now()->format('Y-m-d'),
+                        // La venta se registra con la fecha de emision del comprobante (fecha en
+                    // que el cliente registro sus datos, ajustable por el administrador).
+                    'sale_date' => $this->emissionDate($negotiation),
                         'user_id' => Auth::id(),
                         'client_id' => $person->id,
                         'local_id' => $localId,
@@ -723,6 +775,9 @@ class CommercialNegotiationProcessController extends Controller
                     // Moneda del comprobante: la elegida en la negociacion (PTM0004
                     // y el TC se validan dentro de generateBoleta).
                     'currency' => strtoupper((string) ($negotiation->currency ?? 'PEN')),
+                    // Fecha de emision del comprobante: la de registro del cliente o la que
+                    // el administrador ajusto antes de aprobar.
+                    'emission_date' => $this->emissionDate($negotiation),
                 ];
 
                 // La boleta se emite con los datos del tercero indicado por el cliente.

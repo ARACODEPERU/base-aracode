@@ -2,6 +2,8 @@
 import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
 import Navigation from "@/Components/vristo/layout/Navigation.vue";
 import IconLoader from "@/Components/vristo/icon/icon-loader.vue";
+import InputLabel from "@/Components/InputLabel.vue";
+import TextInput from "@/Components/TextInput.vue";
 import { Link, router } from "@inertiajs/vue3";
 import { computed, ref } from "vue";
 import Swal2 from "sweetalert2";
@@ -146,6 +148,58 @@ const allStepsDone = computed(() =>
     steps.value.filter((s) => !s.skipped).every((s) => s.status === "done" || s.status === "omitted"),
 );
 const finished = ref(allStepsDone.value);
+
+// Fecha de emision del comprobante: por defecto la fecha en que el cliente registro sus
+// datos; el administrador puede ajustarla antes de iniciar el proceso (por ejemplo si el
+// pago fue el dia anterior). Se usa para la venta y el comprobante.
+const emissionDate = ref(
+    props.negotiation.document_emission_date
+        ? String(props.negotiation.document_emission_date).slice(0, 10)
+        : ""
+);
+const emissionSaving = ref(false);
+const emissionLocked = computed(() => Boolean(props.negotiation.sale_document_id) || finished.value);
+
+// Persiste la fecha elegida. `notify` permite guardarla en silencio cuando el guardado
+// es parte del arranque del proceso y no una accion explicita del administrador.
+const saveEmissionDate = async (notify = true) => {
+    if (emissionLocked.value || !emissionDate.value) return;
+
+    emissionSaving.value = true;
+
+    try {
+        const res = await axios.post(
+            route("comm_negotiations_process_emission_date", props.negotiation.id),
+            { emission_date: emissionDate.value },
+            { timeout: 30000 },
+        );
+
+        if (!res.data?.success) {
+            Swal2.fire({
+                title: "No se pudo guardar",
+                text: res.data?.message || "Error al guardar la fecha de emision.",
+                icon: "error",
+                padding: "2em",
+                customClass: "sweet-alerts",
+            });
+            return;
+        }
+
+        if (notify) {
+            toast(res.data.message || "Fecha de emision actualizada");
+        }
+    } catch (error) {
+        Swal2.fire({
+            title: "No se pudo guardar",
+            text: error.response?.data?.message || "Error de conexion",
+            icon: "error",
+            padding: "2em",
+            customClass: "sweet-alerts",
+        });
+    } finally {
+        emissionSaving.value = false;
+    }
+};
 
 const visibleSteps = computed(() => steps.value.filter((step) => !step.skipped));
 
@@ -302,8 +356,13 @@ const skipStep = async (step) => {
     }
 };
 
-const run = () => {
+const run = async () => {
     if (processing.value || finished.value) return;
+
+    // La fecha de emision debe quedar guardada antes de procesar: es la que usaran la
+    // venta y el comprobante.
+    await saveEmissionDate(false);
+
     processing.value = true;
     runRemaining();
 };
@@ -341,6 +400,28 @@ const run = () => {
                     Volver al detalle
                 </Link>
             </div>
+        </div>
+
+        <div class="mt-5 panel">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h3 class="font-semibold dark:text-white">Fecha de emision del comprobante</h3>
+                    <p class="text-sm text-gray-500">
+                        Por defecto, la fecha en que el cliente registro sus datos. Ajustala antes de procesar si el pago fue otro dia.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <InputLabel for="emission_date" value="Fecha de emision" />
+                        <TextInput id="emission_date" v-model="emissionDate" type="date" class="w-auto" :disabled="emissionLocked || emissionSaving" />
+                    </div>
+                    <button v-if="!emissionLocked" type="button" class="btn btn-outline-primary" :disabled="emissionSaving" @click="saveEmissionDate()">
+                        <IconLoader v-if="emissionSaving" class="mr-2 h-4 w-4 animate-spin" />
+                        Guardar fecha
+                    </button>
+                </div>
+            </div>
+            <p v-if="emissionLocked" class="mt-2 text-xs text-gray-500">El comprobante ya fue generado: la fecha de emision no puede cambiarse.</p>
         </div>
 
         <div class="mt-5 panel">
