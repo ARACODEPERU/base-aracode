@@ -124,7 +124,8 @@
         const classes = {
             'pending': 'text-orange-500',
             'finished': 'text-gray-400',
-            'live': 'text-red-600 animate-pulse font-bold'
+            'live': 'text-red-600 animate-pulse font-bold',
+            'no_points': 'text-indigo-600 font-bold'
         };
         return classes[status] || 'text-gray-500';
     };
@@ -331,6 +332,11 @@
                 title: 'Partido Anulado',
                 text: 'Este partido fue cancelado. No se permiten registros de goles ni actas oficiales.',
                 icon: 'error'
+            },
+            'no_points': {
+                title: 'Jugado sin puntos (mutuo acuerdo)',
+                text: 'Este encuentro se disputo y ambos equipos acordaron no sumar puntos: la tabla lo cuenta como partido jugado, sin goles ni puntos. No requiere acta.',
+                icon: 'info'
             },
             'closed': {
                 title: 'Acta Oficial Cerrada',
@@ -923,6 +929,7 @@
                                 </button>
                                 <button
                                     v-can="'even_ediciones_partido_acta'"
+                                    v-if="match.status !== 'no_points'"
                                     v-tippy="{content: 'Generar Acta y Finalizar Partido', placement: 'bottom'}"
                                     @click="openModalMatchReport(match)"
                                     class="p-1 hover:bg-green-100 rounded-lg transition dark:hover:bg-[#011403]/30 no-export"
@@ -1119,6 +1126,18 @@
                             ]">
                             <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="currentColor" d="M431.2 476.5L163.5 208.8C141.1 240.2 128 278.6 128 320C128 426 214 512 320 512C361.5 512 399.9 498.9 431.2 476.5zM476.5 431.2C498.9 399.8 512 361.4 512 320C512 214 426 128 320 128C278.5 128 240.1 141.1 208.8 163.5L476.5 431.2zM64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320z"/></svg>
                             Cancelado
+                        </button>
+
+                        <button @click="formMatch.status = 'no_points'"
+                            type="button"
+                            :class="[
+                                'py-1.5 px-2.5 inline-flex items-center gap-x-1.5 text-sm rounded-lg transition-colors border',
+                                formMatch.status === 'no_points'
+                                    ? 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800'
+                                    : 'bg-gray-100 text-gray-800 border-transparent hover:text-cyan-700 dark:bg-neutral-700 dark:text-neutral-200'
+                            ]">
+                            <svg class="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="currentColor" d="M323.4 128C403.8 128 468.7 192.9 468.7 273.3C468.7 316.2 450.2 354.8 421 381.7L494.8 455.5C507.3 468 507.3 485.7 494.8 494.8C482.3 503.9 464.6 503.9 455.5 494.8L381.7 421C354.8 450.2 316.2 468.7 273.3 468.7C192.9 468.7 128 403.8 128 323.4C128 243 192.9 128 273.3 128L323.4 128Z"/></svg>
+                            Jugado sin puntos
                         </button>
                     </div>
                 </div>

@@ -93,6 +93,9 @@ class HandleInertiaRequests extends Middleware
             // Interruptor multi-moneda (PTM0004): el header oculta el botón
             // "Cambio de moneda" cuando el sistema opera solo en soles.
             'multiCurrencyEnabled' => fn () => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
+            // Contexto del colegio activo en el módulo escolar (PTM0005 =
+            // modo multi-colegio). El menú y las pantallas School lo usan.
+            'academicSchool' => fn () => app(\Modules\Academic\Services\SchoolContextService::class)->shareData(),
             // Estado del Modo Super Editor (activo, borrador pendiente, vencimiento).
             // El frontend no guarda este estado: lo recibe en cada respuesta, así
             // que sobrevive a los reloads que vuelven a montar las directivas.

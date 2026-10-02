@@ -80,8 +80,13 @@ class TournamentPublicDataService
         $groups = [];
 
         foreach ($media as $item) {
-            $dateKey = $item->media_date->format('Y-m-d');
+            // Omite registros cuyo archivo fisico fue eliminado fuera de la
+            // aplicacion: evita cuadros rotos en la landing publica.
+            if (! TournamentMedia::exists($item->file_path)) {
+                continue;
+            }
 
+            $dateKey = $item->media_date->format('Y-m-d');
             $groups[$dateKey] ??= [
                 'date' => $dateKey,
                 'label' => TournamentDateLabels::full($item->media_date),

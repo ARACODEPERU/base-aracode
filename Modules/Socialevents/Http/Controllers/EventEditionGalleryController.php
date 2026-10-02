@@ -141,7 +141,7 @@ class EventEditionGalleryController extends Controller
             ->where('edition_id', $editionId)
             ->firstOrFail();
 
-        if ($media->file_path) {
+        if (TournamentMedia::exists($media->file_path)) {
             Storage::disk('public')->delete($media->file_path);
         }
 
@@ -194,6 +194,7 @@ class EventEditionGalleryController extends Controller
                 'url' => TournamentMedia::url($item->file_path),
                 'file_name' => $item->file_name,
                 'mime_type' => $item->mime_type,
+                'file_missing' => ! TournamentMedia::exists($item->file_path),
                 'media_date' => $item->media_date->format('Y-m-d'),
                 'media_date_label' => TournamentDateLabels::full($item->media_date),
                 'match' => $item->match

@@ -44,6 +44,7 @@ class MatchAdminController extends Controller
             WHEN status = 'closed' THEN 4
             WHEN status = 'walk_over' THEN 5
             WHEN status = 'cancelled' THEN 6
+            WHEN status = 'no_points' THEN 7
             END")
             ->orderBy('match_date', 'asc')
             ->get();
@@ -62,7 +63,7 @@ class MatchAdminController extends Controller
     public function store(Request $request, int $editionId): JsonResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,live,finished,closed,walk_over,cancelled',
+            'status' => 'required|in:pending,live,finished,closed,walk_over,cancelled,no_points',
             'match_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
             'team_h_id' => 'nullable|integer',
@@ -107,7 +108,7 @@ class MatchAdminController extends Controller
         $match = EventEditionMatch::with(['equipolocal', 'equipovisitante'])->findOrFail($match);
 
         $validated = $request->validate([
-            'status' => 'sometimes|in:pending,live,finished,closed,walk_over,cancelled',
+            'status' => 'sometimes|in:pending,live,finished,closed,walk_over,cancelled,no_points',
             'match_date' => 'nullable|date',
             'location' => 'nullable|string|max:255',
             'team_h_id' => 'nullable|integer',

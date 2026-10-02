@@ -9,9 +9,12 @@ use Modules\Socialevents\Support\TournamentLandingCache;
 
 class PositionTableService
 {
-    public function updateTablePositions($editionId)
+    public function updateTablePositions(int $editionId)
     {
-        //dd($editionId);
+        if ($editionId <= 0) {
+            throw new \InvalidArgumentException('updateTablePositions requiere un edition_id valido, se recibio: '.$editionId);
+        }
+
         // 1. Obtener equipos ÚNICOS de esta edición para evitar duplicados en el array de memoria
         $editionTeams = EventEditionTeam::where('edition_id', $editionId)->get();
 
@@ -31,7 +34,8 @@ class PositionTableService
             ->whereNotNull('team_a_id')
             ->where(function ($query) {
                 $query->where('status','finished')
-                    ->orWhere('status','closed');
+                    ->orWhere('status','closed')
+                    ->orWhere('status','no_points');
             })
             ->get();
         //dd($matches);
@@ -49,6 +53,17 @@ class PositionTableService
 
             // Si ninguno esta inscrito, el partido no aplica.
             if (! $homePresent && ! $awayPresent) {
+                $count++;
+                continue;
+            }
+
+            // Partido "Jugado sin puntos" (mutuo acuerdo): cuenta como partido
+            // jugado para ambos equipos, pero no otorga goles, ni resultados
+            // (P/G/E), ni puntos. La tabla queda tal cual estaba antes del
+            // encuentro, conservando la fecha disputada.
+            if ($m->status === 'no_points') {
+                if ($homePresent) { $table[$hId]['played'] += 1; }
+                if ($awayPresent) { $table[$aId]['played'] += 1; }
                 $count++;
                 continue;
             }

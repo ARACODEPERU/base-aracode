@@ -1,0 +1,455 @@
+<script setup>
+import { useForm, Link } from '@inertiajs/vue3';
+import FormSection from '@/Components/FormSection.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
+import Keypad from '@/Components/Keypad.vue';
+import Swal2 from 'sweetalert2';
+import { ref, onMounted } from 'vue';
+import { Select, SelectOption } from 'ant-design-vue';
+import Multiselect from '@suadelabs/vue3-multiselect';
+import '@suadelabs/vue3-multiselect/dist/vue3-multiselect.css';
+
+const props = defineProps({
+    identityDocumentTypes: {
+        type: Object,
+        default: () => ({}),
+    },
+    ubigeo: {
+        type: Object,
+        default: () => ({})
+    },
+    teacher: {
+        type: Object,
+        default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
+    },
+    professions: {
+        type: Object,
+        default: () => ({})
+    },
+    occupations: {
+        type: Object,
+        default: () => ({})
+    }
+});
+
+const baseUrl = assetUrl;
+
+const getImage = (path) => {
+    return baseUrl + 'storage/'+ path;
+}
+
+const getFlagImage = (path) => {
+    return baseUrl + path;
+}
+
+const filteredCountries = ref([]);
+
+const form = useForm({
+    id: props.teacher.id,
+    teacher_id: props.teacher.teacher_id,
+    document_type_id: props.teacher.document_type_id,
+    number: props.teacher.number,
+    telephone: props.teacher.telephone,
+    email: props.teacher.email,
+    image: null,
+    image_preview: props.teacher.image ? getImage(props.teacher.image) : null,
+    address: props.teacher.address,
+    ubigeo: props.teacher.ubigeo,
+    birthdate: props.teacher.birthdate,
+    names: props.teacher.names,
+    father_lastname: props.teacher.father_lastname,
+    mother_lastname: props.teacher.mother_lastname,
+    ubigeo_description: props.teacher.ubigeo_description,
+    presentacion: props.teacher.presentacion,
+    country_id: props.teacher.country_id,
+    gender: props.teacher.gender,
+    profession_id: {
+        id: props.teacher.profession_id,
+        description: props.teacher.profession
+    },
+    occupation_id: {
+        id: props.teacher.occupation_id,
+        description: props.teacher.ocupacion
+    },
+    foreign_state: props.teacher.foreign_state ?? null,
+    foreign_city: props.teacher.foreign_city ?? null
+});
+
+const createPatient = () => {
+    form.post(route('aca_school_teachers_update'), {
+        forceFormData: true,
+        errorBag: 'createPatient',
+        preserveScroll: true,
+        onSuccess: () => {
+            Swal2.fire({
+                title: 'Enhorabuena',
+                text: 'Se Actualizó correctamente',
+                icon: 'success',
+                padding: '2em',
+                customClass: 'sweet-alerts',
+            });
+        },
+    });
+}
+
+const ubigeoSelected = ref({
+    district_id: null,
+    ubigeo_description: null
+});
+
+const selectCity = () => {
+    form.ubigeo_description = ubigeoSelected.value.ubigeo_description;
+    form.ubigeo = ubigeoSelected.value.district_id;
+}
+
+const imagePreviewRef = ref(null);
+const loadFile = (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        // If the user cancels the file selection, clear the fields and exit
+        form.image = null;
+        form.image_preview = null;
+        return;
+    }
+
+    // Assign the file object to the `image` field for form submission
+    form.image = file;
+
+    // Create a temporary URL for the preview and assign it
+    const fileUrl = URL.createObjectURL(file);
+    form.image_preview = fileUrl;
+
+    // Use the template ref to get the <img> element
+    const imageElement = imagePreviewRef.value;
+
+    if (imageElement) {
+        // This is a good practice to free up memory when the image has loaded
+        imageElement.onload = () => {
+            URL.revokeObjectURL(fileUrl);
+        };
+    }
+};
+
+onMounted(() => {
+    filteredCountries.value = props.countries;
+});
+
+const normalizeText = (text) => {
+    return (text || "")
+        .normalize("NFD")                // descompone letras + tildes (ej: "á" → "á")
+        .replace(/\p{Diacritic}/gu, "")  // elimina los diacríticos
+        .toLowerCase()
+        .trim();
+};
+
+const handleSearch = (input) => {
+    const term = normalizeText(input);
+
+    if (!term) {
+        filteredCountries.value = props.countries;
+        return;
+    }
+
+    filteredCountries.value = props.countries.filter(c =>
+        normalizeText(c.description).includes(term)
+    );
+};
+
+const countrySelected = ref(props.teacher.country_id);
+
+const handleChange = (val) => {
+    form.country_id = val;
+};
+</script>
+
+<template>
+    <FormSection @submitted="createPatient" class="">
+        <template #title>
+            Docente Detalles
+        </template>
+
+        <template #description>
+            Crear nuevo Docente, Los campos con * son obligatorios
+        </template>
+
+        <template #form>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="document_type_id" value="Tipo *" />
+                <select v-model="form.document_type_id" id="document_type_id" class="form-select">
+                    <option value="" selected>Seleccionar</option>
+                    <option v-for="(identityDocumentType) in identityDocumentTypes" :value="identityDocumentType.id">{{ identityDocumentType.description }}</option>
+                </select>
+                <InputError :message="form.errors.document_type_id" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="number" value="Número *" />
+                <div class="flex items-center">
+                    <div class="relative w-full mr-1">
+                        <input v-model="form.number" type="text" id="number" class="form-input">
+                    </div>
+                    <button @click="openSwal2Search" type="button" class="btn btn-primary px-2.5 py-2.5">
+                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <InputError :message="form.errors.number" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="birthdate" value="Fecha de nacimiento *" />
+                <TextInput
+                    id="birthdate"
+                    v-model="form.birthdate"
+                    type="date"
+                />
+                <InputError :message="form.errors.birthdate" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="names" value="Nombres *" />
+                <TextInput
+                    id="names"
+                    v-model="form.names"
+                    type="text"
+                />
+                <InputError :message="form.errors.names" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2 ">
+                <InputLabel for="father_lastname" value="Apellido Paterno *" />
+                <TextInput
+                    id="father_lastname"
+                    v-model="form.father_lastname"
+                    type="text"
+                />
+                <InputError :message="form.errors.father_lastname" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="mother_lastname" value="Apellido Materno *" />
+                <TextInput
+                    id="mother_lastname"
+                    v-model="form.mother_lastname"
+                    type="text"
+                />
+                <InputError :message="form.errors.mother_lastname" class="mt-2" />
+            </div>
+            <div class="col-span-6 lg:col-span-3">
+                <InputLabel for="country" value="País *" />
+                <Select
+                    style="width: 100%"
+                    placeholder="Seleccione un país"
+                    show-search
+                    :filter-option="false"
+                    @search="handleSearch"
+                    @change="handleChange"
+                    v-model:value="countrySelected"
+                    :allowClear="true"
+                >
+                    <template v-for="country in filteredCountries">
+                        <SelectOption :value="country.id" :label="country.description">
+                            <div class="flex items-center gap-4">
+                                <img :src="getFlagImage(country.image)" class="w-4 h-4" />
+                                <span>{{ country.description }}</span>
+                            </div>
+                        </SelectOption>
+                   </template>
+                </Select>
+            </div>
+            <div class="col-span-6 sm:col-span-3 ">
+                <InputLabel for="ubigeo" value="Ciudad *" />
+                <template v-if="form.country_id == 1">
+                    <multiselect
+                        id="ubigeo_id"
+                        :model-value="ubigeoSelected"
+                        v-model="ubigeoSelected"
+                        :options="ubigeo"
+                        class="custom-multiselect"
+                        :searchable="true"
+                        placeholder="Buscar"
+                        selected-label="seleccionado"
+                        select-label="Elegir"
+                        deselect-label="Quitar"
+                        label="ubigeo_description"
+                        track-by="district_id"
+                        @update:model-value="selectCity"
+                    ></multiselect>
+                    <InputError :message="form.errors.ubigeo" class="mt-2" />
+                </template>
+                <template v-else>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <InputLabel for="foreign_state" value="Depto./Estado *" />
+                            <TextInput
+                                id="foreign_state"
+                                v-model="form.foreign_state"
+                                type="text"
+                                placeholder="Ej: California"
+                            />
+                            <InputError :message="form.errors.foreign_state" class="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel for="foreign_city" value="Ciudad *" />
+                            <TextInput
+                                id="foreign_city"
+                                v-model="form.foreign_city"
+                                type="text"
+                                placeholder="Ej: Los Ángeles"
+                            />
+                            <InputError :message="form.errors.foreign_city" class="mt-1" />
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="address" value="Dirección *" />
+                <TextInput
+                    id="address"
+                    v-model="form.address"
+                    type="text"
+                    class="block w-full mt-1"
+
+                />
+                <InputError :message="form.errors.address" class="mt-2" />
+            </div>
+
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="telephone" value="Teléfono *" />
+                <TextInput
+                    id="telephone"
+                    v-model="form.telephone"
+                    type="text"
+                />
+                <InputError :message="form.errors.telephone" class="mt-2" />
+            </div>
+            <div class="col-span-6 sm:col-span-2">
+                <InputLabel for="email" value="Email *" />
+                <TextInput
+                    id="email"
+                    v-model="form.email"
+                    type="text"
+                    class="block w-full mt-1"
+
+                />
+                <InputError :message="form.errors.email" class="mt-2" />
+            </div>
+
+            <div class="lg:col-span-3">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <div v-if="form.image_preview" style="width: 80px;height: 80px;">
+                            <img id='preview_img' class="w-full h-full object-cover rounded-full" :src="form.image_preview" alt="Current profile photo" />
+                        </div>
+                        <span v-else class="group-has-[div]:hidden flex shrink-0 justify-center items-center size-20 border-2 border-dotted border-gray-300 text-gray-400 cursor-pointer rounded-full hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-600 dark:hover:bg-neutral-700/50">
+                            <svg class="shrink-0 size-7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="10" r="3"></circle>
+                                <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block">
+                            <span class="sr-only">Elige tu foto de perfil</span>
+                            <input
+                                @change="loadFile"
+                                type="file" class="block w-full text-sm text-gray-500
+                                file:me-4 file:py-2 file:px-4
+                                file:rounded-lg file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-600 file:text-white
+                                hover:file:bg-blue-700
+                                file:disabled:opacity-50 file:disabled:pointer-events-none
+                                dark:text-neutral-500
+                                dark:file:bg-blue-500
+                                dark:hover:file:bg-blue-400"
+                                ref="imagePreviewRef"
+                            >
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+                <InputLabel for="gender" value="Genero *" />
+                <div class="space-x-4">
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="M" name="square_radio_g" class="form-radio rounded-none" checked />
+                        <span>Masculino</span>
+                    </label>
+                    <label class="inline-flex">
+                        <input v-model="form.gender" type="radio" value="F" name="square_radio_g" class="form-radio text-success rounded-none" />
+                        <span>Femenino</span>
+                    </label>
+                </div>
+                <InputError :message="form.errors.gender" class="mt-2" />
+            </div>
+            <div class="col-span-2">
+                <InputLabel for="profession_id" value="Profesión" />
+                <multiselect
+                    id="profession_id"
+                    :model-value="form.profession_id"
+                    v-model="form.profession_id"
+                    :options="professions"
+                    class="custom-multiselect"
+                    :searchable="true"
+                    placeholder="Buscar"
+                    selected-label="seleccionado"
+                    select-label="Elegir"
+                    deselect-label="Quitar"
+                    label="description"
+                    track-by="id"
+                ></multiselect>
+                <InputError :message="form.errors.profession_id" class="mt-1" />
+            </div>
+            <div class="col-span-2">
+                <InputLabel for="occupation_id" value="Cargo/ocupacion" />
+                <multiselect
+                    id="occupation_id"
+                    :model-value="form.occupation_id"
+                    v-model="form.occupation_id"
+                    :options="occupations"
+                    class="custom-multiselect"
+                    :searchable="true"
+                    placeholder="Buscar"
+                    selected-label="seleccionado"
+                    select-label="Elegir"
+                    deselect-label="Quitar"
+                    label="description"
+                    track-by="id"
+                ></multiselect>
+                <InputError :message="form.errors.occupation_id" class="mt-1" />
+            </div>
+            <div class="col-span-6">
+                <InputLabel for="presentacion" value="Presentación *" />
+                <textarea
+                    id="presentacion"
+                    v-model="form.presentacion"
+                    rows="4"
+                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                >
+                </textarea>
+                <InputError :message="form.errors.presentacion" class="mt-2" />
+            </div>
+        </template>
+
+        <template #actions>
+
+            <Keypad>
+                <template #botones>
+                    <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                        <svg v-show="form.processing" aria-hidden="true" role="status" class="inline w-4 h-4 mr-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                            <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                        </svg>
+                        Actualizar
+                    </PrimaryButton>
+                    <Link :href="route('aca_school_teachers_list')"  class="ml-2 inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-green-600 hover:shadow-lg focus:bg-green-600 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-green-700 active:shadow-lg transition duration-150 ease-in-out">Ir al Listado</Link>
+                </template>
+            </Keypad>
+        </template>
+    </FormSection>
+</template>

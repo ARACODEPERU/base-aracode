@@ -49,6 +49,10 @@
     @inertia
     <script>
         window.assetUrl = @json(asset(''));
+        // Tipo de negocio (parametro P000009, ya usado por Dashboard/CMS/CRM):
+        // el menu de Academico lo lee para decidir si muestra el grupo Colegio
+        // (5 = Colegio, 6 = Colegio y capacitaciones).
+        window.businessType = @json(\App\Models\Parameter::where('parameter_code', 'P000009')->value('value_default'));
     </script>
 
 </body>

@@ -1,0 +1,55 @@
+<script setup>
+import AppLayout from "@/Layouts/Vristo/AppLayout.vue";
+import CreateForm from './Partials/SchoolCreateForm.vue';
+import { Link } from '@inertiajs/vue3';
+import { onMounted, ref } from 'vue';
+import Swal2 from 'sweetalert2';
+
+const props = defineProps({
+    identityDocumentTypes: {
+        type: Object,
+        default: () => ({}),
+    },
+    ubigeo: {
+        type: Object,
+        default: () => ({})
+    },
+    countries: {
+        type: Object,
+        default: () => ({})
+    },
+    professions: {
+        type: Object,
+        default: () => ({})
+    },
+    occupations: {
+        type: Object,
+        default: () => ({})
+    }
+});
+</script>
+
+<template>
+    <AppLayout title="Crear Docente">
+        <ul class="flex space-x-2 rtl:space-x-reverse">
+            <li>
+                <a :href="route('aca_school_years_list')" class="text-primary hover:underline">Colegio</a>
+            </li>
+            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+                <Link :href="route('aca_school_teachers_list')" class="text-primary hover:underline">Docentes</Link>
+            </li>
+            <li class="before:content-['/'] ltr:before:mr-1 rtl:before:ml-1">
+                <span>Nuevo</span>
+            </li>
+        </ul>
+        <div class="pt-5">
+            <CreateForm
+                :identityDocumentTypes="identityDocumentTypes"
+                :ubigeo="ubigeo"
+                :countries="countries"
+                :professions="professions"
+                :occupations="occupations"
+             />
+        </div>
+    </AppLayout>
+</template>

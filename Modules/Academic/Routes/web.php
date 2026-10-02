@@ -31,6 +31,12 @@ use Modules\Academic\Http\Controllers\AcaListVideoController;
 use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaReportsController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
+use Modules\Academic\Http\Controllers\AcaSchoolController;
+use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
+use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
+use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
+use Modules\Academic\Http\Controllers\AcaSchoolTeacherController;
+use Modules\Academic\Http\Controllers\AcaSchoolYearController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
 use Modules\Academic\Http\Controllers\AcaShortVideoController;
 use Modules\Academic\Http\Controllers\AcaStudentController;
@@ -774,6 +780,126 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_gestion_de_calificaciones'])
         ->post('grade/management/store', [AcaGradeManagementController::class, 'store'])
         ->name('aca_grade_management_store');
+
+    /*
+     * ------------------------------------------------------------------
+     * Modulo escolar (colegios): anios escolares, estructura
+     * nivel/grado/seccion, alumnos escolares y matriculas.
+     * El colegio activo lo resuelve SchoolContextService (parametro
+     * PTM0005 = modo multi-colegio).
+     * ------------------------------------------------------------------
+     */
+
+    // Colegios (mantenedor principal, sobre todo en modo multi-colegio)
+    Route::middleware(['middleware' => 'permission:aca_school_listado'])
+        ->get('schools', [AcaSchoolController::class, 'index'])->name('aca_schools_list');
+    Route::middleware(['middleware' => 'permission:aca_school_nuevo'])
+        ->get('schools/create', [AcaSchoolController::class, 'create'])->name('aca_schools_create');
+    Route::middleware(['middleware' => 'permission:aca_school_nuevo'])
+        ->post('schools/store', [AcaSchoolController::class, 'store'])->name('aca_schools_store');
+    Route::middleware(['middleware' => 'permission:aca_school_editar'])
+        ->get('schools/edit/{id}', [AcaSchoolController::class, 'edit'])->name('aca_schools_edit');
+    Route::middleware(['middleware' => 'permission:aca_school_editar'])
+        ->post('schools/update', [AcaSchoolController::class, 'update'])->name('aca_schools_update');
+    Route::middleware(['middleware' => 'permission:aca_school_eliminar'])
+        ->delete('schools/destroy/{id}', [AcaSchoolController::class, 'destroy'])->name('aca_schools_destroy');
+
+    // Años escolares
+    Route::middleware(['middleware' => 'permission:aca_school_year_listado'])
+        ->get('school/years', [AcaSchoolYearController::class, 'index'])->name('aca_school_years_list');
+    Route::middleware(['middleware' => 'permission:aca_school_year_nuevo'])
+        ->post('school/years/store', [AcaSchoolYearController::class, 'store'])->name('aca_school_years_store');
+    Route::middleware(['middleware' => 'permission:aca_school_year_editar'])
+        ->put('school/years/update', [AcaSchoolYearController::class, 'update'])->name('aca_school_years_update');
+    Route::middleware(['middleware' => 'permission:aca_school_year_editar'])
+        ->put('school/years/activate/{id}', [AcaSchoolYearController::class, 'activate'])->name('aca_school_years_activate');
+    Route::middleware(['middleware' => 'permission:aca_school_year_editar'])
+        ->put('school/years/close/{id}', [AcaSchoolYearController::class, 'close'])->name('aca_school_years_close');
+
+    // Estructura academica: niveles, grados y secciones
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->get('school/structure', [AcaSchoolStructureController::class, 'index'])->name('aca_school_structure');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->post('school/structure/level/store', [AcaSchoolStructureController::class, 'storeLevel'])->name('aca_school_structure_level_store');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->put('school/structure/level/{id}/update', [AcaSchoolStructureController::class, 'updateLevel'])->name('aca_school_structure_level_update');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->delete('school/structure/level/{id}/destroy', [AcaSchoolStructureController::class, 'destroyLevel'])->name('aca_school_structure_level_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->post('school/structure/grade/store', [AcaSchoolStructureController::class, 'storeGrade'])->name('aca_school_structure_grade_store');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->put('school/structure/grade/{id}/update', [AcaSchoolStructureController::class, 'updateGrade'])->name('aca_school_structure_grade_update');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->delete('school/structure/grade/{id}/destroy', [AcaSchoolStructureController::class, 'destroyGrade'])->name('aca_school_structure_grade_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->post('school/structure/section/store', [AcaSchoolStructureController::class, 'storeSection'])->name('aca_school_structure_section_store');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->put('school/structure/section/{id}/update', [AcaSchoolStructureController::class, 'updateSection'])->name('aca_school_structure_section_update');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->delete('school/structure/section/{id}/destroy', [AcaSchoolStructureController::class, 'destroySection'])->name('aca_school_structure_section_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_estructura'])
+        ->post('school/structure/search-teachers', [AcaSchoolStructureController::class, 'searchTeachers'])->name('aca_school_structure_search_teachers');
+
+    // Alumnos escolares
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_listado'])
+        ->get('school/students', [AcaSchoolStudentController::class, 'index'])->name('aca_school_students_list');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_nuevo'])
+        ->get('school/students/create', [AcaSchoolStudentController::class, 'create'])->name('aca_school_students_create');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_nuevo'])
+        ->post('school/students/store', [AcaSchoolStudentController::class, 'store'])->name('aca_school_students_store');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->get('school/students/edit/{id}', [AcaSchoolStudentController::class, 'edit'])->name('aca_school_students_edit');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->post('school/students/update', [AcaSchoolStudentController::class, 'update'])->name('aca_school_students_update');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_eliminar'])
+        ->delete('school/students/destroy/{id}', [AcaSchoolStudentController::class, 'destroy'])->name('aca_school_students_destroy');
+
+    // Apoderados de alumnos escolares
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->get('school/students/{studentId}/guardians', [AcaSchoolStudentController::class, 'listGuardians'])->name('aca_school_students_guardians_list');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->post('school/students/{studentId}/guardians/store', [AcaSchoolStudentController::class, 'storeGuardian'])->name('aca_school_students_guardians_store');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->put('school/students/guardians/{guardianId}/update', [AcaSchoolStudentController::class, 'updateGuardian'])->name('aca_school_students_guardians_update');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+        ->delete('school/students/guardians/{guardianId}/destroy', [AcaSchoolStudentController::class, 'destroyGuardian'])->name('aca_school_students_guardians_destroy');
+
+    // Matriculas escolares
+    Route::middleware(['middleware' => 'permission:aca_school_matricula_listado'])
+        ->get('school/enrollments', [AcaSchoolEnrollmentController::class, 'index'])->name('aca_school_enrollments_list');
+    Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
+        ->get('school/enrollments/create', [AcaSchoolEnrollmentController::class, 'create'])->name('aca_school_enrollments_create');
+    Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
+        ->post('school/enrollments/store', [AcaSchoolEnrollmentController::class, 'store'])->name('aca_school_enrollments_store');
+    Route::middleware(['middleware' => 'permission:aca_school_matricula_editar'])
+        ->put('school/enrollments/{id}/update', [AcaSchoolEnrollmentController::class, 'update'])->name('aca_school_enrollments_update');
+    Route::middleware(['middleware' => 'permission:aca_school_matricula_editar'])
+        ->put('school/enrollments/{id}/status', [AcaSchoolEnrollmentController::class, 'changeStatus'])->name('aca_school_enrollments_status');
+
+    // Docentes del colegio (clon del mantenedor de docentes de capacitaciones
+    // con vistas/rutas/permisos propios para el grupo Colegio del menu)
+    Route::middleware(['middleware' => 'permission:aca_school_docente_listado'])
+        ->get('school/teachers', [AcaSchoolTeacherController::class, 'index'])->name('aca_school_teachers_list');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_nuevo'])
+        ->get('school/teachers/create', [AcaSchoolTeacherController::class, 'create'])->name('aca_school_teachers_create');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_nuevo'])
+        ->post('school/teachers/store', [AcaSchoolTeacherController::class, 'store'])->name('aca_school_teachers_store');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_editar'])
+        ->get('school/teachers/edit/{id}', [AcaSchoolTeacherController::class, 'edit'])->name('aca_school_teachers_edit');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_editar'])
+        ->post('school/teachers/update', [AcaSchoolTeacherController::class, 'update'])->name('aca_school_teachers_update');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_eliminar'])
+        ->delete('school/teachers/destroy/{id}', [AcaSchoolTeacherController::class, 'destroy'])->name('aca_school_teachers_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_editar'])
+        ->get('school/teachers/resume/{id}', [AcaSchoolTeacherController::class, 'resume'])->name('aca_school_teachers_resume');
+    Route::post('school/teachers/resume/work_experience/store', [AcaSchoolTeacherController::class, 'workExperienceStore'])->name('aca_school_teachers_work_experience_store');
+    Route::delete('school/teachers/resume/work_experience/destroy/{id}', [AcaSchoolTeacherController::class, 'workExperienceDestroy'])->name('aca_school_teachers_work_experience_destroy');
+
+    // Cascadas y busquedas del formulario de matricula (axios JSON)
+    Route::post('school/enrollments/grades-by-level', [AcaSchoolEnrollmentController::class, 'gradesByLevel'])->name('aca_school_enrollments_grades');
+    Route::post('school/enrollments/sections-by-grade', [AcaSchoolEnrollmentController::class, 'sectionsByGrade'])->name('aca_school_enrollments_sections');
+    Route::post('school/enrollments/search-students', [AcaSchoolEnrollmentController::class, 'searchStudents'])->name('aca_school_enrollments_search_students');
+    Route::post('school/enrollments/search-guardians', [AcaSchoolEnrollmentController::class, 'searchGuardians'])->name('aca_school_enrollments_search_guardians');
 });
 
 Route::middleware(['auth', 'role:Administrador|webAdmin|admin|Docente'])

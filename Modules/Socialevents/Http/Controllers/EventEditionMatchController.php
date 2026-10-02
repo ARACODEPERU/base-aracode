@@ -305,8 +305,12 @@ class EventEditionMatchController extends Controller
                 'score_a' => $score_a,
                 'status' => 'closed',
             ]);
-            $this->positionService->updateTablePositions($request->get('edition_id'));
+            $this->positionService->updateTablePositions((int) $match->edition_id);
         } else {
+            // El cambio pudo ser solo de estado (p. ej. Cancelado -> "Jugado sin
+            // puntos"): recalcular la tabla para reflejarlo al instante. El
+            // recalculo es idempotente (siempre parte de cero).
+            $this->positionService->updateTablePositions((int) $match->edition_id);
             TournamentLandingCache::forget((int) $match->edition_id);
         }
 

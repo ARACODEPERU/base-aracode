@@ -13,15 +13,42 @@ import {
     faClock,
     faGavel,
     faHand,
-    faTags
+    faTags,
+    faSchool,
+    faCalendarDays,
+    faSitemap,
+    faFileSignature,
+    faChalkboardUser,
+    faLayerGroup
 } from "@fortawesome/free-solid-svg-icons";
 
-const menuAcademic = {
+/**
+ * Tipo de negocio (parametro P000009 "Tipo de negocio o empresa, para ventas
+ * en linea"). Se expone desde app.blade.php como window.businessType:
+ *   5 = Colegio                  -> menu escolar puro
+ *   6 = Colegio y capacitaciones -> menu escolar + capacitaciones/talleres
+ * Cualquier otro valor (1,2,3,4,99...) conserva el menu de capacitaciones de
+ * siempre, sin el grupo Colegio. window es el mismo mecanismo que ya usa
+ * window.assetUrl en app.blade.php.
+ */
+const BUSINESS_COLEGIO = '5';
+const BUSINESS_COLEGIO_CAPACITACIONES = '6';
+const businessType = String(typeof window !== 'undefined' && window.businessType !== undefined ? window.businessType : '');
+const isColegio = businessType === BUSINESS_COLEGIO || businessType === BUSINESS_COLEGIO_CAPACITACIONES;
+const isColegioConCapacitaciones = businessType === BUSINESS_COLEGIO_CAPACITACIONES;
+
+/* ------------------------------------------------------------------
+ * Grupo Capacitación: el negocio actual (cursos de pago, certificados,
+ * suscripciones). Visible cuando el colegio tambien vende capacitaciones.
+ * ------------------------------------------------------------------ */
+const capacitacionGroup = {
+    route: null,
     status: false,
-    text: "Académico",
-    icom: faGraduationCap,
-    route: 'module',
-    permissions: "aca_dashboard",
+    text: "Capacitación",
+    icom: faLayerGroup,
+    // Permiso de entrada del grupo (el header evalua el string completo):
+    // los items internos filtran con su propio permiso.
+    permissions: "aca_cursos_listado",
     items: [
         {
             route: route("aca_subscriptions_list"),
@@ -109,29 +136,21 @@ const menuAcademic = {
             icom: faCertificate,
             permissions: "aca_certificados_listado",
         },
-        {
-            route: null,
-            status: false,
-            text: "Tutoriales Cortos",
-            icom: faPlay,
-            permissions: "aca_tutoriales_cortos",
-            items: [
-                {
-                    route: route("aca_tutorials_playlist"),
-                    status: false,
-                    text: "Lista de reproduccion",
-                    icom: faCertificate,
-                    permissions: "aca_tutoriales_lista",
-                },
-                {
-                    route: route("aca_tutorials_videos_list"),
-                    status: false,
-                    text: "Videos",
-                    icom: faCertificate,
-                    permissions: "aca_tutoriales_videos",
-                },
-            ]
-        },
+    ],
+};
+
+/* ------------------------------------------------------------------
+ * Grupo Aula y Seguimiento: herramientas de uso diario de Docente y
+ * Alumno (examenes, asistencia, participaciones, calificaciones).
+ * ------------------------------------------------------------------ */
+const aulaGroup = {
+    route: null,
+    status: false,
+    text: "Aula y Seguimiento",
+    icom: faChalkboardUser,
+    // Permiso de entrada del grupo; los items internos filtran con el suyo.
+    permissions: "aca_miscursos",
+    items: [
         {
             route: route("aca_mycourses"),
             status: false,
@@ -172,17 +191,189 @@ const menuAcademic = {
             permissions: "aca_gestion_de_calificaciones",
             id: 'btnCalificaciones'
         },
-        {
-            route: route('aca_reports_dashboard'),
-            status: false,
-            text: 'Reportes',
-            permissions: 'aca_reportes',
-            icom: faChartLine,
-        }
     ],
 };
 
+/* ------------------------------------------------------------------
+ * Grupo Colegio: administracion escolar (matriculas por nivel/grado/
+ * seccion). Se muestra solo con el tipo de negocio 5 o 6 (P000009).
+ * ------------------------------------------------------------------ */
+const colegioGroup = {
+    route: null,
+    status: false,
+    text: 'Colegio',
+    icom: faSchool,
+    permissions: 'aca_school_year_listado',
+    items: [
+        {
+            route: route('aca_school_years_list'),
+            status: false,
+            text: 'Años Escolares',
+            icom: faCalendarDays,
+            permissions: 'aca_school_year_listado',
+        },
+        {
+            route: route('aca_school_structure'),
+            status: false,
+            text: 'Estructura Académica',
+            icom: faSitemap,
+            permissions: 'aca_school_estructura',
+        },
+        {
+            route: route('aca_school_students_list'),
+            status: false,
+            text: 'Alumnos',
+            icom: faUserGraduate,
+            permissions: 'aca_school_alumno_listado',
+        },
+        {
+            route: route('aca_school_enrollments_list'),
+            status: false,
+            text: 'Matrículas',
+            icom: faFileSignature,
+            permissions: 'aca_school_matricula_listado',
+        },
+        {
+            route: route('aca_school_teachers_list'),
+            status: false,
+            text: 'Docentes',
+            icom: faUserTie,
+            permissions: 'aca_school_docente_listado',
+        },
+        {
+            route: route('aca_schools_list'),
+            status: false,
+            text: 'Colegios',
+            icom: faLandmarkFlag,
+            permissions: 'aca_school_listado',
+        },
+    ],
+};
 
+/* ------------------------------------------------------------------
+ * Tutoriales y Reportes (comunes a todos los tipos de negocio).
+ * ------------------------------------------------------------------ */
+const tutorialesGroup = {
+    route: null,
+    status: false,
+    text: "Tutoriales Cortos",
+    icom: faPlay,
+    permissions: "aca_tutoriales_cortos",
+    items: [
+        {
+            route: route("aca_tutorials_playlist"),
+            status: false,
+            text: "Lista de reproduccion",
+            icom: faCertificate,
+            permissions: "aca_tutoriales_lista",
+        },
+        {
+            route: route("aca_tutorials_videos_list"),
+            status: false,
+            text: "Videos",
+            icom: faCertificate,
+            permissions: "aca_tutoriales_videos",
+        },
+    ],
+};
+
+const reportesItem = {
+    route: route('aca_reports_dashboard'),
+    status: false,
+    text: 'Reportes',
+    permissions: 'aca_reportes',
+    icom: faChartLine,
+};
+
+/* ------------------------------------------------------------------
+ * Armado del menu segun el tipo de negocio:
+ * - Colegio (5): solo administracion escolar + tutoriales + reportes.
+ * - Colegio y capacitaciones (6): los 3 grupos.
+ * - Resto (1,2,3,4,99): el menu de capacitaciones clasico, con el
+ *   mismo orden de siempre; los grupos solo aplican al modo colegio.
+ * ------------------------------------------------------------------ */
+let academicItems;
+
+if (isColegioConCapacitaciones) {
+    academicItems = [
+        capacitacionGroup,
+        aulaGroup,
+        colegioGroup,
+        tutorialesGroup,
+        reportesItem,
+    ];
+} else if (isColegio) {
+    academicItems = [
+        colegioGroup,
+        tutorialesGroup,
+        reportesItem,
+    ];
+} else {
+    academicItems = [
+        {
+            route: route("aca_subscriptions_list"),
+            status: false,
+            text: "Tipo de suscripcion",
+            icom: faRocket,
+            permissions: "aca_suscripciones",
+        },
+        {
+            route: route("aca_institutions_list"),
+            status: false,
+            text: "Instituciones",
+            icom: faLandmarkFlag,
+            permissions: "aca_institucion_listado",
+        },
+        {
+            route: route("aca_teachers_list"),
+            status: false,
+            text: "Docentes",
+            icom: faUserTie,
+            permissions: "aca_docente_listado",
+        },
+        {
+            route: route("aca_students_list"),
+            status: false,
+            text: "Estudiantes",
+            icom: faUserGraduate,
+            permissions: "aca_estudiante_listado",
+            info: capacitacionGroup.items[3].info,
+        },
+        {
+            route: route("aca_courses_list"),
+            status: false,
+            text: "Cursos",
+            icom: faBook,
+            permissions: "aca_cursos_listado",
+        },
+        {
+            route: route("aca_course_options"),
+            status: false,
+            text: "Categorías/Tipo/Sector",
+            icom: faTags,
+            permissions: "aca_category_sector_type_modality",
+        },
+        {
+            route: route("aca_certificate_list"),
+            status: false,
+            text: "Certificados",
+            icom: faCertificate,
+            permissions: "aca_certificados_listado",
+        },
+        aulaGroup,
+        tutorialesGroup,
+        reportesItem,
+    ];
+}
+
+const menuAcademic = {
+    status: false,
+    text: "Académico",
+    icom: faGraduationCap,
+    route: 'module',
+    permissions: "aca_dashboard",
+    items: academicItems,
+};
 
 // Llamamos la función para cargar los docentes al menú
 export default menuAcademic;

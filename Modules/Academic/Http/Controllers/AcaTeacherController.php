@@ -19,6 +19,25 @@ use Illuminate\Support\Facades\Hash;
 class AcaTeacherController extends Controller
 {
     use ValidatesRequests;
+
+    /**
+     * Subnamespace de vistas. Los clones (AcaSchoolTeacherController) lo
+     * sobrescriben para renderizar School/Teachers en lugar de Teachers.
+     */
+    protected function viewNamespace(): string
+    {
+        return 'Academic::';
+    }
+
+    /**
+     * Prefijo de nombres de ruta para redirects post-accion. Los clones lo
+     * sobrescriben (aca_school_teachers_*) para mantener al usuario dentro
+     * de su grupo del menu.
+     */
+    protected function routeName(string $suffix): string
+    {
+        return 'aca_teachers_' . $suffix;
+    }
     /**
      * Display a listing of the resource.
      * @return Renderable
@@ -50,7 +69,7 @@ class AcaTeacherController extends Controller
 
         $teachers = $teachers->paginate(12)->onEachSide(2);
 
-        return Inertia::render('Academic::Teachers/List', [
+        return Inertia::render($this->viewNamespace().'Teachers/List', [
             'teachers' => $teachers,
             'filters' => request()->all('search')
         ]);
@@ -79,7 +98,7 @@ class AcaTeacherController extends Controller
             ->orderBy('id')
             ->get();
 
-        return Inertia::render('Academic::Teachers/Create', [
+        return Inertia::render($this->viewNamespace().'Teachers/Create', [
             'identityDocumentTypes' => $identityDocumentTypes,
             'ubigeo'        => $ubigeo,
             'countries'     => $countries,
@@ -228,7 +247,7 @@ class AcaTeacherController extends Controller
             ]
         );
 
-        return redirect()->route('aca_teachers_list')
+        return redirect()->route($this->routeName('list'))
             ->with('message', __('Docente creado con éxito'));
     }
 
@@ -267,7 +286,7 @@ class AcaTeacherController extends Controller
 
         $teacher->image_preview = $teacher->image;
         //dd($teacher);
-        return Inertia::render('Academic::Teachers/Edit', [
+        return Inertia::render($this->viewNamespace().'Teachers/Edit', [
             'identityDocumentTypes' => $identityDocumentTypes,
             'ubigeo'                => $ubigeo,
             'teacher'               => $teacher,
@@ -404,7 +423,7 @@ class AcaTeacherController extends Controller
             'teacher_code'  => $request->get('number'),
         ]);
 
-        return redirect()->route('aca_teachers_edit', $teacher_id)
+        return redirect()->route($this->routeName('edit'), $teacher_id)
             ->with('message', __('Docente creado con éxito'));
     }
 
@@ -468,7 +487,7 @@ class AcaTeacherController extends Controller
             $resumes = $resumes->toArray();
         }
 
-        return Inertia::render('Academic::Teachers/Resume', [
+        return Inertia::render($this->viewNamespace().'Teachers/Resume', [
             'person'                => $per,
             'teacher'               => $tea,
             'resumes'               => $resumes

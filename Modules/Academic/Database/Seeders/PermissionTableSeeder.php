@@ -91,6 +91,31 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_cursos_examen_final_crear']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_category_sector_type_modality']));
 
+        /*
+         * Permisos del modulo escolar (colegios): mantenedor de colegios,
+         * anios escolares, estructura nivel/grado/seccion, alumnos escolares
+         * y matriculas. firstOrCreate = idempotente.
+         */
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_year_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_year_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_year_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_estructura']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_matricula_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_matricula_nueva']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_matricula_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_nuevo']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_eliminar']));
+
         foreach ($permissions as $permission) {
 
             $role->givePermissionTo($permission->name);

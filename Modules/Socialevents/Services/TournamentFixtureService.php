@@ -101,7 +101,7 @@ class TournamentFixtureService
             ->where('edition_id', $editionId);
 
         if ($filter === 'played') {
-            $query->where('status', 'closed');
+            $query->whereIn('status', ['closed', 'no_points']);
         } elseif ($filter === 'pending') {
             $query->where('status', 'pending');
         }

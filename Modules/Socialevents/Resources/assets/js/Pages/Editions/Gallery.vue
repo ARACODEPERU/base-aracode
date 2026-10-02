@@ -205,6 +205,8 @@ const groupedMedia = computed(() => {
     return Object.values(groups);
 });
 
+const missingFilesCount = computed(() => props.media.filter((item) => item.file_missing).length);
+
 const destroyMedia = async (item) => {
     const result = await Swal2.fire({
         title: '¿Eliminar este archivo?',
@@ -465,6 +467,20 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div v-else class="space-y-8">
+                            <div
+                                v-if="missingFilesCount > 0"
+                                class="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800/60 dark:bg-red-900/20 dark:text-red-300"
+                            >
+                                <p class="font-semibold">
+                                    ⚠ {{ missingFilesCount }} archivo(s) ya no existen en el servidor
+                                </p>
+                                <p class="mt-1">
+                                    Sus registros siguen en la galería pero <strong>no se muestran en la landing pública</strong>.
+                                    Esto ocurre cuando la imagen es eliminada del disco fuera del sistema (limpieza manual, antivirus o restauración de backup).
+                                    Elimina el registro marcado y vuelve a subir la imagen para que vuelva a aparecer.
+                                </p>
+                            </div>
+
                             <div v-for="group in groupedMedia" :key="group.label">
                                 <div class="mb-3 flex items-center gap-2">
                                     <span class="inline-flex h-2 w-2 rounded-full bg-primary"></span>
@@ -514,6 +530,15 @@ onBeforeUnmount(() => {
                                         <!-- Etiqueta del partido -->
                                         <div v-if="item.match" class="absolute left-2 top-2 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur">
                                             {{ item.match.label }}
+                                        </div>
+
+                                        <!-- Aviso de archivo faltante en disco -->
+                                        <div
+                                            v-if="item.file_missing"
+                                            class="absolute inset-x-2 rounded bg-red-600/90 px-2 py-0.5 text-center text-xs font-semibold text-white"
+                                            :class="item.match ? 'top-8' : 'top-2'"
+                                        >
+                                            Archivo no encontrado en el servidor
                                         </div>
 
                                         <!-- Botón eliminar -->
