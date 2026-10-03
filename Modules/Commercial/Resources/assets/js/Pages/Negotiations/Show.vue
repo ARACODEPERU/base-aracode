@@ -783,12 +783,16 @@ const reactivate = () => {
                             <dd class="dark:text-white">{{ negotiation.client_data?.ocupacion || '--' }}</dd>
                         </div>
                         <div>
+                            <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Profesion</dt>
+                            <dd class="dark:text-white">{{ negotiation.client_data?.profesion || '--' }}</dd>
+                        </div>
+                        <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Empresa</dt>
                             <dd class="dark:text-white">{{ negotiation.client_data?.company || '--' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Industria</dt>
-                            <dd class="dark:text-white">{{ negotiation.client_data?.industry || negotiation.client_data?.profession || '--' }}</dd>
+                            <dd class="dark:text-white">{{ negotiation.client_data?.industry || '--' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Fecha de nacimiento</dt>

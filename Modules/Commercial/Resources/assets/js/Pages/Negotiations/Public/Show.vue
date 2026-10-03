@@ -23,6 +23,7 @@ const props = defineProps({
     identityDocumentTypes: { type: Array, default: () => [] },
     industries: { type: Array, default: () => [] },
     occupations: { type: Array, default: () => [] },
+    professions: { type: Array, default: () => [] },
     countries: { type: Array, default: () => [] },
     ubigeo: { type: Array, default: () => [] },
     paymentMethodCatalog: { type: Array, default: () => [] },
@@ -54,6 +55,7 @@ const form = useForm({
     email: null,
     telephone: null,
     ocupacion: null,
+    profesion: null,
     company: null,
     industry_id: null,
     birthdate: null,
@@ -233,6 +235,12 @@ const loadVerifiedPerson = (person) => {
     if ("occupation_id" in person) {
         form.ocupacion = props.occupations.find(
             (item) => Number(item.id) === Number(person.occupation_id)
+        ) ?? null;
+    }
+    // La profesion se precarga igual que el cargo: por id contra el catalogo.
+    if ("profession_id" in person) {
+        form.profesion = props.professions.find(
+            (item) => Number(item.id) === Number(person.profession_id)
         ) ?? null;
     }
     form.company = person.company ?? form.company;
@@ -1056,6 +1064,24 @@ watch(brickFormVisible, async (visible) => {
                                     track-by="id"
                                 ></multiselect>
                                 <InputError :message="form.errors.ocupacion || form.errors['ocupacion.id']" class="mt-1" />
+                            </div>
+
+                            <div class="col-span-6 sm:col-span-3">
+                                <InputLabel for="profesion" value="Profesión" />
+                                <multiselect
+                                    id="profesion"
+                                    v-model="form.profesion"
+                                    :options="professions"
+                                    class="custom-multiselect"
+                                    :searchable="true"
+                                    placeholder="Buscar profesión"
+                                    selected-label="seleccionada"
+                                    select-label="Elegir"
+                                    deselect-label="Quitar"
+                                    label="description"
+                                    track-by="id"
+                                ></multiselect>
+                                <InputError :message="form.errors.profesion || form.errors['profesion.id']" class="mt-1" />
                             </div>
 
                             <div class="col-span-6 sm:col-span-3">
