@@ -55,6 +55,7 @@ const clientFullName = computed(() => {
 });
 
 const occupationLabel = computed(() => props.form.ocupacion?.description ?? props.form.ocupacion ?? null);
+const professionLabel = computed(() => props.form.profesion?.description ?? props.form.profesion ?? null);
 const industryLabel = computed(() => props.form.industry_id?.description ?? null);
 
 const countryLabel = computed(() =>
@@ -109,6 +110,7 @@ const summaryHtml = () => {
     rows.push(summaryRow("Direccion", form.address));
     rows.push(summaryRow(props.foreignLocation ? "Pais / Estado / Ciudad" : "Ubicacion", locationLabel.value));
     rows.push(summaryRow("Cargo u ocupacion", occupationLabel.value));
+    rows.push(summaryRow("Profesion", professionLabel.value));
     rows.push(summaryRow("Empresa", form.company));
     rows.push(summaryRow("Industria", industryLabel.value));
 
