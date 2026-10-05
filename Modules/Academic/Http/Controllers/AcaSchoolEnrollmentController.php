@@ -10,9 +10,12 @@ use Inertia\Inertia;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
 use Modules\Academic\Entities\AcaSchoolGrade;
 use Modules\Academic\Entities\AcaSchoolLevel;
+use Modules\Academic\Entities\AcaSchoolPaymentSchedule;
 use Modules\Academic\Entities\AcaSchoolSection;
 use Modules\Academic\Entities\AcaSchoolStudent;
+use Modules\Academic\Entities\AcaSchoolStudentGuardian;
 use Modules\Academic\Entities\AcaSchoolYear;
+use Modules\Academic\Services\SchoolCommitmentsService;
 use Modules\Academic\Services\SchoolContextService;
 
 class AcaSchoolEnrollmentController extends Controller
@@ -99,6 +102,7 @@ class AcaSchoolEnrollmentController extends Controller
             'years' => $data['years'],
             'levels' => $data['levels'],
             'typeLabels' => AcaSchoolEnrollment::typeLabels(),
+            'guardianRelationships' => AcaSchoolStudentGuardian::relationshipLabels(),
             'preselect' => [
                 'year_id' => $request->query('year_id'),
                 'student_id' => $request->query('student_id'),
@@ -148,6 +152,27 @@ class AcaSchoolEnrollmentController extends Controller
             ->values();
 
         return response()->json($sections);
+    }
+
+    /**
+     * Indica si el alumno ya tiene matricula registrada en el año dado,
+     * para bloquear el botón antes de intentar guardar.
+     */
+    public function checkEnrollment(Request $request)
+    {
+        $this->validate($request, [
+            'student_id' => 'required|integer|exists:aca_school_students,id',
+            'year_id' => 'required|integer|exists:aca_school_years,id',
+        ]);
+
+        $enrolled = AcaSchoolEnrollment::where('student_id', $request->get('student_id'))
+            ->where('year_id', $request->get('year_id'))
+            ->exists();
+
+        return response()->json([
+            'enrolled' => $enrolled,
+            'message' => $enrolled ? 'El alumno ya tiene una matrícula registrada en el año seleccionado.' : null,
+        ]);
     }
 
     public function searchStudents(Request $request)
@@ -243,7 +268,7 @@ class AcaSchoolEnrollmentController extends Controller
                     throw new \Exception('La sección '.$section->name.' no tiene vacantes disponibles.');
                 }
 
-                AcaSchoolEnrollment::create([
+                $enrollment = AcaSchoolEnrollment::create([
                     'school_id' => $school->id,
                     'year_id' => $year->id,
                     'student_id' => $student->id,
@@ -256,6 +281,10 @@ class AcaSchoolEnrollmentController extends Controller
                     'guardian_phone' => $request->get('guardian_phone'),
                     'observations' => $request->get('observations'),
                 ]);
+
+                // Compromisos de pago automaticos: cargo pendiente de
+                // matricula segun tarifa + cronograma de mensualidades.
+                app(SchoolCommitmentsService::class)->createForEnrollment($enrollment);
             });
         } catch (\Throwable $e) {
             return back()->withErrors(['student_id' => $e->getMessage()]);

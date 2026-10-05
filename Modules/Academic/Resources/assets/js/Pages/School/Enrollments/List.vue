@@ -251,6 +251,10 @@ const saveEdit = () => {
                                             Editar
                                         </button>
                                         <tippy target="bottom" placement="bottom">Editar matrícula</tippy>
+                                        <Link v-if="item.status === 'activo'" v-tippy:bottom :href="route('aca_school_charges_show', item.id)" type="button" class="btn btn-sm btn-outline-info">
+                                            Cobrar
+                                        </Link>
+                                        <tippy target="bottom" placement="bottom">Cobrar matrícula/mensualidad</tippy>
                                     </div>
                                 </td>
                                 <td>{{ item.year_number }}</td>
@@ -272,8 +276,8 @@ const saveEdit = () => {
                         </tbody>
                     </table>
                 </div>
-                <div v-if="enrollments.links" class="p-4 flex justify-center">
-                    <Pagination :links="enrollments.links" />
+                <div v-if="enrollments.links" class="p-4">
+                    <Pagination :data="enrollments" />
                 </div>
             </div>
         </div>

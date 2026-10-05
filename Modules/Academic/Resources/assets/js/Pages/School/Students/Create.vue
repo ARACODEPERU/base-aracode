@@ -103,7 +103,7 @@ const createStudent = () => {
                         <input v-model="form.address" type="text" class="form-input" />
                     </div>
                     <div class="sm:col-span-3 flex justify-end gap-2">
-                        <Link :href="route('aca_school_students_list')" class="btn btn-outline-danger">Cancelar</Link>
+                        <Link :href="route('aca_school_students_list')" class="btn btn-outline-secondary">Ir al listado</Link>
                         <button type="submit" class="btn btn-primary" :disabled="form.processing">Guardar</button>
                     </div>
                 </form>

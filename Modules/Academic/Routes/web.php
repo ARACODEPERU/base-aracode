@@ -32,8 +32,10 @@ use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaNotificationController;
 use Modules\Academic\Http\Controllers\AcaReportsController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
+use Modules\Academic\Http\Controllers\AcaSchoolChargeController;
 use Modules\Academic\Http\Controllers\AcaSchoolController;
 use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
+use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
 use Modules\Academic\Http\Controllers\AcaSchoolTeacherController;
@@ -891,7 +893,7 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('school/students/create', [AcaSchoolStudentController::class, 'create'])->name('aca_school_students_create');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_nuevo'])
         ->post('school/students/store', [AcaSchoolStudentController::class, 'store'])->name('aca_school_students_store');
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->get('school/students/edit/{id}', [AcaSchoolStudentController::class, 'edit'])->name('aca_school_students_edit');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
         ->post('school/students/update', [AcaSchoolStudentController::class, 'update'])->name('aca_school_students_update');
@@ -899,11 +901,11 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->delete('school/students/destroy/{id}', [AcaSchoolStudentController::class, 'destroy'])->name('aca_school_students_destroy');
 
     // Apoderados de alumnos escolares
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->get('school/students/{studentId}/guardians', [AcaSchoolStudentController::class, 'listGuardians'])->name('aca_school_students_guardians_list');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
         ->post('school/students/{studentId}/guardians/store', [AcaSchoolStudentController::class, 'storeGuardian'])->name('aca_school_students_guardians_store');
-    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
         ->put('school/students/guardians/{guardianId}/update', [AcaSchoolStudentController::class, 'updateGuardian'])->name('aca_school_students_guardians_update');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar'])
         ->delete('school/students/guardians/{guardianId}/destroy', [AcaSchoolStudentController::class, 'destroyGuardian'])->name('aca_school_students_guardians_destroy');
@@ -911,10 +913,40 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     // Matriculas escolares
     Route::middleware(['middleware' => 'permission:aca_school_matricula_listado'])
         ->get('school/enrollments', [AcaSchoolEnrollmentController::class, 'index'])->name('aca_school_enrollments_list');
+
+    // Tarifas de cobros del colegio
+    Route::middleware(['middleware' => 'permission:aca_school_tarifa_listado'])
+        ->get('school/fees', [AcaSchoolFeeController::class, 'index'])->name('aca_school_fees_list');
+    Route::middleware(['middleware' => 'permission:aca_school_tarifa_editar'])
+        ->post('school/fees/store', [AcaSchoolFeeController::class, 'store'])->name('aca_school_fees_store');
+    Route::middleware(['middleware' => 'permission:aca_school_tarifa_editar'])
+        ->post('school/fees/update/{id}', [AcaSchoolFeeController::class, 'update'])->name('aca_school_fees_update');
+    Route::middleware(['middleware' => 'permission:aca_school_tarifa_eliminar'])
+        ->delete('school/fees/destroy/{id}', [AcaSchoolFeeController::class, 'destroy'])->name('aca_school_fees_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_tarifa_editar'])
+        ->post('school/fees/grades-by-level', [AcaSchoolFeeController::class, 'gradesByLevel'])->name('aca_school_fees_grades');
+    Route::middleware(['middleware' => 'permission:aca_school_tarifa_editar'])
+        ->post('school/fees/sections-by-grade', [AcaSchoolFeeController::class, 'sectionsByGrade'])->name('aca_school_fees_sections');
+
+    // Cobros a los alumnos (por matricula)
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
+        ->get('school/charges/{enrollmentId}', [AcaSchoolChargeController::class, 'show'])->name('aca_school_charges_show');
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
+        ->get('school/charges/by-student/{studentId}', [AcaSchoolChargeController::class, 'byStudent'])->name('aca_school_charges_by_student');
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_registrar'])
+        ->post('school/charges/store', [AcaSchoolChargeController::class, 'store'])->name('aca_school_charges_store');
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_registrar'])
+        ->post('school/charges/{id}/annul', [AcaSchoolChargeController::class, 'annul'])->name('aca_school_charges_annul');
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_registrar'])
+        ->post('school/charges/generate-schedule', [AcaSchoolChargeController::class, 'generateSchedule'])->name('aca_school_charges_generate_schedule');
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_registrar'])
+        ->post('school/charges/comprobante', [AcaSchoolChargeController::class, 'storeComprobante'])->name('aca_school_charges_comprobante');
     Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
         ->get('school/enrollments/create', [AcaSchoolEnrollmentController::class, 'create'])->name('aca_school_enrollments_create');
     Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
         ->post('school/enrollments/store', [AcaSchoolEnrollmentController::class, 'store'])->name('aca_school_enrollments_store');
+    Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
+        ->post('school/enrollments/check-enrollment', [AcaSchoolEnrollmentController::class, 'checkEnrollment'])->name('aca_school_enrollments_check');
     Route::middleware(['middleware' => 'permission:aca_school_matricula_editar'])
         ->put('school/enrollments/{id}/update', [AcaSchoolEnrollmentController::class, 'update'])->name('aca_school_enrollments_update');
     Route::middleware(['middleware' => 'permission:aca_school_matricula_editar'])

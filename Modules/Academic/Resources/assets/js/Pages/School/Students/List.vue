@@ -3,7 +3,21 @@ import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import { useForm, Link, router } from '@inertiajs/vue3';
 import Swal2 from 'sweetalert2';
-import { faPencil, faTrash, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { computed } from 'vue';
+import { faPencil, faTrash, faUserPlus, faUsers, faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
+import { usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+
+const permissions = computed(() => page.props.auth?.permissions || []);
+
+const hasPermission = (permission) => {
+    if (!permission) {
+        return true;
+    }
+
+    return permissions.value.includes(permission);
+};
 
 const props = defineProps({
     students: { type: Object, default: () => ({}) },
@@ -125,6 +139,14 @@ const destroyStudent = (id) => {
                                             <font-awesome-icon :icon="faPencil" class="m-0" />
                                         </Link>
                                         <tippy target="bottom" placement="bottom">Editar</tippy>
+                                        <Link v-if="hasPermission('aca_school_alumno_apoderados')" v-tippy:bottom :href="route('aca_school_students_edit', item.id)" type="button" class="btn btn-sm btn-outline-success">
+                                            <font-awesome-icon :icon="faUsers" class="m-0" />
+                                        </Link>
+                                        <tippy target="bottom" placement="bottom">Apoderados</tippy>
+                                        <Link v-if="item.active_enrollment_id" v-tippy:bottom :href="route('aca_school_charges_by_student', item.id)" type="button" class="btn btn-sm btn-outline-info">
+                                            <font-awesome-icon :icon="faMoneyBillWave" class="m-0" />
+                                        </Link>
+                                        <tippy target="bottom" placement="bottom">Cobrar matrícula/mensualidad</tippy>
                                         <button v-tippy:bottom type="button" class="btn btn-sm btn-outline-danger" @click="destroyStudent(item.id)">
                                             <font-awesome-icon :icon="faTrash" />
                                         </button>

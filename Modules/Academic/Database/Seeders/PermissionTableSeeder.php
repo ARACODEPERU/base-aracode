@@ -111,6 +111,7 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_nuevo']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_editar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_alumno_apoderados']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_matricula_listado']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_matricula_nueva']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_matricula_editar']));
@@ -118,6 +119,11 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_nuevo']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_editar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_docente_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_tarifa_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_tarifa_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_tarifa_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_cobro_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_cobro_registrar']));
 
         foreach ($permissions as $permission) {
 

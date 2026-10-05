@@ -15,6 +15,7 @@ const form = useForm({
     address: props.school.address,
     phone: props.school.phone,
     email: props.school.email,
+    type: props.school.type ?? 'privado',
     is_default: !!props.school.is_default,
     status: !!props.school.status,
 });
@@ -55,6 +56,13 @@ const updateSchool = () => {
                     <div>
                         <label class="form-label">Código modular (MINEDU)</label>
                         <input v-model="form.modular_code" type="text" class="form-input" maxlength="20" />
+                    </div>
+                    <div>
+                        <label class="form-label">Tipo de colegio *</label>
+                        <select v-model="form.type" class="form-select">
+                            <option value="privado">Privado (cobros con mensualidad obligatoria)</option>
+                            <option value="nacional">Nacional (cobros voluntarios)</option>
+                        </select>
                     </div>
                     <div>
                         <label class="form-label">Teléfono</label>

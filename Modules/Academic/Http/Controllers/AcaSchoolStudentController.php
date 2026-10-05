@@ -41,6 +41,9 @@ class AcaSchoolStudentController extends Controller
                 })
                 ->orderBy('people.full_name')
                 ->select('aca_school_students.*')
+                ->selectRaw('(SELECT ae.id FROM aca_school_enrollments ae
+                    WHERE ae.student_id = aca_school_students.id AND ae.status = ?
+                    ORDER BY ae.id DESC LIMIT 1) AS active_enrollment_id', [AcaSchoolEnrollment::STATUS_ACTIVO])
                 ->with('person')
                 ->paginate(20)
                 ->onEachSide(2)

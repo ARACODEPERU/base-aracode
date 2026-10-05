@@ -40,6 +40,7 @@ class AcaSchoolController extends Controller
         $this->validate($request, [
             'name' => 'required|max:300',
             'modular_code' => 'nullable|max:20',
+            'type' => 'required|in:privado,nacional',
         ]);
 
         AcaSchool::create($this->payload($request, true));
@@ -60,6 +61,7 @@ class AcaSchoolController extends Controller
         $this->validate($request, [
             'name' => 'required|max:300',
             'modular_code' => 'nullable|max:20',
+            'type' => 'required|in:privado,nacional',
         ]);
 
         $school = AcaSchool::findOrFail($request->get('id'));
@@ -115,6 +117,7 @@ class AcaSchoolController extends Controller
             'address' => $request->get('address'),
             'phone' => $request->get('phone'),
             'email' => $request->get('email'),
+            'type' => $request->get('type', AcaSchool::TYPE_PRIVADO),
             'status' => $request->boolean('status'),
         ];
 

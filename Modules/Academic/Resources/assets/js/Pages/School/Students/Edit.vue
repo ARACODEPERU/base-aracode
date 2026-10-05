@@ -1,9 +1,9 @@
 <script setup>
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
-import { useForm, Link } from '@inertiajs/vue3';
+import { useForm, Link, usePage } from '@inertiajs/vue3';
 import Swal2 from 'sweetalert2';
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import ModalSmall from '@/Components/ModalSmall.vue';
 import GuardianSearchModal from './../../../Components/GuardianSearchModal.vue';
@@ -15,6 +15,18 @@ const props = defineProps({
     guardianRelationships: { type: Object, default: () => ({}) },
     ubigeo: { type: Array, default: () => [] },
 });
+
+const page = usePage();
+
+const permissions = computed(() => page.props.auth?.permissions || []);
+
+const hasPermission = (permission) => {
+    if (!permission) {
+        return true;
+    }
+
+    return permissions.value.includes(permission);
+};
 
 const person = props.student.person ?? {};
 
@@ -246,13 +258,13 @@ const removeGuardian = (guardian) => {
                         <label for="student_status" class="ml-2 text-sm">Activo</label>
                     </div>
                     <div class="sm:col-span-3 flex justify-end gap-2">
-                        <Link :href="route('aca_school_students_list')" class="btn btn-outline-danger">Cancelar</Link>
+                        <Link :href="route('aca_school_students_list')" class="btn btn-outline-secondary">Ir al listado</Link>
                         <button type="submit" class="btn btn-primary" :disabled="form.processing">Guardar cambios</button>
                     </div>
                 </form>
             </div>
 
-            <div class="panel mt-5">
+            <div v-if="hasPermission('aca_school_alumno_apoderados')" class="panel mt-5">
                 <div class="flex items-center justify-between p-5 border-b border-[#ebedf2] dark:border-[#191e3a]">
                     <h3 class="text-lg font-semibold">Apoderados</h3>
                     <PrimaryButton type="button" @click="showGuardianSearchModal = true">

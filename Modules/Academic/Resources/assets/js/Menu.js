@@ -20,7 +20,8 @@ import {
     faFileSignature,
     faChalkboardUser,
     faLayerGroup,
-    faBell
+    faBell,
+    faMoneyBillWave
 
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -241,6 +242,20 @@ const colegioGroup = {
             text: 'Matrículas',
             icom: faFileSignature,
             permissions: 'aca_school_matricula_listado',
+        },
+        {
+            route: route('aca_school_fees_list'),
+            status: false,
+            text: 'Tarifas',
+            icom: faTags,
+            permissions: 'aca_school_tarifa_listado',
+        },
+        {
+            route: route('aca_school_enrollments_list'),
+            status: false,
+            text: 'Cobros',
+            icom: faMoneyBillWave,
+            permissions: 'aca_school_cobro_listado',
         },
         {
             route: route('aca_school_teachers_list'),

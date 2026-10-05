@@ -10,6 +10,9 @@ class AcaSchool extends Model
 {
     use HasFactory;
 
+    public const TYPE_PRIVADO = 'privado';
+    public const TYPE_NACIONAL = 'nacional';
+
     protected $fillable = [
         'name',
         'modular_code',
@@ -17,6 +20,7 @@ class AcaSchool extends Model
         'phone',
         'email',
         'logo',
+        'type',
         'is_default',
         'status',
     ];
@@ -44,6 +48,14 @@ class AcaSchool extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(AcaSchoolEnrollment::class, 'school_id');
+    }
+
+    public static function typeLabels(): array
+    {
+        return [
+            self::TYPE_PRIVADO => 'Privado',
+            self::TYPE_NACIONAL => 'Nacional',
+        ];
     }
 
     /**
