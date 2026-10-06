@@ -9,7 +9,8 @@ import {
     faCalendarDays,
     faClipboardList,
     faGear,
-    faBell
+    faBell,
+    faCalendarCheck
 } from "@fortawesome/free-solid-svg-icons";
 import menuDental from 'Modules/Dental/Resources/assets/js/Menu.js';
 
@@ -64,6 +65,27 @@ const menuHealth = {
                         <li>📲 <span>Aviso antes de la cita: 30 minutos, 1 hora o el tiempo que definas.</span></li>
                         <li>📅 <span>Aviso un día antes, a la hora que elijas.</span></li>
                         <li>✍️ <span>Mensajes editables con variables como {paciente}, {hora_cita} y {nombre_dr}.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            }
+        },
+        {
+            route: route('heal_google_calendar'),
+            status: false,
+            text: 'Google Calendar',
+            icom: faCalendarCheck,
+            permissions: 'heal_google_calendar',
+            info: {
+                title: 'Sincronización con Google Calendar',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Las citas de la Agenda también se ven en el calendario del consultorio.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📅 <span>Crear, mover o cancelar una cita actualiza el evento en Google.</span></li>
+                        <li>🔄 <span>Los eventos creados o editados en Google vuelven a la Agenda.</span></li>
+                        <li>📥 <span>Los eventos que no se pueden resolver quedan en la bandeja "Por revisar".</span></li>
                     </ul>
                 `,
                 placement: 'right'
