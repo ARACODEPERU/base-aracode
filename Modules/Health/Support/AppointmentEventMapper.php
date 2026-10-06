@@ -4,7 +4,6 @@ namespace Modules\Health\Support;
 
 use Carbon\Carbon;
 use Modules\Dental\Entities\DentAppointment;
-use Modules\Health\Entities\HealSetting;
 
 /**
  * Traduce entre una cita de la Agenda y un evento de Google Calendar.
@@ -18,9 +17,6 @@ use Modules\Health\Entities\HealSetting;
  */
 class AppointmentEventMapper
 {
-    /** Separadores aceptados entre el paciente y el motivo de la cita. */
-    private const SUMMARY_SEPARATORS = [' — ', ' – ', ' - '];
-
     /**
      * Campos de la cita que, al cambiar, ameritan volver a enviar el evento.
      *
@@ -45,6 +41,14 @@ class AppointmentEventMapper
         'status',
         'important',
     ];
+
+    /** Plantillas configurables del titulo y la descripcion del evento. */
+    private AppointmentEventTemplate $templates;
+
+    public function __construct(?AppointmentEventTemplate $templates = null)
+    {
+        $this->templates = $templates ?? new AppointmentEventTemplate();
+    }
 
     /**
      * true si alguno de los campos cambiados importa para el calendario.
@@ -77,8 +81,8 @@ class AppointmentEventMapper
         $end = $this->endAt($appointment, $start, $timezone);
 
         return [
-            'summary' => $this->summaryText($appointment),
-            'description' => $this->descriptionText($appointment),
+            'summary' => $this->summaryText($appointment, $start, $end),
+            'description' => $this->descriptionText($appointment, $start, $end),
             'start' => ['dateTime' => $start->format('c'), 'timeZone' => $timezone],
             'end' => ['dateTime' => $end->format('c'), 'timeZone' => $timezone],
             'status' => 'confirmed',
@@ -199,7 +203,7 @@ class AppointmentEventMapper
         // lugar del dato original y la lectura dejaria de ser idempotente.
         // Solo se baja la descripcion cuando el texto es distinto al nuestro
         // (es decir, cuando alguien la edito en Google).
-        if ($details !== '' && $details !== $this->descriptionText($appointment)) {
+        if ($details !== '' && $details !== $this->descriptionText($appointment, $start, $end)) {
             $this->putIfDifferent($changes, $appointment, 'details', mb_substr($details, 0, 255));
         }
 
@@ -213,75 +217,62 @@ class AppointmentEventMapper
     }
 
     /**
-     * Titulo del evento: "{paciente} — {motivo de la cita}".
+     * Titulo del evento segun la plantilla configurada (SC-00018).
      */
-    public function summaryText(DentAppointment $appointment): string
+    public function summaryText(DentAppointment $appointment, ?Carbon $start = null, ?Carbon $end = null): string
     {
-        $patient = trim((string) ($appointment->patient?->full_name ?? ''));
+        [$start, $end] = $this->moments($appointment, $start, $end);
 
-        if ($patient === '') {
-            $patient = 'Paciente';
-        }
-
-        $description = trim((string) ($appointment->description ?? ''));
-
-        if ($description === '') {
-            $description = 'Cita';
-        }
-
-        return mb_substr($patient . ' — ' . $description, 0, 255);
+        return $this->templates->title($appointment, $start, $end);
     }
 
     /**
-     * Descripcion del evento con los datos utiles de la cita.
+     * Descripcion del evento segun la plantilla configurada (SC-00019).
      *
-     * Nunca incluye informacion clinica: solo identificacion, motivo y contacto.
+     * Nunca incluye informacion clinica: solo lo que el consultorio decide
+     * mostrar en su calendario.
+     *
+     * Los momentos que llegan mandan sobre los de la cita: asi la comparacion
+     * de ida y vuelta usa el mismo texto que el evento que se acaba de leer.
      */
-    public function descriptionText(DentAppointment $appointment): string
+    public function descriptionText(DentAppointment $appointment, ?Carbon $start = null, ?Carbon $end = null): string
     {
-        $lines = [];
+        [$start, $end] = $this->moments($appointment, $start, $end);
 
-        $correlative = trim((string) ($appointment->correlative ?? ''));
+        return $this->templates->description($appointment, $start, $end);
+    }
 
-        $lines[] = 'Cita #' . ($correlative !== '' ? $correlative : $appointment->id);
+    /**
+     * Plantillas del evento (las usa la pantalla de Google Calendar).
+     */
+    public function templates(): AppointmentEventTemplate
+    {
+        return $this->templates;
+    }
 
-        $doctor = trim((string) ($appointment->doctor?->full_name ?? ''));
+    /**
+     * Momentos de la cita: los que llegan (de un evento) o los de la cita.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function moments(DentAppointment $appointment, ?Carbon $start, ?Carbon $end): array
+    {
+        $timezone = (string) config('health.google_calendar.timezone', 'America/Lima');
 
-        if ($doctor !== '') {
-            $lines[] = 'Doctor: ' . $doctor;
-        }
+        $start = $start ?? $this->startAt($appointment, $timezone);
+        $end = $end ?? $this->endAt($appointment, $start, $timezone);
 
-        $phone = trim((string) ($appointment->telephone ?? ''));
-
-        if ($phone === '') {
-            $phone = trim((string) ($appointment->patient?->telephone ?? ''));
-        }
-
-        if ($phone !== '') {
-            $lines[] = 'Teléfono: ' . $phone;
-        }
-
-        $details = trim((string) ($appointment->details ?? ''));
-
-        if ($details !== '') {
-            $lines[] = $details;
-        }
-
-        $clinic = trim((string) (HealSetting::first()?->establishment_name ?? ''));
-
-        if ($clinic !== '') {
-            $lines[] = $clinic;
-        }
-
-        return mb_substr(implode("\n", $lines), 0, 1000);
+        return [$start, $end];
     }
 
     /**
      * Motivo de la cita a partir del titulo del evento.
      *
-     * Quita el prefijo del paciente si esta presente; asi el titulo que escribe
-     * Google no se va acumulando ("Paciente — Paciente — motivo") en cada
-     * vuelta.
+     * El titulo puede ser configurable, asi que el nombre del paciente se busca
+     * en cualquier parte y se quita junto con los separadores que quedan
+     * sueltos: de "Cita: Juan Perez - Limpieza" sale "Cita: Limpieza", y de
+     * "Paciente — motivo" sale "motivo". Si no queda un texto con sentido se
+     * devuelve null y el motivo guardado no se toca.
      */
     public function descriptionFromSummary(string $summary, DentAppointment $appointment): ?string
     {
@@ -292,19 +283,60 @@ class AppointmentEventMapper
         }
 
         $patient = trim((string) ($appointment->patient?->full_name ?? ''));
+        $text = $summary;
+        $position = $patient === '' ? false : mb_stripos($summary, $patient);
 
-        if ($patient !== '') {
-            foreach (self::SUMMARY_SEPARATORS as $separator) {
-                $prefix = $patient . $separator;
+        if ($position !== false) {
+            $text = mb_substr($summary, 0, $position)
+                . ' '
+                . mb_substr($summary, $position + mb_strlen($patient));
 
-                if (str_starts_with($summary, $prefix)) {
-                    $summary = trim(mb_substr($summary, mb_strlen($prefix)));
-                    break;
-                }
+            // El separador que unia el nombre con el resto queda en medio.
+            $text = (string) preg_replace('/\s+[—–|]\s+|\s+-\s+/u', ' ', $text);
+
+            // Envoltorios que el nombre dejo vacios: "Limpieza (María) -> Limpieza ().".
+            $text = (string) preg_replace('/[\(\[\{]\s*[\)\]\}]/u', '', $text);
+        }
+
+        // Separadores y signos que quedaron sueltos al principio o al final (una
+        // llave de apertura al final, o de cierre al principio, no dicen nada).
+        $text = (string) preg_replace('/^[\s—–|\-:,\)\]\}]+/u', '', $text);
+        $text = (string) preg_replace('/[\s—–|\-:,\(\[\{]+$/u', '', $text);
+        $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+
+        // Sin un texto con sentido no se toca el motivo de la cita.
+        if (mb_strlen($text) < 3) {
+            return null;
+        }
+
+        return mb_substr($text, 0, 255);
+    }
+
+    /**
+     * Separa un titulo en las partes que podrian traer el nombre del paciente.
+     *
+     * @return array<int, string>
+     */
+    public function summaryCandidates(string $summary): array
+    {
+        $summary = trim($summary);
+
+        if ($summary === '') {
+            return [];
+        }
+
+        $parts = preg_split('/\s*[—–|,:\/]\s*|\s+-\s+/u', $summary) ?: [];
+        $candidates = [$summary];
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+
+            if (mb_strlen($part) >= 3) {
+                $candidates[] = $part;
             }
         }
 
-        return mb_substr($summary, 0, 255);
+        return array_values(array_unique($candidates));
     }
 
     /**

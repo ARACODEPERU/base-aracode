@@ -671,28 +671,27 @@ class GoogleCalendarSyncService
     }
 
     /**
-     * Paciente cuyo nombre completo coincide con lo que abre el titulo.
+     * Paciente cuyo nombre completo aparece en el titulo del evento.
+     *
+     * El titulo es configurable, asi que el nombre se busca en cualquier parte:
+     * primero el titulo completo y despues cada una de sus partes (separadas por
+     * guiones, dos puntos, comas o barras).
      */
     private function matchPatientBySummary(string $summary): ?HealPatient
     {
-        $summary = trim($summary);
+        foreach ($this->mapper->summaryCandidates($summary) as $candidate) {
+            $patient = HealPatient::with('person')
+                ->whereHas('person', function ($query) use ($candidate) {
+                    $query->whereRaw('LOWER(full_name) = ?', [mb_strtolower($candidate)]);
+                })
+                ->first();
 
-        if ($summary === '') {
-            return null;
+            if ($patient) {
+                return $patient;
+            }
         }
 
-        $parts = preg_split('/\s+[—–-]\s+/u', $summary, 2);
-        $candidate = trim((string) ($parts[0] ?? ''));
-
-        if ($candidate === '' || mb_strlen($candidate) < 3) {
-            return null;
-        }
-
-        return HealPatient::with('person')
-            ->whereHas('person', function ($query) use ($candidate) {
-                $query->whereRaw('LOWER(full_name) = ?', [mb_strtolower($candidate)]);
-            })
-            ->first();
+        return null;
     }
 
     /**

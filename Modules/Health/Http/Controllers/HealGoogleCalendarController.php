@@ -3,18 +3,23 @@
 namespace Modules\Health\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Person;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealGoogleCalendarEvent;
 use Modules\Health\Entities\HealPatient;
 use Modules\Health\Jobs\PullGoogleCalendarChanges;
 use Modules\Health\Services\GoogleCalendarService;
 use Modules\Health\Services\GoogleCalendarSyncService;
+use Modules\Health\Support\AppointmentEventMapper;
+use Modules\Health\Support\AppointmentEventTemplate;
 
 /**
  * Pantalla Salud > Google Calendar.
@@ -35,6 +40,7 @@ class HealGoogleCalendarController extends Controller
     public function __construct(
         private readonly GoogleCalendarSyncService $sync,
         private readonly GoogleCalendarService $google,
+        private readonly AppointmentEventMapper $mapper,
     ) {
     }
 
@@ -52,6 +58,7 @@ class HealGoogleCalendarController extends Controller
             'doctors' => $this->doctorOptions(),
             'parametersUrl' => route('parameters'),
             'reconcileMinutes' => (int) config('health.google_calendar.reconcile_minutes', 5),
+            'eventTemplate' => $this->eventTemplateProps(),
         ]);
     }
 
@@ -162,13 +169,129 @@ class HealGoogleCalendarController extends Controller
 
         $failed = array_values(array_filter($results, fn (array $check) => ! $check['ok']));
 
-        $redirect = back()->with('diagnostics', $results);
+        // La hora viaja con el resultado: la pantalla distingue una prueba nueva
+        // de la anterior aunque las comprobaciones sean las mismas.
+        $redirect = back()->with('diagnostics', [
+            'checks' => $results,
+            'at' => now()->format('H:i:s'),
+        ]);
 
         if ($failed === []) {
-            return $redirect->with('message', 'Conexion con Google verificada: todo en orden.');
+            return $redirect->with('message', 'Conexión con Google verificada: todo en orden.');
         }
 
-        return $redirect->with('error', 'Revisa el diagnostico: ' . $failed[0]['label'] . ' — ' . $failed[0]['message']);
+        return $redirect->with(
+            'error',
+            'La conexión con Google falló en ' . $failed[0]['label'] . ': ' . $failed[0]['message']
+        );
+    }
+
+    /**
+     * Guarda las plantillas del evento (JSON, sin recargar la pantalla).
+     */
+    public function saveTemplates(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'title' => ['nullable', 'string', 'max:' . AppointmentEventTemplate::TEMPLATE_MAX],
+            'description' => ['nullable', 'string', 'max:' . AppointmentEventTemplate::TEMPLATE_MAX],
+        ]);
+
+        $this->mapper->templates()->save($data['title'] ?? null, $data['description'] ?? null);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Plantillas guardadas. Los próximos eventos se enviarán con este texto.',
+            'template' => $this->eventTemplateProps(),
+        ]);
+    }
+
+    /**
+     * Vista previa: el texto exactamente como lo recibirá Google Calendar.
+     */
+    public function previewTemplates(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'title' => ['nullable', 'string', 'max:' . AppointmentEventTemplate::TEMPLATE_MAX],
+            'description' => ['nullable', 'string', 'max:' . AppointmentEventTemplate::TEMPLATE_MAX],
+        ]);
+
+        [$appointment, $source] = $this->sampleAppointment();
+        $timezone = $this->google->timezone();
+        $start = $this->mapper->startAt($appointment, $timezone);
+        $end = $this->mapper->endAt($appointment, $start, $timezone);
+
+        return response()->json([
+            'ok' => true,
+            'source' => $source,
+            'preview' => $this->mapper->templates()->preview(
+                $appointment,
+                $start,
+                $end,
+                $data['title'] ?? null,
+                $data['description'] ?? null
+            ),
+        ]);
+    }
+
+    /**
+     * Plantillas del evento y variables disponibles para la pantalla.
+     *
+     * @return array<string, mixed>
+     */
+    private function eventTemplateProps(): array
+    {
+        $templates = $this->mapper->templates();
+
+        return $templates->templates() + ['variables' => $templates->available()];
+    }
+
+    /**
+     * Cita de ejemplo para la vista previa.
+     *
+     * Usa la última cita registrada y, si todavía no hay ninguna, una cita
+     * armada en memoria (nunca se guarda).
+     *
+     * @return array{0: DentAppointment, 1: string}
+     */
+    private function sampleAppointment(): array
+    {
+        $appointment = DentAppointment::with(['patient', 'doctor'])
+            ->orderByDesc('date_appointmen')
+            ->orderByDesc('time_appointmen')
+            ->first();
+
+        if ($appointment) {
+            return [$appointment, 'última cita registrada'];
+        }
+
+        $date = now()->addDay()->toDateString();
+
+        $demo = new DentAppointment([
+            'description' => 'Limpieza dental',
+            'details' => 'Paciente con ortodoncia',
+            'message' => 'Consultorio 2',
+            'telephone' => '999 888 777',
+            'date_appointmen' => $date,
+            'time_appointmen' => '08:00:00',
+            'date_end_appointmen' => $date,
+            'time_end_appointmen' => '08:30:00',
+            'status' => '1',
+        ]);
+
+        $demo->correlative = 'C-00012';
+
+        $demo->setRelation('patient', (new Person())->forceFill([
+            'full_name' => 'María López',
+            'number' => '45678912',
+            'telephone' => '999 888 777',
+            'email' => 'maria@correo.com',
+        ]));
+
+        $demo->setRelation('doctor', (new Person())->forceFill([
+            'full_name' => 'Juan Pérez',
+        ]));
+
+        return [$demo, 'cita de ejemplo (todavía no hay citas registradas)'];
     }
 
     /**

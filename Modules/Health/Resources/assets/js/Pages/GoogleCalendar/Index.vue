@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
@@ -34,6 +34,11 @@ const props = defineProps({
         type: Number,
         default: 5,
     },
+    // Plantillas del evento (título y descripción) y variables disponibles.
+    eventTemplate: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const page = usePage();
@@ -44,10 +49,40 @@ const inboundActive = ref(Boolean(props.channel.inbound));
 const savedInbound = ref(Boolean(props.channel.inbound));
 const busy = ref(false);
 
-// Diagnóstico del botón "Probar conexión": llega como flash desde el servidor.
-const diagnostics = ref(
-    Array.isArray(page.props.flash?.diagnostics) ? page.props.flash.diagnostics : []
-);
+// Diagnóstico del botón "Probar conexión". Llega como flash y se refresca con
+// un vigilante: Inertia reutiliza el componente en las peticiones POST, así que
+// una lectura única al montar nunca vería el resultado.
+const diagnostics = ref([]);
+const diagnosticsAt = ref('');
+const diagnosticsPanel = ref(null);
+
+// Plantillas del evento: se editan aquí y se guardan sin recargar la pantalla.
+const templates = reactive({
+    title: String(props.eventTemplate?.title ?? ''),
+    description: String(props.eventTemplate?.description ?? ''),
+});
+const titleInput = ref(null);
+const descriptionInput = ref(null);
+const preview = ref(null);
+const previewSource = ref('');
+const templateBusy = ref(false);
+const templateMessage = ref('');
+
+const variables = computed(() => props.eventTemplate?.variables ?? []);
+const templateDefaults = computed(() => ({
+    title: String(props.eventTemplate?.defaultTitle ?? ''),
+    description: String(props.eventTemplate?.defaultDescription ?? ''),
+}));
+const variableGroups = computed(() => {
+    const groups = new Map();
+
+    variables.value.forEach((item) => {
+        const group = item.group ?? 'Variables';
+        groups.set(group, [...(groups.get(group) ?? []), item]);
+    });
+
+    return Array.from(groups, ([group, items]) => ({ group, items }));
+});
 
 // Formularios de la bandeja "Por revisar": uno por evento, con el paciente
 // sugerido preseleccionado cuando el título coincide con alguien del padrón.
@@ -107,15 +142,157 @@ const flash = (icon, title, text) => {
     });
 };
 
-const showFlash = () => {
-    if (page.props.flash?.message) {
-        flash('success', 'Listo', page.props.flash.message);
+// Avisos y resultado del diagnóstico.
+//
+// Inertia reutiliza el componente de la página en las peticiones POST, así que
+// no basta con leer los avisos al montar: se procesan al montar (por ejemplo al
+// volver de Google) y en cada respuesta nueva.
+const handleFlash = (flashProps) => {
+    const payload = flashProps?.diagnostics;
+
+    if (payload && Array.isArray(payload.checks)) {
+        diagnostics.value = payload.checks;
+        diagnosticsAt.value = payload.at ?? '';
+
+        nextTick(() => {
+            diagnosticsPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
     }
 
-    if (page.props.flash?.error) {
-        flash('error', 'No se pudo completar', page.props.flash.error);
+    if (flashProps?.message) {
+        flash('success', 'Listo', flashProps.message);
+    }
+
+    if (flashProps?.error) {
+        flash('error', 'No se pudo completar', flashProps.error);
     }
 };
+
+handleFlash(page.props.flash);
+watch(() => page.props.flash, handleFlash);
+
+// El estado real lo manda el servidor: los interruptores se sincronizan con
+// cada respuesta (así una acción fallida vuelve a su sitio).
+watch(() => props.channel, (channel) => {
+    channelActive.value = Boolean(channel.active);
+    savedChannelActive.value = channelActive.value;
+    inboundActive.value = Boolean(channel.inbound);
+    savedInbound.value = inboundActive.value;
+});
+
+// La bandeja puede traer eventos nuevos: se les crea su formulario para que los
+// desplegables siempre tengan dónde guardar.
+watch(() => props.reviewItems, (items) => {
+    items.forEach((item) => {
+        if (!reviewForms[item.id]) {
+            reviewForms[item.id] = {
+                patient_id: String(matchPatientId(item.suggested_patient) ?? ''),
+                doctor_id: props.doctors.length === 1 ? String(props.doctors[0].code) : '',
+            };
+        }
+    });
+});
+
+// Textos del evento: insertar variables, ver la vista previa y guardar.
+const savedTitle = ref(String(props.eventTemplate?.title ?? ''));
+const savedDescription = ref(String(props.eventTemplate?.description ?? ''));
+
+const templatesChanged = computed(
+    () => templates.title !== savedTitle.value || templates.description !== savedDescription.value
+);
+
+const diagnosticsSummary = computed(() => {
+    if (!diagnostics.value.length) {
+        return null;
+    }
+
+    const failed = diagnostics.value.filter((check) => !check.ok);
+
+    return {
+        ok: failed.length === 0,
+        total: diagnostics.value.length,
+        passed: diagnostics.value.length - failed.length,
+        failed,
+    };
+});
+
+// El campo donde está el cursor es el que recibe la variable.
+const activeField = ref('description');
+
+const insertVariable = (token, target = activeField.value) => {
+    const element = target === 'title' ? titleInput.value : descriptionInput.value;
+    const snippet = `{${token}}`;
+
+    if (!element) {
+        templates[target] = `${templates[target]}${snippet}`;
+        return;
+    }
+
+    const start = element.selectionStart ?? templates[target].length;
+    const end = element.selectionEnd ?? start;
+
+    templates[target] = `${templates[target].slice(0, start)}${snippet}${templates[target].slice(end)}`;
+
+    nextTick(() => {
+        element.focus();
+        const cursor = start + snippet.length;
+        element.setSelectionRange(cursor, cursor);
+    });
+};
+
+const runPreview = async () => {
+    templateBusy.value = true;
+    templateMessage.value = '';
+
+    try {
+        const { data } = await axios.post(route('heal_google_calendar_templates_preview'), {
+            title: templates.title,
+            description: templates.description,
+        });
+
+        preview.value = data.preview;
+        previewSource.value = data.source ?? '';
+    } catch (error) {
+        preview.value = null;
+        templateMessage.value = 'No se pudo generar la vista previa. Revisa los textos e inténtalo otra vez.';
+    } finally {
+        templateBusy.value = false;
+    }
+};
+
+const saveTemplates = async () => {
+    templateBusy.value = true;
+    templateMessage.value = '';
+
+    try {
+        const { data } = await axios.post(route('heal_google_calendar_templates'), {
+            title: templates.title,
+            description: templates.description,
+        });
+
+        savedTitle.value = templates.title;
+        savedDescription.value = templates.description;
+        templateMessage.value = data.message ?? 'Plantillas guardadas.';
+        flash('success', 'Plantillas guardadas', templateMessage.value);
+    } catch (error) {
+        const errors = error?.response?.data?.errors;
+        const firstError = errors ? Object.values(errors)[0]?.[0] : null;
+
+        templateMessage.value = firstError ?? 'No se pudieron guardar las plantillas.';
+        flash('error', 'No se pudo guardar', templateMessage.value);
+    } finally {
+        templateBusy.value = false;
+    }
+};
+
+const restoreDefaults = () => {
+    templates.title = templateDefaults.value.title;
+    templates.description = templateDefaults.value.description;
+    preview.value = null;
+    templateMessage.value = 'Textos de fábrica restaurados: pulsa Guardar para aplicarlos.';
+};
+
+const previewLine = (value) => (value === '' ? '(vacío)' : value);
 
 const copyRedirectUri = async () => {
     if (!redirectUri.value) {
@@ -193,7 +370,9 @@ const refreshChannel = () => {
 };
 
 const testConnection = () => {
+    // El resultado anterior se limpia para que el aviso sea siempre de esta prueba.
     diagnostics.value = [];
+    diagnosticsAt.value = '';
     post('heal_google_calendar_test');
 };
 
@@ -235,7 +414,6 @@ const discard = (item) => {
     post('heal_google_calendar_review_discard', { routeParams: [item.id] });
 };
 
-showFlash();
 </script>
 
 <template>
@@ -250,6 +428,46 @@ showFlash();
         </Navigation>
 
         <div class="mt-5 flex flex-col gap-6">
+            <!-- Resultado de "Probar conexión": verde si todo respondió, rojo con el motivo si algo falló -->
+            <div
+                v-if="diagnosticsSummary"
+                class="panel border-l-4"
+                :class="diagnosticsSummary.ok ? 'border-success' : 'border-danger'"
+            >
+                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl leading-none" :class="diagnosticsSummary.ok ? 'text-success' : 'text-danger'">
+                            {{ diagnosticsSummary.ok ? '✓' : '✕' }}
+                        </span>
+                        <div>
+                            <h6 class="text-base font-semibold dark:text-white-light">
+                                {{ diagnosticsSummary.ok
+                                    ? `Conexión verificada: ${diagnosticsSummary.passed} de ${diagnosticsSummary.total} comprobaciones correctas`
+                                    : `La conexión falló en «${diagnosticsSummary.failed[0].label}»` }}
+                            </h6>
+                            <p class="text-sm text-gray-500">
+                                {{ diagnosticsSummary.ok ? 'Google respondió bien y el calendario es accesible.' : diagnosticsSummary.failed[0].message }}
+                                <span v-if="diagnosticsAt">Última prueba: {{ diagnosticsAt }}.</span>
+                            </p>
+                            <p
+                                v-if="!diagnosticsSummary.ok && diagnosticsSummary.failed[0].hint"
+                                class="mt-1 text-xs text-warning"
+                            >
+                                {{ diagnosticsSummary.failed[0].hint }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary whitespace-nowrap"
+                        @click="diagnosticsPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                    >
+                        Ver detalle
+                    </button>
+                </div>
+            </div>
+
             <!-- Estado del canal -->
             <div class="panel">
                 <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -411,8 +629,11 @@ showFlash();
             </div>
 
             <!-- Diagnóstico -->
-            <div v-if="diagnostics.length" class="panel">
-                <h6 class="text-base font-semibold dark:text-white-light">Diagnóstico de la conexión</h6>
+            <div v-if="diagnostics.length" ref="diagnosticsPanel" class="panel">
+                <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                    <h6 class="text-base font-semibold dark:text-white-light">Diagnóstico de la conexión</h6>
+                    <span v-if="diagnosticsAt" class="text-xs text-gray-500">Última prueba: {{ diagnosticsAt }}</span>
+                </div>
 
                 <div class="mt-4 flex flex-col gap-3">
                     <div
@@ -464,6 +685,126 @@ showFlash();
                         Google solo entrega notificaciones a una URL HTTPS pública. En local no hay push: los cambios llegan por la
                         reconciliación programada cada {{ reconcileMinutes }} minutos.
                     </p>
+                </div>
+            </div>
+
+            <!-- Textos del evento -->
+            <div class="panel">
+                <h6 class="text-base font-semibold dark:text-white-light">Cómo se verán los eventos</h6>
+                <p class="mt-1 text-sm text-gray-500">
+                    Arma el título y la descripción con los datos de la cita. Se guardan en los parámetros
+                    {{ eventTemplate?.codes?.title }} y {{ eventTemplate?.codes?.description }}.
+                    Google Calendar no interpreta HTML en el evento creado por API: el texto se envía plano (los saltos de línea sí
+                    se respetan) y las etiquetas se quitan al enviar.
+                </p>
+
+                <div class="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm font-medium dark:text-white-light" for="event-title-template">
+                                    Título del evento
+                                </label>
+                                <span class="text-xs text-gray-500">
+                                    {{ templates.title.length }} / {{ eventTemplate?.limits?.title ?? 255 }}
+                                </span>
+                            </div>
+                            <input
+                                id="event-title-template"
+                                ref="titleInput"
+                                v-model="templates.title"
+                                type="text"
+                                class="form-input mt-1"
+                                @focus="activeField = 'title'"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">
+                                Una sola línea. Si queda vacío se envía el texto de fábrica.
+                            </p>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm font-medium dark:text-white-light" for="event-description-template">
+                                    Descripción del evento
+                                </label>
+                                <span class="text-xs text-gray-500">
+                                    {{ templates.description.length }} / {{ eventTemplate?.limits?.template ?? 2000 }}
+                                </span>
+                            </div>
+                            <textarea
+                                id="event-description-template"
+                                ref="descriptionInput"
+                                v-model="templates.description"
+                                rows="7"
+                                class="form-textarea mt-1"
+                                @focus="activeField = 'description'"
+                            ></textarea>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Una línea por dato: las líneas cuyos valores queden vacíos no se envían.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" class="btn btn-outline-primary" :disabled="templateBusy" @click="runPreview">
+                                Vista previa
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                :disabled="templateBusy || !templatesChanged"
+                                @click="saveTemplates"
+                            >
+                                Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" :disabled="templateBusy" @click="restoreDefaults">
+                                Textos de fábrica
+                            </button>
+                        </div>
+
+                        <p v-if="templateMessage" class="text-sm text-gray-600 dark:text-white-light">{{ templateMessage }}</p>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <div>
+                            <span class="text-sm font-medium dark:text-white-light">Variables</span>
+                            <p class="mt-1 text-xs text-gray-500">
+                                Un clic inserta la variable en el campo donde tengas el cursor.
+                            </p>
+
+                            <div class="mt-2 flex flex-col gap-3">
+                                <div v-for="group in variableGroups" :key="group.group">
+                                    <span class="block text-xs uppercase text-gray-400">{{ group.group }}</span>
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        <button
+                                            v-for="variable in group.items"
+                                            :key="variable.token"
+                                            type="button"
+                                            class="badge bg-primary/10 text-primary hover:bg-primary/20"
+                                            :title="`${variable.label}. Ejemplo: ${variable.example}`"
+                                            @click="insertVariable(variable.token)"
+                                        >
+                                            {{ '{' + variable.token + '}' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="preview" class="rounded border border-gray-200 p-3 dark:border-gray-600">
+                            <span class="block text-xs uppercase text-gray-400">Vista previa ({{ previewSource }})</span>
+
+                            <div class="mt-2 rounded bg-gray-100 p-3 dark:bg-gray-800">
+                                <span class="block text-sm font-semibold dark:text-white-light">
+                                    {{ previewLine(preview.title) }}
+                                </span>
+                                <pre class="mt-2 whitespace-pre-wrap text-xs text-gray-600 dark:text-gray-300">{{ previewLine(preview.description) }}</pre>
+                            </div>
+
+                            <ul v-if="preview.warnings?.length" class="mt-2 list-disc pl-5 text-xs text-warning">
+                                <li v-for="(warning, index) in preview.warnings" :key="index">{{ warning }}</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
 
