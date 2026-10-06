@@ -85,6 +85,9 @@ class HandleInertiaRequests extends Middleware
             },
             'flash' => [
                 'message' => fn () => $request->session()->get('message'),
+                // Resultado de los diagnosticos (por ejemplo el boton "Probar
+                // conexion" de Salud > Google Calendar).
+                'diagnostics' => fn () => $request->session()->get('diagnostics'),
                 // Mensajes de error de acciones del mantenedor (por ejemplo
                 // duplicados en Categorias/Tipo/Sector): BackWithError usa
                 // la misma llave de sesion.

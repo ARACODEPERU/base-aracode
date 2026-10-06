@@ -6,6 +6,8 @@
     import { Link, router, useForm } from '@inertiajs/vue3';
     import { Dropdown, Menu, MenuItem, Input, Select, Textarea, message } from 'ant-design-vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    // Ayuda de las credenciales de Google Calendar (boton "?" + guia).
+    import GoogleCalendarCredentialHelp from 'Modules/Health/Resources/assets/js/Components/GoogleCalendarCredentialHelp.vue';
 
     const props = defineProps({
         parameters: {
@@ -34,6 +36,29 @@
         }).then(()=>{
             lastSavedValues[id] = value;
             message.success('Se actualizó correctamente');
+        });
+    }
+
+    // Parámetros confidenciales (pwd): el valor guardado nunca llega al
+    // navegador. Solo se envía un valor nuevo, y de forma explícita, para que
+    // un clic o un blur accidental no borre una credencial ya registrada.
+    const saveSecret = (parameter) => {
+        const value = String(parameter.value_default ?? '').trim();
+
+        if (value === '') {
+            message.warning('Escribe el valor nuevo para reemplazar el que ya está guardado');
+            return;
+        }
+
+        axios.post(route('parameters_update_default_value', [parameter.id]), {
+            value_default: value,
+        }).then(({ data }) => {
+            parameter.value_default = '';
+            parameter.has_value = Boolean(data?.has_value ?? true);
+            lastSavedValues[parameter.id] = null;
+            message.success('Credencial guardada. No se volverá a mostrar.');
+        }).catch(() => {
+            message.error('No se pudo guardar la credencial');
         });
     }
 </script>
@@ -144,6 +169,31 @@
                                                 :options="JSON.parse(parameter.json_query_data)"
                                                 @change="updateDefaultValue(parameter.id, parameter.value_default)"
                                             />
+                                        </template>
+                                        <template v-else-if="parameter.control_type == 'pwd'">
+                                            <div class="flex items-start gap-2">
+                                                <Input
+                                                    v-model:value="parameter.value_default"
+                                                    type="password"
+                                                    autocomplete="new-password"
+                                                    :placeholder="parameter.has_value ? 'Guardado •••••• — escribe uno nuevo para reemplazarlo' : 'Sin registrar'"
+                                                    @pressEnter="saveSecret(parameter)"
+                                                />
+                                                <!-- ¿De dónde sale este valor? Solo aparece en los parámetros que tienen guía. -->
+                                                <GoogleCalendarCredentialHelp :parameter-code="parameter.parameter_code" />
+                                                <button
+                                                    type="button"
+                                                    class="whitespace-nowrap rounded bg-blue-900 px-3 py-1.5 text-xs font-medium uppercase text-white hover:bg-blue-700"
+                                                    @click="saveSecret(parameter)"
+                                                >
+                                                    Reemplazar
+                                                </button>
+                                            </div>
+                                            <small class="text-gray-500">
+                                                {{ parameter.has_value
+                                                    ? 'Valor confidencial guardado. No se muestra por seguridad.'
+                                                    : 'Valor confidencial: aún sin registrar.' }}
+                                            </small>
                                         </template>
                                         <template v-else-if="parameter.control_type == 'tx'">
                                             <Textarea

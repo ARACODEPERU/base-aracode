@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Academic\Services;
+namespace Modules\Integrationhub\Services;
 
 use App\Models\Parameter;
 use Illuminate\Support\Facades\Http;
@@ -16,17 +16,31 @@ use RuntimeException;
  * usuario y contrasena (Basic auth), el camino que documenta SMSGate para
  * integraciones.
  *
- * Parametros del sistema:
- *   - SC-00003: URL del servidor (la misma que usa la aplicacion; admite la
- *     ruta /mobile/v1 y se normaliza a /3rdparty/v1).
- *   - SC-00004: usuario.
- *   - SC-00005: contrasena.
+ * Las credenciales se leen de parametros del sistema cuyo codigo vive en la
+ * configuracion del canal que se le pase en el constructor. Asi el mismo
+ * servicio sirve al Academico y a Salud sin duplicar el transporte:
+ *
+ *   - Academic (prefijo por defecto 'academic.notifications.smsgate'):
+ *     SC-00003 (URL), SC-00004 (usuario) y SC-00005 (contrasena).
+ *   - Health ('health.notifications.smsgate'):
+ *     SC-00006 (URL), SC-00007 (usuario) y SC-00008 (contrasena).
  *
  * Si falta el usuario o la contrasena, isConfigured() devuelve false y la
- * opcion "SMS via SMSGate" no se muestra en la pantalla de Notificaciones.
+ * opcion de enviar SMS no se ofrece en la pantalla que use el canal.
  */
 class SmsgateService
 {
+    /**
+     * Prefijo de configuracion del canal (por defecto, el del modulo Academico).
+     *
+     * @param string $configPrefix clave base de config, por ejemplo
+     *                             'academic.notifications.smsgate'
+     */
+    public function __construct(
+        private readonly string $configPrefix = 'academic.notifications.smsgate',
+    ) {
+    }
+
     /** @var array{url: string, username: string, password: string}|null */
     private ?array $credentials = null;
 
@@ -60,9 +74,9 @@ class SmsgateService
         if ($credentials === null) {
             throw new RuntimeException(
                 'Falta configurar SMSGate (URL, usuario y contrasena) en los parametros del sistema '
-                . config('academic.notifications.smsgate.url_parameter', 'SC-00003') . ', '
-                . config('academic.notifications.smsgate.username_parameter', 'SC-00004') . ' y '
-                . config('academic.notifications.smsgate.password_parameter', 'SC-00005') . '.'
+                . $this->config('url_parameter', 'SC-00003') . ', '
+                . $this->config('username_parameter', 'SC-00004') . ' y '
+                . $this->config('password_parameter', 'SC-00005') . '.'
             );
         }
 
@@ -81,7 +95,7 @@ class SmsgateService
 
         try {
             $response = Http::withBasicAuth($credentials['username'], $credentials['password'])
-                ->timeout((int) config('academic.notifications.smsgate.timeout', 30))
+                ->timeout((int) $this->config('timeout', 30))
                 ->acceptJson()
                 ->post($this->endpoint(), [
                     'phoneNumbers' => [$to],
@@ -134,7 +148,7 @@ class SmsgateService
     {
         $value = $this->parameter('url_parameter', 'SC-00003');
 
-        return $value ?? trim((string) config('academic.notifications.smsgate.default_url', 'https://api.sms-gate.app/mobile/v1'));
+        return $value ?? trim((string) $this->config('default_url', 'https://api.sms-gate.app/mobile/v1'));
     }
 
     /**
@@ -154,7 +168,7 @@ class SmsgateService
         $base = preg_replace('#/mobile$#i', '', $base) ?? $base;
         $base = rtrim($base, '/');
 
-        $path = (string) config('academic.notifications.smsgate.messages_path', '/3rdparty/v1/messages');
+        $path = (string) $this->config('messages_path', '/3rdparty/v1/messages');
 
         return $base . '/' . ltrim($path, '/');
     }
@@ -164,7 +178,7 @@ class SmsgateService
      */
     private function parameter(string $key, string $defaultCode): ?string
     {
-        $code = trim((string) config('academic.notifications.smsgate.' . $key, $defaultCode));
+        $code = trim((string) $this->config($key, $defaultCode));
 
         if ($code === '') {
             return null;
@@ -173,5 +187,13 @@ class SmsgateService
         $value = trim((string) Parameter::where('parameter_code', $code)->value('value_default'));
 
         return $value === '' ? null : $value;
+    }
+
+    /**
+     * Valor de configuracion del canal (con el prefijo del constructor).
+     */
+    private function config(string $key, mixed $default = null): mixed
+    {
+        return config($this->configPrefix . '.' . $key, $default);
     }
 }

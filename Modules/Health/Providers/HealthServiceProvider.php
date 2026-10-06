@@ -30,7 +30,43 @@ class HealthServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
 
+        $this->registerCommands();
+        $this->registerObservers();
+
         $this->shareHealthSettings();
+    }
+
+    /**
+     * Registra los comandos de Salud.
+     *
+     * El Kernel de la aplicacion no descubre comandos de los modulos por la
+     * ruta (arriba, en App\Console), asi que cada modulo publica los suyos,
+     * igual que hacen Sales y Security.
+     */
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\Health\Console\SendHealthAppointmentNotices::class,
+                \Modules\Health\Console\SyncGoogleCalendar::class,
+                \Modules\Health\Console\RefreshGoogleCalendarChannel::class,
+            ]);
+        }
+    }
+
+    /**
+     * Observa las citas de la Agenda para sincronizarlas con Google Calendar.
+     *
+     * El observador vive aqui (y no en Dental) porque la sincronizacion es una
+     * funcion de Salud; registrar el modelo ajeno evita tener que tocar los
+     * controladores que ya crean citas (Agenda de Salud, CRUD de Dental, cita
+     * siguiente de una atencion).
+     */
+    protected function registerObservers(): void
+    {
+        \Modules\Dental\Entities\DentAppointment::observe(
+            \Modules\Health\Observers\DentAppointmentObserver::class
+        );
     }
 
     /**

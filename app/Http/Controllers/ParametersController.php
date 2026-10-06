@@ -12,6 +12,20 @@ use Inertia\Inertia;
 
 class ParametersController extends Controller
 {
+    /**
+     * Tipo de control de los parametros confidenciales (credenciales).
+     *
+     * Se guardan como cualquier otro parametro, pero la pantalla nunca los
+     * vuelve a mostrar: solo indica que hay un valor guardado.
+     */
+    private const SECRET_CONTROL_TYPE = 'pwd';
+
+    /**
+     * Centinela de la mascara: si la interfaz manda este texto (o un valor
+     * vacio) no se pisa el valor guardado.
+     */
+    private const SECRET_PLACEHOLDER = '********';
+
     public function index()
     {
         $parameters = (new Parameter())->newQuery();
@@ -48,6 +62,15 @@ class ParametersController extends Controller
                 $value_default = in_array(strtolower(trim((string) $value_default)), ['1', 'true']) ? '1' : '0';
             }
 
+            // Confidenciales (pwd): el valor NO viaja al navegador. Solo se
+            // informa si ya hay uno guardado para que la pantalla lo indique.
+            $is_secret = $parameter->control_type === self::SECRET_CONTROL_TYPE;
+            $has_value = trim((string) $parameter->value_default) !== '';
+
+            if ($is_secret) {
+                $value_default = null;
+            }
+
             array_push($formatted, [
                 'id' => $parameter->id,
                 'parameter_code' => $parameter->parameter_code,
@@ -55,6 +78,8 @@ class ParametersController extends Controller
                 'control_type' => $parameter->control_type,
                 'json_query_data' => $json_query_data,
                 'value_default' => $value_default,
+                'is_secret' => $is_secret,
+                'has_value' => $has_value,
                 'sync_status' => $sync_status,
             ]);
         }
@@ -99,20 +124,35 @@ class ParametersController extends Controller
     public function edit($id)
     {
         $parameter = Parameter::find($id);
+
+        $is_secret = $this->isSecret($parameter);
+        $has_value = $this->hasStoredValue($parameter);
+
+        // El valor de un parametro confidencial no viaja al formulario: solo el
+        // aviso de que ya hay uno guardado.
+        if ($is_secret && $parameter) {
+            $parameter->value_default = null;
+        }
+
         return Inertia::render('Parameters/Edit', [
-            'parameter' => $parameter
+            'parameter' => $parameter,
+            'is_secret' => $is_secret,
+            'has_value' => $has_value,
         ]);
     }
 
     public function update(Request $request, $id)
     {
+        $parameter = Parameter::find($id);
+        $is_secret = $this->isSecret($parameter);
 
         $this->validate($request, [
             'parameter_code'        => 'required|max:10',
             'parameter_code'        => 'unique:parameters,parameter_code,' . $id,
             'description'           => 'required|max:255',
             'control_type'          => 'required',
-            'value_default'         => 'required'
+            // En un confidencial el campo vacio significa "no lo cambies".
+            'value_default'         => $is_secret ? 'nullable' : 'required'
         ]);
 
         $valor_seguro = $request->get('value_default');
@@ -123,14 +163,23 @@ class ParametersController extends Controller
             $valor_seguro = htmlspecialchars($value_default, ENT_QUOTES, 'UTF-8');
         }
 
-        $parameter = Parameter::find($id);
-        $parameter->update([
+        if (! $parameter) {
+            return;
+        }
+
+        $attributes = [
             'parameter_code'        => $request->get('parameter_code'),
             'description'           => $request->get('description'),
             'control_type'          => $request->get('control_type'),
             'json_query_data'       => $request->get('json_query_data'),
-            'value_default'         => $valor_seguro
-        ]);
+        ];
+
+        // Un confidencial que llega vacio conserva su valor guardado.
+        if (! ($is_secret && ! $this->isNewSecretValue((string) $valor_seguro))) {
+            $attributes['value_default'] = $valor_seguro;
+        }
+
+        $parameter->update($attributes);
 
         // Invalidar caches que dependen de valores de parametros (ej: API Key de OpenAI en P000025)
         Cache::forget('academic:openai-api-key:' . $request->get('parameter_code'));
@@ -151,6 +200,15 @@ class ParametersController extends Controller
     {
         $parameter = Parameter::find($id);
 
+        if (! $parameter) {
+            return;
+        }
+
+        // Confidencial sin valor nuevo: se conserva el guardado.
+        if ($this->isSecret($parameter) && ! $this->isNewSecretValue((string) $val)) {
+            return;
+        }
+
         $parameter->update([
             'value_default' => $val
         ]);
@@ -165,19 +223,67 @@ class ParametersController extends Controller
     /**
      * Endpoint POST para guardar valores largos (textareas como robots.txt / llms.txt)
      * desde la lista de parametros, evitando el limite de longitud de URL en GET.
+     *
+     * Tambien es el endpoint que usa la lista para los parametros confidenciales
+     * (pwd): un valor vacio o la mascara NO sobrescriben lo guardado.
      */
     public function updateDefaultValuePost(Request $request, $id)
     {
         $parameter = Parameter::find($id);
 
+        if (! $parameter) {
+            return response()->json(['success' => false, 'message' => 'El parametro no existe.'], 404);
+        }
+
+        $value = (string) $request->input('value_default', '');
+
+        if ($this->isSecret($parameter) && ! $this->isNewSecretValue($value)) {
+            return response()->json([
+                'success' => true,
+                'unchanged' => true,
+                'has_value' => $this->hasStoredValue($parameter),
+            ]);
+        }
+
         $parameter->update([
-            'value_default' => $request->input('value_default', '')
+            'value_default' => $value
         ]);
 
         Cache::forget('academic:openai-api-key:' . $parameter->parameter_code);
         $this->syncFileFromParameter($parameter);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'unchanged' => false,
+            'has_value' => trim($value) !== '',
+        ]);
+    }
+
+    /**
+     * true si el parametro es confidencial (credenciales que no se muestran).
+     */
+    private function isSecret(?Parameter $parameter): bool
+    {
+        return $parameter !== null && $parameter->control_type === self::SECRET_CONTROL_TYPE;
+    }
+
+    /**
+     * true si el parametro ya tiene un valor guardado.
+     */
+    private function hasStoredValue(?Parameter $parameter): bool
+    {
+        return $parameter !== null && trim((string) $parameter->value_default) !== '';
+    }
+
+    /**
+     * true si el valor recibido es un valor nuevo de verdad (no vacio y no la
+     * mascara). Es lo unico que puede reemplazar un valor confidencial.
+     */
+    private function isNewSecretValue(string $value): bool
+    {
+        $value = trim($value);
+
+        return $value !== '' && $value !== self::SECRET_PLACEHOLDER;
     }
 
     /**

@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\Academic\Entities\AcaNotificationCampaign;
 use Modules\Academic\Entities\AcaNotificationCampaignRecipient;
-use Modules\Academic\Services\SmsgateService;
+use Modules\Integrationhub\Services\SmsgateService;
 use Modules\Academic\Services\TelegramCourseNotifier;
 use Modules\Academic\Services\VonageSmsService;
 use Modules\Academic\Services\WhatsappCourseNotifier;

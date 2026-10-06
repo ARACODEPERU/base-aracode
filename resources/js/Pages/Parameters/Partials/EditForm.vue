@@ -7,12 +7,24 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
+// Ayuda de las credenciales de Google Calendar (boton "?" + guia).
+import GoogleCalendarCredentialHelp from 'Modules/Health/Resources/assets/js/Components/GoogleCalendarCredentialHelp.vue';
 
 const props = defineProps({
     parameter: {
         type: Object,
         default: () => ({}),
-    }
+    },
+    // Parámetro confidencial: el valor guardado no viene del servidor.
+    is_secret: {
+        type: Boolean,
+        default: false,
+    },
+    // Ya existe un valor guardado (solo aplica a los confidenciales).
+    has_value: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const form = useForm({
@@ -76,13 +88,35 @@ const updateParameter = () => {
                     <option value="chq">Elegir varias opciones (consulta a una tabla de la BD)</option>
                     <option value="chj">Elegir varias opciones (desde un arreglo json)</option>
                     <option value="tx">Texto amplio</option>
+                    <option value="pwd">Confidencial (credencial: no se vuelve a mostrar)</option>
                     <option value="rgq">Rango entre dos valores(consulta a una tabla de la BD)</option>
                     <option value="rgj">Rango entre dos valores(desde un arreglo json)</option>
                     <option value="fl">Archivo</option>
                 </select>
                 <InputError :message="form.errors.control_type" class="mt-2" />
             </div>
-            <div v-if="form.control_type == 'tx'" class="col-span-6">
+            <div v-if="form.control_type == 'pwd'" class="col-span-6 sm:col-span-2">
+                <div class="flex items-center gap-2">
+                    <InputLabel for="value_default" value="Valor *" />
+                    <!-- ¿De dónde sale este valor? Solo aparece en los parámetros que tienen guía. -->
+                    <GoogleCalendarCredentialHelp :parameter-code="form.parameter_code" />
+                </div>
+                <TextInput
+                    id="value_default"
+                    v-model="form.value_default"
+                    type="password"
+                    autocomplete="new-password"
+                    class="block w-full mt-1"
+                    :placeholder="has_value ? 'Guardado •••••• — escribe uno nuevo para reemplazarlo' : 'Sin registrar'"
+                />
+                <small class="text-gray-500">
+                    {{ has_value
+                        ? 'Valor confidencial guardado: no se muestra. Déjalo vacío para conservarlo.'
+                        : 'Valor confidencial: se guardará y no se volverá a mostrar.' }}
+                </small>
+                <InputError :message="form.errors.value_default" class="mt-2" />
+            </div>
+            <div v-else-if="form.control_type == 'tx'" class="col-span-6">
                 <InputLabel for="value_default" value="Valor *" />
                 <textarea
                     class="mt-1 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"

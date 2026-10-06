@@ -19,6 +19,8 @@ use Modules\Health\Http\Controllers\HealActivityController;
 use Modules\Health\Http\Controllers\HealSettingController;
 use Modules\Health\Http\Controllers\HealTestDataController;
 use Modules\Health\Http\Controllers\HealAttentionPdfController;
+use Modules\Health\Http\Controllers\HealAppointmentNoticeController;
+use Modules\Health\Http\Controllers\HealGoogleCalendarController;
 use Modules\Health\Http\Controllers\Odontology\HealOdoAppointmentController;
 
 Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
@@ -46,6 +48,29 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
     Route::get('agendas/availability', [HealAgendaController::class, 'availability'])->name('heal_agendas_availability');
     Route::post('agendas/appointments/store', [HealAgendaController::class, 'storeAppointment'])->name('heal_agendas_appointments_store');
     Route::post('agendas/appointments/move', [HealAgendaController::class, 'moveAppointment'])->name('heal_agendas_appointments_move');
+
+    // Avisos de citas (recordatorios a pacientes por SMS).
+    Route::middleware(['permission:heal_avisos'])->group(function () {
+        Route::get('avisos', [HealAppointmentNoticeController::class, 'index'])->name('heal_appointment_notices');
+        Route::post('avisos/update', [HealAppointmentNoticeController::class, 'update'])->name('heal_appointment_notices_update');
+        Route::post('avisos/preview', [HealAppointmentNoticeController::class, 'preview'])->name('heal_appointment_notices_preview');
+        Route::post('avisos/test', [HealAppointmentNoticeController::class, 'test'])->name('heal_appointment_notices_test');
+    });
+
+    // Google Calendar (sincronizacion bidireccional de la Agenda).
+    Route::middleware(['permission:heal_google_calendar'])->prefix('google-calendar')->group(function () {
+        Route::get('/', [HealGoogleCalendarController::class, 'index'])->name('heal_google_calendar');
+        Route::get('connect', [HealGoogleCalendarController::class, 'connect'])->name('heal_google_calendar_connect');
+        Route::get('callback', [HealGoogleCalendarController::class, 'callback'])->name('heal_google_calendar_callback');
+        Route::post('disconnect', [HealGoogleCalendarController::class, 'disconnect'])->name('heal_google_calendar_disconnect');
+        Route::post('sync', [HealGoogleCalendarController::class, 'syncNow'])->name('heal_google_calendar_sync');
+        Route::post('test', [HealGoogleCalendarController::class, 'test'])->name('heal_google_calendar_test');
+        Route::post('templates', [HealGoogleCalendarController::class, 'saveTemplates'])->name('heal_google_calendar_templates');
+        Route::post('templates/preview', [HealGoogleCalendarController::class, 'previewTemplates'])->name('heal_google_calendar_templates_preview');
+        Route::post('channel', [HealGoogleCalendarController::class, 'refreshChannel'])->name('heal_google_calendar_channel');
+        Route::post('review/{mapping}', [HealGoogleCalendarController::class, 'review'])->name('heal_google_calendar_review');
+        Route::post('review/{mapping}/discard', [HealGoogleCalendarController::class, 'discard'])->name('heal_google_calendar_review_discard');
+    });
 
     Route::post('patients/search', 'HealPatientController@searchPatient')->name('heal_patients_search');
 

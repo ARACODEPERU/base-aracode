@@ -29,6 +29,29 @@ class Kernel extends ConsoleKernel
                     ->withoutOverlapping()
                     ->timezone('America/Lima');
 
+        // Avisos de citas de Salud: detecta cada minuto los recordatorios
+        // vencidos y los encola (el envio real lo hace el worker de la cola).
+        $schedule->command('health:send-appointment-notices')
+                    ->everyMinute()
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
+        // Google Calendar: reconcilia la Agenda con el calendario del consultorio.
+        // Es la red de seguridad de las notificaciones push de Google (que no
+        // siempre llegan) y tambien el mecanismo real cuando el sistema esta en
+        // local, porque Google solo notifica a URLs HTTPS publicas.
+        $schedule->command('health:sync-google-calendar')
+                    ->everyFiveMinutes()
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
+        // Google Calendar: renueva el canal de notificaciones push antes de que
+        // expire (los canales de Google caducan en semanas).
+        $schedule->command('health:google-calendar-refresh-channel')
+                    ->dailyAt('03:00')
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
         // Medición de almacenamiento para el indicador del dashboard (módulo Security).
         // El resultado queda en caché 24 h; el dashboard puede recalcular manualmente.
         $schedule->command('security:measure-storage')
@@ -53,6 +76,7 @@ class Kernel extends ConsoleKernel
         $this->load(base_path('Modules/Sales/Console'));
         $this->load(base_path('Modules/Academic/Console'));
         $this->load(base_path('Modules/Security/Console'));
+        $this->load(base_path('Modules/Health/Console'));
         require base_path('routes/console.php');
     }
 }
