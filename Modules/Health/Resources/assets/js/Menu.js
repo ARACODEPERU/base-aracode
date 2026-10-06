@@ -8,7 +8,8 @@ import {
     faFileMedical,
     faCalendarDays,
     faClipboardList,
-    faGear
+    faGear,
+    faBell
 } from "@fortawesome/free-solid-svg-icons";
 import menuDental from 'Modules/Dental/Resources/assets/js/Menu.js';
 
@@ -46,6 +47,27 @@ const menuHealth = {
             text: 'Agendas',
             icom: faCalendarDays,
             permissions: 'heal_citas_listado',
+        },
+        {
+            route: route('heal_appointment_notices'),
+            status: false,
+            text: 'Avisos',
+            icom: faBell,
+            permissions: 'heal_avisos',
+            info: {
+                title: 'Notificaciones a pacientes',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Recordatorios automáticos de citas por SMS.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📲 <span>Aviso antes de la cita: 30 minutos, 1 hora o el tiempo que definas.</span></li>
+                        <li>📅 <span>Aviso un día antes, a la hora que elijas.</span></li>
+                        <li>✍️ <span>Mensajes editables con variables como {paciente}, {hora_cita} y {nombre_dr}.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            }
         },
         {
             route: route('heal_clinical_records_list'),

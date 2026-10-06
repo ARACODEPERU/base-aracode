@@ -29,6 +29,13 @@ class Kernel extends ConsoleKernel
                     ->withoutOverlapping()
                     ->timezone('America/Lima');
 
+        // Avisos de citas de Salud: detecta cada minuto los recordatorios
+        // vencidos y los encola (el envio real lo hace el worker de la cola).
+        $schedule->command('health:send-appointment-notices')
+                    ->everyMinute()
+                    ->withoutOverlapping()
+                    ->timezone('America/Lima');
+
         // Medición de almacenamiento para el indicador del dashboard (módulo Security).
         // El resultado queda en caché 24 h; el dashboard puede recalcular manualmente.
         $schedule->command('security:measure-storage')
@@ -53,6 +60,7 @@ class Kernel extends ConsoleKernel
         $this->load(base_path('Modules/Sales/Console'));
         $this->load(base_path('Modules/Academic/Console'));
         $this->load(base_path('Modules/Security/Console'));
+        $this->load(base_path('Modules/Health/Console'));
         require base_path('routes/console.php');
     }
 }

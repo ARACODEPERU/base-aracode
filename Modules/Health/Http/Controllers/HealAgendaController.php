@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Dental\Entities\DentAppointment;
+use Modules\Health\Entities\HealAppointmentNoticeDelivery;
 use Modules\Health\Entities\HealAttention;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
@@ -218,6 +219,11 @@ class HealAgendaController extends Controller
             'status' => '1',
             'updated_user_id' => Auth::id(),
         ]);
+
+        // La cita cambio de horario: se borran los avisos ya registrados para
+        // que el nuevo horario reciba sus recordatorios (los que ya se enviaron
+        // y cuyo momento pasó no se repiten porque el aviso deja de estar vencido).
+        HealAppointmentNoticeDelivery::where('appointment_id', $appointmentId)->delete();
 
         return response()->json([
             'appointment' => $appointment->fresh()->load(['patient', 'doctor']),

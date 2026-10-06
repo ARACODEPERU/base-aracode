@@ -30,7 +30,25 @@ class HealthServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
 
+        $this->registerCommands();
+
         $this->shareHealthSettings();
+    }
+
+    /**
+     * Registra el comando que encola los avisos de citas de Salud.
+     *
+     * El Kernel de la aplicacion no descubre comandos de los modulos por la
+     * ruta (arriba, en App\Console), asi que cada modulo publica los suyos,
+     * igual que hacen Sales y Security.
+     */
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\Health\Console\SendHealthAppointmentNotices::class,
+            ]);
+        }
     }
 
     /**
