@@ -33,6 +33,11 @@
             type: Object,
             default: () => ({}),
         },
+        // Duraciones permitidas, enviadas por Modules/Health/Support/AppointmentDuration.
+        appointmentDurationOptions: {
+            type: Array,
+            default: () => [],
+        },
     });
 
     const form = useForm({
@@ -44,6 +49,7 @@
         doctor_person_id: null,
         date_appointmen: null,
         time_appointmen: null,
+        duration_minutes: null,
         date_end_appointmen: null,
         time_end_appointmen: null,
         email: null,
@@ -153,12 +159,36 @@
 
     };
 
+    /** Diferencia en minutos entre dos instantes; 30 como respaldo. */
+    const minutesBetween = (start, end) => {
+        const from = new Date(start);
+        const to = new Date(end);
+
+        if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+            return 30;
+        }
+
+        return Math.max(15, Math.round((to - from) / 60000));
+    };
+
+    /** Ajusta una duracion a la permitida inmediata inferior del catalogo. */
+    const snapDuration = (minutes) => {
+        const values = props.appointmentDurationOptions.map((option) => Number(option.value));
+
+        if (!values.length) {
+            return Number(minutes) || 30;
+        }
+
+        return values.filter((value) => value <= Number(minutes)).pop() ?? values[0];
+    };
+
     const editEvent = (data = null) => {
 
         if (data) {
             let obj = JSON.parse(JSON.stringify(data.event));
 
             form.id = obj.id ? obj.id : null,
+            form.duration_minutes = snapDuration(minutesBetween(obj.start, obj.end));
             form.description = obj.title ? obj.title : null,
             form.date_appointmen = obj.extendedProps ? obj.extendedProps.date_appointmen : null,
             form.time_appointmen = obj.extendedProps ? obj.extendedProps.time_appointmen : null,
@@ -182,6 +212,7 @@
             String(date.getDate()).padStart(2, '0');
 
             form.date_appointmen = formattedDate;
+            form.duration_minutes = 30;
         }
 
         isAddEventModal.value = true;
@@ -268,8 +299,15 @@
     const timeVisible = ref(false);
     const startTimeChange = (time) => {
         form.time_appointmen = time;
-        form.time_end_appointmen = sumarMinutos(time,30);
+        form.time_end_appointmen = sumarMinutos(time, Number(form.duration_minutes) || 30);
         timeVisible.value = false;
+    };
+
+    /** Mantiene el fin en sincronia con la duracion elegida. */
+    const durationChange = () => {
+        if (form.time_appointmen) {
+            form.time_end_appointmen = sumarMinutos(form.time_appointmen, Number(form.duration_minutes) || 30);
+        }
     };
 
     const showMessage = (msg = '', type = 'success') => {
@@ -536,6 +574,20 @@
                                                     </Dropdown>
                                                     
                                                     <div class="text-danger mt-2" id="endDateErr"></div>
+                                                </div>
+                                                <div class="mb-5">
+                                                    <label for="duration_minutes">Duración :</label>
+                                                    <select
+                                                        id="duration_minutes"
+                                                        v-model="form.duration_minutes"
+                                                        class="form-select"
+                                                        @change="durationChange"
+                                                    >
+                                                        <option v-for="option in appointmentDurationOptions" :key="option.value" :value="option.value">
+                                                            {{ option.label }}
+                                                        </option>
+                                                    </select>
+                                                    <InputError :message="form.errors.duration_minutes" class="mt-1" />
                                                 </div>
                                             </div>
                                             <div class="mb-5">

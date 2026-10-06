@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
+use Modules\Health\Support\AppointmentDuration;
 
 class AppointmentController extends Controller
 {
@@ -52,7 +53,8 @@ class AppointmentController extends Controller
         return Inertia::render('Dental::Appointments/Calendar', [
             'appointments' => $appointments,
             'patients' => $patients,
-            'doctors' => $doctors
+            'doctors' => $doctors,
+            'appointmentDurationOptions' => AppointmentDuration::options()
         ]);
     }
     public function index()
@@ -104,7 +106,8 @@ class AppointmentController extends Controller
             'appointments' => $appointments,
             'filters' => request()->all(),
             'patients' => $patients,
-            'doctors' => $doctors
+            'doctors' => $doctors,
+            'appointmentDurationOptions' => AppointmentDuration::options()
         ]);
     }
 
@@ -122,9 +125,13 @@ class AppointmentController extends Controller
                 'doctor_id'             => 'required',
                 'date_appointmen'       => 'required',
                 'time_appointmen'       => 'required',
+                'duration_minutes'      => ['required', 'integer', AppointmentDuration::rule()],
                 'description'           => 'required|max:255',
                 'details'               => 'max:255',
                 'message'               => 'max:500',
+            ],
+            [
+                'duration_minutes.in' => AppointmentDuration::message(),
             ]
         );
 
@@ -134,8 +141,8 @@ class AppointmentController extends Controller
         $ddate = $request->get('date_appointmen') . ' ' . $request->get('time_appointmen');
         $initialDateTime = Carbon::parse($ddate);
 
-        // Agregar 30 minutos
-        $newDateTime = $initialDateTime->addMinutes(30);
+        // El fin se calcula con la duracion elegida (15 min a 6 horas).
+        $newDateTime = $initialDateTime->addMinutes((int) $request->get('duration_minutes'));
 
         $appointment = DentAppointment::create([
             'patient_id'            => $request->get('patient_id')['code'],
@@ -174,9 +181,13 @@ class AppointmentController extends Controller
                 'doctor_id'             => 'required',
                 'date_appointmen'       => 'required',
                 'time_appointmen'       => 'required',
+                'duration_minutes'      => ['required', 'integer', AppointmentDuration::rule()],
                 'description'           => 'required|max:255',
                 'details'               => 'max:255',
                 'message'               => 'max:500',
+            ],
+            [
+                'duration_minutes.in' => AppointmentDuration::message(),
             ]
         );
 
@@ -186,8 +197,8 @@ class AppointmentController extends Controller
         $ddate = $request->get('date_appointmen') . ' ' . $request->get('time_appointmen');
         $initialDateTime = Carbon::parse($ddate);
 
-        // Agregar 30 minutos
-        $newDateTime = $initialDateTime->addMinutes(30);
+        // El fin se calcula con la duracion elegida (15 min a 6 horas).
+        $newDateTime = $initialDateTime->addMinutes((int) $request->get('duration_minutes'));
 
         DentAppointment::find($id)->update([
             'patient_id'            => $request->get('patient_id')['code'],

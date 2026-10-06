@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealDoctor;
+use Modules\Health\Support\AppointmentDuration;
 use Modules\Health\Support\ResolvesDoctorContext;
 
 class CalendarController extends Controller
@@ -29,6 +30,7 @@ class CalendarController extends Controller
                 'doctors' => $this->allowedDoctorOptions(),
                 'currentDoctor' => $this->currentDoctorOption(),
                 'canChooseDoctor' => $canChooseDoctor,
+                'appointmentDurationOptions' => AppointmentDuration::options(),
             ]
         );
     }
