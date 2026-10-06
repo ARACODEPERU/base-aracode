@@ -6,6 +6,8 @@
     import { Link, router, useForm } from '@inertiajs/vue3';
     import { Dropdown, Menu, MenuItem, Input, Select, Textarea, message } from 'ant-design-vue';
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
+    // Ayuda de las credenciales de Google Calendar (boton "?" + guia).
+    import GoogleCalendarCredentialHelp from 'Modules/Health/Resources/assets/js/Components/GoogleCalendarCredentialHelp.vue';
 
     const props = defineProps({
         parameters: {
@@ -177,6 +179,8 @@
                                                     :placeholder="parameter.has_value ? 'Guardado •••••• — escribe uno nuevo para reemplazarlo' : 'Sin registrar'"
                                                     @pressEnter="saveSecret(parameter)"
                                                 />
+                                                <!-- ¿De dónde sale este valor? Solo aparece en los parámetros que tienen guía. -->
+                                                <GoogleCalendarCredentialHelp :parameter-code="parameter.parameter_code" />
                                                 <button
                                                     type="button"
                                                     class="whitespace-nowrap rounded bg-blue-900 px-3 py-1.5 text-xs font-medium uppercase text-white hover:bg-blue-700"

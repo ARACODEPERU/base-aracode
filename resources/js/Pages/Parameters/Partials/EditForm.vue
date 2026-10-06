@@ -7,6 +7,8 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Keypad from '@/Components/Keypad.vue';
 import Swal2 from 'sweetalert2';
+// Ayuda de las credenciales de Google Calendar (boton "?" + guia).
+import GoogleCalendarCredentialHelp from 'Modules/Health/Resources/assets/js/Components/GoogleCalendarCredentialHelp.vue';
 
 const props = defineProps({
     parameter: {
@@ -94,7 +96,11 @@ const updateParameter = () => {
                 <InputError :message="form.errors.control_type" class="mt-2" />
             </div>
             <div v-if="form.control_type == 'pwd'" class="col-span-6 sm:col-span-2">
-                <InputLabel for="value_default" value="Valor *" />
+                <div class="flex items-center gap-2">
+                    <InputLabel for="value_default" value="Valor *" />
+                    <!-- ¿De dónde sale este valor? Solo aparece en los parámetros que tienen guía. -->
+                    <GoogleCalendarCredentialHelp :parameter-code="form.parameter_code" />
+                </div>
                 <TextInput
                     id="value_default"
                     v-model="form.value_default"
