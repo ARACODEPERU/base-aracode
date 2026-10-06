@@ -213,14 +213,43 @@ const colegioGroup = {
     status: false,
     text: 'Colegio',
     icom: faSchool,
-    permissions: 'aca_school_year_listado',
+    // Permiso de entrada del grupo (lista con semantica OR): se muestra si el
+    // usuario tiene cualquiera de los permisos de sus items; los items internos
+    // se filtran con el suyo. Sin el OR, el Docente (solo aca_school_docente_notas)
+    // no veia el grupo y con ello tampoco "Registro de Notas".
+    permissions: [
+        'aca_school_year_listado',
+        'aca_school_estructura',
+        'aca_school_alumno_listado',
+        'aca_school_matricula_listado',
+        'aca_school_tarifa_listado',
+        'aca_school_cobro_listado',
+        'aca_school_docente_listado',
+        'aca_school_docente_notas',
+        'aca_school_area_listado',
+        'aca_school_listado',
+    ],
     items: [
+        {
+            route: route('aca_schools_list'),
+            status: false,
+            text: 'Colegios',
+            icom: faLandmarkFlag,
+            permissions: 'aca_school_listado',
+        },
         {
             route: route('aca_school_years_list'),
             status: false,
             text: 'Años Escolares',
             icom: faCalendarDays,
             permissions: 'aca_school_year_listado',
+        },
+        {
+            route: route('aca_school_fees_list'),
+            status: false,
+            text: 'Tarifas',
+            icom: faTags,
+            permissions: 'aca_school_tarifa_listado',
         },
         {
             route: route('aca_school_structure'),
@@ -230,9 +259,23 @@ const colegioGroup = {
             permissions: 'aca_school_estructura',
         },
         {
+            route: route('aca_school_areas_list'),
+            status: false,
+            text: 'Áreas Curriculares',
+            icom: faLayerGroup,
+            permissions: 'aca_school_area_listado',
+        },
+        {
+            route: route('aca_school_teachers_list'),
+            status: false,
+            text: 'Docentes',
+            icom: faUserTie,
+            permissions: 'aca_school_docente_listado',
+        },
+        {
             route: route('aca_school_students_list'),
             status: false,
-            text: 'Alumnos',
+            text: 'Estudiantes',
             icom: faUserGraduate,
             permissions: 'aca_school_alumno_listado',
         },
@@ -244,11 +287,11 @@ const colegioGroup = {
             permissions: 'aca_school_matricula_listado',
         },
         {
-            route: route('aca_school_fees_list'),
+            route: route('aca_school_teacher_grades'),
             status: false,
-            text: 'Tarifas',
-            icom: faTags,
-            permissions: 'aca_school_tarifa_listado',
+            text: 'Registro de Notas',
+            icom: faChalkboardUser,
+            permissions: 'aca_school_docente_notas',
         },
         {
             route: route('aca_school_enrollments_list'),
@@ -256,20 +299,6 @@ const colegioGroup = {
             text: 'Cobros',
             icom: faMoneyBillWave,
             permissions: 'aca_school_cobro_listado',
-        },
-        {
-            route: route('aca_school_teachers_list'),
-            status: false,
-            text: 'Docentes',
-            icom: faUserTie,
-            permissions: 'aca_school_docente_listado',
-        },
-        {
-            route: route('aca_schools_list'),
-            status: false,
-            text: 'Colegios',
-            icom: faLandmarkFlag,
-            permissions: 'aca_school_listado',
         },
     ],
 };

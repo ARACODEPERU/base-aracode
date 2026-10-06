@@ -28,6 +28,17 @@ class AcademicServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+
+        // Comandos de consola (patron de Sales/Security: registro explicito via
+        // ServiceProvider). En Laravel 12 Kernel::load() solo resuelve clases
+        // bajo app/, de modo que los $this->load('Modules/*/Console') del Kernel
+        // son inertes: sin este bloque artisan desconoce academic:* y la tarea
+        // programada falla cada noche con exit code 1.
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\Academic\Console\CheckExpiredSubscriptions::class,
+            ]);
+        }
     }
 
     /**

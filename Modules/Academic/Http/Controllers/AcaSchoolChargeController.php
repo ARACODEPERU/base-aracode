@@ -2,6 +2,7 @@
 
 namespace Modules\Academic\Http\Controllers;
 
+use App\Http\Controllers\ApisnetPeController;
 use App\Http\Controllers\Controller;
 use App\Models\Parameter;
 use App\Models\PaymentMethod;
@@ -301,6 +302,49 @@ class AcaSchoolChargeController extends Controller
         }
 
         return response()->json(array_merge(['success' => true], $result));
+    }
+
+    /**
+     * Consulta RUC/DNI para autocompletar el cliente del comprobante.
+     * Busca primero en la base de datos y, si no existe, consulta la
+     * API de SUNAT (migo.pe) reutilizando ApisnetPeController.
+     */
+    public function consultClientDocument(Request $request)
+    {
+        $validated = $this->validate($request, [
+            'document_type_id' => 'required|integer',
+            'number' => 'required|string|max:15',
+        ]);
+
+        $number = trim($validated['number']);
+        $typeId = (int) $validated['document_type_id'];
+
+        // 1. Si la persona ya esta registrada usamos sus datos guardados.
+        $person = Person::where('number', $number)
+            ->where('document_type_id', $typeId)
+            ->first();
+
+        if ($person) {
+            return response()->json([
+                'success' => true,
+                'source' => 'database',
+                'person' => [
+                    'razon_social' => $person->full_name,
+                    'direccion' => $person->address,
+                    'numero_documento' => $person->number,
+                ],
+            ]);
+        }
+
+        // 2. Consultamos la API externa (RUC en SUNAT, DNI en RENIEC, via migo.pe).
+        $service = app(ApisnetPeController::class);
+        $data = $typeId === 6
+            ? $service->consultaRUCmigo($number)
+            : $service->consultaDNImigo($number);
+
+        return response()->json(array_merge($data ?? ['success' => false], [
+            'source' => $typeId === 6 ? 'sunat' : 'reniec',
+        ]));
     }
 
     /**

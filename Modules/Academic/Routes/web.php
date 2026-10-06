@@ -32,12 +32,14 @@ use Modules\Academic\Http\Controllers\AcaModuleController;
 use Modules\Academic\Http\Controllers\AcaNotificationController;
 use Modules\Academic\Http\Controllers\AcaReportsController;
 use Modules\Academic\Http\Controllers\AcaSaleDocumentController;
+use Modules\Academic\Http\Controllers\AcaSchoolAreaController;
 use Modules\Academic\Http\Controllers\AcaSchoolChargeController;
 use Modules\Academic\Http\Controllers\AcaSchoolController;
 use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
 use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
+use Modules\Academic\Http\Controllers\AcaSchoolTeacherGradesController;
 use Modules\Academic\Http\Controllers\AcaSchoolTeacherController;
 use Modules\Academic\Http\Controllers\AcaSchoolYearController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
@@ -862,6 +864,18 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_school_year_editar'])
         ->put('school/years/close/{id}', [AcaSchoolYearController::class, 'close'])->name('aca_school_years_close');
 
+    // Áreas curriculares: catalogo que alimenta el registro de notas
+    Route::middleware(['middleware' => 'permission:aca_school_area_listado'])
+        ->get('school/areas', [AcaSchoolAreaController::class, 'index'])->name('aca_school_areas_list');
+    Route::middleware(['middleware' => 'permission:aca_school_area_nuevo'])
+        ->post('school/areas/store', [AcaSchoolAreaController::class, 'store'])->name('aca_school_areas_store');
+    Route::middleware(['middleware' => 'permission:aca_school_area_nuevo'])
+        ->post('school/areas/seed-standard', [AcaSchoolAreaController::class, 'seedStandard'])->name('aca_school_areas_seed_standard');
+    Route::middleware(['middleware' => 'permission:aca_school_area_editar'])
+        ->put('school/areas/update', [AcaSchoolAreaController::class, 'update'])->name('aca_school_areas_update');
+    Route::middleware(['middleware' => 'permission:aca_school_area_eliminar'])
+        ->delete('school/areas/destroy/{id}', [AcaSchoolAreaController::class, 'destroy'])->name('aca_school_areas_destroy');
+
     // Estructura academica: niveles, grados y secciones
     Route::middleware(['middleware' => 'permission:aca_school_estructura'])
         ->get('school/structure', [AcaSchoolStructureController::class, 'index'])->name('aca_school_structure');
@@ -929,6 +943,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->post('school/fees/sections-by-grade', [AcaSchoolFeeController::class, 'sectionsByGrade'])->name('aca_school_fees_sections');
 
     // Cobros a los alumnos (por matricula)
+    // Registro de notas del docente (solo secciones donde es tutor o auxiliar)
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/grades', [AcaSchoolTeacherGradesController::class, 'index'])->name('aca_school_teacher_grades');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/grades/section/{sectionId}', [AcaSchoolTeacherGradesController::class, 'show'])->name('aca_school_teacher_grades_show');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->post('school/teacher/grades/section/{sectionId}/store', [AcaSchoolTeacherGradesController::class, 'store'])->name('aca_school_teacher_grades_store');
+
     Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
         ->get('school/charges/{enrollmentId}', [AcaSchoolChargeController::class, 'show'])->name('aca_school_charges_show');
     Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
@@ -941,6 +963,8 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->post('school/charges/generate-schedule', [AcaSchoolChargeController::class, 'generateSchedule'])->name('aca_school_charges_generate_schedule');
     Route::middleware(['middleware' => 'permission:aca_school_cobro_registrar'])
         ->post('school/charges/comprobante', [AcaSchoolChargeController::class, 'storeComprobante'])->name('aca_school_charges_comprobante');
+    Route::middleware(['middleware' => 'permission:aca_school_cobro_registrar'])
+        ->post('school/charges/consult-document', [AcaSchoolChargeController::class, 'consultClientDocument'])->name('aca_school_charges_consult_document');
     Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
         ->get('school/enrollments/create', [AcaSchoolEnrollmentController::class, 'create'])->name('aca_school_enrollments_create');
     Route::middleware(['middleware' => 'permission:aca_school_matricula_nueva'])
