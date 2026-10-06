@@ -10,7 +10,8 @@ import {
     faClipboardList,
     faGear,
     faBell,
-    faCalendarCheck
+    faCalendarCheck,
+    faCalendarWeek
 } from "@fortawesome/free-solid-svg-icons";
 import menuDental from 'Modules/Dental/Resources/assets/js/Menu.js';
 
@@ -47,6 +48,13 @@ const menuHealth = {
             status: false,
             text: 'Agendas',
             icom: faCalendarDays,
+            permissions: 'heal_citas_listado',
+        },
+        {
+            route: route('calendar'),
+            status: false,
+            text: 'Calendario de citas',
+            icom: faCalendarWeek,
             permissions: 'heal_citas_listado',
         },
         {
