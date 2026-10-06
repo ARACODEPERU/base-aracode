@@ -22,7 +22,6 @@ use Modules\Health\Entities\HealHistory;
 use Modules\Health\Entities\HealOdontogram;
 use Modules\Health\Entities\HealPatient;
 use Modules\Health\Entities\HealTestRecord;
-use Modules\Health\Support\GoogleCalendarSyncGuard;
 
 class HealTestDataController extends Controller
 {
@@ -188,9 +187,7 @@ class HealTestDataController extends Controller
                     $start = $this->testSlotAt($today, $doctorSlot, 'future');
                     $end = $start->copy()->addMinutes(45);
 
-                    // Los datos de prueba no deben inundar el calendario del
-                    // consultorio: se crean sin disparar la sincronizacion.
-                    $appointment = GoogleCalendarSyncGuard::withoutSync(fn () => DentAppointment::create([
+                    $appointment = DentAppointment::create([
                         'patient_id' => $patient->id,
                         'patient_person_id' => $patient->person_id,
                         'doctor_id' => $doctor->id,
@@ -208,7 +205,7 @@ class HealTestDataController extends Controller
                         'important' => $sequence % 3 === 0,
                         'created_user_id' => $userId,
                         'updated_user_id' => $userId,
-                    ]));
+                    ]);
                     $this->track($batchCode, 'dent_appointments', $appointment->id, $userId);
                 }
             });
