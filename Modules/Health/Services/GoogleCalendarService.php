@@ -23,6 +23,13 @@ use RuntimeException;
  * Todo se lee de parametros del sistema y de `health.google_calendar.*`, igual
  * que el canal de SMS de los avisos: si falta el Client ID, el Client Secret o
  * el refresh token, isConfigured() devuelve false y no se sincroniza nada.
+ *
+ * El Client ID, el Client Secret y el refresh token son parametros
+ * confidenciales (tipo 'pwd'): el administrador los registra una sola vez y la
+ * pantalla de Parametros del sistema no los vuelve a mostrar. De ahi en
+ * adelante todo se maneja con el boton "Conectar con Google": el callback
+ * guarda el refresh token y los datos de la cuenta (correo, nombre y foto), y
+ * desconectar revoca el permiso en la propia cuenta de Google.
  */
 class GoogleCalendarService
 {
@@ -30,7 +37,7 @@ class GoogleCalendarService
     private const ACCESS_TOKEN_CACHE_KEY = 'health.google_calendar.access_token';
 
     /** Descripcion del parametro que guarda el refresh token. */
-    private const REFRESH_TOKEN_DESCRIPTION = 'Google Calendar (Salud): refresh token de OAuth 2.0 (lo guarda el boton "Conectar con Google"; tambien se puede pegar a mano)';
+    private const REFRESH_TOKEN_DESCRIPTION = 'Google Calendar (Salud): refresh token de OAuth 2.0 (lo guarda el boton "Conectar con Google"). Confidencial: no se muestra por seguridad';
 
     /**
      * true solo si el interruptor Activo (SC-00010) esta encendido.
@@ -248,7 +255,7 @@ class GoogleCalendarService
     }
 
     /**
-     * Olvida las credenciales de la cuenta conectada.
+     * Olvida las credenciales de la cuenta conectada (solo en el sistema).
      */
     public function disconnect(): void
     {
@@ -259,6 +266,158 @@ class GoogleCalendarService
         }
 
         Cache::forget(self::ACCESS_TOKEN_CACHE_KEY);
+    }
+
+    /**
+     * Revoca el permiso en la cuenta de Google (ademas de olvidarlo aqui).
+     *
+     * Google responde 200 al revocar y 400 cuando el token ya no existe: en
+     * ambos casos el acceso quedo sin efecto, asi que no se considera error.
+     */
+    public function revoke(): void
+    {
+        $token = $this->refreshToken();
+
+        if ($token === null) {
+            return;
+        }
+
+        try {
+            $response = Http::asForm()
+                ->timeout((int) $this->config('timeout', 30))
+                ->acceptJson()
+                ->post((string) $this->config('revoke_url', 'https://oauth2.googleapis.com/revoke'), [
+                    'token' => $token,
+                ]);
+        } catch (\Throwable $exception) {
+            throw new RuntimeException('No se pudo avisar a Google para revocar el acceso: ' . $exception->getMessage(), 0, $exception);
+        }
+
+        if (! $response->successful() && $response->status() !== 400) {
+            throw new RuntimeException(
+                'Google rechazo revocar el acceso (HTTP ' . $response->status() . '): '
+                . mb_substr(trim((string) $response->body()), 0, 300)
+            );
+        }
+    }
+
+    /**
+     * Datos de la cuenta conectada a partir de la respuesta del token.
+     *
+     * El `id_token` (que Google manda cuando se pide el scope `openid`) trae el
+     * correo, el nombre y la foto. NO se valida su firma ni se usa para
+     * autenticar
+     * a nadie: es solo lo que se muestra en la pantalla. Si no viene, se
+     * consulta el endpoint de perfil con el access token.
+     *
+     * @param array<string, mixed> $tokenData
+     * @return array{email: ?string, name: ?string, picture: ?string}
+     */
+    public function accountFromToken(array $tokenData): array
+    {
+        $idToken = $tokenData['id_token'] ?? null;
+        $claims = is_string($idToken) ? $this->decodeJwtClaims($idToken) : [];
+
+        $account = [
+            'email' => $this->firstString($claims['email'] ?? null),
+            'name' => $this->firstString($claims['name'] ?? null),
+            'picture' => $this->firstString($claims['picture'] ?? null),
+        ];
+
+        if ($account['email'] === null) {
+            $profile = $this->fetchAccount();
+
+            if ($profile !== null) {
+                $account = [
+                    'email' => $profile['email'] ?? $account['email'],
+                    'name' => $profile['name'] ?? $account['name'],
+                    'picture' => $profile['picture'] ?? $account['picture'],
+                ];
+            }
+        }
+
+        return $account;
+    }
+
+    /**
+     * Perfil de la cuenta conectada (null si Google no lo entrega).
+     *
+     * Sirve de respaldo cuando el refresh token se obtuvo con una version
+     * anterior del scope (sin `openid email`).
+     *
+     * @return array{email: ?string, name: ?string, picture: ?string}|null
+     */
+    public function fetchAccount(): ?array
+    {
+        try {
+            $response = $this->send('get', (string) $this->config('userinfo_url', 'https://openidconnect.googleapis.com/v1/userinfo'));
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $data = $response->json();
+
+        if (! is_array($data)) {
+            return null;
+        }
+
+        return [
+            'email' => $this->firstString($data['email'] ?? null),
+            'name' => $this->firstString($data['name'] ?? null),
+            'picture' => $this->firstString($data['picture'] ?? null),
+        ];
+    }
+
+    /**
+     * Cuerpo (claims) de un JWT de Google, sin validar la firma.
+     *
+     * Solo se usa para mostrar el correo de la cuenta conectada; la sesion y la
+     * autenticacion de la aplicacion no dependen de este dato.
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeJwtClaims(string $token): array
+    {
+        $parts = explode('.', $token);
+
+        if (count($parts) < 2) {
+            return [];
+        }
+
+        $payload = strtr($parts[1], '-_', '+/');
+        $padding = strlen($payload) % 4;
+
+        if ($padding > 0) {
+            $payload .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($payload, true);
+
+        if ($decoded === false) {
+            return [];
+        }
+
+        $claims = json_decode($decoded, true);
+
+        return is_array($claims) ? $claims : [];
+    }
+
+    /**
+     * Primer valor de texto no vacio de una lista de candidatos.
+     */
+    private function firstString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 
     /**

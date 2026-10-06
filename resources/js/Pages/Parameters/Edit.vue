@@ -8,7 +8,17 @@ const props = defineProps({
     parameter: {
         type: Object,
         default: () => ({}),
-    }
+    },
+    // Parámetro confidencial: el valor no viene del servidor.
+    is_secret: {
+        type: Boolean,
+        default: false,
+    },
+    // Ya hay un valor guardado (solo aplica a los confidenciales).
+    has_value: {
+        type: Boolean,
+        default: false,
+    },
 });
 </script>
 
@@ -26,7 +36,7 @@ const props = defineProps({
             </li>
         </Navigation>
         <div class="mt-5">
-            <EditForm :parameter="parameter" /> 
+            <EditForm :parameter="parameter" :is_secret="is_secret" :has_value="has_value" /> 
         </div>
     </AppLayout>
 </template>

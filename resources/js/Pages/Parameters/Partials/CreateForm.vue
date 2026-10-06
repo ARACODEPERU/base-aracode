@@ -83,13 +83,26 @@
                     <option value="chq">Elegir varias opciones (consulta a una tabla de la BD)</option>
                     <option value="chj">Elegir varias opciones (desde un arreglo json)</option>
                     <option value="tx">Texto amplio</option>
+                    <option value="pwd">Confidencial (credencial: no se vuelve a mostrar)</option>
                     <option value="rgq">Rango entre dos valores(consulta a una tabla de la BD)</option>
                     <option value="rgj">Rango entre dos valores(desde un arreglo json)</option>
                     <option value="fl">Archivo</option>
                 </select>
                 <InputError :message="form.errors.control_type" class="mt-2" />
             </div>
-            <div v-if="form.control_type == 'tx'" class="col-span-6">
+            <div v-if="form.control_type == 'pwd'" class="col-span-6 sm:col-span-2">
+                <InputLabel for="value_default" value="Valor *" />
+                <TextInput
+                    id="value_default"
+                    v-model="form.value_default"
+                    type="password"
+                    autocomplete="new-password"
+                    class="block w-full mt-1"
+                />
+                <small class="text-gray-500">Valor confidencial: se guardará y no se volverá a mostrar.</small>
+                <InputError :message="form.errors.value_default" class="mt-2" />
+            </div>
+            <div v-else-if="form.control_type == 'tx'" class="col-span-6">
                 <InputLabel for="value_default" value="Valor *" />
                 <textarea
                     class="mt-1 block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"

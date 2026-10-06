@@ -12,6 +12,10 @@ use Illuminate\Database\Eloquent\Model;
  * push, que hay que renovar antes de que expire. Cuando Google responde 410
  * GONE el token deja de ser valido: se borra y la siguiente lectura vuelve a
  * ser completa.
+ *
+ * Tambien guarda la cuenta de Google que quedo conectada con el boton
+ * "Conectar con Google" (correo, nombre y foto), para que la pantalla pueda
+ * mostrar con que cuenta se sincroniza el consultorio.
  */
 class HealGoogleCalendarState extends Model
 {
@@ -19,6 +23,9 @@ class HealGoogleCalendarState extends Model
 
     protected $fillable = [
         'calendar_id',
+        'account_email',
+        'account_name',
+        'account_picture',
         'channel_id',
         'resource_id',
         'resource_uri',

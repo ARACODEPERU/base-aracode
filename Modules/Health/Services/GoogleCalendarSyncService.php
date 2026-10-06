@@ -111,6 +111,7 @@ class GoogleCalendarSyncService
     public function status(): array
     {
         $state = $this->state();
+        $account = $this->account();
 
         $webhookUrl = $this->webhookUrl();
 
@@ -124,11 +125,74 @@ class GoogleCalendarSyncService
             'lastFullSyncAt' => $state->last_full_sync_at?->toDateTimeString(),
             'lastError' => $state->last_error,
             'hasSyncToken' => trim((string) $state->sync_token) !== '',
+            // Cuenta de Google conectada (nunca incluye credenciales).
+            'accountEmail' => $account['email'],
+            'accountName' => $account['name'],
+            'accountPicture' => $account['picture'],
             'channelId' => $state->channel_id,
             'channelExpiresAt' => $state->channel_expires_at?->toDateTimeString(),
             'channelFresh' => $state->channelIsFresh((int) config('health.google_calendar.channel_renew_days', 2)),
             'reviewCount' => $this->reviewItems()->count(),
         ]);
+    }
+
+    /**
+     * Cuenta de Google conectada (correo, nombre y foto).
+     *
+     * @return array{email: ?string, name: ?string, picture: ?string}
+     */
+    public function account(): array
+    {
+        if (! Schema::hasTable('heal_google_calendar_states')
+            || ! Schema::hasColumn('heal_google_calendar_states', 'account_email')) {
+            return ['email' => null, 'name' => null, 'picture' => null];
+        }
+
+        $state = $this->state();
+
+        return [
+            'email' => $this->nullableString($state->account_email ?? null),
+            'name' => $this->nullableString($state->account_name ?? null),
+            'picture' => $this->nullableString($state->account_picture ?? null),
+        ];
+    }
+
+    /**
+     * Guarda la cuenta con la que quedo conectado el calendario.
+     *
+     * @param array{email?: ?string, name?: ?string, picture?: ?string} $account
+     */
+    public function storeAccount(array $account): void
+    {
+        if (! Schema::hasTable('heal_google_calendar_states')
+            || ! Schema::hasColumn('heal_google_calendar_states', 'account_email')) {
+            return;
+        }
+
+        $picture = trim((string) ($account['picture'] ?? ''));
+
+        $this->state()->forceFill([
+            'account_email' => $this->nullableString($account['email'] ?? null),
+            'account_name' => $this->nullableString($account['name'] ?? null),
+            'account_picture' => $picture === '' ? null : mb_substr($picture, 0, 500),
+        ])->save();
+    }
+
+    /**
+     * Olvida la cuenta conectada (al desconectar el calendario).
+     */
+    public function forgetAccount(): void
+    {
+        if (! Schema::hasTable('heal_google_calendar_states')
+            || ! Schema::hasColumn('heal_google_calendar_states', 'account_email')) {
+            return;
+        }
+
+        $this->state()->forceFill([
+            'account_email' => null,
+            'account_name' => null,
+            'account_picture' => null,
+        ])->save();
     }
 
     /**
@@ -822,6 +886,208 @@ class GoogleCalendarSyncService
             'message' => 'Canal de notificaciones registrado.',
             'expiresAt' => $expiresAt?->toDateTimeString(),
         ];
+    }
+
+    /**
+     * Diagnostico de la conexion con Google (boton "Probar conexion").
+     *
+     * Recorre lo que puede fallar en orden (credenciales, cuenta, token,
+     * calendario, correo de la cuenta y notificaciones) y nunca lanza: cada
+     * comprobacion devuelve su resultado y, cuando falla, una sugerencia en
+     * espanol para corregirlo.
+     *
+     * @return array<int, array{code: string, label: string, ok: bool, message: string, hint: ?string}>
+     */
+    public function diagnose(): array
+    {
+        $checks = [];
+
+        $clientId = $this->google->clientId();
+        $clientSecret = $this->google->clientSecret();
+        $refreshToken = $this->google->refreshToken();
+        $credentialsReady = $clientId !== null && $clientSecret !== null;
+
+        $checks[] = $this->check(
+            'credentials',
+            'Credenciales de la aplicacion',
+            $credentialsReady,
+            $credentialsReady
+                ? 'Client ID y Client Secret registrados.'
+                : 'Falta registrar el Client ID y/o el Client Secret (SC-00011 y SC-00012).',
+            'Se registran una sola vez en Parametros del sistema: Google Cloud Console > APIs y servicios > Credenciales > ID de cliente de OAuth (Aplicacion web).'
+        );
+
+        // Sin credenciales no tiene sentido seguir: todo lo demas depende de ellas.
+        if (! $credentialsReady) {
+            return $checks;
+        }
+
+        $connected = $refreshToken !== null;
+
+        $checks[] = $this->check(
+            'account',
+            'Cuenta de Google',
+            $connected,
+            $connected
+                ? 'La cuenta del consultorio esta conectada (' . ($this->account()['email'] ?: 'correo no registrado') . ').'
+                : 'La cuenta de Google todavia no esta conectada.',
+            'Pulsa "Continuar con Google" y acepta los permisos del calendario: sin el refresh token no se sincroniza nada.'
+        );
+
+        if (! $connected) {
+            return $checks;
+        }
+
+        $checks[] = $this->tokenCheck();
+        $checks[] = $this->calendarCheck();
+        $checks[] = $this->scopeCheck();
+        $checks[] = $this->webhookCheck();
+
+        return $checks;
+    }
+
+    /**
+     * Comprobacion del token de acceso (renueva contra Google).
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function tokenCheck(): array
+    {
+        try {
+            $this->google->accessToken(true);
+        } catch (\Throwable $exception) {
+            $error = $exception->getMessage();
+
+            return $this->check('token', 'Token de acceso', false, mb_substr($error, 0, 300), $this->hintFor($error));
+        }
+
+        return $this->check('token', 'Token de acceso', true, 'Google renovo el token de acceso correctamente.');
+    }
+
+    /**
+     * Comprobacion del acceso al calendario configurado.
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function calendarCheck(): array
+    {
+        $timezone = $this->google->timezone();
+        $calendarId = $this->google->calendarId();
+
+        try {
+            $page = $this->google->listEvents([
+                'maxResults' => 1,
+                'singleEvents' => 'true',
+                'timeMin' => Carbon::now($timezone)->subDays($this->google->windowDays())->startOfDay()->toRfc3339String(),
+                'timeMax' => Carbon::now($timezone)->addDays($this->google->windowDays())->endOfDay()->toRfc3339String(),
+            ]);
+        } catch (\Throwable $exception) {
+            $error = $exception->getMessage();
+
+            return $this->check('calendar', 'Acceso al calendario', false, mb_substr($error, 0, 300), $this->hintFor($error));
+        }
+
+        $found = count((array) ($page['items'] ?? []));
+
+        return $this->check(
+            'calendar',
+            'Acceso al calendario',
+            true,
+            'El calendario "' . $calendarId . '" respondio' . ($found > 0 ? ' y tiene eventos en la ventana.' : ' (sin eventos en la ventana, es normal).')
+        );
+    }
+
+    /**
+     * Comprobacion del correo de la cuenta conectada.
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function scopeCheck(): array
+    {
+        $email = $this->account()['email'];
+
+        return $this->check(
+            'scope',
+            'Correo de la cuenta',
+            $email !== null,
+            $email !== null
+                ? 'Conectada como ' . $email . '.'
+                : 'El correo de la cuenta conectada no quedo registrado.',
+            'La cuenta se conecto pidiendo solo permisos de calendario: vuelve a pulsar "Continuar con Google" aceptando los permisos para registrar el correo.'
+        );
+    }
+
+    /**
+     * Comprobacion de la URL de notificaciones push.
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function webhookCheck(): array
+    {
+        $webhookUrl = $this->webhookUrl();
+
+        return $this->check(
+            'webhook',
+            'Notificaciones push',
+            $webhookUrl !== null,
+            $webhookUrl !== null
+                ? 'URL publica lista: ' . $webhookUrl
+                : 'Sin URL HTTPS publica: Google no puede avisar los cambios.',
+            'En local es normal. Define HEALTH_GOOGLE_WEBHOOK_URL con un dominio o tunel HTTPS si quieres avisos instantaneos; mientras tanto la reconciliacion programada revisa los cambios.'
+        );
+    }
+
+    /**
+     * Arma una comprobacion del diagnostico.
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function check(string $code, string $label, bool $ok, string $message, ?string $hint = null): array
+    {
+        return [
+            'code' => $code,
+            'label' => $label,
+            'ok' => $ok,
+            'message' => $message,
+            'hint' => $ok ? null : $hint,
+        ];
+    }
+
+    /**
+     * Sugerencia en espanol para los errores mas comunes de Google.
+     */
+    private function hintFor(string $message): string
+    {
+        $lower = mb_strtolower($message);
+
+        if (str_contains($lower, 'invalid_client')) {
+            return 'El Client ID o el Client Secret no coinciden con la credencial de Google Cloud. Vuelve a registrarlos en Parametros del sistema (SC-00011 y SC-00012).';
+        }
+
+        if (str_contains($lower, 'invalid_grant') || str_contains($lower, 'expired or revoked')) {
+            return 'La autorizacion caduco o se revoco. Si la pantalla de consentimiento de Google esta en modo "Prueba", el permiso caduca a los 7 dias: publica la app (En produccion) o usa una app interna, y vuelve a pulsar "Continuar con Google".';
+        }
+
+        if (str_contains($lower, 'redirect_uri_mismatch')) {
+            return 'La URL de callback no esta registrada en la credencial de Google Cloud. Agregala como URI de redireccionamiento autorizado: ' . $this->google->redirectUri();
+        }
+
+        if (str_contains($lower, 'accessnotconfigured')
+            || str_contains($lower, 'has not been used')
+            || str_contains($lower, 'is disabled')
+            || str_contains($lower, 'not enabled')) {
+            return 'Falta habilitar "Google Calendar API" en el proyecto de Google Cloud (APIs y servicios > Biblioteca).';
+        }
+
+        if (str_contains($lower, 'insufficient') || str_contains($lower, 'forbidden')) {
+            return 'La cuenta conectada no autorizo el calendario: vuelve a pulsar "Continuar con Google" y acepta los permisos.';
+        }
+
+        if (str_contains($lower, 'no se pudo conectar')) {
+            return 'Revisa la conexion a internet del servidor y el valor de HEALTH_GOOGLE_TIMEOUT.';
+        }
+
+        return 'Con el detalle de Google suele bastar para corregirlo; si el calendario no aparece, revisa el Calendar ID (SC-00014).';
     }
 
     /**

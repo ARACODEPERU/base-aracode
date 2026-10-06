@@ -64,6 +64,7 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
         Route::get('callback', [HealGoogleCalendarController::class, 'callback'])->name('heal_google_calendar_callback');
         Route::post('disconnect', [HealGoogleCalendarController::class, 'disconnect'])->name('heal_google_calendar_disconnect');
         Route::post('sync', [HealGoogleCalendarController::class, 'syncNow'])->name('heal_google_calendar_sync');
+        Route::post('test', [HealGoogleCalendarController::class, 'test'])->name('heal_google_calendar_test');
         Route::post('channel', [HealGoogleCalendarController::class, 'refreshChannel'])->name('heal_google_calendar_channel');
         Route::post('review/{mapping}', [HealGoogleCalendarController::class, 'review'])->name('heal_google_calendar_review');
         Route::post('review/{mapping}/discard', [HealGoogleCalendarController::class, 'discard'])->name('heal_google_calendar_review_discard');

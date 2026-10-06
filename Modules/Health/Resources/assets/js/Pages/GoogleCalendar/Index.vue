@@ -44,6 +44,11 @@ const inboundActive = ref(Boolean(props.channel.inbound));
 const savedInbound = ref(Boolean(props.channel.inbound));
 const busy = ref(false);
 
+// Diagnóstico del botón "Probar conexión": llega como flash desde el servidor.
+const diagnostics = ref(
+    Array.isArray(page.props.flash?.diagnostics) ? page.props.flash.diagnostics : []
+);
+
 // Formularios de la bandeja "Por revisar": uno por evento, con el paciente
 // sugerido preseleccionado cuando el título coincide con alguien del padrón.
 const reviewForms = reactive(
@@ -81,6 +86,16 @@ function matchPatientId(name) {
 const ready = computed(() => Boolean(props.channel.ready));
 const connected = computed(() => Boolean(props.channel.refreshToken));
 const credentialsReady = computed(() => Boolean(props.channel.clientId) && Boolean(props.channel.clientSecret));
+const accountLabel = computed(() => props.channel.accountEmail || 'Cuenta de Google conectada');
+const redirectUri = computed(() => props.channel.redirectUri || '');
+
+// Un error de credenciales caducadas (modo "Prueba" de Google: 7 días) se
+// explica en la pantalla en vez de dejar solo el mensaje de Google.
+const expiredGrant = computed(() => {
+    const lastError = String(props.channel.lastError ?? '').toLowerCase();
+
+    return lastError.includes('invalid_grant') || lastError.includes('expired or revoked');
+});
 
 const flash = (icon, title, text) => {
     Swal.fire({
@@ -99,6 +114,19 @@ const showFlash = () => {
 
     if (page.props.flash?.error) {
         flash('error', 'No se pudo completar', page.props.flash.error);
+    }
+};
+
+const copyRedirectUri = async () => {
+    if (!redirectUri.value) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(redirectUri.value);
+        flash('success', 'Copiado', 'Pega esta URL en Google Cloud Console como URI de redireccionamiento autorizado.');
+    } catch (error) {
+        flash('error', 'No se pudo copiar', 'Copia la URL manualmente desde el recuadro.');
     }
 };
 
@@ -153,7 +181,7 @@ const post = (name, options = {}) => {
 
 const syncNow = () => {
     if (!ready.value) {
-        flash('error', 'Sincronización no disponible', 'Activa el canal y completa las credenciales de Google.');
+        flash('error', 'Sincronización no disponible', 'Activa el canal y conecta la cuenta de Google.');
         return;
     }
 
@@ -164,11 +192,16 @@ const refreshChannel = () => {
     post('heal_google_calendar_channel');
 };
 
+const testConnection = () => {
+    diagnostics.value = [];
+    post('heal_google_calendar_test');
+};
+
 const disconnect = () => {
     Swal.fire({
         icon: 'warning',
         title: '¿Desconectar la cuenta de Google?',
-        text: 'Se olvida el refresh token. Las citas ya sincronizadas no se tocan.',
+        text: 'Se revoca el permiso en tu cuenta de Google y se olvida la conexión. Las citas ya sincronizadas no se tocan.',
         showCancelButton: true,
         confirmButtonText: 'Desconectar',
         cancelButtonText: 'Cancelar',
@@ -244,11 +277,60 @@ showFlash();
                     </div>
                 </div>
 
+                <!-- Cuenta conectada (o el botón para conectarla) -->
+                <div
+                    class="mt-4 flex flex-col gap-4 rounded border border-gray-200 p-4 dark:border-gray-700 md:flex-row md:items-center md:justify-between"
+                >
+                    <div class="flex items-center gap-3">
+                        <img
+                            v-if="connected && channel.accountPicture"
+                            :src="channel.accountPicture"
+                            alt="Cuenta de Google"
+                            class="h-10 w-10 rounded-full"
+                        />
+                        <div v-else class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                            {{ connected ? 'G' : '?' }}
+                        </div>
+                        <div>
+                            <span class="block text-xs uppercase text-gray-400">Cuenta de Google</span>
+                            <span :class="connected ? 'font-semibold text-success' : 'text-danger'">
+                                {{ connected ? `Conectada como ${accountLabel}` : 'Sin conectar' }}
+                            </span>
+                            <span v-if="connected && channel.accountName" class="block text-xs text-gray-500">
+                                {{ channel.accountName }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a
+                            v-if="!connected && credentialsReady"
+                            :href="route('heal_google_calendar_connect')"
+                            class="btn btn-primary"
+                        >
+                            Continuar con Google
+                        </a>
+                        <span v-else-if="!connected" class="text-sm text-warning">
+                            Registra la credencial (abajo) para poder conectar la cuenta.
+                        </span>
+                        <button v-else type="button" class="btn btn-outline-danger" :disabled="busy" @click="disconnect">
+                            Desconectar
+                        </button>
+                        <button type="button" class="btn btn-secondary" :disabled="busy" @click="syncNow">Sincronizar ahora</button>
+                        <button type="button" class="btn btn-outline-primary" :disabled="busy" @click="testConnection">
+                            Probar conexión
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" :disabled="busy" @click="refreshChannel">
+                            Renovar canal
+                        </button>
+                    </div>
+                </div>
+
                 <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="rounded border border-gray-200 p-3 text-sm dark:border-gray-700">
-                        <span class="block text-xs uppercase text-gray-400">Cuenta de Google</span>
-                        <span :class="connected ? 'text-success' : 'text-danger'">
-                            {{ connected ? 'Conectada' : 'Sin conectar' }}
+                        <span class="block text-xs uppercase text-gray-400">Credenciales</span>
+                        <span :class="credentialsReady ? 'text-success' : 'text-danger'">
+                            {{ credentialsReady ? 'Registradas' : 'Pendientes' }}
                         </span>
                     </div>
                     <div class="rounded border border-gray-200 p-3 text-sm dark:border-gray-700">
@@ -267,36 +349,85 @@ showFlash();
                     </div>
                 </div>
 
-                <div class="mt-4 flex flex-wrap items-center gap-2">
-                    <a v-if="!connected" :href="route('heal_google_calendar_connect')" class="btn btn-primary">
-                        Conectar con Google
-                    </a>
-                    <button v-else type="button" class="btn btn-outline-danger" :disabled="busy" @click="disconnect">
-                        Desconectar
-                    </button>
-                    <button type="button" class="btn btn-secondary" :disabled="busy" @click="syncNow">Sincronizar ahora</button>
-                    <button type="button" class="btn btn-outline-primary" :disabled="busy" @click="refreshChannel">
-                        Renovar canal
-                    </button>
-                    <span class="text-xs text-gray-500">
-                        La reconciliación automática corre cada {{ reconcileMinutes }} minutos.
-                    </span>
-                </div>
-
-                <p v-if="!credentialsReady" class="mt-4 rounded bg-warning/10 px-3 py-2 text-sm text-warning">
-                    Faltan las credenciales de Google: completa el Client ID y el Client Secret ({{ channel.parameterCodes?.client_id }} y
-                    {{ channel.parameterCodes?.client_secret }}) en
-                    <a :href="parametersUrl" class="underline">Parámetros del sistema</a>.
-                </p>
-
-                <p v-else-if="!connected" class="mt-4 rounded bg-warning/10 px-3 py-2 text-sm text-warning">
-                    Pulsa «Conectar con Google» para autorizar la cuenta del consultorio: sin el refresh token
-                    ({{ channel.parameterCodes?.refresh_token }}) no se sincroniza nada.
-                </p>
-
                 <p v-if="channel.lastError" class="mt-4 rounded bg-danger/10 px-3 py-2 text-sm text-danger">
                     Último error: {{ channel.lastError }}
                 </p>
+
+                <p v-if="expiredGrant" class="mt-3 rounded bg-warning/10 px-3 py-2 text-sm text-warning">
+                    La autorización caducó o fue revocada. Es lo normal cuando la app de Google está en modo
+                    <strong>Prueba</strong> (el permiso dura 7 días): publícala en <em>En producción</em> o usa una app interna, y
+                    vuelve a pulsar «Continuar con Google».
+                </p>
+
+                <span class="mt-3 block text-xs text-gray-500">
+                    La reconciliación automática corre cada {{ reconcileMinutes }} minutos.
+                </span>
+            </div>
+
+            <!-- Puesta en marcha (una sola vez) -->
+            <div v-if="!credentialsReady" class="panel">
+                <h6 class="text-base font-semibold dark:text-white-light">Registra la credencial una sola vez</h6>
+                <p class="mt-1 text-sm text-gray-500">
+                    Google exige que la aplicación tenga una credencial propia (Client ID y Client Secret) antes de poder
+                    conectar un calendario. Se registra <strong>una sola vez</strong> en Parámetros del sistema
+                    ({{ channel.parameterCodes?.client_id }} y {{ channel.parameterCodes?.client_secret }}) y no se vuelve a mostrar.
+                    Después, cualquier administrador solo pulsa «Continuar con Google».
+                </p>
+
+                <ol class="mt-3 list-decimal pl-5 text-sm text-gray-600 dark:text-white-light">
+                    <li>
+                        En <strong>Google Cloud Console</strong> crea un proyecto y habilita <strong>Google Calendar API</strong>
+                        (APIs y servicios &gt; Biblioteca).
+                    </li>
+                    <li>
+                        En <strong>Credenciales</strong> crea un <em>ID de cliente de OAuth</em> de tipo
+                        <strong>Aplicación web</strong>.
+                    </li>
+                    <li>
+                        Agrega esta URL como <strong>URI de redireccionamiento autorizado</strong>:
+                        <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <code class="break-all rounded bg-gray-100 px-2 py-1 dark:bg-gray-700">{{ redirectUri || '—' }}</code>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @click="copyRedirectUri">Copiar</button>
+                        </div>
+                    </li>
+                    <li>Registra el <strong>Client ID</strong> y el <strong>Client Secret</strong> en Parámetros del sistema.</li>
+                    <li>
+                        Si la pantalla de consentimiento queda en modo <em>Prueba</em>, el permiso caduca a los 7 días:
+                        publícala (<em>En producción</em>) o usa una app <em>Interna</em> para conectarla una sola vez.
+                    </li>
+                </ol>
+
+                <a :href="parametersUrl" class="btn btn-primary mt-4 inline-block">Ir a Parámetros del sistema</a>
+            </div>
+
+            <div v-else class="panel">
+                <h6 class="text-base font-semibold dark:text-white-light">Credenciales de la aplicación ✓</h6>
+                <p class="mt-1 text-sm text-gray-500">
+                    El Client ID y el Client Secret ({{ channel.parameterCodes?.client_id }} y
+                    {{ channel.parameterCodes?.client_secret }}) ya están registrados y no se vuelven a mostrar. Si necesitas
+                    reemplazarlos, hazlo desde
+                    <a :href="parametersUrl" class="underline">Parámetros del sistema</a>.
+                </p>
+            </div>
+
+            <!-- Diagnóstico -->
+            <div v-if="diagnostics.length" class="panel">
+                <h6 class="text-base font-semibold dark:text-white-light">Diagnóstico de la conexión</h6>
+
+                <div class="mt-4 flex flex-col gap-3">
+                    <div
+                        v-for="check in diagnostics"
+                        :key="check.code"
+                        class="rounded border p-3 text-sm"
+                        :class="check.ok ? 'border-success/40 bg-success/5' : 'border-danger/40 bg-danger/5'"
+                    >
+                        <span class="mr-2 font-semibold" :class="check.ok ? 'text-success' : 'text-danger'">
+                            {{ check.ok ? '✓' : '✕' }} {{ check.label }}
+                        </span>
+                        <span class="text-gray-700 dark:text-white-light">{{ check.message }}</span>
+                        <span v-if="check.hint" class="mt-1 block text-xs text-warning">{{ check.hint }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Dirección Google -> sistema -->

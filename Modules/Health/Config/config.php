@@ -96,6 +96,11 @@ return [
     |
     | El cliente HTTP se arma a mano con la fachada Http (Guzzle ya instalado):
     | no se requiere el paquete google/apiclient.
+    |
+    | Las credenciales (SC-00011, SC-00012 y SC-00013) son parametros
+    | confidenciales: se registran una sola vez y la pantalla de Parametros del
+    | sistema ya no las vuelve a mostrar. Al administrador solo le queda pulsar
+    | el boton "Conectar con Google" y aceptar los permisos.
     */
     'google_calendar' => [
         // Parametro del sistema con el interruptor Activo del canal.
@@ -118,12 +123,18 @@ return [
         'default_calendar_id' => env('HEALTH_GOOGLE_CALENDAR_ID', 'primary'),
         // Dias de ventana por defecto (hacia atras y hacia adelante).
         'default_window_days' => (int) env('HEALTH_GOOGLE_WINDOW_DAYS', 60),
-        // Permiso OAuth: solo eventos del calendario configurado.
-        'scope' => env('HEALTH_GOOGLE_SCOPE', 'https://www.googleapis.com/auth/calendar.events'),
+        // Permiso OAuth: eventos del calendario del consultorio, mas `openid
+        // email` (no sensibles) para poder mostrar con que cuenta quedo
+        // conectado el calendario. Se pide en el mismo consentimiento.
+        'scope' => env('HEALTH_GOOGLE_SCOPE', 'openid email https://www.googleapis.com/auth/calendar.events'),
         // Endpoints de Google.
         'auth_url' => env('HEALTH_GOOGLE_AUTH_URL', 'https://accounts.google.com/o/oauth2/v2/auth'),
         'token_url' => env('HEALTH_GOOGLE_TOKEN_URL', 'https://oauth2.googleapis.com/token'),
         'api_url' => env('HEALTH_GOOGLE_API_URL', 'https://www.googleapis.com/calendar/v3'),
+        // Revocacion del permiso al desconectar la cuenta.
+        'revoke_url' => env('HEALTH_GOOGLE_REVOKE_URL', 'https://oauth2.googleapis.com/revoke'),
+        // Perfil de la cuenta conectada (respaldo si el token no trae id_token).
+        'userinfo_url' => env('HEALTH_GOOGLE_USERINFO_URL', 'https://openidconnect.googleapis.com/v1/userinfo'),
         'timeout' => (int) env('HEALTH_GOOGLE_TIMEOUT', 30),
         'page_size' => (int) env('HEALTH_GOOGLE_PAGE_SIZE', 250),
         // Zona horaria con la que se envian y se leen los eventos.

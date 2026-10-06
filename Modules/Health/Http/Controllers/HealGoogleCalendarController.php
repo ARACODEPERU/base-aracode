@@ -61,7 +61,7 @@ class HealGoogleCalendarController extends Controller
     public function connect(): RedirectResponse
     {
         if ($this->google->clientId() === null || $this->google->clientSecret() === null) {
-            return back()->with('error', 'Completa el Client ID y el Client Secret en Parámetros del sistema antes de conectar.');
+            return back()->with('error', 'Registra el Client ID y el Client Secret (una sola vez) en Parámetros del sistema antes de conectar.');
         }
 
         $state = Str::random(40);
@@ -101,25 +101,74 @@ class HealGoogleCalendarController extends Controller
         }
 
         try {
-            $this->google->exchangeCode($code);
+            $tokenData = $this->google->exchangeCode($code);
         } catch (\Throwable $exception) {
             return redirect()->route('heal_google_calendar')
                 ->with('error', 'No se pudo conectar con Google: ' . $exception->getMessage());
         }
 
+        // El id_token que pide el scope `openid email` permite mostrar con que
+        // cuenta quedo conectado el calendario del consultorio.
+        try {
+            $this->sync->storeAccount($this->google->accountFromToken($tokenData));
+        } catch (\Throwable) {
+            // Solo es un dato de pantalla: si falla, la conexion sigue en pie.
+        }
+
+        $email = $this->sync->account()['email'];
+
         return redirect()->route('heal_google_calendar')
-            ->with('message', 'Cuenta de Google conectada. Enciende el interruptor Activo y pulsa "Sincronizar ahora".');
+            ->with('message', 'Cuenta de Google conectada' . ($email !== null ? ' (' . $email . ')' : '') . '. Enciende el interruptor Activo y pulsa "Sincronizar ahora".');
     }
 
     /**
-     * Olvida las credenciales de la cuenta conectada.
+     * Revoca el permiso en Google y olvida la cuenta conectada.
      */
     public function disconnect(): RedirectResponse
     {
+        $revokeError = null;
+
+        // La revocacion va primero: necesita el refresh token que se borra abajo.
+        try {
+            $this->google->revoke();
+        } catch (\Throwable $exception) {
+            $revokeError = $exception->getMessage();
+        }
+
         $this->google->disconnect();
+        $this->sync->forgetAccount();
+
+        if ($revokeError !== null) {
+            return redirect()->route('heal_google_calendar')->with(
+                'message',
+                'Cuenta desconectada en el sistema. Aviso: Google no confirmo la revocacion del permiso (' . $revokeError . '); puedes retirarlo desde tu cuenta de Google.'
+            );
+        }
 
         return redirect()->route('heal_google_calendar')
-            ->with('message', 'Cuenta de Google desconectada.');
+            ->with('message', 'Cuenta de Google desconectada y permiso revocado en tu cuenta.');
+    }
+
+    /**
+     * Prueba la conexion con Google y deja el diagnostico en la pantalla.
+     *
+     * Es el boton "Probar conexion": revisa credenciales, cuenta conectada,
+     * token, acceso al calendario y URL de notificaciones, y explica en
+     * espanol que corregir cuando algo falla.
+     */
+    public function test(): RedirectResponse
+    {
+        $results = $this->sync->diagnose();
+
+        $failed = array_values(array_filter($results, fn (array $check) => ! $check['ok']));
+
+        $redirect = back()->with('diagnostics', $results);
+
+        if ($failed === []) {
+            return $redirect->with('message', 'Conexion con Google verificada: todo en orden.');
+        }
+
+        return $redirect->with('error', 'Revisa el diagnostico: ' . $failed[0]['label'] . ' — ' . $failed[0]['message']);
     }
 
     /**

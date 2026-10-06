@@ -35,15 +35,15 @@ return new class extends Migration
 
     private const ENABLED_DESCRIPTION = self::PREFIX . 'activar la sincronizacion con la Agenda (solo sincroniza cuando este encendido)';
 
-    private const CLIENT_ID_DESCRIPTION = self::PREFIX . 'Client ID de OAuth 2.0 (Google Cloud Console > APIs y servicios > Credenciales)';
+    private const CLIENT_ID_DESCRIPTION = self::PREFIX . 'Client ID de OAuth 2.0 (Google Cloud Console > APIs y servicios > Credenciales). Confidencial: se registra una vez y no se vuelve a mostrar';
 
-    private const CLIENT_SECRET_DESCRIPTION = self::PREFIX . 'Client Secret de OAuth 2.0 de la misma credencial';
+    private const CLIENT_SECRET_DESCRIPTION = self::PREFIX . 'Client Secret de OAuth 2.0 de la misma credencial. Confidencial: se registra una vez y no se vuelve a mostrar';
 
-    private const REFRESH_TOKEN_DESCRIPTION = self::PREFIX . 'refresh token de OAuth 2.0 (lo guarda el boton "Conectar con Google"; tambien se puede pegar a mano)';
+    private const REFRESH_TOKEN_DESCRIPTION = self::PREFIX . 'refresh token de OAuth 2.0 (lo guarda el boton "Conectar con Google"). Confidencial: no se muestra por seguridad';
 
     private const CALENDAR_ID_DESCRIPTION = self::PREFIX . 'identificador del calendario del consultorio (por defecto primary)';
 
-    private const CHANNEL_TOKEN_DESCRIPTION = self::PREFIX . 'secreto del canal de notificaciones push; valida el encabezado X-Goog-Channel-Token';
+    private const CHANNEL_TOKEN_DESCRIPTION = self::PREFIX . 'secreto del canal de notificaciones push; valida el encabezado X-Goog-Channel-Token. Confidencial: no se muestra por seguridad';
 
     private const WINDOW_DAYS_DESCRIPTION = self::PREFIX . 'dias de ventana de la primera sincronizacion (hacia atras y hacia adelante; por defecto 60)';
 
@@ -63,6 +63,10 @@ return new class extends Migration
      * SC-00012 y SC-00013). El secreto del canal de push (SC-00015) se genera
      * aqui para que el webhook nazca protegido y nadie tenga que inventarlo.
      *
+     * Las credenciales nacen con el tipo 'pwd' (confidencial): se registran una
+     * sola vez y la pantalla de Parametros del sistema ya no vuelve a mostrarlas.
+     * Al administrador solo le queda pulsar el boton "Conectar con Google".
+     *
      * Es idempotente: solo crea las filas que falten y no pisa un valor ya
      * cargado por el administrador.
      */
@@ -73,11 +77,11 @@ return new class extends Migration
         }
 
         $this->ensure(self::ENABLED_CODE, self::ENABLED_DESCRIPTION, 'chx', '0');
-        $this->ensure(self::CLIENT_ID_CODE, self::CLIENT_ID_DESCRIPTION, 'tx', null);
-        $this->ensure(self::CLIENT_SECRET_CODE, self::CLIENT_SECRET_DESCRIPTION, 'tx', null);
-        $this->ensure(self::REFRESH_TOKEN_CODE, self::REFRESH_TOKEN_DESCRIPTION, 'tx', null);
+        $this->ensure(self::CLIENT_ID_CODE, self::CLIENT_ID_DESCRIPTION, 'pwd', null);
+        $this->ensure(self::CLIENT_SECRET_CODE, self::CLIENT_SECRET_DESCRIPTION, 'pwd', null);
+        $this->ensure(self::REFRESH_TOKEN_CODE, self::REFRESH_TOKEN_DESCRIPTION, 'pwd', null);
         $this->ensure(self::CALENDAR_ID_CODE, self::CALENDAR_ID_DESCRIPTION, 'tx', self::DEFAULT_CALENDAR_ID);
-        $this->ensure(self::CHANNEL_TOKEN_CODE, self::CHANNEL_TOKEN_DESCRIPTION, 'tx', Str::random(40));
+        $this->ensure(self::CHANNEL_TOKEN_CODE, self::CHANNEL_TOKEN_DESCRIPTION, 'pwd', Str::random(40));
         $this->ensure(self::WINDOW_DAYS_CODE, self::WINDOW_DAYS_DESCRIPTION, 'tx', self::DEFAULT_WINDOW_DAYS);
         $this->ensure(self::INBOUND_CODE, self::INBOUND_DESCRIPTION, 'chx', '1');
     }
