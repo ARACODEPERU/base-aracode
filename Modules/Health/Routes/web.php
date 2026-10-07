@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->prefix('health')->group(function () {
         Route::post('avisos/update', [HealAppointmentNoticeController::class, 'update'])->name('heal_appointment_notices_update');
         Route::post('avisos/preview', [HealAppointmentNoticeController::class, 'preview'])->name('heal_appointment_notices_preview');
         Route::post('avisos/test', [HealAppointmentNoticeController::class, 'test'])->name('heal_appointment_notices_test');
+        Route::post('avisos/deliveries/{delivery}/retry', [HealAppointmentNoticeController::class, 'retry'])->name('heal_appointment_notices_retry');
     });
 
     // Google Calendar (sincronizacion bidireccional de la Agenda).

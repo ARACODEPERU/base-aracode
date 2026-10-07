@@ -16,6 +16,7 @@ use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
 use Modules\Health\Entities\HealSetting;
 use Modules\Health\Support\AppointmentDuration;
+use Modules\Health\Support\HealthPhoneNumber;
 use Modules\Health\Support\PendingSignatureReminder;
 
 class HealAgendaController extends Controller
@@ -167,7 +168,8 @@ class HealAgendaController extends Controller
             'date_end_appointmen' => $end->toDateString(),
             'time_end_appointmen' => $end->format('H:i:s'),
             'email' => $patient->person?->email,
-            'telephone' => $patient->person?->telephone,
+            // La cita hereda el telefono del paciente ya en la forma de Salud.
+            'telephone' => HealthPhoneNumber::normalize($patient->person?->telephone),
             'description' => $data['description'],
             'details' => $data['details'] ?? null,
             'message' => $data['message'] ?? null,

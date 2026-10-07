@@ -829,8 +829,17 @@ const sendMessageWhatsapp = () => {
                                                             <InputError :message="form.errors.email" class="mt-1" />
                                                         </div>
                                                         <div :class="[form.telephone ? form.errors.telephone ? 'has-success' : 'has-error' : '', ]" class="sm:col-span-1" >
-                                                            <label for="email" >Teléfono</label>
-                                                            <input id="email" type="text" class="form-input" v-model="form.telephone" />
+                                                            <label for="telephone" >Teléfono</label>
+                                                            <input
+                                                                id="telephone"
+                                                                type="text"
+                                                                inputmode="numeric"
+                                                                maxlength="12"
+                                                                placeholder="Ej: 987987987"
+                                                                class="form-input"
+                                                                v-model="form.telephone"
+                                                            />
+                                                            <p class="mt-1 text-xs text-gray-500">Celular del Perú: 9 dígitos que empiezan con 9 (sin el +51).</p>
                                                             <InputError :message="form.errors.telephone" class="mt-1" />
                                                         </div>
                                                         <div class="sm:col-span-2">

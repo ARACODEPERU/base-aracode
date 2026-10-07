@@ -8,6 +8,8 @@ use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealAppointmentNotice;
 use Modules\Health\Entities\HealSetting;
 use Modules\Health\Support\AppointmentNoticeMessage;
+use Modules\Health\Support\HealthPhoneNumber;
+use Modules\Integrationhub\Exceptions\SmsgateRejectedException;
 use Modules\Integrationhub\Services\SmsgateService;
 use RuntimeException;
 
@@ -19,6 +21,12 @@ use RuntimeException;
  * telefono del paciente, el texto final del aviso y el envio por SMSGate.
  *
  * El envio real lo hace el job en la cola; este servicio no encola nada.
+ *
+ * El telefono del destinatario se valida con la regla de Salud (celular del
+ * Peru: 9 digitos que empiezan en 9) antes de llamar al API: un numero que no
+ * la cumple lanza SmsgateRejectedException, de modo que la entrega queda
+ * fallida con un motivo legible en lugar de viajar como "+987987987" y volver
+ * rechazada por SMSGate.
  */
 class AppointmentNoticeService
 {
@@ -159,21 +167,42 @@ class AppointmentNoticeService
     /**
      * Envia el aviso de una cita al telefono indicado.
      *
-     * @throws RuntimeException cuando falta configuracion o SMSGate rechaza el envio.
+     * @throws SmsgateRejectedException cuando el telefono no es un celular del Peru.
+     * @throws RuntimeException cuando falta configuracion o el fallo es transitorio.
      */
     public function sendTo(string $phone, HealAppointmentNotice $notice, DentAppointment $appointment): void
     {
-        $this->smsgate->send($phone, $this->renderNoticeText($notice, $appointment));
+        $this->smsgate->send($this->smsDestination($phone), $this->renderNoticeText($notice, $appointment));
     }
 
     /**
      * Envia un texto ya armado (prueba desde la pantalla).
      *
-     * @throws RuntimeException cuando falta configuracion o SMSGate rechaza el envio.
+     * @throws SmsgateRejectedException cuando el telefono no es un celular del Peru.
+     * @throws RuntimeException cuando falta configuracion o el fallo es transitorio.
      */
     public function sendTest(string $phone, string $text): void
     {
-        $this->smsgate->send($phone, $text);
+        $this->smsgate->send($this->smsDestination($phone), $text);
+    }
+
+    /**
+     * Telefono de envio en E.164 sin "+" (51 + los 9 digitos).
+     *
+     * @throws SmsgateRejectedException cuando el valor no es un celular del Peru.
+     */
+    private function smsDestination(string $phone): string
+    {
+        $number = HealthPhoneNumber::toE164($phone);
+
+        if ($number === null) {
+            throw new SmsgateRejectedException(
+                'El telefono "' . mb_substr(trim($phone), 0, 30) . '" no es un celular del Peru utilizable '
+                . '(9 digitos que empiezan en 9, sin el +51).'
+            );
+        }
+
+        return $number;
     }
 
     /**

@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
+use Modules\Health\Rules\PeruMobile;
 use Modules\Health\Support\AppointmentDuration;
+use Modules\Health\Support\HealthPhoneNumber;
 
 class AppointmentController extends Controller
 {
@@ -126,6 +128,7 @@ class AppointmentController extends Controller
                 'date_appointmen'       => 'required',
                 'time_appointmen'       => 'required',
                 'duration_minutes'      => ['required', 'integer', AppointmentDuration::rule()],
+                'telephone'             => ['nullable', new PeruMobile()],
                 'description'           => 'required|max:255',
                 'details'               => 'max:255',
                 'message'               => 'max:500',
@@ -134,6 +137,9 @@ class AppointmentController extends Controller
                 'duration_minutes.in' => AppointmentDuration::message(),
             ]
         );
+
+        // El telefono de la cita se guarda en la forma de Salud (9 digitos).
+        HealthPhoneNumber::normalizeRequest($request);
 
         $patient = HealPatient::find($request->get('patient_id')['code']);
         $doctor = HealDoctor::find($request->get('doctor_id')['code']);
@@ -182,6 +188,7 @@ class AppointmentController extends Controller
                 'date_appointmen'       => 'required',
                 'time_appointmen'       => 'required',
                 'duration_minutes'      => ['required', 'integer', AppointmentDuration::rule()],
+                'telephone'             => ['nullable', new PeruMobile()],
                 'description'           => 'required|max:255',
                 'details'               => 'max:255',
                 'message'               => 'max:500',
@@ -190,6 +197,9 @@ class AppointmentController extends Controller
                 'duration_minutes.in' => AppointmentDuration::message(),
             ]
         );
+
+        // El telefono de la cita se guarda en la forma de Salud (9 digitos).
+        HealthPhoneNumber::normalizeRequest($request);
 
         $patient = HealPatient::find($request->get('patient_id')['code']);
         $doctor = HealDoctor::find($request->get('doctor_id')['code']);
