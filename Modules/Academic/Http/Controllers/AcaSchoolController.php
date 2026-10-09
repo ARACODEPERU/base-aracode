@@ -5,6 +5,7 @@ namespace Modules\Academic\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Modules\Academic\Entities\AcaSchool;
 
@@ -41,6 +42,7 @@ class AcaSchoolController extends Controller
             'name' => 'required|max:300',
             'modular_code' => 'nullable|max:20',
             'type' => 'required|in:privado,nacional',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,svg|max:2048',
         ]);
 
         AcaSchool::create($this->payload($request, true));
@@ -62,10 +64,11 @@ class AcaSchoolController extends Controller
             'name' => 'required|max:300',
             'modular_code' => 'nullable|max:20',
             'type' => 'required|in:privado,nacional',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp,svg|max:2048',
         ]);
 
         $school = AcaSchool::findOrFail($request->get('id'));
-        $school->update($this->payload($request, false));
+        $school->update($this->payload($request, false, $school));
 
         return redirect()->route('aca_schools_list')
             ->with('message', __('Colegio actualizado con éxito'));
@@ -86,6 +89,12 @@ class AcaSchoolController extends Controller
             }
 
             $school->delete();
+
+            // Limpia el archivo de escudo para no dejar huérfanos en disco.
+            if ($school->logo && Storage::disk('public')->exists($school->logo)) {
+                Storage::disk('public')->delete($school->logo);
+            }
+
             DB::commit();
 
             $message = 'Colegio eliminado correctamente';
@@ -102,13 +111,18 @@ class AcaSchoolController extends Controller
         ]);
     }
 
-    private function payload(Request $request, bool $creating): array
+    private function payload(Request $request, bool $creating, ?AcaSchool $existing = null): array
     {
         $path = null;
         $file = $request->file('logo');
         if ($file) {
             $file_name = date('YmdHis').'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('uploads/schools', $file_name, 'public');
+
+            // Al reemplazar el escudo, elimina el archivo anterior para no acumular basura.
+            if (! $creating && $existing?->logo && Storage::disk('public')->exists($existing->logo)) {
+                Storage::disk('public')->delete($existing->logo);
+            }
         }
 
         $data = [

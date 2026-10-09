@@ -129,6 +129,12 @@ class PermissionTableSeeder extends Seeder
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_area_nuevo']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_area_editar']));
         array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_area_eliminar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_horario_listado']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_horario_editar']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_horario_docente']));
+        // Porteria: asistencia institucional escaneando el QR del carné.
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_porteria_escaner']));
+        array_push($permissions, Permission::firstOrCreate(['name' => 'aca_school_porteria_reporte']));
 
         foreach ($permissions as $permission) {
 
@@ -158,11 +164,21 @@ class PermissionTableSeeder extends Seeder
         $docente->givePermissionTo('aca_cursos_listado');
         // Registro de notas del colegio (solo sus secciones asignadas).
         $docente->givePermissionTo('aca_school_docente_notas');
+        // Consulta de su propio horario y, mas adelante, registro de la
+        // asistencia de su hora de clase.
+        $docente->givePermissionTo('aca_school_horario_docente');
 
         // El canal SMSGate lo configuran y usan admin y Administrador; la guia
         // paso a paso queda solo para admin (aca_smsgate_guia ya se concedio
         // arriba, dentro del bloque de $permissions).
         $administrador = Role::firstOrCreate(['name' => 'Administrador']);
         $administrador->givePermissionTo('aca_smsgate_configuracion');
+        $administrador->givePermissionTo('aca_school_porteria_escaner');
+        $administrador->givePermissionTo('aca_school_porteria_reporte');
+
+        // Rol dedicado del equipo de la puerta: solo escanea, no ve notas,
+        // cobros ni matriculas. Es con el que entra la tablet de la porteria.
+        $portero = Role::firstOrCreate(['name' => 'Portero']);
+        $portero->givePermissionTo('aca_school_porteria_escaner');
     }
 }

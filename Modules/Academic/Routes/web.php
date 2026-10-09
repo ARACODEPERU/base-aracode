@@ -37,9 +37,13 @@ use Modules\Academic\Http\Controllers\AcaSchoolChargeController;
 use Modules\Academic\Http\Controllers\AcaSchoolController;
 use Modules\Academic\Http\Controllers\AcaSchoolEnrollmentController;
 use Modules\Academic\Http\Controllers\AcaSchoolFeeController;
+use Modules\Academic\Http\Controllers\AcaSchoolGateController;
+use Modules\Academic\Http\Controllers\AcaSchoolScheduleController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
 use Modules\Academic\Http\Controllers\AcaSchoolTeacherGradesController;
+use Modules\Academic\Http\Controllers\AcaSchoolAttendanceController;
+use Modules\Academic\Http\Controllers\AcaSchoolTeacherCompetencyController;
 use Modules\Academic\Http\Controllers\AcaSchoolTeacherController;
 use Modules\Academic\Http\Controllers\AcaSchoolYearController;
 use Modules\Academic\Http\Controllers\AcaSalesController;
@@ -876,6 +880,34 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
     Route::middleware(['middleware' => 'permission:aca_school_area_eliminar'])
         ->delete('school/areas/destroy/{id}', [AcaSchoolAreaController::class, 'destroy'])->name('aca_school_areas_destroy');
 
+    /*
+     * Horario del colegio: jornada (hora de entrada y salida por nivel/turno) y
+     * bloques de clase por seccion, area y docente. De aqui salen el horario de
+     * cada alumno, que docente le dicta cada curso y, mas adelante, el registro
+     * de asistencia por hora del docente.
+     */
+    Route::middleware(['middleware' => 'permission:aca_school_horario_listado'])
+        ->get('school/schedules', [AcaSchoolScheduleController::class, 'index'])->name('aca_school_schedules_index');
+
+    // "Mi horario": lo ve el docente con su propio permiso, sin permiso de edicion.
+    Route::middleware(['middleware' => 'permission:aca_school_horario_docente'])
+        ->get('school/schedules/my', [AcaSchoolScheduleController::class, 'mySchedule'])->name('aca_school_schedules_my');
+
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->post('school/schedules/store', [AcaSchoolScheduleController::class, 'store'])->name('aca_school_schedules_store');
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->put('school/schedules/update/{id}', [AcaSchoolScheduleController::class, 'update'])->name('aca_school_schedules_update');
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->delete('school/schedules/destroy/{id}', [AcaSchoolScheduleController::class, 'destroy'])->name('aca_school_schedules_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->post('school/schedules/copy-day', [AcaSchoolScheduleController::class, 'copyDay'])->name('aca_school_schedules_copy_day');
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->post('school/schedules/copy-section', [AcaSchoolScheduleController::class, 'copySection'])->name('aca_school_schedules_copy_section');
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->post('school/schedules/journey/store', [AcaSchoolScheduleController::class, 'storeJourney'])->name('aca_school_schedules_journey_store');
+    Route::middleware(['middleware' => 'permission:aca_school_horario_editar'])
+        ->delete('school/schedules/journey/destroy/{id}', [AcaSchoolScheduleController::class, 'destroyJourney'])->name('aca_school_schedules_journey_destroy');
+
     // Estructura academica: niveles, grados y secciones
     Route::middleware(['middleware' => 'permission:aca_school_estructura'])
         ->get('school/structure', [AcaSchoolStructureController::class, 'index'])->name('aca_school_structure');
@@ -913,6 +945,14 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->post('school/students/update', [AcaSchoolStudentController::class, 'update'])->name('aca_school_students_update');
     Route::middleware(['middleware' => 'permission:aca_school_alumno_eliminar'])
         ->delete('school/students/destroy/{id}', [AcaSchoolStudentController::class, 'destroy'])->name('aca_school_students_destroy');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_listado'])
+        ->get('school/students/{id}/card', [AcaSchoolStudentController::class, 'card'])->name('aca_school_students_card');
+
+    // Impresión masiva de carnés (ids separados por coma, en nueva pestaña)
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_listado'])
+        ->get('school/students/cards/print', [AcaSchoolStudentController::class, 'cardsBulk'])->name('aca_school_students_cards_bulk');
+    Route::middleware(['middleware' => 'permission:aca_school_alumno_listado'])
+        ->get('school/students/cards/bulk-ids', [AcaSchoolStudentController::class, 'bulkIds'])->name('aca_school_students_bulk_ids');
 
     // Apoderados de alumnos escolares
     Route::middleware(['middleware' => 'permission:aca_school_alumno_editar|aca_school_alumno_apoderados'])
@@ -950,6 +990,38 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
         ->get('school/teacher/grades/section/{sectionId}', [AcaSchoolTeacherGradesController::class, 'show'])->name('aca_school_teacher_grades_show');
     Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
         ->post('school/teacher/grades/section/{sectionId}/store', [AcaSchoolTeacherGradesController::class, 'store'])->name('aca_school_teacher_grades_store');
+
+    // Registro de asistencia mensual del docente (dinamica estilo SIAGIE)
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/attendances', [AcaSchoolAttendanceController::class, 'index'])->name('aca_school_attendance_index');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/attendances/section/{sectionId}', [AcaSchoolAttendanceController::class, 'show'])->name('aca_school_attendance_show');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->post('school/teacher/attendances/section/{sectionId}/store', [AcaSchoolAttendanceController::class, 'store'])->name('aca_school_attendance_store');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/attendances/section/{sectionId}/pdf', [AcaSchoolAttendanceController::class, 'pdf'])->name('aca_school_attendance_pdf');
+
+    /*
+     * Porteria del colegio: asistencia institucional (entrada y salida por la
+     * puerta) escaneando el QR del carné. Es distinta de la asistencia de aula
+     * que registra el docente mes a mes.
+     */
+    Route::middleware(['middleware' => 'permission:aca_school_porteria_escaner'])
+        ->get('school/gate/scanner', [AcaSchoolGateController::class, 'scanner'])->name('aca_school_gate_scanner');
+    Route::middleware(['middleware' => 'permission:aca_school_porteria_escaner'])
+        ->post('school/gate/scan', [AcaSchoolGateController::class, 'scan'])->name('aca_school_gate_scan');
+    Route::middleware(['middleware' => 'permission:aca_school_porteria_escaner'])
+        ->get('school/gate/day', [AcaSchoolGateController::class, 'day'])->name('aca_school_gate_day');
+    Route::middleware(['middleware' => 'permission:aca_school_porteria_reporte'])
+        ->get('school/gate/report', [AcaSchoolGateController::class, 'report'])->name('aca_school_gate_report');
+
+    // Registro de evaluacion por competencias CNEB (formato SIAGIE)
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/competencies/section/{sectionId}', [AcaSchoolTeacherCompetencyController::class, 'show'])->name('aca_school_teacher_competencies_show');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->post('school/teacher/competencies/section/{sectionId}/store', [AcaSchoolTeacherCompetencyController::class, 'store'])->name('aca_school_teacher_competencies_store');
+    Route::middleware(['middleware' => 'permission:aca_school_docente_notas'])
+        ->get('school/teacher/competencies/section/{sectionId}/export', [AcaSchoolTeacherCompetencyController::class, 'export'])->name('aca_school_teacher_competencies_export');
 
     Route::middleware(['middleware' => 'permission:aca_school_cobro_listado'])
         ->get('school/charges/{enrollmentId}', [AcaSchoolChargeController::class, 'show'])->name('aca_school_charges_show');

@@ -57,6 +57,16 @@ class AcaSchoolSection extends Model
     }
 
     /**
+     * Bloques del horario de la seccion (que cursos lleva el alumno).
+     */
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(AcaSchoolSchedule::class, 'section_id')
+            ->orderBy('weekday')
+            ->orderBy('start_time');
+    }
+
+    /**
      * Matriculas que ocupan vacante en la seccion (status activo).
      */
     public function activeEnrollments(): HasMany

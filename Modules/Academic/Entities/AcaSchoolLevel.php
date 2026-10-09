@@ -21,11 +21,28 @@ class AcaSchoolLevel extends Model
         'name',
         'sort_order',
         'status',
+        'scale',
     ];
 
     protected $casts = [
         'status' => 'boolean',
     ];
+
+    /**
+     * Escala de evaluacion del nivel: la configurada por el colegio o, si no
+     * definio ninguna, el default del MINEDU (Inicial literal AD/A/B/C y
+     * Primaria/Secundaria vigesimal 0-20).
+     */
+    public function evaluationScale(): string
+    {
+        if (in_array($this->scale, ['literal', 'vigesimal'], true)) {
+            return $this->scale;
+        }
+
+        return $this->code === self::INICIAL
+            ? AcaSchoolGradeCompetency::SCALE_LITERAL
+            : AcaSchoolGradeCompetency::SCALE_VIGESIMAL;
+    }
 
     public function school(): BelongsTo
     {
@@ -35,6 +52,14 @@ class AcaSchoolLevel extends Model
     public function grades(): HasMany
     {
         return $this->hasMany(AcaSchoolGrade::class, 'level_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Jornadas del nivel: hora oficial de entrada y salida por turno.
+     */
+    public function journeys(): HasMany
+    {
+        return $this->hasMany(AcaSchoolJourney::class, 'level_id');
     }
 
     /**
