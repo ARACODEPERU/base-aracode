@@ -15,6 +15,8 @@ use Modules\Health\Entities\HealAttention;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
 use Modules\Health\Entities\HealSetting;
+use Modules\Health\Support\AppointmentDuration;
+use Modules\Health\Support\HealthPhoneNumber;
 use Modules\Health\Support\PendingSignatureReminder;
 
 class HealAgendaController extends Controller
@@ -68,6 +70,7 @@ class HealAgendaController extends Controller
             'normalEnd' => $this->normalEnd(),
             'workingHoursRanges' => $this->workingHours(),
             'slotMinutes' => self::SLOT_MINUTES,
+            'appointmentDurationOptions' => AppointmentDuration::options(),
             'attentionBlockMinutes' => self::ATTENTION_BLOCK_MINUTES,
             'pendingSignatures' => PendingSignatureReminder::items(),
         ]);
@@ -107,7 +110,9 @@ class HealAgendaController extends Controller
         $data = $request->validate([
             'doctor_id' => ['required', 'exists:heal_doctors,id'],
             'date' => ['required', 'date_format:Y-m-d'],
-            'duration_minutes' => ['nullable', 'integer', 'min:15', 'max:240', 'multiple_of:15'],
+            'duration_minutes' => ['nullable', 'integer', AppointmentDuration::rule()],
+        ], [
+            'duration_minutes.in' => AppointmentDuration::message(),
         ]);
 
         $duration = (int) ($data['duration_minutes'] ?? self::SLOT_MINUTES);
@@ -133,10 +138,12 @@ class HealAgendaController extends Controller
             'doctor_id_value' => [$this->canChooseDoctor() ? 'required' : 'nullable', 'exists:heal_doctors,id'],
             'date_appointmen' => ['required', 'date_format:Y-m-d'],
             'time_appointmen' => ['required', 'date_format:H:i'],
-            'duration_minutes' => ['required', 'integer', 'min:15', 'max:240', 'multiple_of:15'],
+            'duration_minutes' => ['required', 'integer', AppointmentDuration::rule()],
             'description' => ['required', 'string', 'max:255'],
             'details' => ['nullable', 'string', 'max:255'],
             'message' => ['nullable', 'string', 'max:500'],
+        ], [
+            'duration_minutes.in' => AppointmentDuration::message(),
         ]);
 
         $doctorId = $this->resolveAppointmentDoctorId($request);
@@ -161,7 +168,8 @@ class HealAgendaController extends Controller
             'date_end_appointmen' => $end->toDateString(),
             'time_end_appointmen' => $end->format('H:i:s'),
             'email' => $patient->person?->email,
-            'telephone' => $patient->person?->telephone,
+            // La cita hereda el telefono del paciente ya en la forma de Salud.
+            'telephone' => HealthPhoneNumber::normalize($patient->person?->telephone),
             'description' => $data['description'],
             'details' => $data['details'] ?? null,
             'message' => $data['message'] ?? null,
@@ -185,7 +193,9 @@ class HealAgendaController extends Controller
             'doctor_id' => ['required', 'exists:heal_doctors,id'],
             'date' => ['required', 'date_format:Y-m-d'],
             'time' => ['required', 'date_format:H:i'],
-            'duration_minutes' => ['required', 'integer', 'min:15', 'max:240', 'multiple_of:15'],
+            'duration_minutes' => ['required', 'integer', AppointmentDuration::rule()],
+        ], [
+            'duration_minutes.in' => AppointmentDuration::message(),
         ]);
 
         $appointmentId = (int) $data['appointment_id'];

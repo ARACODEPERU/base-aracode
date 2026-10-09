@@ -5,6 +5,7 @@ namespace Modules\Health\Console;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealAppointmentNotice;
@@ -23,6 +24,11 @@ use Modules\Health\Support\AppointmentNoticeMessage;
  *
  * No hace nada cuando el canal esta apagado (parametro SC-00009) o cuando faltan
  * las credenciales de SMSGate de Salud (SC-00006, SC-00007 y SC-00008).
+ *
+ * Un aviso que no se puede encolar no detiene la corrida: la entrega queda
+ * fallida con el motivo y se sigue con las demas citas. Asi el comando termina
+ * siempre bien (exit code 0) y el planificador no avisa de un comando fallido
+ * por un fallo puntual de una entrega.
  */
 class SendHealthAppointmentNotices extends Command
 {
@@ -107,7 +113,30 @@ class SendHealthAppointmentNotices extends Command
                     continue;
                 }
 
-                SendAppointmentNotice::dispatch($delivery->id);
+                try {
+                    SendAppointmentNotice::dispatch($delivery->id);
+                } catch (\Throwable $exception) {
+                    // La cola rechazo el encolado (por ejemplo una cola en modo
+                    // sincrono donde el envio revienta): se deja constancia en
+                    // la entrega y se continua con el resto.
+                    $delivery->update([
+                        'status' => 'failed',
+                        'error_message' => mb_substr(
+                            'No se pudo encolar el aviso: ' . $exception->getMessage(),
+                            0,
+                            500
+                        ),
+                    ]);
+
+                    Log::warning('No se pudo encolar un aviso de cita', [
+                        'delivery_id' => $delivery->id,
+                        'appointment_id' => $appointment->id,
+                        'error' => $exception->getMessage(),
+                    ]);
+
+                    continue;
+                }
+
                 $queued++;
             }
         }

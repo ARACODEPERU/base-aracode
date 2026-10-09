@@ -49,6 +49,11 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    // Duraciones permitidas, enviadas por Modules/Health/Support/AppointmentDuration.
+    appointmentDurationOptions: {
+        type: Array,
+        default: () => [],
+    },
 });
 const baseUrl = assetUrl;
 const form = useForm({
@@ -60,6 +65,7 @@ const form = useForm({
     doctor_person_id: null,
     date_appointmen: null,
     time_appointmen: null,
+    duration_minutes: 30,
     email: null,
     telephone: null,
     description: null,
@@ -75,6 +81,29 @@ const isViewNoteModal = ref(false);
 const isShowNoteMenu = ref(false);
 const selectedTab = ref("all");
 const selectedNote = ref({});
+
+/** Diferencia en minutos entre dos instantes; 30 como respaldo. */
+const minutesBetween = (start, end) => {
+    const from = new Date(start);
+    const to = new Date(end);
+
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+        return 30;
+    }
+
+    return Math.max(15, Math.round((to - from) / 60000));
+};
+
+/** Ajusta una duracion a la permitida inmediata inferior del catalogo. */
+const snapDuration = (minutes) => {
+    const values = props.appointmentDurationOptions.map((option) => Number(option.value));
+
+    if (!values.length) {
+        return Number(minutes) || 30;
+    }
+
+    return values.filter((value) => value <= Number(minutes)).pop() ?? values[0];
+};
 
 const saveAppointment = () => {
     if (form.id) {
@@ -180,6 +209,10 @@ const editNote = (note = null) => {
         form.doctor_person_id = pp.doctor_person_id;
         form.date_appointmen = pp.date_appointmen;
         form.time_appointmen = pp.time_appointmen;
+        form.duration_minutes = snapDuration(minutesBetween(
+            `${pp.date_appointmen}T${pp.time_appointmen}`,
+            `${pp.date_end_appointmen || pp.date_appointmen}T${pp.time_end_appointmen}`
+        ));
         form.email = pp.email;
         form.telephone = pp.telephone;
         form.description = pp.description;
@@ -775,6 +808,19 @@ const sendMessageWhatsapp = () => {
                                                             />
                                                             <InputError :message="form.errors.time_appointmen" class="mt-1" />
                                                         </div>
+                                                        <div>
+                                                            <label for="duration_minutes" >Duración</label>
+                                                            <select
+                                                                id="duration_minutes"
+                                                                v-model="form.duration_minutes"
+                                                                class="form-select"
+                                                            >
+                                                                <option v-for="option in appointmentDurationOptions" :key="option.value" :value="option.value">
+                                                                    {{ option.label }}
+                                                                </option>
+                                                            </select>
+                                                            <InputError :message="form.errors.duration_minutes" class="mt-1" />
+                                                        </div>
                                                     </div>
                                                     <div class="grid grid-cols-1 gap-5 md:grid-cols-4" >
                                                         <div :class="[form.email ? form.errors.email ? 'has-success' : 'has-error' : '', ]" class="sm:col-span-1">
@@ -783,8 +829,17 @@ const sendMessageWhatsapp = () => {
                                                             <InputError :message="form.errors.email" class="mt-1" />
                                                         </div>
                                                         <div :class="[form.telephone ? form.errors.telephone ? 'has-success' : 'has-error' : '', ]" class="sm:col-span-1" >
-                                                            <label for="email" >Teléfono</label>
-                                                            <input id="email" type="text" class="form-input" v-model="form.telephone" />
+                                                            <label for="telephone" >Teléfono</label>
+                                                            <input
+                                                                id="telephone"
+                                                                type="text"
+                                                                inputmode="numeric"
+                                                                maxlength="12"
+                                                                placeholder="Ej: 987987987"
+                                                                class="form-input"
+                                                                v-model="form.telephone"
+                                                            />
+                                                            <p class="mt-1 text-xs text-gray-500">Celular del Perú: 9 dígitos que empiezan con 9 (sin el +51).</p>
                                                             <InputError :message="form.errors.telephone" class="mt-1" />
                                                         </div>
                                                         <div class="sm:col-span-2">

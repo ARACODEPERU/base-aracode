@@ -7,10 +7,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Modules\Dental\Entities\DentAppointment;
 use Modules\Health\Entities\HealAppointmentNotice;
 use Modules\Health\Entities\HealAppointmentNoticeDelivery;
 use Modules\Health\Services\AppointmentNoticeService;
+use Modules\Integrationhub\Exceptions\SmsgateRejectedException;
 
 /**
  * Envia un aviso de cita por SMS.
@@ -18,7 +20,13 @@ use Modules\Health\Services\AppointmentNoticeService;
  * El comando que corre cada minuto solo encola; el envio real (render + SMSGate)
  * ocurre aqui, en la cola, para no detener el planificador. La fila de entrega
  * ya existe cuando llega el job, asi que se actualiza su estado segun el
- * resultado: sent, skipped (sin telefono) o failed (agoto los reintentos).
+ * resultado: sent, skipped (sin telefono) o failed.
+ *
+ * Un rechazo permanente de SMSGate (numero invalido o 4xx del servidor) queda
+ * como failed con su motivo y NO se reintenta: el telefono hay que corregirlo
+ * en los datos. Ademas se registra en nivel warning, por debajo del umbral de
+ * las alertas, para que un dato malo no despierte al administrador por
+ * Telegram.
  */
 class SendAppointmentNotice implements ShouldQueue
 {
@@ -84,6 +92,22 @@ class SendAppointmentNotice implements ShouldQueue
                 'status' => 'sent',
                 'sent_at' => now(),
                 'error_message' => null,
+            ]);
+        } catch (SmsgateRejectedException $exception) {
+            // Fallo permanente: el numero (o el mensaje) no sirven y reintentar
+            // no cambia nada. Se deja constancia en la entrega y se sigue: no
+            // se relanza, asi el job no reintenta ni falla.
+            $delivery->update([
+                'status' => 'failed',
+                'error_message' => mb_substr($exception->getMessage(), 0, 500),
+            ]);
+
+            Log::warning('Aviso de cita no enviado: SMSGate rechazo el mensaje', [
+                'delivery_id' => $this->deliveryId,
+                'appointment_id' => $delivery->appointment_id,
+                'notice_id' => $delivery->notice_id,
+                'phone' => $phone,
+                'error' => $exception->getMessage(),
             ]);
         } catch (\Throwable $exception) {
             $delivery->update([

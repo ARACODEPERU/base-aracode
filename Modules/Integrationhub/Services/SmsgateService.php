@@ -4,6 +4,8 @@ namespace Modules\Integrationhub\Services;
 
 use App\Models\Parameter;
 use Illuminate\Support\Facades\Http;
+use Modules\Integrationhub\Exceptions\SmsgateRejectedException;
+use Modules\Integrationhub\Support\PhoneNumberFormatter;
 use RuntimeException;
 
 /**
@@ -27,6 +29,12 @@ use RuntimeException;
  *
  * Si falta el usuario o la contrasena, isConfigured() devuelve false y la
  * opcion de enviar SMS no se ofrece en la pantalla que use el canal.
+ *
+ * El telefono se normaliza con PhoneNumberFormatter antes de enviarlo: el
+ * sistema guarda los numeros sin el codigo de pais (por ejemplo los 9 digitos
+ * del celular peruano) y SMSGate exige E.164 completo. Un numero que no se
+ * puede normalizar, o un rechazo 4xx del servidor, se informa con
+ * SmsgateRejectedException: reintentar no sirve, hay que corregir el dato.
  */
 class SmsgateService
 {
@@ -61,11 +69,14 @@ class SmsgateService
     /**
      * Envia un SMS de texto plano.
      *
-     * @param  string $to   Telefono (con o sin "+"; se envia siempre con "+")
+     * @param  string $to   Telefono (con o sin "+", con o sin codigo de pais)
      * @param  string $text Mensaje a enviar
      * @return array        Respuesta de SMSGate (id, state, ...)
      *
-     * @throws RuntimeException cuando falta configuracion o el servidor rechaza el envio.
+     * @throws SmsgateRejectedException cuando el numero o el mensaje no son
+     *                                  utilizables, o el servidor responde 4xx.
+     * @throws RuntimeException cuando falta configuracion o el fallo es
+     *                          transitorio (red, timeout o 5xx).
      */
     public function send(string $to, string $text): array
     {
@@ -80,17 +91,21 @@ class SmsgateService
             );
         }
 
-        // SMSGate espera E.164 con "+"; el sistema guarda los numeros sin "+".
-        $digits = ltrim(trim($to), '+');
-        $to = $digits === '' ? '' : '+' . $digits;
+        // SMSGate espera E.164 con "+"; se completa el codigo de pais cuando el
+        // numero se guardo sin el (el celular peruano de 9 digitos, por ejemplo).
+        $number = PhoneNumberFormatter::toE164($to, null, $this->countryCode());
         $text = trim($text);
 
-        if ($to === '') {
-            throw new RuntimeException('El telefono del destinatario esta vacio.');
+        if ($number === null) {
+            throw new SmsgateRejectedException(
+                'El telefono del destinatario no es utilizable para SMS: "' . mb_substr(trim($to), 0, 30) . '".'
+            );
         }
 
+        $to = '+' . $number;
+
         if ($text === '') {
-            throw new RuntimeException('El mensaje del SMS esta vacio.');
+            throw new SmsgateRejectedException('El mensaje del SMS esta vacio.');
         }
 
         try {
@@ -106,10 +121,17 @@ class SmsgateService
         }
 
         if (! $response->successful()) {
-            throw new RuntimeException(
-                'SMSGate rechazo el SMS (HTTP ' . $response->status() . '): '
-                . mb_substr(trim((string) $response->body()), 0, 300)
-            );
+            $message = 'SMSGate rechazo el SMS (HTTP ' . $response->status() . '): '
+                . mb_substr(trim((string) $response->body()), 0, 300);
+
+            // 4xx (por ejemplo el 400 "invalid phone number"): el numero o el
+            // mensaje no sirven, reintentar no cambia nada. Los 5xx y los
+            // timeouts si son transitorios y se reintentan en la cola.
+            if ($response->clientError()) {
+                throw new SmsgateRejectedException($message);
+            }
+
+            throw new RuntimeException($message);
         }
 
         $data = $response->json();
@@ -187,6 +209,16 @@ class SmsgateService
         $value = trim((string) Parameter::where('parameter_code', $code)->value('value_default'));
 
         return $value === '' ? null : $value;
+    }
+
+    /**
+     * Codigo de pais que se antepone a los numeros guardados sin el.
+     */
+    private function countryCode(): string
+    {
+        $code = preg_replace('/\D+/', '', (string) $this->config('country_code', '51')) ?? '';
+
+        return $code === '' ? '51' : $code;
     }
 
     /**

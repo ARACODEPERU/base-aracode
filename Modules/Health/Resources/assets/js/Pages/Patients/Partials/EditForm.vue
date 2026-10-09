@@ -230,9 +230,12 @@ const cropImageAndSave = (res) => {
                     id="telephone"
                     v-model="form.telephone"
                     type="text"
+                    inputmode="numeric"
+                    maxlength="12"
+                    placeholder="Ej: 987987987"
                     class="block w-full mt-1"
-                    
                 />
+                <p class="mt-1 text-xs text-gray-500">Celular del Perú: 9 dígitos que empiezan con 9 (sin el +51).</p>
                 <InputError :message="form.errors.telephone" class="mt-2" />
             </div>
             <div class="col-span-6 sm:col-span-3">

@@ -1,11 +1,16 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import Navigation from '@/Components/vristo/layout/Navigation.vue';
 import Swal from 'sweetalert2';
 
 const props = defineProps({
     notices: {
+        type: Array,
+        default: () => [],
+    },
+    deliveries: {
         type: Array,
         default: () => [],
     },
@@ -37,6 +42,32 @@ const savedChannelActive = ref(Boolean(props.channel.active));
 const saving = ref(false);
 const previews = ref({});
 const testForm = reactive({ phone: '', key: 'first' });
+const retrying = ref(null);
+
+// Entregas de los avisos: el backend las manda ya resueltas y se refrescan con
+// el botón Actualizar (router.reload).
+const deliveries = computed(() => props.deliveries || []);
+
+const deliveryStatusLabels = {
+    pending: 'Encolada',
+    processing: 'Enviando',
+    sent: 'Enviada',
+    skipped: 'Omitida',
+    failed: 'Fallida',
+};
+
+const deliveryStatusClasses = {
+    pending: 'bg-info/20 text-info',
+    processing: 'bg-warning/20 text-warning',
+    sent: 'bg-success/20 text-success',
+    skipped: 'bg-gray-200 text-gray-600',
+    failed: 'bg-danger/20 text-danger',
+};
+
+const deliveryStatusLabel = (status) => deliveryStatusLabels[status] || status;
+const deliveryStatusClass = (status) => deliveryStatusClasses[status] || 'bg-gray-200 text-gray-600';
+
+const reloadDeliveries = () => router.reload({ only: ['deliveries'] });
 
 const titles = {
     first: 'Primer aviso antes de la cita',
@@ -166,6 +197,37 @@ const sendTest = async () => {
             customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-danger' },
             buttonsStyling: false,
         });
+    }
+};
+
+const retry = async (delivery) => {
+    retrying.value = delivery.id;
+
+    try {
+        const { data } = await axios.post(route('heal_appointment_notices_retry', [delivery.id]));
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Aviso encolado',
+            text: data.message,
+            customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-success' },
+            buttonsStyling: false,
+        });
+
+        reloadDeliveries();
+    } catch (error) {
+        const messages = error.response?.data?.errors || {};
+        const firstError = Object.values(messages).flat().join(' ');
+
+        Swal.fire({
+            icon: 'error',
+            title: 'No se pudo reintentar',
+            text: firstError || error.response?.data?.message || 'Revisa el canal e inténtalo de nuevo.',
+            customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-danger' },
+            buttonsStyling: false,
+        });
+    } finally {
+        retrying.value = null;
     }
 };
 
@@ -334,8 +396,16 @@ const channelReady = computed(() => Boolean(props.channel.configured) && channel
                 </p>
                 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div>
-                        <label class="form-label">Teléfono (con código de país)</label>
-                        <input v-model="testForm.phone" type="text" class="form-input" placeholder="Ej: +51999888777" />
+                        <label class="form-label">Teléfono</label>
+                        <input
+                            v-model="testForm.phone"
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="15"
+                            class="form-input"
+                            placeholder="Ej: 987987987"
+                        />
+                        <p class="mt-1 text-xs text-gray-500">Celular del Perú: 9 dígitos que empiezan con 9 (sin el +51).</p>
                     </div>
                     <div>
                         <label class="form-label">Bloque</label>
@@ -346,6 +416,69 @@ const channelReady = computed(() => Boolean(props.channel.configured) && channel
                     <div class="flex items-end">
                         <button type="button" class="btn btn-secondary" @click="sendTest">Enviar prueba</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Entregas recientes -->
+            <div class="panel">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h6 class="text-base font-semibold dark:text-white-light">Últimas entregas</h6>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Resultado de los últimos 50 avisos que detectó el planificador. Un aviso fallido se puede reintentar
+                            después de corregir el teléfono del paciente.
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" @click="reloadDeliveries">
+                        Actualizar
+                    </button>
+                </div>
+
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full table-auto text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-left text-xs uppercase text-gray-400 dark:border-gray-700">
+                                <th class="px-2 py-2">Cita</th>
+                                <th class="px-2 py-2">Paciente</th>
+                                <th class="px-2 py-2">Teléfono</th>
+                                <th class="px-2 py-2">Aviso</th>
+                                <th class="px-2 py-2">Estado</th>
+                                <th class="px-2 py-2">Motivo</th>
+                                <th class="px-2 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="delivery in deliveries" :key="delivery.id" class="border-b border-gray-100 dark:border-gray-800">
+                                <td class="px-2 py-2">{{ delivery.correlative || `#${delivery.appointment_id}` }}</td>
+                                <td class="px-2 py-2">{{ delivery.patient || '—' }}</td>
+                                <td class="px-2 py-2">{{ delivery.telephone || '—' }}</td>
+                                <td class="px-2 py-2">{{ titleFor({ key: delivery.notice_key }) }}</td>
+                                <td class="px-2 py-2">
+                                    <span class="badge" :class="deliveryStatusClass(delivery.status)">
+                                        {{ deliveryStatusLabel(delivery.status) }}
+                                    </span>
+                                </td>
+                                <td class="px-2 py-2 text-xs text-gray-500">{{ delivery.error_message || '—' }}</td>
+                                <td class="px-2 py-2 text-right">
+                                    <button
+                                        v-if="delivery.status !== 'sent'"
+                                        v-can="'heal_avisos'"
+                                        type="button"
+                                        class="btn btn-outline-primary btn-xs"
+                                        :disabled="retrying === delivery.id"
+                                        @click="retry(delivery)"
+                                    >
+                                        {{ retrying === delivery.id ? 'Reintentando...' : 'Reintentar' }}
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr v-if="!deliveries.length">
+                                <td colspan="7" class="px-2 py-4 text-center text-gray-500">
+                                    Todavía no hay entregas registradas.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

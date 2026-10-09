@@ -15,6 +15,8 @@ use Inertia\Inertia;
 use Modules\Health\Entities\HealPatient;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Modules\Dental\Entities\DentAppointment;
+use Modules\Health\Rules\PeruMobile;
+use Modules\Health\Support\HealthPhoneNumber;
 
 class HealPatientController extends Controller
 {
@@ -106,7 +108,7 @@ class HealPatientController extends Controller
                 'document_type_id'  => 'required',
                 'number'            => 'required|max:12',
                 'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
-                'telephone'         => 'required|max:12',
+                'telephone'         => ['required', new PeruMobile()],
                 'email'             => 'required|max:255|unique:people,email',
                 'email'             => 'required|max:255|unique:users,email',
                 'address'           => 'required|max:255',
@@ -117,6 +119,9 @@ class HealPatientController extends Controller
                 'mother_lastname'   => 'required|max:255',
             ]
         );
+
+        // El telefono se guarda siempre en la forma de Salud (9 digitos, sin +51).
+        HealthPhoneNumber::normalizeRequest($request);
 
         // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
         // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';
@@ -221,7 +226,7 @@ class HealPatientController extends Controller
                 'document_type_id'  => 'required',
                 'number'            => 'required|max:12',
                 'number'            => 'unique:people,number,' . $update_id . ',id,document_type_id,' . $request->get('document_type_id'),
-                'telephone'         => 'required|max:12',
+                'telephone'         => ['required', new PeruMobile()],
                 'email'             => 'required|max:255',
                 'address'           => 'required|max:255',
                 'ubigeo'            => 'required|max:255',
@@ -231,6 +236,9 @@ class HealPatientController extends Controller
                 'mother_lastname'   => 'required|max:255',
             ]
         );
+
+        // El telefono se guarda siempre en la forma de Salud (9 digitos, sin +51).
+        HealthPhoneNumber::normalizeRequest($request);
 
         // $path = 'img' . DIRECTORY_SEPARATOR . 'imagen-no-disponible.jpeg';
         // $destination = 'uploads' . DIRECTORY_SEPARATOR . 'products';

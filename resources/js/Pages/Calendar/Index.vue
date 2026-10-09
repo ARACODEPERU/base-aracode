@@ -42,6 +42,11 @@
             type: Boolean,
             default: false,
         },
+        // Duraciones permitidas, enviadas por Modules/Health/Support/AppointmentDuration.
+        appointmentDurationOptions: {
+            type: Array,
+            default: () => ([]),
+        },
     });
 
     // Estatus de la cita tal como se guarda en dent_appointments.
@@ -207,14 +212,8 @@
     /* ---------------------------- Nueva cita ----------------------------- */
 
     const isCreateModal = ref(false);
-    const durationOptions = [
-        { value: '15', label: '15 minutos' },
-        { value: '30', label: '30 minutos' },
-        { value: '45', label: '45 minutos' },
-        { value: '60', label: '1 hora' },
-        { value: '90', label: '1:30 horas' },
-        { value: '120', label: '2 horas' },
-    ];
+    // Duraciones permitidas, enviadas por el servidor (Modules/Health/Support/AppointmentDuration).
+    const durationOptions = computed(() => props.appointmentDurationOptions);
 
     // Quien no administra agendas solo puede elegir su propio doctor.
     const doctorChoices = computed(() => {

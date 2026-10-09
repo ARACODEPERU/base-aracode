@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Modules\Health\Entities\HealDoctor;
 use Modules\Health\Entities\HealPatient;
+use Modules\Health\Rules\PeruMobile;
+use Modules\Health\Support\AppointmentDuration;
+use Modules\Health\Support\HealthPhoneNumber;
 
 class AppointmentController extends Controller
 {
@@ -52,7 +55,8 @@ class AppointmentController extends Controller
         return Inertia::render('Dental::Appointments/Calendar', [
             'appointments' => $appointments,
             'patients' => $patients,
-            'doctors' => $doctors
+            'doctors' => $doctors,
+            'appointmentDurationOptions' => AppointmentDuration::options()
         ]);
     }
     public function index()
@@ -104,7 +108,8 @@ class AppointmentController extends Controller
             'appointments' => $appointments,
             'filters' => request()->all(),
             'patients' => $patients,
-            'doctors' => $doctors
+            'doctors' => $doctors,
+            'appointmentDurationOptions' => AppointmentDuration::options()
         ]);
     }
 
@@ -122,11 +127,19 @@ class AppointmentController extends Controller
                 'doctor_id'             => 'required',
                 'date_appointmen'       => 'required',
                 'time_appointmen'       => 'required',
+                'duration_minutes'      => ['required', 'integer', AppointmentDuration::rule()],
+                'telephone'             => ['nullable', new PeruMobile()],
                 'description'           => 'required|max:255',
                 'details'               => 'max:255',
                 'message'               => 'max:500',
+            ],
+            [
+                'duration_minutes.in' => AppointmentDuration::message(),
             ]
         );
+
+        // El telefono de la cita se guarda en la forma de Salud (9 digitos).
+        HealthPhoneNumber::normalizeRequest($request);
 
         $patient = HealPatient::find($request->get('patient_id')['code']);
         $doctor = HealDoctor::find($request->get('doctor_id')['code']);
@@ -134,8 +147,8 @@ class AppointmentController extends Controller
         $ddate = $request->get('date_appointmen') . ' ' . $request->get('time_appointmen');
         $initialDateTime = Carbon::parse($ddate);
 
-        // Agregar 30 minutos
-        $newDateTime = $initialDateTime->addMinutes(30);
+        // El fin se calcula con la duracion elegida (15 min a 6 horas).
+        $newDateTime = $initialDateTime->addMinutes((int) $request->get('duration_minutes'));
 
         $appointment = DentAppointment::create([
             'patient_id'            => $request->get('patient_id')['code'],
@@ -174,11 +187,19 @@ class AppointmentController extends Controller
                 'doctor_id'             => 'required',
                 'date_appointmen'       => 'required',
                 'time_appointmen'       => 'required',
+                'duration_minutes'      => ['required', 'integer', AppointmentDuration::rule()],
+                'telephone'             => ['nullable', new PeruMobile()],
                 'description'           => 'required|max:255',
                 'details'               => 'max:255',
                 'message'               => 'max:500',
+            ],
+            [
+                'duration_minutes.in' => AppointmentDuration::message(),
             ]
         );
+
+        // El telefono de la cita se guarda en la forma de Salud (9 digitos).
+        HealthPhoneNumber::normalizeRequest($request);
 
         $patient = HealPatient::find($request->get('patient_id')['code']);
         $doctor = HealDoctor::find($request->get('doctor_id')['code']);
@@ -186,8 +207,8 @@ class AppointmentController extends Controller
         $ddate = $request->get('date_appointmen') . ' ' . $request->get('time_appointmen');
         $initialDateTime = Carbon::parse($ddate);
 
-        // Agregar 30 minutos
-        $newDateTime = $initialDateTime->addMinutes(30);
+        // El fin se calcula con la duracion elegida (15 min a 6 horas).
+        $newDateTime = $initialDateTime->addMinutes((int) $request->get('duration_minutes'));
 
         DentAppointment::find($id)->update([
             'patient_id'            => $request->get('patient_id')['code'],

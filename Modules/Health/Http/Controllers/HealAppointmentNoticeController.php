@@ -4,15 +4,20 @@ namespace Modules\Health\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Health\Entities\HealAppointmentNotice;
+use Modules\Health\Entities\HealAppointmentNoticeDelivery;
 use Modules\Health\Entities\HealSetting;
+use Modules\Health\Jobs\SendAppointmentNotice;
 use Modules\Health\Jobs\SendAppointmentNoticeTest;
+use Modules\Health\Rules\PeruMobile;
 use Modules\Health\Services\AppointmentNoticeService;
 use Modules\Health\Support\AppointmentNoticeMessage;
+use Modules\Health\Support\HealthPhoneNumber;
 
 /**
  * Pantalla Salud > Avisos (notificaciones a pacientes).
@@ -21,6 +26,12 @@ use Modules\Health\Support\AppointmentNoticeMessage;
  * uno "un dia antes"), muestra el estado del canal SMS Gateway con su
  * interruptor Activo (parametro SC-00009) y permite previsualizar y enviar un
  * SMS de prueba. Los avisos reales los envia el planificador por la cola.
+ *
+ * La pantalla muestra tambien las ultimas entregas con su estado y motivo: los
+ * avisos que no salieron (telefono mal guardado, por ejemplo) se ven aqui y se
+ * pueden reintentar sin tocar la base. El telefono de prueba se valida con la
+ * regla de Salud (celular del Peru) para no encolar un numero que SMSGate va a
+ * rechazar.
  */
 class HealAppointmentNoticeController extends Controller
 {
@@ -46,6 +57,7 @@ class HealAppointmentNoticeController extends Controller
 
         return Inertia::render('Health::Notices/Index', [
             'notices' => $blocks,
+            'deliveries' => $this->recentDeliveries(),
             'channel' => array_merge($this->notices->channelStatus(), [
                 'parameterCode' => $this->notices->channelParameterCode(),
                 'parameterId' => $this->notices->channelParameterId(),
@@ -133,7 +145,7 @@ class HealAppointmentNoticeController extends Controller
     public function test(Request $request)
     {
         $validated = $request->validate([
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'max:30', new PeruMobile()],
             'key' => ['required', Rule::in(AppointmentNoticeMessage::keys())],
             'message' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -156,10 +168,81 @@ class HealAppointmentNoticeController extends Controller
             $message = HealAppointmentNotice::where('key', $validated['key'])->value('message');
         }
 
-        SendAppointmentNoticeTest::dispatch($validated['phone'], $this->notices->renderSampleText($message));
+        $phone = HealthPhoneNumber::normalize($validated['phone']);
+
+        SendAppointmentNoticeTest::dispatch($phone, $this->notices->renderSampleText($message));
 
         return response()->json([
             'message' => 'SMS de prueba encolado. Llega en unos segundos si el worker de la cola está corriendo.',
         ], 202);
+    }
+
+    /**
+     * Vuelve a encolar un aviso que no salio (telefono corregido, canal que
+     * estuvo apagado, intento fallido...).
+     *
+     * La fila de entrega es la misma: la clave unica (cita, bloque y canal) no
+     * admite duplicados, asi que solo se reinicia su estado y se despacha de
+     * nuevo el job. Un aviso ya enviado no se repite.
+     */
+    public function retry(HealAppointmentNoticeDelivery $delivery)
+    {
+        if (! $this->notices->isConfigured() || ! $this->notices->isChannelActive()) {
+            throw ValidationException::withMessages([
+                'delivery' => 'El canal SMS Gateway no esta listo: revisa el interruptor Activo (' . $this->notices->channelParameterCode() . ') y las credenciales de SMSGate (Salud).',
+            ]);
+        }
+
+        if ($delivery->status === 'sent') {
+            throw ValidationException::withMessages([
+                'delivery' => 'Ese aviso ya se envio; no se repite.',
+            ]);
+        }
+
+        $delivery->update([
+            'status' => 'pending',
+            'error_message' => null,
+            'sent_at' => null,
+        ]);
+
+        SendAppointmentNotice::dispatch($delivery->id);
+
+        return response()->json([
+            'message' => 'Aviso encolado otra vez. El resultado se vera en la tabla de entregas.',
+        ], 202);
+    }
+
+    /**
+     * Ultimas entregas de avisos, con el estado y el motivo del fallo.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function recentDeliveries(): array
+    {
+        // Instalacion aun sin migrar: la tabla de entregas todavia no existe.
+        if (! Schema::hasTable('heal_appointment_notice_deliveries')) {
+            return [];
+        }
+
+        return HealAppointmentNoticeDelivery::query()
+            ->with(['appointment.patient', 'notice'])
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get()
+            ->map(fn (HealAppointmentNoticeDelivery $delivery) => [
+                'id' => $delivery->id,
+                'appointment_id' => $delivery->appointment_id,
+                'correlative' => $delivery->appointment?->correlative,
+                'patient' => $delivery->appointment?->patient?->full_name,
+                'telephone' => $delivery->appointment?->telephone,
+                'notice_key' => $delivery->notice?->key,
+                'channel' => $delivery->channel,
+                'status' => $delivery->status,
+                'error_message' => $delivery->error_message,
+                'sent_at' => $delivery->sent_at?->format('d/m/Y H:i'),
+                'created_at' => $delivery->created_at?->format('d/m/Y H:i'),
+            ])
+            ->values()
+            ->all();
     }
 }

@@ -73,6 +73,8 @@ return [
             'default_url' => env('SMSGATE_URL', 'https://api.sms-gate.app/mobile/v1'),
             // Ruta del API externo de envio, sobre la URL base normalizada.
             'messages_path' => env('SMSGATE_MESSAGES_PATH', '/3rdparty/v1/messages'),
+            // Codigo de pais que se antepone a los numeros guardados sin el.
+            'country_code' => env('SMSGATE_COUNTRY_CODE', '51'),
             'timeout' => (int) env('SMSGATE_TIMEOUT', 30),
         ],
 

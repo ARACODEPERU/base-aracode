@@ -17,7 +17,7 @@
             <div class="overflow-hidden">
                 <div class="flex items-center justify-center flex-wrap gap-8 md:gap-12">
                     @php
-                        $clients = ['brise', 'iprase', 'cpa', 'horizonte', 'orbe', 'cprod', 'jrrss', 'zoelife', 'celmovil', 'cap', 'kentha'];
+                        $clients = ['erios', 'brise', 'iprase', 'cpa', 'horizonte', 'orbe', 'cprod', 'jrrss', 'zoelife', 'celmovil', 'cap', 'kentha'];
                     @endphp
                     @foreach($clients as $client)
                         <img 
