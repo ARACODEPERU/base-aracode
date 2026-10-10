@@ -21,6 +21,6 @@ class BillingPlans extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.billing-plans');
+        return view('aracode.components.billing-plans');
     }
 }

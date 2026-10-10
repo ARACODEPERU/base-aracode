@@ -46,7 +46,7 @@ class BlogController extends Controller
             ->orderBy('cms_section_items.position')
             ->first();
 
-        return view('pages.blog', [
+        return view('aracode.pages.blog', [
             'categories'        => $categories,
             'articles'          => $articles,
             'latest_articles'   => $latest_articles,
@@ -106,7 +106,7 @@ class BlogController extends Controller
                 ->get();
         }
 
-        return view('pages.blog-articulo', [
+        return view('aracode.pages.blog-articulo', [
             'categories'        => $categories,
             'article'           => $article,
             'latest_articles'   => $latest_articles,

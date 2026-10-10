@@ -21,6 +21,6 @@ class LmsPlansEssentials extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.lms-plans-essentials');
+        return view('aracode.components.lms-plans-essentials');
     }
 }

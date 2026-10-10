@@ -1,0 +1,436 @@
+/*
+ * Hoja de estilos fuente del sitio Pichanguero.
+ * Se compila con: npm run build:pichanguero
+ * Salida servible: public/themes/pichanguero/css/pichanguero.css
+ *
+ * Las clases propias van en CSS plano (fuera de @layer) a propósito: así
+ * Tailwind nunca las descarta por no detectarlas y el sitio queda autocontenido.
+ *
+ * Sistema de superficies: los componentes leen variables CSS en vez de colores
+ * fijos, así una misma tarjeta, botón o badge funciona igual sobre fondo azul
+ * marino (.pg-surface-dark) que sobre fondo claro (.pg-surface-light).
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Tokens de identidad (variables reutilizables)
+   ============================================================ */
+:root {
+    /* Colores de marca */
+    --pg-navy: #071f36;
+    --pg-navy-2: #0a2a47;
+    --pg-navy-3: #0e3557;
+    --pg-green: #36b82e;
+    --pg-forest: #00834b;
+    --pg-lime: #b5ff27;
+    --pg-white: #ffffff;
+    --pg-light: #f3f7fa;
+    --pg-ink: #0b2239;
+    --pg-slate: #55697d;
+    --pg-muted: #9ab0c4;
+    --pg-line: #1b4067;
+    --pg-line-light: #dce6ee;
+
+    /* Superficie oscura (valores por defecto) */
+    --pg-heading: var(--pg-white);
+    --pg-body: var(--pg-muted);
+    --pg-card-bg: rgba(10, 42, 71, 0.82);
+    --pg-card-bg-hover: rgba(14, 53, 87, 0.92);
+    --pg-border: var(--pg-line);
+    --pg-accent: var(--pg-lime);
+    --pg-accent-soft: rgba(181, 255, 39, 0.12);
+    --pg-icon-bg: rgba(181, 255, 39, 0.12);
+    --pg-icon-fg: var(--pg-lime);
+    --pg-shadow: none;
+}
+
+/*
+ * Sección clara: blanco y gris azulado claro para el contenido informativo
+ * (torneos, beneficios, preguntas frecuentes). Basta con añadir la clase al
+ * contenedor de la sección para que todos los componentes cambien de piel.
+ */
+.pg-surface-light {
+    --pg-heading: var(--pg-ink);
+    --pg-body: var(--pg-slate);
+    --pg-card-bg: var(--pg-white);
+    --pg-card-bg-hover: var(--pg-white);
+    --pg-border: var(--pg-line-light);
+    --pg-accent: var(--pg-forest);
+    --pg-accent-soft: rgba(54, 184, 46, 0.1);
+    --pg-icon-bg: rgba(54, 184, 46, 0.12);
+    --pg-icon-fg: var(--pg-forest);
+    --pg-shadow: 0 16px 36px -26px rgba(7, 31, 54, 0.35);
+
+    background-color: var(--pg-light);
+    color: var(--pg-body);
+}
+
+.pg-surface-dark {
+    background-color: var(--pg-navy);
+    color: var(--pg-body);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    @apply bg-white font-pg antialiased;
+    color: var(--pg-ink);
+}
+
+/* Titulares con personalidad deportiva; datos y textos, en Inter */
+h1,
+h2,
+h3,
+.pg-display {
+    @apply font-display tracking-tight;
+}
+
+h1,
+h2 {
+    font-weight: 800;
+}
+
+::selection {
+    background: var(--pg-lime);
+    color: var(--pg-navy);
+}
+
+/* Anillo de foco visible y consistente para navegación con teclado */
+:focus-visible {
+    outline: 2px solid var(--pg-green);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.pg-surface-dark :focus-visible {
+    outline-color: var(--pg-lime);
+}
+
+/* ============================================================
+   Estructura
+   ============================================================ */
+.pg-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.pg-section {
+    @apply py-16 sm:py-20 lg:py-24;
+}
+
+.pg-heading {
+    color: var(--pg-heading);
+}
+
+.pg-body {
+    color: var(--pg-body);
+}
+
+.pg-lead {
+    @apply text-base leading-relaxed sm:text-lg;
+    color: var(--pg-body);
+    max-width: 65ch;
+}
+
+.pg-accent {
+    color: var(--pg-accent);
+}
+
+/* ============================================================
+   Botones
+   ============================================================ */
+.pg-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3
+           text-base font-semibold transition duration-200 ease-out;
+    text-align: center;
+}
+
+/* CTA principal: lima sobre azul marino (contraste 13:1) */
+.pg-btn-primary {
+    background-color: var(--pg-lime);
+    color: var(--pg-navy);
+}
+
+.pg-btn-primary:hover {
+    filter: brightness(1.06);
+    transform: translateY(-2px);
+}
+
+/* Botón sólido secundario: verde complementario con texto blanco (4.9:1) */
+.pg-btn-green {
+    background-color: var(--pg-forest);
+    color: var(--pg-white);
+}
+
+.pg-btn-green:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+}
+
+/* Botón de contorno: se adapta a la superficie donde esté */
+.pg-btn-ghost {
+    border: 1px solid var(--pg-border);
+    color: var(--pg-heading);
+}
+
+.pg-btn-ghost:hover {
+    border-color: var(--pg-green);
+    color: var(--pg-accent);
+}
+
+.pg-btn-sm {
+    @apply rounded-lg px-4 py-2 text-sm;
+}
+
+.pg-btn-lg {
+    @apply px-7 py-3.5 text-base sm:text-lg;
+}
+
+/* ============================================================
+   Tarjetas y bloques
+   ============================================================ */
+.pg-card {
+    @apply rounded-2xl p-6 transition duration-200 ease-out;
+    background-color: var(--pg-card-bg);
+    border: 1px solid var(--pg-border);
+    box-shadow: var(--pg-shadow);
+}
+
+.pg-card:hover {
+    background-color: var(--pg-card-bg-hover);
+    border-color: rgba(54, 184, 46, 0.45);
+    transform: translateY(-3px);
+}
+
+.pg-icon-box {
+    @apply flex h-12 w-12 items-center justify-center rounded-xl;
+    background-color: var(--pg-icon-bg);
+    color: var(--pg-icon-fg);
+}
+
+/* ============================================================
+   Etiquetas de sección
+   ============================================================ */
+.pg-badge {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold
+           uppercase tracking-wide;
+    border: 1px solid var(--pg-border);
+    color: var(--pg-body);
+}
+
+.pg-badge-accent {
+    background-color: var(--pg-accent-soft);
+    border-color: rgba(54, 184, 46, 0.35);
+    color: var(--pg-accent);
+}
+
+.pg-surface-dark .pg-badge-accent {
+    border-color: rgba(181, 255, 39, 0.32);
+}
+
+/* ============================================================
+   Navegación
+   ============================================================ */
+.pg-nav {
+    @apply fixed inset-x-0 top-0 z-50 transition-all duration-300;
+    background-color: transparent;
+}
+
+.pg-nav.is-scrolled {
+    background-color: rgba(7, 31, 54, 0.94);
+    border-bottom: 1px solid var(--pg-line);
+    backdrop-filter: blur(10px);
+}
+
+.pg-nav-inner {
+    @apply flex h-16 items-center justify-between gap-4 lg:h-20;
+}
+
+.pg-nav-link {
+    @apply relative py-2 text-sm font-medium transition-colors duration-200;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.pg-nav-link:hover {
+    color: var(--pg-white);
+}
+
+/* Selección marcada en lima, con subrayado además del color */
+.pg-nav-link.is-active {
+    color: var(--pg-lime);
+}
+
+.pg-nav-link.is-active::after {
+    content: '';
+    @apply absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full;
+    background-color: var(--pg-lime);
+}
+
+/* Logo: la marca del proyecto se muestra sin deformar ni recolorear */
+.pg-brand-mark {
+    @apply h-10 w-auto;
+}
+
+.pg-brand-word {
+    @apply text-lg font-extrabold tracking-tight text-white;
+    font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
+}
+
+/* ============================================================
+   Menú móvil
+   ============================================================ */
+.pg-mobile-menu {
+    @apply pointer-events-none fixed inset-0 z-[60] opacity-0 transition-opacity duration-300;
+    background-color: var(--pg-navy);
+}
+
+.pg-mobile-menu.is-open {
+    @apply pointer-events-auto opacity-100;
+}
+
+.pg-mobile-link {
+    @apply block py-4 text-lg font-medium transition-colors duration-200;
+    border-bottom: 1px solid var(--pg-line);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.pg-mobile-link:hover,
+.pg-mobile-link.is-active {
+    color: var(--pg-lime);
+}
+
+/* ============================================================
+   Preguntas frecuentes
+   ============================================================ */
+.pg-faq {
+    @apply rounded-2xl p-6 transition duration-200;
+    background-color: var(--pg-card-bg);
+    border: 1px solid var(--pg-border);
+    box-shadow: var(--pg-shadow);
+}
+
+.pg-faq summary {
+    @apply flex list-none cursor-pointer items-start justify-between gap-4 text-base font-semibold sm:text-lg;
+    color: var(--pg-heading);
+}
+
+.pg-faq summary::-webkit-details-marker {
+    display: none;
+}
+
+.pg-faq summary::after {
+    content: '+';
+    @apply text-2xl leading-none transition-transform duration-300;
+    color: var(--pg-accent);
+}
+
+.pg-faq[open] summary {
+    color: var(--pg-accent);
+}
+
+.pg-faq[open] summary::after {
+    content: '\2212';
+}
+
+.pg-faq p {
+    color: var(--pg-body);
+}
+
+/* ============================================================
+   Pasos numerados
+   ============================================================ */
+.pg-step-number {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold;
+    background-color: var(--pg-icon-bg);
+    color: var(--pg-icon-fg);
+    border: 1px solid rgba(54, 184, 46, 0.3);
+}
+
+/* ============================================================
+   Tira de capacidades
+   ============================================================ */
+.pg-rail {
+    @apply grid grid-cols-2 gap-x-6 gap-y-8 lg:grid-cols-4;
+}
+
+.pg-rail-item {
+    @apply flex items-start gap-3;
+}
+
+/* ============================================================
+   Detalles gráficos inspirados en el movimiento del fútbol
+   ============================================================ */
+/* Franja diagonal sutil: se usa con moderación en las zonas de impacto */
+.pg-slash {
+    @apply pointer-events-none absolute;
+    background-image: linear-gradient(135deg, rgba(54, 184, 46, 0.22), rgba(181, 255, 39, 0.06));
+}
+
+.pg-diagonal-edge {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 3.5rem), 0 100%);
+}
+
+.pg-photo {
+    @apply h-full w-full object-cover;
+}
+
+/* ============================================================
+   Utilidades propias
+   ============================================================ */
+.pg-link {
+    @apply font-medium underline-offset-4 transition-colors duration-200;
+    color: var(--pg-body);
+}
+
+.pg-link:hover {
+    color: var(--pg-accent);
+    text-decoration: underline;
+}
+
+/*
+ * Aparición al hacer scroll.
+ * Solo se ocultan los bloques cuando hay JS (html.js): sin JavaScript
+ * el contenido se muestra normalmente.
+ */
+.js .pg-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.js .pg-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ============================================================
+   Movimiento reducido
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .js .pg-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .pg-btn:hover,
+    .pg-card:hover {
+        transform: none;
+    }
+
+    * {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+    }
+}

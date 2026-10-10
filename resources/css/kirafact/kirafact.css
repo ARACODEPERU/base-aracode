@@ -1,0 +1,194 @@
+/*
+ * Hoja de estilos fuente del sitio KiraFact.
+ * Se compila con: npm run build:kirafact
+ * Salida servible: public/themes/kirafact/css/kirafact.css
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Base
+   ============================================================ */
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    @apply bg-kf-dark font-kf text-slate-200 antialiased;
+}
+
+::selection {
+    @apply bg-kf-teal/30 text-white;
+}
+
+/* ============================================================
+   Contenedor
+   ============================================================ */
+.kf-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+/* ============================================================
+   Botones
+   ============================================================ */
+.kf-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold
+           transition-all duration-300 focus:outline-none focus-visible:ring-2
+           focus-visible:ring-kf-teal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-kf-dark;
+}
+
+.kf-btn-primary {
+    @apply bg-gradient-to-r from-kf-teal to-kf-emerald text-kf-dark shadow-lg shadow-kf-teal/25
+           hover:-translate-y-0.5 hover:brightness-110;
+}
+
+.kf-btn-ghost {
+    @apply border border-kf-line text-slate-200 hover:border-kf-teal/60 hover:text-white;
+}
+
+.kf-btn-amber {
+    @apply bg-kf-amber text-kf-dark hover:-translate-y-0.5 hover:brightness-105;
+}
+
+.kf-btn-sm {
+    @apply rounded-lg px-4 py-2 text-sm;
+}
+
+.kf-btn-lg {
+    @apply px-8 py-4 text-lg;
+}
+
+/* ============================================================
+   Tarjetas y bloques
+   ============================================================ */
+.kf-card {
+    @apply rounded-2xl border border-kf-line bg-kf-panel/80 p-6 shadow-kf-card
+           transition-all duration-300 hover:-translate-y-1 hover:border-kf-teal/40;
+}
+
+.kf-card-featured {
+    @apply border-kf-teal/60 ring-2 ring-kf-teal/40;
+}
+
+.kf-icon-box {
+    @apply flex h-12 w-12 items-center justify-center rounded-xl
+           border border-kf-teal/25 bg-kf-teal/10 text-kf-sky;
+}
+
+/* ============================================================
+   Etiquetas
+   ============================================================ */
+.kf-badge {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs
+           font-semibold uppercase tracking-wide;
+}
+
+.kf-badge-teal {
+    @apply border-kf-teal/30 bg-kf-teal/10 text-kf-sky;
+}
+
+.kf-badge-amber {
+    @apply border-kf-amber/30 bg-kf-amber/10 text-kf-amber;
+}
+
+/* ============================================================
+   Navegación
+   ============================================================ */
+.kf-nav {
+    @apply fixed inset-x-0 top-0 z-50 transition-all duration-300;
+}
+
+.kf-nav-inner {
+    @apply flex h-16 items-center justify-between;
+}
+
+.kf-nav.is-scrolled {
+    @apply border-b border-kf-line bg-kf-dark/90 backdrop-blur;
+}
+
+.kf-nav-link {
+    @apply text-sm font-medium text-slate-300 transition-colors hover:text-kf-teal;
+}
+
+.kf-nav-link.is-active {
+    @apply text-kf-teal;
+}
+
+/* ============================================================
+   Menú móvil
+   ============================================================ */
+.kf-mobile-menu {
+    @apply pointer-events-none fixed inset-0 z-[60] opacity-0 transition-opacity duration-300;
+    background: rgba(6, 20, 24, 0.97);
+}
+
+.kf-mobile-menu.is-open {
+    @apply pointer-events-auto opacity-100;
+}
+
+.kf-mobile-link {
+    @apply block border-b border-kf-line py-4 text-lg font-medium text-slate-200
+           transition-colors hover:text-kf-teal;
+}
+
+/* ============================================================
+   Preguntas frecuentes
+   ============================================================ */
+.kf-faq summary {
+    @apply flex list-none cursor-pointer items-center justify-between gap-4 text-lg font-semibold text-white;
+}
+
+.kf-faq summary::-webkit-details-marker {
+    display: none;
+}
+
+.kf-faq[open] summary {
+    @apply text-kf-teal;
+}
+
+.kf-faq summary::after {
+    content: '+';
+    @apply text-2xl leading-none text-kf-teal transition-transform duration-300;
+}
+
+.kf-faq[open] summary::after {
+    content: '\2212';
+}
+
+/* ============================================================
+   Pasos numerados
+   ============================================================ */
+.kf-step-number {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full border
+           border-kf-teal/30 bg-kf-teal/15 font-bold text-kf-sky;
+}
+
+/* ============================================================
+   Utilidades propias
+   ============================================================ */
+.kf-gradient-text {
+    @apply bg-gradient-to-r from-kf-teal to-kf-sky bg-clip-text text-transparent;
+}
+
+/* Aparición al hacer scroll (solo se oculta cuando hay JS) */
+.js .kf-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    will-change: opacity, transform;
+}
+
+.js .kf-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .js .kf-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

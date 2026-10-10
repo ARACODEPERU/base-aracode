@@ -21,6 +21,6 @@ class AboutVisionMissionValues extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.about-vision-mission-values');
+        return view('aracode.components.about-vision-mission-values');
     }
 }

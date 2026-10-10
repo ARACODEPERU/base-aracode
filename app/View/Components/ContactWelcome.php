@@ -21,6 +21,6 @@ class ContactWelcome extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.contact-welcome');
+        return view('aracode.components.contact-welcome');
     }
 }

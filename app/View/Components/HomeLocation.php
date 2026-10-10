@@ -21,6 +21,6 @@ class HomeLocation extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.home-location');
+        return view('aracode.components.home-location');
     }
 }

@@ -21,6 +21,6 @@ class ValueProposition extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.value-proposition');
+        return view('aracode.components.value-proposition');
     }
 }

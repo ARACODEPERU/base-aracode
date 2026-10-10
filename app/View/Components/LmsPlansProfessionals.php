@@ -21,6 +21,6 @@ class LmsPlansProfessionals extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.lms-plans-professionals');
+        return view('aracode.components.lms-plans-professionals');
     }
 }

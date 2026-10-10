@@ -41,7 +41,7 @@ class ComplaintsBookController extends Controller
         $tipoDocuemntos = DB::table('identity_document_type')->get();
 
         // para vistas BLADE
-        // return view('pages/complaints-book', [
+        // return view('aracode.pages.complaints-book', [
         //     'monedas' => $monedas,
         //         'tipoDocumentos' => $tipoDocumentos,
         // ]);

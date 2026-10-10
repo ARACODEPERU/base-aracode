@@ -21,6 +21,6 @@ class CmsQuestions extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.cms-questions');
+        return view('aracode.components.cms-questions');
     }
 }

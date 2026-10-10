@@ -1,0 +1,194 @@
+/*
+ * Hoja de estilos fuente del sitio KAPTA.
+ * Se compila con: npm run build:kapta
+ * Salida servible: public/themes/kapta/css/kapta.css
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Base
+   ============================================================ */
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    @apply bg-ka-dark font-ka text-slate-200 antialiased;
+}
+
+::selection {
+    @apply bg-ka-violet/30 text-white;
+}
+
+/* ============================================================
+   Contenedor
+   ============================================================ */
+.ka-container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+/* ============================================================
+   Botones
+   ============================================================ */
+.ka-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold
+           transition-all duration-300 focus:outline-none focus-visible:ring-2
+           focus-visible:ring-ka-violet/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ka-dark;
+}
+
+.ka-btn-primary {
+    @apply bg-gradient-to-r from-ka-indigo to-ka-violet text-white shadow-lg shadow-ka-indigo/25
+           hover:-translate-y-0.5 hover:brightness-110;
+}
+
+.ka-btn-ghost {
+    @apply border border-ka-line text-slate-200 hover:border-ka-violet/60 hover:text-white;
+}
+
+.ka-btn-amber {
+    @apply bg-ka-amber text-ka-dark hover:-translate-y-0.5 hover:brightness-105;
+}
+
+.ka-btn-sm {
+    @apply rounded-lg px-4 py-2 text-sm;
+}
+
+.ka-btn-lg {
+    @apply px-8 py-4 text-lg;
+}
+
+/* ============================================================
+   Tarjetas y bloques
+   ============================================================ */
+.ka-card {
+    @apply rounded-2xl border border-ka-line bg-ka-panel/80 p-6 shadow-ka-card
+           transition-all duration-300 hover:-translate-y-1 hover:border-ka-violet/40;
+}
+
+.ka-card-featured {
+    @apply border-ka-violet/60 ring-2 ring-ka-violet/40;
+}
+
+.ka-icon-box {
+    @apply flex h-12 w-12 items-center justify-center rounded-xl
+           border border-ka-indigo/25 bg-ka-indigo/10 text-ka-cyan;
+}
+
+/* ============================================================
+   Etiquetas
+   ============================================================ */
+.ka-badge {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs
+           font-semibold uppercase tracking-wide;
+}
+
+.ka-badge-violet {
+    @apply border-ka-violet/30 bg-ka-violet/10 text-ka-cyan;
+}
+
+.ka-badge-amber {
+    @apply border-ka-amber/30 bg-ka-amber/10 text-ka-amber;
+}
+
+/* ============================================================
+   Navegación
+   ============================================================ */
+.ka-nav {
+    @apply fixed inset-x-0 top-0 z-50 transition-all duration-300;
+}
+
+.ka-nav-inner {
+    @apply flex h-16 items-center justify-between;
+}
+
+.ka-nav.is-scrolled {
+    @apply border-b border-ka-line bg-ka-dark/90 backdrop-blur;
+}
+
+.ka-nav-link {
+    @apply text-sm font-medium text-slate-300 transition-colors hover:text-ka-cyan;
+}
+
+.ka-nav-link.is-active {
+    @apply text-ka-cyan;
+}
+
+/* ============================================================
+   Menú móvil
+   ============================================================ */
+.ka-mobile-menu {
+    @apply pointer-events-none fixed inset-0 z-[60] opacity-0 transition-opacity duration-300;
+    background: rgba(8, 13, 31, 0.97);
+}
+
+.ka-mobile-menu.is-open {
+    @apply pointer-events-auto opacity-100;
+}
+
+.ka-mobile-link {
+    @apply block border-b border-ka-line py-4 text-lg font-medium text-slate-200
+           transition-colors hover:text-ka-cyan;
+}
+
+/* ============================================================
+   Preguntas frecuentes
+   ============================================================ */
+.ka-faq summary {
+    @apply flex list-none cursor-pointer items-center justify-between gap-4 text-lg font-semibold text-white;
+}
+
+.ka-faq summary::-webkit-details-marker {
+    display: none;
+}
+
+.ka-faq[open] summary {
+    @apply text-ka-cyan;
+}
+
+.ka-faq summary::after {
+    content: '+';
+    @apply text-2xl leading-none text-ka-cyan transition-transform duration-300;
+}
+
+.ka-faq[open] summary::after {
+    content: '\2212';
+}
+
+/* ============================================================
+   Pasos numerados
+   ============================================================ */
+.ka-step-number {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full border
+           border-ka-indigo/30 bg-ka-indigo/15 font-bold text-ka-cyan;
+}
+
+/* ============================================================
+   Utilidades propias
+   ============================================================ */
+.ka-gradient-text {
+    @apply bg-gradient-to-r from-ka-cyan to-ka-violet bg-clip-text text-transparent;
+}
+
+/* Aparición al hacer scroll (solo se oculta cuando hay JS) */
+.js .ka-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    will-change: opacity, transform;
+}
+
+.js .ka-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .js .ka-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

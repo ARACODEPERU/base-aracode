@@ -21,6 +21,6 @@ class HomeAbout extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.home-about');
+        return view('aracode.components.home-about');
     }
 }

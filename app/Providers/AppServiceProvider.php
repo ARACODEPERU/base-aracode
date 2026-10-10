@@ -30,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
             return $rule->passes($attribute, $value);
         });
 
+        // El sitio web (paginas, componentes y layout) vive dentro de
+        // resources/views/aracode. Se registra el path de componentes anonimos
+        // para que los tags <x-...> del sitio sigan resolviendo igual aunque
+        // ya no esten en resources/views/components.
+        Blade::anonymousComponentPath(resource_path('views/aracode/components'));
+
         Inertia::share('company', function () {
             return Company::first();
         });

@@ -3,6 +3,9 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build && vite build --ssr",
+        "build:pichanguero": "tailwindcss -c resources/css/pichanguero/tailwind.config.js -i resources/css/pichanguero/pichanguero.css -o public/themes/pichanguero/css/pichanguero.css --minify",
+        "build:kapta": "tailwindcss -c resources/css/kapta/tailwind.config.js -i resources/css/kapta/kapta.css -o public/themes/kapta/css/kapta.css --minify",
+        "build:kirafact": "tailwindcss -c resources/css/kirafact/tailwind.config.js -i resources/css/kirafact/kirafact.css -o public/themes/kirafact/css/kirafact.css --minify",
         "test:js": "node --test \"tests/js/**/*.test.mjs\"",
         "editor:build": "npm run build --prefix ../editor-aracode",
         "prebuild": "npm run editor:build"

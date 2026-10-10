@@ -21,6 +21,6 @@ class StoreOnlineBenefits extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.store-online-benefits');
+        return view('aracode.components.store-online-benefits');
     }
 }

@@ -21,6 +21,6 @@ class HomeProducts extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.home-products');
+        return view('aracode.components.home-products');
     }
 }

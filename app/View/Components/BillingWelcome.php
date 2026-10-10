@@ -21,6 +21,6 @@ class BillingWelcome extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.billing-welcome');
+        return view('aracode.components.billing-welcome');
     }
 }
