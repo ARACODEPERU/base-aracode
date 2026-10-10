@@ -1,66 +1,129 @@
-{{-- Footer del sitio KiraFact --}}
-<footer class="border-t border-kf-line bg-kf-panel/40">
-    <div class="kf-container py-14">
-        <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
+{{--
+    Pie de página del sitio KIRAFACT.
+
+    - La marca KIRAFACT va con su descriptor y la firma de ARACODE.
+    - El logotipo de ARACODE es el archivo oficial del proyecto y se usa tal
+      cual, sin recolorear, sobre el fondo azul marino.
+    - Solo se enlazan los datos reales de contacto y las páginas legales que
+      existan en config('kirafact.legal').
+--}}
+@php
+    $marca = config('kirafact.marca');
+    $contacto = config('kirafact.contacto');
+    $legal = config('kirafact.legal');
+    $inicio = route('kirafact.home');
+    $anio = date('Y');
+@endphp
+
+<footer class="kf-surface-dark border-t" style="border-color: var(--kf-surface-line)">
+    <div class="kf-container py-14 lg:py-16">
+        <div class="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.1fr]">
+
             {{-- Marca --}}
-            <div class="lg:col-span-2">
-                <a href="{{ route('kirafact.home') }}" class="flex items-center gap-2.5">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-kf-teal to-kf-emerald">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <rect x="5" y="3" width="14" height="18" rx="2.5" stroke="#062018" stroke-width="1.8"/>
-                            <path d="M9.5 16.2l1.7 1.7 3.3-3.4" stroke="#062018" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    <span class="text-lg font-extrabold text-white">Kira<span class="kf-gradient-text">Fact</span></span>
+            <div>
+                <a href="{{ $inicio }}" class="kf-brand" aria-label="KIRAFACT — inicio">
+                    @include('kirafact.components.marca', ['superficie' => 'oscura', 'conDescriptor' => true])
                 </a>
-                <p class="mt-4 max-w-md text-sm leading-relaxed text-kf-muted">
-                    Facturación electrónica y gestión comercial para empresas: comprobantes, inventario,
-                    ventas y reportes con cumplimiento ante SUNAT.
+                <p class="kf-slate mt-5 max-w-sm text-sm leading-relaxed">
+                    KIRAFACT es un software de facturación electrónica y gestión empresarial
+                    desarrollado por ARACODE Smart Solutions para empresas del Perú.
                 </p>
-                <a href="https://aracodeperu.com" target="_blank" rel="noopener" class="kf-badge kf-badge-teal mt-5">
-                    Un producto de ARACODE Smart Solutions
+                <p class="kf-slate mt-5 text-xs font-semibold uppercase tracking-wide">
+                    {{ $marca['firma'] }}
+                </p>
+                <a href="{{ $marca['web_aracode'] }}" target="_blank" rel="noopener"
+                   class="mt-5 inline-flex items-center gap-3">
+                    <img src="{{ asset($marca['logo_aracode']) }}"
+                         alt="{{ $marca['empresa'] }}"
+                         style="height: {{ $marca['logo_aracode_alto'] }}px"
+                         height="{{ $marca['logo_aracode_alto'] }}"
+                         width="{{ (int) round($marca['logo_aracode_alto'] * 5.4) }}"
+                         loading="lazy" decoding="async">
                 </a>
             </div>
 
-            {{-- Sitio --}}
+            {{-- Enlaces internos --}}
+            <nav aria-label="Enlaces del sitio">
+                <h2 class="text-sm font-bold uppercase tracking-wide">Sitio</h2>
+                <ul class="kf-footer-links mt-4 space-y-1.5 text-sm">
+                    <li><a href="{{ $inicio }}" class="kf-slate transition-colors hover:text-white">Inicio</a></li>
+                    <li><a href="{{ $inicio }}#funcionalidades" class="kf-slate transition-colors hover:text-white">Funcionalidades</a></li>
+                    <li><a href="{{ $inicio }}#beneficios" class="kf-slate transition-colors hover:text-white">Beneficios</a></li>
+                    <li><a href="{{ $inicio }}#preguntas" class="kf-slate transition-colors hover:text-white">Preguntas frecuentes</a></li>
+                    <li><a href="{{ route('kirafact.planes') }}" class="kf-slate transition-colors hover:text-white">Planes</a></li>
+                    <li><a href="{{ route('kirafact.contacto') }}" class="kf-slate transition-colors hover:text-white">Contacto</a></li>
+                </ul>
+            </nav>
+
+            {{-- Producto --}}
             <div>
-                <h4 class="text-sm font-semibold uppercase tracking-wide text-white">Sitio</h4>
-                <ul class="mt-4 space-y-3 text-sm">
-                    <li><a href="{{ route('kirafact.home') }}#caracteristicas" class="text-kf-muted transition-colors hover:text-kf-teal">Características</a></li>
-                    <li><a href="{{ route('kirafact.home') }}#como-funciona" class="text-kf-muted transition-colors hover:text-kf-teal">Cómo funciona</a></li>
-                    <li><a href="{{ route('kirafact.planes') }}" class="text-kf-muted transition-colors hover:text-kf-teal">Planes</a></li>
-                    <li><a href="{{ route('kirafact.contacto') }}" class="text-kf-muted transition-colors hover:text-kf-teal">Contacto</a></li>
+                <h2 class="text-sm font-bold uppercase tracking-wide">Producto</h2>
+                <ul class="kf-footer-links mt-4 space-y-1.5 text-sm">
+                    <li>
+                        @if (config('kirafact.login_url'))
+                            <a href="{{ config('kirafact.login_url') }}" target="_blank" rel="noopener"
+                               class="kf-slate transition-colors hover:text-white">Ingresar al sistema</a>
+                        @else
+                            <span class="kf-slate">Ingresar al sistema (no habilitado)</span>
+                        @endif
+                    </li>
+                    <li><a href="{{ $inicio }}#software" class="kf-slate transition-colors hover:text-white">Cómo se trabaja</a></li>
+                    <li><a href="{{ $inicio }}#acceso" class="kf-slate transition-colors hover:text-white">Acceso de clientes</a></li>
                 </ul>
             </div>
 
-            {{-- Contacto --}}
+            {{-- Contacto (solo datos reales y verificados) --}}
             <div>
-                <h4 class="text-sm font-semibold uppercase tracking-wide text-white">Contacto</h4>
-                <ul class="mt-4 space-y-3 text-sm text-kf-muted">
+                <h2 class="text-sm font-bold uppercase tracking-wide">Contacto</h2>
+                <ul class="kf-footer-links mt-4 space-y-1.5 text-sm">
                     <li>
-                        <a href="https://wa.me/51917295856?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20KiraFact"
-                           target="_blank" rel="noopener" class="transition-colors hover:text-kf-teal">
-                            WhatsApp (+51) 917 295 856
+                        <a href="{{ $contacto['whatsapp_url'] }}?text={{ rawurlencode(config('kirafact.mensajes.info_whatsapp')) }}"
+                           target="_blank" rel="noopener"
+                           class="kf-slate inline-flex items-center gap-2 transition-colors hover:text-white">
+                            @include('kirafact.components.icon', ['icono' => 'whatsapp', 'iconoClase' => 'h-4 w-4'])
+                            <span>{{ $contacto['whatsapp'] }}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="mailto:contacto@aracodeperu.com" class="transition-colors hover:text-kf-teal">
-                            contacto@aracodeperu.com
+                        <a href="mailto:{{ $contacto['email'] }}"
+                           class="kf-slate inline-flex items-center gap-2 transition-colors hover:text-white">
+                            @include('kirafact.components.icon', ['icono' => 'correo', 'iconoClase' => 'h-4 w-4'])
+                            <span>{{ $contacto['email'] }}</span>
                         </a>
                     </li>
-                    <li>Nuevo Chimbote, Perú</li>
+                    <li class="kf-slate flex items-center gap-2">
+                        @include('kirafact.components.icon', ['icono' => 'ubicacion', 'iconoClase' => 'h-4 w-4'])
+                        <span>{{ $contacto['ciudad'] }}</span>
+                    </li>
+                    <li>
+                        <a href="{{ $contacto['web'] }}" target="_blank" rel="noopener"
+                           class="kf-slate inline-flex items-center gap-2 transition-colors hover:text-white">
+                            @include('kirafact.components.icon', ['icono' => 'externo', 'iconoClase' => 'h-4 w-4'])
+                            <span>aracodeperu.com</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <div class="border-t border-kf-line">
-        <div class="kf-container flex flex-col items-center justify-between gap-3 py-5 text-xs text-kf-muted sm:flex-row">
-            <p>&copy; {{ date('Y') }} KiraFact. Todos los derechos reservados.</p>
-            <div class="flex items-center gap-5">
-                <a href="{{ route('kirafact.contacto') }}" class="transition-colors hover:text-kf-teal">Solicitar asesoría</a>
-                <a href="https://aracodeperu.com" target="_blank" rel="noopener" class="transition-colors hover:text-kf-teal">aracodeperu.com</a>
-            </div>
+    <div class="border-t" style="border-color: var(--kf-surface-line)">
+        <div class="kf-container flex flex-col items-start justify-between gap-3 py-5 text-xs sm:flex-row sm:items-center">
+            <p class="kf-slate">
+                &copy; {{ $anio }} KIRAFACT. Todos los derechos reservados.
+                Desarrollado por {{ $marca['empresa'] }}.
+            </p>
+
+            @if ($legal['privacidad'] || $legal['terminos'])
+                <div class="flex items-center gap-5">
+                    @if ($legal['privacidad'])
+                        <a href="{{ $legal['privacidad'] }}" class="kf-slate transition-colors hover:text-white">Política de privacidad</a>
+                    @endif
+                    @if ($legal['terminos'])
+                        <a href="{{ $legal['terminos'] }}" class="kf-slate transition-colors hover:text-white">Términos legales</a>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 </footer>

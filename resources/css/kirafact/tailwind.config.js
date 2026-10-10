@@ -1,6 +1,9 @@
 /**
- * Config de Tailwind propia del sitio KiraFact.
+ * Config de Tailwind propia del sitio KIRAFACT.
  * Autocontenida: no hereda del tailwind.config.js de la raíz.
+ *
+ * Los valores de marca viven aquí y en :root de resources/css/kirafact/kirafact.css.
+ * Cuando exista el manual de marca definitivo hay que cambiar los dos sitios.
  */
 const path = require('path');
 
@@ -12,28 +15,31 @@ module.exports = {
         abs('../../views/kirafact/**/*.blade.php'),
         abs('../../../public/themes/kirafact/js/**/*.js'),
     ],
-    darkMode: 'class',
     theme: {
         extend: {
             colors: {
                 kf: {
-                    dark: '#061418',
-                    panel: '#0C1F25',
-                    panel2: '#11292F',
-                    line: '#1B3138',
-                    teal: '#14B8A6',
-                    emerald: '#10B981',
-                    sky: '#38BDF8',
-                    amber: '#FBBF24',
-                    muted: '#94A3B8',
+                    navy: '#0B1B3A',
+                    navy2: '#12274F',
+                    navy3: '#17305F',
+                    blue: '#168CF0',
+                    /* Azul profundo: es el azul que sí cumple contraste AA
+                       llevando texto blanco encima o como color de enlace. */
+                    'blue-ink': '#0E6FC4',
+                    'blue-deep': '#0B5A9E',
+                    'blue-soft': '#7CC1FA',
+                    mist: '#F3F6FA',
+                    line: '#E2E8F0',
+                    ink: '#182338',
+                    slate: '#5B6B82',
+                    muted: '#A9B6C7',
                 },
             },
             fontFamily: {
-                kf: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                kf: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
             },
             boxShadow: {
-                'kf-glow': '0 0 40px rgba(20, 184, 166, 0.18)',
-                'kf-card': '0 18px 40px -20px rgba(2, 12, 14, 0.9)',
+                'kf-soft': '0 18px 40px -30px rgba(11, 27, 58, 0.32)',
             },
         },
     },

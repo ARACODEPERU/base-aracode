@@ -1,83 +1,77 @@
-{{-- Navbar del sitio KiraFact --}}
-<nav class="kf-nav" id="kfNav">
+{{--
+    Barra de navegación del sitio KIRAFACT.
+
+    Arranca transparente sobre la banda azul marino del hero y pasa a fondo
+    blanco al desplazar (la clase is-scrolled la pone el JS). El color de los
+    enlaces y del hueco del logotipo lo resuelven las variables de .kf-nav, así
+    que no hay que duplicar estilos para los dos fondos.
+--}}
+@php
+    $inicio = route('kirafact.home');
+
+    $enlaces = [
+        ['texto' => 'Inicio', 'url' => $inicio, 'ancla' => 'inicio', 'ruta' => 'kirafact.home'],
+        ['texto' => 'Funcionalidades', 'url' => $inicio.'#funcionalidades', 'ancla' => 'funcionalidades'],
+        ['texto' => 'Beneficios', 'url' => $inicio.'#beneficios', 'ancla' => 'beneficios'],
+        ['texto' => 'Preguntas frecuentes', 'url' => $inicio.'#preguntas', 'ancla' => 'preguntas'],
+        ['texto' => 'Contacto', 'url' => route('kirafact.contacto'), 'ruta' => 'kirafact.contacto'],
+    ];
+@endphp
+
+<header class="kf-nav" id="kfNav">
     <div class="kf-container">
         <div class="kf-nav-inner">
-            {{-- Logo --}}
-            <a href="{{ route('kirafact.home') }}" class="flex items-center gap-2.5">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-kf-teal to-kf-emerald shadow-lg shadow-kf-teal/30">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect x="5" y="3" width="14" height="18" rx="2.5" stroke="#062018" stroke-width="1.8"/>
-                        <path d="M9 8h6M9 12h4" stroke="#062018" stroke-width="1.6" stroke-linecap="round"/>
-                        <path d="M9.5 16.2l1.7 1.7 3.3-3.4" stroke="#062018" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="text-lg font-extrabold tracking-tight text-white">
-                    Kira<span class="kf-gradient-text">Fact</span>
-                </span>
+            <a href="{{ $inicio }}" class="kf-brand" aria-label="KIRAFACT — inicio">
+                @include('kirafact.components.marca', ['superficie' => 'auto'])
             </a>
 
-            {{-- Navegación escritorio --}}
-            <div class="hidden lg:flex items-center gap-7">
-                <a href="{{ route('kirafact.home') }}"
-                   class="kf-nav-link {{ request()->routeIs('kirafact.home') ? 'is-active' : '' }}">Inicio</a>
-                <a href="{{ route('kirafact.home') }}#caracteristicas" class="kf-nav-link">Características</a>
-                <a href="{{ route('kirafact.home') }}#como-funciona" class="kf-nav-link">Cómo funciona</a>
-                <a href="{{ route('kirafact.planes') }}"
-                   class="kf-nav-link {{ request()->routeIs('kirafact.planes') ? 'is-active' : '' }}">Planes</a>
-                <a href="{{ route('kirafact.contacto') }}"
-                   class="kf-nav-link {{ request()->routeIs('kirafact.contacto') ? 'is-active' : '' }}">Contacto</a>
-            </div>
+            {{-- Navegación de escritorio --}}
+            <nav class="hidden items-center gap-7 lg:flex" aria-label="Navegación principal">
+                @foreach ($enlaces as $enlace)
+                    <a href="{{ $enlace['url'] }}"
+                       class="kf-nav-link {{ isset($enlace['ruta']) && request()->routeIs($enlace['ruta']) ? 'is-active' : '' }}"
+                       @isset($enlace['ancla']) data-ancla="{{ $enlace['ancla'] }}" @endisset>{{ $enlace['texto'] }}</a>
+                @endforeach
+            </nav>
 
-            {{-- CTA escritorio --}}
+            {{-- Acceso al sistema (escritorio) --}}
             <div class="hidden lg:block">
-                <a href="{{ route('kirafact.contacto') }}" class="kf-btn kf-btn-primary kf-btn-sm">
-                    Solicitar asesoría
-                </a>
+                @include('kirafact.components.btn-ingresar', ['class' => 'kf-btn-primary kf-btn-sm'])
             </div>
 
-            {{-- Botón menú móvil --}}
-            <button type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-kf-line text-slate-200 lg:hidden"
-                    id="kfMenuBtn" aria-label="Abrir menú" aria-controls="kfMobileMenu" aria-expanded="false">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
+            {{-- Botón del menú móvil --}}
+            <button type="button" class="kf-nav-toggle lg:hidden" id="kfMenuBtn"
+                    aria-label="Abrir menú" aria-controls="kfMobileMenu" aria-expanded="false">
+                @include('kirafact.components.icon', ['icono' => 'menu', 'iconoClase' => 'h-5 w-5'])
             </button>
         </div>
     </div>
-</nav>
+</header>
 
-{{-- Menú móvil --}}
+{{-- Menú móvil: panel azul marino a pantalla completa --}}
 <div class="kf-mobile-menu" id="kfMobileMenu" aria-hidden="true">
     <div class="kf-container py-5">
-        <div class="flex items-center justify-between">
-            <a href="{{ route('kirafact.home') }}" class="flex items-center gap-2.5">
-                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-kf-teal to-kf-emerald">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <rect x="5" y="3" width="14" height="18" rx="2.5" stroke="#062018" stroke-width="1.8"/>
-                        <path d="M9.5 16.2l1.7 1.7 3.3-3.4" stroke="#062018" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <span class="text-lg font-extrabold text-white">Kira<span class="kf-gradient-text">Fact</span></span>
+        <div class="flex items-center justify-between gap-4">
+            <a href="{{ $inicio }}" class="kf-brand" aria-label="KIRAFACT — inicio">
+                @include('kirafact.components.marca', ['superficie' => 'oscura'])
             </a>
-            <button type="button" class="h-10 w-10 rounded-lg border border-kf-line text-slate-200"
-                    id="kfMenuClose" aria-label="Cerrar menú">
-                <svg class="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+            <button type="button" class="kf-nav-toggle" id="kfMenuClose" aria-label="Cerrar menú">
+                @include('kirafact.components.icon', ['icono' => 'cerrar', 'iconoClase' => 'h-5 w-5'])
             </button>
         </div>
 
-        <nav class="mt-8">
-            <a href="{{ route('kirafact.home') }}" class="kf-mobile-link">Inicio</a>
-            <a href="{{ route('kirafact.home') }}#caracteristicas" class="kf-mobile-link">Características</a>
-            <a href="{{ route('kirafact.home') }}#como-funciona" class="kf-mobile-link">Cómo funciona</a>
-            <a href="{{ route('kirafact.planes') }}" class="kf-mobile-link">Planes</a>
-            <a href="{{ route('kirafact.contacto') }}" class="kf-mobile-link">Contacto</a>
+        <nav class="mt-6" aria-label="Navegación principal (móvil)">
+            @foreach ($enlaces as $enlace)
+                <a href="{{ $enlace['url'] }}" class="kf-mobile-link"
+                   @isset($enlace['ancla']) data-ancla="{{ $enlace['ancla'] }}" @endisset>
+                    <span>{{ $enlace['texto'] }}</span>
+                    @include('kirafact.components.icon', ['icono' => 'flecha', 'iconoClase' => 'h-5 w-5'])
+                </a>
+            @endforeach
         </nav>
 
-        <a href="{{ route('kirafact.contacto') }}" class="kf-btn kf-btn-primary mt-8 w-full">
-            Solicitar asesoría
-        </a>
+        <div class="mt-8">
+            @include('kirafact.components.btn-ingresar', ['class' => 'kf-btn-primary kf-btn-block'])
+        </div>
     </div>
 </div>

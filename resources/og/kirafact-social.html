@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KIRAFACT — imagen para compartir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Lienzo exacto para og:image. Sin scroll, sin márgenes y sin escalado. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: #0B1B3A;
+    color: #ffffff;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Rejilla técnica tenue, igual que el hero del sitio */
+  .rejilla {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 75% at 22% 0%, #000 35%, transparent 100%);
+    mask-image: radial-gradient(ellipse 90% 75% at 22% 0%, #000 35%, transparent 100%);
+  }
+  .halo {
+    position: absolute; width: 620px; height: 620px; border-radius: 50%;
+    background-image: radial-gradient(circle, rgba(22,140,240,.45), transparent 68%);
+    filter: blur(38px);
+    right: -170px; top: -210px;
+  }
+  .halo2 {
+    position: absolute; width: 420px; height: 420px; border-radius: 50%;
+    background-image: radial-gradient(circle, rgba(22,140,240,.28), transparent 70%);
+    filter: blur(34px);
+    left: -180px; bottom: -220px;
+  }
+
+  .contenido { position: relative; padding: 68px 72px 0; height: 100%; }
+
+  .etiqueta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 18px; border-radius: 999px;
+    border: 1px solid rgba(22,140,240,.4);
+    background-color: rgba(22,140,240,.16);
+    color: #9ED2FC;
+    font-size: 19px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  }
+
+  .marca {
+    margin: 34px 0 0;
+    font-size: 112px; line-height: 1; font-weight: 800; letter-spacing: -0.025em;
+    color: #ffffff;
+  }
+
+  .descriptor {
+    margin: 26px 0 0;
+    max-width: 720px;
+    font-size: 33px; line-height: 1.3; font-weight: 500;
+    color: #C7D5E6;
+  }
+
+  .firma {
+    margin: 26px 0 0;
+    font-size: 20px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: #7CC1FA;
+  }
+
+  /* Panel abstracto: mismo motivo que la composición del software.
+     Sin RUC, sin nombres y sin importes. */
+  .panel {
+    position: absolute; right: 72px; top: 150px; width: 300px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px;
+    background-color: rgba(255,255,255,.05);
+    overflow: hidden;
+  }
+  .panel-barra {
+    display: flex; align-items: center; gap: 7px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    background-color: rgba(255,255,255,.05);
+  }
+  .punto { width: 9px; height: 9px; border-radius: 50%; background-color: rgba(255,255,255,.28); }
+  .panel-titulo { margin-left: 8px; font-size: 13px; font-weight: 700; letter-spacing: .05em; color: #A9B6C7; }
+  .panel-cuerpo { padding: 20px 18px 22px; }
+  .fila { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .fila:last-child { margin-bottom: 0; }
+  .fila-texto { width: 58px; font-size: 12px; color: #A9B6C7; }
+  .barra { flex: 1; height: 7px; border-radius: 999px; background-color: rgba(255,255,255,.16); overflow: hidden; }
+  .barra > span { display: block; height: 100%; border-radius: 999px; background-image: linear-gradient(90deg, #168CF0, #7CC1FA); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 20px;
+    padding: 7px 14px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.16);
+    color: #C7D5E6; font-size: 13px; font-weight: 600;
+  }
+
+  .pie {
+    position: absolute; left: 72px; right: 72px; bottom: 54px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255,255,255,.12);
+    display: flex; align-items: center; gap: 18px;
+    font-size: 20px; font-weight: 600; color: #C7D5E6;
+  }
+  .separador { width: 5px; height: 5px; border-radius: 50%; background-color: #168CF0; }
+</style>
+</head>
+<body>
+  <div class="rejilla"></div>
+  <div class="halo"></div>
+  <div class="halo2"></div>
+
+  <div class="contenido">
+    <span class="etiqueta">Software empresarial</span>
+
+    <p class="marca">KIRAFACT</p>
+
+    <p class="descriptor">Facturación electrónica<br>y gestión empresarial</p>
+
+    <p class="firma">by ARACODE SMART SOLUTIONS</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-barra">
+      <span class="punto"></span><span class="punto"></span><span class="punto"></span>
+      <span class="panel-titulo">Comprobante electrónico</span>
+    </div>
+    <div class="panel-cuerpo">
+      <div class="fila"><span class="fila-texto">Cliente</span><span class="barra"><span style="width:78%"></span></span></div>
+      <div class="fila"><span class="fila-texto">Detalle</span><span class="barra"><span style="width:56%"></span></span></div>
+      <div class="fila"><span class="fila-texto">Estado</span><span class="barra"><span style="width:88%"></span></span></div>
+      <span class="chip">Estado del envío en el sistema</span>
+    </div>
+  </div>
+
+  <div class="pie">
+    <span>Comprobantes electrónicos</span>
+    <span class="separador"></span>
+    <span>Envío y validación con SUNAT</span>
+    <span class="separador"></span>
+    <span>Reportes de ventas</span>
+  </div>
+</body>
+</html>
