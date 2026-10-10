@@ -16,11 +16,13 @@ import {
     faTags,
     faSchool,
     faCalendarDays,
+    faCalendarCheck,
     faSitemap,
     faFileSignature,
     faChalkboardUser,
     faLayerGroup,
     faBell,
+    faQrcode,
     faMoneyBillWave
 
 } from "@fortawesome/free-solid-svg-icons";
@@ -228,6 +230,8 @@ const colegioGroup = {
         'aca_school_docente_notas',
         'aca_school_area_listado',
         'aca_school_listado',
+        'aca_school_horario_listado',
+        'aca_school_horario_docente',
     ],
     items: [
         {
@@ -236,6 +240,22 @@ const colegioGroup = {
             text: 'Colegios',
             icom: faLandmarkFlag,
             permissions: 'aca_school_listado',
+            info: {
+                title: 'Colegios',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Registro de los colegios que administra la plataforma:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🏫 <span>Crear y editar colegios (nombre, código modular, dirección y contacto).</span></li>
+                        <li>🛡️ <span>Cargar el logo o escudo que se usa en carnés y documentos.</span></li>
+                        <li>🏷️ <span>Definir el tipo: privado o nacional.</span></li>
+                        <li>⭐ <span>Marcar el colegio por defecto del sistema.</span></li>
+                        <li>🔄 <span>Activar o desactivar un colegio.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_years_list'),
@@ -243,6 +263,20 @@ const colegioGroup = {
             text: 'Años Escolares',
             icom: faCalendarDays,
             permissions: 'aca_school_year_listado',
+            info: {
+                title: 'Años Escolares',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Administración de los años lectivos del colegio:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📅 <span>Crear el año escolar (ej. 2027) para poder matricular.</span></li>
+                        <li>✅ <span>Activar el año en curso: matrículas, notas y carnés se registran en el año activo.</span></li>
+                        <li>📝 <span>Agregar observaciones del año lectivo.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_fees_list'),
@@ -250,6 +284,20 @@ const colegioGroup = {
             text: 'Tarifas',
             icom: faTags,
             permissions: 'aca_school_tarifa_listado',
+            info: {
+                title: 'Tarifas',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Conceptos y montos de pago del año escolar:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>💰 <span>Definir matrícula y mensualidades por nivel y grado.</span></li>
+                        <li>🗓️ <span>Configurar el cronograma de vencimientos de cada cuota.</span></li>
+                        <li>✏️ <span>Editar o desactivar tarifas cuando cambian los montos.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_structure'),
@@ -257,6 +305,21 @@ const colegioGroup = {
             text: 'Estructura Académica',
             icom: faSitemap,
             permissions: 'aca_school_estructura',
+            info: {
+                title: 'Estructura Académica',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Organización del colegio en niveles, grados y secciones:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🏗️ <span>Crear niveles (Inicial, Primaria, Secundaria) y sus grados.</span></li>
+                        <li>👥 <span>Abrir secciones por grado con turno y capacidad.</span></li>
+                        <li>👩‍🏫 <span>Asignar tutor y auxiliar de cada sección.</span></li>
+                        <li>🪑 <span>Ver los asientos disponibles antes de matricular.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_areas_list'),
@@ -264,6 +327,65 @@ const colegioGroup = {
             text: 'Áreas Curriculares',
             icom: faLayerGroup,
             permissions: 'aca_school_area_listado',
+            info: {
+                title: 'Áreas Curriculares',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Catálogo de cursos o áreas que se evalúan en las notas:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📚 <span>Cargar las áreas oficiales del CNEB por nivel con un clic.</span></li>
+                        <li>✏️ <span>Crear áreas propias del colegio y ordenarlas para el registro de notas.</span></li>
+                        <li>🔄 <span>Activar o desactivar áreas que ya no se evalúan.</span></li>
+                        <li>🔗 <span>Estas áreas aparecen automáticamente en el Registro de Notas.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_schedules_index'),
+            status: false,
+            text: 'Horarios',
+            icom: faClock,
+            permissions: 'aca_school_horario_listado',
+            info: {
+                title: 'Horarios',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Jornada del colegio y horario de clases por sección:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🕒 <span>Definir la hora de entrada y salida por nivel y turno.</span></li>
+                        <li>📅 <span>Cargar los bloques de cada sección: área, día y hora.</span></li>
+                        <li>👩‍🏫 <span>Asignar el docente que dicta cada curso.</span></li>
+                        <li>📋 <span>Copiar el horario de un día a otros o de otra sección del mismo grado.</span></li>
+                        <li>⏰ <span>Es la base del control de asistencia por hora del docente.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_schedules_my'),
+            status: false,
+            text: 'Mi Horario',
+            icom: faClock,
+            permissions: 'aca_school_horario_docente',
+            info: {
+                title: 'Mi Horario',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Su horario de clases como docente:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📅 <span>Consultar sus bloques día por día.</span></li>
+                        <li>🏫 <span>Ver el nivel, la sección y el aula de cada clase.</span></li>
+                        <li>📚 <span>Conocer el área curricular que le toca dictar.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_teachers_list'),
@@ -271,6 +393,20 @@ const colegioGroup = {
             text: 'Docentes',
             icom: faUserTie,
             permissions: 'aca_school_docente_listado',
+            info: {
+                title: 'Docentes',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Registro del personal docente del colegio:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>👩‍🏫 <span>Registrar docentes con sus datos y documento.</span></li>
+                        <li>✏️ <span>Editar o desactivar docentes.</span></li>
+                        <li>🔎 <span>Buscar docentes por nombre o documento.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_students_list'),
@@ -278,6 +414,22 @@ const colegioGroup = {
             text: 'Estudiantes',
             icom: faUserGraduate,
             permissions: 'aca_school_alumno_listado',
+            info: {
+                title: 'Estudiantes',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Ficha completa de cada alumno del colegio:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>✏️ <span>Registrar y editar datos del alumno y su documento.</span></li>
+                        <li>👨‍👩‍👧 <span>Gestionar apoderados y su relación con el alumno.</span></li>
+                        <li>🪪 <span>Imprimir el carné del alumno con QR para asistencia.</span></li>
+                        <li>💰 <span>Cobrar matrícula o mensualidad.</span></li>
+                        <li>🗑️ <span>Eliminar alumnos sin matrículas activas.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_enrollments_list'),
@@ -285,6 +437,22 @@ const colegioGroup = {
             text: 'Matrículas',
             icom: faFileSignature,
             permissions: 'aca_school_matricula_listado',
+            info: {
+                title: 'Matrículas',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Inscripción de alumnos en el año escolar activo:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📝 <span>Matricular alumnos en una sección del año activo.</span></li>
+                        <li>🏷️ <span>Registrar el tipo: nueva, promovida, repitente, traslado o reingreso.</span></li>
+                        <li>👨‍👩‍👧 <span>Asignar apoderado y teléfono de contacto.</span></li>
+                        <li>🪑 <span>Ver asientos disponibles por sección.</span></li>
+                        <li>🔄 <span>Retirar, anular o dar traslado de salida.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_teacher_grades'),
@@ -292,6 +460,65 @@ const colegioGroup = {
             text: 'Registro de Notas',
             icom: faChalkboardUser,
             permissions: 'aca_school_docente_notas',
+            info: {
+                title: 'Registro de Notas',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Evaluación del docente en sus secciones (tutor o auxiliar):
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📚 <span>Registrar notas por área curricular y bimestre.</span></li>
+                        <li>🔤 <span>Escala AD/A/B/C o literal según el nivel de la sección.</span></li>
+                        <li>👥 <span>Solo ve las secciones donde es tutor o auxiliar.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_attendance_index'),
+            status: false,
+            text: 'Registro de Asistencias',
+            icom: faCalendarCheck,
+            permissions: 'aca_school_docente_notas',
+            info: {
+                title: 'Registro de Asistencias',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Asistencia mensual de la I.E., con la dinamica de SIAGIE (MINEDU):
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🗓️ <span>Marcar cada alumno por día: A, T, J o F.</span></li>
+                        <li>⚡ <span>Completar asistencias hasta un día dado con un clic.</span></li>
+                        <li>📄 <span>Exportar la hoja mensual a PDF.</span></li>
+                        <li>👥 <span>Solo ve las secciones donde es tutor o auxiliar.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_gate_scanner'),
+            status: false,
+            text: 'Portería',
+            icom: faQrcode,
+            permissions: 'aca_school_porteria_escaner',
+            info: {
+                title: 'Portería',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Asistencia de la institución: el paso de los alumnos por la puerta:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>📷 <span>Escanear el QR del carné con la cámara del equipo.</span></li>
+                        <li>🔫 <span>O con la pistola lectora, sin hacer clic en ningún campo.</span></li>
+                        <li>⏱️ <span>La entrada se marca como asistencia o tardanza según la jornada.</span></li>
+                        <li>🚪 <span>La salida se registra aparte y es opcional.</span></li>
+                        <li>📄 <span>No confundir con la asistencia de aula que registra el docente.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
         {
             route: route('aca_school_enrollments_list'),
@@ -299,6 +526,20 @@ const colegioGroup = {
             text: 'Cobros',
             icom: faMoneyBillWave,
             permissions: 'aca_school_cobro_listado',
+            info: {
+                title: 'Cobros',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Cobranza de matrícula y mensualidades por alumno:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>💰 <span>Registrar cobros de matrícula y mensualidades.</span></li>
+                        <li>🧾 <span>Emitir boleta o factura del pago.</span></li>
+                        <li>🗓️ <span>Consultar el cronograma y los pagos pendientes.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
         },
     ],
 };

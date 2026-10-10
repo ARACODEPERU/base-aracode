@@ -50,7 +50,7 @@ const shiftLabels = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche' };
                         </div>
 
                         <Link
-                            :href="route('aca_school_teacher_grades_show', section.id)"
+                            :href="route('aca_school_teacher_competencies_show', section.id)"
                             class="btn btn-primary w-full mt-4"
                         >
                             <font-awesome-icon :icon="faChalkboardUser" class="mr-1" />

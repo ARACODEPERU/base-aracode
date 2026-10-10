@@ -71,6 +71,50 @@ test('con el modo apagado, un método de gate inexistente falla cerrado (no romp
     assert.equal(decision.action, 'remove');
 });
 
+test('con el modo apagado, un array de permisos aplica semántica OR sin explotar (vue-gates solo acepta strings)', () => {
+    // Gate sin hasAnyPermission: se resuelve entrada por entrada.
+    const keep = evaluateOff({ value: ['treasury_cuentas', 'integrationhub_listado'] });
+    assert.equal(keep.action, 'keep');
+
+    const remove = evaluateOff({ value: ['treasury_cuentas', 'otro_permiso'] });
+    assert.equal(remove.action, 'remove');
+});
+
+test('con el modo apagado, el array se resuelve con hasAnyPermission cuando el gate lo implementa', () => {
+    const hasAnyGate = {
+        hasAnyPermission: (values) => values.split('|').includes('dashboard'),
+        hasPermission: (value) => value === 'dashboard',
+    };
+
+    const keep = evaluateGate({
+        gate: hasAnyGate,
+        name: 'permission',
+        arg: null,
+        value: ['no_tengo_este', 'dashboard'],
+        modifiers: {},
+        editorActive: false,
+    });
+
+    assert.equal(keep.action, 'keep');
+
+    const remove = evaluateGate({
+        gate: hasAnyGate,
+        name: 'permission',
+        arg: null,
+        value: ['no_tengo_este', 'tampoco_este'],
+        modifiers: {},
+        editorActive: false,
+    });
+
+    assert.equal(remove.action, 'remove');
+});
+
+test('con el modo apagado, un array vacío falla cerrado', () => {
+    const decision = evaluateOff({ value: [] });
+
+    assert.equal(decision.action, 'remove');
+});
+
 test('con el modo encendido NUNCA se elimina el elemento', () => {
     for (const value of ['integrationhub_listado', 'treasury_cuentas', 'inexistente', ['a', 'b']]) {
         assert.equal(evaluateOn({ value }).action, 'keep', `No debe eliminarse con ${JSON.stringify(value)}`);

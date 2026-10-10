@@ -89,6 +89,32 @@ export const labelForText = (text, permission) => {
 };
 
 /**
+ * Arrays en el binding: semántica OR. vue-gates puro solo acepta strings
+ * (match() explota con arrays), así que la evaluación central resuelve el
+ * grupo con hasAnyPermission y entrega un string puro al gate.
+ */
+const gateAccepts = ({ gate, name, arg, value }) => {
+    const method = parseCondition(name, arg);
+
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return false;
+        }
+
+        // hasAnyPermission comparte el wildcard-matching de vue-gates; si el
+        // gate de prueba no lo implementa, se resuelve entrada por entrada.
+        if (typeof gate?.hasAnyPermission === 'function') {
+            return gate.hasAnyPermission(value.join('|'));
+        }
+
+        return value.some((entry) =>
+            typeof gate?.[method] === 'function' ? gate[method](entry) : false);
+    }
+
+    return typeof gate?.[method] === 'function' ? gate[method](value) : false;
+};
+
+/**
  * Decide qué hacer con el elemento.
  *
  * @returns {{action: 'keep'|'remove'|'assign', attributes?: object, decorate?: object|null}}
@@ -112,8 +138,7 @@ export const evaluateGate = ({ gate, name, arg = null, value, modifiers = null, 
         };
     }
 
-    const method = parseCondition(name, arg);
-    const isValid = typeof gate?.[method] === 'function' ? gate[method](value) : false;
+    const isValid = gateAccepts({ gate, name, arg, value });
 
     if (isValid) {
         return { action: 'keep' };

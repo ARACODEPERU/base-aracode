@@ -68,6 +68,7 @@
         "fullcalendar": "^6.1.14",
         "jspdf": "^2.5.1",
         "jspdf-autotable": "^3.8.1",
+        "jsqr": "^1.4.0",
         "jszip": "^3.10.1",
         "konva": "^10.2.3",
         "laravel-echo": "^1.16.1",

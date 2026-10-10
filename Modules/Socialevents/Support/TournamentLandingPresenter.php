@@ -53,7 +53,24 @@ final class TournamentLandingPresenter
             'showAppDownload' => self::showAppDownload($edition),
             'appDownloadUrl' => self::appDownloadUrl($edition),
             'appVersion' => config('socialevents.mobile_app_version', '1.0.0'),
+            'splashDurationMs' => (int) config('socialevents.landing_splash_ms', 4600),
+            'splashSponsor' => (string) config('socialevents.landing_sponsor_name', 'ARACODE'),
+            'splashLogoUrl' => self::splashLogoUrl(),
+            'playerDetailUrlTemplate' => route('socialevents_torneos_player_detail', [
+                'slug' => $edition->landingSlug(),
+                'playerId' => '__PLAYER__',
+            ]),
         ];
+    }
+
+    /**
+     * Logo del patrocinador que se muestra en el splash de la landing.
+     */
+    public static function splashLogoUrl(): string
+    {
+        $configured = (string) config('socialevents.landing_sponsor_logo', 'img/logo176x32_negativo.png');
+
+        return asset($configured);
     }
 
     public static function showAppDownload(EventEdition $edition): bool

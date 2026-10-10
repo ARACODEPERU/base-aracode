@@ -5,7 +5,7 @@
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js';
-    import { Tooltip } from 'ant-design-vue'
+    import { Tooltip, Popover } from 'ant-design-vue'
     import { useSidebarEditor } from 'Modules/Security/Resources/assets/js/Composables/useSidebarEditor';
 
     const store = useAppStore();
@@ -850,6 +850,25 @@
                                                     ></div>
                                                     <span class="text-slate-700 dark:text-slate-200 leading-tight break-words">{{ subOption.text }}</span>
                                                 </div>
+                                                <!-- Descripción de la opción (menu.js -> info): se muestra al pasar el mouse por el ícono, antes de entrar. -->
+                                                <Popover
+                                                    v-if="subOption.info"
+                                                    placement="rightTop"
+                                                    :trigger="['click', 'hover']"
+                                                    :mouseEnterDelay="0.1"
+                                                    :destroyTooltipOnHide="true"
+                                                >
+                                                    <template #title>
+                                                        <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">{{ subOption.info?.title }}</h3>
+                                                    </template>
+                                                    <template #content>
+                                                        <div class="max-w-[300px] text-sm" v-html="subOption.info?.content"></div>
+                                                    </template>
+                                                    <span
+                                                        class="ml-1 inline-flex h-5 w-5 shrink-0 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] font-bold text-slate-400 transition-colors hover:border-blue-400 hover:text-blue-600 dark:border-slate-600 dark:text-slate-500 dark:hover:border-blue-500 dark:hover:text-blue-400"
+                                                        @click.stop.prevent
+                                                    >ⓘ</span>
+                                                </Popover>
                                                 <span
                                                     v-if="subOption.badge"
                                                     :class="[badgeBaseClasses, badgeClasses(subOption.badge)]"

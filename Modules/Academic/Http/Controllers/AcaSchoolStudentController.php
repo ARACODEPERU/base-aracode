@@ -5,14 +5,19 @@ namespace Modules\Academic\Http\Controllers;
 use App\Models\District;
 use App\Models\Person;
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Modules\Academic\Entities\AcaSchool;
 use Modules\Academic\Entities\AcaSchoolEnrollment;
+use Modules\Academic\Entities\AcaSchoolLevel;
 use Modules\Academic\Entities\AcaSchoolStudent;
 use Modules\Academic\Entities\AcaSchoolStudentGuardian;
 use Modules\Academic\Entities\AcaSchoolYear;
 use Modules\Academic\Services\SchoolContextService;
+use Modules\Academic\Services\StudentCardQr;
 
 class AcaSchoolStudentController extends Controller
 {
@@ -25,22 +30,9 @@ class AcaSchoolStudentController extends Controller
         $school = $this->context->currentSchool();
 
         $students = collect();
+        $filterOptions = collect();
         if ($school) {
-            $students = AcaSchoolStudent::query()
-                ->where('aca_school_students.school_id', $school->id)
-                ->leftJoin('people', 'people.id', '=', 'aca_school_students.person_id')
-                ->when($request->query('search'), function ($query, $search) {
-                    $query->where(function ($q) use ($search) {
-                        $q->where('people.full_name', 'like', '%'.$search.'%')
-                            ->orWhere('people.number', 'like', '%'.$search.'%')
-                            ->orWhere('aca_school_students.student_code', 'like', '%'.$search.'%');
-                    });
-                })
-                ->when($request->query('status') !== null && $request->query('status') !== '', function ($query) use ($request) {
-                    $query->where('aca_school_students.status', $request->boolean('status'));
-                })
-                ->orderBy('people.full_name')
-                ->select('aca_school_students.*')
+            $students = $this->filteredStudentsQuery($school, $request)
                 ->selectRaw('(SELECT ae.id FROM aca_school_enrollments ae
                     WHERE ae.student_id = aca_school_students.id AND ae.status = ?
                     ORDER BY ae.id DESC LIMIT 1) AS active_enrollment_id', [AcaSchoolEnrollment::STATUS_ACTIVO])
@@ -48,12 +40,59 @@ class AcaSchoolStudentController extends Controller
                 ->paginate(20)
                 ->onEachSide(2)
                 ->withQueryString();
+
+            // Opciones para los filtros en cascada Nivel -> Grado -> Sección.
+            $filterOptions = AcaSchoolLevel::query()
+                ->where('school_id', $school->id)
+                ->where('status', true)
+                ->orderBy('sort_order')
+                ->with(['grades' => fn ($q) => $q->orderBy('sort_order'), 'grades.sections' => fn ($q) => $q->orderBy('id')])
+                ->get(['id', 'name']);
         }
 
         return Inertia::render('Academic::School/Students/List', [
             'students' => $students,
-            'filters' => $request->only(['search', 'status']),
+            'filters' => $request->only(['search', 'status', 'level_id', 'grade_id', 'section_id']),
+            'filterOptions' => $filterOptions,
         ]);
+    }
+
+    /**
+     * Query de alumnos del colegio con búsqueda y filtros por estructura
+     * académica (nivel/grado/sección según la matrícula activa).
+     */
+    private function filteredStudentsQuery(AcaSchool $school, Request $request)
+    {
+        return AcaSchoolStudent::query()
+            ->where('aca_school_students.school_id', $school->id)
+            ->leftJoin('people', 'people.id', '=', 'aca_school_students.person_id')
+            ->when($request->query('search'), function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('people.full_name', 'like', '%'.$search.'%')
+                        ->orWhere('people.number', 'like', '%'.$search.'%')
+                        ->orWhere('aca_school_students.student_code', 'like', '%'.$search.'%');
+                });
+            })
+            ->when($request->query('status') !== null && $request->query('status') !== '', function ($query) use ($request) {
+                $query->where('aca_school_students.status', $request->boolean('status'));
+            })
+            ->when($request->query('section_id'), function ($query, $sectionId) {
+                $query->whereHas('enrollments', fn ($e) => $e
+                    ->where('status', AcaSchoolEnrollment::STATUS_ACTIVO)
+                    ->where('section_id', $sectionId));
+            })
+            ->when($request->query('grade_id'), function ($query, $gradeId) {
+                $query->whereHas('enrollments', fn ($e) => $e
+                    ->where('status', AcaSchoolEnrollment::STATUS_ACTIVO)
+                    ->whereHas('section', fn ($s) => $s->where('grade_id', $gradeId)));
+            })
+            ->when($request->query('level_id'), function ($query, $levelId) {
+                $query->whereHas('enrollments', fn ($e) => $e
+                    ->where('status', AcaSchoolEnrollment::STATUS_ACTIVO)
+                    ->whereHas('section.grade', fn ($g) => $g->where('level_id', $levelId)));
+            })
+            ->orderBy('people.full_name')
+            ->select('aca_school_students.*');
     }
 
     public function create()
@@ -200,6 +239,156 @@ class AcaSchoolStudentController extends Controller
         $student->delete();
 
         return response()->json(['success' => true, 'message' => 'Alumno eliminado correctamente']);
+    }
+
+    /**
+     * Carné escolar del alumno (PDF para imprimir).
+     */
+    public function card(int $id)
+    {
+        $school = $this->context->currentSchool();
+
+        $student = AcaSchoolStudent::query()
+            ->where('school_id', $school?->id ?? 0)
+            ->with('person')
+            ->findOrFail($id);
+
+        // Nivel/grado/sección provienen de la matrícula activa más reciente.
+        $enrollment = AcaSchoolEnrollment::query()
+            ->where('student_id', $student->id)
+            ->where('status', AcaSchoolEnrollment::STATUS_ACTIVO)
+            ->with(['section.grade.level', 'year'])
+            ->orderByDesc('id')
+            ->first();
+
+        if (! $enrollment || ! $enrollment->section) {
+            abort(404, 'El alumno no tiene una matrícula activa con sección asignada para generar el carné.');
+        }
+
+        // Logo del colegio embebido en base64 para DomPDF.
+        $logoDataUri = null;
+        if ($school?->logo && Storage::disk('public')->exists($school->logo)) {
+            $mime = Storage::disk('public')->mimeType($school->logo);
+            $logoDataUri = 'data:'.$mime.';base64,'.base64_encode(Storage::disk('public')->get($school->logo));
+        }
+
+        // QR con el código del alumno: lo lee el escáner de portería.
+        $qrDataUri = StudentCardQr::dataUri($student->student_code);
+
+        $pdf = Pdf::loadView('academic::cards.student_card', [
+            'school' => $school,
+            'student' => $student,
+            'enrollment' => $enrollment,
+            'logoDataUri' => $logoDataUri,
+            'qrDataUri' => $qrDataUri,
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        $fileName = 'carnet_'.$student->student_code.'_'.$student->person?->full_name.'.pdf';
+
+        return $pdf->stream(str_replace(' ', '_', $fileName));
+    }
+
+    /**
+     * Ids de alumnos que coinciden con los filtros actuales (para "seleccionar
+     * todo" en la impresión masiva de carnés).
+     */
+    public function bulkIds(Request $request)
+    {
+        $school = $this->context->currentSchool();
+
+        if (! $school) {
+            return response()->json(['ids' => [], 'total' => 0]);
+        }
+
+        $query = $this->filteredStudentsQuery($school, $request);
+        $total = (clone $query)->count();
+        $ids = $query->limit(200)->pluck('aca_school_students.id');
+
+        return response()->json(['ids' => $ids, 'total' => $total]);
+    }
+
+    /**
+     * Impresión masiva de carnés (varios por hoja A4, 3x3, tamaño original).
+     */
+    public function cardsBulk(Request $request)
+    {
+        $raw = $request->input('ids', []);
+        $ids = collect(is_string($raw) ? explode(',', $raw) : (array) $raw)
+            ->map(fn ($v) => (int) $v)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($ids)) {
+            abort(400, 'No se seleccionaron alumnos para imprimir.');
+        }
+
+        if (count($ids) > 100) {
+            abort(400, 'Máximo 100 carnés por tanda de impresión.');
+        }
+
+        $school = $this->context->currentSchool();
+
+        $students = AcaSchoolStudent::query()
+            ->where('school_id', $school?->id ?? 0)
+            ->whereIn('id', $ids)
+            ->with('person')
+            ->get()
+            ->keyBy('id');
+
+        // Matrícula activa más reciente de cada alumno (igual que el carné individual).
+        $enrollments = AcaSchoolEnrollment::query()
+            ->whereIn('student_id', $ids)
+            ->where('status', AcaSchoolEnrollment::STATUS_ACTIVO)
+            ->with(['section.grade.level', 'year'])
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('student_id');
+
+        // Logo del colegio embebido en base64 para DomPDF (una sola vez).
+        $logoDataUri = null;
+        if ($school?->logo && Storage::disk('public')->exists($school->logo)) {
+            $mime = Storage::disk('public')->mimeType($school->logo);
+            $logoDataUri = 'data:'.$mime.';base64,'.base64_encode(Storage::disk('public')->get($school->logo));
+        }
+
+        $cards = [];
+        foreach ($ids as $id) {
+            $student = $students->get($id);
+            $enrollment = $enrollments->get($id)?->first();
+
+            // Se omiten los alumnos sin matrícula activa con sección asignada.
+            if (! $student || ! $enrollment || ! $enrollment->section) {
+                continue;
+            }
+
+            $cards[] = [
+                'student' => $student,
+                'enrollment' => $enrollment,
+                'qrDataUri' => StudentCardQr::dataUri($student->student_code),
+            ];
+        }
+
+        if (empty($cards)) {
+            abort(404, 'Los alumnos seleccionados no tienen matrícula activa con sección asignada.');
+        }
+
+        // Orden alfabético para una mejor presentación al recortar.
+        $cards = collect($cards)
+            ->sortBy(fn ($c) => $c['student']->person?->full_name)
+            ->values()
+            ->all();
+
+        $pdf = Pdf::loadView('academic::cards.students_cards_bulk', [
+            'school' => $school,
+            'cards' => $cards,
+            'logoDataUri' => $logoDataUri,
+        ]);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('carnes_alumnos_'.date('YmdHis').'.pdf');
     }
 
     /**

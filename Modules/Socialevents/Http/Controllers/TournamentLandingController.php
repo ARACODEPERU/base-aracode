@@ -2,16 +2,20 @@
 
 namespace Modules\Socialevents\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Services\TournamentPublicDataService;
+use Modules\Socialevents\Services\TournamentRankingsService;
 use Modules\Socialevents\Support\TournamentLandingCache;
 use Modules\Socialevents\Support\TournamentLandingPresenter;
 
 class TournamentLandingController extends Controller
 {
     public function __construct(
-        private TournamentPublicDataService $publicDataService
+        private TournamentPublicDataService $publicDataService,
+        private TournamentRankingsService $rankingsService,
     ) {}
 
     public function show(string $slug)
@@ -26,19 +30,7 @@ class TournamentLandingController extends Controller
             }
         }
 
-        $edition = EventEdition::with([
-            'evento',
-            'equipos.equipo',
-        ])
-            ->where('public_slug', $slug)
-            ->first();
-
-        if (! $edition && ctype_digit($slug)) {
-            $edition = EventEdition::with([
-                'evento',
-                'equipos.equipo',
-            ])->find((int) $slug);
-        }
+        $edition = $this->resolveEdition($slug);
 
         if (! $edition) {
             abort(404, 'Edición o evento no encontrado.');
@@ -66,6 +58,50 @@ class TournamentLandingController extends Controller
     }
 
     /**
+     * Detalle partido a partido de un jugador del torneo (modal de la landing).
+     *
+     * Endpoint público: solo responde para ediciones con la landing publicada.
+     */
+    public function playerDetail(Request $request, string $slug, int $playerId): JsonResponse
+    {
+        $edition = $this->resolveEdition($slug);
+
+        if (! $edition || ! $edition->landing_published) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Torneo no disponible.',
+            ], 404);
+        }
+
+        // Se normaliza antes de cachear: la clave de caché queda acotada a las
+        // tres categorías válidas y no a cualquier texto recibido por la URL.
+        $category = (string) $request->query('categoria', 'player');
+
+        if (! in_array($category, TournamentRankingsService::DETAIL_CATEGORIES, true)) {
+            $category = 'player';
+        }
+
+        $payload = TournamentLandingCache::rememberPlayerDetail(
+            (int) $edition->id,
+            $playerId,
+            $category,
+            fn () => $this->rankingsService->playerDetail((int) $edition->id, $playerId, $category)
+        );
+
+        if (! $payload) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No encontramos estadísticas de este jugador.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $payload,
+        ]);
+    }
+
+    /**
      * Registra una descarga de la app móvil e incrementa el contador de la edición.
      */
     public function downloadApp(string $slug)
@@ -87,5 +123,27 @@ class TournamentLandingController extends Controller
         TournamentLandingCache::forget((int) $edition->id);
 
         return redirect()->away($url);
+    }
+
+    /**
+     * Resuelve la edición por slug público o por id legado.
+     */
+    private function resolveEdition(string $slug): ?EventEdition
+    {
+        $edition = EventEdition::with([
+            'evento',
+            'equipos.equipo',
+        ])
+            ->where('public_slug', $slug)
+            ->first();
+
+        if (! $edition && ctype_digit($slug)) {
+            $edition = EventEdition::with([
+                'evento',
+                'equipos.equipo',
+            ])->find((int) $slug);
+        }
+
+        return $edition;
     }
 }
