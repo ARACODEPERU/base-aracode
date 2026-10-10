@@ -1,7 +1,52 @@
 @extends('aracode.layouts.webpage')
 
-@section('meta_title', 'KiraFact | Facturación Electrónica y Gestión Comercial | ARACODE')
-@section('meta_description', 'KiraFact — Facturación electrónica y gestión comercial: emisión de facturas, boletas, notas y más. Integración directa con SUNAT.')
+@section('meta_title', 'KiraFact | Facturación electrónica desarrollada por ARACODE')
+@section('meta_description', 'KiraFact es el sistema de facturación electrónica y gestión comercial de ARACODE Smart Solutions. Conoce qué resuelve en tu empresa y coordina una asesoría.')
+
+@php
+    /*
+        Ficha de KIRAFACT en el sitio corporativo.
+
+        Reparto de intenciones: esta página habla del PRODUCTO COMO PRODUCTO DE
+        ARACODE (quién lo desarrolla, qué resuelve en una empresa, con quién se
+        coordina una asesoría). El detalle funcional y las condiciones vigentes
+        los publica el sitio del producto, que es su web oficial.
+
+        Los enlaces al sitio oficial no se escriben aquí: salen de
+        config/productos.php, el único archivo que se edita el día que KIRAFACT
+        pase a su propio dominio. Procedimiento completo en
+        docs/SEO_ECOSISTEMA_PRODUCTOS.md.
+    */
+    $sitioKirafact = \App\Support\SitiosProducto::url('kirafact');
+    $planesKirafact = \App\Support\SitiosProducto::planes('kirafact');
+@endphp
+
+@push('json-ld')
+{{-- `@@` escapa la directiva @context de Blade, igual que en el layout. --}}
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "SoftwareApplication",
+    "name": "KiraFact",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "es-PE",
+    "description": "Sistema de facturación electrónica y gestión comercial para empresas: emisión de comprobantes, integración con SUNAT, inventario, ventas y reportes.",
+    "url": "{{ $sitioKirafact }}",
+    "mainEntityOfPage": "{{ route('solucion_facturacion') }}",
+    "author": {
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}"
+    },
+    "publisher": {
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}"
+    }
+}
+</script>
+@endpush
 
 @section('content')
     @include('aracode.components.v2.navbar')
@@ -12,12 +57,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">SUNAT</span>
+                    <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Producto de ARACODE</span>
                     <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
                         Kira<span class="text-gradient">Fact</span>
                     </h1>
                     <p class="text-lg text-white/70 mb-8 reveal reveal-delay-2">
-                        Facturación electrónica y gestión comercial para empresas: ventas, inventario y comprobantes electrónicos con cumplimiento total ante SUNAT.
+                        KiraFact es el sistema de facturación electrónica y gestión comercial que ARACODE Smart Solutions desarrolla para las empresas del Perú: ventas, inventario y comprobantes electrónicos con cumplimiento ante SUNAT.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 reveal reveal-delay-3">
                         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">
@@ -26,9 +71,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
                         </a>
-                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-secondary ara-btn-lg">
-                            Ver Planes
-                        </a>
+                        @if ($planesKirafact)
+                            <a href="{{ $planesKirafact }}" class="ara-btn ara-btn-secondary ara-btn-lg" target="_blank" rel="noopener">
+                                Ver Planes
+                                <span class="sr-only">(se abre en una pestaña nueva)</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
                 <div class="hidden lg:block reveal reveal-delay-4">
@@ -97,80 +145,20 @@
         </div>
     </section>
 
-    {{-- Pricing --}}
-    <section class="py-20 lg:py-28 bg-ara-slate-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <x-v2.section-heading
-                badge="Planes"
-                title="Planes flexibles para tu empresa"
-                subtitle="Elige el plan que mejor se adapte a las necesidades de tu negocio."
-                :light="false"
-            />
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                @php
-                    $plans = [
-                        [
-                            'name' => 'Emprendedor',
-                            'price' => 'S/ 35',
-                            'period' => '/mes',
-                            'annual' => 'S/ 350 /año',
-                            'features' => ['Módulo de ventas y compras', 'Control de inventario', 'Facturas y boletas electrónicas', 'Reportes básicos', '2 usuarios', 'Soporte 24/7'],
-                            'highlighted' => false,
-                        ],
-                        [
-                            'name' => 'PYME',
-                            'price' => 'S/ 50',
-                            'period' => '/mes',
-                            'annual' => 'S/ 500 /año',
-                            'features' => ['Todo lo del plan Emprendedor', 'Cotizaciones y notas de venta', 'Kardex y movimientos', 'Punto de venta', '5 usuarios', 'Soporte prioritario'],
-                            'highlighted' => true,
-                        ],
-                        [
-                            'name' => 'PRO',
-                            'price' => 'S/ 80',
-                            'period' => '/mes',
-                            'annual' => 'S/ 800 /año',
-                            'features' => ['Todo lo del plan PYME', 'Guías de remisión', 'Reportes avanzados', '10 usuarios', 'Soporte dedicado', 'Capacitación incluida'],
-                            'highlighted' => false,
-                        ],
-                    ];
-                @endphp
-
-                @foreach($plans as $index => $plan)
-                    <div class="ara-card relative reveal reveal-delay-{{ $index + 1 }} {{ $plan['highlighted'] ? 'ring-2 ring-ara-blue shadow-lg' : '' }}">
-                        @if($plan['highlighted'])
-                            <span class="absolute -top-3 left-1/2 -translate-x-1/2 ara-badge ara-badge-blue">Más Popular</span>
-                        @endif
-                        
-                        <h3 class="text-xl font-bold text-ara-slate-700 mb-2">{{ $plan['name'] }}</h3>
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-ara-blue">{{ $plan['price'] }}</span>
-                            <span class="text-ara-slate-400">{{ $plan['period'] }}</span>
-                            @if($plan['annual'])
-                                <div class="text-sm text-ara-slate-400 mt-1">{{ $plan['annual'] }}</div>
-                            @endif
-                        </div>
-                        
-                        <ul class="space-y-3 mb-8">
-                            @foreach($plan['features'] as $feature)
-                                <li class="flex items-center gap-3 text-ara-slate-500">
-                                    <svg class="w-5 h-5 text-ara-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    {{ $feature }}
-                                </li>
-                            @endforeach
-                        </ul>
-                        
-                        <a href="{{ route('contacto') }}" class="ara-btn w-full {{ $plan['highlighted'] ? 'ara-btn-primary' : 'ara-btn-ghost' }}">
-                            Lo Quiero
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
+    {{--
+        Antes aquí vivían tres tarjetas de planes con importes (S/ 35, S/ 50 y
+        S/ 80) que config/kirafact.php declara como TARIFAS DE REFERENCIA, SIN
+        PUBLICAR: la ficha corporativa publicaba precios que el propio producto
+        todavía no confirma. Ahora KiraFact no publica importes en ninguna de sus
+        dos páginas: las condiciones se confirman con el equipo comercial, y para
+        eso enlaza al sitio oficial.
+    --}}
+    <x-v2.product-official
+        producto="kirafact"
+        :paginaSecundaria="$planesKirafact"
+        etiquetaSecundaria="Planes y condiciones"
+        nota="Las funcionalidades y las condiciones vigentes están en la web de KIRAFACT. Las tarifas se confirman con el equipo comercial según el uso que le dará tu empresa, así que escríbenos y te enviamos la propuesta."
+    />
 
     <x-v2.cta-section 
         title="¿Quieres probar KiraFact?"

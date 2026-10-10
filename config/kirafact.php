@@ -347,6 +347,9 @@ return [
     |
     | La página de planes existe, pero con 'publicar' => false solo explica que
     | la tarifa se confirma con el equipo comercial y ofrece el contacto real.
+    | La ficha corporativa (/kirafact) tampoco publica importes: las dos páginas
+    | enlazan aquí para las condiciones vigentes
+    | (docs/SEO_ECOSISTEMA_PRODUCTOS.md).
     | Para publicar las tarjetas: revisa importes y prestaciones, y cambia
     | 'publicar' a true.
     */

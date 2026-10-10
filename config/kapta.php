@@ -9,9 +9,10 @@
 | repartido por las vistas: la tabla de planes, los datos de contacto y los
 | recursos que todavía no existen.
 |
-| IMPORTANTE sobre los precios: los importes y las prestaciones de abajo son
-| los que ARACODE Smart Solutions publica hoy en su página del producto
-| (ARACODE › LMS › planes). No se han inventado ni se han estimado. Si la
+| IMPORTANTE sobre los precios: los importes y las prestaciones de abajo son la
+| ÚNICA tabla de precios pública de KAPTA. No se han inventado ni se han
+| estimado, y la ficha que ARACODE publica en su sitio corporativo (/kapta) no
+| tiene importes propios: enlaza aquí (docs/SEO_ECOSISTEMA_PRODUCTOS.md). Si la
 | tabla aprobada cambia, se edita SOLO este archivo y el sitio entero queda
 | coherente. Recuerda volver a ejecutar `php artisan config:clear` (o
 | `config:cache` en producción) después de editarlo.

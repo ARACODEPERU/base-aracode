@@ -1,7 +1,52 @@
 @extends('aracode.layouts.webpage')
 
-@section('meta_title', 'Pichanguero | Gestión de Torneos y Campeonatos | ARACODE')
-@section('meta_description', 'Pichanguero — Plataforma para organizar torneos de fútbol: fixture automático, tabla de posiciones, estadísticas de jugadores, resultados en vivo y app móvil para equipos.')
+@section('meta_title', 'Pichanguero | Plataforma de torneos desarrollada por ARACODE')
+@section('meta_description', 'Pichanguero es la plataforma de ARACODE Smart Solutions para organizar campeonatos de fútbol: fixture automático, tabla de posiciones, estadísticas y app móvil.')
+
+@php
+    /*
+        Ficha de Pichanguero en el sitio corporativo.
+
+        Reparto de intenciones: esta página habla del PRODUCTO COMO PRODUCTO DE
+        ARACODE (quién lo desarrolla, para quién es, con quién se coordina una
+        demo). El detalle funcional y la descarga vigente de la app los publica
+        el sitio del producto, que es su web oficial.
+
+        Los enlaces al sitio oficial no se escriben aquí: salen de
+        config/productos.php, el único archivo que se edita el día que
+        Pichanguero pase a su propio dominio. Procedimiento completo en
+        docs/SEO_ECOSISTEMA_PRODUCTOS.md.
+    */
+    $sitioPichanguero = \App\Support\SitiosProducto::url('pichanguero');
+    $descargasPichanguero = \App\Support\SitiosProducto::descargas('pichanguero');
+@endphp
+
+@push('json-ld')
+{{-- `@@` escapa la directiva @context de Blade, igual que en el layout. --}}
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "SoftwareApplication",
+    "name": "Pichanguero",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Android, Web",
+    "inLanguage": "es-PE",
+    "description": "Plataforma para organizar campeonatos de fútbol: fixture automático, tabla de posiciones, estadísticas de jugadores, resultados en vivo y app móvil para equipos y jugadores.",
+    "url": "{{ $sitioPichanguero }}",
+    "mainEntityOfPage": "{{ route('solucion_pichanguero') }}",
+    "author": {
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}"
+    },
+    "publisher": {
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}"
+    }
+}
+</script>
+@endpush
 
 @section('content')
     @include('aracode.components.v2.navbar')
@@ -12,12 +57,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <span class="ara-badge ara-badge-green mb-6 inline-block reveal">Gestión deportiva</span>
+                    <span class="ara-badge ara-badge-green mb-6 inline-block reveal">Producto de ARACODE</span>
                     <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
                         Pichan<span class="text-gradient">guero</span>
                     </h1>
                     <p class="text-lg text-white/70 mb-8 reveal reveal-delay-2">
-                        La plataforma para organizar campeonatos de fútbol sin papeles ni Excel: fixture automático, tabla de posiciones, estadísticas y resultados en tiempo real.
+                        Pichanguero es la plataforma que ARACODE Smart Solutions desarrolla para organizar campeonatos de fútbol sin papeles ni Excel: fixture automático, tabla de posiciones, estadísticas y resultados en tiempo real.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 reveal reveal-delay-3">
                         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">
@@ -26,9 +71,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
                         </a>
-                        <a href="{{ asset('downloads/pichanguero.apk') }}" class="ara-btn ara-btn-secondary ara-btn-lg">
-                            Descargar App
-                        </a>
+                        @if ($descargasPichanguero)
+                            <a href="{{ $descargasPichanguero }}" class="ara-btn ara-btn-secondary ara-btn-lg" target="_blank" rel="noopener">
+                                Descargar App
+                                <span class="sr-only">(se abre en una pestaña nueva)</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
                 <div class="hidden lg:block reveal reveal-delay-4">
@@ -134,18 +182,33 @@
             </div>
 
             {{-- Descarga de la app --}}
+            {{-- El botón manda a la página de descargas del sitio oficial, que es
+                 la que publica la versión vigente del APK y cómo instalarla. --}}
             <div class="mt-12 ara-card bg-ara-navy text-center reveal">
                 <h3 class="text-2xl font-bold text-white mb-3">Lleva el torneo en el bolsillo</h3>
                 <p class="text-white/70 mb-6">Descarga la app y consulta el fixture, resultados y estadísticas desde tu celular.</p>
-                <a href="{{ asset('downloads/pichanguero.apk') }}" class="ara-btn ara-btn-primary ara-btn-lg">
-                    Descargar Pichanguero
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                </a>
+                @if ($descargasPichanguero)
+                    <a href="{{ $descargasPichanguero }}" class="ara-btn ara-btn-primary ara-btn-lg" target="_blank" rel="noopener">
+                        Descargar Pichanguero
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span class="sr-only">(se abre en una pestaña nueva)</span>
+                    </a>
+                @endif
             </div>
         </div>
     </section>
+
+    {{--
+        El cierre de la ficha va en blanco: la sección anterior («Para quién») es
+        gris, así que aquí se alterna el fondo como en el resto del sitio.
+    --}}
+    <x-v2.product-official
+        producto="pichanguero"
+        fondo="claro"
+        nota="Las funcionalidades, la landing pública de los torneos y la descarga vigente de la app están en la web de Pichanguero. Esta página de ARACODE cuenta quién desarrolla el producto y cómo llevarlo a tu campeonato."
+    />
 
     <x-v2.cta-section
         title="¿Listo para ordenar tu torneo?"

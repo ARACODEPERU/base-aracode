@@ -114,8 +114,10 @@ Todo lo comercial vive en `config/kapta.php`:
 
 - **`planes`**: los seis planes en tres niveles (esenciales, profesionales, avanzados) con importes
   mensuales y anuales, capacidad, prestaciones, ficha comparativa y enlace de solicitud.
-  Los importes y las prestaciones son los que ARACODE publica hoy en su página del producto; no se
-  inventaron ni se estimaron. Si la tabla aprobada cambia, se edita **solo** este archivo.
+  Esta es la **única tabla de precios pública de KAPTA**: la ficha que ARACODE publica en su sitio
+  corporativo (`/kapta`) no tiene importes propios y enlaza aquí (ver
+  `docs/SEO_ECOSISTEMA_PRODUCTOS.md`). No se inventaron ni se estimaron. Si la tabla aprobada
+  cambia, se edita **solo** este archivo.
   Recuerda ejecutar `php artisan config:clear` (o `config:cache` en producción) después.
 - **`niveles`** y **`comparativa`**: agrupaciones y filas de la tabla comparativa.
 - **`contacto`** y **`mensajes`**: WhatsApp, correo, ubicación y textos de los enlaces.

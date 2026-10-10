@@ -22,6 +22,15 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('og_title', 'ARACODE Smart Solutions')">
     <meta name="twitter:description" content="@yield('og_description', 'Soluciones digitales potenciadas con IA para empresas y organizaciones.')">
+    {{-- URL canónica --}}
+    {{--
+        Cada página es su propia canónica: evita que variantes con parámetros
+        (paginación, filtros, utm) se indexen como páginas distintas. Una vista
+        puede sustituirla con @section('canonical', '...') cuando su URL real
+        viva en otro sitio; url()->current() no arrastra la query string.
+    --}}
+    <link rel="canonical" href="@yield('canonical', url()->current())">
+
     {{-- Schema.org JSON-LD --}}
     <script type="application/ld+json">
     {

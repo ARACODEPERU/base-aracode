@@ -74,13 +74,19 @@ Route::get('/precios', [WebPageController::class, 'precios'])->name('precios');
 Route::get('/equipo', [WebPageController::class, 'equipo'])->name('equipo');
 
 // Redirecciones de rutas antiguas
-Route::get('/nosotros', fn () => redirect()->route('empresa'));
-Route::get('/v2', fn () => redirect()->route('index_main'));
-Route::get('/sitios-webs', fn () => redirect()->route('solucion_kapta'));
-Route::get('/tienda-online', fn () => redirect()->route('soluciones'));
-Route::get('/e-learning', fn () => redirect()->route('solucion_kapta'));
-Route::get('/facturador', fn () => redirect()->route('solucion_facturacion'));
-Route::get('/contacto-v2', fn () => redirect()->route('contacto'));
+//
+// 301 permanente, no 302 temporal: son URLs retiradas que no van a volver, y
+// solo el 301 le dice a Google que la autoridad de la vieja URL pasa a la
+// nueva (un 302 la conserva en la URL antigua indefinidamente). Además estas
+// rutas apuntan directo al destino final: si algún día un producto cambia de
+// URL, hay que actualizarlas aquí para no encadenar redirecciones.
+Route::get('/nosotros', fn () => redirect()->route('empresa', [], 301));
+Route::get('/v2', fn () => redirect()->route('index_main', [], 301));
+Route::get('/sitios-webs', fn () => redirect()->route('solucion_kapta', [], 301));
+Route::get('/tienda-online', fn () => redirect()->route('soluciones', [], 301));
+Route::get('/e-learning', fn () => redirect()->route('solucion_kapta', [], 301));
+Route::get('/facturador', fn () => redirect()->route('solucion_facturacion', [], 301));
+Route::get('/contacto-v2', fn () => redirect()->route('contacto', [], 301));
 
 // Route::get('/', [LandingController::class, 'index'])->name('index_main');
 // Route::get('/facturador', [LandingController::class, 'biller'])->name('biller_main');

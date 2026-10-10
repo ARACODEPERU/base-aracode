@@ -9,10 +9,14 @@
         -------------------------------
         Los productos que ya tienen su propio sitio web (resources/views/kapta,
         kirafact y pichanguero) mandan ahí su botón «Conocer Más»: es la web del
-        producto, con su identidad y —en producción— su propio dominio. Mientras
-        conviven dentro de este repositorio se resuelven con url(), así que
-        funcionan en cualquier host; el día que un producto se copie a su
-        dominio, se cambia su línea de aquí y nada más.
+        producto, con su identidad y —en producción— su propio dominio.
+
+        Las URLs NO se escriben aquí: salen de config/productos.php, que es el
+        único archivo que se edita el día que un producto se copie a su dominio
+        (así esta página y las fichas de producto cambian a la vez). Mientras
+        conviven dentro de este repositorio la config guarda la ruta relativa y
+        SitiosProducto la resuelve contra el host actual. Ver
+        docs/SEO_ECOSISTEMA_PRODUCTOS.md.
 
         «Desarrollo a Medida» y las tarjetas de Automatización e IA son servicios
         de ARACODE, no productos con sitio propio, así que siguen apuntando a sus
@@ -26,9 +30,9 @@
         abriéndose en la misma pestaña.
     */
     $sitiosProducto = [
-        'kapta' => url('/site/kapta'),
-        'kirafact' => url('/site/kirafact'),
-        'pichanguero' => url('/site/pichanguero'),
+        'kapta' => \App\Support\SitiosProducto::url('kapta'),
+        'kirafact' => \App\Support\SitiosProducto::url('kirafact'),
+        'pichanguero' => \App\Support\SitiosProducto::url('pichanguero'),
     ];
 @endphp
 

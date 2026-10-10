@@ -1,7 +1,52 @@
 @extends('aracode.layouts.webpage')
 
-@section('meta_title', 'KAPTA LMS | Plataforma E-Learning | ARACODE')
-@section('meta_description', 'KAPTA LMS - Plataforma SaaS para gestión y formación educativa. Gestión de cursos, aulas virtuales, certificaciones y más.')
+@section('meta_title', 'KAPTA LMS | Plataforma e-learning desarrollada por ARACODE')
+@section('meta_description', 'KAPTA LMS es un producto de ARACODE Smart Solutions: conoce qué resuelve en una institución, cómo se implementa y con quién coordinar una demostración.')
+
+@php
+    /*
+        Ficha de KAPTA en el sitio corporativo.
+
+        Reparto de intenciones: esta página habla del PRODUCTO COMO PRODUCTO DE
+        ARACODE (quién lo desarrolla, cómo se implementa, con quién se coordina
+        una demo). Los planes, los precios y las funcionalidades al detalle los
+        publica el sitio del producto, que es su web oficial.
+
+        Los enlaces al sitio oficial no se escriben aquí: salen de
+        config/productos.php, el único archivo que se edita el día que KAPTA
+        pase a su propio dominio. Procedimiento completo en
+        docs/SEO_ECOSISTEMA_PRODUCTOS.md.
+    */
+    $sitioKapta = \App\Support\SitiosProducto::url('kapta');
+    $planesKapta = \App\Support\SitiosProducto::planes('kapta');
+@endphp
+
+@push('json-ld')
+{{-- `@@` escapa la directiva @context de Blade, igual que en el layout. --}}
+<script type="application/ld+json">
+{
+    "@@context": "https://schema.org",
+    "@@type": "SoftwareApplication",
+    "name": "KAPTA LMS",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "es-PE",
+    "description": "Plataforma de gestión del aprendizaje para instituciones, academias y empresas: cursos, aulas virtuales, matrículas, evaluaciones y certificados.",
+    "url": "{{ $sitioKapta }}",
+    "mainEntityOfPage": "{{ route('solucion_kapta') }}",
+    "author": {
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}"
+    },
+    "publisher": {
+        "@@type": "Organization",
+        "name": "ARACODE Smart Solutions",
+        "url": "{{ url('/') }}"
+    }
+}
+</script>
+@endpush
 
 @section('content')
     @include('aracode.components.v2.navbar')
@@ -12,12 +57,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <span class="ara-badge ara-badge-green mb-6 inline-block reveal">Plataforma SaaS</span>
+                    <span class="ara-badge ara-badge-green mb-6 inline-block reveal">Producto de ARACODE</span>
                     <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
                         KAPTA <span class="text-gradient">LMS</span>
                     </h1>
                     <p class="text-lg text-white/70 mb-8 reveal reveal-delay-2">
-                        Plataforma completa de gestión y formación educativa. Diseñada para instituciones, academias y empresas que buscan ofrecer formación de calidad.
+                        KAPTA LMS es la plataforma SaaS de gestión y formación educativa que ARACODE Smart Solutions desarrolla para instituciones, academias y empresas. Aquí te contamos quién está detrás del producto y cómo llevarlo a tu institución.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 reveal reveal-delay-3">
                         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">
@@ -26,9 +71,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
                         </a>
-                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-secondary ara-btn-lg">
-                            Ver Planes
-                        </a>
+                        @if ($planesKapta)
+                            <a href="{{ $planesKapta }}" class="ara-btn ara-btn-secondary ara-btn-lg" target="_blank" rel="noopener">
+                                Ver Planes
+                                <span class="sr-only">(se abre en una pestaña nueva)</span>
+                            </a>
+                        @endif
                     </div>
                 </div>
                 <div class="hidden lg:block reveal reveal-delay-4">
@@ -97,107 +145,19 @@
         </div>
     </section>
 
-    {{-- Pricing --}}
-    <section class="py-20 lg:py-28 bg-ara-slate-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <x-v2.section-heading
-                badge="Planes"
-                title="Elige el plan ideal"
-                subtitle="Planes flexibles que se adaptan al tamaño y necesidades de tu institución."
-                :light="false"
-            />
-
-            {{--
-                =====================================================
-                PLANES — Edita fácilmente cambiando los valores.
-                Campos: name, price, period, annual, features, highlighted
-                highlighted = true → marca "Más Popular"
-                =====================================================
-            --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @php
-                    $plans = [
-                        [
-                            'name' => 'Emprendedor',
-                            'price' => 'S/ 149',
-                            'period' => '/mes',
-                            'annual' => 'S/ 1490 /año',
-                            'features' => [
-                                'Hasta 50 estudiantes',
-                                '10 cursos',
-                                'Certificaciones básicas',
-                                'Soporte por email',
-                            ],
-                            'highlighted' => false,
-                        ],
-                        [
-                            'name' => 'Profesional',
-                            'price' => 'S/ 299',
-                            'period' => '/mes',
-                            'annual' => 'S/ 2990 /año',
-                            'features' => [
-                                'Hasta 200 estudiantes',
-                                'Cursos ilimitados',
-                                'Certificaciones personalizadas',
-                                'Soporte prioritario',
-                                'Métricas IA',
-                                'Pasarela de pago',
-                            ],
-                            'highlighted' => true,
-                        ],
-                        [
-                            'name' => 'Enterprise',
-                            'price' => 'Personalizado',
-                            'period' => '',
-                            'annual' => '',
-                            'features' => [
-                                'Estudiantes ilimitados',
-                                'Todo lo del plan Profesional',
-                                'Integraciones API',
-                                'Soporte dedicado',
-                                'SLA garantizado',
-                                'Capacitación incluida',
-                            ],
-                            'highlighted' => false,
-                        ],
-                        
-                    ];
-                @endphp
-
-                @foreach($plans as $index => $plan)
-                    <div class="ara-card relative reveal reveal-delay-{{ ($index % 3) + 1 }} {{ $plan['highlighted'] ? 'ring-2 ring-ara-blue shadow-lg' : '' }}">
-                        @if($plan['highlighted'])
-                            <span class="absolute -top-3 left-1/2 -translate-x-1/2 ara-badge ara-badge-blue">Más Popular</span>
-                        @endif
-                        
-                        <h3 class="text-xl font-bold text-ara-slate-700 mb-2">{{ $plan['name'] }}</h3>
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold text-ara-blue">{{ $plan['price'] }}</span>
-                            <span class="text-ara-slate-400">{{ $plan['period'] }}</span>
-                            @if($plan['annual'])
-                                <div class="text-sm text-ara-slate-400 mt-1">{{ $plan['annual'] }}</div>
-                            @endif
-                        </div>
-                        
-                        <ul class="space-y-3 mb-8">
-                            @foreach($plan['features'] as $feature)
-                                <li class="flex items-center gap-3 text-ara-slate-500">
-                                    <svg class="w-5 h-5 text-ara-green flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                    </svg>
-                                    {{ $feature }}
-                                </li>
-                            @endforeach
-                        </ul>
-                        
-                        <a href="{{ route('contacto') }}" class="ara-btn w-full {{ $plan['highlighted'] ? 'ara-btn-primary' : 'ara-btn-ghost' }}">
-                            {{ $plan['price'] === 'Personalizado' ? 'Contactar' : 'Comenzar' }}
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
+    {{--
+        Antes aquí vivía una tabla de planes con importes propios (S/ 149, S/ 299,
+        «Personalizado») que ya no coincidía con la tabla vigente del producto.
+        Publicar dos listas de precios del mismo producto confunde al visitante y
+        reparte la autoridad de la página entre dos URLs: ahora los planes y sus
+        precios los publica solo el sitio oficial, y esta ficha enlaza ahí.
+    --}}
+    <x-v2.product-official
+        producto="kapta"
+        :paginaSecundaria="$planesKapta"
+        etiquetaSecundaria="Ver planes y precios"
+        nota="Las funcionalidades, los planes vigentes con sus precios y el acceso al producto están en la web de KAPTA. Para una demostración o una propuesta para tu institución, escríbenos: la atiende el equipo de ARACODE."
+    />
 
     <x-v2.cta-section 
         title="¿Listo para transformar la educación?"
