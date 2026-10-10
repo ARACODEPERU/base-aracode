@@ -131,7 +131,7 @@ body.se-landing ::selection {
     animation-name: se-splash-autohide;
     animation-duration: 1ms;
     animation-timing-function: linear;
-    animation-delay: calc(var(--se-splash-ms, 2600ms) + 4000ms);
+    animation-delay: calc(var(--se-splash-ms, 4600ms) + 4000ms);
     animation-fill-mode: forwards;
 }
 

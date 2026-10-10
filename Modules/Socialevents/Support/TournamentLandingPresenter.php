@@ -53,7 +53,7 @@ final class TournamentLandingPresenter
             'showAppDownload' => self::showAppDownload($edition),
             'appDownloadUrl' => self::appDownloadUrl($edition),
             'appVersion' => config('socialevents.mobile_app_version', '1.0.0'),
-            'splashDurationMs' => (int) config('socialevents.landing_splash_ms', 2600),
+            'splashDurationMs' => (int) config('socialevents.landing_splash_ms', 4600),
             'splashSponsor' => (string) config('socialevents.landing_sponsor_name', 'ARACODE'),
             'splashLogoUrl' => self::splashLogoUrl(),
             'playerDetailUrlTemplate' => route('socialevents_torneos_player_detail', [

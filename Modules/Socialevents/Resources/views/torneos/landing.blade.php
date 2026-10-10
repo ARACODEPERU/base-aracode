@@ -16,7 +16,7 @@
     $appVersion = $appVersion ?? config('socialevents.mobile_app_version', '1.0.0');
     $heroStatValue = $prizeSummary ?? ($inscriptionLabel ?? '—');
     $scorersRanking = $scorersRanking ?? collect();
-    $splashDurationMs = $splashDurationMs ?? (int) config('socialevents.landing_splash_ms', 2600);
+    $splashDurationMs = $splashDurationMs ?? (int) config('socialevents.landing_splash_ms', 4600);
     $splashSponsor = $splashSponsor ?? (string) config('socialevents.landing_sponsor_name', 'ARACODE');
     $splashLogoUrl = $splashLogoUrl ?? \Modules\Socialevents\Support\TournamentLandingPresenter::splashLogoUrl();
     $playerDetailUrlTemplate = $playerDetailUrlTemplate ?? route('socialevents_torneos_player_detail', [

@@ -26,8 +26,9 @@ return [
     /*
     | Splash publicitario de la landing (patrocinio ARACODE).
     | Tiempo mínimo en pantalla, en milisegundos, antes de revelar el torneo.
+    | Debe alcanzar para leer el mensaje completo.
     */
-    'landing_splash_ms' => (int) env('SOCIALEVENTS_LANDING_SPLASH_MS', 2600),
+    'landing_splash_ms' => (int) env('SOCIALEVENTS_LANDING_SPLASH_MS', 4600),
     'landing_sponsor_name' => env('SOCIALEVENTS_LANDING_SPONSOR', 'ARACODE'),
     'landing_sponsor_logo' => 'img/logo176x32_negativo.png',
 
