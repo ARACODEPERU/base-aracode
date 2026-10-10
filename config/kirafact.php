@@ -26,18 +26,19 @@
 return [
 
     /*
-    | URL del sistema KIRAFACT (acceso de clientes).
+    | Solicitud de demo: la acción principal del sitio.
     |--------------------------------------------------------------------------
-    | Es la dirección real del sistema, NO el dominio de esta web.
-    | Se puede definir por entorno:
+    | Es el texto de TODOS los botones de conversión (cabecera, menú móvil,
+    | hero, sección de demo, cierre y pie). El destino no se configura aquí:
+    | el botón abre WhatsApp con 'mensajes.demo_whatsapp' ya escrito, usando el
+    | número real de 'contacto'.
     |
-    |     KIRAFACT_LOGIN_URL=https://...
-    |
-    | Mientras esté vacía, los botones «Ingresar al sistema» se muestran en
-    | estado no disponible y no enlazan a ninguna parte: no se inventa un
-    | enlace funcional ni se piden credenciales en esta web.
+    | Esta web no ofrece acceso de clientes ni pide credenciales: no hay portal
+    | dentro de ella, así que no se publica ningún botón de ingreso.
     */
-    'login_url' => env('KIRAFACT_LOGIN_URL'),
+    'demo' => [
+        'boton' => 'Solicitar una demo',
+    ],
 
     /*
     | Marca.
@@ -123,8 +124,7 @@ return [
     */
     'mensajes' => [
         'info_whatsapp' => 'Hola, quiero información sobre KIRAFACT.',
-        'demo_whatsapp' => 'Hola, quiero conocer KIRAFACT para mi negocio.',
-        'acceso_pendiente' => 'El acceso al sistema se habilita cuando la URL de ingreso esté publicada. Escríbenos y te la enviamos.',
+        'demo_whatsapp' => 'Hola, quiero solicitar una demo de KIRAFACT.',
     ],
 
     /*
@@ -143,7 +143,6 @@ return [
             ['icono' => 'reportes', 'texto' => 'Información de ventas del negocio'],
         ],
         'cta_principal' => 'Conoce KIRAFACT',
-        'cta_secundario' => 'Ingresar al sistema',
     ],
 
     /*
@@ -200,15 +199,15 @@ return [
     ],
 
     /*
-    | Acceso al sistema existente.
+    | Sección de solicitud de demo.
     |--------------------------------------------------------------------------
-    | Reutiliza la misma 'login_url' de arriba. No hay pantalla de login ni
-    | formulario de credenciales dentro de esta web.
+    | Ocupa el lugar que antes tenía el acceso de clientes. No promete prueba
+    | gratuita, descuento ni plazo: describe lo que se muestra en la demo.
     */
-    'acceso' => [
-        'titulo' => '¿Ya utilizas KIRAFACT?',
-        'texto' => 'Ingresa a tu sistema para continuar gestionando tu negocio.',
-        'boton' => 'Ingresar al sistema',
+    'demo_seccion' => [
+        'titulo' => 'Conoce KIRAFACT en una demo',
+        'texto' => 'Te mostramos el sistema con los casos de tu negocio: emisión de comprobantes, envío a SUNAT y reportes de ventas. La demo la coordina el equipo de ARACODE Smart Solutions.',
+        'nota' => 'La demo se agenda por WhatsApp. ¿Prefieres el correo?',
     ],
 
     /*
@@ -218,7 +217,6 @@ return [
         'titulo' => 'Ordena la facturación y la gestión de tu negocio',
         'texto' => 'Cuéntanos cómo factura hoy tu empresa y revisamos con nuestro equipo si KIRAFACT encaja con tu operación.',
         'boton' => 'Hablar con el equipo',
-        'boton_secundario' => 'Ingresar al sistema',
     ],
 
     /*
@@ -429,8 +427,8 @@ return [
             'publicado' => true,
         ],
         [
-            'pregunta' => '¿Cómo puedo ingresar al sistema?',
-            'respuesta' => 'Con el botón «Ingresar al sistema», que abre el acceso de clientes. Si todavía no ves ese acceso habilitado en esta página, escríbenos por WhatsApp o correo y te enviamos la dirección de ingreso.',
+            'pregunta' => '¿Cómo puedo solicitar una demo?',
+            'respuesta' => 'Con el botón «Solicitar una demo», que abre WhatsApp con el mensaje ya escrito. Si prefieres el correo, escríbenos a contacto@aracodeperu.com y coordinamos día y hora para mostrarte el sistema.',
             'publicado' => true,
         ],
         [

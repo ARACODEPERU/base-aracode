@@ -61,14 +61,15 @@
 
                 <div class="kf-card kf-reveal">
                     <span class="kf-icon-box">
-                        @include('kirafact.components.icon', ['icono' => 'usuarios', 'iconoClase' => 'h-6 w-6'])
+                        @include('kirafact.components.icon', ['icono' => 'visibilidad', 'iconoClase' => 'h-6 w-6'])
                     </span>
-                    <h2 class="kf-h3 mt-5">¿Ya eres cliente?</h2>
+                    <h2 class="kf-h3 mt-5">Ver el sistema</h2>
                     <p class="kf-slate mt-2 text-sm leading-relaxed">
-                        Si ya utilizas KIRAFACT, el acceso a tu sistema está en la web del producto.
+                        Si prefieres verlo antes de conversar, pide una demo y te mostramos cómo se
+                        emite un comprobante y cómo se sigue su estado.
                     </p>
                     <span class="mt-4">
-                        @include('kirafact.components.btn-ingresar', ['class' => 'kf-btn-secondary kf-btn-sm'])
+                        @include('kirafact.components.btn-demo', ['class' => 'kf-btn-secondary kf-btn-sm'])
                     </span>
                 </div>
             </div>

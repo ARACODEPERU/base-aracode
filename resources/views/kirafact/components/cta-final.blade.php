@@ -1,9 +1,9 @@
 {{--
     Llamada a la acción final.
 
-    Fondo azul marino con acentos azules. La acción principal es real (contacto
-    comercial con canales verificados); el acceso al sistema se ofrece en segundo
-    lugar y reutiliza la URL configurada.
+    Fondo azul marino con acentos azules. Dos acciones, las dos reales: la
+    principal lleva al contacto comercial (canales verificados) y la secundaria
+    pide directamente la demo por WhatsApp.
 
     No se anuncia prueba gratuita, descuento, garantía ni oferta temporal.
 --}}
@@ -13,7 +13,8 @@
 
 <section class="kf-surface-dark relative overflow-hidden py-16 sm:py-20 lg:py-24" id="contacto-cta">
     <div class="kf-grid-lines absolute inset-0" aria-hidden="true"></div>
-    <div class="kf-halo -bottom-40 left-1/2 h-[26rem] w-[26rem] -translate-x-1/2" aria-hidden="true"></div>
+    {{-- El halo respira mientras se recorre el cierre (animación ligada al scroll) --}}
+    <div class="kf-halo kf-halo-cta -bottom-40 left-1/2 h-[26rem] w-[26rem] -translate-x-1/2" aria-hidden="true"></div>
 
     <div class="kf-container relative">
         <div class="mx-auto max-w-3xl text-center kf-reveal">
@@ -25,14 +26,8 @@
                     <span>{{ $cta['boton'] }}</span>
                     @include('kirafact.components.icon', ['icono' => 'flecha'])
                 </a>
-                @include('kirafact.components.btn-ingresar', ['class' => 'kf-btn-secondary kf-btn-lg', 'texto' => $cta['boton_secundario']])
+                @include('kirafact.components.btn-demo', ['class' => 'kf-btn-secondary kf-btn-lg'])
             </div>
-
-            @unless (config('kirafact.login_url'))
-                <p class="kf-slate mx-auto mt-4 max-w-md text-xs leading-relaxed">
-                    {{ config('kirafact.mensajes.acceso_pendiente') }}
-                </p>
-            @endunless
         </div>
     </div>
 </section>

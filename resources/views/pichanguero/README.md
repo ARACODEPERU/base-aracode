@@ -81,9 +81,46 @@ los dos fondos. Basta con marcar el contenedor de la sección:
 <section class="pg-surface-light"> <!-- blanco y gris azulado: información -->
 ```
 
-Clases propias disponibles: `pg-container`, `pg-section`, `pg-card`, `pg-icon-box`, `pg-btn`
-(`-primary`, `-green`, `-ghost`, `-sm`, `-lg`), `pg-badge` (`-accent`), `pg-faq`, `pg-step-number`,
-`pg-rail`, `pg-slash`, `pg-diagonal-edge`, `pg-reveal`.
+Clases propias disponibles: `pg-container`, `pg-section`, `pg-card`, `pg-card-title`, `pg-icon-box`,
+`pg-btn` (`-primary`, `-green`, `-ghost`, `-sm`, `-lg`), `pg-badge` (`-accent`), `pg-faq`,
+`pg-step-number`, `pg-rail`, `pg-slash`, `pg-diagonal-edge`, `pg-reveal`, `pg-theme-switch` y las
+que leen la superficie en la que están: `pg-heading` (titulares), `pg-body` (texto corriente) y
+`pg-hairline` (borde/separador).
+
+Conviene usar esas tres últimas en lugar de las clases de color fijas de Tailwind
+(`text-pg-ink`, `text-pg-slate`, `border-pg-line-light`): dan el mismo color en claro y se adaptan
+solas cuando la sección se invierte en oscuro (`text-white` y `text-pg-muted` son correctas dentro
+de las secciones `pg-surface-dark`, que no cambian de tema).
+
+### Tema claro y oscuro
+
+La cabecera lleva un interruptor que cambia entre **modo claro y modo oscuro**. Muestra el icono
+del modo al que se va: con el sitio en claro se ve una **luna** (pasa a oscuro) y con el sitio en
+oscuro se ve un **sol** (vuelve a claro).
+
+| Pieza | Dónde vive |
+| --- | --- |
+| Interruptor | `resources/views/pichanguero/components/theme-switch.blade.php` (dos instancias: cabecera y menú móvil) |
+| Colores del tema oscuro | `resources/css/pichanguero/pichanguero.css`, sección «Tema claro y oscuro» |
+| Cambio de tema y memoria | `public/themes/pichanguero/js/app.js`, apartado 5 |
+| Aplicación antes de pintar | `resources/views/pichanguero/layouts/app.blade.php` (script en línea del `<head>`) |
+
+**Cómo funciona.** El tema es el atributo `data-tema` del `<html>`: `claro` (valor con el que se
+sirve la página) u `oscuro`, que solo se pone si el visitante lo eligió antes. La elección se guarda
+en `localStorage` bajo la clave `pg-tema` (distinta de la de KiraFact, porque en este repositorio
+los dos sitios comparten origen) y el script del `<head>` la aplica antes de la primera pintada, así
+que al recargar en oscuro no se ve un destello claro. En claro el sitio se sirve tal cual estaba:
+nadie que no toque el interruptor recibe el tema oscuro del sistema operativo.
+
+**Qué cambia exactamente.** Las secciones de impacto (`pg-surface-dark`: portada, pasos, descarga y
+pie) ya son azul marino y **no cambian**. Lo que se invierte son las secciones informativas
+(`pg-surface-light`), que pasan a azul marino medio (`--pg-navy-2`) redefiniendo sus mismas
+variables: por eso el ritmo claro/oscuro del diseño se mantiene en los dos temas, solo que en
+oscuro las dos superficies son azules y las de impacto siguen siendo las más profundas. Ningún
+componente cambia de forma ni de tamaño.
+
+**Sin JavaScript** el interruptor no puede hacer nada, así que no se muestra: el sitio se ve
+completo y en claro, igual que antes.
 
 ### Recursos gráficos
 
@@ -106,3 +143,7 @@ Todo lo que sirve el navegador está en `public/themes/pichanguero/images/`:
   porque Tailwind usa la clave tal cual para el nombre de la clase.
 - Las ilustraciones se muestran como lo que son (recursos de la app). No hay capturas de interfaz
   generadas presentadas como si fueran el sistema real.
+- El tema claro/oscuro no se apoya en la opción `darkMode: 'class'` de Tailwind (que hoy no se usa):
+  el interruptor solo cambia el atributo `data-tema` del `<html>` y el CSS reacciona a él. Si algún
+  día se quieren variantes `dark:` de utilidades, la config ya está lista para la clase `dark`, pero
+  entonces habría que añadir esa clase al `<html>` junto con el atributo.

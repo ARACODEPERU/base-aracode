@@ -1,6 +1,10 @@
 /**
  * JS del sitio Pichanguero.
  * Vanilla, sin dependencias ni bundler: se sirve tal cual desde el tema.
+ *
+ * Aparte de lo que se mueve en pantalla, aquí vive el interruptor de tema claro
+ * / oscuro: los colores los pone el CSS y este archivo solo cambia el atributo
+ * data-tema del <html> y recuerda la elección.
  */
 (function () {
     'use strict';
@@ -92,4 +96,58 @@
     document.querySelectorAll('[data-year]').forEach(function (element) {
         element.textContent = String(new Date().getFullYear());
     });
+
+    /* ---------- 5) Tema claro / oscuro ---------- */
+    /* El estado vive en el atributo data-tema del <html>, que el layout dejó en
+       'claro', o ya en 'oscuro' si había una elección guardada (lo aplica antes
+       de pintar, así que aquí no hay nada que corregir a la vista).
+
+       El interruptor muestra el icono del modo AL QUE SE VA: la luna en claro y
+       el sol en oscuro. Aquí solo se cambia el atributo y se pone al día el
+       texto del botón, para quien lo use con lector de pantalla. */
+    var root = document.documentElement;
+    var themeToggles = document.querySelectorAll('[data-tema-switch]');
+
+    if (themeToggles.length) {
+        var applyTheme = function (theme, remember) {
+            var dark = theme === 'oscuro';
+            var label = dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+
+            root.setAttribute('data-tema', dark ? 'oscuro' : 'claro');
+
+            themeToggles.forEach(function (toggle) {
+                toggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
+                toggle.setAttribute('aria-label', label);
+                toggle.setAttribute('title', label);
+            });
+
+            if (remember) {
+                try {
+                    localStorage.setItem('pg-tema', dark ? 'oscuro' : 'claro');
+                } catch (e) {
+                    /* Sin almacenamiento, la elección vale solo para esta página. */
+                }
+            }
+        };
+
+        var currentTheme = function () {
+            return root.getAttribute('data-tema') === 'oscuro' ? 'oscuro' : 'claro';
+        };
+
+        themeToggles.forEach(function (toggle) {
+            toggle.addEventListener('click', function () {
+                applyTheme(currentTheme() === 'oscuro' ? 'claro' : 'oscuro', true);
+            });
+        });
+
+        /* Deja el botón en consonancia con el tema que ya trae el documento */
+        applyTheme(currentTheme(), false);
+
+        /* Si el tema se cambia en otra pestaña, esta se pone al día igual */
+        window.addEventListener('storage', function (event) {
+            if (event.key === 'pg-tema') {
+                applyTheme(event.newValue === 'oscuro' ? 'oscuro' : 'claro', false);
+            }
+        });
+    }
 })();

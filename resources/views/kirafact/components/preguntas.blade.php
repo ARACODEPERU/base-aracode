@@ -16,7 +16,7 @@
         <div class="max-w-3xl kf-reveal">
             <h2 class="kf-h2">Preguntas frecuentes</h2>
             <p class="kf-lead kf-copy mt-5">
-                Las dudas que más nos llegan sobre el producto y sobre el acceso al sistema.
+                Las dudas que más nos llegan sobre el producto y sobre cómo verlo funcionando.
             </p>
         </div>
 

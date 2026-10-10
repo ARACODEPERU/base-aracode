@@ -35,7 +35,9 @@
                             <span class="kf-icon-box">
                                 @include('kirafact.components.icon', ['icono' => $beneficio['icono'], 'iconoClase' => 'h-6 w-6'])
                             </span>
-                            <span class="kf-slate text-xs font-bold tabular-nums lg:mt-3 lg:block">
+                            {{-- El número se enciende cuando la fila pasa por el centro
+                                 de la pantalla (animación ligada al scroll) --}}
+                            <span class="kf-benefit-number text-xs font-bold tabular-nums lg:mt-3 lg:block">
                                 {{ sprintf('%02d', $indice + 1) }}
                             </span>
                         </div>

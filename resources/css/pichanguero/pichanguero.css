@@ -9,6 +9,10 @@
  * Sistema de superficies: los componentes leen variables CSS en vez de colores
  * fijos, así una misma tarjeta, botón o badge funciona igual sobre fondo azul
  * marino (.pg-surface-dark) que sobre fondo claro (.pg-surface-light).
+ *
+ * Sobre esa misma idea está hecho el modo oscuro: el atributo data-tema del
+ * <html> invierte las secciones claras redefiniendo sus variables (ver el final
+ * del archivo). Ningún componente cambia de forma entre un tema y otro.
  */
 @tailwind base;
 @tailwind components;
@@ -209,6 +213,17 @@ h2 {
     transform: translateY(-3px);
 }
 
+/* Título de una tarjeta que además es enlace: se tiñe con el acento de la
+   superficie en la que está, así funciona en claro y en oscuro. */
+.pg-card-title {
+    color: var(--pg-heading);
+    transition: color 0.2s ease-out;
+}
+
+.pg-card:hover .pg-card-title {
+    color: var(--pg-accent);
+}
+
 .pg-icon-box {
     @apply flex h-12 w-12 items-center justify-center rounded-xl;
     background-color: var(--pg-icon-bg);
@@ -395,6 +410,15 @@ h2 {
 }
 
 /*
+ * Borde que sigue a la superficie donde está: sustituye a las clases fijas de
+ * Tailwind (border-pg-line-light) en los separadores, porque el color del borde
+ * cambia con el tema.
+ */
+.pg-hairline {
+    border-color: var(--pg-border);
+}
+
+/*
  * Aparición al hacer scroll.
  * Solo se ocultan los bloques cuando hay JS (html.js): sin JavaScript
  * el contenido se muestra normalmente.
@@ -434,3 +458,101 @@ h2 {
         transition-duration: 0.001ms !important;
     }
 }
+
+/* ============================================================
+   Tema claro y oscuro
+   ============================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto (el sitio
+   tal como está diseñado) y oscuro solo si el visitante lo pide con el
+   interruptor de la cabecera. La elección se guarda en localStorage bajo la
+   clave 'pg-tema' y el layout la aplica antes de pintar, así que al recargar en
+   oscuro no se ve un destello claro.
+
+   Qué cambia y qué no: las secciones de impacto (.pg-surface-dark: portada,
+   pasos, descarga y pie) ya son azul marino y se quedan igual; lo que se
+   invierte son las secciones informativas (.pg-surface-light), que pasan a azul
+   marino medio. Así el ritmo claro/oscuro del diseño se mantiene en los dos
+   temas, solo que en oscuro las dos superficies son azules y las de impacto
+   siguen siendo las más profundas.
+   ============================================================ */
+
+/* Interruptor: muestra el icono del modo AL QUE SE VA (luna en claro, sol en
+   oscuro). Los dos iconos están siempre en el DOM y se cruzan con una
+   transición, así que el botón no se reconstruye al cambiar de tema. */
+.pg-theme-switch {
+    position: relative;
+}
+
+.pg-theme-switch .pg-theme-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.22s ease-out, transform 0.3s ease-out;
+}
+
+.pg-theme-icon-sun {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .pg-theme-icon-sun {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .pg-theme-icon-moon {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. */
+.no-js .pg-theme-switch {
+    display: none;
+}
+
+html[data-tema='oscuro'] {
+    /* Los controles nativos (barras de desplazamiento, autofill) acompañan */
+    color-scheme: dark;
+}
+
+html[data-tema='oscuro'] body {
+    background-color: var(--pg-navy);
+    color: var(--pg-body);
+}
+
+/* Secciones informativas: de blanco y gris azulado a azul marino medio. */
+html[data-tema='oscuro'] .pg-surface-light {
+    --pg-heading: var(--pg-white);
+    --pg-body: var(--pg-muted);
+    --pg-card-bg: rgba(255, 255, 255, 0.045);
+    --pg-card-bg-hover: rgba(255, 255, 255, 0.075);
+    --pg-border: var(--pg-line);
+    --pg-accent: var(--pg-lime);
+    --pg-accent-soft: rgba(181, 255, 39, 0.12);
+    --pg-icon-bg: rgba(181, 255, 39, 0.14);
+    --pg-icon-fg: var(--pg-lime);
+    --pg-shadow: none;
+
+    background-color: var(--pg-navy-2);
+    color: var(--pg-body);
+}
+
+/* Detalles que en claro llevan el verde corporativo fijo: sobre azul marino ese
+   verde pierde fuerza, así que usan el acento de la superficie (lima). */
+html[data-tema='oscuro'] .pg-badge-accent,
+html[data-tema='oscuro'] .pg-step-number {
+    border-color: rgba(181, 255, 39, 0.32);
+}
+
+html[data-tema='oscuro'] .pg-card:hover {
+    border-color: rgba(181, 255, 39, 0.45);
+}
+
+/* El foco tiene que verse sobre azul marino, no solo sobre las secciones
+   oscuras: en modo oscuro todo el sitio es azul. */
+html[data-tema='oscuro'] :focus-visible {
+    outline-color: var(--pg-lime);
+}
+

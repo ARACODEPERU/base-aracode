@@ -41,8 +41,8 @@
                                      class="h-11 w-11" width="600" height="600" loading="lazy" decoding="async">
                             </span>
                             <div>
-                                <p class="pg-display text-lg font-bold text-pg-ink">Pichanguero</p>
-                                <p class="text-sm text-pg-slate">Versión 1.0.0 · Android · APK</p>
+                                <p class="pg-display pg-heading text-lg font-bold">Pichanguero</p>
+                                <p class="text-sm pg-body">Versión 1.0.0 · Android · APK</p>
                             </div>
                         </div>
 
@@ -55,8 +55,8 @@
                         </a>
                     </div>
 
-                    <div class="mt-8 border-t border-pg-line-light pt-8">
-                        <h2 class="text-base font-bold text-pg-ink">Cómo instalarla</h2>
+                    <div class="mt-8 border-t pg-hairline pt-8">
+                        <h2 class="pg-heading text-base font-bold">Cómo instalarla</h2>
                         <ol class="mt-6 space-y-5">
                             @php
                                 $steps = [
@@ -69,7 +69,7 @@
                             @foreach($steps as $index => $step)
                                 <li class="flex gap-4">
                                     <span class="pg-step-number">{{ $index + 1 }}</span>
-                                    <p class="pt-2 text-pg-slate">{{ $step }}</p>
+                                    <p class="pt-2 pg-body">{{ $step }}</p>
                                 </li>
                             @endforeach
                         </ol>
@@ -79,8 +79,8 @@
                 {{-- Panel lateral --}}
                 <div class="space-y-6">
                     <div class="pg-card">
-                        <h3 class="text-base font-bold text-pg-ink">Qué incluye la app</h3>
-                        <ul class="mt-4 space-y-3 text-sm text-pg-slate">
+                        <h3 class="pg-heading text-base font-bold">Qué incluye la app</h3>
+                        <ul class="mt-4 space-y-3 text-sm pg-body">
                             @foreach([
                                 'Fixture y próximos partidos',
                                 'Tabla de posiciones actualizada',
@@ -98,8 +98,8 @@
                     </div>
 
                     <div class="pg-card">
-                        <h3 class="text-base font-bold text-pg-ink">¿Problemas para instalar?</h3>
-                        <p class="mt-2 text-sm text-pg-slate">
+                        <h3 class="pg-heading text-base font-bold">¿Problemas para instalar?</h3>
+                        <p class="mt-2 text-sm pg-body">
                             Escríbenos y te acompañamos en la instalación y en la configuración de tu torneo.
                         </p>
                         <a href="{{ route('pichanguero.contacto') }}" class="pg-btn pg-btn-green pg-btn-sm mt-5">

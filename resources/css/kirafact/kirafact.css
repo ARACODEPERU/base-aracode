@@ -4,10 +4,11 @@
  * Salida servible: public/themes/kirafact/css/kirafact.css
  *
  * Organización:
- *   1. Base y superficies        5. Composición del software
- *   2. Tipografía                6. Funcionalidades y beneficios
- *   3. Botones y etiquetas       7. Planes (sin publicar) y notas
- *   4. Navegación                8. Preguntas frecuentes y utilidades
+ *   1. Base y superficies        6. Funcionalidades y beneficios
+ *   2. Tipografía                7. Planes (sin publicar) y notas
+ *   3. Botones y etiquetas       8. Preguntas frecuentes y utilidades
+ *   4. Navegación                9. Movimiento ligado al scroll
+ *   5. Marca y composición      10. Tema claro y oscuro
  *
  * Las clases propias van en CSS plano (fuera de @layer) a propósito: así
  * Tailwind nunca las descarta por no detectarlas y el sitio queda autocontenido.
@@ -39,6 +40,9 @@
     --kf-ink: #182338;
     --kf-slate: #5b6b82;
     --kf-muted: #a9b6c7;
+
+    /* Curva de aceleración del sitio: un ease-out largo, sin rebotes. */
+    --kf-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 html {
@@ -255,6 +259,11 @@ h4 {
     transform: translateY(0);
 }
 
+/* Respuesta táctil/click: se hunde ligeramente sin mover el diseño */
+.kf-btn:active {
+    scale: 0.985;
+}
+
 /* Contorno: se adapta a la superficie donde esté */
 .kf-btn-secondary {
     border: 1.5px solid var(--kf-btn-outline);
@@ -266,20 +275,6 @@ h4 {
     border-color: var(--kf-accent);
     color: var(--kf-accent);
     background-color: rgba(22, 140, 240, 0.06);
-}
-
-/* Estado no disponible: mismo alto y forma, sin invitar al clic.
-   Se usa mientras falte la URL real del sistema. */
-.kf-btn.is-disabled,
-.kf-btn[aria-disabled='true'] {
-    cursor: not-allowed;
-    opacity: 0.55;
-    border-style: dashed;
-    color: var(--kf-surface-slate);
-    border-color: var(--kf-btn-outline);
-    background-color: transparent;
-    box-shadow: none;
-    transform: none;
 }
 
 .kf-btn-sm {
@@ -398,7 +393,7 @@ h4 {
     color: var(--kf-nav-ink-hover);
 }
 
-.kf-nav-link.is-active::after {
+.kf-nav-link::after {
     content: '';
     position: absolute;
     left: 0;
@@ -407,6 +402,14 @@ h4 {
     height: 2px;
     border-radius: 999px;
     background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 320ms var(--kf-ease);
+}
+
+.kf-nav-link.is-active::after,
+.kf-nav-link:hover::after {
+    transform: scaleX(1);
 }
 
 .kf-nav-toggle {
@@ -736,17 +739,253 @@ h4 {
 }
 
 /* Aparición al hacer scroll. Solo se ocultan los bloques cuando hay JS
-   (html.js): sin JavaScript el contenido se muestra normalmente. */
+   (html.js): sin JavaScript el contenido se muestra normalmente.
+
+   El retardo lo pone el JS con --kf-delay para que los bloques hermanos
+   entren escalonados (0 ms, 70 ms, 140 ms…) en lugar de todos a la vez. */
 .js .kf-reveal {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.55s ease, transform 0.55s ease;
+    transform: translateY(22px) scale(0.985);
+    transition: opacity 620ms var(--kf-ease), transform 720ms var(--kf-ease);
+    transition-delay: var(--kf-delay, 0ms);
     will-change: opacity, transform;
 }
 
 .js .kf-reveal.is-visible {
     opacity: 1;
     transform: none;
+}
+
+/* ============================================================
+   9. Movimiento ligado al scroll
+   ============================================================
+   Dos mecanismos, cada uno dueño de sus propiedades para que no se pisen:
+
+   - El revelado de bloques (.kf-reveal) lo dirige el JS con una transición:
+     funciona en cualquier navegador y se puede medir.
+   - Los efectos continuos (barra de progreso, deriva del hero, riel de los
+     pasos, números que se encienden) usan animaciones nativas ligadas al
+     scroll (animation-timeline). No dependen de JS, no gastan hilo principal
+     y se apagan solos donde el navegador no las soporte.
+
+   Todo vive dentro de prefers-reduced-motion: no-preference: quien pide menos
+   movimiento no recibe ninguna de estas animaciones, ni siquiera declaradas.
+   ============================================================ */
+
+/* Barra de progreso de lectura: refleja cuánto queda de la página */
+.kf-progress {
+    @apply pointer-events-none fixed inset-x-0 top-0;
+    height: 3px;
+    z-index: 70;
+}
+
+/* Sin soporte de animación ligada al scroll la barra queda en escala 0
+   (invisible) y la mueve el JS; con soporte la mueve el compositor. */
+.kf-progress > span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background-image: linear-gradient(90deg, var(--kf-blue), var(--kf-blue-soft));
+}
+
+/* Riel y relleno de los pasos del software */
+.kf-steps {
+    @apply relative;
+}
+
+.kf-steps::before,
+.kf-steps::after {
+    content: '';
+    position: absolute;
+    left: 1.1875rem;
+    top: 1.25rem;
+    bottom: 1.25rem;
+    width: 2px;
+    border-radius: 999px;
+}
+
+.kf-steps::before {
+    background-color: var(--kf-surface-line);
+}
+
+.kf-steps::after {
+    background-image: linear-gradient(180deg, var(--kf-blue), var(--kf-blue-soft));
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+}
+
+/* Los círculos numerados tapan el riel a su paso */
+.kf-step-number {
+    position: relative;
+    z-index: 1;
+}
+
+.kf-benefit-number {
+    color: var(--kf-surface-slate);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Progreso de lectura: sin JS y en el compositor */
+    @supports (animation-timeline: scroll()) {
+        .kf-progress > span {
+            scale: 0 1;
+            animation: kf-progreso linear both;
+            animation-timeline: scroll(root block);
+        }
+    }
+
+    /*
+       Deriva del hero. La línea de tiempo se declara CON NOMBRE en la sección
+       y la consumen sus elementos: la sección tiene overflow:hidden para
+       recortar la decoración, y un elemento recortado no puede tener línea de
+       tiempo propia (su contenedor de scroll no se mueve, así que el progreso
+       se queda congelado). Compartiendo la línea de la sección, el panel y el
+       fondo se desplazan a distinta velocidad mientras el hero sale de pantalla.
+    */
+    @supports (animation-timeline: view()) {
+        #inicio {
+            view-timeline-name: --kf-hero;
+            view-timeline-axis: block;
+        }
+
+        /* Ojo con el orden: el atajo `animation` reinicia animation-timeline a
+           auto, así que la línea de tiempo va siempre DESPUÉS del atajo. */
+        #inicio .kf-mock {
+            animation: kf-deriva-panel linear both;
+            animation-timeline: --kf-hero;
+            animation-range: cover;
+        }
+
+        #inicio .kf-grid-lines {
+            animation: kf-deriva-fondo linear both;
+            animation-timeline: --kf-hero;
+            animation-range: cover;
+        }
+
+        #inicio .kf-halo {
+            animation: kf-deriva-halo linear both;
+            animation-timeline: --kf-hero;
+            animation-range: cover;
+        }
+
+        /* El riel de los pasos se rellena a medida que se recorre la lista */
+        .kf-steps::after {
+            animation: kf-relleno linear both;
+            animation-timeline: view();
+            animation-range: cover 25% cover 80%;
+        }
+
+        /* Los números de beneficios se encienden al pasar por el centro */
+        .kf-benefit-number {
+            animation: kf-encender linear both;
+            animation-timeline: view();
+            animation-range: cover 30% cover 45%;
+        }
+
+        /* El halo del cierre respira mientras se recorre su sección */
+        #contacto-cta {
+            view-timeline-name: --kf-cierre;
+            view-timeline-axis: block;
+        }
+
+        .kf-halo-cta {
+            animation: kf-respirar linear both;
+            animation-timeline: --kf-cierre;
+            animation-range: cover;
+        }
+    }
+
+    /* Acordeón: altura y opacidad animadas, sin JS. Donde el navegador no
+       soporte la interpolación, el acordeón abre igual (solo sin transición). */
+    @supports selector(::details-content) {
+        .kf-faq {
+            interpolate-size: allow-keywords;
+        }
+
+        .kf-faq::details-content {
+            block-size: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: block-size 300ms var(--kf-ease), opacity 240ms var(--kf-ease),
+                content-visibility 300ms allow-discrete;
+        }
+
+        .kf-faq[open]::details-content {
+            block-size: auto;
+            opacity: 1;
+        }
+    }
+}
+
+@keyframes kf-progreso {
+    from {
+        scale: 0 1;
+    }
+    to {
+        scale: 1 1;
+    }
+}
+
+@keyframes kf-deriva-panel {
+    from {
+        transform: translateY(26px);
+    }
+    to {
+        transform: translateY(-26px);
+    }
+}
+
+@keyframes kf-deriva-fondo {
+    from {
+        transform: translateY(-1.5%);
+    }
+    to {
+        transform: translateY(4%);
+    }
+}
+
+@keyframes kf-deriva-halo {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 0.95;
+    }
+    to {
+        transform: translate3d(-46px, 70px, 0);
+        opacity: 0.5;
+    }
+}
+
+@keyframes kf-relleno {
+    from {
+        transform: scaleY(0);
+    }
+    to {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes kf-encender {
+    from {
+        color: var(--kf-surface-slate);
+        scale: 0.86;
+    }
+    to {
+        color: var(--kf-accent);
+        scale: 1;
+    }
+}
+
+@keyframes kf-respirar {
+    from {
+        transform: translate3d(-50%, 34px, 0) scale(0.9);
+        opacity: 0.55;
+    }
+    to {
+        transform: translate3d(-50%, -34px, 0) scale(1.06);
+        opacity: 0.95;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -760,8 +999,191 @@ h4 {
         transition: none;
     }
 
+    /* La barra de progreso es solo un adorno: sin movimiento no se muestra */
+    .kf-progress {
+        display: none;
+    }
+
     .kf-card-interactive:hover,
     .kf-btn-primary:hover {
         transform: none;
+    }
+
+    .kf-btn:active {
+        scale: 1;
+    }
+
+    .kf-nav-link::after {
+        transition: none;
+    }
+}
+
+/* ============================================================
+   10. Tema claro y oscuro
+   ============================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto y oscuro
+   solo cuando el visitante lo elige con el interruptor de la cabecera. La
+   elección se recuerda en localStorage, y el layout la aplica antes de pintar,
+   así que al recargar no se ve un destello claro.
+
+   El modo oscuro no es una hoja aparte: el sitio ya está construido sobre
+   variables por superficie, así que basta con redefinir esas mismas variables.
+   Solo se reescribe lo que no lee variables: el fondo del documento, la cabecera
+   pegada al scroll y el panel del menú móvil.
+
+   Criterio de color: en claro, el blanco es la superficie más clara y el azul
+   marino la más profunda. En oscuro la jerarquía se mantiene pero se invierte
+   (las secciones claras suben a azul profundo y el azul marino baja a casi
+   negro), para que la página conserve relieve en lugar de ser un plano único.
+   ============================================================ */
+
+/* Interruptor: muestra el icono del modo AL QUE SE VA (luna en claro, sol en
+   oscuro). Los dos iconos están siempre en el DOM y se cruzan con una
+   transición, así que no hay que reconstruir el botón al cambiar de tema. */
+.kf-tema-switch {
+    position: relative;
+}
+
+.kf-tema-switch .kf-tema-icono {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 220ms var(--kf-ease), transform 300ms var(--kf-ease);
+}
+
+.kf-tema-icono-sol {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .kf-tema-icono-sol {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .kf-tema-icono-luna {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. */
+.no-js .kf-tema-switch {
+    display: none;
+}
+
+/* Paleta del tema oscuro: un solo sitio donde ajustarla. */
+html[data-tema='oscuro'] {
+    /* Los controles nativos (barras de desplazamiento, relleno automático)
+       acompañan al tema en lugar de quedarse claros. */
+    color-scheme: dark;
+
+    --kf-noche-bg: #0d1730;
+    --kf-noche-surface: #111d38;
+    --kf-noche-card: #17243f;
+    --kf-noche-deep: #060c1c;
+    --kf-noche-ink: #e9eff9;
+    --kf-noche-slate: #a4b4cc;
+    --kf-noche-line: rgba(255, 255, 255, 0.12);
+    --kf-noche-accent: #6fbbfb;
+    --kf-noche-accent-strong: #a5d6ff;
+    --kf-noche-outline: rgba(255, 255, 255, 0.24);
+}
+
+html[data-tema='oscuro'] body {
+    background-color: var(--kf-noche-bg);
+    color: var(--kf-noche-ink);
+}
+
+/* Superficies que en claro son blancas o gris muy claro. */
+html[data-tema='oscuro'] .kf-surface-light,
+html[data-tema='oscuro'] .kf-surface-mist {
+    --kf-surface-ink: var(--kf-noche-ink);
+    --kf-surface-slate: var(--kf-noche-slate);
+    --kf-surface-line: var(--kf-noche-line);
+    --kf-card-bg: var(--kf-noche-card);
+    --kf-card-shadow: 0 22px 46px -34px rgba(0, 0, 0, 0.85);
+    --kf-accent: var(--kf-noche-accent);
+    --kf-accent-strong: var(--kf-noche-accent-strong);
+    --kf-icon-bg: rgba(22, 140, 240, 0.18);
+    --kf-icon-ink: var(--kf-blue-soft);
+    --kf-badge-bg: rgba(22, 140, 240, 0.14);
+    --kf-badge-line: rgba(22, 140, 240, 0.38);
+    --kf-badge-ink: #9ed2fc;
+    --kf-btn-outline: var(--kf-noche-outline);
+    --kf-slot-line: rgba(255, 255, 255, 0.28);
+    --kf-slot-ink: #c7d5e6;
+    --kf-mock-bg: #0e1d38;
+    --kf-mock-bar-bg: rgba(255, 255, 255, 0.05);
+    --kf-mock-line: var(--kf-noche-line);
+    --kf-bar-bg: rgba(255, 255, 255, 0.16);
+    --kf-focus: var(--kf-noche-accent);
+}
+
+/* Cada superficie conserva su propio fondo: "light" sube y "mist" se queda con
+   el fondo del documento, igual que en claro. */
+html[data-tema='oscuro'] .kf-surface-light {
+    --kf-surface-bg: var(--kf-noche-surface);
+}
+
+html[data-tema='oscuro'] .kf-surface-mist {
+    --kf-surface-bg: var(--kf-noche-bg);
+}
+
+/* Azul marino: sigue siendo la superficie más profunda, ahora casi negra. */
+html[data-tema='oscuro'] .kf-surface-dark,
+html[data-tema='oscuro'] .kf-mobile-menu {
+    --kf-surface-bg: var(--kf-noche-deep);
+    --kf-card-bg: rgba(255, 255, 255, 0.06);
+    --kf-mock-bg: #08122a;
+    --kf-mock-bar-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* La sombra del panel del software era azul marino: sobre fondo oscuro no se ve
+   y el borde queda solo. Se cambia por una sombra negra, que sí separa. */
+html[data-tema='oscuro'] .kf-surface-dark .kf-mock {
+    box-shadow: 0 40px 80px -44px rgba(0, 0, 0, 0.95);
+}
+
+html[data-tema='oscuro'] .kf-mobile-menu {
+    background-color: rgba(6, 12, 28, 0.98);
+}
+
+/* Cabecera pegada al scroll: mismas variables, resueltas para oscuro. */
+html[data-tema='oscuro'] .kf-nav.is-scrolled {
+    --kf-nav-ink: var(--kf-noche-ink);
+    --kf-nav-ink-hover: var(--kf-blue-soft);
+    --kf-nav-line: var(--kf-noche-line);
+    --kf-slot-line: rgba(255, 255, 255, 0.28);
+    --kf-slot-ink: #c7d5e6;
+    --kf-surface-ink: var(--kf-noche-ink);
+    --kf-surface-slate: var(--kf-noche-slate);
+    --kf-btn-outline: var(--kf-noche-outline);
+    background-color: rgba(13, 23, 48, 0.94);
+    border-bottom-color: var(--kf-noche-line);
+    box-shadow: 0 12px 30px -26px rgba(0, 0, 0, 0.9);
+}
+
+/* Azul al 5 % y al 6 %: pensados para fondos blancos, se pierden en oscuro. */
+html[data-tema='oscuro'] .kf-note {
+    background-color: rgba(22, 140, 240, 0.1);
+}
+
+html[data-tema='oscuro'] .kf-btn-secondary:hover {
+    background-color: rgba(22, 140, 240, 0.14);
+}
+
+/* El texto seleccionado se leía en azul marino sobre azul translúcido. */
+html[data-tema='oscuro'] ::selection {
+    background: rgba(22, 140, 240, 0.42);
+    color: #ffffff;
+}
+
+/* Movimiento: el interruptor se queda quieto, pero sigue cambiando de icono.
+   Va al final a propósito, después de declarar la transición del interruptor. */
+@media (prefers-reduced-motion: reduce) {
+    .kf-tema-switch .kf-tema-icono {
+        transition: none;
     }
 }

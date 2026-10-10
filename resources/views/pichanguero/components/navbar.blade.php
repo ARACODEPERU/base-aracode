@@ -30,21 +30,27 @@
                 @endforeach
             </div>
 
-            {{-- CTA escritorio --}}
-            <div class="hidden lg:block">
-                <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-sm">
-                    Descargar la app
-                </a>
-            </div>
+            {{-- Acciones: tema, CTA de escritorio y menú móvil.
+                 El interruptor de tema va siempre visible (también en móvil); el
+                 CTA solo en escritorio, porque en móvil se ofrece dentro del menú. --}}
+            <div class="flex items-center gap-2">
+                @include('pichanguero.components.theme-switch')
 
-            {{-- Botón menú móvil --}}
-            <button type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-pg-line text-white transition-colors hover:border-pg-green lg:hidden"
-                    id="pgMenuBtn" aria-label="Abrir menú" aria-controls="pgMobileMenu" aria-expanded="false">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
+                <div class="hidden lg:block">
+                    <a href="{{ route('pichanguero.descargas') }}" class="pg-btn pg-btn-primary pg-btn-sm">
+                        Descargar la app
+                    </a>
+                </div>
+
+                {{-- Botón menú móvil --}}
+                <button type="button"
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-pg-line text-white transition-colors hover:border-pg-green lg:hidden"
+                        id="pgMenuBtn" aria-label="Abrir menú" aria-controls="pgMobileMenu" aria-expanded="false">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 </nav>
@@ -57,12 +63,17 @@
                 <img src="{{ asset('themes/pichanguero/images/logo.svg') }}" alt="Pichanguero"
                      class="pg-brand-mark" width="260" height="48">
             </a>
-            <button type="button" class="h-10 w-10 rounded-lg border border-pg-line text-white"
-                    id="pgMenuClose" aria-label="Cerrar menú">
-                <svg class="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                {{-- El interruptor se repite aquí porque el panel tapa la cabecera --}}
+                @include('pichanguero.components.theme-switch')
+
+                <button type="button" class="h-10 w-10 rounded-lg border border-pg-line text-white"
+                        id="pgMenuClose" aria-label="Cerrar menú">
+                    <svg class="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <nav class="mt-8" aria-label="Secciones">

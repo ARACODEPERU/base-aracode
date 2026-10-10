@@ -13,7 +13,7 @@
     $canonical = $seo['canonical'] ?: url()->current();
 @endphp
 <!DOCTYPE html>
-<html lang="es" class="no-js">
+<html lang="es" class="no-js" data-tema="claro">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,6 +21,19 @@
     {{-- Sin JS el contenido se ve igual: los bloques que aparecen al desplazar
          solo se ocultan cuando hay JS. --}}
     <script>document.documentElement.classList.remove('no-js');document.documentElement.classList.add('js');</script>
+
+    {{-- Tema elegido por el visitante: se aplica antes de pintar para que al
+         recargar en modo oscuro no se vea un destello claro. Sin nada guardado
+         el sitio arranca en claro, que es lo que ya dice data-tema. --}}
+    <script>
+        try {
+            if (localStorage.getItem('kf-tema') === 'oscuro') {
+                document.documentElement.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (e) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    </script>
 
     {{-- SEO --}}
     <title>@yield('title', $seo['title'])</title>
@@ -56,6 +69,10 @@
     @stack('head')
 </head>
 <body class="font-kf antialiased">
+
+    {{-- Progreso de lectura: lo mueve el compositor con animation-timeline
+         (o el JS donde el navegador todavía no lo soporte). Decorativo. --}}
+    <div class="kf-progress" aria-hidden="true"><span></span></div>
 
     <a href="#contenido"
        class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-kf-navy">

@@ -60,15 +60,15 @@
                 <h2 class="text-sm font-bold uppercase tracking-wide">Producto</h2>
                 <ul class="kf-footer-links mt-4 space-y-1.5 text-sm">
                     <li>
-                        @if (config('kirafact.login_url'))
-                            <a href="{{ config('kirafact.login_url') }}" target="_blank" rel="noopener"
-                               class="kf-slate transition-colors hover:text-white">Ingresar al sistema</a>
-                        @else
-                            <span class="kf-slate">Ingresar al sistema (no habilitado)</span>
-                        @endif
+                        <a href="{{ $contacto['whatsapp_url'] }}?text={{ rawurlencode(config('kirafact.mensajes.demo_whatsapp')) }}"
+                           target="_blank" rel="noopener"
+                           class="kf-slate inline-flex items-center gap-2 transition-colors hover:text-white">
+                            @include('kirafact.components.icon', ['icono' => 'whatsapp', 'iconoClase' => 'h-4 w-4'])
+                            <span>{{ config('kirafact.demo.boton') }}</span>
+                        </a>
                     </li>
                     <li><a href="{{ $inicio }}#software" class="kf-slate transition-colors hover:text-white">Cómo se trabaja</a></li>
-                    <li><a href="{{ $inicio }}#acceso" class="kf-slate transition-colors hover:text-white">Acceso de clientes</a></li>
+                    <li><a href="{{ $inicio }}#demo" class="kf-slate transition-colors hover:text-white">Cómo se coordina la demo</a></li>
                 </ul>
             </div>
 

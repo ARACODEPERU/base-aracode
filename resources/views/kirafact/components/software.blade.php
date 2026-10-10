@@ -22,7 +22,9 @@
                 <h2 class="kf-h2 mt-5">{{ $software['titulo'] }}</h2>
                 <p class="kf-lead kf-copy mt-5">{{ $software['descripcion'] }}</p>
 
-                <ol class="mt-9 space-y-6">
+                {{-- El riel de progreso (pseudo-elementos de .kf-steps) se rellena
+                     a medida que la lista cruza la pantalla --}}
+                <ol class="kf-steps mt-9 space-y-6">
                     @foreach ($software['pasos'] as $indice => $paso)
                         <li class="flex gap-5">
                             <span class="kf-step-number">{{ $indice + 1 }}</span>

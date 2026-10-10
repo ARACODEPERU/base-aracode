@@ -59,7 +59,7 @@
     </section>
 
     {{-- ===================== CAPACIDADES ===================== --}}
-    <section class="pg-surface-light border-b border-pg-line-light">
+    <section class="pg-surface-light border-b pg-hairline">
         <div class="pg-container py-10 lg:py-12">
             <div class="pg-rail">
                 @php
@@ -94,8 +94,8 @@
                             {!! $item['icon'] !!}
                         </svg>
                         <div>
-                            <p class="pg-display text-sm font-bold text-pg-ink">{{ $item['title'] }}</p>
-                            <p class="mt-1 text-xs text-pg-slate">{{ $item['text'] }}</p>
+                            <p class="pg-display pg-heading text-sm font-bold">{{ $item['title'] }}</p>
+                            <p class="mt-1 text-xs pg-body">{{ $item['text'] }}</p>
                         </div>
                     </div>
                 @endforeach
@@ -108,10 +108,10 @@
         <div class="pg-container">
             <div class="mx-auto max-w-2xl text-center">
                 <span class="pg-badge pg-badge-accent">Beneficios</span>
-                <h2 class="pg-reveal mt-5 text-3xl text-pg-ink sm:text-4xl">
+                <h2 class="pg-reveal mt-5 text-3xl pg-heading sm:text-4xl">
                     Todo lo que tu torneo necesita
                 </h2>
-                <p class="pg-reveal mt-4 text-pg-slate">
+                <p class="pg-reveal mt-4 pg-body">
                     Menos trabajo administrativo y más fútbol: la información del campeonato se ordena sola.
                 </p>
             </div>
@@ -159,8 +159,8 @@
                                 {!! $benefit['icon'] !!}
                             </svg>
                         </div>
-                        <h3 class="mt-5 text-lg text-pg-ink">{{ $benefit['title'] }}</h3>
-                        <p class="mt-2 leading-relaxed text-pg-slate">{{ $benefit['text'] }}</p>
+                        <h3 class="pg-heading mt-5 text-lg">{{ $benefit['title'] }}</h3>
+                        <p class="mt-2 leading-relaxed pg-body">{{ $benefit['text'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -229,10 +229,10 @@
         <div class="pg-container">
             <div class="mx-auto max-w-2xl text-center">
                 <span class="pg-badge pg-badge-accent">Hecho para</span>
-                <h2 class="pg-reveal mt-5 text-3xl text-pg-ink sm:text-4xl">
+                <h2 class="pg-reveal mt-5 text-3xl pg-heading sm:text-4xl">
                     ¿Para quién es Pichanguero?
                 </h2>
-                <p class="pg-reveal mt-4 text-pg-slate">
+                <p class="pg-reveal mt-4 pg-body">
                     Desde una liga barrial hasta academias que manejan varias categorías durante el año.
                 </p>
             </div>
@@ -248,8 +248,8 @@
 
                 @foreach($audiences as $audience)
                     <div class="pg-card pg-reveal">
-                        <h3 class="text-lg text-pg-ink">{{ $audience['title'] }}</h3>
-                        <p class="mt-2 leading-relaxed text-pg-slate">{{ $audience['text'] }}</p>
+                        <h3 class="pg-heading text-lg">{{ $audience['title'] }}</h3>
+                        <p class="mt-2 leading-relaxed pg-body">{{ $audience['text'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -298,7 +298,7 @@
             <div class="mx-auto max-w-3xl">
                 <div class="text-center">
                     <span class="pg-badge pg-badge-accent">Preguntas frecuentes</span>
-                    <h2 class="pg-reveal mt-5 text-3xl text-pg-ink sm:text-4xl">Dudas habituales</h2>
+                    <h2 class="pg-reveal mt-5 text-3xl pg-heading sm:text-4xl">Dudas habituales</h2>
                 </div>
 
                 <div class="mt-10 space-y-4">

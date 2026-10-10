@@ -34,16 +34,23 @@
                 @endforeach
             </nav>
 
-            {{-- Acceso al sistema (escritorio) --}}
-            <div class="hidden lg:block">
-                @include('kirafact.components.btn-ingresar', ['class' => 'kf-btn-primary kf-btn-sm'])
-            </div>
+            {{-- Acciones: tema, solicitud de demo y menú móvil.
+                 El interruptor de tema va siempre visible (también en móvil);
+                 el botón de demo solo en escritorio, porque en móvil se ofrece
+                 dentro del menú, a lo ancho. --}}
+            <div class="flex items-center gap-2">
+                @include('kirafact.components.tema-switch')
 
-            {{-- Botón del menú móvil --}}
-            <button type="button" class="kf-nav-toggle lg:hidden" id="kfMenuBtn"
-                    aria-label="Abrir menú" aria-controls="kfMobileMenu" aria-expanded="false">
-                @include('kirafact.components.icon', ['icono' => 'menu', 'iconoClase' => 'h-5 w-5'])
-            </button>
+                <div class="hidden lg:block">
+                    @include('kirafact.components.btn-demo', ['class' => 'kf-btn-primary kf-btn-sm'])
+                </div>
+
+                {{-- Botón del menú móvil --}}
+                <button type="button" class="kf-nav-toggle lg:hidden" id="kfMenuBtn"
+                        aria-label="Abrir menú" aria-controls="kfMobileMenu" aria-expanded="false">
+                    @include('kirafact.components.icon', ['icono' => 'menu', 'iconoClase' => 'h-5 w-5'])
+                </button>
+            </div>
         </div>
     </div>
 </header>
@@ -55,9 +62,13 @@
             <a href="{{ $inicio }}" class="kf-brand" aria-label="KIRAFACT — inicio">
                 @include('kirafact.components.marca', ['superficie' => 'oscura'])
             </a>
-            <button type="button" class="kf-nav-toggle" id="kfMenuClose" aria-label="Cerrar menú">
-                @include('kirafact.components.icon', ['icono' => 'cerrar', 'iconoClase' => 'h-5 w-5'])
-            </button>
+            <div class="flex items-center gap-2">
+                {{-- El interruptor se repite aquí porque el panel tapa la cabecera --}}
+                @include('kirafact.components.tema-switch')
+                <button type="button" class="kf-nav-toggle" id="kfMenuClose" aria-label="Cerrar menú">
+                    @include('kirafact.components.icon', ['icono' => 'cerrar', 'iconoClase' => 'h-5 w-5'])
+                </button>
+            </div>
         </div>
 
         <nav class="mt-6" aria-label="Navegación principal (móvil)">
@@ -71,7 +82,7 @@
         </nav>
 
         <div class="mt-8">
-            @include('kirafact.components.btn-ingresar', ['class' => 'kf-btn-primary kf-btn-block'])
+            @include('kirafact.components.btn-demo', ['class' => 'kf-btn-primary kf-btn-block'])
         </div>
     </div>
 </div>
