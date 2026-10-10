@@ -15,7 +15,9 @@
         <div class="pg-nav-inner">
             {{-- Marca: logotipo del proyecto, sin deformar --}}
             <a href="{{ route('pichanguero.home') }}" class="flex shrink-0 items-center">
-                <img src="{{ asset('themes/pichanguero/images/logo.svg') }}" alt="Pichanguero"
+                {{-- <img src="{{ asset('themes/pichanguero/images/logo.svg') }}" alt="Pichanguero"
+                     class="pg-brand-mark" width="260" height="48"> --}}
+                <img src="{{ asset('themes/pichanguero/images/Logo-vertical.png') }}" alt="Pichanguero"
                      class="pg-brand-mark" width="260" height="48">
             </a>
 
