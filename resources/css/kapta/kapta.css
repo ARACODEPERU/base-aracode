@@ -1,127 +1,402 @@
 /*
- * Hoja de estilos fuente del sitio KAPTA.
+ * Hoja de estilos fuente del sitio KAPTA LMS.
  * Se compila con: npm run build:kapta
  * Salida servible: public/themes/kapta/css/kapta.css
+ *
+ * Organización:
+ *   1. Base y superficies        5. Componentes de producto
+ *   2. Tipografía                6. Funcionalidades y soluciones
+ *   3. Botones y etiquetas       7. Planes y tablas
+ *   4. Navegación                8. Preguntas frecuentes y utilidades
+ *
+ * Las clases propias van en CSS plano (fuera de @layer) a propósito: así
+ * Tailwind nunca las descarta por no detectarlas y el sitio queda autocontenido.
+ *
+ * Idea central: cada contenedor declara una "superficie" (clara, gris o azul
+ * marino) y los componentes leen variables CSS. La misma tarjeta, etiqueta o
+ * botón funciona sobre blanco, sobre gris claro y sobre azul marino sin
+ * duplicar estilos: solo hay que marcar la sección con ka-surface-light,
+ * ka-surface-mist o ka-surface-dark.
  */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================================
-   Base
+   1. Base y superficies
    ============================================================ */
+:root {
+    /* Tokens de marca: los mismos nombres que en tailwind.config.js */
+    --ka-navy: #0b1740;
+    --ka-navy-2: #122459;
+    --ka-navy-3: #162d6b;
+    --ka-blue: #0188ee;
+    --ka-blue-ink: #0173ce;
+    --ka-blue-deep: #01519c;
+    --ka-cyan: #42c5f5;
+    --ka-mist: #f3f6fa;
+    --ka-line: #e1e8f2;
+    --ka-ink: #26344f;
+    --ka-slate: #516480;
+    --ka-muted: #a7bad6;
+}
+
 html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
 }
 
 body {
-    @apply bg-ka-dark font-ka text-slate-200 antialiased;
+    @apply bg-white font-ka text-ka-ink antialiased;
 }
 
 ::selection {
-    @apply bg-ka-violet/30 text-white;
+    background: rgba(66, 197, 245, 0.35);
+    color: var(--ka-navy);
 }
 
-/* ============================================================
-   Contenedor
-   ============================================================ */
+/* Foco visible y consistente en toda la interfaz (navegación por teclado) */
+:focus-visible {
+    outline: 2px solid var(--ka-focus, var(--ka-blue-deep));
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+}
+
+/*
+ * Superficies. Cada una redefine las variables que consumen los componentes.
+ * Claro = lectura; gris = separación de bloques; oscuro = impacto visual.
+ */
+.ka-surface-light {
+    --ka-surface-bg: #ffffff;
+    --ka-surface-ink: var(--ka-ink);
+    --ka-surface-slate: var(--ka-slate);
+    --ka-surface-line: var(--ka-line);
+    --ka-card-bg: #ffffff;
+    --ka-card-shadow: 0 18px 40px -28px rgba(11, 23, 64, 0.35);
+    --ka-accent: var(--ka-blue-ink);
+    --ka-accent-strong: var(--ka-blue-deep);
+    --ka-icon-bg: rgba(1, 136, 238, 0.1);
+    --ka-icon-ink: var(--ka-blue-ink);
+    --ka-badge-bg: rgba(1, 136, 238, 0.08);
+    --ka-badge-line: rgba(1, 136, 238, 0.22);
+    --ka-badge-ink: var(--ka-blue-deep);
+    --ka-btn-outline: #cbd8e8;
+    --ka-bar-bg: #e3ebf5;
+    --ka-mock-bg: #ffffff;
+    --ka-mock-bar-bg: var(--ka-mist);
+    --ka-mock-line: var(--ka-line);
+    --ka-focus: var(--ka-blue-deep);
+
+    background-color: var(--ka-surface-bg);
+    color: var(--ka-surface-ink);
+}
+
+.ka-surface-mist {
+    --ka-surface-bg: var(--ka-mist);
+    --ka-surface-ink: var(--ka-ink);
+    --ka-surface-slate: var(--ka-slate);
+    --ka-surface-line: #dde6f1;
+    --ka-card-bg: #ffffff;
+    --ka-card-shadow: 0 18px 40px -30px rgba(11, 23, 64, 0.3);
+    --ka-accent: var(--ka-blue-ink);
+    --ka-accent-strong: var(--ka-blue-deep);
+    --ka-icon-bg: #ffffff;
+    --ka-icon-ink: var(--ka-blue-ink);
+    --ka-badge-bg: #ffffff;
+    --ka-badge-line: #d7e2f0;
+    --ka-badge-ink: var(--ka-blue-deep);
+    --ka-btn-outline: #cbd8e8;
+    --ka-bar-bg: #e3ebf5;
+    --ka-mock-bg: #ffffff;
+    --ka-mock-bar-bg: var(--ka-mist);
+    --ka-mock-line: var(--ka-line);
+    --ka-focus: var(--ka-blue-deep);
+
+    background-color: var(--ka-surface-bg);
+    color: var(--ka-surface-ink);
+}
+
+.ka-surface-dark {
+    --ka-surface-bg: var(--ka-navy);
+    --ka-surface-ink: #ffffff;
+    --ka-surface-slate: var(--ka-muted);
+    --ka-surface-line: rgba(255, 255, 255, 0.12);
+    --ka-card-bg: rgba(255, 255, 255, 0.05);
+    --ka-card-shadow: none;
+    --ka-accent: var(--ka-cyan);
+    --ka-accent-strong: var(--ka-cyan);
+    --ka-icon-bg: rgba(66, 197, 245, 0.14);
+    --ka-icon-ink: var(--ka-cyan);
+    --ka-badge-bg: rgba(66, 197, 245, 0.12);
+    --ka-badge-line: rgba(66, 197, 245, 0.32);
+    --ka-badge-ink: var(--ka-cyan);
+    --ka-btn-outline: rgba(255, 255, 255, 0.35);
+    --ka-bar-bg: rgba(255, 255, 255, 0.14);
+    --ka-mock-bg: #0e1c4c;
+    --ka-mock-bar-bg: rgba(255, 255, 255, 0.06);
+    --ka-mock-line: rgba(255, 255, 255, 0.14);
+    --ka-focus: var(--ka-cyan);
+
+    background-color: var(--ka-surface-bg);
+    color: var(--ka-surface-ink);
+}
+
 .ka-container {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+/*
+ * Contenedor más ancho solo para la tabla comparativa: con seis planes
+ * al lado, la caja de lectura se queda corta. Se define después de
+ * .ka-container para que su max-width gane sobre el de Tailwind.
+ */
+.ka-container-wide {
+    @apply max-w-[92rem];
+}
+
+.ka-section {
+    @apply py-16 sm:py-20 lg:py-24;
+}
+
+.ka-section-tight {
+    @apply py-12 sm:py-14 lg:py-16;
 }
 
 /* ============================================================
-   Botones
+   2. Tipografía
+   ============================================================ */
+
+/* Titulares con personalidad; los datos priorizan legibilidad (Inter). */
+h1,
+h2,
+h3,
+h4,
+.ka-display {
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.ka-h1 {
+    @apply font-extrabold;
+    font-size: clamp(2rem, 1.25rem + 3.1vw, 3.5rem);
+    line-height: 1.07;
+}
+
+.ka-h2 {
+    @apply font-extrabold;
+    font-size: clamp(1.6rem, 1.15rem + 1.9vw, 2.4rem);
+    line-height: 1.14;
+}
+
+.ka-h3 {
+    @apply text-lg font-bold sm:text-xl;
+    line-height: 1.3;
+}
+
+.ka-lead {
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--ka-surface-slate);
+}
+
+@media (min-width: 640px) {
+    .ka-lead {
+        font-size: 1.125rem;
+    }
+}
+
+.ka-copy {
+    max-width: 62ch;
+}
+
+.ka-slate {
+    color: var(--ka-surface-slate);
+}
+
+.ka-ink {
+    color: var(--ka-surface-ink);
+}
+
+/* Acento de marca. Sobre azul marino funciona como degradado; sobre claro es
+   azul profundo sólido, porque el celeste no alcanza contraste con blanco. */
+.ka-accent {
+    color: var(--ka-accent);
+}
+
+.ka-surface-dark .ka-accent {
+    background-image: linear-gradient(92deg, #42c5f5 0%, #8fd9fa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* ============================================================
+   3. Botones y etiquetas
    ============================================================ */
 .ka-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold
-           transition-all duration-300 focus:outline-none focus-visible:ring-2
-           focus-visible:ring-ka-violet/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ka-dark;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-center
+           font-semibold transition-all duration-200;
 }
 
 .ka-btn-primary {
-    @apply bg-gradient-to-r from-ka-indigo to-ka-violet text-white shadow-lg shadow-ka-indigo/25
-           hover:-translate-y-0.5 hover:brightness-110;
+    background-color: var(--ka-blue-ink);
+    color: #ffffff;
+    box-shadow: 0 16px 30px -18px rgba(1, 115, 206, 0.7);
 }
 
-.ka-btn-ghost {
-    @apply border border-ka-line text-slate-200 hover:border-ka-violet/60 hover:text-white;
+.ka-btn-primary:hover {
+    background-color: var(--ka-blue);
+    transform: translateY(-1px);
 }
 
-.ka-btn-amber {
-    @apply bg-ka-amber text-ka-dark hover:-translate-y-0.5 hover:brightness-105;
+.ka-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Contorno: se adapta a la superficie donde esté */
+.ka-btn-secondary {
+    border: 1.5px solid var(--ka-btn-outline);
+    color: var(--ka-surface-ink);
+    background-color: transparent;
+}
+
+.ka-btn-secondary:hover {
+    border-color: var(--ka-accent);
+    color: var(--ka-accent);
+    background-color: rgba(1, 136, 238, 0.06);
 }
 
 .ka-btn-sm {
-    @apply rounded-lg px-4 py-2 text-sm;
+    @apply rounded-lg px-4 py-2.5 text-sm;
+}
+
+/* En pantallas táctiles ningún botón baja de 44 px de alto */
+@media (max-width: 767px) {
+    .ka-btn,
+    .ka-switch button {
+        min-height: 2.75rem;
+    }
 }
 
 .ka-btn-lg {
-    @apply px-8 py-4 text-lg;
+    @apply px-7 py-3.5 text-base sm:text-lg;
 }
 
-/* ============================================================
-   Tarjetas y bloques
-   ============================================================ */
-.ka-card {
-    @apply rounded-2xl border border-ka-line bg-ka-panel/80 p-6 shadow-ka-card
-           transition-all duration-300 hover:-translate-y-1 hover:border-ka-violet/40;
+.ka-btn-block {
+    @apply w-full;
 }
 
-.ka-card-featured {
-    @apply border-ka-violet/60 ring-2 ring-ka-violet/40;
+/* Enlace de texto con subrayado que responde al paso del ratón */
+.ka-link {
+    color: var(--ka-accent);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgba(66, 197, 245, 0.5);
+    text-underline-offset: 3px;
 }
 
-.ka-icon-box {
-    @apply flex h-12 w-12 items-center justify-center rounded-xl
-           border border-ka-indigo/25 bg-ka-indigo/10 text-ka-cyan;
+.ka-link:hover {
+    color: var(--ka-accent-strong);
+    text-decoration-color: currentColor;
 }
 
-/* ============================================================
-   Etiquetas
-   ============================================================ */
 .ka-badge {
     @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs
-           font-semibold uppercase tracking-wide;
+           font-bold uppercase tracking-wide;
+    background-color: var(--ka-badge-bg);
+    border-color: var(--ka-badge-line);
+    color: var(--ka-badge-ink);
 }
 
-.ka-badge-violet {
-    @apply border-ka-violet/30 bg-ka-violet/10 text-ka-cyan;
-}
-
-.ka-badge-amber {
-    @apply border-ka-amber/30 bg-ka-amber/10 text-ka-amber;
+/* Etiqueta neutra: para estados y datos secundarios, no para decorar */
+.ka-badge-neutral {
+    background-color: transparent;
+    border-color: var(--ka-surface-line);
+    color: var(--ka-surface-slate);
 }
 
 /* ============================================================
-   Navegación
+   4. Navegación
    ============================================================ */
-.ka-nav {
-    @apply fixed inset-x-0 top-0 z-50 transition-all duration-300;
-}
 
-.ka-nav-inner {
-    @apply flex h-16 items-center justify-between;
+/* Arriba del todo va transparente sobre la banda azul marino; al desplazar
+   pasa a blanco con borde y sombra. Las variables cambian el color del texto
+   sin duplicar la estructura. */
+.ka-nav {
+    --ka-nav-ink: #ffffff;
+    --ka-nav-ink-hover: var(--ka-cyan);
+    --ka-nav-line: rgba(255, 255, 255, 0.28);
+    --ka-slot-line: rgba(255, 255, 255, 0.5);
+    --ka-slot-ink: #cbd9ec;
+    @apply fixed inset-x-0 top-0 z-50 transition-all duration-300;
+    border-bottom: 1px solid transparent;
 }
 
 .ka-nav.is-scrolled {
-    @apply border-b border-ka-line bg-ka-dark/90 backdrop-blur;
+    --ka-nav-ink: var(--ka-ink);
+    --ka-nav-ink-hover: var(--ka-blue-ink);
+    --ka-nav-line: var(--ka-line);
+    --ka-slot-line: #9fb6d4;
+    --ka-slot-ink: var(--ka-slate);
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom-color: var(--ka-line);
+    box-shadow: 0 12px 30px -26px rgba(11, 23, 64, 0.6);
+}
+
+.ka-nav-inner {
+    @apply flex h-[4.5rem] items-center justify-between gap-4;
 }
 
 .ka-nav-link {
-    @apply text-sm font-medium text-slate-300 transition-colors hover:text-ka-cyan;
+    @apply relative py-2 text-sm font-semibold transition-colors duration-200;
+    color: var(--ka-nav-ink);
+}
+
+.ka-nav-link:hover {
+    color: var(--ka-nav-ink-hover);
 }
 
 .ka-nav-link.is-active {
-    @apply text-ka-cyan;
+    color: var(--ka-nav-ink-hover);
 }
 
-/* ============================================================
-   Menú móvil
-   ============================================================ */
+/* Subrayado corto del enlace activo */
+.ka-nav-link.is-active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.15rem;
+    height: 2px;
+    border-radius: 999px;
+    background-color: currentColor;
+}
+
+.ka-nav-toggle {
+    /* 44 px de lado: el mínimo cómodo para el dedo */
+    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors;
+    border-color: var(--ka-nav-line);
+    color: var(--ka-nav-ink);
+}
+
+.ka-nav-toggle:hover {
+    border-color: var(--ka-nav-ink-hover);
+    color: var(--ka-nav-ink-hover);
+}
+
+/* Menú móvil: panel azul marino a pantalla completa. Se declaran aquí las
+   mismas variables que en .ka-nav para que el hueco del logotipo y el botón
+   de cierre se vean igual que en la cabecera. */
 .ka-mobile-menu {
-    @apply pointer-events-none fixed inset-0 z-[60] opacity-0 transition-opacity duration-300;
-    background: rgba(8, 13, 31, 0.97);
+    --ka-nav-ink: #ffffff;
+    --ka-nav-ink-hover: var(--ka-cyan);
+    --ka-nav-line: rgba(255, 255, 255, 0.28);
+    --ka-slot-line: rgba(255, 255, 255, 0.5);
+    --ka-slot-ink: #cbd9ec;
+    @apply pointer-events-none fixed inset-0 z-[60] overflow-y-auto opacity-0
+           transition-opacity duration-300;
+    background-color: rgba(11, 23, 64, 0.98);
 }
 
 .ka-mobile-menu.is-open {
@@ -129,15 +404,382 @@ body {
 }
 
 .ka-mobile-link {
-    @apply block border-b border-ka-line py-4 text-lg font-medium text-slate-200
-           transition-colors hover:text-ka-cyan;
+    @apply flex min-h-[3.25rem] items-center justify-between border-b py-4 text-lg font-semibold
+           text-white transition-colors;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Enlaces del pie: con relleno vertical para que el área táctil sea cómoda */
+.ka-footer-links a {
+    @apply inline-block py-1;
+}
+
+.ka-mobile-link:hover,
+.ka-mobile-link.is-active {
+    color: var(--ka-cyan);
 }
 
 /* ============================================================
-   Preguntas frecuentes
+   5. Componentes de producto
    ============================================================ */
+.ka-card {
+    @apply relative flex h-full flex-col rounded-[1.25rem] border p-6;
+    background-color: var(--ka-card-bg);
+    border-color: var(--ka-surface-line);
+    box-shadow: var(--ka-card-shadow);
+}
+
+.ka-card-interactive {
+    @apply transition-all duration-300;
+}
+
+.ka-card-interactive:hover {
+    transform: translateY(-3px);
+    border-color: rgba(1, 136, 238, 0.45);
+    box-shadow: 0 26px 52px -30px rgba(11, 23, 64, 0.42);
+}
+
+.ka-icon-box {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl;
+    background-color: var(--ka-icon-bg);
+    color: var(--ka-icon-ink);
+}
+
+.ka-tile {
+    @apply relative flex h-full flex-col rounded-2xl border p-5;
+    background-color: var(--ka-card-bg);
+    border-color: var(--ka-surface-line);
+}
+
+.ka-check-item {
+    @apply flex items-start gap-3 text-sm leading-relaxed;
+    color: var(--ka-surface-slate);
+}
+
+.ka-check-item svg {
+    @apply mt-0.5 h-4 w-4 shrink-0;
+    color: var(--ka-accent);
+}
+
+/* Hueco reservado: se usa donde falta un recurso oficial (logotipo, capturas)
+   para no inventar una versión definitiva. */
+.ka-slot {
+    @apply inline-flex items-center gap-2 rounded-xl border border-dashed px-3 py-2
+           text-[0.6875rem] font-bold uppercase tracking-wide;
+    border-color: var(--ka-slot-line, #9fb6d4);
+    color: var(--ka-slot-ink, var(--ka-slate));
+}
+
+/* Marca del sitio: hueco del logotipo cuando todavía no hay archivo oficial */
+.ka-brand {
+    /* Sin shrink-0: en pantallas estrechas la marca se recorta antes que
+       empujar el botón del menú fuera de la pantalla. */
+    @apply flex min-w-0 items-center gap-3 py-1.5;
+}
+
+/*
+ * En pantallas muy estrechas el hueco del logotipo se queda solo con su icono
+ * para que el nombre y el botón del menú sigan entrando con holgura.
+ */
+@media (max-width: 419px) {
+    .ka-brand .ka-slot > span {
+        display: none;
+    }
+
+    .ka-brand .ka-slot {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+.ka-brand-logos {
+    @apply flex items-center;
+}
+
+.ka-brand-img {
+    @apply block w-auto;
+}
+
+.ka-brand-name {
+    @apply font-display text-lg font-extrabold tracking-tight;
+    color: var(--ka-nav-ink, var(--ka-surface-ink));
+}
+
+.ka-brand-name .ka-brand-sub {
+    color: var(--ka-nav-ink-hover, var(--ka-accent));
+}
+
+/*
+ * La cabecera cambia de superficie al desplazar. Cuando exista el logotipo
+ * oficial se muestran sus dos versiones (para fondo oscuro y para fondo
+ * claro) y aquí se alterna la que corresponde.
+ */
+.ka-logo-on-light {
+    display: none;
+}
+
+.ka-nav.is-scrolled .ka-logo-on-dark {
+    display: none;
+}
+
+.ka-nav.is-scrolled .ka-logo-on-light {
+    display: block;
+}
+
+/* --- Composición ilustrativa de la interfaz -------------------------------
+   Marco tipo ventana con paneles. Todo es HTML y CSS: no se presenta como
+   captura real del sistema, y así se indica junto al marco. */
+.ka-mock {
+    @apply overflow-hidden rounded-2xl border;
+    background-color: var(--ka-mock-bg);
+    border-color: var(--ka-mock-line);
+    box-shadow: 0 40px 80px -42px rgba(11, 23, 64, 0.6);
+}
+
+.ka-mock-bar {
+    @apply flex items-center gap-2 border-b px-4 py-3;
+    background-color: var(--ka-mock-bar-bg);
+    border-color: var(--ka-mock-line);
+}
+
+.ka-mock-dot {
+    @apply h-2.5 w-2.5 rounded-full;
+    background-color: var(--ka-bar-bg);
+}
+
+.ka-mock-title {
+    @apply ml-2 text-[0.6875rem] font-semibold uppercase tracking-wider;
+    color: var(--ka-surface-slate);
+}
+
+.ka-mock-body {
+    @apply p-4 sm:p-5;
+}
+
+.ka-mock-note {
+    @apply mt-3 text-[0.6875rem] leading-relaxed;
+    color: var(--ka-surface-slate);
+}
+
+.ka-mock-panel {
+    @apply rounded-xl border p-3;
+    border-color: var(--ka-mock-line);
+    background-color: var(--ka-surface-bg);
+}
+
+.ka-surface-dark .ka-mock-panel {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.ka-bar {
+    @apply h-1.5 w-full overflow-hidden rounded-full;
+    background-color: var(--ka-bar-bg);
+}
+
+.ka-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, var(--ka-blue), var(--ka-cyan));
+}
+
+/* Rejilla técnica muy tenue: solo decoración de fondo, sin coste de pintado */
+.ka-grid-lines {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+}
+
+.ka-halo {
+    @apply pointer-events-none absolute rounded-full;
+    background-image: radial-gradient(circle, rgba(1, 136, 238, 0.45), transparent 68%);
+    filter: blur(30px);
+}
+
+.ka-slash {
+    @apply pointer-events-none absolute rounded-full;
+    background-image: linear-gradient(180deg, rgba(66, 197, 245, 0.55), transparent);
+}
+
+.ka-photo {
+    @apply block h-full w-full object-cover;
+}
+
+/* ============================================================
+   6. Franja de valor, funcionalidades y soluciones
+   ============================================================ */
+.ka-rail {
+    @apply grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4;
+}
+
+.ka-rail-item {
+    @apply flex items-start gap-3;
+}
+
+@media (min-width: 1024px) {
+    .ka-rail-item + .ka-rail-item {
+        padding-left: 2rem;
+        border-left: 1px solid var(--ka-surface-line);
+    }
+}
+
+.ka-feature-media {
+    @apply relative overflow-hidden rounded-[1.25rem] border;
+    border-color: var(--ka-surface-line);
+}
+
+.ka-step-number {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold;
+    background-color: var(--ka-icon-bg);
+    color: var(--ka-icon-ink);
+}
+
+/* ============================================================
+   7. Planes y tablas
+   ============================================================ */
+.ka-plan {
+    @apply relative flex h-full flex-col rounded-[1.25rem] border p-6 sm:p-7;
+    background-color: var(--ka-card-bg);
+    border-color: var(--ka-surface-line);
+    box-shadow: var(--ka-card-shadow);
+}
+
+.ka-plan-featured {
+    border-color: var(--ka-blue);
+    box-shadow: 0 26px 52px -30px rgba(1, 115, 206, 0.45);
+}
+
+.ka-plan-name {
+    @apply font-display text-lg font-extrabold;
+    color: var(--ka-surface-ink);
+}
+
+.ka-plan-price {
+    @apply font-display font-extrabold;
+    font-size: 2.35rem;
+    line-height: 1.05;
+    color: var(--ka-accent);
+}
+
+.ka-plan-period {
+    @apply text-sm font-medium;
+    color: var(--ka-surface-slate);
+}
+
+.ka-plan-list {
+    @apply mt-6 space-y-3;
+}
+
+.ka-plan-list li {
+    @apply flex items-start gap-3 text-sm leading-relaxed;
+    color: var(--ka-surface-slate);
+}
+
+.ka-plan-list svg {
+    @apply mt-0.5 h-4 w-4 shrink-0;
+    color: var(--ka-accent);
+}
+
+/* Tabla comparativa: se desplaza dentro de su propio contenedor, nunca la
+   página completa. */
+.ka-table-wrap {
+    @apply overflow-x-auto rounded-[1.25rem] border;
+    border-color: var(--ka-surface-line);
+    background-color: var(--ka-card-bg);
+    -webkit-overflow-scrolling: touch;
+}
+
+.ka-table {
+    @apply w-full border-collapse text-sm;
+    min-width: 46rem;
+}
+
+.ka-table th,
+.ka-table td {
+    @apply border-b py-3 text-left align-middle;
+    padding-inline: 0.875rem;
+    border-color: var(--ka-surface-line);
+}
+
+.ka-table thead th {
+    @apply whitespace-nowrap text-xs font-bold uppercase tracking-wide;
+    background-color: rgba(1, 136, 238, 0.06);
+    color: var(--ka-surface-ink);
+}
+
+.ka-table td {
+    white-space: nowrap;
+    color: var(--ka-surface-slate);
+}
+
+.ka-table td:first-child,
+.ka-table th:first-child {
+    @apply whitespace-normal font-semibold;
+    min-width: 13rem;
+    padding-left: 1.25rem;
+    color: var(--ka-surface-ink);
+}
+
+.ka-table tbody tr:hover td {
+    background-color: rgba(1, 136, 238, 0.04);
+}
+
+.ka-table tbody tr:last-child td {
+    @apply border-b-0;
+}
+
+/* Conmutador mensual / anual */
+.ka-switch {
+    @apply inline-flex items-center gap-1 rounded-full border p-1;
+    border-color: var(--ka-surface-line);
+    background-color: var(--ka-card-bg);
+}
+
+.ka-switch button {
+    @apply rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200;
+    color: var(--ka-surface-slate);
+}
+
+.ka-switch button[aria-pressed='true'] {
+    background-color: var(--ka-blue-ink);
+    color: #ffffff;
+}
+
+/* Precio anual o mensual: se muestra solo el que corresponde.
+   Es inline-flex para que el importe y el periodo queden alineados por la
+   línea base. Sin JavaScript se ve el mensual, que es el estado inicial. */
+[data-precio] {
+    display: none;
+}
+
+[data-precio].is-active {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.ka-note {
+    @apply rounded-2xl border p-5 text-sm leading-relaxed;
+    border-color: var(--ka-surface-line);
+    background-color: rgba(1, 136, 238, 0.05);
+    color: var(--ka-surface-slate);
+}
+
+/* ============================================================
+   8. Preguntas frecuentes y utilidades
+   ============================================================ */
+.ka-faq {
+    @apply rounded-2xl border px-5 py-1;
+    background-color: var(--ka-card-bg);
+    border-color: var(--ka-surface-line);
+}
+
 .ka-faq summary {
-    @apply flex list-none cursor-pointer items-center justify-between gap-4 text-lg font-semibold text-white;
+    @apply flex cursor-pointer list-none items-center justify-between gap-4 py-5
+           font-display text-base font-bold sm:text-lg;
+    color: var(--ka-surface-ink);
 }
 
 .ka-faq summary::-webkit-details-marker {
@@ -145,38 +787,32 @@ body {
 }
 
 .ka-faq[open] summary {
-    @apply text-ka-cyan;
+    color: var(--ka-accent);
 }
 
 .ka-faq summary::after {
     content: '+';
-    @apply text-2xl leading-none text-ka-cyan transition-transform duration-300;
+    @apply text-xl font-normal leading-none;
+    color: var(--ka-accent);
+    transition: transform 0.25s ease;
 }
 
 .ka-faq[open] summary::after {
     content: '\2212';
 }
 
-/* ============================================================
-   Pasos numerados
-   ============================================================ */
-.ka-step-number {
-    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full border
-           border-ka-indigo/30 bg-ka-indigo/15 font-bold text-ka-cyan;
+.ka-faq .ka-faq-body {
+    @apply pb-5 text-sm leading-relaxed sm:text-base;
+    color: var(--ka-surface-slate);
+    max-width: 68ch;
 }
 
-/* ============================================================
-   Utilidades propias
-   ============================================================ */
-.ka-gradient-text {
-    @apply bg-gradient-to-r from-ka-cyan to-ka-violet bg-clip-text text-transparent;
-}
-
-/* Aparición al hacer scroll (solo se oculta cuando hay JS) */
+/* Aparición al hacer scroll. Solo se ocultan los bloques cuando hay JS
+   (html.js): sin JavaScript el contenido se muestra normalmente. */
 .js .ka-reveal {
     opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(20px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
     will-change: opacity, transform;
 }
 
@@ -186,9 +822,18 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
     .js .ka-reveal {
         opacity: 1;
         transform: none;
         transition: none;
+    }
+
+    .ka-card-interactive:hover,
+    .ka-btn-primary:hover {
+        transform: none;
     }
 }

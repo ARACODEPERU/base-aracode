@@ -5,7 +5,7 @@
 (function () {
     'use strict';
 
-    /* ---------- 1) Navbar con fondo al hacer scroll ---------- */
+    /* ---------- 1) Cabecera: transparente arriba, blanca al desplazar ---------- */
     var nav = document.getElementById('kaNav');
 
     function updateNav() {
@@ -88,7 +88,27 @@
         }
     }
 
-    /* ---------- 4) Año actual donde se pida ---------- */
+    /* ---------- 4) Conmutador mensual / anual de la página de planes ---------- */
+    /* Solo cambia qué precio se muestra; no altera datos ni envía nada. */
+    document.querySelectorAll('.ka-switch').forEach(function (group) {
+        var buttons = Array.prototype.slice.call(group.querySelectorAll('button[data-periodo]'));
+
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                var periodo = button.getAttribute('data-periodo');
+
+                buttons.forEach(function (other) {
+                    other.setAttribute('aria-pressed', other === button ? 'true' : 'false');
+                });
+
+                document.querySelectorAll('[data-precio]').forEach(function (precio) {
+                    precio.classList.toggle('is-active', precio.getAttribute('data-precio') === periodo);
+                });
+            });
+        });
+    });
+
+    /* ---------- 5) Año actual donde se pida ---------- */
     document.querySelectorAll('[data-year]').forEach(function (element) {
         element.textContent = String(new Date().getFullYear());
     });

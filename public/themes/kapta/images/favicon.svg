@@ -1,14 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="KAPTA">
-  <defs>
-    <linearGradient id="kaFav" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4F46E5"/>
-      <stop offset="1" stop-color="#7C3AED"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="#0E1530"/>
-  <g fill="none" stroke="url(#kaFav)" stroke-width="3" stroke-linecap="round">
-    <path d="M32 16l16 8-16 8-16-8 16-8z" fill="url(#kaFav)" stroke="none"/>
-    <path d="M20 28v11c0 3.3 5.4 6 12 6s12-2.7 12-6V28"/>
-    <path d="M48 26v10" stroke="#22D3EE"/>
-  </g>
+<!--
+    Marca de posición del sitio de KAPTA LMS.
+
+    NO es el logotipo oficial: es un cuadro neutro con los colores de la marca
+    para que el icono de la pestaña no quede vacío mientras llega el archivo
+    oficial. No contiene letras, monogramas ni ninguna reinterpretación del
+    isotipo. Cuando exista el logotipo, se sustituye este archivo por el suyo
+    (o se apunta el layout al nuevo recurso).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="KAPTA LMS">
+  <rect width="64" height="64" rx="14" fill="#0B1740"/>
+  <rect x="14" y="14" width="36" height="36" rx="8" fill="none" stroke="#42C5F5" stroke-width="4" opacity="0.85"/>
 </svg>

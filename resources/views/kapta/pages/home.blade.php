@@ -1,288 +1,613 @@
 @extends('kapta.layouts.app')
 
-@section('title', 'KAPTA LMS — Enseña, evalúa y certifica en línea')
-@section('description', 'KAPTA LMS gestiona tus cursos, aulas virtuales, evaluaciones, matrículas y certificados automáticos. Plataforma para instituciones, academias y empresas.')
+@section('title', 'KAPTA LMS — Gestiona tu formación. Impulsa tu crecimiento.')
+@section('description', 'KAPTA LMS administra cursos, alumnos, matrículas, evaluaciones y certificados desde una sola plataforma. Dominio, SSL, hosting y página web incluidos según el plan.')
+
+@php
+    $contacto = config('kapta.contacto');
+    $demoHref = $contacto['whatsapp_url'] . '?text=' . urlencode(config('kapta.mensajes.demo_whatsapp'));
+    $planes = config('kapta.planes');
+    $niveles = config('kapta.niveles');
+@endphp
 
 @section('content')
     @include('kapta.components.navbar')
 
-    {{-- ===================== HERO ===================== --}}
-    <section class="relative overflow-hidden pt-32 pb-24">
-        <div class="absolute inset-0 -z-10">
+    {{-- ==========================================================
+         A · HERO
+         ========================================================== --}}
+    <section class="ka-surface-dark relative overflow-hidden pb-20 pt-28 sm:pt-32 lg:pb-24 lg:pt-40">
+        {{-- Fondo: fotografía real del proyecto con velo azul marino --}}
+        <div class="absolute inset-0 -z-10" aria-hidden="true">
             <img src="{{ asset('themes/kapta/images/bg-hero.webp') }}" alt=""
-                 class="h-full w-full object-cover opacity-25">
-            <div class="absolute inset-0 bg-gradient-to-b from-ka-dark/85 via-ka-dark/90 to-ka-dark"></div>
+                 class="ka-photo opacity-[0.22]" width="2000" height="1271">
+            <div class="absolute inset-0"
+                 style="background-image: linear-gradient(180deg, rgba(11,23,64,.84) 0%, rgba(11,23,64,.94) 52%, #0b1740 100%)"></div>
         </div>
+        <div class="ka-grid-lines absolute inset-0 -z-10" aria-hidden="true"></div>
+        <div class="ka-halo right-[-12%] top-[-14%] h-[440px] w-[440px]" aria-hidden="true"></div>
 
         <div class="ka-container relative">
-            <div class="max-w-3xl">
-                <span class="ka-badge ka-badge-amber ka-reveal">Plataforma e-learning</span>
-
-                <h1 class="ka-reveal mt-6 text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
-                    Enseña, evalúa y <span class="ka-gradient-text">certifica en línea</span>
-                </h1>
-
-                <p class="ka-reveal mt-6 text-lg leading-relaxed text-slate-300">
-                    KAPTA LMS reúne cursos, aulas virtuales, evaluaciones, matrículas y certificados en una sola
-                    plataforma. Diseñada para instituciones, academias y empresas que forman personas.
-                </p>
-
-                <div class="ka-reveal mt-9 flex flex-col gap-4 sm:flex-row">
-                    <a href="{{ route('kapta.planes') }}" class="ka-btn ka-btn-primary ka-btn-lg">
-                        Ver planes
-                    </a>
-                    <a href="{{ route('kapta.contacto') }}" class="ka-btn ka-btn-ghost ka-btn-lg">
-                        Solicitar demo
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ===================== TIRA ===================== --}}
-    <section class="border-y border-ka-line bg-ka-panel/50">
-        <div class="ka-container py-8">
-            <div class="grid grid-cols-2 gap-6 lg:grid-cols-4">
-                @php
-                    $strip = [
-                        ['title' => 'Cursos y aulas', 'text' => 'Contenido multimedia'],
-                        ['title' => 'Evaluaciones', 'text' => 'Notas y avance'],
-                        ['title' => 'Certificados', 'text' => 'Emisión automática'],
-                        ['title' => 'Métricas con IA', 'text' => 'Seguimiento del alumno'],
-                    ];
-                @endphp
-
-                @foreach($strip as $item)
-                    <div>
-                        <p class="text-sm font-semibold text-white">{{ $item['title'] }}</p>
-                        <p class="mt-1 text-xs text-ka-muted">{{ $item['text'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- ===================== BENEFICIOS ===================== --}}
-    <section id="beneficios" class="scroll-mt-24 py-20 lg:py-28">
-        <div class="ka-container">
-            <div class="mx-auto max-w-3xl text-center">
-                <span class="ka-badge ka-badge-violet">Beneficios</span>
-                <h2 class="mt-5 text-3xl font-extrabold text-white sm:text-4xl">
-                    Todo el ciclo formativo en un solo lugar
-                </h2>
-                <p class="mt-4 text-ka-muted">
-                    Desde la matrícula hasta el certificado, sin hojas de cálculo ni procesos manuales.
-                </p>
-            </div>
-
-            <div class="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                @php
-                    $benefits = [
-                        [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>',
-                            'title' => 'Gestión completa',
-                            'text' => 'Administra cursos, módulos, evaluaciones y certificaciones desde un solo panel.',
-                        ],
-                        [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>',
-                            'title' => 'Aulas virtuales',
-                            'text' => 'Videos, documentos, PDF y enlaces organizados por módulo y sesión.',
-                        ],
-                        [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>',
-                            'title' => 'Certificación automática',
-                            'text' => 'Genera certificados personalizados al completar el curso o la evaluación final.',
-                        ],
-                        [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>',
-                            'title' => 'Control de matrículas',
-                            'text' => 'Registra alumnos, controla cupos y sigue el avance de cada participante.',
-                        ],
-                        [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
-                            'title' => 'Pasarelas de pago',
-                            'text' => 'Vende cursos y certificaciones con cobros en línea y control de ingresos.',
-                        ],
-                        [
-                            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>',
-                            'title' => 'Métricas con IA',
-                            'text' => 'Paneles con progreso, notas y alertas para acompañar a cada estudiante.',
-                        ],
-                    ];
-                @endphp
-
-                @foreach($benefits as $benefit)
-                    <div class="ka-card ka-reveal">
-                        <div class="ka-icon-box">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                {!! $benefit['icon'] !!}
-                            </svg>
-                        </div>
-                        <h3 class="mt-5 text-lg font-bold text-white">{{ $benefit['title'] }}</h3>
-                        <p class="mt-2 leading-relaxed text-ka-muted">{{ $benefit['text'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- ===================== CÓMO FUNCIONA ===================== --}}
-    <section id="como-funciona" class="scroll-mt-24 border-y border-ka-line bg-ka-panel/30 py-20 lg:py-28">
-        <div class="ka-container">
-            <div class="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
+            <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:gap-16">
+                {{-- Columna izquierda: mensaje --}}
                 <div>
-                    <span class="ka-badge ka-badge-amber">Cómo funciona</span>
-                    <h2 class="mt-5 text-3xl font-extrabold text-white sm:text-4xl">
-                        Tu programa formativo en cuatro pasos
-                    </h2>
-                    <p class="mt-4 text-ka-muted">
-                        Publica el curso una vez y deja que la plataforma se encargue de matrículas, evaluaciones
-                        y certificados.
+                    <span class="ka-badge ka-reveal">Plataforma LMS</span>
+
+                    <h1 class="ka-h1 ka-reveal mt-6 text-white">
+                        Gestiona tu formación.<br>
+                        <span class="ka-accent">Impulsa tu crecimiento.</span>
+                    </h1>
+
+                    <p class="ka-lead ka-reveal mt-6 max-w-xl text-ka-muted">
+                        Administra cursos, alumnos, evaluaciones y certificados desde una plataforma
+                        diseñada para simplificar la gestión de tu institución educativa.
                     </p>
 
-                    <ol class="mt-10 space-y-6">
-                        @php
-                            $steps = [
-                                ['title' => 'Crea tu curso', 'text' => 'Define módulos, sesiones y materiales.'],
-                                ['title' => 'Abre la matrícula', 'text' => 'Inscribe alumnos por enlace, cupo o pago en línea.'],
-                                ['title' => 'Evalúa', 'text' => 'Carga actividades, notas y seguimiento del avance.'],
-                                ['title' => 'Certifica', 'text' => 'Emite el certificado automáticamente al completar el curso.'],
-                            ];
-                        @endphp
+                    <div class="ka-reveal mt-9 flex flex-col gap-4 sm:flex-row">
+                        <a href="{{ $demoHref }}" target="_blank" rel="noopener"
+                           class="ka-btn ka-btn-primary ka-btn-lg">
+                            Solicitar una demo
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                        <a href="#funcionalidades" class="ka-btn ka-btn-secondary ka-btn-lg">
+                            Explorar funcionalidades
+                        </a>
+                    </div>
 
-                        @foreach($steps as $index => $step)
-                            <li class="flex gap-4">
-                                <span class="ka-step-number">{{ $index + 1 }}</span>
-                                <div>
-                                    <p class="font-semibold text-white">{{ $step['title'] }}</p>
-                                    <p class="mt-1 text-sm text-ka-muted">{{ $step['text'] }}</p>
-                                </div>
+                    <ul class="ka-reveal mt-10 grid grid-cols-1 gap-3 text-sm text-ka-muted sm:grid-cols-3">
+                        @foreach (['Campus virtual con aulas', 'Matrículas y usuarios', 'Certificados en PDF'] as $punto)
+                            <li class="flex items-center gap-2">
+                                <svg class="h-4 w-4 shrink-0 text-ka-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {{ $punto }}
                             </li>
                         @endforeach
-                    </ol>
+                    </ul>
                 </div>
 
+                {{-- Columna derecha: composición ilustrativa de la plataforma --}}
+                {{-- Cuando existan capturas auténticas, se cambia este bloque por las imágenes reales. --}}
                 <div class="ka-reveal">
-                    <img src="{{ asset('themes/kapta/images/app-ui.png') }}" alt="Plataforma KAPTA LMS"
-                         class="w-full rounded-2xl border border-ka-line shadow-ka-glow" loading="lazy">
+                    @include('kapta.components.mock', ['variant' => 'panel', 'titulo' => 'Panel de KAPTA LMS'])
                 </div>
             </div>
         </div>
     </section>
 
-    {{-- ===================== PARA QUIÉN ===================== --}}
-    <section class="py-20 lg:py-28">
-        <div class="ka-container">
-            <div class="mx-auto max-w-3xl text-center">
-                <span class="ka-badge ka-badge-violet">Hecho para</span>
-                <h2 class="mt-5 text-3xl font-extrabold text-white sm:text-4xl">¿Para quién es KAPTA?</h2>
-                <p class="mt-4 text-ka-muted">
-                    Instituciones que necesitan ordenar su formación y demostrar resultados.
-                </p>
-            </div>
-
-            <div class="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+    {{-- ==========================================================
+         C · FRANJA DE VALOR
+         ========================================================== --}}
+    <section class="ka-surface-light border-b" style="border-color: var(--ka-surface-line)">
+        <div class="ka-container ka-section-tight">
+            <div class="ka-rail">
                 @php
-                    $audiences = [
-                        ['title' => 'Institutos y academias', 'text' => 'Cursos regulares, ciclos y certificaciones con matrícula online.'],
-                        ['title' => 'Áreas de capacitación', 'text' => 'Programas internos con seguimiento de avance por colaborador.'],
-                        ['title' => 'Empresas y consultoras', 'text' => 'Vende formación a distancia y entrega certificados verificables.'],
+                    $atributos = [
+                        [
+                            'titulo' => 'Gestión centralizada',
+                            'texto' => 'Cursos, docentes, alumnos y matrículas en un mismo panel.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M4 6h16M4 12h16M4 18h10"/>',
+                        ],
+                        [
+                            'titulo' => 'Acceso multidispositivo',
+                            'texto' => 'El campus se abre desde computadora, tablet y celular.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>',
+                        ],
+                        [
+                            'titulo' => 'Evaluaciones y certificados',
+                            'texto' => 'Exámenes con nota y certificados en PDF o automáticos.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7l7-4z"/>',
+                        ],
+                        [
+                            'titulo' => 'Infraestructura incluida',
+                            'texto' => 'Dominio, SSL y hosting, más página web según el plan.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M5 12h14M5 12a7 7 0 0114 0M5 12a7 7 0 0014 0M12 4v16"/>',
+                        ],
                     ];
                 @endphp
 
-                @foreach($audiences as $audience)
-                    <div class="ka-card ka-reveal">
-                        <h3 class="text-lg font-bold text-white">{{ $audience['title'] }}</h3>
-                        <p class="mt-2 leading-relaxed text-ka-muted">{{ $audience['text'] }}</p>
+                @foreach ($atributos as $atributo)
+                    <div class="ka-rail-item">
+                        <span class="ka-icon-box h-10 w-10">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                {!! $atributo['icono'] !!}
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="font-display text-sm font-bold ka-ink">{{ $atributo['titulo'] }}</p>
+                            <p class="mt-1 text-xs leading-relaxed ka-slate">{{ $atributo['texto'] }}</p>
+                        </div>
                     </div>
                 @endforeach
             </div>
         </div>
     </section>
 
-    {{-- ===================== PLANES (RESUMEN) ===================== --}}
-    <section class="relative overflow-hidden border-y border-ka-line py-16">
-        <div class="absolute inset-0 -z-10">
-            <img src="{{ asset('themes/kapta/images/bg-page.webp') }}" alt=""
-                 class="h-full w-full object-cover opacity-20">
-            <div class="absolute inset-0 bg-gradient-to-r from-ka-dark via-ka-dark/85 to-ka-dark/70"></div>
-        </div>
-
+    {{-- ==========================================================
+         D · BENEFICIOS
+         ========================================================== --}}
+    <section class="ka-surface-mist ka-section">
         <div class="ka-container">
-            <div class="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
-                <div>
-                    <span class="ka-badge ka-badge-amber">Planes</span>
-                    <h2 class="mt-5 text-2xl font-extrabold text-white sm:text-3xl">
-                        Planes que crecen con tu institución
-                    </h2>
-                    <p class="mt-3 max-w-xl text-ka-muted">
-                        Desde emprendimientos educativos hasta instituciones con cientos de estudiantes.
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="ka-badge">Beneficios</span>
+                <h2 class="ka-h2 ka-reveal mt-5 ka-ink">
+                    Más organización para tu institución. Más tiempo para crecer.
+                </h2>
+                <p class="ka-lead ka-reveal mt-4">
+                    KAPTA ordena el trabajo administrativo que hoy se reparte entre hojas de cálculo,
+                    correos y grupos de mensajes.
+                </p>
+            </div>
+
+            <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                @php
+                    $beneficios = [
+                        [
+                            'titulo' => 'Todo en un solo lugar',
+                            'texto' => 'Dejas de saltar entre herramientas: alumnos, docentes, cursos, matrículas, pagos, evaluaciones y certificados viven en la misma plataforma.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M4 7v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H6a2 2 0 00-2 2z"/>',
+                        ],
+                        [
+                            'titulo' => 'Tu institución, tu imagen',
+                            'texto' => 'El campus lleva tu logo, tus colores y tu dominio propio, para que el alumno reconozca a tu institución y no a un portal ajeno.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M7 21h10M12 17v4M4 5h16v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/>',
+                        ],
+                        [
+                            'titulo' => 'Vende cursos sin fricción',
+                            'texto' => 'La tienda online y la pasarela de pagos permiten cobrar la matrícula de forma automática, sin perseguir comprobantes.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 10h18M7 15h1m4 0h1M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>',
+                        ],
+                        [
+                            'titulo' => 'Decisiones con datos',
+                            'texto' => 'Los reportes muestran avance, notas y actividad, para detectar a tiempo quién necesita acompañamiento.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($beneficios as $beneficio)
+                    <div class="ka-card ka-card-interactive ka-reveal">
+                        <span class="ka-icon-box">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                {!! $beneficio['icono'] !!}
+                            </svg>
+                        </span>
+                        <h3 class="ka-h3 mt-5 ka-ink">{{ $beneficio['titulo'] }}</h3>
+                        <p class="mt-2 text-sm leading-relaxed ka-slate">{{ $beneficio['texto'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    {{-- ==========================================================
+         E · FUNCIONALIDADES
+         ========================================================== --}}
+    <section id="funcionalidades" class="ka-surface-light ka-section scroll-mt-24">
+        <div class="ka-container">
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="ka-badge">Funcionalidades</span>
+                <h2 class="ka-h2 ka-reveal mt-5 ka-ink">Lo que resuelve KAPTA en el día a día</h2>
+                <p class="ka-lead ka-reveal mt-4">
+                    Cada pieza está pensada para el trabajo real de un área académica: publicar contenido,
+                    matricular, evaluar y certificar.
+                </p>
+            </div>
+
+            {{-- Fila 1 · contenido del curso --}}
+            <div class="mt-14 grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
+                <div class="ka-reveal">
+                    <span class="ka-badge ka-badge-neutral">Campus virtual</span>
+                    <h3 class="ka-h2 mt-5 text-2xl ka-ink sm:text-3xl">Cursos y contenidos ordenados por módulos</h3>
+                    <p class="ka-lead mt-4 text-base">
+                        Arma tus programas por módulos y sesiones con video, documentos, PDFs y enlaces.
+                        Lo que antes vivía en carpetas compartidas queda dentro del campus, disponible
+                        para cada alumno matriculado.
+                    </p>
+                    <ul class="mt-6 space-y-3">
+                        @foreach ([
+                            'Módulos y sesiones con materiales en video, PDF y enlaces',
+                            'Almacenamiento propio más enlaces de Google Drive para crecer',
+                            'Certificados subidos en PDF o emitidos automáticamente, según el plan',
+                        ] as $punto)
+                            <li class="ka-check-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {{ $punto }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div class="ka-reveal ka-feature-media">
+                    <img src="{{ asset('themes/webpage/images/misc/s4.webp') }}"
+                         alt="Persona estudiando en línea desde una tablet y una computadora portátil"
+                         class="ka-photo aspect-[4/3]" width="1271" height="1271" loading="lazy" decoding="async">
+                </div>
+            </div>
+
+            {{-- Fila 2 · gestión y seguimiento --}}
+            <div class="mt-16 grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
+                <div class="ka-reveal ka-feature-media lg:order-2">
+                    <img src="{{ asset('themes/webpage/images/misc/s6.jpg') }}"
+                         alt="Escritorio de trabajo con reportes de avance en pantalla"
+                         class="ka-photo aspect-[4/3]" width="1080" height="1080" loading="lazy" decoding="async">
+                </div>
+                <div class="ka-reveal lg:order-1">
+                    <span class="ka-badge ka-badge-neutral">Matrículas y pagos</span>
+                    <h3 class="ka-h2 mt-5 text-2xl ka-ink sm:text-3xl">De la matrícula al certificado, sin planillas sueltas</h3>
+                    <p class="ka-lead mt-4 text-base">
+                        Registra alumnos y docentes, controla los usuarios administrativos y deja que la
+                        matrícula se genere sola cuando alguien compra un curso en la tienda online.
+                    </p>
+                    <ul class="mt-6 space-y-3">
+                        @foreach ([
+                            'Matrícula automática al comprar en la tienda y manual desde el campus',
+                            'Pasarela de pagos Mercado Pago (Perú) y/o PayPal, según el plan',
+                            'Reportes de avance, notas y actividad por alumno',
+                        ] as $punto)
+                            <li class="ka-check-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                {{ $punto }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+
+            {{-- Mosaico de capacidades --}}
+            <div class="mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                @php
+                    $mosaico = [
+                        [
+                            'titulo' => 'Alumnos y docentes',
+                            'texto' => 'Registra personas, asigna docentes a cada curso y controla los usuarios administrativos del sistema.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M16 19v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1M9.5 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM21 19v-1a4 4 0 00-3-3.87M16.5 3.13a4 4 0 010 7.75"/>',
+                        ],
+                        [
+                            'titulo' => 'Exámenes y evaluaciones',
+                            'texto' => 'Carga actividades y evaluaciones, registra notas y sigue el avance de cada participante.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 5h6M9 5a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2M9 5V4a1 1 0 011-1h4a1 1 0 011 1v1M9 12h6M9 16h4"/>',
+                        ],
+                        [
+                            'titulo' => 'Certificación',
+                            'texto' => 'Entrega certificados en PDF o emítelos automáticamente al completar el curso o la evaluación final.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 15a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L7 22l5-2.5L17 22l-1.5-8.5"/>',
+                        ],
+                        [
+                            'titulo' => 'Reportes y seguimiento',
+                            'texto' => 'Paneles con progreso, resultados de exámenes y actividad, para acompañar a quien lo necesita.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+                        ],
+                        [
+                            'titulo' => 'Enlaces de Google Drive',
+                            'texto' => 'Suma almacenamiento enlazando archivos de Drive sin cargar todo dentro de la plataforma.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M10 13a5 5 0 007.07 0l1.42-1.42a5 5 0 00-7.07-7.07L10.7 5.23M14 11a5 5 0 00-7.07 0L5.5 12.42a5 5 0 007.07 7.07l.72-.72"/>',
+                        ],
+                        [
+                            'titulo' => 'Desde cualquier dispositivo',
+                            'texto' => 'El campus abre en navegador de escritorio, tablet y celular, sin instalar nada.',
+                            'icono' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 17h6M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>',
+                        ],
+                    ];
+                @endphp
+
+                @foreach ($mosaico as $pieza)
+                    <div class="ka-tile ka-card-interactive ka-reveal">
+                        <span class="ka-icon-box h-10 w-10">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                {!! $pieza['icono'] !!}
+                            </svg>
+                        </span>
+                        <h3 class="mt-4 font-display text-base font-bold ka-ink">{{ $pieza['titulo'] }}</h3>
+                        <p class="mt-2 text-sm leading-relaxed ka-slate">{{ $pieza['texto'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Infraestructura incluida, según el plan --}}
+            <div class="ka-reveal mt-6 flex flex-col items-start justify-between gap-6 rounded-[1.25rem] border p-7 sm:flex-row sm:items-center"
+                 style="border-color: var(--ka-surface-line); background-color: rgba(1,136,238,.05)">
+                <div class="max-w-2xl">
+                    <p class="font-display text-lg font-extrabold ka-ink">Dominio, SSL y hosting, incluidos</p>
+                    <p class="mt-2 text-sm leading-relaxed ka-slate">
+                        Todos los planes incluyen dominio, certificado SSL y hosting, además del mantenimiento
+                        del sistema. Según el plan se suma página web estándar o personalizada, landing page,
+                        CMS para editarla y facturación electrónica en el plan más completo.
                     </p>
                 </div>
-                <a href="{{ route('kapta.planes') }}" class="ka-btn ka-btn-amber ka-btn-lg shrink-0">
-                    Ver planes y precios
+                <a href="{{ route('kapta.planes') }}" class="ka-btn ka-btn-secondary shrink-0">
+                    Ver qué incluye cada plan
                 </a>
             </div>
         </div>
     </section>
 
-    {{-- ===================== FAQ ===================== --}}
-    <section class="py-20 lg:py-28">
-        <div class="ka-container">
-            <div class="mx-auto max-w-3xl">
-                <div class="text-center">
-                    <span class="ka-badge ka-badge-violet">Preguntas frecuentes</span>
-                    <h2 class="mt-5 text-3xl font-extrabold text-white sm:text-4xl">Dudas habituales</h2>
+    {{-- ==========================================================
+         F · PRESENTACIÓN VISUAL DEL PRODUCTO
+         ========================================================== --}}
+    <section id="producto" class="ka-surface-dark ka-section relative scroll-mt-24 overflow-hidden">
+        <div class="ka-grid-lines absolute inset-0" aria-hidden="true"></div>
+        <div class="ka-halo left-[-12%] top-[10%] h-[380px] w-[380px]" aria-hidden="true"></div>
+
+        <div class="ka-container relative">
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="ka-badge">Así funciona</span>
+                <h2 class="ka-h2 ka-reveal mt-5 text-white">Tres pantallas que resumen la plataforma</h2>
+                <p class="ka-lead ka-reveal mt-4">
+                    El panel administrativo, el campus del alumno y la emisión de certificados.
+                    Cada rol ve solo lo que necesita.
+                </p>
+            </div>
+
+            {{-- Marcos preparados para recibir las capturas auténticas cuando estén disponibles --}}
+            <div class="mt-14 grid grid-cols-1 gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+                <div class="ka-reveal">
+                    @include('kapta.components.mock', ['variant' => 'panel', 'titulo' => 'Panel administrativo'])
                 </div>
 
-                <div class="mt-12 space-y-4">
-                    @php
-                        $faqs = [
-                            [
-                                'q' => '¿Puedo usar mi propio dominio y mi marca?',
-                                'a' => 'Sí. La plataforma se puede personalizar con tu logo, colores y dominio para que tus alumnos la vean como tuya.',
-                            ],
-                            [
-                                'q' => '¿Cómo se entregan los certificados?',
-                                'a' => 'Se generan automáticamente al completar el curso o la evaluación final, listos para descargar y verificar.',
-                            ],
-                            [
-                                'q' => '¿Migran los cursos que ya tengo?',
-                                'a' => 'Sí. Te acompañamos en la carga inicial de cursos, materiales y alumnos según el plan contratado.',
-                            ],
-                            [
-                                'q' => '¿Ofrecen capacitación al equipo?',
-                                'a' => 'El plan Enterprise incluye capacitación; en los demás planes podemos coordinar una sesión de arranque.',
-                            ],
-                        ];
-                    @endphp
+                <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-1">
+                    <div class="ka-reveal">
+                        @include('kapta.components.mock', ['variant' => 'alumno', 'titulo' => 'Campus del alumno'])
+                    </div>
+                    <div class="ka-reveal">
+                        @include('kapta.components.mock', ['variant' => 'certificado', 'titulo' => 'Certificado'])
+                    </div>
+                </div>
+            </div>
 
-                    @foreach($faqs as $faq)
-                        <details class="ka-faq rounded-2xl border border-ka-line bg-ka-panel/60 p-6">
-                            <summary>{{ $faq['q'] }}</summary>
-                            <p class="mt-4 leading-relaxed text-ka-muted">{{ $faq['a'] }}</p>
-                        </details>
-                    @endforeach
+            <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
+                @php
+                    $roles = [
+                        ['titulo' => 'Administración', 'texto' => 'Cursos, docentes, matrículas, usuarios y reportes.'],
+                        ['titulo' => 'Docentes', 'texto' => 'Materiales por sesión, evaluaciones y notas del grupo.'],
+                        ['titulo' => 'Alumnos', 'texto' => 'Su curso, su avance y su certificado en un mismo lugar.'],
+                    ];
+                @endphp
+
+                @foreach ($roles as $rol)
+                    <div class="ka-reveal rounded-2xl border p-5" style="border-color: var(--ka-surface-line)">
+                        <p class="font-display text-sm font-bold text-white">{{ $rol['titulo'] }}</p>
+                        <p class="mt-2 text-sm leading-relaxed text-ka-muted">{{ $rol['texto'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
+    {{-- ==========================================================
+         G · SOLUCIONES POR TIPO DE CLIENTE
+         ========================================================== --}}
+    <section id="soluciones" class="ka-surface-light ka-section scroll-mt-24">
+        <div class="ka-container">
+            <div class="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+                <div>
+                    <span class="ka-badge">Soluciones</span>
+                    <h2 class="ka-h2 ka-reveal mt-5 ka-ink">¿Para quién trabaja KAPTA LMS?</h2>
+                    <p class="ka-lead ka-reveal mt-4">
+                        La misma plataforma se adapta al tamaño y al modelo de cada organización:
+                        desde quien dicta su primer curso hasta quien capacita equipos completos.
+                    </p>
+
+                    <ul class="mt-8 space-y-5">
+                        @php
+                            $perfiles = [
+                                ['titulo' => 'Academias', 'texto' => 'Cursos cortos y ciclos con matrícula en línea y certificado al terminar.'],
+                                ['titulo' => 'Institutos', 'texto' => 'Programas por módulos, docentes asignados y control académico del avance.'],
+                                ['titulo' => 'Centros de capacitación', 'texto' => 'Varias sedes y grupos simultáneos con usuarios administrativos por área.'],
+                                ['titulo' => 'Emprendedores que venden cursos', 'texto' => 'Página web, tienda online y pasarela de pagos para cobrar sin intermediarios.'],
+                                ['titulo' => 'Organizaciones que capacitan a sus equipos', 'texto' => 'Formación interna con seguimiento por colaborador y certificación al cierre.'],
+                            ];
+                        @endphp
+
+                        @foreach ($perfiles as $perfil)
+                            <li class="ka-reveal flex gap-4">
+                                <span class="ka-step-number">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <p class="font-display font-bold ka-ink">{{ $perfil['titulo'] }}</p>
+                                    <p class="mt-1 text-sm leading-relaxed ka-slate">{{ $perfil['texto'] }}</p>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 lg:gap-6">
+                    {{-- Fotografía real del proyecto: un aula moderna, apropiada para
+                         academias, institutos y centros de capacitación. --}}
+                    <div class="ka-reveal ka-feature-media col-span-2">
+                        <img src="{{ asset('themes/kapta/images/bg-hero.webp') }}"
+                             alt="Aula moderna con butacas listas para una clase"
+                             class="ka-photo aspect-[16/10]" width="2000" height="1271" loading="lazy" decoding="async">
+                    </div>
+                    <div class="ka-reveal col-span-2 rounded-[1.25rem] border p-6"
+                         style="border-color: var(--ka-surface-line); background-color: var(--ka-mist)">
+                        <p class="font-display text-sm font-bold ka-ink">Un mismo campus, varias audiencias</p>
+                        <p class="mt-2 text-sm leading-relaxed ka-slate">
+                            Cada perfil entra con su propio rol: administración gestiona, el docente dicta
+                            y publica, el alumno cursa. Sin instalar nada y desde cualquier dispositivo.
+                        </p>
+                        <a href="{{ $demoHref }}" target="_blank" rel="noopener" class="ka-btn ka-btn-primary ka-btn-sm mt-5">
+                            Verlo con mis cursos
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    {{-- ===================== CTA FINAL ===================== --}}
-    <section class="pb-24">
+    {{-- ==========================================================
+         H · PLANES Y PRECIOS (resumen)
+         ========================================================== --}}
+    <section id="planes" class="ka-surface-mist ka-section scroll-mt-24">
         <div class="ka-container">
-            <div class="relative overflow-hidden rounded-3xl border border-ka-line bg-gradient-to-br from-ka-panel to-ka-panel2 p-10 text-center lg:p-14">
-                <div class="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-ka-violet/20 blur-3xl"></div>
+            <div class="mx-auto max-w-2xl text-center">
+                <span class="ka-badge">Planes</span>
+                <h2 class="ka-h2 ka-reveal mt-5 ka-ink">Un plan para cada tamaño de institución</h2>
+                <p class="ka-lead ka-reveal mt-4">
+                    Seis planes agrupados en tres niveles. Todos incluyen dominio, SSL, hosting,
+                    mantenimiento y certificación; cambian la capacidad y los módulos.
+                </p>
+            </div>
 
-                <h2 class="relative text-3xl font-extrabold text-white sm:text-4xl">
-                    ¿Listo para digitalizar tu formación?
-                </h2>
+            <div class="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                @foreach ($niveles as $clave => $nivel)
+                    @php
+                        $delNivel = collect($planes)->where('nivel', $clave);
+                        $primero = $delNivel->first();
+                    @endphp
+
+                    <div class="ka-card ka-card-interactive ka-reveal">
+                        <p class="font-display text-lg font-extrabold ka-ink">{{ $nivel['nombre'] }}</p>
+                        <p class="mt-2 text-sm leading-relaxed ka-slate">{{ $nivel['resumen'] }}</p>
+
+                        <p class="mt-6 flex items-baseline gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wide ka-slate">Desde</span>
+                            <span class="ka-plan-price">{{ $primero['mensual'] }}</span>
+                            <span class="ka-plan-period">/mes</span>
+                        </p>
+
+                        <ul class="mt-6 space-y-3">
+                            @foreach ($delNivel as $plan)
+                                <li class="ka-check-item">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span>
+                                        <span class="font-semibold ka-ink">{{ $plan['nombre'] }}</span>
+                                        · {{ $plan['capacidad'] }}
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <a href="{{ route('kapta.planes') }}#{{ $clave }}" class="ka-btn ka-btn-secondary mt-7">
+                            Ver el detalle
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="ka-reveal mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div class="ka-note">
+                    <span class="font-semibold ka-ink">Alumnos activos:</span>
+                    los planes se miden por los alumnos que cursan de forma simultánea, no por el total
+                    de alumnos registrados en el campus.
+                </div>
+                <div class="ka-note">
+                    {{ config('kapta.mensajes.nota_precios') }}
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <a href="{{ route('kapta.planes') }}" class="ka-btn ka-btn-primary ka-btn-lg">
+                    Comparar los seis planes
+                </a>
+            </div>
+        </div>
+    </section>
+
+    {{-- ==========================================================
+         I · PREGUNTAS FRECUENTES
+         ========================================================== --}}
+    <section id="faq" class="ka-surface-light ka-section scroll-mt-24">
+        <div class="ka-container">
+            <div class="mx-auto max-w-3xl">
+                <div class="text-center">
+                    <span class="ka-badge">Preguntas frecuentes</span>
+                    <h2 class="ka-h2 ka-reveal mt-5 ka-ink">Dudas habituales antes de empezar</h2>
+                </div>
+
+                <div class="mt-10 space-y-3">
+                    @php
+                        $faqs = [
+                            [
+                                'p' => '¿Qué es KAPTA LMS?',
+                                'r' => 'Es una plataforma de gestión del aprendizaje (LMS): reúne el campus virtual con cursos y materiales, la administración de alumnos y docentes, las matrículas, las evaluaciones y la emisión de certificados. Es un producto de ARACODE Smart Solutions.',
+                            ],
+                            [
+                                'p' => '¿Para quién está diseñado?',
+                                'r' => 'Para academias, institutos, centros de capacitación, emprendedores que comercializan sus cursos y organizaciones que capacitan a sus equipos.',
+                            ],
+                            [
+                                'p' => '¿Qué funcionalidades incluye?',
+                                'r' => 'Campus virtual con cursos y aulas, administración de alumnos y docentes, matrículas y usuarios, exámenes y evaluaciones, certificados en PDF o automáticos, pagos en línea, reportes y seguimiento, almacenamiento con enlaces de Google Drive, y página web o landing page con dominio propio según el plan.',
+                            ],
+                            [
+                                'p' => '¿Cómo funciona la contratación?',
+                                'r' => 'Eliges el plan según tu cantidad de alumnos activos y solicitas una demo. Revisamos la plataforma con tus cursos y, si decides avanzar, coordinamos la puesta en marcha por WhatsApp o correo.',
+                            ],
+                            [
+                                'p' => '¿Qué incluye cada plan?',
+                                'r' => 'Todos los planes incluyen dominio, SSL, hosting, mantenimiento del sistema y el campus virtual. Cambian la cantidad de alumnos activos, los usuarios administrativos, los correos corporativos, el almacenamiento, la página web incluida, la tienda online, la pasarela de pagos y el tipo de certificación. La comparación completa está en la página de planes.',
+                            ],
+                            [
+                                'p' => '¿Qué diferencia hay entre alumnos registrados y alumnos activos?',
+                                'r' => 'Los planes se miden por alumnos activos: quienes están cursando de forma simultánea. No se mide por el total de alumnos registrados en el campus. Si necesitas el detalle exacto para tu caso, escríbenos y te lo confirmamos.',
+                            ],
+                            [
+                                'p' => '¿Cómo se gestionan las matrículas y los certificados?',
+                                'r' => 'La matrícula puede ser manual desde el campus o automática cuando el alumno compra el curso en la tienda online, según el plan. Los certificados se entregan como PDF cargado o se emiten automáticamente al completar el curso o la evaluación final, también según el plan.',
+                            ],
+                            [
+                                'p' => '¿Qué opciones de pago están disponibles?',
+                                'r' => 'Según el plan se integra Mercado Pago (Perú) y/o PayPal para cobrar los cursos en línea. El plan Corporativo añade además facturación electrónica.',
+                            ],
+                            [
+                                'p' => '¿Cómo solicito una demostración o soporte?',
+                                'r' => 'Escríbenos por WhatsApp o al correo comercial y coordinamos una demostración con tus propios cursos, tu estructura de módulos y tus certificados.',
+                            ],
+                        ];
+                    @endphp
+
+                    @foreach ($faqs as $faq)
+                        <details class="ka-faq ka-reveal">
+                            <summary>{{ $faq['p'] }}</summary>
+                            <p class="ka-faq-body">{{ $faq['r'] }}</p>
+                        </details>
+                    @endforeach
+                </div>
+
+                <p class="mt-8 text-center text-sm ka-slate">
+                    ¿Te queda otra duda?
+                    <a href="{{ route('kapta.contacto') }}" class="ka-link">Escríbenos y la resolvemos</a>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    {{-- ==========================================================
+         J · LLAMADA A LA ACCIÓN FINAL
+         ========================================================== --}}
+    <section class="ka-surface-dark relative overflow-hidden pb-20 pt-4 lg:pb-24">
+        <div class="ka-container">
+            <div class="relative overflow-hidden rounded-[1.5rem] border px-8 py-12 text-center lg:px-14 lg:py-16"
+                 style="border-color: var(--ka-surface-line); background-image: linear-gradient(135deg, #122459 0%, #0b1740 60%, #162d6b 100%)">
+                <div class="absolute inset-0 -z-10" aria-hidden="true">
+                    <img src="{{ asset('themes/kapta/images/bg-page.webp') }}" alt=""
+                         class="ka-photo opacity-[0.16]" width="2000" height="1271" loading="lazy" decoding="async">
+                </div>
+                <div class="ka-grid-lines absolute inset-0 -z-10" aria-hidden="true"></div>
+
+                <h2 class="ka-h2 relative text-white">Tu próxima etapa de crecimiento comienza aquí</h2>
                 <p class="relative mx-auto mt-4 max-w-2xl text-ka-muted">
-                    Cuéntanos cuántos alumnos y cursos manejas y te mostramos KAPTA funcionando con tu programa.
+                    Descubre cómo KAPTA LMS puede ayudarte a gestionar tu formación de manera más organizada.
                 </p>
                 <div class="relative mt-8 flex flex-col justify-center gap-4 sm:flex-row">
-                    <a href="{{ route('kapta.contacto') }}" class="ka-btn ka-btn-primary ka-btn-lg">Solicitar demo</a>
-                    <a href="{{ route('kapta.planes') }}" class="ka-btn ka-btn-ghost ka-btn-lg">Ver planes</a>
+                    <a href="{{ $demoHref }}" target="_blank" rel="noopener" class="ka-btn ka-btn-primary ka-btn-lg">
+                        Solicitar una demo
+                    </a>
+                    <a href="{{ route('kapta.planes') }}" class="ka-btn ka-btn-secondary ka-btn-lg">
+                        Ver planes y precios
+                    </a>
                 </div>
             </div>
         </div>
