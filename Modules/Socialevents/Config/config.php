@@ -24,6 +24,14 @@ return [
     'landing_cache_ttl' => (int) env('SOCIALEVENTS_LANDING_CACHE_TTL', 120),
 
     /*
+    | Splash publicitario de la landing (patrocinio ARACODE).
+    | Tiempo mínimo en pantalla, en milisegundos, antes de revelar el torneo.
+    */
+    'landing_splash_ms' => (int) env('SOCIALEVENTS_LANDING_SPLASH_MS', 2600),
+    'landing_sponsor_name' => env('SOCIALEVENTS_LANDING_SPONSOR', 'ARACODE'),
+    'landing_sponsor_logo' => 'img/logo176x32_negativo.png',
+
+    /*
     | Módulos de evento previstos. Solo "sports" está operativo hoy; el resto se
     | mostrará en el dashboard como próximamente sin afectar rutas existentes.
     */

@@ -145,3 +145,10 @@ Route::get('torneos/{slug}', [TournamentLandingController::class, 'show'])
 Route::get('torneos/{slug}/download-app', [TournamentLandingController::class, 'downloadApp'])
     ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
     ->name('socialevents_torneos_download_app');
+
+// Ruta pública con el detalle partido a partido de un jugador (modal de la landing)
+Route::get('torneos/{slug}/jugador/{playerId}', [TournamentLandingController::class, 'playerDetail'])
+    ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*|\d+')
+    ->whereNumber('playerId')
+    ->middleware('throttle:60,1')
+    ->name('socialevents_torneos_player_detail');

@@ -16,6 +16,17 @@
     $appVersion = $appVersion ?? config('socialevents.mobile_app_version', '1.0.0');
     $heroStatValue = $prizeSummary ?? ($inscriptionLabel ?? '—');
     $scorersRanking = $scorersRanking ?? collect();
+    $splashDurationMs = $splashDurationMs ?? (int) config('socialevents.landing_splash_ms', 2600);
+    $splashSponsor = $splashSponsor ?? (string) config('socialevents.landing_sponsor_name', 'ARACODE');
+    $splashLogoUrl = $splashLogoUrl ?? \Modules\Socialevents\Support\TournamentLandingPresenter::splashLogoUrl();
+    $playerDetailUrlTemplate = $playerDetailUrlTemplate ?? route('socialevents_torneos_player_detail', [
+        'slug' => $edition->landingSlug(),
+        'playerId' => '__PLAYER__',
+    ]);
+    // Puntaje sin decimales innecesarios: 12.00 -> 12, 12.50 -> 12.5
+    $fmtPoints = static function ($value): string {
+        return rtrim(rtrim(number_format((float) $value, 2, '.', ''), '0'), '.');
+    };
 @endphp
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
@@ -43,6 +54,35 @@
     @vite(['Modules/Socialevents/Resources/assets/js/torneos-landing.js'])
 </head>
 <body class="se-landing">
+    {{-- Splash publicitario: cubre la carga de la landing y se oculta solo. --}}
+    <div
+        class="se-splash"
+        data-se-splash
+        role="status"
+        aria-live="polite"
+        style="--se-splash-ms: {{ max(0, (int) $splashDurationMs) }}ms"
+    >
+        <div class="se-splash__inner">
+            <img
+                class="se-splash__logo"
+                src="{{ $splashLogoUrl }}"
+                alt="{{ $splashSponsor }}"
+                width="284"
+                height="63"
+                loading="eager"
+                decoding="async"
+            >
+            <p class="se-splash__message">
+                Sitio web patrocinado y desarrollado por <strong>{{ $splashSponsor }}</strong>
+            </p>
+            <div class="se-splash__bar" aria-hidden="true"><span></span></div>
+            <p class="se-splash__hint">Cargando información del torneo…</p>
+        </div>
+    </div>
+    <noscript>
+        <style>.se-splash { display: none !important; }</style>
+    </noscript>
+
     <div class="se-ambient" aria-hidden="true">
         <div class="se-ambient__grid"></div>
         <div class="se-ambient__orb se-ambient__orb--1"></div>
@@ -283,11 +323,11 @@
         </section>
 
         <section id="posiciones" class="se-section se-section--alt">
-            <div class="se-container se-standings-layout">
-                <div>
-                    <h3 class="se-section__title" data-se-reveal style="text-align:left;margin-bottom:1.5rem">
-                        Tabla de <span>posiciones</span>
-                    </h3>
+            <div class="se-container">
+                <header class="se-section__head" data-se-reveal>
+                    <h2 class="se-section__title">Tabla de <span>posiciones</span></h2>
+                    <p class="se-section__sub">Clasificación actualizada con puntos, goles y diferencia</p>
+                </header>
                     <div class="se-table-scroll-hint" aria-hidden="true">
                         <i class="fas fa-arrows-alt-h"></i> Desliza para ver más
                     </div>
@@ -341,13 +381,15 @@
                             </p>
                         @endif
                     </div>
-                </div>
+            </div>
 
-                <aside>
-                    <div class="se-ranking-block">
-                        <h4 data-se-reveal>Mejor <span>jugador</span></h4>
+            <div class="se-container se-rank-stack">
+                <section class="se-rank-section se-rank-section--player" aria-labelledby="se-rank-title-player">
+                    <h3 class="se-rank-section__title" id="se-rank-title-player" data-se-reveal>Mejor <span>jugador</span></h3>
+                    <p class="se-rank-section__note" data-se-reveal>Puntaje por goles, asistencias, MVP y valla invicta</p>
+                    <div class="se-rank-grid se-rank-grid--player">
                         @forelse ($playersRanking as $index => $player)
-                            <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
+                            <article class="se-rank-card se-rank-card--lg {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">
                                     @if ($player['player']['person']->image ?? null)
                                         <img src="{{ asset('storage/' . $player['player']['person']->image) }}" alt="">
@@ -356,23 +398,39 @@
                                     @endif
                                     <span class="se-rank-card__pos">{{ $index + 1 }}</span>
                                 </div>
-                                <div>
-                                    <div class="se-rank-card__name">{{ $player['player']['person']->full_name }}</div>
+                                <div class="se-rank-card__body">
+                                    <button
+                                        type="button"
+                                        class="se-rank-card__name se-rank-card__name--action"
+                                        data-se-player-open
+                                        data-player-id="{{ $player['player']->person_id ?? '' }}"
+                                        data-player-category="player"
+                                        data-player-name="{{ $player['player']['person']->full_name ?? 'Jugador' }}"
+                                        aria-haspopup="dialog"
+                                    >
+                                        <span>{{ $player['player']['person']->full_name ?? 'Jugador' }}</span>
+                                        <i class="fas fa-chevron-right se-rank-card__chevron" aria-hidden="true"></i>
+                                    </button>
                                     <div class="se-rank-card__stats">
                                         {{ $player['stats']['goals'] }} goles · {{ $player['stats']['assists'] }} asist. · {{ $player['stats']['mvp'] }} MVP
                                     </div>
+                                    @if (($player['points'] ?? null) !== null)
+                                        <div class="se-rank-card__points">{{ $fmtPoints($player['points']) }} pts</div>
+                                    @endif
                                 </div>
-                            </div>
+                            </article>
                         @empty
                             <p class="se-section__sub" data-se-reveal>Sin datos de jugadores aún.</p>
                         @endforelse
                     </div>
+                </section>
 
-                    <div class="se-ranking-block se-ranking-block--scorer">
-                        <h4 data-se-reveal>Goleador <span>de la temporada</span></h4>
-                        <p class="se-ranking-block__note" data-se-reveal>Desempate: menos partidos jugados</p>
+                <section class="se-rank-section se-rank-section--scorer se-col-8" aria-labelledby="se-rank-title-scorer">
+                    <h3 class="se-rank-section__title" id="se-rank-title-scorer" data-se-reveal>Goleador <span>de la temporada</span></h3>
+                    <p class="se-rank-section__note" data-se-reveal>Desempate: menos partidos jugados</p>
+                    <div class="se-rank-grid">
                         @forelse ($scorersRanking as $index => $scorer)
-                            <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
+                            <article class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">
                                     @if ($scorer['player']['person']->image ?? null)
                                         <img src="{{ asset('storage/' . $scorer['player']['person']->image) }}" alt="">
@@ -381,22 +439,36 @@
                                     @endif
                                     <span class="se-rank-card__pos">{{ $index + 1 }}</span>
                                 </div>
-                                <div>
-                                    <div class="se-rank-card__name">{{ $scorer['player']['person']->full_name }}</div>
+                                <div class="se-rank-card__body">
+                                    <button
+                                        type="button"
+                                        class="se-rank-card__name se-rank-card__name--action"
+                                        data-se-player-open
+                                        data-player-id="{{ $scorer['player']->person_id ?? '' }}"
+                                        data-player-category="scorer"
+                                        data-player-name="{{ $scorer['player']['person']->full_name ?? 'Jugador' }}"
+                                        aria-haspopup="dialog"
+                                    >
+                                        <span>{{ $scorer['player']['person']->full_name ?? 'Jugador' }}</span>
+                                        <i class="fas fa-chevron-right se-rank-card__chevron" aria-hidden="true"></i>
+                                    </button>
                                     <div class="se-rank-card__stats">
                                         {{ $scorer['goals'] ?? 0 }} {{ ($scorer['goals'] ?? 0) == 1 ? 'gol' : 'goles' }} · {{ $scorer['matches_played'] ?? 0 }} {{ ($scorer['matches_played'] ?? 0) == 1 ? 'partido' : 'partidos' }}
                                     </div>
                                 </div>
-                            </div>
+                            </article>
                         @empty
                             <p class="se-section__sub" data-se-reveal>Sin datos de goleadores aún.</p>
                         @endforelse
                     </div>
+                </section>
 
-                    <div class="se-ranking-block se-ranking-block--gk">
-                        <h4 data-se-reveal>Mejor <span>arquero</span></h4>
+                <section class="se-rank-section se-rank-section--gk se-col-8" aria-labelledby="se-rank-title-gk">
+                    <h3 class="se-rank-section__title" id="se-rank-title-gk" data-se-reveal>Mejor <span>arquero</span></h3>
+                    <p class="se-rank-section__note" data-se-reveal>Atajadas, valla invicta y MVP</p>
+                    <div class="se-rank-grid">
                         @forelse ($goalkeepersRanking as $index => $gk)
-                            <div class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
+                            <article class="se-rank-card {{ $index === 0 ? 'is-top' : '' }}" data-se-reveal>
                                 <div class="se-rank-card__avatar">
                                     @if ($gk['player']['person']->image ?? null)
                                         <img src="{{ asset('storage/' . $gk['player']['person']->image) }}" alt="">
@@ -405,18 +477,32 @@
                                     @endif
                                     <span class="se-rank-card__pos">{{ $index + 1 }}</span>
                                 </div>
-                                <div>
-                                    <div class="se-rank-card__name">{{ $gk['player']['person']->full_name }}</div>
+                                <div class="se-rank-card__body">
+                                    <button
+                                        type="button"
+                                        class="se-rank-card__name se-rank-card__name--action"
+                                        data-se-player-open
+                                        data-player-id="{{ $gk['player']->person_id ?? '' }}"
+                                        data-player-category="goalkeeper"
+                                        data-player-name="{{ $gk['player']['person']->full_name ?? 'Jugador' }}"
+                                        aria-haspopup="dialog"
+                                    >
+                                        <span>{{ $gk['player']['person']->full_name ?? 'Jugador' }}</span>
+                                        <i class="fas fa-chevron-right se-rank-card__chevron" aria-hidden="true"></i>
+                                    </button>
                                     <div class="se-rank-card__stats">
                                         {{ $gk['stats']['saves'] }} atajadas · {{ $gk['stats']['clean_sheet'] }} valla invicta · {{ $gk['stats']['mvp'] }} MVP
                                     </div>
+                                    @if (($gk['points'] ?? null) !== null)
+                                        <div class="se-rank-card__points">{{ $fmtPoints($gk['points']) }} pts</div>
+                                    @endif
                                 </div>
-                            </div>
+                            </article>
                         @empty
                             <p class="se-section__sub" data-se-reveal>Sin datos de porteros aún.</p>
                         @endforelse
                     </div>
-                </aside>
+                </section>
             </div>
         </section>
 
@@ -585,6 +671,43 @@
             </p>
         </div>
     </footer>
+
+    {{-- Detalle partido a partido del jugador (mejor jugador, goleador, arquero) --}}
+    <div
+        class="se-modal"
+        data-se-player-modal
+        aria-hidden="true"
+        data-player-url="{{ $playerDetailUrlTemplate }}"
+    >
+        <div class="se-modal__backdrop" data-se-player-close></div>
+        <div
+            class="se-modal__dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="se-player-modal-title"
+        >
+            <header class="se-modal__head">
+                <div class="se-modal__identity">
+                    <div class="se-modal__avatar" data-se-modal-avatar aria-hidden="true"></div>
+                    <div class="se-modal__identity-text">
+                        <p class="se-modal__eyebrow" data-se-modal-category></p>
+                        <h3 class="se-modal__title" id="se-player-modal-title" data-se-modal-name>Jugador</h3>
+                        <p class="se-modal__meta" data-se-modal-meta></p>
+                    </div>
+                </div>
+                <button type="button" class="se-modal__close" data-se-player-close aria-label="Cerrar detalle">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="se-modal__body" data-se-modal-body>
+                <p class="se-modal__state" data-se-modal-state>
+                    <i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>
+                    Cargando detalles…
+                </p>
+            </div>
+        </div>
+    </div>
 
     <div class="se-lightbox" data-se-lightbox aria-hidden="true">
         <button type="button" class="se-lightbox__close" data-se-lightbox-close aria-label="Cerrar">

@@ -114,6 +114,143 @@ body.se-landing ::selection {
     background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%);
 }
 
+/* Splash publicitario (patrocinio de la empresa) */
+.se-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    padding: clamp(1.25rem, 5vw, 3rem);
+    background:
+        radial-gradient(circle at 50% 15%, rgba(59, 130, 246, 0.28), transparent 60%),
+        linear-gradient(160deg, #070b14 0%, #0d1321 55%, #070b14 100%);
+    opacity: 1;
+    transition: opacity 0.45s ease;
+    /* Red de seguridad: si el JS no llega a ejecutarse, el splash se oculta igual. */
+    animation-name: se-splash-autohide;
+    animation-duration: 1ms;
+    animation-timing-function: linear;
+    animation-delay: calc(var(--se-splash-ms, 2600ms) + 4000ms);
+    animation-fill-mode: forwards;
+}
+
+.se-splash.is-hiding {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.se-splash.is-hidden {
+    display: none;
+}
+
+.se-splash__inner {
+    width: min(32rem, 100%);
+    text-align: center;
+}
+
+.se-splash__logo {
+    width: min(17rem, 68vw);
+    height: auto;
+    margin: 0 auto 1.35rem;
+    filter: drop-shadow(0 12px 30px rgba(59, 130, 246, 0.35));
+    animation: se-splash-pulse 2.4s ease-in-out infinite;
+}
+
+.se-splash__message {
+    margin: 0 0 1.5rem;
+    font-size: clamp(0.9rem, 2.6vw, 1.15rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.se-splash__message strong {
+    display: inline-block;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    background: linear-gradient(90deg, var(--se-accent), var(--se-accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.se-splash__bar {
+    position: relative;
+    width: min(18rem, 70vw);
+    height: 0.3rem;
+    margin: 0 auto 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+.se-splash__bar span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--se-accent), var(--se-accent-2));
+    animation: se-splash-slide 1.15s ease-in-out infinite;
+}
+
+.se-splash__hint {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--se-muted);
+}
+
+@keyframes se-splash-slide {
+    0% {
+        transform: translateX(-110%);
+    }
+
+    100% {
+        transform: translateX(260%);
+    }
+}
+
+@keyframes se-splash-pulse {
+    0%,
+    100% {
+        opacity: 0.92;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+@keyframes se-splash-autohide {
+    0%,
+    99% {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    100% {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .se-splash__logo,
+    .se-splash__bar span {
+        animation: none;
+    }
+
+    .se-splash__bar span {
+        width: 100%;
+    }
+}
+
 /* Header */
 .se-header {
     position: fixed;
@@ -892,24 +1029,67 @@ body.se-landing ::selection {
     }
 }
 
-/* Standings */
-.se-standings-layout {
-    display: grid;
-    gap: 2.5rem;
+/* Standings: tabla centrada y rankeos apilados debajo */
+.se-rank-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(2rem, 5vw, 3.5rem);
+    margin-top: clamp(2rem, 5vw, 3rem);
 }
 
-/* Permite que la tabla (y el aside) se encojan correctamente dentro del grid
-   en móvil, para que el scroll horizontal funcione. */
-.se-standings-layout > * {
-    min-width: 0;
+.se-rank-section {
+    width: 100%;
+    text-align: center;
 }
 
+/* "col-8": 8 de 12 columnas en escritorio, ancho completo en móvil/tablet. */
 @media (min-width: 1024px) {
-    .se-standings-layout {
-        grid-template-columns: 1.6fr 1fr;
-        gap: 3rem;
-        align-items: start;
+    .se-rank-section.se-col-8 {
+        width: 66.6667%;
+        max-width: 66.6667%;
     }
+}
+
+.se-rank-section__title {
+    margin: 0 0 0.45rem;
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    font-style: italic;
+}
+
+.se-rank-section__title span {
+    color: var(--se-accent);
+}
+
+.se-rank-section--scorer .se-rank-section__title span {
+    color: var(--se-amber);
+}
+
+.se-rank-section--gk .se-rank-section__title span {
+    color: var(--se-green);
+}
+
+.se-rank-section__note {
+    margin: 0 0 1.25rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--se-muted);
+}
+
+.se-rank-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 0.75rem;
+    text-align: left;
+}
+
+.se-rank-grid--player {
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
 }
 
 .se-table-wrap {
@@ -1017,26 +1197,6 @@ body.se-landing ::selection {
     color: var(--se-accent);
 }
 
-.se-ranking-block + .se-ranking-block {
-    margin-top: 2.5rem;
-}
-
-.se-ranking-block h4 {
-    font-size: 1.25rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    font-style: italic;
-    margin: 0 0 1.25rem;
-}
-
-.se-ranking-block h4 span {
-    color: var(--se-accent);
-}
-
-.se-ranking-block--gk h4 span {
-    color: var(--se-green);
-}
-
 .se-rank-card {
     display: flex;
     align-items: center;
@@ -1045,7 +1205,8 @@ body.se-landing ::selection {
     border-radius: var(--se-radius);
     border: 1px solid var(--se-border);
     background: rgba(255, 255, 255, 0.04);
-    margin-bottom: 0.65rem;
+    margin: 0;
+    transition: transform 0.25s ease, border-color 0.25s ease;
 }
 
 .se-rank-card.is-top {
@@ -1053,9 +1214,26 @@ body.se-landing ::selection {
     border-color: rgba(59, 130, 246, 0.3);
 }
 
-.se-ranking-block--gk .se-rank-card.is-top {
+.se-rank-section--gk .se-rank-card.is-top {
     background: linear-gradient(90deg, rgba(34, 197, 94, 0.18), transparent);
     border-color: rgba(34, 197, 94, 0.3);
+}
+
+.se-rank-section--scorer .se-rank-card.is-top {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), transparent);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.se-rank-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Variante con más espacio para el bloque "Mejor jugador". */
+.se-rank-card--lg {
+    gap: 1.15rem;
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--se-radius-lg);
 }
 
 .se-rank-card__avatar {
@@ -1071,12 +1249,21 @@ body.se-landing ::selection {
     border: 2px solid var(--se-border);
 }
 
+.se-rank-card--lg .se-rank-card__avatar img {
+    width: 4rem;
+    height: 4rem;
+}
+
 .se-rank-card.is-top .se-rank-card__avatar img {
     border-color: var(--se-accent);
 }
 
-.se-ranking-block--gk .se-rank-card.is-top .se-rank-card__avatar img {
+.se-rank-section--gk .se-rank-card.is-top .se-rank-card__avatar img {
     border-color: var(--se-green);
+}
+
+.se-rank-section--scorer .se-rank-card.is-top .se-rank-card__avatar img {
+    border-color: var(--se-amber);
 }
 
 .se-rank-card__pos {
@@ -1094,34 +1281,22 @@ body.se-landing ::selection {
     color: #fff;
 }
 
-.se-ranking-block--gk .se-rank-card__pos {
+.se-rank-card--lg .se-rank-card__pos {
+    width: 1.45rem;
+    height: 1.45rem;
+    font-size: 0.66rem;
+}
+
+.se-rank-section--gk .se-rank-card__pos {
     background: var(--se-green);
 }
 
-.se-ranking-block--scorer h4 span {
-    color: var(--se-amber);
-}
-
-.se-ranking-block--scorer .se-rank-card.is-top {
-    background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), transparent);
-    border-color: rgba(245, 158, 11, 0.3);
-}
-
-.se-ranking-block--scorer .se-rank-card.is-top .se-rank-card__avatar img {
-    border-color: var(--se-amber);
-}
-
-.se-ranking-block--scorer .se-rank-card__pos {
+.se-rank-section--scorer .se-rank-card__pos {
     background: var(--se-amber);
 }
 
-.se-ranking-block__note {
-    margin: -0.5rem 0 1.25rem;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--se-muted);
+.se-rank-card__body {
+    min-width: 0;
 }
 
 .se-rank-card__name {
@@ -1129,6 +1304,56 @@ body.se-landing ::selection {
     text-transform: uppercase;
     font-size: 0.85rem;
     line-height: 1.2;
+}
+
+.se-rank-card--lg .se-rank-card__name {
+    font-size: 1rem;
+}
+
+/* El nombre es un botón: se limpian los estilos nativos del control. */
+.se-rank-card__name--action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.2s ease;
+}
+
+.se-rank-card__name--action:hover,
+.se-rank-card__name--action:focus-visible {
+    color: var(--se-accent-2);
+}
+
+.se-rank-card__name--action:focus-visible {
+    outline: 2px solid var(--se-accent);
+    outline-offset: 3px;
+    border-radius: 0.35rem;
+}
+
+.se-rank-card__name--action > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.se-rank-card__chevron {
+    flex-shrink: 0;
+    font-size: 0.6rem;
+    opacity: 0.55;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.se-rank-card__name--action:hover .se-rank-card__chevron,
+.se-rank-card__name--action:focus-visible .se-rank-card__chevron {
+    transform: translateX(2px);
+    opacity: 1;
 }
 
 .se-rank-card__stats {
@@ -1142,6 +1367,397 @@ body.se-landing ::selection {
 
 .se-rank-card.is-top .se-rank-card__stats {
     color: var(--se-accent-2);
+}
+
+.se-rank-card__points {
+    margin-top: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--se-accent-2);
+}
+
+.se-rank-section--scorer .se-rank-card__points {
+    color: var(--se-amber);
+}
+
+.se-rank-section--gk .se-rank-card__points {
+    color: var(--se-green);
+}
+
+/* Modal con el detalle partido a partido del jugador */
+.se-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(0.75rem, 3vw, 2rem);
+}
+
+.se-modal.is-open {
+    display: flex;
+}
+
+.se-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 7, 13, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+.se-modal__dialog {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(56rem, 100%);
+    max-height: min(88vh, 46rem);
+    border-radius: var(--se-radius-lg);
+    border: 1px solid var(--se-border);
+    background: linear-gradient(180deg, #0e1524, #080d17);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+    animation: se-modal-in 0.28s ease;
+}
+
+@keyframes se-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.se-modal__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: clamp(1rem, 3vw, 1.5rem);
+    border-bottom: 1px solid var(--se-border);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.se-modal__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.se-modal__avatar {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(59, 130, 246, 0.45);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.se-modal__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.se-modal__avatar-initials {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--se-accent-2);
+}
+
+.se-modal__identity-text {
+    min-width: 0;
+}
+
+.se-modal__eyebrow {
+    margin: 0 0 0.25rem;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--se-accent-2);
+}
+
+.se-modal__title {
+    margin: 0;
+    font-size: clamp(1.05rem, 3.4vw, 1.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    font-style: italic;
+    overflow-wrap: anywhere;
+}
+
+.se-modal__meta {
+    margin: 0.3rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--se-muted);
+}
+
+.se-modal__close {
+    flex-shrink: 0;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 1px solid var(--se-border);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--se-text);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.se-modal__close:hover,
+.se-modal__close:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    transform: rotate(90deg);
+}
+
+.se-modal__body {
+    padding: clamp(1rem, 3vw, 1.5rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.se-modal__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin: 2rem 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--se-muted);
+    text-align: center;
+}
+
+.se-modal__state--error {
+    color: var(--se-red);
+}
+
+.se-modal__summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+.se-modal__stat {
+    padding: 0.7rem 0.5rem;
+    border-radius: var(--se-radius);
+    border: 1px solid var(--se-border);
+    background: rgba(255, 255, 255, 0.04);
+    text-align: center;
+}
+
+.se-modal__stat--accent {
+    border-color: rgba(34, 211, 238, 0.4);
+    background: rgba(34, 211, 238, 0.12);
+}
+
+.se-modal__stat-value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 900;
+    font-style: italic;
+}
+
+.se-modal__stat-label {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--se-muted);
+}
+
+.se-modal__section + .se-modal__section {
+    margin-top: 1.6rem;
+}
+
+.se-modal__section-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--se-accent);
+}
+
+.se-modal__reasons,
+.se-modal__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.se-modal__reason {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--se-border);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.78rem;
+}
+
+.se-modal__reason + .se-modal__reason {
+    margin-top: 0.4rem;
+}
+
+.se-modal__reason-concept {
+    font-weight: 700;
+}
+
+.se-modal__reason-detail {
+    font-weight: 700;
+    text-align: right;
+    color: var(--se-muted);
+}
+
+.se-modal__reason-detail strong {
+    color: var(--se-text);
+}
+
+.se-modal__reason-total {
+    margin: 0.75rem 0 0;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--se-muted);
+}
+
+.se-modal__reason-total strong {
+    color: var(--se-accent-2);
+}
+
+.se-modal__list li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.se-modal__list li + li {
+    margin-top: 0.35rem;
+}
+
+.se-modal__badge {
+    flex-shrink: 0;
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--se-text);
+}
+
+.se-modal__badge--mvp {
+    background: rgba(59, 130, 246, 0.24);
+    color: #bfdbfe;
+}
+
+.se-modal__badge--goal {
+    background: rgba(245, 158, 11, 0.24);
+    color: #fde68a;
+}
+
+.se-modal__badge--clean {
+    background: rgba(34, 197, 94, 0.22);
+    color: #bbf7d0;
+}
+
+.se-modal__empty {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--se-muted);
+}
+
+.se-modal__table-wrap {
+    overflow-x: auto;
+    border-radius: var(--se-radius);
+    border: 1px solid var(--se-border);
+    -webkit-overflow-scrolling: touch;
+}
+
+.se-modal__table {
+    width: 100%;
+    min-width: 34rem;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+}
+
+.se-modal__table th {
+    padding: 0.6rem 0.55rem;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 0.56rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--se-muted);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.se-modal__table th:nth-child(2) {
+    text-align: left;
+}
+
+.se-modal__table td {
+    padding: 0.55rem;
+    border-top: 1px solid var(--se-border);
+    text-align: center;
+}
+
+.se-modal__table td:nth-child(2) {
+    text-align: left;
+}
+
+.se-modal__match {
+    min-width: 12rem;
+    font-weight: 700;
+}
+
+.se-modal__muted {
+    color: var(--se-muted);
+}
+
+@media (max-width: 639px) {
+    .se-modal__dialog {
+        max-height: 92vh;
+    }
+
+    .se-modal__avatar {
+        width: 3.25rem;
+        height: 3.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .se-modal__dialog {
+        animation: none;
+    }
 }
 
 /* Contact */
@@ -1254,6 +1870,11 @@ body.se-landing ::selection {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--se-muted);
+}
+
+/* Con títulos largos el logo del pie desbordaba a ambos lados en móvil. */
+.se-footer__inner .se-brand {
+    max-width: 100%;
 }
 
 /* Premios */
