@@ -4,10 +4,11 @@
  * Salida servible: public/themes/kapta/css/kapta.css
  *
  * Organización:
- *   1. Base y superficies        5. Componentes de producto
- *   2. Tipografía                6. Funcionalidades y soluciones
- *   3. Botones y etiquetas       7. Planes y tablas
- *   4. Navegación                8. Preguntas frecuentes y utilidades
+ *   1. Base y superficies        6. Funcionalidades y soluciones
+ *   2. Tipografía                7. Planes y tablas
+ *   3. Botones y etiquetas       8. Preguntas frecuentes y utilidades
+ *   4. Navegación                9. Tema claro y oscuro
+ *   5. Componentes de producto
  *
  * Las clases propias van en CSS plano (fuera de @layer) a propósito: así
  * Tailwind nunca las descarta por no detectarlas y el sitio queda autocontenido.
@@ -835,5 +836,189 @@ h4,
     .ka-card-interactive:hover,
     .ka-btn-primary:hover {
         transform: none;
+    }
+}
+
+/* ============================================================
+   9. Tema claro y oscuro
+   ============================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto y oscuro
+   solo cuando el visitante lo elige con el interruptor de la cabecera. La
+   elección se recuerda en localStorage (clave 'ka-tema') y el layout la aplica
+   antes de pintar, así que al recargar en oscuro no se ve un destello claro.
+
+   El modo oscuro no es una hoja aparte: el sitio ya está construido sobre
+   variables por superficie, así que basta con redefinir esas mismas variables.
+   Solo se reescribe lo que no lee variables: el fondo del documento, la cabecera
+   pegada al scroll y el panel del menú móvil.
+
+   Criterio de color: en claro, el blanco es la superficie más clara y el azul
+   marino la más profunda. En oscuro la jerarquía se mantiene pero se invierte
+   (las secciones claras suben a azul profundo y el azul marino baja a casi
+   negro), para que la página conserve relieve en lugar de ser un plano único.
+
+   Convención del interruptor (los tres sitios del repositorio son
+   independientes, así que la pieza se implementa dentro de cada uno): atributo
+   data-tema con los valores 'claro'/'oscuro', el icono del modo al que se va
+   (luna en claro, sol en oscuro), aria-pressed activo solo en oscuro y una
+   clave de almacenamiento por sitio (aquí 'ka-tema').
+   ============================================================ */
+
+/* Interruptor: muestra el icono del modo AL QUE SE VA. Los dos iconos están
+   siempre en el DOM y se cruzan con una transición, así que el botón no se
+   reconstruye al cambiar de tema. */
+.ka-theme-switch {
+    position: relative;
+}
+
+.ka-theme-switch .ka-theme-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.22s ease, transform 0.3s ease;
+}
+
+.ka-theme-icon-sun {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .ka-theme-icon-sun {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .ka-theme-icon-moon {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. */
+.no-js .ka-theme-switch {
+    display: none;
+}
+
+/* Paleta del tema oscuro: un solo sitio donde ajustarla. */
+html[data-tema='oscuro'] {
+    /* Los controles nativos (barras de desplazamiento, relleno automático)
+       acompañan al tema en lugar de quedarse claros. */
+    color-scheme: dark;
+
+    --ka-noche-bg: #070f2b;
+    --ka-noche-surface: #0f1b42;
+    --ka-noche-card: #16234f;
+    --ka-noche-deep: #050a1f;
+    --ka-noche-ink: #e9eefb;
+    --ka-noche-slate: #a3b1cd;
+    --ka-noche-line: rgba(255, 255, 255, 0.12);
+    --ka-noche-accent: #5fc9f8;
+    --ka-noche-accent-strong: #9fdcfb;
+    --ka-noche-outline: rgba(255, 255, 255, 0.24);
+}
+
+html[data-tema='oscuro'] body {
+    background-color: var(--ka-noche-bg);
+    color: var(--ka-noche-ink);
+}
+
+/* Superficies que en claro son blancas o gris muy claro. */
+html[data-tema='oscuro'] .ka-surface-light,
+html[data-tema='oscuro'] .ka-surface-mist {
+    --ka-surface-ink: var(--ka-noche-ink);
+    --ka-surface-slate: var(--ka-noche-slate);
+    --ka-surface-line: var(--ka-noche-line);
+    --ka-card-bg: var(--ka-noche-card);
+    --ka-card-shadow: 0 22px 46px -34px rgba(0, 0, 0, 0.85);
+    --ka-accent: var(--ka-noche-accent);
+    --ka-accent-strong: var(--ka-noche-accent-strong);
+    --ka-icon-bg: rgba(66, 197, 245, 0.16);
+    --ka-icon-ink: var(--ka-cyan);
+    --ka-badge-bg: rgba(66, 197, 245, 0.14);
+    --ka-badge-line: rgba(66, 197, 245, 0.36);
+    --ka-badge-ink: #9edcfb;
+    --ka-btn-outline: var(--ka-noche-outline);
+    --ka-bar-bg: rgba(255, 255, 255, 0.16);
+    --ka-mock-bg: #0e1a45;
+    --ka-mock-bar-bg: rgba(255, 255, 255, 0.05);
+    --ka-mock-line: var(--ka-noche-line);
+    --ka-focus: var(--ka-noche-accent);
+}
+
+/* Cada superficie conserva su propio fondo: "light" sube y "mist" se queda con
+   el fondo del documento, igual que en claro. */
+html[data-tema='oscuro'] .ka-surface-light {
+    --ka-surface-bg: var(--ka-noche-surface);
+}
+
+html[data-tema='oscuro'] .ka-surface-mist {
+    --ka-surface-bg: var(--ka-noche-bg);
+}
+
+/* Azul marino: sigue siendo la superficie más profunda, ahora casi negra. */
+html[data-tema='oscuro'] .ka-surface-dark,
+html[data-tema='oscuro'] .ka-mobile-menu {
+    --ka-surface-bg: var(--ka-noche-deep);
+    --ka-card-bg: rgba(255, 255, 255, 0.06);
+    --ka-mock-bg: #0a1440;
+    --ka-mock-bar-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* La sombra del marco ilustrativo era azul marino: sobre fondo oscuro no se ve
+   y el borde queda solo. Se cambia por una sombra negra, que sí separa. */
+html[data-tema='oscuro'] .ka-surface-dark .ka-mock {
+    box-shadow: 0 40px 80px -42px rgba(0, 0, 0, 0.95);
+}
+
+html[data-tema='oscuro'] .ka-mobile-menu {
+    background-color: rgba(5, 10, 31, 0.98);
+}
+
+/* Cabecera pegada al scroll: mismas variables, resueltas para oscuro. */
+html[data-tema='oscuro'] .ka-nav.is-scrolled {
+    --ka-nav-ink: var(--ka-noche-ink);
+    --ka-nav-ink-hover: var(--ka-cyan);
+    --ka-nav-line: var(--ka-noche-line);
+    --ka-slot-line: rgba(255, 255, 255, 0.28);
+    --ka-slot-ink: #cbd9ec;
+    --ka-surface-ink: var(--ka-noche-ink);
+    --ka-surface-slate: var(--ka-noche-slate);
+    --ka-btn-outline: var(--ka-noche-outline);
+    background-color: rgba(7, 15, 43, 0.94);
+    border-bottom-color: var(--ka-noche-line);
+    box-shadow: 0 12px 30px -26px rgba(0, 0, 0, 0.9);
+}
+
+/* Azul al 5 % y al 6 %: pensados para fondos blancos, se pierden en oscuro. */
+html[data-tema='oscuro'] .ka-note {
+    background-color: rgba(1, 136, 238, 0.12);
+}
+
+html[data-tema='oscuro'] .ka-btn-secondary:hover {
+    background-color: rgba(1, 136, 238, 0.16);
+}
+
+/* Tabla comparativa: las filas alternas y el encabezado usan azul translúcido,
+   que sobre oscuro necesita un poco más de presencia. */
+html[data-tema='oscuro'] .ka-table thead th {
+    background-color: rgba(1, 136, 238, 0.14);
+}
+
+html[data-tema='oscuro'] .ka-table tbody tr:hover td {
+    background-color: rgba(1, 136, 238, 0.1);
+}
+
+/* El texto seleccionado se leía en azul marino sobre celeste translúcido. */
+html[data-tema='oscuro'] ::selection {
+    background: rgba(66, 197, 245, 0.4);
+    color: #ffffff;
+}
+
+/* Movimiento: el interruptor se queda quieto, pero sigue cambiando de icono.
+   Va al final a propósito, después de declarar la transición del interruptor. */
+@media (prefers-reduced-motion: reduce) {
+    .ka-theme-switch .ka-theme-icon {
+        transition: none;
     }
 }

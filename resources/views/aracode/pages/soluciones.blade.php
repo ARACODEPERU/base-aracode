@@ -3,6 +3,35 @@
 @section('meta_title', 'Soluciones | ARACODE Smart Solutions')
 @section('meta_description', 'Descubre todas nuestras soluciones tecnológicas: KAPTA LMS, Facturación Electrónica, Desarrollo a Medida y más.')
 
+@php
+    /*
+        Sitios propios de cada producto
+        -------------------------------
+        Los productos que ya tienen su propio sitio web (resources/views/kapta,
+        kirafact y pichanguero) mandan ahí su botón «Conocer Más»: es la web del
+        producto, con su identidad y —en producción— su propio dominio. Mientras
+        conviven dentro de este repositorio se resuelven con url(), así que
+        funcionan en cualquier host; el día que un producto se copie a su
+        dominio, se cambia su línea de aquí y nada más.
+
+        «Desarrollo a Medida» y las tarjetas de Automatización e IA son servicios
+        de ARACODE, no productos con sitio propio, así que siguen apuntando a sus
+        páginas internas.
+
+        Decisión de navegación: los sitios de producto abren en una PESTAÑA
+        NUEVA. Esta página funciona como catálogo y el visitante puede querer
+        abrir dos o tres productos para compararlos sin perder el lugar donde
+        estaba; además el destino es otra web, con su propia navegación y su
+        propio logo. Los destinos internos (contacto, desarrollo) siguen
+        abriéndose en la misma pestaña.
+    */
+    $sitiosProducto = [
+        'kapta' => url('/site/kapta'),
+        'kirafact' => url('/site/kirafact'),
+        'pichanguero' => url('/site/pichanguero'),
+    ];
+@endphp
+
 @section('content')
     @include('aracode.components.v2.navbar')
 
@@ -30,7 +59,8 @@
                 <x-v2.product-card
                     title="KAPTA LMS"
                     description="Plataforma SaaS para gestión y formación educativa completa."
-                    :href="route('solucion_kapta')"
+                    :href="$sitiosProducto['kapta']"
+                    :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
                     badge="Plataforma SaaS"
                     :features="[
@@ -48,7 +78,8 @@
                 <x-v2.product-card
                     title="KiraFact"
                     description="Facturación electrónica y gestión comercial para empresas: ventas, inventario y comprobantes electrónicos."
-                    :href="route('solucion_facturacion')"
+                    :href="$sitiosProducto['kirafact']"
+                    :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
                     badge="SUNAT"
                     :features="[
@@ -84,7 +115,8 @@
                 <x-v2.product-card
                     title="Pichanguero"
                     description="Plataforma para organizar torneos de fútbol: fixture automático, posiciones y estadísticas en tiempo real."
-                    :href="route('solucion_pichanguero')"
+                    :href="$sitiosProducto['pichanguero']"
+                    :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
                     badge="App móvil"
                     :features="[

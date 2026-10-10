@@ -222,6 +222,26 @@ azul marino baja a casi negro, de modo que la página mantiene relieve en lugar 
 **Sin JavaScript** el interruptor no puede hacer nada, así que no se muestra: el sitio se ve
 completo y en claro, igual que antes.
 
+### Convención del interruptor (KiraFact, Pichanguero y Kapta)
+
+Los tres sitios del repositorio son **independientes**: cada uno se copia a su dominio con sus
+vistas, su CSS y su JS. Por eso el interruptor **no se comparte** entre ellos, se implementa dentro
+de cada sitio. Lo que sí se mantiene igual es su interfaz, para que pasar de uno a otro se sienta
+como el mismo producto:
+
+| Pieza | Convención |
+| --- | --- |
+| Estado | atributo `data-tema` del `<html>`, con los valores `claro` (por defecto) y `oscuro` |
+| Icono | el del modo AL QUE SE VA: luna en claro, sol en oscuro |
+| Etiqueta | «Cambiar a modo oscuro» en claro y «Cambiar a modo claro» en oscuro, en `aria-label` y `title` |
+| Accesibilidad | `aria-pressed` en `true` solo cuando el modo oscuro está activo; sin JS el botón no se muestra |
+| Almacenamiento | una clave por sitio, con el prefijo de sus clases: **`kf-tema`** aquí, `pg-tema` en Pichanguero y `ka-tema` reservada en Kapta |
+
+La clave de `localStorage` es lo único que **no** puede repetirse: en este repositorio los tres
+sitios comparten origen y, aunque en producción cada uno tenga su dominio, una clave propia evita
+que un ajuste de un sitio arrastre al otro. El nombre del atributo y sus valores sí se mantienen,
+porque son justo lo que comparten.
+
 ## Copiar el sitio a su propio dominio
 
 1. Copia estas cuatro zonas juntas: `resources/views/kirafact/`, `resources/css/kirafact/`,

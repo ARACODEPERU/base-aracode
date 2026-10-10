@@ -7,6 +7,7 @@
     'badge' => null,
     'features' => [],
     'delay' => 0,
+    'nuevaPestana' => false,
 ])
 
 <div class="ara-product-card reveal reveal-delay-{{ $delay }}">
@@ -34,11 +35,22 @@
             </ul>
         @endif
         
-        <a href="{{ $href }}" class="ara-btn ara-btn-primary">
+        {{--
+            «Conocer Más» puede llevar al sitio propio del producto, que en
+            producción es otro dominio. Cuando es así se abre en una pestaña
+            nueva (nuevaPestana) y se avisa con texto solo para lectores de
+            pantalla: quien navega con lector no debería descubrir que cambió de
+            pestaña al perder la página anterior.
+        --}}
+        <a href="{{ $href }}" class="ara-btn ara-btn-primary"
+           @if ($nuevaPestana) target="_blank" rel="noopener" @endif>
             Conocer Más
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
             </svg>
+            @if ($nuevaPestana)
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+            @endif
         </a>
     </div>
 </div>

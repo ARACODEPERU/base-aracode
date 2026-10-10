@@ -35,25 +35,31 @@
                 @endforeach
             </div>
 
-            {{-- Acciones de escritorio --}}
-            <div class="hidden items-center gap-4 lg:flex">
-                @if ($campusUrl)
-                    <a href="{{ $campusUrl }}" target="_blank" rel="noopener" class="ka-nav-link">
-                        Campus virtual
-                    </a>
-                @endif
-                <a href="{{ $demoHref }}" target="_blank" rel="noopener" class="ka-btn ka-btn-primary ka-btn-sm">
-                    Solicitar una demo
-                </a>
-            </div>
+            {{-- Acciones: tema, enlaces de escritorio y menú móvil.
+                 El interruptor de tema va siempre visible (también en móvil); los
+                 enlaces solo en escritorio, porque en móvil viven en el menú. --}}
+            <div class="flex items-center gap-2">
+                @include('kapta.components.theme-switch')
 
-            {{-- Botón del menú móvil --}}
-            <button type="button" class="ka-nav-toggle lg:hidden" id="kaMenuBtn"
-                    aria-label="Abrir menú" aria-controls="kaMobileMenu" aria-expanded="false">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
+                <div class="hidden items-center gap-4 lg:flex">
+                    @if ($campusUrl)
+                        <a href="{{ $campusUrl }}" target="_blank" rel="noopener" class="ka-nav-link">
+                            Campus virtual
+                        </a>
+                    @endif
+                    <a href="{{ $demoHref }}" target="_blank" rel="noopener" class="ka-btn ka-btn-primary ka-btn-sm">
+                        Solicitar una demo
+                    </a>
+                </div>
+
+                {{-- Botón del menú móvil --}}
+                <button type="button" class="ka-nav-toggle lg:hidden" id="kaMenuBtn"
+                        aria-label="Abrir menú" aria-controls="kaMobileMenu" aria-expanded="false">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 </nav>
@@ -65,11 +71,16 @@
             <a href="{{ route('kapta.home') }}" class="ka-brand" aria-label="KAPTA LMS, ir al inicio">
                 @include('kapta.components.brand', ['variant' => 'dark'])
             </a>
-            <button type="button" class="ka-nav-toggle" id="kaMenuClose" aria-label="Cerrar menú">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-2">
+                {{-- El interruptor se repite aquí porque el panel tapa la cabecera --}}
+                @include('kapta.components.theme-switch')
+
+                <button type="button" class="ka-nav-toggle" id="kaMenuClose" aria-label="Cerrar menú">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <nav class="mt-8" aria-label="Secciones del sitio">

@@ -4,12 +4,25 @@
     Se puede copiar junto con resources/views/kapta a su propio dominio.
 --}}
 <!DOCTYPE html>
-<html lang="es" class="no-js">
+<html lang="es" class="no-js" data-tema="claro">
 <head>
     <meta charset="utf-8">
 
     {{-- Sin JS el contenido se ve igual: los bloques animados solo se ocultan cuando hay JS. --}}
     <script>document.documentElement.classList.remove('no-js');document.documentElement.classList.add('js');</script>
+
+    {{-- Tema elegido por el visitante: se aplica antes de pintar para que al
+         recargar en modo oscuro no se vea un destello claro. Sin nada guardado
+         el sitio arranca en claro, que es lo que ya dice data-tema. --}}
+    <script>
+        try {
+            if (localStorage.getItem('ka-tema') === 'oscuro') {
+                document.documentElement.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (e) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 

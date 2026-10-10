@@ -59,6 +59,55 @@ Arquitectura de estilos: cada sección declara una superficie (`ka-surface-light
 botones, etiquetas, mockups) leen esas variables, así que la misma pieza funciona sobre blanco,
 sobre gris y sobre azul marino sin duplicar estilos.
 
+### Tema claro y oscuro
+
+La cabecera lleva un interruptor que cambia entre **modo claro y modo oscuro**. Muestra el icono
+del modo al que se va: con el sitio en claro se ve una **luna** (pasa a oscuro) y con el sitio en
+oscuro se ve un **sol** (vuelve a claro).
+
+| Pieza | Dónde vive |
+| --- | --- |
+| Interruptor | `resources/views/kapta/components/theme-switch.blade.php` (dos instancias: cabecera y menú móvil) |
+| Colores del tema oscuro | `resources/css/kapta/kapta.css`, sección 9 («Tema claro y oscuro») |
+| Cambio de tema y memoria | `public/themes/kapta/js/app.js`, apartado 6 |
+| Aplicación antes de pintar | `resources/views/kapta/layouts/app.blade.php` (script en línea del `<head>`) |
+
+**Cómo funciona.** El tema es el atributo `data-tema` del `<html>`: `claro` (valor con el que se
+sirve la página) u `oscuro`, que solo se pone si el visitante lo eligió antes. La elección se guarda
+en `localStorage` bajo la clave `ka-tema` —una por sitio, porque en este repositorio los tres
+comparten origen— y el script del `<head>` la aplica antes de la primera pintada, así que al
+recargar en oscuro no se ve un destello claro. En claro el sitio se sirve tal cual estaba: nadie que
+no toque el interruptor recibe el tema oscuro del sistema operativo.
+
+**Qué cambia exactamente.** Las bandas de impacto (`ka-surface-dark`: hero, bandas destacadas y
+pie) ya son azul marino y **no cambian**. Lo que se invierte son las secciones informativas
+(`ka-surface-light` y `ka-surface-mist`), que pasan a azul profundo redefiniendo sus mismas
+variables. Ningún componente cambia de forma ni de tamaño: los colores salen de las variables que
+cada superficie ya declaraba.
+
+**Sin JavaScript** el interruptor no puede hacer nada, así que no se muestra: el sitio se ve
+completo y en claro, igual que antes.
+
+#### Convención del interruptor (Kapta, KiraFact y Pichanguero)
+
+Los tres sitios del repositorio son **independientes**: cada uno se copia a su dominio con sus
+vistas, su CSS y su JS. Por eso el interruptor **no se comparte** entre ellos, se implementa dentro
+de cada sitio, y lo que sí se mantiene igual es su interfaz, para que pasar de uno a otro se sienta
+como el mismo producto:
+
+| Pieza | Convención |
+| --- | --- |
+| Estado | atributo `data-tema` del `<html>`, con los valores `claro` (por defecto) y `oscuro` |
+| Icono | el del modo AL QUE SE VA: luna en claro, sol en oscuro |
+| Etiqueta | «Cambiar a modo oscuro» en claro y «Cambiar a modo claro» en oscuro, en `aria-label` y `title` |
+| Accesibilidad | `aria-pressed` en `true` solo cuando el modo oscuro está activo; sin JS el botón no se muestra |
+| Almacenamiento | una clave por sitio, con el prefijo de sus clases: **`ka-tema`** aquí, `kf-tema` en KiraFact y `pg-tema` en Pichanguero |
+
+La clave de `localStorage` es lo único que **no** puede repetirse: en este repositorio los tres
+sitios comparten origen y, aunque en producción cada uno tenga su dominio, una clave propia evita
+que un ajuste de un sitio arrastre al otro. El nombre del atributo y sus valores sí se mantienen,
+porque son justo lo que comparten.
+
 ## Contenido configurable
 
 Todo lo comercial vive en `config/kapta.php`:
@@ -99,7 +148,8 @@ Todo lo comercial vive en `config/kapta.php`:
 ## Notas
 
 - `js/app.js` es vanilla, sin bundler: cabecera que cambia al desplazar, menú móvil, aparición de
-  bloques al hacer scroll y el conmutador mensual/anual de la página de planes.
+  bloques al hacer scroll, el conmutador mensual/anual de la página de planes y el interruptor de
+  tema claro / oscuro (ver «Tema claro y oscuro»).
 - Las animaciones se desactivan con `prefers-reduced-motion: reduce`.
 - Sin JavaScript el contenido se ve igual: los bloques animados solo se ocultan cuando hay JS.
 - Todas las bandas de encabezado son azul marino para que la cabecera transparente tenga siempre
