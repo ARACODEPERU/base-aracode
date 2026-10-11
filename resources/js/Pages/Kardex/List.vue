@@ -1,10 +1,11 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/Layouts/Vristo/AppLayout.vue';
 import { useForm } from '@inertiajs/vue3';
 import { faTrashAlt, faPencilAlt, faPrint, faWarehouse } from "@fortawesome/free-solid-svg-icons";
 import Pagination from '@/Components/Pagination.vue';
 import Keypad from '@/Components/Keypad.vue';
 import ModalSmall from '@/Components/ModalSmall.vue';
+import InputLabel from '@/Components/InputLabel.vue';
 import { ref } from 'vue';
 import VueMagnifier from '@websitebeaver/vue-magnifier'
 import '@websitebeaver/vue-magnifier/styles.css'
@@ -140,7 +141,9 @@ function getProductsByLocal() {
                                 <tr v-for="(kardex, index) in kardexes.data"
                                     class="bg-blue-600 border-b border-blue-400 hover:bg-blue-500">
                                     <td class="text-center px-6 py-4">
-                                        <button @click="openModalDetailsSizes(kardex)" type="button"
+                                        <!-- El detalle por talla solo existe en productos con
+                                             presentaciones; el resto solo se registra en kardex. -->
+                                        <button v-if="kardex.presentations" @click="openModalDetailsSizes(kardex)" type="button"
                                             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                                             <svg aria-hidden="true" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
                                                 xmlns="http://www.w3.org/2000/svg">
@@ -150,13 +153,14 @@ function getProductsByLocal() {
                                             </svg>
                                             <span class="sr-only">Icon description</span>
                                         </button>
+                                        <span v-else class="text-gray-300 dark:text-gray-500">—</span>
                                     </td>
                                     <td class="px-6 py-4">{{ kardex.local_names }}</td>
                                     <td class="w-32 p-4" style="text-align: center;">
-                                        <VueMagnifier 
+                                        <VueMagnifier
                                             :src="'/storage/' + kardex.image" width="60px"
-                                            :zoomImgSrc="'/storage/' + kardex.image" 
-                                            :mgWidth="200" 
+                                            :zoomImgSrc="'/storage/' + kardex.image"
+                                            :mgWidth="200"
                                             :mgHeight="200" />
                                     </td>
                                     <td class="w-32 p-4">

@@ -14,6 +14,7 @@ use Modules\Socialevents\Entities\EventEditionMatchSanction;
 use Modules\Socialevents\Entities\EventEditionMatchReport;
 use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
+use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Services\PositionTableService;
 
 class MatchAdminController extends Controller
@@ -227,6 +228,9 @@ class MatchAdminController extends Controller
             'group_name' => $match->group_name,
             'round_number' => $match->round_number,
             'is_editable' => in_array($match->status, ['pending']),
+            'edition_id' => $match->edition_id,
+            'penalty_rounds' => $match->penalty_rounds,
+            'penalties' => $match->penalties ?? [],
         ];
     }
 
@@ -248,17 +252,33 @@ class MatchAdminController extends Controller
                     ->orderBy('jersey_number', 'asc')
                     ->get();
 
-                $players[$teamType === 'equipolocal' ? 'home' : 'away'] = $teamPlayers->map(function ($player) use ($match) {
+                // Suspensiones vigentes para este partido (mismo criterio que la web)
+                $suspendedMap = app(PlayerSuspensionService::class)
+                    ->getActiveSuspensionsMap((int) $match->edition_id, $match);
+
+                $players[$teamType === 'equipolocal' ? 'home' : 'away'] = $teamPlayers->map(function ($player) use ($match, $suspendedMap) {
+                    $suspension = $suspendedMap[$player->person_id] ?? null;
+
                     $p = [
                         'id' => $player->id,
                         'person_id' => $player->person_id,
                         'team_id' => $player->team_id,
                         'jersey_number' => $player->jersey_number,
                         'position' => $player->position,
+                        'role_in_team' => $player->role_in_team,
                         'name' => $player->person ? $player->person->full_name : 'Jugador',
                         'stats' => [],
                         'sanctions' => [],
                         'participation' => null,
+                        'is_suspended' => $suspension !== null,
+                        'suspension' => $suspension ? [
+                            'type' => $suspension->type,
+                            'type_label' => $suspension->type_label,
+                            'reason' => $suspension->reason,
+                            'matches_count' => $suspension->matches_count,
+                            'starts_at' => optional($suspension->starts_at)->format('Y-m-d'),
+                            'ends_at' => optional($suspension->ends_at)->format('Y-m-d'),
+                        ] : null,
                     ];
 
                     $stats = EventEditionMatchPlayerStat::where('match_id', $match->id)
@@ -312,6 +332,13 @@ class MatchAdminController extends Controller
             'edition_id' => 'required|integer',
             'players_h' => 'nullable|array',
             'players_a' => 'nullable|array',
+            'penalty_rounds' => 'nullable|integer|min:1|max:10',
+            'penalties' => 'nullable|array',
+            'penalties.*.team' => 'nullable|in:local,visitor',
+            'penalties.*.result' => 'nullable|in:goal,miss,saved',
+            'price_red' => 'nullable|numeric',
+            'double_yellow' => 'nullable|numeric',
+            'yellow' => 'nullable|numeric',
         ]);
 
         // Bloqueo: jugadores suspendidos no pueden participar en el acta
@@ -327,25 +354,32 @@ class MatchAdminController extends Controller
             ], 422);
         }
 
-        DB::transaction(function () use ($match, $validated) {
+        $hasPenalties = ! empty($validated['penalties']);
+        $priceRed = $validated['price_red'] ?? 0;
+        $priceDoubleYellow = $validated['double_yellow'] ?? 0;
+        $priceYellow = $validated['yellow'] ?? 0;
+
+        DB::transaction(function () use ($match, $validated, $hasPenalties, $priceRed, $priceDoubleYellow, $priceYellow) {
             $match->update([
                 'score_h' => $validated['score_h'],
                 'score_a' => $validated['score_a'],
                 'status' => 'finished',
                 'original_score' => $validated['score_h'] . '-' . $validated['score_a'],
+                'penalty_rounds' => $hasPenalties ? ($validated['penalty_rounds'] ?? null) : null,
+                'penalties' => $hasPenalties ? $validated['penalties'] : null,
             ]);
 
             $teamHId = $match->team_h_id;
             $teamAId = $match->team_a_id;
 
             if (isset($validated['players_h'])) {
-                $this->savePlayerCards($match->id, $validated['players_h']);
+                $this->savePlayerCards($match->id, $validated['players_h'], $priceRed, $priceDoubleYellow, $priceYellow);
                 $this->savePlayerStats($match->id, $validated['players_h'], $teamHId, $validated['score_a'] == 0);
                 $this->saveMatchPlayerParticipated($validated['players_h'], $match->id);
             }
 
             if (isset($validated['players_a'])) {
-                $this->savePlayerCards($match->id, $validated['players_a']);
+                $this->savePlayerCards($match->id, $validated['players_a'], $priceRed, $priceDoubleYellow, $priceYellow);
                 $this->savePlayerStats($match->id, $validated['players_a'], $teamAId, $validated['score_h'] == 0);
                 $this->saveMatchPlayerParticipated($validated['players_a'], $match->id);
             }
@@ -361,7 +395,7 @@ class MatchAdminController extends Controller
         ]);
     }
 
-    private function savePlayerCards($matchId, $players)
+    private function savePlayerCards($matchId, $players, $priceRed = 0, $priceDoubleYellow = 0, $priceYellow = 0)
     {
         foreach ($players as $p) {
             if (!isset($p['person_id'])) continue;
@@ -379,6 +413,7 @@ class MatchAdminController extends Controller
                     'player_id' => $p['person_id'],
                     'type' => 'red',
                     'minute' => $p['red_card_minute'] ?? null,
+                    'amount_fine' => $priceRed,
                 ]);
             }
 
@@ -387,12 +422,14 @@ class MatchAdminController extends Controller
                     'match_id' => $matchId,
                     'player_id' => $p['person_id'],
                     'type' => 'double_yellow',
+                    'amount_fine' => $priceDoubleYellow,
                 ]);
                 for ($i = 1; $i <= 2; $i++) {
                     EventEditionMatchSanction::create([
                         'match_id' => $matchId,
                         'player_id' => $p['person_id'],
                         'type' => 'yellow',
+                        'amount_fine' => $priceYellow,
                     ]);
                 }
             } elseif ($yellowCount === 1) {
@@ -400,6 +437,7 @@ class MatchAdminController extends Controller
                     'match_id' => $matchId,
                     'player_id' => $p['person_id'],
                     'type' => 'yellow',
+                    'amount_fine' => $priceYellow,
                 ]);
             }
         }

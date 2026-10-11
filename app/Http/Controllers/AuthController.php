@@ -19,9 +19,25 @@ class AuthController extends Controller
                 'message' => 'Login successful',
                 'token' => $token,
                 'user' => $user,
+                // La app móvil necesita los roles para mostrar las opciones de administrador
+                'roles' => $user->getRoleNames()->values()->all(),
             ]);
         }
 
         return response()->json(['message' => 'Invalid credentials'], 401);
+    }
+
+    /**
+     * Datos del usuario autenticado, incluyendo sus roles.
+     */
+    public function user(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'message' => 'Usuario obtenido correctamente',
+            'user' => $user,
+            'roles' => $user->getRoleNames()->values()->all(),
+        ]);
     }
 }

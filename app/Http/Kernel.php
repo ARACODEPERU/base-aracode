@@ -37,7 +37,14 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            // El encabezado Link con los preloads de Vite se limita a 30 entradas:
+            // cada página agrega un Link por cada chunk/hoja de estilo preloaded y
+            // en /sales/products ya sumaba 8,2 KB. Al pasar el límite de 8 KB que
+            // acepta php-cgi/mod_fcgid, Apache corta la respuesta con
+            // "Premature end of script headers" y el navegador recibe un 500 sin
+            // cuerpo. Las etiquetas <link rel="modulepreload"> del HTML siguen
+            // intactas, así que el precargado real no se pierde.
+            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class . ':30',
         ],
 
         'api' => [

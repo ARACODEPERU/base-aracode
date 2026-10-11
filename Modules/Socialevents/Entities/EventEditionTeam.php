@@ -14,6 +14,29 @@ class EventEditionTeam extends Model
 
     public $incrementing = false;
 
+    /**
+     * La tabla no tiene columna `id`: su clave primaria es
+     * (edition_id, team_id). Sin esto, Eloquent filtraba por `id` en update(),
+     * delete(), refresh() y fresh(), de modo que quitar un equipo de la
+     * edición no eliminaba nada.
+     */
+    protected function setKeysForSelectQuery($query)
+    {
+        return $this->setCompositeKeys($query);
+    }
+
+    protected function setKeysForSaveQuery($query)
+    {
+        return $this->setCompositeKeys($query);
+    }
+
+    private function setCompositeKeys($query)
+    {
+        return $query
+            ->where('edition_id', $this->getAttribute('edition_id'))
+            ->where('team_id', $this->getAttribute('team_id'));
+    }
+
     protected $fillable = [
         'edition_id',
         'team_id',

@@ -78,12 +78,17 @@ class InventoryKardexQueryService
 
     public function mapRow(object $row): array
     {
+        // El tipo se deduce del signo y no del campo motion: al anular una venta
+        // el movimiento queda con motion "sale" pero en positivo (reingreso al
+        // stock), y los traslados usan el mismo motion para salida y entrada.
+        $quantity = (float) $row->quantity;
+
         return [
             'id' => $row->id,
             'date_of_issue' => $row->date_of_issue,
             'motion' => $row->motion,
-            'motion_label' => $row->motion === 'purchase' ? 'Ingreso' : 'Salida',
-            'quantity' => (float) $row->quantity,
+            'motion_label' => $quantity >= 0 ? 'Ingreso' : 'Salida',
+            'quantity' => $quantity,
             'description' => $row->description,
             'local_name' => $row->local_name ?? '—',
             'product_id' => $row->product_id,

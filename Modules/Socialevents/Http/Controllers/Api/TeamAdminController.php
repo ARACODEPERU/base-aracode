@@ -134,6 +134,30 @@ class TeamAdminController extends Controller
         }
     }
 
+    /**
+     * Todos los jugadores de la edición (con su equipo), con búsqueda opcional.
+     */
+    public function editionPlayers(Request $request, int $editionId): JsonResponse
+    {
+        try {
+            $players = $this->editionTeamPlayer->listForEdition(
+                $editionId,
+                $request->query('q')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jugadores obtenidos correctamente',
+                'data' => $players,
+            ]);
+        } catch (RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
     public function linkPlayer(Request $request, int $editionId, int $teamId): JsonResponse
     {
         $validated = $request->validate([

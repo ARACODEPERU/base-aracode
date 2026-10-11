@@ -9,6 +9,7 @@ use Modules\Socialevents\Http\Controllers\Api\PlayerStatsApiController;
 use Modules\Socialevents\Http\Controllers\Api\TeamApiController;
 use Modules\Socialevents\Http\Controllers\Api\PlayerApiController;
 use Modules\Socialevents\Http\Controllers\Api\MatchAdminController;
+use Modules\Socialevents\Http\Controllers\Api\EditionGalleryAdminController;
 use Modules\Socialevents\Http\Controllers\Api\EditionPublicController;
 use Modules\Socialevents\Http\Controllers\Api\TeamAdminController;
 use Modules\Socialevents\Http\Middleware\EnsureSocialeventsAdmin;
@@ -166,6 +167,20 @@ Route::prefix('socialevents')->name('api.')->group(function () {
 
 			Route::delete('editions/{editionId}/teams/{teamId}/players/{personId}', [TeamAdminController::class, 'deletePlayer'])
 				->name('admin.editions.teams.players.delete');
+
+			// Todos los jugadores de la edición (búsqueda por nombre o DNI)
+			Route::get('editions/{editionId}/players', [TeamAdminController::class, 'editionPlayers'])
+				->name('admin.editions.players');
+
+			// Galería de la landing (fotos tomadas desde el celular)
+			Route::get('editions/{editionId}/gallery', [EditionGalleryAdminController::class, 'index'])
+				->name('admin.editions.gallery');
+
+			Route::post('editions/{editionId}/gallery', [EditionGalleryAdminController::class, 'store'])
+				->name('admin.editions.gallery.store');
+
+			Route::delete('editions/{editionId}/gallery/{mediaId}', [EditionGalleryAdminController::class, 'destroy'])
+				->name('admin.editions.gallery.destroy');
 
 			Route::post('persons/search', [TeamAdminController::class, 'searchPerson'])
 				->name('admin.persons.search');
