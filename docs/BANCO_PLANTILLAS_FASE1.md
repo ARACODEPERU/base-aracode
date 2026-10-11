@@ -371,3 +371,44 @@ Verificación: `tipos()` da 3 landings y 3 sitios que suman las 6 plantillas pub
 sirve 6 chips `plt-tipo` (uno por tarjeta, comprobado también en el navegador y en el HTML de la
 ficha); `?q=landing` devuelve solo las landings y `?q=#SitioWeb` solo los sitios. Las tres pruebas
 nuevas fallan si una plantilla se queda sin formato o si el buscador deja de reconocerlo.
+
+### 4.6 La demo de Clínica Dental como plantilla de referencia
+
+Pedido: que la primera landing sirviera de ejemplo para las siguientes. Decisión de alcance: el
+estándar se aplica **a todas las plantillas**, y queda escrito como lista obligatoria de 9 puntos en
+[BANCO_PLANTILLAS.md](BANCO_PLANTILLAS.md) (fotografía real, WhatsApp y ubicación, prueba social,
+precios, redes sociales, diseño con movimiento, honestidad de la demo, rendimiento y comprobación
+final).
+
+Qué se rehízo en `public/demos/clinica-dental/` (proyecto independiente, sin tocar el resto del
+banco):
+
+- **Fotografía real.** Tres fotos locales en WebP (portada 16/11, atención vertical 4/5, detalle
+  16/10), reescaladas a un máximo de 1600 px de ancho. Vienen de Wikimedia Commons vía Openverse,
+  filtradas por licencias sin obligaciones (CC0 / dominio público); su procedencia está en
+  `CREDITOS.md` junto con la lista de reemplazos al publicar un sitio real.
+- **WhatsApp y ubicación.** Botón flotante en toda la página, seis enlaces `wa.me` con mensaje
+  pre-escrito, dirección y horarios, y un **plano propio en SVG** más un botón a Google Maps: la
+  demo no carga scripts de mapas de terceros.
+- **Prueba social y precios.** Cuatro cifras animadas en la portada, tres testimonios con valoración
+  y avatares de iniciales (no se usan caras de terceros) y tres tarjetas de tarifas con nota de que
+  son referenciales.
+- **Redes sociales.** Instagram, Facebook, TikTok y WhatsApp con `aria-label` y `rel="noopener"`,
+  en la barra superior y en el pie. Apuntan a la plataforma porque son de demostración.
+- **Diseño y movimiento.** Aparición al hacer scroll, contadores, cabecera con sombra al bajar, hover
+  en tarjetas y botones, `:focus-visible` y soporte de `prefers-reduced-motion`. El JavaScript de
+  aparición solo existe si hay JS: sin él la página se ve completa.
+- **Honestidad.** El número de WhatsApp es uno que no existe, todos los datos están marcados como de
+  ejemplo y el formulario, al enviarlo, avisa de que no manda datos en vez de simular una cita
+  reservada.
+
+Verificado: 200 en la carpeta y en cada archivo (CSS, JS, tres WebP y el SVG) con su tipo MIME
+correcto; sin recursos de terceros cargados (solo enlaces salientes); menú móvil que abre y cierra
+(`aria-expanded` correcto) sin desbordamiento a 390 px; validación del formulario comprobada en el
+navegador (envío vacío → 5 errores visibles y ningún envío; envío completo → aviso de demostración);
+revisión visual a 1400 px de portada, «la clínica», opiniones, precios, visita, preguntas y pie; y la
+suite Unit sigue en verde (254 pruebas antes de este cambio; la sección no depende de estos archivos).
+
+Pendiente de este estándar: **las otras cinco plantillas** (Restaurante y carta digital, Portafolio
+Creativo, Academia de Cursos, Estudio Contable e Inmobiliaria) todavía no tienen demostración. Cada
+una es un proyecto web completo y se construye con la lista obligatoria, una por entrega.
