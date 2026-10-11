@@ -12,11 +12,12 @@
         una demo). Los planes, los precios y las funcionalidades al detalle los
         publica el sitio del producto, que es su web oficial.
 
-        Los enlaces al sitio oficial no se escriben aquí: salen de
-        config/productos.php, el único archivo que se edita el día que KAPTA
-        pase a su propio dominio. Procedimiento completo en
+        El nombre comercial y los enlaces al sitio oficial no se escriben aquí:
+        salen de config/productos.php, el único archivo que se edita el día que
+        KAPTA pase a su propio dominio. Procedimiento completo en
         docs/SEO_ECOSISTEMA_PRODUCTOS.md.
     */
+    $nombreKapta = \App\Support\SitiosProducto::nombre('kapta');
     $sitioKapta = \App\Support\SitiosProducto::url('kapta');
     $planesKapta = \App\Support\SitiosProducto::planes('kapta');
 @endphp
@@ -27,7 +28,7 @@
 {
     "@@context": "https://schema.org",
     "@@type": "SoftwareApplication",
-    "name": "KAPTA LMS",
+    "name": "{{ $nombreKapta }}",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Web",
     "inLanguage": "es-PE",
@@ -62,7 +63,7 @@
                         KAPTA <span class="text-gradient">LMS</span>
                     </h1>
                     <p class="text-lg text-white/70 mb-8 reveal reveal-delay-2">
-                        KAPTA LMS es la plataforma SaaS de gestión y formación educativa que ARACODE Smart Solutions desarrolla para instituciones, academias y empresas. Aquí te contamos quién está detrás del producto y cómo llevarlo a tu institución.
+                        KAPTA LMS es la plataforma SaaS de gestión y formación educativa que ARACODE Smart Solutions desarrolla para instituciones, academias y empresas.                        Aquí te contamos quién está detrás del producto y cómo llevarlo a tu institución.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 reveal reveal-delay-3">
                         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">

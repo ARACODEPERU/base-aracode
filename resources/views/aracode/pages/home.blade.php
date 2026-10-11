@@ -119,9 +119,10 @@
                     :delay="1"
                 />
 
-                {{-- KiraFact --}}
+                {{-- KIRAFACT: misma grafía que en /soluciones y en el sitio del
+                     producto (config/kirafact.php «titulo_marca»). --}}
                 <x-v2.product-card
-                    title="KiraFact"
+                    title="KIRAFACT"
                     description="Facturación electrónica y gestión comercial para empresas."
                     :href="route('solucion_facturacion')"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"

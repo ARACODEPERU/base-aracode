@@ -12,11 +12,12 @@
         demo). El detalle funcional y la descarga vigente de la app los publica
         el sitio del producto, que es su web oficial.
 
-        Los enlaces al sitio oficial no se escriben aquí: salen de
-        config/productos.php, el único archivo que se edita el día que
+        El nombre comercial y los enlaces al sitio oficial no se escriben aquí:
+        salen de config/productos.php, el único archivo que se edita el día que
         Pichanguero pase a su propio dominio. Procedimiento completo en
         docs/SEO_ECOSISTEMA_PRODUCTOS.md.
     */
+    $nombrePichanguero = \App\Support\SitiosProducto::nombre('pichanguero');
     $sitioPichanguero = \App\Support\SitiosProducto::url('pichanguero');
     $descargasPichanguero = \App\Support\SitiosProducto::descargas('pichanguero');
 @endphp
@@ -27,7 +28,7 @@
 {
     "@@context": "https://schema.org",
     "@@type": "SoftwareApplication",
-    "name": "Pichanguero",
+    "name": "{{ $nombrePichanguero }}",
     "applicationCategory": "SportsApplication",
     "operatingSystem": "Android, Web",
     "inLanguage": "es-PE",

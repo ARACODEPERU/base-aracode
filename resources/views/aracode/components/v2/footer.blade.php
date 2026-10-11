@@ -31,7 +31,7 @@
                 <h4 class="text-white font-semibold mb-6">Soluciones</h4>
                 <ul class="space-y-3">
                     <li><a href="{{ route('solucion_kapta') }}" class="ara-footer-link">KAPTA LMS</a></li>
-                    <li><a href="{{ route('solucion_facturacion') }}" class="ara-footer-link">KiraFact</a></li>
+                    <li><a href="{{ route('solucion_facturacion') }}" class="ara-footer-link">KIRAFACT</a></li>
                     <li><a href="{{ route('solucion_pichanguero') }}" class="ara-footer-link">Pichanguero</a></li>
                     <li><a href="{{ route('solucion_desarrollo') }}" class="ara-footer-link">Desarrollo a Medida</a></li>
                     <li><a href="{{ route('soluciones') }}" class="ara-footer-link">Todas las Soluciones</a></li>
