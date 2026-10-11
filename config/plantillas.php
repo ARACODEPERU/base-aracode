@@ -127,7 +127,7 @@ return [
             'etiquetas' => ['odontología', 'citas', 'tratamientos', 'landing'],
             'resumen' => 'Landing para consultorio odontológico: tratamientos, equipo, horarios y reserva de cita.',
             'incluye' => [
-                'Portada con el tratamiento principal y llamada a reservar',
+                'Hero a pantalla completa con slider de tres fotos y llamada a reservar',
                 'Seis tratamientos con su descripción',
                 'Bloque de confianza: años, pacientes y especialidades',
                 'Horarios de atención y datos de contacto',
@@ -138,7 +138,7 @@ return [
             'demo' => 'clinica-dental',
             'destacada' => true,
             'publicada' => true,
-            'actualizada' => '2026-10-10',
+            'actualizada' => '2026-10-11',
         ],
 
         'restaurante-carta' => [
@@ -188,7 +188,7 @@ return [
             'etiquetas' => ['academia', 'cursos', 'matrícula', 'certificado'],
             'resumen' => 'Sitio de academia con catálogo de cursos, temario por módulos, docentes, certificación y matrícula en línea.',
             'incluye' => [
-                'Portada con áreas, cursos destacados y cifras de confianza',
+                'Hero a pantalla completa con slider de tres fotos, áreas y cifras de confianza',
                 'Catálogo de ocho cursos con precios, duración y fechas de inicio',
                 'Filtros por área, modalidad y búsqueda por texto',
                 'Ficha de curso con temario por módulos en acordeones',

@@ -9,13 +9,14 @@
    corporativo: la carpeta se puede copiar a su propio dominio tal cual.
 
    Esta es la primera plantilla de formato SITIO WEB del banco (varias páginas
-   enlazadas), y el ejemplo de la lista obligatoria para ese formato: fotografía
-   real, WhatsApp y ubicación, prueba social, precios, redes sociales y
-   movimiento. La lista está en docs/BANCO_PLANTILLAS.md.
+   enlazadas), y el ejemplo de la lista obligatoria para ese formato: hero a
+   pantalla completa con slider, fotografía real, WhatsApp y ubicación, prueba
+   social, precios, redes sociales y movimiento. La lista está en
+   docs/BANCO_PLANTILLAS.md.
 
-   Orden: variables → base → utilidades → botones → barra → cabecera → portada →
-   cifras → secciones y tarjetas → cursos → ficha de curso → matrícula → pie →
-   WhatsApp → movimiento reducido.
+   Orden: variables → base → utilidades → botones → barra → cabecera → portada
+   (hero con slider) → cifras → secciones y tarjetas → cursos → ficha de curso →
+   matrícula → pie → WhatsApp → movimiento reducido.
 */
 
 /* =============================================================================
@@ -541,30 +542,94 @@ html.js .revelar.visible {
 }
 
 /* =============================================================================
-   Portada
-   ============================================================================= */
+   Portada: hero a pantalla completa con slider de fondo
+   =============================================================================
+
+   Las tres fotos viven en una capa absoluta que rota; el texto se apoya encima,
+   sobre un velo oscuro que es lo que garantiza que se lea. `svh` mide el
+   viewport sin la barra del navegador móvil, así que el hero no queda corto en
+   el celular, y `min-height` es un mínimo: si el texto no cabe, la sección
+   crece en vez de recortar.
+*/
 
 .portada {
-    padding: 3.5rem 0 2.5rem;
-    background: linear-gradient(180deg, var(--hielo) 0%, var(--blanco) 80%);
-}
-
-.portada__rejilla {
+    position: relative;
     display: grid;
-    gap: 2.5rem;
-    align-items: center;
+    align-content: center;
+    /* El desplazamiento horizontal del dedo es del slider, no del scroll; el
+       vertical y el zoom con los dedos siguen siendo del navegador. */
+    touch-action: pan-y pinch-zoom;
+    min-height: 88vh;
+    min-height: min(88svh, 60rem);
+    padding: clamp(2.75rem, 7vw, 5.5rem) 0 clamp(5rem, 9vw, 7rem);
+    background: var(--indigo-2);
+    color: rgba(255, 255, 255, 0.86);
+    overflow: hidden;
 }
 
-@media (min-width: 960px) {
-    .portada__rejilla {
-        grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-        gap: 3.25rem;
+.portada__fondo {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.portada__pista {
+    display: flex;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portada__diapositiva {
+    flex: 0 0 100%;
+    min-width: 0;
+    height: 100%;
+}
+
+.portada__diapositiva img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Velo: más denso del lado del texto que del lado de la foto. */
+.portada__velo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        100deg,
+        rgba(9, 18, 45, 0.92) 0%,
+        rgba(9, 18, 45, 0.76) 42%,
+        rgba(9, 18, 45, 0.36) 78%,
+        rgba(9, 18, 45, 0.54) 100%
+    );
+}
+
+.portada__contenido {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 900px) {
+    .portada__contenido {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 3rem;
     }
+}
+
+.portada__texto h1 {
+    color: var(--blanco);
 }
 
 .portada__lead {
     font-size: 1.0625rem;
-    color: var(--gris);
+    color: rgba(255, 255, 255, 0.84);
     max-width: 34rem;
 }
 
@@ -581,7 +646,7 @@ html.js .revelar.visible {
     margin: 0;
     padding: 0;
     list-style: none;
-    color: var(--gris);
+    color: rgba(255, 255, 255, 0.82);
     font-size: 0.9375rem;
 }
 
@@ -595,38 +660,30 @@ html.js .revelar.visible {
     width: 1.1rem;
     height: 1.1rem;
     margin-top: 0.25rem;
-    color: var(--ambar-oscuro);
+    color: #FFD79A;
     flex-shrink: 0;
 }
 
-.portada__foto {
-    position: relative;
-    margin: 0;
-    border-radius: var(--radio);
-    overflow: hidden;
-    box-shadow: var(--sombra-alta);
-}
-
-.portada__foto img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 11;
-    object-fit: cover;
-}
-
+/* Tarjeta del próximo inicio: dato sobre la foto, con fondo translúcido. */
 .portada__proximo {
-    position: absolute;
-    left: 1rem;
-    bottom: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
-    padding: 0.85rem 1.1rem;
+    justify-self: start;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: var(--radio-chico);
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: var(--sombra);
+    background: rgba(255, 255, 255, 0.12);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     font-size: 0.8125rem;
-    color: var(--gris);
+    color: rgba(255, 255, 255, 0.78);
+}
+
+@media (min-width: 900px) {
+    .portada__proximo {
+        justify-self: end;
+    }
 }
 
 .portada__proximo-titulo {
@@ -634,21 +691,135 @@ html.js .revelar.visible {
     letter-spacing: 0.08em;
     font-size: 0.6875rem;
     font-weight: 700;
-    color: var(--indigo);
+    color: #FFD79A;
 }
 
 .portada__proximo strong {
     font-size: 1.0625rem;
-    color: var(--tinta);
+    color: var(--blanco);
+}
+
+/* --- Controles del slider ---------------------------------------------- */
+
+.portada__controles {
+    position: absolute;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 2;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 9999px;
+    background: rgba(9, 18, 45, 0.52);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+/* Sin JavaScript los botones no harían nada: solo aparecen con el script
+   cargado, que es quien añade la clase `js` al <html>. */
+html.js .portada__controles {
+    display: flex;
+}
+
+.carrusel__flecha {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--blanco);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.carrusel__flecha:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.carrusel__flecha:focus-visible {
+    outline: 2px solid var(--blanco);
+    outline-offset: 2px;
+}
+
+.carrusel__flecha svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.carrusel__puntos {
+    display: flex;
+    align-items: center;
+}
+
+/* Punto con área táctil de 44 px: el círculo es la caja de contenido
+   (`background-clip`) y el relleno, zona de pulsación. */
+.carrusel__punto {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 1.15rem;
+    border: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    background-clip: content-box;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.carrusel__punto:hover {
+    background-color: rgba(255, 255, 255, 0.72);
+}
+
+.carrusel__punto[aria-current="true"] {
+    background-color: var(--blanco);
+}
+
+.carrusel__punto:focus-visible {
+    outline: 2px solid var(--blanco);
+    outline-offset: 2px;
+}
+
+/* En pantalla estrecha el velo se vuelve vertical —el texto ocupa todo el
+   ancho— y los controles bajan debajo del texto en vez de taparlo. */
+@media (max-width: 720px) {
+    .portada {
+        padding-bottom: 2.75rem;
+    }
+
+    .portada__velo {
+        background: linear-gradient(
+            180deg,
+            rgba(9, 18, 45, 0.8) 0%,
+            rgba(9, 18, 45, 0.9) 100%
+        );
+    }
+
+    .portada__controles {
+        position: static;
+        transform: none;
+        justify-self: center;
+        margin-top: 2.25rem;
+    }
+}
+
+/* Cifras de confianza: viven en su propia banda, justo debajo del hero, así
+   que el hero puede ocupar la pantalla completa sin números encima. */
+.banda-cifras {
+    background: var(--blanco);
+    border-bottom: 1px solid var(--linea);
 }
 
 .cifras {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.5rem 2rem;
-    margin: 2.5rem 0 0;
-    padding-top: 2rem;
-    border-top: 1px solid var(--linea);
+    margin: 0;
+    padding: 2.25rem 0;
 }
 
 @media (min-width: 720px) {
@@ -2126,7 +2297,9 @@ html.js .revelar.visible {
     .tarjeta,
     .curso,
     .redes a,
-    .whatsapp {
+    .whatsapp,
+    .menu,
+    .portada__pista {
         transition: none;
     }
 

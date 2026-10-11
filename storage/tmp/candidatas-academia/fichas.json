@@ -1,0 +1,200 @@
+[
+    {
+        "archivo": "01-estudiantes.img",
+        "consulta": "students",
+        "titulo": "Student Union Lincoln U PA",
+        "autor": "Smallbones",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=28677546",
+        "ancho": 3935,
+        "alto": 2951,
+        "kb": 4005
+    },
+    {
+        "archivo": "02-estudiantes.img",
+        "consulta": "students",
+        "titulo": "File:Arizona Geosciences Student Club 010.jpg",
+        "autor": "Frank Schulenburg",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=38671587",
+        "ancho": 4533,
+        "alto": 3022,
+        "kb": 2663
+    },
+    {
+        "archivo": "03-estudiantes.img",
+        "consulta": "students",
+        "titulo": "Student encampment at the University of Oregon",
+        "autor": "Spacemace1",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=147949254",
+        "ancho": 4032,
+        "alto": 3024,
+        "kb": 4297
+    },
+    {
+        "archivo": "04-estudiantes.img",
+        "consulta": "students",
+        "titulo": "File:University of Utah - Student Housing - 28 November 2012",
+        "autor": "Mangoman88",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=23274038",
+        "ancho": 2592,
+        "alto": 1728,
+        "kb": 2162
+    },
+    {
+        "archivo": "05-estudiantes.img",
+        "consulta": "students",
+        "titulo": "Japan Student Services Organization 2013-12-29",
+        "autor": "Asanagi",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=30590536",
+        "ancho": 4200,
+        "alto": 3200,
+        "kb": 1207
+    },
+    {
+        "archivo": "06-estudiantes.img",
+        "consulta": "students",
+        "titulo": "Students and instructors meeting at the Faculty of Philosoph",
+        "autor": "TooDoors",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=158732314",
+        "ancho": 2000,
+        "alto": 1500,
+        "kb": 275
+    },
+    {
+        "archivo": "07-estudiantes.img",
+        "consulta": "students",
+        "titulo": "File:BYU Ernest L. Wilkinson Student Center Building.JPG",
+        "autor": "Pastelitodepapa",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=25762274",
+        "ancho": 3266,
+        "alto": 1892,
+        "kb": 2239
+    },
+    {
+        "archivo": "08-aula.img",
+        "consulta": "classroom",
+        "titulo": "Digital carrel classroom",
+        "autor": "Wikideas1",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=146876242",
+        "ancho": 4122,
+        "alto": 2666,
+        "kb": 659
+    },
+    {
+        "archivo": "09-aula.img",
+        "consulta": "classroom",
+        "titulo": "Digital art classroom",
+        "autor": "Wikideas1",
+        "licencia": "cc0",
+        "origen": "https://commons.wikimedia.org/w/index.php?curid=163504467",
+        "ancho": 3927,
+        "alto": 2968,
+        "kb": 984
+    },
+    {
+        "archivo": "10-clase.img",
+        "consulta": "lecture hall students",
+        "titulo": "",
+        "autor": "",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/5959368/free-public-domain-cc0-photo",
+        "ancho": 2048,
+        "alto": 1536,
+        "kb": 416
+    },
+    {
+        "archivo": "11-clase.img",
+        "consulta": "lecture hall students",
+        "titulo": "ANNAPOLIS, Md. (Jan. 24, 2022)",
+        "autor": "U.S. Naval Academy",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/10993937/photo-image-face-person-public-domain",
+        "ancho": 5568,
+        "alto": 3712,
+        "kb": 233
+    },
+    {
+        "archivo": "12-biblioteca.img",
+        "consulta": "library study",
+        "titulo": "large library study filled lots",
+        "autor": "",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/3291722/free-photo-image-bibliothek-ballroom-architecture-law",
+        "ancho": 5065,
+        "alto": 3377,
+        "kb": 448
+    },
+    {
+        "archivo": "13-laptops.img",
+        "consulta": "students laptop",
+        "titulo": "Woman working laptop",
+        "autor": "",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/5920742/photo-image-background-public-domain-hand",
+        "ancho": 4471,
+        "alto": 2981,
+        "kb": 188
+    },
+    {
+        "archivo": "14-laptops.img",
+        "consulta": "students laptop",
+        "titulo": "Person working Macbook Pro laptop",
+        "autor": "",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/6113337/photo-image-phone-public-domain-laptop",
+        "ancho": 3000,
+        "alto": 2000,
+        "kb": 240
+    },
+    {
+        "archivo": "15-laptops.img",
+        "consulta": "students laptop",
+        "titulo": "Person working Macbook Air laptop",
+        "autor": "",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/6112994/photo-image-public-domain-laptop-person",
+        "ancho": 5616,
+        "alto": 3744,
+        "kb": 229
+    },
+    {
+        "archivo": "16-laptops.img",
+        "consulta": "students laptop",
+        "titulo": "Woman using laptop",
+        "autor": "",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/5917108/woman-using-laptop-free-public-domain-cc0-photo",
+        "ancho": 4896,
+        "alto": 3264,
+        "kb": 184
+    },
+    {
+        "archivo": "17-profesor.img",
+        "consulta": "teacher class",
+        "titulo": "Students listen their teacher class",
+        "autor": "The African Union Mission in",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/3372953/free-photo-image-teaching-africa-african",
+        "ancho": 4146,
+        "alto": 2759,
+        "kb": 215
+    },
+    {
+        "archivo": "18-universidad.img",
+        "consulta": "college students",
+        "titulo": "Berea College students present quilt",
+        "autor": "libraryofcongress",
+        "licencia": "cc0",
+        "origen": "https://www.rawpixel.com/image/6922493/berea-college-students-present-quilt-6326",
+        "ancho": 5561,
+        "alto": 4393,
+        "kb": 290
+    }
+]

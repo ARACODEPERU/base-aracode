@@ -3,13 +3,14 @@
    Clínica Dental Sonrisa — comportamiento de la demostración
    =============================================================================
 
-   JavaScript propio, sin librerías. Hace cinco cosas:
+   JavaScript propio, sin librerías. Hace seis cosas:
 
      1. Menú desplegable de móvil.
      2. Aparición de bloques al hacer scroll.
      3. Contadores de las cifras de la portada.
      4. Sombra de la cabecera cuando la página baja.
      5. Validación del formulario de cita.
+     6. Slider de la portada: flechas, puntos, teclado y arrastre con el dedo.
 
    Nada de esto es imprescindible para leer la página: sin JavaScript se ve todo
    —los bloques aparecen porque la clase que los oculta la pone este archivo— y
@@ -253,6 +254,163 @@
 
             formulario.submit();
         });
+    }
+
+    /* ---------------------------------------------------------------------
+       6. Slider de la portada
+       ---------------------------------------------------------------------
+
+       El hero rota la foto de fondo. Nada de esto es imprescindible: la primera
+       foto se ve sin JavaScript y el texto no depende de la que esté puesta.
+    */
+
+    var carrusel = document.querySelector('[data-carrusel]');
+
+    if (carrusel) {
+        var pista = carrusel.querySelector('.portada__pista');
+        var diapositivas = [].slice.call(carrusel.querySelectorAll('[data-diapositiva]'));
+        var puntos = [].slice.call(carrusel.querySelectorAll('[data-carrusel-punto]'));
+        var botonAnterior = carrusel.querySelector('[data-carrusel-anterior]');
+        var botonSiguiente = carrusel.querySelector('[data-carrusel-siguiente]');
+        var INTERVALO = 6000;
+        var actual = 0;
+        var temporizador = null;
+
+        function irA(indice) {
+            // El módulo hace que el slider dé la vuelta por los dos extremos.
+            actual = (indice + diapositivas.length) % diapositivas.length;
+
+            pista.style.transform = 'translateX(-' + (actual * 100) + '%)';
+
+            // Solo la foto que se ve se anuncia: las otras dos son ruido para
+            // quien navega con lector de pantalla.
+            diapositivas.forEach(function (diapositiva, i) {
+                diapositiva.setAttribute('aria-hidden', i === actual ? 'false' : 'true');
+            });
+
+            puntos.forEach(function (punto, i) {
+                if (i === actual) {
+                    punto.setAttribute('aria-current', 'true');
+                } else {
+                    punto.removeAttribute('aria-current');
+                }
+            });
+        }
+
+        function avanzar(paso) {
+            irA(actual + paso);
+        }
+
+        function detener() {
+            window.clearInterval(temporizador);
+            temporizador = null;
+        }
+
+        function arrancar() {
+            // Con movimiento reducido el slider sigue funcionando a mano: lo
+            // único que no ocurre es el paso automático.
+            if (movimientoReducido || temporizador) {
+                return;
+            }
+
+            temporizador = window.setInterval(function () {
+                avanzar(1);
+            }, INTERVALO);
+        }
+
+        function manual(paso) {
+            detener();
+            avanzar(paso);
+            arrancar();
+        }
+
+        if (botonAnterior) {
+            botonAnterior.addEventListener('click', function () {
+                manual(-1);
+            });
+        }
+
+        if (botonSiguiente) {
+            botonSiguiente.addEventListener('click', function () {
+                manual(1);
+            });
+        }
+
+        puntos.forEach(function (punto, i) {
+            punto.addEventListener('click', function () {
+                detener();
+                irA(i);
+                arrancar();
+            });
+        });
+
+        // Teclado: con el foco dentro del hero, las flechas cambian de foto en
+        // vez de hacer scroll.
+        carrusel.addEventListener('keydown', function (evento) {
+            if (evento.key !== 'ArrowLeft' && evento.key !== 'ArrowRight') {
+                return;
+            }
+
+            manual(evento.key === 'ArrowRight' ? 1 : -1);
+        });
+
+        // Arrastre con el dedo. Solo táctil: con el ratón competiría con la
+        // selección de texto, y para eso ya están las flechas, los puntos y el
+        // teclado.
+        var inicioX = null;
+
+        carrusel.addEventListener('pointerdown', function (evento) {
+            if (evento.pointerType === 'mouse') {
+                return;
+            }
+
+            inicioX = evento.clientX;
+            detener();
+        });
+
+        // El final del arrastre se escucha en la ventana: si el dedo suelta
+        // fuera del hero, el carrusel no recibe el evento.
+        window.addEventListener('pointerup', function (evento) {
+            if (inicioX === null) {
+                return;
+            }
+
+            var recorrido = evento.clientX - inicioX;
+            inicioX = null;
+
+            // Un cuarto del ancho ya cuenta como intención de pasar; si no, la
+            // foto vuelve a su sitio sin cambiar nada.
+            if (Math.abs(recorrido) > carrusel.clientWidth * 0.25) {
+                avanzar(recorrido < 0 ? 1 : -1);
+            } else {
+                irA(actual);
+            }
+
+            arrancar();
+        });
+
+        window.addEventListener('pointercancel', function () {
+            inicioX = null;
+            arrancar();
+        });
+
+        // Se pausa mientras se mira de cerca y al cambiar de pestaña; al volver
+        // se retoma solo si el movimiento no está reducido.
+        carrusel.addEventListener('mouseenter', detener);
+        carrusel.addEventListener('mouseleave', arrancar);
+        carrusel.addEventListener('focusin', detener);
+        carrusel.addEventListener('focusout', arrancar);
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                detener();
+            } else {
+                arrancar();
+            }
+        });
+
+        irA(0);
+        arrancar();
     }
 
     /* ---------------------------------------------------------------------

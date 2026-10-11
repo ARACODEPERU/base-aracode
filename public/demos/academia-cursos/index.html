@@ -22,7 +22,7 @@
 
 <title>Academia Horizonte — Demostración de plantilla</title>
 
-<link rel="preload" as="image" href="img/portada.webp">
+<link rel="preload" as="image" href="img/clase.webp">
 <link rel="stylesheet" href="css/estilos.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
 </head>
@@ -108,10 +108,34 @@
 
     <!-- ===================== PORTADA ===================== -->
 
-    <section class="portada" id="inicio">
-        <div class="contenedor portada__rejilla">
+    <!-- Hero a pantalla completa con slider de fondo: tres fotos propias, que no
+         se repiten en las secciones de más abajo. Rotan solas y también con las
+         flechas, los puntos, el teclado o el dedo; sin JavaScript se ve la
+         primera y el texto se lee completo. -->
+    <section class="portada" id="inicio" data-carrusel>
+        <div class="portada__fondo">
+            <ul class="portada__pista">
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/clase.webp" width="1400" height="933" fetchpriority="high" decoding="async"
+                         alt="Alumnos siguiendo una clase práctica con laptops en el aula">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/conferencia.webp" width="1024" height="768" loading="lazy" decoding="async"
+                         alt="Clase magistral en el auditorio de la academia, con la proyección al frente">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/practica.webp" width="1024" height="683" loading="lazy" decoding="async"
+                         alt="Manos escribiendo en una laptop durante una práctica del curso">
+                </li>
+            </ul>
+
+            <!-- Velo: sin él, un texto blanco sobre una foto clara no se lee. -->
+            <span class="portada__velo" aria-hidden="true"></span>
+        </div>
+
+        <div class="contenedor portada__contenido">
             <div class="portada__texto revelar">
-                <p class="sello">Cursos cortos con certificado en Nuevo Chimbote</p>
+                <p class="sello sello--oscuro">Cursos cortos con certificado en Nuevo Chimbote</p>
 
                 <h1>Estudia, practica y certifícate en pocas semanas</h1>
 
@@ -125,7 +149,7 @@
                         Matricularme
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
-                    <a class="boton boton--fantasma" href="cursos.html">Ver los cursos y precios</a>
+                    <a class="boton boton--borde" href="cursos.html">Ver los cursos y precios</a>
                 </div>
 
                 <ul class="portada__datos">
@@ -144,16 +168,35 @@
                 </ul>
             </div>
 
-            <figure class="portada__foto revelar">
-                <img src="img/portada.webp" width="1024" height="683" alt="Alumnos de la academia trabajando con laptops durante una clase">
-                <figcaption class="portada__proximo">
-                    <span class="portada__proximo-titulo">Próximo inicio</span>
-                    <strong>Lunes 2 de noviembre</strong>
-                    <span>Cupos por orden de matrícula</span>
-                </figcaption>
-            </figure>
+            <!-- El inicio de clases es el dato que más se pregunta, así que va en
+                 una tarjeta de cristal sobre la foto. -->
+            <div class="portada__proximo revelar">
+                <span class="portada__proximo-titulo">Próximo inicio</span>
+                <strong>Lunes 2 de noviembre</strong>
+                <span>Cupos por orden de matrícula</span>
+            </div>
         </div>
 
+        <!-- Controles del slider en una sola pastilla: en escritorio flota abajo
+             al centro y en móvil baja debajo del texto, sin taparlo. -->
+        <div class="portada__controles">
+            <button class="carrusel__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <div class="carrusel__puntos" role="group" aria-label="Elegir foto de la academia">
+                <button class="carrusel__punto" type="button" data-carrusel-punto="0" aria-label="Ver la primera foto" aria-current="true"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-label="Ver la segunda foto"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-label="Ver la tercera foto"></button>
+            </div>
+            <button class="carrusel__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- Cifras de confianza: en su propia banda, para que el hero quede a
+         pantalla completa sin números encima de la foto. -->
+    <div class="banda-cifras">
         <div class="contenedor">
             <dl class="cifras">
                 <div>
@@ -174,7 +217,7 @@
                 </div>
             </dl>
         </div>
-    </section>
+    </div>
 
     <!-- ===================== ÁREAS ===================== -->
 
@@ -381,13 +424,13 @@
                 <div>
                     <h3>Un lugar para quedarte a practicar</h3>
                     <p>
-                        La sala de estudio está abierta todo el día para los alumnos matriculados:
-                        puedes llegar antes de tu clase, repasar con los compañeros o terminar un
-                        ejercicio en las computadoras del laboratorio.
+                        La biblioteca está abierta para los alumnos matriculados: puedes llegar
+                        antes de tu clase, repasar con los compañeros o terminar un ejercicio en
+                        las computadoras del laboratorio.
                     </p>
 
                     <ul class="lista-check">
-                        <li>Sala de estudio libre para alumnos matriculados</li>
+                        <li>Biblioteca y sala de lectura para alumnos matriculados</li>
                         <li>Wifi y enchufes en cada mesa</li>
                         <li>Material de consulta de los cursos</li>
                         <li>El docente atiende consultas en la hora previa a su clase</li>
@@ -395,8 +438,8 @@
                 </div>
 
                 <figure>
-                    <img src="img/instalaciones.webp" width="1024" height="683" alt="Sala de estudio de la academia con mesas, estantes de libros y alumnos repasando" loading="lazy" decoding="async">
-                    <figcaption>La sala de estudio: abierta para los alumnos, sin costo adicional.</figcaption>
+                    <img src="img/instalaciones.webp" width="1024" height="683" alt="Interior de la biblioteca: estanterías abiertas con libros y pasillos de consulta" loading="lazy" decoding="async">
+                    <figcaption>Biblioteca: estanterías abiertas y mesas de lectura, sin costo adicional para los alumnos.</figcaption>
                 </figure>
             </div>
         </div>

@@ -4,6 +4,17 @@ La auditoría y el plan están en [BANCO_PLANTILLAS_FASE1.md](BANCO_PLANTILLAS_F
 Este documento es la parte operativa: cómo agregar una plantilla, cómo agregar su
 demostración y qué hacer el día que una demo se mude a su propio subdominio.
 
+## Regla de portada (hero o slider)
+
+Aclaración vigente del banco: **toda landing y todo sitio web abre con un hero o
+un slider a pantalla completa, moderno y responsive**. Es el punto 1 de la lista
+obligatoria de más abajo, y las dos demostraciones publicadas ya lo cumplen:
+`clinica-dental` (landing) y `academia-cursos` (sitio web) abren con un slider de
+tres fotos cada una.
+Antes de dar por buena una portada nueva: avanzar el slider a mano, revisarla a
+1440 px y a 390 px y repetir la revisión con `prefers-reduced-motion` activado,
+que debe apagar el paso automático sin romper los controles.
+
 ## Piezas de la sección
 
 | Pieza | Archivo | Qué hace |
@@ -55,37 +66,53 @@ páginas). Las dos llevan sus créditos de fotos y su lista de reemplazos en `CR
 ### Lista obligatoria de toda demostración
 
 Lo que sigue es el estándar del banco: una plantilla nueva no se publica sin
-cumplirlo. Los 9 puntos se comprueban antes de enlazarla desde la ficha.
+cumplirlo. Los 10 puntos se comprueban antes de enlazarla desde la ficha.
 
-1. **Fotografía real.** Como mínimo una foto horizontal en la portada, una
-   vertical en la sección de confianza y una horizontal de detalle. Locales, en
-   `img/`, reescaladas (máximo 1600 px de ancho) y en WebP, con `alt`
+1. **Portada: hero o slider, a pantalla completa.** Es lo primero que se mira y
+   lo que decide si el visitante sigue: ninguna plantilla se publica con una
+   portada discreta. El hero ocupa la pantalla (`min-height` de unas 88 unidades
+   de viewport, nunca menos), lleva una foto real a sangre y un velo oscuro que
+   garantice el contraste; el titular, la propuesta, los botones y las garantías
+   van encima. Cuando hay tres o más fotos horizontales —lo normal— el fondo
+   rota como **slider**: flechas y puntos en una pastilla de control, paso
+   automático que se detiene al pasar el ratón o al enfocar, arrastre con el
+   dedo y `prefers-reduced-motion` que apaga solo el paso automático (a mano
+   sigue funcionando). Responsive de verdad: en móvil la pastilla baja debajo
+   del texto en vez de taparlo, los puntos tienen área táctil de 44 px y ningún
+   texto depende de un borde de la foto. Sin JavaScript se ve la primera foto y
+   la página se lee completa; el hero nunca es la única forma de leer algo.
+2. **Fotografía real.** Como mínimo tres horizontales en la portada (el hero),
+   una vertical en la sección de confianza y una horizontal de detalle. Locales,
+   en `img/`, reescaladas (máximo 1600 px de ancho) y en WebP, con `alt`
    descriptivo, `loading="lazy"` y `width`/`height`. La procedencia se anota en
    `CREDITOS.md`: fotos de banco sin obligaciones (CC0 o dominio público) o con
-   la atribución incluida. Nunca fotos de personas sin permiso.
-2. **WhatsApp y ubicación.** Botón flotante en toda la página, enlaces `wa.me`
+   la atribución incluida. Nunca fotos de personas sin permiso, y ninguna foto
+   con marca de agua de un banco de imágenes: se mira a tamaño real antes de
+   publicarla.
+3. **WhatsApp y ubicación.** Botón flotante en toda la página, enlaces `wa.me`
    con mensaje ya escrito, y una forma real de llegar: dirección, horarios y
    mapa (propio o embebido) con enlace para abrir en Google Maps.
-3. **Prueba social.** Tres testimonios como mínimo, con valoración y autor
+4. **Prueba social.** Tres testimonios como mínimo, con valoración y autor
    identificable —en la demo se usan iniciales, no caras de terceros— y las
    cifras de confianza (pacientes, años, especialidades) en la portada.
-4. **Precios de referencia.** Tarifas visibles en tarjetas o tabla, con una nota
+5. **Precios de referencia.** Tarifas visibles en tarjetas o tabla, con una nota
    de que son referenciales y una llamada a la acción en cada una.
-5. **Redes sociales.** Iconos de Instagram, Facebook, TikTok y WhatsApp en la
+6. **Redes sociales.** Iconos de Instagram, Facebook, TikTok y WhatsApp en la
    barra superior y/o el pie; en la demo de referencia están en los dos. Cada
    icono lleva `aria-label`, `target="_blank"` y `rel="noopener"`, y apunta a
    los perfiles del negocio.
-6. **Diseño y movimiento.** Aparición al hacer scroll, contadores animados donde
+7. **Diseño y movimiento.** Aparición al hacer scroll, contadores animados donde
    haya cifras, cabecera con sombra al bajar, hover en tarjetas y botones,
    `:focus-visible` visible y respeto de `prefers-reduced-motion`.
-7. **Honestidad de la demo.** Todo dato inventado (teléfonos, precios,
+8. **Honestidad de la demo.** Todo dato inventado (teléfonos, precios,
    testimonios, dirección) es de ejemplo, el WhatsApp usa un número que no
    existe y el formulario avisa de que no envía datos.
-8. **Rendimiento y aislamiento.** Sin frameworks, sin CDN y sin scripts de
+9. **Rendimiento y aislamiento.** Sin frameworks, sin CDN y sin scripts de
    terceros (mapas o analítica): todo local. Cada imagen por debajo de unos
    250 KB y el JavaScript del sitio en un solo archivo.
-9. **Comprobación final.** 200 en la carpeta y en cada archivo (CSS, JS,
-   imágenes), consola sin errores, revisión a 1400 px y a 390 px, y la ficha del
+10. **Comprobación final.** 200 en la carpeta y en cada archivo (CSS, JS,
+   imágenes), consola sin errores, revisión a 1400 px y a 390 px —con el slider
+   avanzado a mano para ver la segunda foto en las dos medidas— y la ficha del
    catálogo enlazando la demo.
 
 ### Reglas de convivencia con el sitio corporativo

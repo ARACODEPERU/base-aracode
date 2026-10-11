@@ -8,34 +8,42 @@ formato landing es `public/demos/clinica-dental/`.
 
 ## Fotografías
 
-Las cinco fotos vienen de Wikimedia Commons a través de [Openverse](https://openverse.org),
-descargadas con el filtro de licencias **sin obligaciones** (CC0 / dominio público), así que se
-pueden usar en una demostración comercial sin pedir permiso. Están reescaladas a 1024 px de ancho
-como máximo y convertidas a WebP, lo que además borra los metadatos EXIF de los originales.
+Las siete fotos se descargaron de [Openverse](https://openverse.org) —Wikimedia Commons y
+rawpixel— con el filtro de licencias **sin obligaciones** (CC0 / dominio público), así que se
+pueden usar en una demostración comercial sin pedir permiso ni citar al autor. Están reescaladas
+(1400 px de ancho como máximo) y convertidas a WebP, lo que además borra los metadatos EXIF de los
+originales. Ninguna lleva marca de agua: se revisaron a tamaño real antes de publicarlas.
 
-| Archivo | Tamaño | Dónde se usa | Licencia |
-| --- | --- | --- | --- |
-| `img/portada.webp` | 1024 × 683 | Portada (inicio) | CC0 / dominio público |
-| `img/aula.webp` | 1024 × 683 | «Cómo se enseña»: laboratorio | CC0 / dominio público |
-| `img/grupo.webp` | 1000 × 667 | «Cómo se enseña»: trabajo en grupo | CC0 / dominio público |
-| `img/instalaciones.webp` | 1024 × 683 | «Cómo se enseña»: sala de estudio | CC0 / dominio público |
-| `img/egresados.webp` | 1024 × 682 | Certificación: cierre de promoción | CC0 / dominio público |
+Las tres primeras son las del **slider del hero**, a pantalla completa y por eso horizontales; las
+cuatro últimas van en las secciones, dentro de tarjetas.
 
-Nota de trazabilidad: la carpeta temporal de candidatas (20 fotos descargadas con
-`storage/tmp/fotos-academia.php`) se borró al terminar, así que no se conservaron los títulos
-originales de cada foto. No es un problema de licencia —CC0 y dominio público no exigen
-atribución—, pero si se quiere la ficha de origen de una imagen hay que volver a buscarla en
-Openverse con las consultas de ese script (`students laptop computers class`, `computer lab
+| Archivo | Tamaño | Dónde se usa | Foto original | Procedencia | Licencia |
+| --- | --- | --- | --- | --- | --- |
+| `img/clase.webp` | 1400 × 933 | Hero (1.ª foto) | *Arizona Geosciences Student Club 010* (Frank Schulenburg) | Wikimedia Commons vía Openverse | CC0 |
+| `img/conferencia.webp` | 1024 × 768 | Hero (2.ª foto) | rawpixel #5959368 | [rawpixel](https://www.rawpixel.com/image/5959368/free-public-domain-cc0-photo) | CC0 |
+| `img/practica.webp` | 1024 × 683 | Hero (3.ª foto) | *Woman working laptop* | [rawpixel #5920742](https://www.rawpixel.com/image/5920742/photo-image-background-public-domain-hand) | CC0 |
+| `img/aula.webp` | 1024 × 683 | «Cómo se enseña»: laboratorio | — | Wikimedia Commons vía Openverse | CC0 / dominio público |
+| `img/grupo.webp` | 1000 × 667 | «Cómo se enseña»: trabajo en grupo | — | Wikimedia Commons vía Openverse | CC0 / dominio público |
+| `img/instalaciones.webp` | 1024 × 683 | «Cómo se enseña»: biblioteca | — | Wikimedia Commons vía Openverse | CC0 / dominio público |
+| `img/egresados.webp` | 1024 × 682 | Certificación: cierre de promoción | — | Wikimedia Commons vía Openverse | CC0 / dominio público |
+
+Nota de trazabilidad: las cuatro fotos de las secciones salieron de una búsqueda con
+`storage/tmp/fotos-academia.php` (consultas `students laptop computers class`, `computer lab
 university`, `study group students table`, `graduation students ceremony`, `university library
-students`).
+students`) y su carpeta temporal se borró al terminar, así que de esas no se conservó el título
+original. No es un problema de licencia —CC0 y dominio público no exigen atribución—, pero si se
+quiere la ficha exacta hay que volver a buscarlas en Openverse con esas consultas.
 
 `img/mapa.svg` no es una foto: es un plano dibujado a mano para la demo (sin scripts de mapas de
 terceros). El botón «Abrir en Google Maps» del HTML sí lleva a la dirección del negocio.
 
 ## Qué se reemplaza al publicar el sitio de un cliente
 
-1. **Las cinco fotos** por las del negocio, con proporciones parecidas (3/2 horizontal). Se pueden
-   dejar los mismos nombres de archivo y no se toca el HTML.
+1. **Las siete fotos** por las del negocio. Las tres del slider del hero conviene cambiarlas
+   primero: se ven a pantalla completa, así que piden horizontales de 1600 px de ancho o más, y son
+   las que más canta que sean de un aula en el extranjero. Basta reemplazar los archivos con los
+   mismos nombres (`clase`, `conferencia`, `practica`); el HTML no se toca. Las cuatro de las
+   secciones son 3/2 horizontales.
 2. **El plano** por el mapa embebido que prefiera el cliente, o se mantiene el plano propio.
 3. **Los datos de ejemplo**: nombre de la academia, dirección, teléfonos, correo, docentes,
    testimonios, cifras, horarios, precios, fechas de inicio y número de cupos. Están en las cuatro
