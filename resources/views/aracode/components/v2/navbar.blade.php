@@ -12,6 +12,7 @@
                 <a href="{{ route('index_main') }}" class="nav-link {{ request()->routeIs('index_main') ? 'active' : '' }}">Inicio</a>
                 <a href="{{ route('soluciones') }}" class="nav-link {{ request()->routeIs('soluciones') || request()->routeIs('solucion_*') ? 'active' : '' }}">Soluciones</a>
                 <a href="{{ route('empresa') }}" class="nav-link {{ request()->routeIs('empresa') ? 'active' : '' }}">Empresa</a>
+                <a href="{{ route('plantillas.catalogo') }}" class="nav-link {{ request()->routeIs('plantillas.*') ? 'active' : '' }}">Plantillas</a>
                 <a href="{{ route('blog_principal') }}" class="nav-link {{ request()->routeIs('blog_*') ? 'active' : '' }}">Blog</a>
                 <a href="{{ route('contacto') }}" class="nav-link {{ request()->routeIs('contacto') ? 'active' : '' }}">Contacto</a>
             </div>
@@ -65,6 +66,7 @@
     <a href="{{ route('index_main') }}" class="nav-link {{ request()->routeIs('index_main') ? 'active' : '' }}">Inicio</a>
     <a href="{{ route('soluciones') }}" class="nav-link {{ request()->routeIs('soluciones') || request()->routeIs('solucion_*') ? 'active' : '' }}">Soluciones</a>
     <a href="{{ route('empresa') }}" class="nav-link {{ request()->routeIs('empresa') ? 'active' : '' }}">Empresa</a>
+    <a href="{{ route('plantillas.catalogo') }}" class="nav-link {{ request()->routeIs('plantillas.*') ? 'active' : '' }}">Plantillas</a>
     <a href="{{ route('blog_principal') }}" class="nav-link {{ request()->routeIs('blog_*') ? 'active' : '' }}">Blog</a>
     <a href="{{ route('contacto') }}" class="nav-link {{ request()->routeIs('contacto') ? 'active' : '' }}">Contacto</a>
     <div class="mt-8">

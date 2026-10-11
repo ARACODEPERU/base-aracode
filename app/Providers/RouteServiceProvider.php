@@ -39,6 +39,10 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
+            // Banco de Plantillas Web: catálogo, fichas y abridor de demos.
+            // Archivo propio para no tocar las rutas del sitio corporativo.
+            Route::middleware('web')->group(base_path('routes/plantillas.php'));
+
             // Sitios web independientes de cada producto (Blade puro).
             // Cada archivo declara su propio prefijo en una sola línea.
             Route::middleware('web')->group(base_path('routes/pichanguero.php'));

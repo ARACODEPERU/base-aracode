@@ -1,0 +1,721 @@
+/*
+   =============================================================================
+   Clínica Dental Sonrisa — hoja de estilos de la demostración
+   =============================================================================
+
+   CSS propio y sin dependencias: ni framework, ni CDN, ni una sola regla del
+   sitio corporativo de ARACODE. Todo lo que se ve en esta página sale de aquí,
+   que es lo que la hace una plantilla independiente y no una variante del
+   catálogo.
+
+   Orden: variables → base → utilidades mínimas → cabecera → secciones → pie →
+   ajustes de móvil y de movimiento reducido.
+*/
+
+/* =============================================================================
+   Variables
+   ============================================================================= */
+
+:root {
+    --verde: #0E9F8A;
+    --verde-oscuro: #0A7A6B;
+    --tinta: #10231F;
+    --gris: #5C6E6A;
+    --linea: #E1EBE8;
+    --menta: #F1F8F6;
+    --blanco: #FFFFFF;
+    --sombra: 0 18px 45px -30px rgba(16, 35, 31, 0.45);
+    --radio: 1.25rem;
+    --ancho: 72rem;
+    --fuente: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* =============================================================================
+   Base
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: var(--fuente);
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--tinta);
+    background: var(--blanco);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+    margin: 0 0 1rem;
+    line-height: 1.2;
+}
+
+h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    letter-spacing: -0.01em;
+}
+
+h2 {
+    font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+
+h3 {
+    font-size: 1.125rem;
+}
+
+p {
+    margin: 0 0 1rem;
+}
+
+a {
+    color: var(--verde-oscuro);
+}
+
+img,
+svg {
+    max-width: 100%;
+}
+
+/* =============================================================================
+   Utilidades
+   ============================================================================= */
+
+.contenedor {
+    width: 100%;
+    max-width: var(--ancho);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.sr-solo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.salto-contenido {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background: var(--tinta);
+    color: var(--blanco);
+    border-radius: 0 0 0.5rem 0;
+}
+
+.salto-contenido:focus {
+    left: 0;
+}
+
+.etiqueta {
+    display: inline-block;
+    margin: 0 0 0.75rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 9999px;
+    background: var(--menta);
+    color: var(--verde-oscuro);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.etiqueta--clara {
+    background: rgba(255, 255, 255, 0.14);
+    color: #CFF3EC;
+}
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.6rem;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.boton svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.boton--primario {
+    background: var(--verde);
+    color: var(--blanco);
+}
+
+.boton--primario:hover {
+    background: var(--verde-oscuro);
+    transform: translateY(-2px);
+}
+
+.boton--fantasma {
+    background: transparent;
+    color: var(--tinta);
+    border-color: var(--linea);
+}
+
+.boton--fantasma:hover {
+    border-color: var(--verde);
+    color: var(--verde-oscuro);
+}
+
+.boton--ancho {
+    width: 100%;
+}
+
+/* =============================================================================
+   Cabecera
+   ============================================================================= */
+
+.cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.94);
+    border-bottom: 1px solid var(--linea);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.cabecera__interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 4.5rem;
+}
+
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--tinta);
+    text-decoration: none;
+}
+
+.marca__icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.85rem;
+    background: var(--menta);
+    color: var(--verde);
+}
+
+.marca__icono svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.marca__texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.marca__texto strong {
+    font-size: 1rem;
+}
+
+.marca__texto span {
+    font-size: 0.8125rem;
+    color: var(--gris);
+}
+
+.menu-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--linea);
+    border-radius: 0.75rem;
+    background: var(--blanco);
+    color: var(--tinta);
+    cursor: pointer;
+}
+
+.menu-boton svg {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.menu ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.menu a {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    color: var(--tinta);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0.6rem;
+}
+
+.menu a:hover {
+    background: var(--menta);
+    color: var(--verde-oscuro);
+}
+
+.menu__cita {
+    background: var(--verde);
+    color: var(--blanco) !important;
+}
+
+.menu__cita:hover {
+    background: var(--verde-oscuro) !important;
+}
+
+/* El menú se despliega solo cuando el JS activa el estado */
+.menu {
+    display: none;
+    order: 3;
+    width: 100%;
+    padding-bottom: 1rem;
+}
+
+.menu.esta-abierto {
+    display: block;
+}
+
+@media (min-width: 900px) {
+    .menu-boton {
+        display: none;
+    }
+
+    .menu {
+        display: block;
+        order: 0;
+        width: auto;
+        padding-bottom: 0;
+    }
+
+    .menu ul {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.25rem;
+    }
+}
+
+/* =============================================================================
+   Portada
+   ============================================================================= */
+
+.portada {
+    padding: 4rem 0 4.5rem;
+    background: linear-gradient(180deg, var(--menta) 0%, var(--blanco) 100%);
+}
+
+.portada__interior {
+    display: grid;
+    gap: 3rem;
+    align-items: center;
+}
+
+@media (min-width: 900px) {
+    .portada__interior {
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    }
+}
+
+.portada__entrada {
+    max-width: 34rem;
+    font-size: 1.0625rem;
+    color: var(--gris);
+}
+
+.portada__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1.75rem 0 2.5rem;
+}
+
+.portada__datos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--linea);
+}
+
+.portada__datos dt {
+    font-size: 0.8125rem;
+    color: var(--gris);
+}
+
+.portada__datos dd {
+    margin: 0.25rem 0 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--verde-oscuro);
+}
+
+.portada__figura {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 18rem;
+    padding: 2rem;
+    border-radius: var(--radio);
+    background: linear-gradient(160deg, #E8F5F2 0%, #D3EDE7 100%);
+}
+
+.portada__ilustracion {
+    color: rgba(14, 159, 138, 0.35);
+}
+
+.portada__ilustracion svg {
+    width: 13rem;
+    height: 13rem;
+    stroke-width: 0.7;
+}
+
+.tarjeta-flotante {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.25rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: 1rem;
+    background: var(--blanco);
+    box-shadow: var(--sombra);
+}
+
+.tarjeta-flotante p {
+    margin: 0;
+}
+
+.tarjeta-flotante__titulo {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gris);
+}
+
+.tarjeta-flotante__dato {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.tarjeta-flotante__nota {
+    font-size: 0.8125rem;
+    color: var(--verde-oscuro);
+}
+
+/* =============================================================================
+   Secciones
+   ============================================================================= */
+
+.seccion {
+    padding: 4.5rem 0;
+}
+
+.seccion--oscura {
+    background: var(--tinta);
+    color: var(--blanco);
+}
+
+.seccion--oscura .seccion__entrada,
+.seccion--oscura p {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.seccion__cabecera {
+    max-width: 40rem;
+    margin-bottom: 3rem;
+}
+
+.seccion__entrada {
+    color: var(--gris);
+}
+
+.dos-columnas {
+    display: grid;
+    gap: 3rem;
+}
+
+@media (min-width: 900px) {
+    .dos-columnas {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .dos-columnas--cita {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    }
+}
+
+/* --- Rejilla de tratamientos --- */
+
+.rejilla {
+    display: grid;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 640px) {
+    .rejilla--tres {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1000px) {
+    .rejilla--tres {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.tarjeta {
+    padding: 1.75rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    box-shadow: 0 18px 40px -34px rgba(16, 35, 31, 0.4);
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tarjeta:hover {
+    transform: translateY(-5px);
+    border-color: rgba(14, 159, 138, 0.5);
+    box-shadow: 0 26px 50px -32px rgba(14, 159, 138, 0.45);
+}
+
+.tarjeta h3 {
+    margin-bottom: 0.5rem;
+}
+
+.tarjeta p {
+    margin: 0;
+    color: var(--gris);
+    font-size: 0.9375rem;
+}
+
+.tarjeta__icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    background: var(--menta);
+    color: var(--verde);
+}
+
+.tarjeta__icono svg {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+/* --- Lista marcada y equipo --- */
+
+.lista-marcada {
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.lista-marcada li {
+    position: relative;
+    padding-left: 1.75rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.lista-marcada li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 0.75rem;
+    height: 0.4rem;
+    border-left: 2px solid var(--verde);
+    border-bottom: 2px solid var(--verde);
+    transform: rotate(-45deg);
+}
+
+.equipo {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.equipo li {
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.equipo strong {
+    display: block;
+}
+
+.equipo span {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+/* --- Horarios --- */
+
+.horarios {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.75rem;
+    font-size: 0.9375rem;
+}
+
+.horarios th,
+.horarios td {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--linea);
+    text-align: left;
+}
+
+.horarios th {
+    font-weight: 600;
+}
+
+.horarios td {
+    text-align: right;
+    color: var(--gris);
+}
+
+.direccion {
+    font-style: normal;
+    color: var(--gris);
+    line-height: 1.7;
+}
+
+/* --- Formulario de cita --- */
+
+.cita {
+    padding: 2rem;
+    border-radius: var(--radio);
+    background: var(--menta);
+    border: 1px solid var(--linea);
+}
+
+.formulario {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.formulario label {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.formulario input,
+.formulario select {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--linea);
+    border-radius: 0.75rem;
+    background: var(--blanco);
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--tinta);
+}
+
+.formulario input:focus,
+.formulario select:focus {
+    outline: 2px solid var(--verde);
+    outline-offset: 1px;
+    border-color: var(--verde);
+}
+
+.formulario .boton {
+    margin-top: 1rem;
+}
+
+.formulario__nota {
+    margin: 0.75rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--gris);
+}
+
+/* =============================================================================
+   Pie
+   ============================================================================= */
+
+.pie {
+    padding: 2.5rem 0;
+    background: var(--tinta);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9375rem;
+}
+
+.pie__interior {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    justify-content: space-between;
+}
+
+.pie p {
+    margin: 0;
+}
+
+.pie__nota strong {
+    color: var(--blanco);
+}
+
+/* =============================================================================
+   Movimiento reducido
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .boton,
+    .tarjeta {
+        transition: none;
+    }
+
+    .boton--primario:hover,
+    .tarjeta:hover {
+        transform: none;
+    }
+}

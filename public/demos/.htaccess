@@ -1,0 +1,34 @@
+# =============================================================================
+# Demostraciones del Banco de Plantillas Web
+# =============================================================================
+#
+# Cada carpeta de aquí dentro es una plantilla web independiente: HTML, CSS y JS
+# propios, sin Blade, sin Laravel y sin los estilos del sitio corporativo.
+#
+# Estas reglas las sirve el servidor web directamente (el .htaccess de public/
+# solo manda a index.php lo que NO es archivo ni carpeta real), así que la
+# demostración nunca pasa por la aplicación.
+#
+# Seguridad: aquí solo entra contenido estático. Si alguien dejara un .php
+# dentro de una plantilla descargada, no debe ejecutarse; y el listado de
+# carpetas queda prohibido para no exponer archivos sueltos.
+# =============================================================================
+
+Options -Indexes -ExecCGI
+
+<IfModule mod_mime.c>
+    RemoveHandler .php .phtml .phar .php3 .php4 .php5 .php7 .php8
+    RemoveType .php .phtml .phar
+</IfModule>
+
+# Sin condicionales de PHP (php_flag/php_value) a propósito: solo funcionan con
+# mod_php y romperían el servidor con php-fpm. Estas directivas valen en ambos.
+<FilesMatch "(?i)\.(php[0-9]?|phtml|phar|cgi|pl|py|sh|htaccess|env)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

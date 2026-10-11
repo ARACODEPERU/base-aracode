@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Demostración de la plantilla «Clínica Dental» del Banco de Plantillas Web
+    de ARACODE.
+
+    Es un proyecto web independiente: no comparte CSS, JavaScript, componentes ni
+    estructura con el sitio corporativo ni con el catálogo. Sus archivos viven
+    todos en esta carpeta (css/, js/) y las rutas son relativas, así que la
+    carpeta se puede copiar a cualquier servidor o a su propio subdominio sin
+    cambiar una línea.
+
+    noindex: la página que se indexa es la ficha de la plantilla en el catálogo;
+    la demo existe para verla funcionando.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Demostración de la plantilla Clínica Dental: tratamientos, equipo, horarios y reserva de cita.">
+
+<title>Clínica Dental Sonrisa — Demostración de plantilla</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="#inicio" aria-label="Clínica Dental Sonrisa, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5.5C10.6 4.3 9 3.7 7.6 4.1 5.6 4.7 4.4 6.6 4.6 8.9c.1 1.6.6 3 .9 4.5.3 1.6.4 3.4.8 5 .3 1.2 1 2 1.9 2 1 0 1.5-.9 1.8-2.2.3-1.3.5-2.6 1.4-2.6s1.1 1.3 1.4 2.6c.3 1.3.8 2.2 1.8 2.2.9 0 1.6-.8 1.9-2 .4-1.6.5-3.4.8-5 .3-1.5.8-2.9.9-4.5.2-2.3-1-4.2-3-4.8-1.4-.4-3 .2-4.4 1.4Z"/>
+                </svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Clínica Dental</strong>
+                <span>Sonrisa</span>
+            </span>
+        </a>
+
+        <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+            <span class="sr-solo">Abrir menú</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16"/>
+            </svg>
+        </button>
+
+        <nav class="menu" id="menu-principal" aria-label="Principal">
+            <ul>
+                <li><a href="#tratamientos">Tratamientos</a></li>
+                <li><a href="#clinica">La clínica</a></li>
+                <li><a href="#horarios">Horarios</a></li>
+                <li><a href="#cita" class="menu__cita">Reservar cita</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== PORTADA ===================== -->
+    <section class="portada" id="inicio">
+        <div class="contenedor portada__interior">
+            <div class="portada__texto">
+                <p class="etiqueta">Odontología familiar en Nuevo Chimbote</p>
+                <h1>Tu sonrisa, en manos que explican cada paso</h1>
+                <p class="portada__entrada">
+                    Odontología general, ortodoncia y estética dental con presupuesto por escrito
+                    antes de empezar. Atendemos niños y adultos, de lunes a sábado.
+                </p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--primario" href="#cita">
+                        Reservar cita
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a class="boton boton--fantasma" href="#tratamientos">Ver tratamientos</a>
+                </div>
+
+                <dl class="portada__datos">
+                    <div>
+                        <dt>Pacientes atendidos</dt>
+                        <dd>+3.400</dd>
+                    </div>
+                    <div>
+                        <dt>Años en el barrio</dt>
+                        <dd>11</dd>
+                    </div>
+                    <div>
+                        <dt>Especialidades</dt>
+                        <dd>6</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="portada__figura" aria-hidden="true">
+                <div class="tarjeta-flotante">
+                    <p class="tarjeta-flotante__titulo">Horario de hoy</p>
+                    <p class="tarjeta-flotante__dato">9:00 — 20:00</p>
+                    <p class="tarjeta-flotante__nota">Atención continua</p>
+                </div>
+                <div class="portada__ilustracion">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 5.5C10.6 4.3 9 3.7 7.6 4.1 5.6 4.7 4.4 6.6 4.6 8.9c.1 1.6.6 3 .9 4.5.3 1.6.4 3.4.8 5 .3 1.2 1 2 1.9 2 1 0 1.5-.9 1.8-2.2.3-1.3.5-2.6 1.4-2.6s1.1 1.3 1.4 2.6c.3 1.3.8 2.2 1.8 2.2.9 0 1.6-.8 1.9-2 .4-1.6.5-3.4.8-5 .3-1.5.8-2.9.9-4.5.2-2.3-1-4.2-3-4.8-1.4-.4-3 .2-4.4 1.4Z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== TRATAMIENTOS ===================== -->
+    <section class="seccion" id="tratamientos">
+        <div class="contenedor">
+            <header class="seccion__cabecera">
+                <p class="etiqueta">Tratamientos</p>
+                <h2>Lo que resolvemos en consultorio</h2>
+                <p class="seccion__entrada">
+                    Cada tratamiento incluye diagnóstico, presupuesto y explicación del plan
+                    antes de empezar.
+                </p>
+            </header>
+
+            <ul class="rejilla rejilla--tres">
+                <li class="tarjeta">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6m0 0-4 2m4-2 4 2M5 12a7 7 0 0 0 14 0M12 19v2"/></svg>
+                    </span>
+                    <h3>Odontología general</h3>
+                    <p>Limpieza, curaciones y control de caries con seguimiento cada seis meses.</p>
+                </li>
+                <li class="tarjeta">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/></svg>
+                    </span>
+                    <h3>Ortodoncia</h3>
+                    <p>Brackets metálicos y estéticos, con controles mensuales y plan de pagos.</p>
+                </li>
+                <li class="tarjeta">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 9.7l5.4-.8L12 4z"/></svg>
+                    </span>
+                    <h3>Estética dental</h3>
+                    <p>Blanqueamiento y carillas para recuperar el color y la forma del diente.</p>
+                </li>
+                <li class="tarjeta">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.3-7-9.5A3.9 3.9 0 0 1 12 9a3.9 3.9 0 0 1 7 2.5C19 16.7 12 21 12 21z"/></svg>
+                    </span>
+                    <h3>Odontopediatría</h3>
+                    <p>Primera consulta sin costo para niños y control del crecimiento dental.</p>
+                </li>
+                <li class="tarjeta">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12M9 8V6a3 3 0 0 1 6 0v2M5 8l1 11h12l1-11"/></svg>
+                    </span>
+                    <h3>Endodoncia</h3>
+                    <p>Tratamiento de conducto para salvar la pieza y quitar el dolor.</p>
+                </li>
+                <li class="tarjeta">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4v5c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V7l8-4z"/></svg>
+                    </span>
+                    <h3>Urgencias</h3>
+                    <p>Dolor agudo o pieza rota: reservamos un espacio el mismo día.</p>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== LA CLÍNICA ===================== -->
+    <section class="seccion seccion--oscura" id="clinica">
+        <div class="contenedor dos-columnas">
+            <div>
+                <p class="etiqueta etiqueta--clara">La clínica</p>
+                <h2>Un consultorio que se explica sin apuro</h2>
+                <p class="seccion__entrada">
+                    Somos un equipo de cuatro odontólogos con especialidades distintas, para que
+                    no tengas que ir de una clínica a otra. Trabajamos con instrumentos
+                    esterilizados por ciclo y radiografía digital en el mismo consultorio.
+                </p>
+
+                <ul class="lista-marcada">
+                    <li>Diagnóstico con radiografía en la misma visita</li>
+                    <li>Presupuesto por escrito antes de empezar</li>
+                    <li>Financiamiento hasta en 12 cuotas</li>
+                    <li>Historia clínica digital del paciente</li>
+                </ul>
+            </div>
+
+            <ul class="equipo">
+                <li>
+                    <strong>Dra. Ana Beltrán</strong>
+                    <span>Ortodoncia y estética dental</span>
+                </li>
+                <li>
+                    <strong>Dr. Luis Quiroz</strong>
+                    <span>Endodoncia y rehabilitación</span>
+                </li>
+                <li>
+                    <strong>Dra. Carmen Ruiz</strong>
+                    <span>Odontopediatría</span>
+                </li>
+                <li>
+                    <strong>Dr. José Ramírez</strong>
+                    <span>Cirugía e implantes</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== HORARIOS Y CITA ===================== -->
+    <section class="seccion" id="horarios">
+        <div class="contenedor dos-columnas dos-columnas--cita">
+            <div>
+                <p class="etiqueta">Horarios</p>
+                <h2>Cuándo atendemos</h2>
+
+                <table class="horarios">
+                    <caption class="sr-solo">Horario de atención de la clínica</caption>
+                    <tbody>
+                        <tr><th scope="row">Lunes a viernes</th><td>9:00 — 20:00</td></tr>
+                        <tr><th scope="row">Sábados</th><td>9:00 — 14:00</td></tr>
+                        <tr><th scope="row">Domingos</th><td>Solo urgencias</td></tr>
+                    </tbody>
+                </table>
+
+                <address class="direccion">
+                    Av. Los Álamos 456, Nuevo Chimbote<br>
+                    Referencia: a media cuadra de la plaza principal<br>
+                    <a href="tel:+51900000000">+51 900 000 000</a>
+                </address>
+            </div>
+
+            <div class="cita" id="cita">
+                <h2>Reservar cita</h2>
+                <p>
+                    Déjanos tus datos y te confirmamos el horario disponible por WhatsApp
+                    el mismo día.
+                </p>
+
+                <!-- Sin backend: la demostración solo muestra el formulario -->
+                <form class="formulario" action="#" method="post">
+                    <label for="nombre">Nombre y apellido</label>
+                    <input id="nombre" name="nombre" type="text" autocomplete="name" placeholder="María Torres">
+
+                    <label for="telefono">Teléfono o WhatsApp</label>
+                    <input id="telefono" name="telefono" type="tel" autocomplete="tel" placeholder="999 888 777">
+
+                    <label for="motivo">Motivo de la consulta</label>
+                    <select id="motivo" name="motivo">
+                        <option>Consulta general</option>
+                        <option>Ortodoncia</option>
+                        <option>Estética dental</option>
+                        <option>Urgencia por dolor</option>
+                    </select>
+
+                    <button class="boton boton--primario boton--ancho" type="submit">Solicitar cita</button>
+
+                    <p class="formulario__nota">
+                        Demostración: el formulario no envía datos.
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__interior">
+        <p>© <span id="anio">2026</span> Clínica Dental Sonrisa. Plantilla de demostración.</p>
+        <p class="pie__nota">
+            Demostración del <strong>Banco de Plantillas Web</strong> de ARACODE Smart Solutions.
+        </p>
+    </div>
+</footer>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>
