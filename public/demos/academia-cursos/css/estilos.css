@@ -485,13 +485,28 @@ html.js .revelar.visible {
 
     .menu {
         position: fixed;
-        inset: 0 0 auto 0;
-        padding: 5rem 1.5rem 2rem;
+        /*
+           El `backdrop-filter` de la cabecera la convierte en el bloque
+           contenedor de sus hijos `fixed`, así que el menú se mide contra ella y
+           no contra el viewport: `top: 100%` lo deja justo debajo de la
+           cabecera. Con `top: 0` el panel tapaba la marca y el propio botón, y
+           el menú no se podía cerrar con el botón que lo abre.
+        */
+        inset: 100% 0 auto 0;
+        padding: 0.75rem 1.5rem 2rem;
         background: var(--blanco);
         border-bottom: 1px solid var(--linea);
         box-shadow: var(--sombra-alta);
         transform: translateY(-102%);
-        transition: transform 0.3s ease;
+        /*
+           Cerrado no se pinta: con solo el desplazamiento asomaba su borde
+           inferior por encima de la cabecera (el botón de matrícula aparecía
+           sobre la barra superior), y de paso sus enlaces no se pueden enfocar
+           con el tabulador sin abrirlo.
+        */
+        visibility: hidden;
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
         z-index: 30;
     }
 
@@ -514,6 +529,8 @@ html.js .revelar.visible {
 
     .menu--abierto {
         transform: translateY(0);
+        visibility: visible;
+        opacity: 1;
     }
 }
 
@@ -1946,6 +1963,144 @@ html.js .revelar.visible {
     100% {
         opacity: 0;
     }
+}
+
+/* =============================================================================
+   Encabezado de las páginas interiores
+   =============================================================================
+
+   El inicio tiene portada; el catálogo, la ficha y la matrícula empiezan con
+   esta franja oscura: el mismo degradado del cierre para que las páginas se
+   reconozcan como de la misma casa.
+*/
+
+.encabezado {
+    padding: 2.75rem 0 2.5rem;
+    background: linear-gradient(120deg, var(--indigo) 0%, #1D3170 55%, var(--indigo-2) 100%);
+    color: var(--blanco);
+}
+
+.encabezado h1 {
+    color: var(--blanco);
+    margin-bottom: 0.75rem;
+}
+
+.encabezado__lead {
+    max-width: 48rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Dentro de la franja oscura, las migajas y sus enlaces van en claro. */
+.encabezado .migajas,
+.encabezado .migajas a {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.encabezado .migajas a:hover {
+    color: var(--blanco);
+}
+
+/* La ficha de un curso lleva sus datos al costado del título. */
+.encabezado__curso {
+    display: grid;
+    gap: 1.75rem;
+}
+
+@media (min-width: 900px) {
+    .encabezado__curso {
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        gap: 3rem;
+        align-items: end;
+    }
+}
+
+.etiquetas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.etiquetas li {
+    padding: 0.3rem 0.8rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--blanco);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.cifras-curso {
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 1.5rem 1.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.cifras-curso div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cifras-curso dt {
+    color: rgba(255, 255, 255, 0.66);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.cifras-curso dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+/* =============================================================================
+   Piezas de apoyo de las páginas interiores
+   ============================================================================= */
+
+/* Una rejilla de dos, para bloques que no llegan a tres. */
+.rejilla-2 {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 820px) {
+    .rejilla-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Sección con menos aire, para las páginas que encadenan varios bloques
+   cortos (catálogo, matrícula) y no deben parecer un scroll interminable. */
+.seccion--compacta {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+/* Medio punto de los acordeones de la ficha. */
+.modulo p {
+    margin: 0 0 0.85rem;
+    color: var(--gris);
+    font-size: 0.9375rem;
+}
+
+/* Lo que el JavaScript oculta con el atributo `hidden` no lo revive el CSS:
+   los cursos filtrados usan display flex y ganarían a la regla del navegador. */
+[hidden] {
+    display: none !important;
 }
 
 /* =============================================================================

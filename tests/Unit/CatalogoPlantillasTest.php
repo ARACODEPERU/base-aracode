@@ -208,6 +208,65 @@ it('compila su hoja de estilos sin declarar clases del sitio', function () {
     expect($css)->not->toContain('@tailwind');
 });
 
+it('solo publica la demostración de las plantillas que la tienen de verdad', function () {
+    foreach (CatalogoPlantillas::todas() as $plantilla) {
+        if (! CatalogoPlantillas::tieneDemo($plantilla)) {
+            // Sin demo la ficha avisa de que está en preparación: nunca un enlace roto.
+            expect(CatalogoPlantillas::urlDemo($plantilla))->toBeNull();
+
+            continue;
+        }
+
+        // La carpeta de la config es relativa a public/demos/ y ahí está su entrada.
+        expect(CatalogoPlantillas::urlDemo($plantilla))->toEndWith('/demos/'.$plantilla['demo'].'/');
+        expect(is_file(public_path('demos/'.$plantilla['demo'].'/index.html')))->toBeTrue();
+    }
+
+    // Las dos demostraciones publicadas se resuelven: la landing y el sitio web.
+    expect(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('academia-cursos')))
+        ->toEndWith('/demos/academia-cursos/');
+});
+
+it('no deja enlaces internos rotos en una demo de varias páginas', function () {
+    // La academia es la primera demo de tipo sitio: sus páginas se enlazan entre
+    // sí y con rutas relativas, así que una página mal nombrada se lleva al
+    // visitante a un 404 dentro de la demostración.
+    $demo = public_path('demos/academia-cursos');
+    $archivos = glob($demo.'/*.html');
+
+    expect($archivos)->toHaveCount(4);
+
+    $paginas = array_map(fn (string $ruta) => basename($ruta), $archivos);
+    $enlaces = [];
+
+    foreach ($archivos as $archivo) {
+        preg_match_all('/href="([^":]+?\.html)(?:[?#][^"]*)?"/i', file_get_contents($archivo), $coincidencias);
+
+        foreach ($coincidencias[1] as $destino) {
+            $enlaces[basename($archivo).' → '.$destino] = $destino;
+        }
+    }
+
+    expect($enlaces)->not->toBeEmpty();
+
+    // Cada página enlazada existe y es una de las cuatro de la demo. Si una se
+    // rompe, el mensaje de la prueba dice desde qué página se enlazaba.
+    $rotos = [];
+
+    foreach ($enlaces as $descripcion => $destino) {
+        if (! in_array($destino, $paginas, true) || ! is_file($demo.'/'.$destino)) {
+            $rotos[] = $descripcion;
+        }
+    }
+
+    expect($rotos)->toBe([], 'Enlaces internos rotos: '.implode(', ', $rotos));
+
+    // Y el menú lleva a las tres secciones: inicio, catálogo y matrícula.
+    expect(array_values($enlaces))->toContain('cursos.html');
+    expect(array_values($enlaces))->toContain('matricula.html');
+    expect(array_values($enlaces))->toContain('curso-desarrollo-web.html');
+});
+
 it('abre la demostración con un 302 a su carpeta y 404 si todavía no está', function () {
     $respuesta = $this->get('/demo/clinica-dental');
 

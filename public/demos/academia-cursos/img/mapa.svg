@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="900" height="560" role="img" aria-label="Plano de la ubicación de la academia en la Av. Bolognesi 1234, Nuevo Chimbote">
+    <title>Plano de la ubicación de la academia</title>
+
+    <!--
+        Plano propio de la demostración: dibujado a mano en SVG para no cargar
+        scripts de mapas de terceros (privacidad y peso). El botón «Abrir en
+        Google Maps» del HTML sí lleva a la dirección del negocio, así que el
+        visitante llega con indicaciones giro a giro.
+    -->
+
+    <defs>
+        <linearGradient id="agua" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#D3DEF7"/>
+            <stop offset="1" stop-color="#BCCBF1"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="900" height="560" fill="#F4F7FD"/>
+
+    <!-- Manzanas -->
+    <g fill="#E6ECF8">
+        <rect x="40" y="40" width="200" height="150" rx="10"/>
+        <rect x="270" y="40" width="230" height="150" rx="10"/>
+        <rect x="530" y="40" width="150" height="150" rx="10"/>
+        <rect x="40" y="230" width="200" height="120" rx="10"/>
+        <rect x="270" y="230" width="230" height="120" rx="10"/>
+        <rect x="530" y="230" width="150" height="120" rx="10"/>
+        <rect x="40" y="390" width="200" height="130" rx="10"/>
+        <rect x="270" y="390" width="230" height="130" rx="10"/>
+        <rect x="530" y="390" width="150" height="130" rx="10"/>
+    </g>
+
+    <!-- Bahía y avenidas -->
+    <rect x="700" y="0" width="200" height="560" fill="url(#agua)"/>
+    <rect x="0" y="200" width="900" height="20" fill="#FFFFFF"/>
+    <rect x="0" y="370" width="900" height="14" fill="#FFFFFF"/>
+    <rect x="250" y="0" width="16" height="560" fill="#FFFFFF"/>
+    <rect x="510" y="0" width="16" height="560" fill="#FFFFFF"/>
+
+    <!-- Nombres de calles -->
+    <g fill="#5A6684" font-family="Segoe UI, Roboto, sans-serif" font-size="15" font-weight="600">
+        <text x="30" y="215">Av. Bolognesi</text>
+        <text x="30" y="384">Jr. Los Cedros</text>
+        <text x="258" y="26" transform="rotate(90 258 26)">Av. Argentina</text>
+        <text x="518" y="26" transform="rotate(90 518 26)">Av. Pardo</text>
+    </g>
+
+    <!-- Referencias del barrio -->
+    <g fill="#8E9BB8" font-family="Segoe UI, Roboto, sans-serif" font-size="14">
+        <text x="70" y="120">Plaza de armas</text>
+        <text x="300" y="120">Mercado central</text>
+        <text x="556" y="120">Colegio</text>
+        <text x="70" y="300">Estacionamiento</text>
+        <text x="300" y="300">Municipalidad</text>
+        <text x="70" y="470">Botica</text>
+        <text x="300" y="470">Banco</text>
+    </g>
+    <text x="760" y="290" fill="#5A6684" font-family="Segoe UI, Roboto, sans-serif" font-size="14" transform="rotate(90 760 290)">Bahía de Chimbote</text>
+
+    <!-- La academia: marcador sobre la Av. Bolognesi -->
+    <g transform="translate(150 232)">
+        <path d="M0 60c0-14 26-34 26-56A26 26 0 1 0-26 4c0 22 26 42 26 56Z" fill="#16265A" transform="translate(0 -4)"/>
+        <circle cx="0" cy="-22" r="9" fill="#FFFFFF"/>
+        <!-- Birrete, el símbolo de la academia -->
+        <path d="M-6.5-24 0-27.2 6.5-24 0-20.8Z" fill="#F2A61B"/>
+        <path d="M-3.6-22.6v2.4c0 .9 1.6 1.5 3.6 1.5s3.6-.6 3.6-1.5v-2.4" fill="none" stroke="#F2A61B" stroke-width="1.6" stroke-linecap="round"/>
+    </g>
+
+    <g font-family="Segoe UI, Roboto, sans-serif">
+        <rect x="196" y="252" width="278" height="54" rx="12" fill="#FFFFFF" stroke="#E3E8F4"/>
+        <text x="214" y="275" fill="#17203C" font-size="16" font-weight="700">Academia Horizonte</text>
+        <text x="214" y="295" fill="#5A6684" font-size="14">Av. Bolognesi 1234 · a 5 minutos de la plaza</text>
+    </g>
+
+    <!-- Brújula -->
+    <g transform="translate(838 502)" font-family="Segoe UI, Roboto, sans-serif">
+        <circle r="26" fill="#FFFFFF" stroke="#E3E8F4"/>
+        <path d="M0-14 6 6 0 2 -6 6Z" fill="#16265A"/>
+        <text x="-4" y="-16" fill="#5A6684" font-size="11" font-weight="700">N</text>
+    </g>
+</svg>

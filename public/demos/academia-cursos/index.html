@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Demostración de la plantilla «Academia de Cursos» del Banco de Plantillas
+    Web de ARACODE.
+
+    Es la primera plantilla de formato SITIO WEB del banco: cuatro páginas
+    enlazadas con rutas relativas (index.html, cursos.html, la ficha de un curso
+    y matricula.html) y su propio CSS y JavaScript compartidos dentro de la
+    carpeta. No usa nada del sitio corporativo ni de las otras plantillas, así
+    que se puede copiar a su propio dominio tal cual.
+
+    Datos, precios, docentes y testimonios son inventados: están marcados para
+    reemplazarlos. Ver CREDITOS.md.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Demostración de la plantilla Academia de Cursos: catálogo con precios y modalidades, temario por módulos, docentes, certificación, matrícula en línea y ubicación.">
+
+<title>Academia Horizonte — Demostración de plantilla</title>
+
+<link rel="preload" as="image" href="img/portada.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:00 a 21:00 · sábados de 8:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 001
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Academia Horizonte, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/>
+                </svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Academia</strong>
+                <span>Horizonte</span>
+            </span>
+        </a>
+
+        <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+            <span class="sr-solo">Abrir menú</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+
+        <nav class="menu" id="menu-principal" aria-label="Principal">
+            <ul>
+                <li><a href="index.html" aria-current="page">Inicio</a></li>
+                <li><a href="cursos.html">Cursos</a></li>
+                <li><a href="matricula.html#visitanos">Visítanos</a></li>
+                <li><a href="matricula.html" class="menu__matricula">Matricularme</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== PORTADA ===================== -->
+
+    <section class="portada" id="inicio">
+        <div class="contenedor portada__rejilla">
+            <div class="portada__texto revelar">
+                <p class="sello">Cursos cortos con certificado en Nuevo Chimbote</p>
+
+                <h1>Estudia, practica y certifícate en pocas semanas</h1>
+
+                <p class="portada__lead">
+                    Ocho cursos de tecnología, gestión, idiomas y diseño, con clases presenciales
+                    u online, grupos de quince y profesor que responde tus dudas hasta que salga.
+                </p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--principal" href="matricula.html">
+                        Matricularme
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a class="boton boton--fantasma" href="cursos.html">Ver los cursos y precios</a>
+                </div>
+
+                <ul class="portada__datos">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Certificado con código de verificación al terminar
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Puedes pagar en dos partes o por Yape y Plin
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Si trabajas, hay horarios de 7:00 y de 19:00
+                    </li>
+                </ul>
+            </div>
+
+            <figure class="portada__foto revelar">
+                <img src="img/portada.webp" width="1024" height="683" alt="Alumnos de la academia trabajando con laptops durante una clase">
+                <figcaption class="portada__proximo">
+                    <span class="portada__proximo-titulo">Próximo inicio</span>
+                    <strong>Lunes 2 de noviembre</strong>
+                    <span>Cupos por orden de matrícula</span>
+                </figcaption>
+            </figure>
+        </div>
+
+        <div class="contenedor">
+            <dl class="cifras">
+                <div>
+                    <dt>Alumnos formados</dt>
+                    <dd><span data-contador="1840" data-prefijo="+">+0</span></dd>
+                </div>
+                <div>
+                    <dt>Años enseñando</dt>
+                    <dd><span data-contador="9">0</span></dd>
+                </div>
+                <div>
+                    <dt>Cursos activos</dt>
+                    <dd><span data-contador="8">0</span></dd>
+                </div>
+                <div>
+                    <dt>Terminan el curso</dt>
+                    <dd><span data-contador="92" data-sufijo="%">0%</span></dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+
+    <!-- ===================== ÁREAS ===================== -->
+
+    <section class="seccion" id="areas">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Áreas</p>
+                <h2>Por dónde empezar</h2>
+                <p>Cuatro áreas, cada una con su ruta de cursos. Puedes empezar por el que necesites para tu trabajo.</p>
+            </header>
+
+            <ul class="rejilla-4">
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8H4v12h4M16 8h4v12h-4M12 4v16"/></svg>
+                    </span>
+                    <h3>Tecnología</h3>
+                    <p>Desarrollo web, soporte de equipos y ofimática aplicada.</p>
+                    <a class="tarjeta__enlace" href="cursos.html?area=tecnologia">Ver cursos de tecnología</a>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5m0 14h16M8 16V9m4 7V6m4 10v-4"/></svg>
+                    </span>
+                    <h3>Gestión</h3>
+                    <p>Excel para empresas, contabilidad y marketing para negocios.</p>
+                    <a class="tarjeta__enlace" href="cursos.html?area=gestion">Ver cursos de gestión</a>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3.5 12h17M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z"/></svg>
+                    </span>
+                    <h3>Idiomas</h3>
+                    <p>Inglés conversacional por niveles, con clases en vivo.</p>
+                    <a class="tarjeta__enlace" href="cursos.html?area=idiomas">Ver cursos de idiomas</a>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .9-4.4 4.3 1 6-5.2-2.9-5.2 2.9 1-6L3.4 9.5l6-.9L12 3Z"/></svg>
+                    </span>
+                    <h3>Diseño</h3>
+                    <p>Diseño gráfico digital y dibujo técnico para proyectos.</p>
+                    <a class="tarjeta__enlace" href="cursos.html?area=diseno">Ver cursos de diseño</a>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== CURSOS DESTACADOS ===================== -->
+
+    <section class="seccion seccion--hielo" id="destacados">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Los más pedidos</p>
+                <h2>Cursos que la gente está llevando ahora</h2>
+                <p>Los tres con más matrículas de este ciclo. Los ocho, con sus precios y fechas, están en el catálogo.</p>
+            </header>
+
+            <ul class="cursos">
+                <li class="curso revelar" data-area="tecnologia" data-modalidad="hibrido" data-slug="desarrollo-web">
+                    <p class="curso__cabecera">Tecnología <span class="curso__nivel">Intermedio</span></p>
+                    <div class="curso__cuerpo">
+                        <h3 class="curso__titulo">Desarrollo Web Full Stack</h3>
+                        <p class="curso__resumen">
+                            Del HTML a una aplicación con base de datos. Sales con tres proyectos
+                            publicados y un portafolio que puedes mostrar.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                24 semanas · 288 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial y online en vivo
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 1.200 <small>o 2 cuotas de S/ 600</small></span>
+                            <a class="boton boton--indigo boton--chico" href="curso-desarrollo-web.html">Ver temario</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-area="gestion" data-modalidad="presencial" data-slug="excel-empresas">
+                    <p class="curso__cabecera">Gestión <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h3 class="curso__titulo">Excel para empresas</h3>
+                        <p class="curso__resumen">
+                            Tablas, fórmulas que sí se usan en el trabajo, tablas dinámicas y un
+                            reporte final con tus propios datos.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                8 semanas · 32 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial, martes y jueves
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 320 <small>pago único</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20Excel%20para%20empresas" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-area="gestion" data-modalidad="online" data-slug="marketing-digital">
+                    <p class="curso__cabecera">Gestión <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h3 class="curso__titulo">Marketing digital para negocios</h3>
+                        <p class="curso__resumen">
+                            Contenido, pauta y medición para vender por redes. Cada alumno trabaja
+                            con el negocio que tiene o quiere abrir.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                6 semanas · 24 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Online en vivo, lunes y miércoles
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 380 <small>pago único</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20Marketing%20digital" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+
+            <p class="seccion__pie">
+                <a class="boton boton--indigo" href="cursos.html">
+                    Ver los 8 cursos, precios y fechas
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== METODOLOGÍA ===================== -->
+
+    <section class="seccion" id="metodologia">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Cómo se enseña</p>
+                <h2>Clases con quince personas, no con cuarenta</h2>
+                <p>Grupos chicos para que el profesor alcance a cada alumno, y práctica desde la primera clase.</p>
+            </header>
+
+            <div class="bloque-foto revelar">
+                <div>
+                    <h3>Mitad teoría, mitad mano en la máquina</h3>
+                    <p>
+                        Cada sesión empieza con el concepto y sigue con el ejercicio sobre tu
+                        computadora o la del laboratorio. Lo que no te sale en clase lo repasamos
+                        al inicio de la siguiente.
+                    </p>
+
+                    <ul class="lista-check">
+                        <li>Laboratorio con una computadora por alumno</li>
+                        <li>Grabación de la clase disponible una semana</li>
+                        <li>Ejercicios revisados, no solo entregados</li>
+                        <li>Grupo de WhatsApp del aula con el docente</li>
+                    </ul>
+                </div>
+
+                <figure>
+                    <img src="img/aula.webp" width="1024" height="683" alt="Laboratorio de cómputo de la academia con equipos listos para la clase" loading="lazy" decoding="async">
+                    <figcaption>Laboratorio propio: una máquina por alumno y proyector en cada aula.</figcaption>
+                </figure>
+            </div>
+
+            <div class="bloque-foto bloque-foto--invertido revelar" style="margin-top: 3rem;">
+                <div>
+                    <h3>Se aprende practicando con casos reales</h3>
+                    <p>
+                        Los ejercicios salen de situaciones de trabajo: una planilla de ventas, una
+                        página de negocio, una campaña para un producto. Nada de ejemplos abstractos
+                        que no vas a volver a tocar.
+                    </p>
+
+                    <p>
+                        Al terminar cada curso entregas un trabajo final y lo presentas ante el
+                        grupo: es la última clase y también la primera vez que defiendes tu trabajo
+                        frente a otros.
+                    </p>
+                </div>
+
+                <figure>
+                    <img src="img/grupo.webp" width="1000" height="667" alt="Alumnos resolviendo un ejercicio en grupo sobre una mesa con cuadernos" loading="lazy" decoding="async">
+                    <figcaption>Trabajo en grupo: los ejercicios se resuelven en clase, con acompañamiento.</figcaption>
+                </figure>
+            </div>
+
+            <div class="bloque-foto revelar" style="margin-top: 3rem;">
+                <div>
+                    <h3>Un lugar para quedarte a practicar</h3>
+                    <p>
+                        La sala de estudio está abierta todo el día para los alumnos matriculados:
+                        puedes llegar antes de tu clase, repasar con los compañeros o terminar un
+                        ejercicio en las computadoras del laboratorio.
+                    </p>
+
+                    <ul class="lista-check">
+                        <li>Sala de estudio libre para alumnos matriculados</li>
+                        <li>Wifi y enchufes en cada mesa</li>
+                        <li>Material de consulta de los cursos</li>
+                        <li>El docente atiende consultas en la hora previa a su clase</li>
+                    </ul>
+                </div>
+
+                <figure>
+                    <img src="img/instalaciones.webp" width="1024" height="683" alt="Sala de estudio de la academia con mesas, estantes de libros y alumnos repasando" loading="lazy" decoding="async">
+                    <figcaption>La sala de estudio: abierta para los alumnos, sin costo adicional.</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CERTIFICACIÓN ===================== -->
+
+    <section class="seccion seccion--oscura" id="certificacion">
+        <div class="contenedor bloque-foto">
+            <div>
+                <p class="sello sello--oscuro">Certificación</p>
+                <h2>Un certificado que se puede verificar</h2>
+                <p>
+                    Cada certificado lleva un código que cualquiera puede comprobar desde la web:
+                    quien te lo pida escribe el código y ve el curso, las horas y la fecha. Así el
+                    papel no es un adorno.
+                </p>
+
+                <ul class="lista-check">
+                    <li>Certificado digital y físico al terminar</li>
+                    <li>Código de verificación en línea</li>
+                    <li>Detalle de horas y módulos aprobados</li>
+                    <li>Constancia de notas si la pide tu empresa</li>
+                </ul>
+            </div>
+
+            <figure>
+                <img src="img/egresados.webp" width="1024" height="682" alt="Alumnos egresados lanzando sus birretes al terminar el curso" loading="lazy" decoding="async">
+                <figcaption>Cierre de promoción: los egresados reciben su certificado en la última clase.</figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- ===================== DOCENTES ===================== -->
+
+    <section class="seccion" id="docentes">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Docentes</p>
+                <h2>Quién te va a enseñar</h2>
+                <p>Profesionales que trabajan en lo que enseñan. En la demo los avatares son iniciales: no se usan caras de terceros.</p>
+            </header>
+
+            <ul class="rejilla-3">
+                <li class="docente revelar">
+                    <span class="avatar" aria-hidden="true">RM</span>
+                    <span class="docente__datos">
+                        <strong>Ricardo M.</strong>
+                        <span>Desarrollo de software · 11 años</span>
+                        <p>Ingeniero de sistemas. Lleva proyectos web para empresas de la zona y enseña desde el 2016.</p>
+                    </span>
+                </li>
+
+                <li class="docente revelar">
+                    <span class="avatar" aria-hidden="true">SC</span>
+                    <span class="docente__datos">
+                        <strong>Sandra C.</strong>
+                        <span>Gestión y contabilidad · 8 años</span>
+                        <p>Contadora pública. Capacita a equipos administrativos en Excel y procesos de facturación.</p>
+                    </span>
+                </li>
+
+                <li class="docente revelar">
+                    <span class="avatar" aria-hidden="true">JL</span>
+                    <span class="docente__datos">
+                        <strong>Jorge L.</strong>
+                        <span>Marketing y diseño · 7 años</span>
+                        <p>Diseñador gráfico. Maneja las campañas de una decena de negocios locales.</p>
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== OPINIONES ===================== -->
+
+    <section class="seccion seccion--hielo" id="opiniones">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Opiniones</p>
+                <h2>Lo que dicen los egresados</h2>
+                <p>Testimonios de la ficha del negocio. En la demo son de ejemplo.</p>
+            </header>
+
+            <ul class="opiniones">
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas"><span aria-hidden="true">★★★★★</span></p>
+                    <blockquote>Entré sin saber nada de programación y salí con tres proyectos publicados. Lo que más me sirvió fue el grupo del aula: preguntas y te contestan.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">PV</span>
+                        <span class="opinion__autor">
+                            <strong>Paola V.</strong>
+                            <span>Desarrollo Web</span>
+                        </span>
+                    </footer>
+                </li>
+
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas"><span aria-hidden="true">★★★★★</span></p>
+                    <blockquote>Llevé el curso de Excel porque en la oficina me lo pedían. Terminé armando el reporte de ventas de mi área y me lo reconocieron.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">MT</span>
+                        <span class="opinion__autor">
+                            <strong>Miguel T.</strong>
+                            <span>Excel para empresas</span>
+                        </span>
+                    </footer>
+                </li>
+
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="4 de 5 estrellas"><span aria-hidden="true">★★★★☆</span></p>
+                    <blockquote>El nivel de inglés es exigente y las clases son en vivo, así que no te puedes esconder. Los horarios de noche me permitieron trabajar y estudiar.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">KA</span>
+                        <span class="opinion__autor">
+                            <strong>Karla A.</strong>
+                            <span>Inglés conversacional</span>
+                        </span>
+                    </footer>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== PLANES ===================== -->
+
+    <section class="seccion" id="planes">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Precios</p>
+                <h2>Tres formas de estudiar aquí</h2>
+                <p>Precios en soles. No hay costo de matrícula ni de certificado aparte: lo que dice la tarjeta es lo que pagas.</p>
+            </header>
+
+            <ul class="planes">
+                <li class="plan revelar">
+                    <h3>Curso individual</h3>
+                    <p class="plan__precio"><span class="plan__moneda">S/</span> 320</p>
+                    <p class="plan__nota">Desde, según el curso elegido. Pago único o en dos partes.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Un curso completo</li>
+                        <li>Materiales y grabaciones</li>
+                        <li>Certificado incluido</li>
+                    </ul>
+                    <a class="boton boton--borde boton--bloque" href="cursos.html">Elegir curso</a>
+                </li>
+
+                <li class="plan plan--destacado revelar">
+                    <p class="plan__cinta">Lo más pedido</p>
+                    <h3>Plan mensual</h3>
+                    <p class="plan__precio"><span class="plan__moneda">S/</span> 249<small>/mes</small></p>
+                    <p class="plan__nota">Llevas dos cursos a la vez, pagando mes a mes.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Dos cursos simultáneos</li>
+                        <li>Horarios de mañana o noche</li>
+                        <li>Acceso al laboratorio libre</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="matricula.html">Matricularme</a>
+                </li>
+
+                <li class="plan revelar">
+                    <h3>Ruta completa</h3>
+                    <p class="plan__precio"><span class="plan__moneda">S/</span> 1.200</p>
+                    <p class="plan__nota">La ruta de un área con sus tres cursos, de básico a avanzado.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Tres cursos del área</li>
+                        <li>Asesoría para tu proyecto final</li>
+                        <li>Práctica en un caso real</li>
+                    </ul>
+                    <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20de%20la%20ruta%20completa" target="_blank" rel="noopener">Pedir informes</a>
+                </li>
+            </ul>
+
+            <p class="planes__aviso">
+                Precios de referencia de la demostración. En tu sitio se cargan desde tu tarifario y
+                podemos mostrar solo los cursos que quieras promocionar.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== CÓMO INSCRIBIRSE ===================== -->
+
+    <section class="seccion seccion--hielo" id="inscripcion">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Matrícula</p>
+                <h2>Inscribirte toma diez minutos</h2>
+                <p>Sin examen de admisión. El único requisito es que elijas el horario que vas a poder cumplir.</p>
+            </header>
+
+            <ol class="pasos">
+                <li class="paso revelar">
+                    <h3>Elige tu curso</h3>
+                    <p>Mira el temario, la duración y la modalidad en el catálogo.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Llena tus datos</h3>
+                    <p>El formulario de matrícula: nombre, contacto y horario preferido.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Reserva tu cupo</h3>
+                    <p>Te confirmamos por WhatsApp y te damos el link de pago o el código, según prefieras.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Empieza el lunes</h3>
+                    <p>Llegas quince minutos antes el primer día y ya tienes tu lugar en el aula.</p>
+                </li>
+            </ol>
+
+            <p class="seccion__pie">
+                <a class="boton boton--indigo" href="matricula.html">
+                    Ir al formulario de matrícula
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== SEDE ===================== -->
+
+    <section class="seccion" id="sede">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Dónde estamos</p>
+                <h2>Un solo local, en el centro</h2>
+                <p>A cinco minutos de la plaza, con movilidad pública en la puerta.</p>
+            </header>
+
+            <div class="visitanos">
+                <div class="revelar">
+                    <ul class="datos-contacto">
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Dirección</strong>
+                                Av. Bolognesi 1234, Nuevo Chimbote
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Horarios de clase</strong>
+                                Mañana 7:00 — 12:00 · tarde 14:00 — 18:00 · noche 19:00 — 22:00
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                            </span>
+                            <span>
+                                <strong>Teléfono y WhatsApp</strong>
+                                <a href="tel:+51900000000">(043) 000 001</a> · <a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a>
+                            </span>
+                        </li>
+                    </ul>
+
+                    <p>
+                        <a class="boton boton--indigo" href="matricula.html#visitanos">Ver mapa y cómo llegar</a>
+                    </p>
+                </div>
+
+                <figure class="mapa revelar">
+                    <img src="img/mapa.svg" width="900" height="560" alt="Plano de la ubicación de la academia en la Av. Bolognesi 1234, cerca de la plaza" loading="lazy" decoding="async">
+                    <figcaption>
+                        <a class="boton boton--borde boton--bloque" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Bolognesi+1234%2C+Nuevo+Chimbote" target="_blank" rel="noopener">
+                            Abrir en Google Maps
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                        </a>
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion seccion--hielo" id="preguntas">
+        <div class="contenedor contenedor--angosto">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Preguntas</p>
+                <h2>Lo que más nos preguntan</h2>
+            </header>
+
+            <div class="preguntas revelar">
+                <details>
+                    <summary>¿Necesito saber algo antes de empezar?</summary>
+                    <p>Cada curso indica su nivel. Los básicos arrancan desde cero; para los intermedios pedimos una conversación corta para ver si te conviene entrar directo.</p>
+                </details>
+                <details>
+                    <summary>¿Qué pasa si falto a una clase?</summary>
+                    <p>La clase queda grabada una semana y el docente te da el ejercicio pendiente. Si faltas a más de tres sesiones, coordinamos un recuperatorio.</p>
+                </details>
+                <details>
+                    <summary>¿Puedo pagar en partes?</summary>
+                    <p>Sí. Los cursos se pueden pagar en dos partes (mitad al matricular y mitad a la mitad del curso) o mes a mes con el plan mensual.</p>
+                </details>
+                <details>
+                    <summary>¿Dan boleta o factura?</summary>
+                    <p>Sí, emitimos boleta o factura electrónica. Si tu empresa paga el curso, indícanos su RUC al matricularte y sale a su nombre.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>El próximo grupo arranca el lunes 2 de noviembre</h2>
+                <p>Los cupos se asignan por orden de matrícula y cada aula lleva quince alumnos. Escríbenos y te decimos si todavía hay lugar en el curso que quieres.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20saber%20si%20hay%20cupos%20para%20el%20pr%C3%B3ximo%20inicio" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    Preguntar por WhatsApp
+                </a>
+                <a class="boton boton--borde" href="cursos.html">Ver el catálogo</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Academia</strong>
+                    <span>Horizonte</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Cursos cortos con certificado en Nuevo Chimbote. Grupos de quince alumnos,
+                clases presenciales u online y horarios para quienes trabajan.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Cursos">
+            <h3>Cursos</h3>
+            <ul>
+                <li><a href="cursos.html?area=tecnologia">Tecnología</a></li>
+                <li><a href="cursos.html?area=gestion">Gestión</a></li>
+                <li><a href="cursos.html?area=idiomas">Idiomas</a></li>
+                <li><a href="cursos.html?area=diseno">Diseño</a></li>
+                <li><a href="cursos.html">Todos los cursos</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="La academia">
+            <h3>La academia</h3>
+            <ul>
+                <li><a href="index.html#metodologia">Cómo enseñamos</a></li>
+                <li><a href="index.html#certificacion">Certificación</a></li>
+                <li><a href="index.html#docentes">Docentes</a></li>
+                <li><a href="index.html#opiniones">Opiniones</a></li>
+                <li><a href="index.html#preguntas">Preguntas frecuentes</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul>
+                <li>Av. Bolognesi 1234, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 001</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:informes@academiahorizonte.demo">informes@academiahorizonte.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Academia Horizonte. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios, docentes y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20de%20un%20curso" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

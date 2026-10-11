@@ -48,8 +48,9 @@ menú de escritorio del navbar desaparece. Lo vigila la prueba
 ## Agregar una demostración
 
 La demostración **no** es una variación del catálogo: es un proyecto web propio.
-La referencia terminada y usable como modelo es
-`public/demos/clinica-dental/` (con sus créditos de fotos en `CREDITOS.md`).
+La referencia terminada y usable como modelo es `public/demos/clinica-dental/` cuando la
+plantilla es una **landing** y `public/demos/academia-cursos/` cuando es un **sitio web** (varias
+páginas). Las dos llevan sus créditos de fotos y su lista de reemplazos en `CREDITOS.md`.
 
 ### Lista obligatoria de toda demostración
 
@@ -93,9 +94,16 @@ La demostración **no** es una variación del catálogo: es un proyecto web prop
 Reglas:
 
 1. Vive en su carpeta, una por plantilla: `public/demos/<slug>/`.
-2. Todo suyo: su `index.html`, su CSS, su JS y sus imágenes. **No** usa Blade, ni
-   componentes, ni estilos, ni fuentes del sitio corporativo, y el sitio
-   corporativo no usa nada suyo.
+2. Todo suyo: sus páginas (`index.html` y las demás si es de tipo sitio), su CSS,
+   su JS y sus imágenes. **No** usa Blade, ni componentes, ni estilos, ni fuentes
+   del sitio corporativo, y el sitio corporativo no usa nada suyo.
+   - Una demo de **landing** es `index.html` y ya.
+   - Una demo de **sitio** son varias páginas enlazadas con rutas relativas
+     (inicio, listado, ficha y contacto o matrícula) y con **un solo** CSS y **un
+     solo** JS compartidos: el modelo es `public/demos/academia-cursos/`.
+   - El nombre del archivo de una ficha interior no se genera: se escribe a mano
+     (`curso-desarrollo-web.html`) y se copia para el siguiente, porque el
+     catálogo solo guarda la carpeta de la demo, no sus páginas.
 3. **Rutas relativas** (`css/estilos.css`, `js/app.js`, `img/…`). Así la carpeta
    se puede copiar a otro servidor o a su subdominio sin tocar el HTML.
 4. `noindex` en su propio HTML. Lo que posiciona es la ficha de la plantilla; la
@@ -112,7 +120,10 @@ puede mudarse; ver más abajo.
 
 `CREDITOS.md` vive dentro de la carpeta de la demo: anota la licencia de las
 fotos y la lista de lo que hay que reemplazar al publicar el sitio de un cliente
-(fotos, datos de ejemplo, perfiles de redes y número de WhatsApp).
+(fotos, datos de ejemplo, perfiles de redes y número de WhatsApp). En una demo de
+tipo sitio añade, además, qué archivos hay que tocar a la vez al cambiar el
+catálogo de productos o servicios (en la academia: las tarjetas de la lista y las
+opciones del formulario de matrícula).
 
 Sirve sin tocar nada de configuración del servidor porque el `DocumentRoot` es
 `public/` y el `.htaccess` del sitio solo manda a Laravel lo que **no** es un

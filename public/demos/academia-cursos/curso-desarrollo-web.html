@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Ficha de un curso: el tercer nivel de profundidad del sitio (inicio → catálogo
+    → curso). Responde las preguntas de quien ya se decidió por un curso: qué se ve
+    cada semana, cuánto cuesta, cuándo empieza y quién enseña.
+
+    La estructura se repite para los ocho cursos: cambiar el texto y los enlaces es
+    todo lo que hace falta para tener la ficha del siguiente. El temario va en
+    acordeones (details/summary) para que la página se lea de un vistazo sin
+    obligar a recorrer seis módulos abiertos.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Ficha del curso Desarrollo Web Full Stack: temario por módulos, duración, precio, horarios, docente y certificado.">
+
+<title>Desarrollo Web Full Stack — Academia Horizonte</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:00 a 21:00 · sábados de 8:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 001
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Academia Horizonte, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Academia</strong>
+                <span>Horizonte</span>
+            </span>
+        </a>
+
+        <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+            <span class="sr-solo">Abrir menú</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+
+        <nav class="menu" id="menu-principal" aria-label="Principal">
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="cursos.html" aria-current="page">Cursos</a></li>
+                <li><a href="matricula.html#visitanos">Visítanos</a></li>
+                <li><a href="matricula.html" class="menu__matricula">Matricularme</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== ENCABEZADO DEL CURSO ===================== -->
+
+    <section class="encabezado">
+        <div class="contenedor">
+            <nav aria-label="Ruta de navegación">
+                <ol class="migajas">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="cursos.html">Cursos</a></li>
+                    <li aria-current="page">Desarrollo Web Full Stack</li>
+                </ol>
+            </nav>
+
+            <div class="encabezado__curso">
+                <div>
+                    <ul class="etiquetas">
+                        <li>Tecnología</li>
+                        <li>Intermedio</li>
+                        <li>Semipresencial</li>
+                    </ul>
+
+                    <h1>Desarrollo Web Full Stack</h1>
+
+                    <p class="encabezado__lead">
+                        Del HTML a una aplicación con base de datos y usuarios. Sales con tres
+                        proyectos publicados y un portafolio que puedes mostrar en una entrevista.
+                    </p>
+                </div>
+
+                <dl class="cifras-curso">
+                    <div>
+                        <dt>Duración</dt>
+                        <dd>24 semanas</dd>
+                    </div>
+                    <div>
+                        <dt>Carga</dt>
+                        <dd>288 horas</dd>
+                    </div>
+                    <div>
+                        <dt>Horario</dt>
+                        <dd>Lun · Mié · Vie, 19:00 a 22:00</dd>
+                    </div>
+                    <div>
+                        <dt>Inicio</dt>
+                        <dd>Lunes 2 de noviembre</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CONTENIDO Y MATRÍCULA ===================== -->
+
+    <section class="seccion seccion--compacta">
+        <div class="contenedor ficha">
+            <div>
+                <div class="ficha__bloque">
+                    <h2>Qué vas a aprender</h2>
+                    <p>
+                        Seis módulos, en este orden. Cada uno cierra con un ejercicio entregable,
+                        así que llegas al proyecto final con todo practicado.
+                    </p>
+
+                    <div class="modulos">
+                        <details class="modulo" open>
+                            <summary>01 · Base de la web: HTML y CSS</summary>
+                            <p>
+                                Estructura de una página, etiquetas semánticas, formularios y
+                                maquetación con flexbox y grid. Terminas con una página publicada.
+                            </p>
+                            <ul class="modulo__semanas">
+                                <li>Semana 1: cómo se arma una página y qué es el navegador</li>
+                                <li>Semana 2: etiquetas semánticas, textos, imágenes y enlaces</li>
+                                <li>Semana 3: formularios y validación del navegador</li>
+                                <li>Semana 4: flexbox, grid y adaptación al celular</li>
+                            </ul>
+                        </details>
+
+                        <details class="modulo">
+                            <summary>02 · Programar: JavaScript para el navegador</summary>
+                            <p>
+                                Variables, funciones, arreglos, objetos y eventos. Consumo de datos
+                                de una API y manipulación de la página con ejercicios reales.
+                            </p>
+                            <ul class="modulo__semanas">
+                                <li>Semana 5: variables, tipos y funciones</li>
+                                <li>Semana 6: arreglos y objetos con datos de un catálogo</li>
+                                <li>Semana 7: el DOM: leer y cambiar la página</li>
+                                <li>Semana 8: eventos, formularios y validación propia</li>
+                                <li>Semana 9: consumir una API y mostrar los datos</li>
+                            </ul>
+                        </details>
+
+                        <details class="modulo">
+                            <summary>03 · Servidor: PHP y lógica del lado del servidor</summary>
+                            <p>
+                                Formularios que guardan datos, sesiones, validación y organización
+                                del proyecto por carpetas para no perderte en tu propio código.
+                            </p>
+                            <ul class="modulo__semanas">
+                                <li>Semana 10: qué pasa entre el navegador y el servidor</li>
+                                <li>Semana 11: PHP: variables, condiciones y ciclos</li>
+                                <li>Semana 12: recibir un formulario y validarlo</li>
+                                <li>Semana 13: sesiones: recordar al usuario</li>
+                                <li>Semana 14: organizar el proyecto: carpetas y reutilización</li>
+                                <li>Semana 15: repaso y primer entregable integrador</li>
+                            </ul>
+                        </details>
+
+                        <details class="modulo">
+                            <summary>04 · Datos: base de datos y SQL</summary>
+                            <p>
+                                Diseño de tablas, relaciones, consultas con filtros y reportes.
+                                Conectas la base de datos a la aplicación del módulo anterior.
+                            </p>
+                            <ul class="modulo__semanas">
+                                <li>Semana 16: tablas, tipos y claves</li>
+                                <li>Semana 17: consultas: filtros, orden y agrupación</li>
+                                <li>Semana 18: relaciones y consultas entre tablas</li>
+                                <li>Semana 19: conectar la aplicación a la base de datos</li>
+                            </ul>
+                        </details>
+
+                        <details class="modulo">
+                            <summary>05 · Publicar: puesta en producción</summary>
+                            <p>
+                                Dominio, hosting, certificado y respaldos. Los tres proyectos del
+                                curso se publican en línea durante esta etapa.
+                            </p>
+                            <ul class="modulo__semanas">
+                                <li>Semana 20: dominio, hosting y certificado</li>
+                                <li>Semana 21: subir el proyecto y resolver el primer error real</li>
+                                <li>Semana 22: respaldos, correo y correcciones</li>
+                            </ul>
+                        </details>
+
+                        <details class="modulo">
+                            <summary>06 · Proyecto final y presentación</summary>
+                            <p>
+                                Desarrollas una aplicación para un caso real, la documentas y la
+                                presentas ante el grupo: es la última clase y la primera defensa de
+                                tu trabajo frente a otros.
+                            </p>
+                            <ul class="modulo__semanas">
+                                <li>Semana 23: alcance, bocetos y base de datos del proyecto</li>
+                                <li>Semana 24: terminar, publicar y presentar</li>
+                            </ul>
+                        </details>
+                    </div>
+                </div>
+
+                <div class="ficha__bloque">
+                    <h2>Para quién es este curso</h2>
+                    <ul class="lista-check">
+                        <li>Quien nunca programó y quiere empezar con acompañamiento</li>
+                        <li>Quien ya toca plantillas web y quiere entender lo que pasa por dentro</li>
+                        <li>Trabajadores de soporte o diseño que quieren pasar a desarrollo</li>
+                        <li>Quien tiene una idea de negocio y quiere construirla</li>
+                    </ul>
+                </div>
+
+                <div class="ficha__bloque">
+                    <h2>Qué necesitas traer</h2>
+                    <ul class="lista-check">
+                        <li>Laptop propia recomendable (hay equipos del laboratorio si no tienes)</li>
+                        <li>Ganas de practicar entre clases: unas cinco horas por semana</li>
+                        <li>Lectura y matemática básica: no se pide más</li>
+                    </ul>
+                </div>
+
+                <div class="ficha__bloque">
+                    <h2>Cómo se evalúa</h2>
+                    <p>
+                        No hay un examen único que decida todo. La nota sale de los ejercicios de
+                        cada módulo, la entrega de los tres proyectos y la presentación final.
+                        Para el certificado se pide asistir al menos al 75% de las sesiones y
+                        aprobar el proyecto.
+                    </p>
+                </div>
+
+                <div class="ficha__bloque">
+                    <h2>Quién dicta el curso</h2>
+                    <div class="docente">
+                        <span class="avatar" aria-hidden="true">RM</span>
+                        <span class="docente__datos">
+                            <strong>Ricardo M.</strong>
+                            <span>Desarrollo de software · 11 años</span>
+                            <p>
+                                Ingeniero de sistemas. Lleva proyectos web para empresas de la zona
+                                y enseña desde el 2016. Da el curso completo, de la primera a la
+                                última clase.
+                            </p>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="ficha__bloque">
+                    <h2>Preguntas sobre este curso</h2>
+                    <div class="preguntas">
+                        <details>
+                            <summary>¿Puedo llevarlo si solo tengo una laptop prestada?</summary>
+                            <p>Sí. Puedes usar el laboratorio para practicar en las horas libres; avísanos al matricularte para reservarte una máquina.</p>
+                        </details>
+                        <details>
+                            <summary>¿Se puede llevar en el turno de mañana?</summary>
+                            <p>Este curso se dicta solo en el turno noche. Si trabajas de noche, hay turnos de mañana en los cursos de gestión y diseño.</p>
+                        </details>
+                        <details>
+                            <summary>¿Qué pasa si me atraso en un módulo?</summary>
+                            <p>Al inicio de cada clase repasamos el ejercicio anterior y el docente te alcanza el material del módulo. Las grabaciones quedan una semana.</p>
+                        </details>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== PANEL DE MATRÍCULA ===================== -->
+
+            <aside class="panel">
+                <h2 class="sr-solo">Matricularte en este curso</h2>
+
+                <p class="panel__precio">S/ 1.200</p>
+                <p>
+                    o dos cuotas de S/ 600: al matricular y a la mitad del curso. Incluye
+                    materiales y certificado.
+                </p>
+
+                <div class="panel__acciones">
+                    <a class="boton boton--principal boton--bloque" href="matricula.html?curso=desarrollo-web">
+                        Matricularme en este curso
+                    </a>
+                    <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20consultar%20por%20el%20curso%20Desarrollo%20Web%20Full%20Stack" target="_blank" rel="noopener">
+                        Consultar por WhatsApp
+                    </a>
+                </div>
+
+                <ul class="lista-check lista-check--compacta">
+                    <li>288 horas de clases</li>
+                    <li>Laboratorio: una máquina por alumno</li>
+                    <li>Grabaciones disponibles una semana</li>
+                    <li>Certificado con código de verificación</li>
+                    <li>Grupo de WhatsApp del aula</li>
+                </ul>
+
+                <dl class="datos">
+                    <div>
+                        <dt>Próximo inicio</dt>
+                        <dd>Lunes 2 de noviembre</dd>
+                    </div>
+                    <div>
+                        <dt>Cupos</dt>
+                        <dd>4 de 15 disponibles</dd>
+                    </div>
+                    <div>
+                        <dt>Modalidad</dt>
+                        <dd>Presencial u online en vivo</dd>
+                    </div>
+                </dl>
+
+                <p class="aviso">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                    <span>
+                        Los cupos se cierran cuando se llena el aula. Los datos de este sitio son
+                        de demostración.
+                    </span>
+                </p>
+            </aside>
+        </div>
+    </section>
+
+    <!-- ===================== OTROS CURSOS ===================== -->
+
+    <section class="seccion seccion--hielo">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Después de este</p>
+                <h2>Los que siguen en tecnología</h2>
+                <p>Si te gusta armar cosas, estas son las continuaciones naturales.</p>
+            </header>
+
+            <ul class="rejilla-2">
+                <li class="tarjeta revelar">
+                    <h3>Reparación de computadoras</h3>
+                    <p>Diagnóstico y mantenimiento con equipos reales. Complementa al desarrollo: entiendes la máquina además del programa.</p>
+                    <a class="tarjeta__enlace" href="cursos.html?area=tecnologia">Ver el catálogo de tecnología</a>
+                </li>
+                <li class="tarjeta revelar">
+                    <h3>Diseño gráfico digital</h3>
+                    <p>Composición, color y piezas para el negocio. Es la otra mitad del trabajo de un desarrollador web.</p>
+                    <a class="tarjeta__enlace" href="cursos.html?area=diseno">Ver el catálogo de diseño</a>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>Quedan 4 cupos para el grupo de noviembre</h2>
+                <p>Déjanos tus datos y te confirmamos por WhatsApp el horario, la forma de pago y qué llevar el primer día.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="matricula.html?curso=desarrollo-web">Reservar mi cupo</a>
+                <a class="boton boton--borde" href="cursos.html">Ver otros cursos</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Academia</strong>
+                    <span>Horizonte</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Cursos cortos con certificado en Nuevo Chimbote. Grupos de quince alumnos,
+                clases presenciales u online y horarios para quienes trabajan.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Cursos">
+            <h3>Cursos</h3>
+            <ul>
+                <li><a href="cursos.html?area=tecnologia">Tecnología</a></li>
+                <li><a href="cursos.html?area=gestion">Gestión</a></li>
+                <li><a href="cursos.html?area=idiomas">Idiomas</a></li>
+                <li><a href="cursos.html?area=diseno">Diseño</a></li>
+                <li><a href="cursos.html">Todos los cursos</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="La academia">
+            <h3>La academia</h3>
+            <ul>
+                <li><a href="index.html#metodologia">Cómo enseñamos</a></li>
+                <li><a href="index.html#certificacion">Certificación</a></li>
+                <li><a href="index.html#docentes">Docentes</a></li>
+                <li><a href="index.html#opiniones">Opiniones</a></li>
+                <li><a href="index.html#preguntas">Preguntas frecuentes</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul>
+                <li>Av. Bolognesi 1234, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 001</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:informes@academiahorizonte.demo">informes@academiahorizonte.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Academia Horizonte. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios, docentes y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20de%20un%20curso" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

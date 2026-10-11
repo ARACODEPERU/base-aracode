@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Página de matrícula: pasos, formulario, formas de pago, ubicación y preguntas.
+
+    El formulario lo valida js/app.js en el navegador (nombre, correo, celular,
+    curso, modalidad y la casilla de autorización) y, al enviarse bien, avisa de
+    que esta página es una demostración y no manda nada. En una entrega real se
+    conecta al correo o a un servicio de formularios.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Matrícula en línea de la academia: elige curso y horario, revisa las formas de pago y la ubicación del local.">
+
+<title>Matrícula — Academia Horizonte</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:00 a 21:00 · sábados de 8:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 001
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Academia Horizonte, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Academia</strong>
+                <span>Horizonte</span>
+            </span>
+        </a>
+
+        <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+            <span class="sr-solo">Abrir menú</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+
+        <nav class="menu" id="menu-principal" aria-label="Principal">
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="cursos.html">Cursos</a></li>
+                <li><a href="#visitanos">Visítanos</a></li>
+                <li><a href="matricula.html" class="menu__matricula" aria-current="page">Matricularme</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== ENCABEZADO ===================== -->
+
+    <section class="encabezado">
+        <div class="contenedor">
+            <nav aria-label="Ruta de navegación">
+                <ol class="migajas">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li aria-current="page">Matrícula</li>
+                </ol>
+            </nav>
+
+            <h1>Matrícula en línea</h1>
+            <p class="encabezado__lead">
+                Llena tus datos, elige el curso y el horario, y te confirmamos el cupo por
+                WhatsApp. Toma menos de diez minutos y no tienes que ir al local para reservar.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== PASOS ===================== -->
+
+    <section class="seccion seccion--compacta">
+        <div class="contenedor">
+            <h2 class="sr-solo">Cómo matricularte, paso a paso</h2>
+
+            <ol class="pasos">
+                <li class="paso revelar">
+                    <h3>Elige tu curso</h3>
+                    <p>Mira el temario, la duración y el horario en el catálogo.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Llena el formulario</h3>
+                    <p>Aquí abajo: tus datos, el curso y el turno que prefieras.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Confirma el pago</h3>
+                    <p>Te enviamos el código o la cuenta. Reservas el cupo con la primera cuota.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Empieza el lunes</h3>
+                    <p>Llegas quince minutos antes el primer día y ya tienes tu lugar.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- ===================== FORMULARIO ===================== -->
+
+    <section class="seccion seccion--hielo" id="formulario">
+        <div class="contenedor ficha">
+            <div>
+                <form class="formulario" id="formulario-matricula" data-demo="true" novalidate>
+                    <h2 class="formulario__titulo">Datos de la matrícula</h2>
+                    <p class="formulario__nota">
+                        Los campos con asterisco son obligatorios. Usamos tus datos solo para
+                        gestionar tu matrícula: no se comparten con terceros.
+                    </p>
+
+                    <!-- Trampa para robots: un robot la llena, una persona no la ve. -->
+                    <p class="sr-solo" aria-hidden="true">
+                        <label for="sitio-web">No llenar este campo</label>
+                        <input type="text" id="sitio-web" name="sitio_web" tabindex="-1" autocomplete="off">
+                    </p>
+
+                    <div class="campo-fila">
+                        <p class="campo">
+                            <label for="nombre">Nombres y apellidos *</label>
+                            <input type="text" id="nombre" name="nombre" autocomplete="name" placeholder="Ejemplo: Ana Torres Quispe">
+                            <span class="campo__error">Escribe tus nombres y apellidos completos.</span>
+                        </p>
+
+                        <p class="campo">
+                            <label for="documento">DNI o carné</label>
+                            <input type="text" id="documento" name="documento" inputmode="numeric" placeholder="8 a 12 dígitos">
+                        </p>
+                    </div>
+
+                    <div class="campo-fila">
+                        <p class="campo">
+                            <label for="telefono">Celular o WhatsApp *</label>
+                            <input type="tel" id="telefono" name="telefono" autocomplete="tel" placeholder="9 dígitos, por ejemplo 900000000">
+                            <span class="campo__error">Escribe un celular de 9 dígitos para ubicarte.</span>
+                        </p>
+
+                        <p class="campo">
+                            <label for="correo">Correo electrónico *</label>
+                            <input type="email" id="correo" name="correo" autocomplete="email" placeholder="tucorreo@ejemplo.com">
+                            <span class="campo__error">Revisa el correo: ahí te llega la confirmación.</span>
+                        </p>
+                    </div>
+
+                    <p class="campo">
+                        <label for="curso">Curso al que te matriculas *</label>
+                        <select id="curso" name="curso">
+                            <option value="">Elige un curso…</option>
+                            <option value="desarrollo-web">Desarrollo Web Full Stack — S/ 1.200 (24 semanas)</option>
+                            <option value="excel-empresas">Excel para empresas — S/ 320 (8 semanas)</option>
+                            <option value="contabilidad">Contabilidad para no contadores — S/ 420 (10 semanas)</option>
+                            <option value="ingles">Inglés conversacional — S/ 480 (20 semanas)</option>
+                            <option value="diseno-grafico">Diseño gráfico digital — S/ 560 (12 semanas)</option>
+                            <option value="marketing-digital">Marketing digital para negocios — S/ 380 (6 semanas)</option>
+                            <option value="soporte-tecnico">Reparación de computadoras — S/ 460 (8 semanas)</option>
+                            <option value="dibujo-tecnico">Dibujo técnico y AutoCAD básico — S/ 520 (10 semanas)</option>
+                        </select>
+                        <span class="campo__error">Elige el curso al que quieres matricularte.</span>
+                    </p>
+
+                    <fieldset class="grupo-radio">
+                        <legend>Turno que prefieres</legend>
+                        <div class="grupo-radio__opciones">
+                            <label for="turno-manana"><input type="radio" id="turno-manana" name="turno" value="mañana"> Mañana (7:00 — 12:00)</label>
+                            <label for="turno-tarde"><input type="radio" id="turno-tarde" name="turno" value="tarde"> Tarde (14:00 — 18:00)</label>
+                            <label for="turno-noche"><input type="radio" id="turno-noche" name="turno" value="noche"> Noche (19:00 — 22:00)</label>
+                            <label for="turno-flexible"><input type="radio" id="turno-flexible" name="turno" value="flexible"> Me acomodo al horario</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="grupo-radio">
+                        <legend>Modalidad *</legend>
+                        <div class="grupo-radio__opciones">
+                            <label for="modo-presencial"><input type="radio" id="modo-presencial" name="modalidad" value="presencial"> Presencial</label>
+                            <label for="modo-online"><input type="radio" id="modo-online" name="modalidad" value="online"> Online en vivo</label>
+                        </div>
+                    </fieldset>
+                    <span class="campo__error">Elige si prefieres clases presenciales u online.</span>
+
+                    <div class="campo-fila">
+                        <p class="campo">
+                            <label for="pago">Cómo piensas pagar</label>
+                            <select id="pago" name="pago">
+                                <option value="no-se">Todavía no lo decido</option>
+                                <option value="contado">Pago único</option>
+                                <option value="cuotas">En dos cuotas</option>
+                                <option value="mensual">Plan mensual</option>
+                                <option value="empresa">Lo paga mi empresa</option>
+                            </select>
+                        </p>
+
+                        <p class="campo">
+                            <label for="origen">Cómo te enteraste de la academia</label>
+                            <select id="origen" name="origen">
+                                <option value="">Sin respuesta</option>
+                                <option value="recomendacion">Me lo recomendaron</option>
+                                <option value="instagram">Instagram o Facebook</option>
+                                <option value="pasando">Pasé por el local</option>
+                                <option value="busqueda">Lo busqué en internet</option>
+                            </select>
+                        </p>
+                    </div>
+
+                    <p class="campo">
+                        <label for="mensaje">¿Algo que debamos saber? <span class="campo__opcional">(opcional)</span></label>
+                        <textarea id="mensaje" name="mensaje" rows="4" placeholder="Por ejemplo: solo puedo los sábados, necesito factura a nombre de una empresa, ya llevé un curso antes…"></textarea>
+                    </p>
+
+                    <label class="casilla" for="acepto">
+                        <input type="checkbox" id="acepto" name="acepto">
+                        <span>He leído y acepto el tratamiento de mis datos y las condiciones de matrícula. *</span>
+                    </label>
+                    <span class="campo__error">Necesitamos tu autorización para continuar.</span>
+
+                    <button type="submit" class="boton boton--principal boton--bloque">Enviar mi matrícula</button>
+
+                    <p class="formulario__aviso" id="aviso-formulario" role="status"></p>
+
+                    <p class="formulario__alternativa">
+                        ¿Prefieres hacerlo de otra forma? También puedes escribir por WhatsApp o
+                        matriculararte en la oficina, en horario de atención.
+                    </p>
+                </form>
+            </div>
+
+            <!-- ===================== PANEL DE AYUDA ===================== -->
+
+            <aside class="panel">
+                <h2 class="sr-solo">Antes de enviar tu matrícula</h2>
+
+                <ul class="lista-check lista-check--compacta">
+                    <li>Tu documento de identidad</li>
+                    <li>Un número de WhatsApp donde te ubiquemos</li>
+                    <li>El turno que de verdad vas a poder cumplir</li>
+                    <li>Si paga tu empresa: su RUC y razón social</li>
+                </ul>
+
+                <div class="panel__acciones">
+                    <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20necesito%20ayuda%20para%20matricularme" target="_blank" rel="noopener">
+                        Escribir por WhatsApp
+                    </a>
+                    <a class="boton boton--borde boton--bloque" href="cursos.html">Ver los cursos otra vez</a>
+                </div>
+
+                <p class="aviso">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                    <span>
+                        Página de demostración: el formulario se valida en tu navegador y avisa de
+                        lo que falta, pero no envía datos a ningún servidor.
+                    </span>
+                </p>
+            </aside>
+        </div>
+    </section>
+
+    <!-- ===================== FORMAS DE PAGO ===================== -->
+
+    <section class="seccion seccion--oscura" id="pagos">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--oscuro">Pagos</p>
+                <h2>Cómo se reserva un cupo</h2>
+                <p>Con la primera parte del pago queda reservado tu lugar. Si pagas todo de una vez tampoco hay recargo: el precio es el mismo.</p>
+            </header>
+
+            <ul class="pagos">
+                <li class="pago revelar">
+                    <strong>Transferencia o depósito</strong>
+                    <p>Te damos el número de cuenta al confirmar la matrícula y nos envías el voucher por WhatsApp.</p>
+                </li>
+
+                <li class="pago revelar">
+                    <strong>Yape o Plin</strong>
+                    <p>Los pagos por billetera llegan al instante. Te indicamos el número de la oficina y listo.</p>
+                </li>
+
+                <li class="pago revelar">
+                    <strong>En efectivo, en la oficina</strong>
+                    <p>Si prefieres ir en persona, atendemos de lunes a sábado en horario de oficina.</p>
+                </li>
+
+                <li class="pago revelar">
+                    <strong>Con factura de tu empresa</strong>
+                    <p>Órdenes de compra y facturación a nombre de la empresa, con su RUC y razón social.</p>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== VISÍTANOS ===================== -->
+
+    <section class="seccion" id="visitanos">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Visítanos</p>
+                <h2>Dónde estamos y cuándo atienden</h2>
+                <p>Un solo local, en el centro de Nuevo Chimbote. Si vienes por primera vez, pregunta por informes en la ventanilla de la entrada.</p>
+            </header>
+
+            <div class="visitanos">
+                <div class="revelar">
+                    <ul class="datos-contacto">
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Dirección</strong>
+                                Av. Bolognesi 1234, Nuevo Chimbote<br>
+                                Referencia: a cinco minutos de la plaza, al lado de una botica.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Oficina e informes</strong>
+                                Lunes a viernes de 8:00 a 21:00 · sábados de 8:00 a 14:00
+                            </span>
+                        </li>
+
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Turnos de clase</strong>
+                                Mañana 7:00 — 12:00 · tarde 14:00 — 18:00 · noche 19:00 — 22:00
+                            </span>
+                        </li>
+
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                            </span>
+                            <span>
+                                <strong>Teléfono y WhatsApp</strong>
+                                <a href="tel:+51900000000">(043) 000 001</a> · <a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a>
+                            </span>
+                        </li>
+
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Correo</strong>
+                                <a href="mailto:informes@academiahorizonte.demo">informes@academiahorizonte.demo</a>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <figure class="mapa revelar">
+                    <img src="img/mapa.svg" width="900" height="560" alt="Plano de la ubicación de la academia en la Av. Bolognesi 1234, cerca de la plaza principal" loading="lazy" decoding="async">
+                    <figcaption>
+                        <a class="boton boton--indigo boton--bloque" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Bolognesi+1234%2C+Nuevo+Chimbote" target="_blank" rel="noopener">
+                            Abrir en Google Maps
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                        </a>
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion seccion--hielo" id="preguntas">
+        <div class="contenedor contenedor--angosto">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Matrícula</p>
+                <h2>Dudas frecuentes al inscribirse</h2>
+            </header>
+
+            <div class="preguntas revelar">
+                <details>
+                    <summary>¿La matrícula tiene costo aparte?</summary>
+                    <p>No. Lo que dice el precio del curso es todo: incluye materiales, certificado y el acceso al laboratorio. No cobramos inscripción.</p>
+                </details>
+                <details>
+                    <summary>¿Puedo cambiar de curso después?</summary>
+                    <p>Sí, hasta una semana antes del inicio y sin costo. Si ya empezó, se evalúa con la coordinación académica según lo que hayas cursado.</p>
+                </details>
+                <details>
+                    <summary>¿Me devuelven el dinero si no puedo continuar?</summary>
+                    <p>Se devuelve lo no cursado, descontando el mes iniciado. Las condiciones se entregan por escrito al matricularte.</p>
+                </details>
+                <details>
+                    <summary>¿Emiten comprobante electrónico?</summary>
+                    <p>Sí, boleta o factura electrónica. Si necesitas factura, indícanos el RUC de tu empresa en el formulario.</p>
+                </details>
+                <details>
+                    <summary>¿Cómo reservo el cupo si no voy al local?</summary>
+                    <p>Con el formulario, te respondemos por WhatsApp con la cuenta o el código de pago. Con la primera cuota queda reservado tu lugar.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>¿Te quedó una duda?</h2>
+                <p>Escríbenos por WhatsApp con el curso que te interesa y te decimos si todavía hay cupo, sin compromiso.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20tengo%20una%20duda%20sobre%20la%20matr%C3%ADcula" target="_blank" rel="noopener">Preguntar por WhatsApp</a>
+                <a class="boton boton--borde" href="cursos.html">Ver el catálogo otra vez</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Academia</strong>
+                    <span>Horizonte</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Cursos cortos con certificado en Nuevo Chimbote. Grupos de quince alumnos,
+                clases presenciales u online y horarios para quienes trabajan.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Cursos">
+            <h3>Cursos</h3>
+            <ul>
+                <li><a href="cursos.html?area=tecnologia">Tecnología</a></li>
+                <li><a href="cursos.html?area=gestion">Gestión</a></li>
+                <li><a href="cursos.html?area=idiomas">Idiomas</a></li>
+                <li><a href="cursos.html?area=diseno">Diseño</a></li>
+                <li><a href="cursos.html">Todos los cursos</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="La academia">
+            <h3>La academia</h3>
+            <ul>
+                <li><a href="index.html#metodologia">Cómo enseñamos</a></li>
+                <li><a href="index.html#certificacion">Certificación</a></li>
+                <li><a href="index.html#docentes">Docentes</a></li>
+                <li><a href="index.html#opiniones">Opiniones</a></li>
+                <li><a href="matricula.html#preguntas">Preguntas frecuentes</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul>
+                <li>Av. Bolognesi 1234, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 001</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:informes@academiahorizonte.demo">informes@academiahorizonte.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Academia Horizonte. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios, docentes y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20de%20un%20curso" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

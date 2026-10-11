@@ -409,6 +409,32 @@ navegador (envío vacío → 5 errores visibles y ningún envío; envío complet
 revisión visual a 1400 px de portada, «la clínica», opiniones, precios, visita, preguntas y pie; y la
 suite Unit sigue en verde (254 pruebas antes de este cambio; la sección no depende de estos archivos).
 
-Pendiente de este estándar: **las otras cinco plantillas** (Restaurante y carta digital, Portafolio
-Creativo, Academia de Cursos, Estudio Contable e Inmobiliaria) todavía no tienen demostración. Cada
-una es un proyecto web completo y se construye con la lista obligatoria, una por entrega.
+### 4.7 La demo de Academia de Cursos: la primera de formato sitio web
+
+Pedido: la siguiente plantilla del banco después de la clínica. Elegida **Academia de Cursos**
+(categoría educación, `tipo: sitio`) porque es la única de las propuestas con catálogo, ficha de
+producto y matrícula en línea: obliga a resolver el formato que faltaba —varias páginas enlazadas—
+en lugar de repetir una landing de una sola página.
+
+`public/demos/academia-cursos/` es un proyecto independiente de **cuatro páginas** (`index.html`,
+`cursos.html`, `curso-desarrollo-web.html` y `matricula.html`) con **un solo** `css/estilos.css` y
+**un solo** `js/app.js` compartidos, todos con rutas relativas. Cinco fotos locales en WebP (CC0),
+plano propio en SVG, botón flotante de WhatsApp, precios, testimonios, docentes y cifras animadas:
+cumple la lista obligatoria de 9 puntos de [BANCO_PLANTILLAS.md](BANCO_PLANTILLAS.md).
+
+Lo que aporta al banco, además de la plantilla:
+
+- **Una demo que se navega.** Menú con estado activo, migajas en las páginas interiores, enlaces
+  cruzados entre inicio, catálogo, ficha y matrícula, y un tercer nivel de profundidad
+  (inicio → listado → ficha) que las landings no tienen.
+- **Catálogo con filtros** por área, modalidad y búsqueda de texto, con el estado en la URL
+  (`cursos.html?area=tecnologia`), de modo que un enlace desde otra página llega ya filtrado. El
+  filtrado es del navegador; sin JavaScript el listado se lee completo y un aviso lo dice.
+- **Formulario de matrícula con validación propia** (nombre, correo, celular de 9 dígitos, curso,
+  modalidad y autorización) que avisa campo por campo y, al enviarse bien, declara que es una
+  demostración y no manda datos. El curso elegido llega preseleccionado desde la ficha
+  (`matricula.html?curso=desarrollo-web`).
+
+Pendiente de este estándar: **las cuatro plantillas restantes** (Restaurante y carta digital,
+Portafolio Creativo, Estudio Contable e Inmobiliaria) todavía no tienen demostración. Cada una es
+un proyecto web completo y se construye con la lista obligatoria, una por entrega.
