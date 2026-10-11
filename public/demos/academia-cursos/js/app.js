@@ -7,7 +7,7 @@
    sitio. Cada bloque se activa solo si su elemento existe en la página, así que
    el mismo archivo sirve para el inicio, el catálogo, la ficha y la matrícula.
 
-   Hace siete cosas:
+   Hace ocho cosas:
 
      1. Menú desplegable de móvil.
      2. Aparición de bloques al hacer scroll.
@@ -16,6 +16,7 @@
      5. Filtros del catálogo de cursos (buscador, área y modalidad).
      6. Validación del formulario de inscripción.
      7. Slider de la portada: flechas, puntos, teclado y arrastre con el dedo.
+     8. Interruptor de tema claro / oscuro.
 
    Sin JavaScript la página se lee completa: los bloques aparecen porque el
    script es el que los oculta, y el catálogo muestra todos los cursos.
@@ -539,5 +540,65 @@
 
     if (anio) {
         anio.textContent = String(new Date().getFullYear());
+    }
+
+    /* ---------------------------------------------------------------------
+       8. Tema claro / oscuro
+       ---------------------------------------------------------------------
+       El estado vive en el atributo data-tema del <html>, que el script del
+       <head> ya dejó en 'claro' —o en 'oscuro' si había una elección guardada
+       y la aplicó antes de pintar—. Aquí solo se cambia ese atributo y se
+       pone al día el texto del botón para quien lo use con lector de pantalla.
+
+       El interruptor muestra el icono del modo AL QUE SE VA: la luna en claro
+       y el sol en oscuro. La elección se recuerda en localStorage bajo la
+       clave 'academia-cursos-tema' (una por plantilla: en este repositorio
+       todas las demos comparten origen) y, como las cuatro páginas cargan este
+       mismo archivo, el tema elegido vale para todo el sitio.
+    */
+    var raiz = document.documentElement;
+    var interruptoresTema = document.querySelectorAll('[data-tema-switch]');
+
+    if (interruptoresTema.length) {
+        var aplicarTema = function (tema, recordar) {
+            var oscuro = tema === 'oscuro';
+            var etiqueta = oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+
+            raiz.setAttribute('data-tema', oscuro ? 'oscuro' : 'claro');
+
+            interruptoresTema.forEach(function (interruptor) {
+                interruptor.setAttribute('aria-pressed', oscuro ? 'true' : 'false');
+                interruptor.setAttribute('aria-label', etiqueta);
+                interruptor.setAttribute('title', etiqueta);
+            });
+
+            if (recordar) {
+                try {
+                    localStorage.setItem('academia-cursos-tema', oscuro ? 'oscuro' : 'claro');
+                } catch (error) {
+                    /* Sin almacenamiento, la elección vale solo para esta página. */
+                }
+            }
+        };
+
+        var temaActual = function () {
+            return raiz.getAttribute('data-tema') === 'oscuro' ? 'oscuro' : 'claro';
+        };
+
+        interruptoresTema.forEach(function (interruptor) {
+            interruptor.addEventListener('click', function () {
+                aplicarTema(temaActual() === 'oscuro' ? 'claro' : 'oscuro', true);
+            });
+        });
+
+        /* Deja el botón en consonancia con el tema que ya trae el documento */
+        aplicarTema(temaActual(), false);
+
+        /* Si el tema se cambia en otra pestaña, esta se pone al día igual */
+        window.addEventListener('storage', function (evento) {
+            if (evento.key === 'academia-cursos-tema') {
+                aplicarTema(evento.newValue === 'oscuro' ? 'oscuro' : 'claro', false);
+            }
+        });
     }
 })();

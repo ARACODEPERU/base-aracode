@@ -3,7 +3,7 @@
    Clínica Dental Sonrisa — comportamiento de la demostración
    =============================================================================
 
-   JavaScript propio, sin librerías. Hace seis cosas:
+   JavaScript propio, sin librerías. Hace siete cosas:
 
      1. Menú desplegable de móvil.
      2. Aparición de bloques al hacer scroll.
@@ -11,6 +11,7 @@
      4. Sombra de la cabecera cuando la página baja.
      5. Validación del formulario de cita.
      6. Slider de la portada: flechas, puntos, teclado y arrastre con el dedo.
+     7. Interruptor de tema claro / oscuro.
 
    Nada de esto es imprescindible para leer la página: sin JavaScript se ve todo
    —los bloques aparecen porque la clase que los oculta la pone este archivo— y
@@ -421,5 +422,64 @@
 
     if (anio) {
         anio.textContent = String(new Date().getFullYear());
+    }
+
+    /* ---------------------------------------------------------------------
+       7. Tema claro / oscuro
+       ---------------------------------------------------------------------
+       El estado vive en el atributo data-tema del <html>, que el script del
+       <head> ya dejó en 'claro' —o en 'oscuro' si había una elección guardada
+       y la aplicó antes de pintar—. Aquí solo se cambia ese atributo y se
+       pone al día el texto del botón para quien lo use con lector de pantalla.
+
+       El interruptor muestra el icono del modo AL QUE SE VA: la luna en claro
+       y el sol en oscuro. La elección se recuerda en localStorage bajo la
+       clave 'clinica-dental-tema' (una por plantilla: en este repositorio
+       todas las demos comparten origen).
+    */
+    var raiz = document.documentElement;
+    var interruptoresTema = document.querySelectorAll('[data-tema-switch]');
+
+    if (interruptoresTema.length) {
+        var aplicarTema = function (tema, recordar) {
+            var oscuro = tema === 'oscuro';
+            var etiqueta = oscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+
+            raiz.setAttribute('data-tema', oscuro ? 'oscuro' : 'claro');
+
+            interruptoresTema.forEach(function (interruptor) {
+                interruptor.setAttribute('aria-pressed', oscuro ? 'true' : 'false');
+                interruptor.setAttribute('aria-label', etiqueta);
+                interruptor.setAttribute('title', etiqueta);
+            });
+
+            if (recordar) {
+                try {
+                    localStorage.setItem('clinica-dental-tema', oscuro ? 'oscuro' : 'claro');
+                } catch (error) {
+                    /* Sin almacenamiento, la elección vale solo para esta página. */
+                }
+            }
+        };
+
+        var temaActual = function () {
+            return raiz.getAttribute('data-tema') === 'oscuro' ? 'oscuro' : 'claro';
+        };
+
+        interruptoresTema.forEach(function (interruptor) {
+            interruptor.addEventListener('click', function () {
+                aplicarTema(temaActual() === 'oscuro' ? 'claro' : 'oscuro', true);
+            });
+        });
+
+        /* Deja el botón en consonancia con el tema que ya trae el documento */
+        aplicarTema(temaActual(), false);
+
+        /* Si el tema se cambia en otra pestaña, esta se pone al día igual */
+        window.addEventListener('storage', function (evento) {
+            if (evento.key === 'clinica-dental-tema') {
+                aplicarTema(evento.newValue === 'oscuro' ? 'oscuro' : 'claro', false);
+            }
+        });
     }
 })();

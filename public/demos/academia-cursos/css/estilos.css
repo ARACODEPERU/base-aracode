@@ -24,15 +24,44 @@
    ============================================================================= */
 
 :root {
+    /*
+       Paleta. El reparto importa, porque el modo oscuro se hace redefiniendo
+       variables (ver «Tema claro y oscuro», al final del archivo):
+
+       - Constantes: no cambian de tema. `--indigo` y `--indigo-2` son las
+         superficies oscuras por diseño (barra superior, hero, banda de cierre,
+         pie y botones sólidos), `--ambar` es el botón principal (con texto
+         oscuro encima) y `--blanco` el texto y los iconos sobre lo oscuro.
+       - Superficies: `--fondo` (cuerpo, tarjetas, cabecera y campos),
+         `--fondo-suave` (secciones y bloques informativos) y
+         `--fondo-cabecera`. En oscuro pasan a la versión oscura de la paleta.
+       - Texto y acentos: `--tinta` y `--gris` (texto), `--linea` (bordes),
+         `--acento` (enlaces, bordes activos y acentos que en claro son azul
+         marino) y `--ambar-oscuro` (sellos y estrellas), que sobre fondo oscuro
+         se aclaran para poder leerse.
+    */
+
+    /* --- Constantes: iguales en los dos temas ----------------------------- */
+
     --indigo: #16265A;
     --indigo-2: #0F1B42;
     --ambar: #F2A61B;
-    --ambar-oscuro: #B97C05;
+    --blanco: #FFFFFF;
+
+    /* --- Superficies que cambian con el tema ------------------------------ */
+
+    --fondo: #FFFFFF;
+    --fondo-suave: #F4F7FD;
+    --fondo-cabecera: rgba(255, 255, 255, 0.97);
+
+    /* --- Texto, bordes y acentos sobre esas superficies ------------------- */
+
     --tinta: #17203C;
     --gris: #5A6684;
     --linea: #E3E8F4;
-    --hielo: #F4F7FD;
-    --blanco: #FFFFFF;
+    --acento: #16265A;
+    --ambar-oscuro: #B97C05;
+
     --sombra: 0 18px 45px -30px rgba(15, 27, 66, 0.42);
     --sombra-alta: 0 30px 60px -34px rgba(15, 27, 66, 0.5);
     --radio: 1.25rem;
@@ -63,7 +92,7 @@ body {
     font-size: 1rem;
     line-height: 1.65;
     color: var(--tinta);
-    background: var(--blanco);
+    background: var(--fondo);
     -webkit-font-smoothing: antialiased;
 }
 
@@ -97,7 +126,7 @@ p {
 }
 
 a {
-    color: var(--indigo);
+    color: var(--acento);
 }
 
 :focus-visible {
@@ -165,8 +194,8 @@ a {
 }
 
 .sello--claro {
-    background: var(--hielo);
-    color: var(--indigo);
+    background: var(--fondo-suave);
+    color: var(--acento);
 }
 
 .sello--oscuro {
@@ -231,7 +260,7 @@ html.js .revelar.visible {
 
 .boton--indigo {
     background: var(--indigo);
-    border-color: var(--indigo);
+    border-color: var(--acento);
     color: var(--blanco);
 }
 
@@ -248,19 +277,19 @@ html.js .revelar.visible {
 }
 
 .boton--fantasma:hover {
-    border-color: var(--indigo);
-    color: var(--indigo);
+    border-color: var(--acento);
+    color: var(--acento);
 }
 
 .boton--borde {
     border-color: var(--linea);
     color: var(--tinta);
-    background: var(--blanco);
+    background: var(--fondo);
 }
 
 .boton--borde:hover {
-    border-color: var(--indigo);
-    color: var(--indigo);
+    border-color: var(--acento);
+    color: var(--acento);
 }
 
 .boton--bloque {
@@ -364,7 +393,7 @@ html.js .revelar.visible {
     position: sticky;
     top: 0;
     z-index: 40;
-    background: rgba(255, 255, 255, 0.97);
+    background: var(--fondo-cabecera);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--linea);
     transition: box-shadow 0.25s ease;
@@ -380,6 +409,81 @@ html.js .revelar.visible {
     justify-content: space-between;
     gap: 1rem;
     min-height: var(--alto-cabecera);
+}
+
+/* A la derecha van el menú, el interruptor de tema y el botón del menú móvil.
+   Forman un grupo propio para que la marca quede sola a la izquierda y el
+   grupo pegado al borde derecho. */
+.cabecera__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/*
+   Interruptor de tema claro / oscuro.
+
+   Muestra el icono del modo AL QUE SE VA al pulsar: en claro se ve una luna
+   (pasa a oscuro) y en oscuro un sol (vuelve a claro). Los dos iconos están
+   siempre en el DOM y se cruzan con una transición, así que el botón no se
+   reconstruye al cambiar de tema: el estado vive en el atributo data-tema del
+   <html> y solo el CSS decide cuál se ve.
+*/
+.tema-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 2.75rem = 44 px: el área táctil mínima, igual que el botón del menú. */
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border: 1px solid var(--linea);
+    border-radius: 0.85rem;
+    background: var(--fondo);
+    color: var(--tinta);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.tema-switch:hover {
+    border-color: var(--ambar);
+    color: var(--acento);
+}
+
+.tema-switch__icono {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.22s ease-out, transform 0.3s ease-out;
+}
+
+.tema-switch svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tema-switch__icono--sol {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--sol {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--luna {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. La clase
+   `no-js` la quita el script del <head> cuando el navegador ejecuta JS. */
+html.no-js .tema-switch {
+    display: none;
 }
 
 .marca {
@@ -429,7 +533,7 @@ html.js .revelar.visible {
     height: 2.75rem;
     border: 1px solid var(--linea);
     border-radius: 0.85rem;
-    background: var(--blanco);
+    background: var(--fondo);
     color: var(--tinta);
     cursor: pointer;
 }
@@ -458,12 +562,12 @@ html.js .revelar.visible {
 }
 
 .menu a:hover {
-    color: var(--indigo);
+    color: var(--acento);
     border-color: var(--ambar);
 }
 
 .menu a[aria-current="page"] {
-    color: var(--indigo);
+    color: var(--acento);
     border-color: var(--ambar);
 }
 
@@ -495,7 +599,7 @@ html.js .revelar.visible {
         */
         inset: 100% 0 auto 0;
         padding: 0.75rem 1.5rem 2rem;
-        background: var(--blanco);
+        background: var(--fondo);
         border-bottom: 1px solid var(--linea);
         box-shadow: var(--sombra-alta);
         transform: translateY(-102%);
@@ -810,7 +914,7 @@ html.js .portada__controles {
 /* Cifras de confianza: viven en su propia banda, justo debajo del hero, así
    que el hero puede ocupar la pantalla completa sin números encima. */
 .banda-cifras {
-    background: var(--blanco);
+    background: var(--fondo);
     border-bottom: 1px solid var(--linea);
 }
 
@@ -837,7 +941,7 @@ html.js .portada__controles {
     margin: 0.25rem 0 0;
     font-size: clamp(1.7rem, 3.8vw, 2.3rem);
     font-weight: 800;
-    color: var(--indigo);
+    color: var(--acento);
     letter-spacing: -0.02em;
 }
 
@@ -850,7 +954,7 @@ html.js .portada__controles {
 }
 
 .seccion--hielo {
-    background: var(--hielo);
+    background: var(--fondo-suave);
 }
 
 .seccion--oscura {
@@ -953,7 +1057,7 @@ html.js .portada__controles {
     padding: 1.6rem 1.5rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
@@ -971,8 +1075,8 @@ html.js .portada__controles {
     height: 2.75rem;
     margin-bottom: 0.85rem;
     border-radius: 0.85rem;
-    background: var(--hielo);
-    color: var(--indigo);
+    background: var(--fondo-suave);
+    color: var(--acento);
 }
 
 .tarjeta__icono svg {
@@ -1031,7 +1135,7 @@ html.js .portada__controles {
 
 .bloque-foto figcaption {
     padding: 0.85rem 1.25rem 1rem;
-    background: var(--blanco);
+    background: var(--fondo);
     font-size: 0.8125rem;
     color: var(--gris);
 }
@@ -1052,7 +1156,7 @@ html.js .portada__controles {
     padding: 1.4rem 1.3rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
 }
 
 .avatar {
@@ -1115,7 +1219,7 @@ html.js .portada__controles {
     padding: 1.6rem 1.5rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
 }
 
@@ -1157,7 +1261,7 @@ html.js .portada__controles {
     padding: 1.85rem 1.6rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
 }
 
@@ -1191,7 +1295,7 @@ html.js .portada__controles {
 .plan__moneda {
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--indigo);
+    color: var(--acento);
     margin-right: 0.25rem;
 }
 
@@ -1230,7 +1334,7 @@ html.js .portada__controles {
     padding: 1.25rem 1.4rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
     margin-bottom: 2rem;
 }
@@ -1259,12 +1363,12 @@ html.js .portada__controles {
     font: inherit;
     font-size: 0.9375rem;
     color: var(--tinta);
-    background: var(--blanco);
+    background: var(--fondo);
 }
 
 .filtros input:focus,
 .filtros select:focus {
-    border-color: var(--indigo);
+    border-color: var(--acento);
     outline: none;
     box-shadow: 0 0 0 3px rgba(22, 38, 90, 0.14);
 }
@@ -1301,7 +1405,7 @@ html.js .portada__controles {
     overflow: hidden;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
@@ -1370,7 +1474,7 @@ html.js .portada__controles {
 .curso__datos svg {
     width: 1rem;
     height: 1rem;
-    color: var(--indigo);
+    color: var(--acento);
     flex-shrink: 0;
 }
 
@@ -1387,7 +1491,7 @@ html.js .portada__controles {
 .curso__precio {
     font-size: 1.15rem;
     font-weight: 800;
-    color: var(--indigo);
+    color: var(--acento);
 }
 
 .curso__precio small {
@@ -1402,7 +1506,7 @@ html.js .portada__controles {
     padding: 2.5rem 1.5rem;
     border: 1px dashed var(--linea);
     border-radius: var(--radio);
-    background: var(--hielo);
+    background: var(--fondo-suave);
     text-align: center;
     color: var(--gris);
 }
@@ -1424,7 +1528,7 @@ html.js .portada__controles {
 }
 
 .migajas a {
-    color: var(--indigo);
+    color: var(--acento);
     text-decoration: none;
 }
 
@@ -1464,7 +1568,7 @@ html.js .portada__controles {
 .modulo {
     border: 1px solid var(--linea);
     border-radius: var(--radio-chico);
-    background: var(--blanco);
+    background: var(--fondo);
     padding: 0.35rem 1.15rem;
 }
 
@@ -1482,7 +1586,7 @@ html.js .portada__controles {
 .modulo summary::after {
     content: "+";
     float: right;
-    color: var(--indigo);
+    color: var(--acento);
     font-weight: 800;
 }
 
@@ -1519,7 +1623,7 @@ html.js .portada__controles {
     padding: 1.6rem 1.5rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra-alta);
 }
 
@@ -1534,7 +1638,7 @@ html.js .portada__controles {
     margin: 0 0 0.25rem;
     font-size: 2.2rem;
     font-weight: 800;
-    color: var(--indigo);
+    color: var(--acento);
 }
 
 .panel__precio small {
@@ -1629,7 +1733,7 @@ html.js .portada__controles {
     padding: 1.5rem 1.4rem 1.5rem 1.4rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
 }
 
 .paso::before {
@@ -1682,7 +1786,7 @@ html.js .portada__controles {
     padding: 1.2rem 1.25rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio-chico);
-    background: var(--blanco);
+    background: var(--fondo);
     font-size: 0.9375rem;
     color: var(--gris);
 }
@@ -1742,8 +1846,8 @@ html.js .portada__controles {
     width: 2.4rem;
     height: 2.4rem;
     border-radius: 0.75rem;
-    background: var(--hielo);
-    color: var(--indigo);
+    background: var(--fondo-suave);
+    color: var(--acento);
     flex-shrink: 0;
 }
 
@@ -1757,7 +1861,7 @@ html.js .portada__controles {
     border: 1px solid var(--linea);
     border-radius: var(--radio);
     overflow: hidden;
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
 }
 
@@ -1778,7 +1882,7 @@ html.js .portada__controles {
     padding: 1.85rem 1.6rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra-alta);
 }
 
@@ -1827,7 +1931,7 @@ html.js .portada__controles {
     padding: 0.75rem 0.9rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio-chico);
-    background: var(--blanco);
+    background: var(--fondo);
     font: inherit;
     font-size: 0.9375rem;
     color: var(--tinta);
@@ -1840,7 +1944,7 @@ html.js .portada__controles {
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
-    border-color: var(--indigo);
+    border-color: var(--acento);
     outline: none;
     box-shadow: 0 0 0 3px rgba(22, 38, 90, 0.14);
 }
@@ -1867,7 +1971,7 @@ html.js .portada__controles {
 }
 
 .grupo-radio input {
-    accent-color: var(--indigo);
+    accent-color: var(--acento);
     width: 1.1rem;
     height: 1.1rem;
 }
@@ -1885,7 +1989,7 @@ html.js .portada__controles {
     width: 1.15rem;
     height: 1.15rem;
     margin-top: 0.15rem;
-    accent-color: var(--indigo);
+    accent-color: var(--acento);
 }
 
 .campo__error {
@@ -1935,7 +2039,7 @@ html.js .portada__controles {
 .preguntas details {
     border: 1px solid var(--linea);
     border-radius: var(--radio-chico);
-    background: var(--blanco);
+    background: var(--fondo);
     padding: 0.35rem 1.1rem;
 }
 
@@ -1953,7 +2057,7 @@ html.js .portada__controles {
 .preguntas summary::after {
     content: "+";
     float: right;
-    color: var(--indigo);
+    color: var(--acento);
     font-weight: 800;
 }
 
@@ -2272,6 +2376,58 @@ html.js .portada__controles {
    los cursos filtrados usan display flex y ganarían a la regla del navegador. */
 [hidden] {
     display: none !important;
+}
+
+/* =============================================================================
+   Tema claro y oscuro
+   =============================================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto (la
+   plantilla tal como se diseñó) y oscuro solo si el visitante lo pide con el
+   interruptor de la cabecera. La elección se guarda en localStorage bajo la
+   clave 'academia-cursos-tema' —una por plantilla, porque en este repositorio
+   todas las demos comparten origen— y el script del <head> la aplica antes de
+   pintar: al recargar en oscuro no se ve un destello claro.
+
+   El sitio tiene cuatro páginas y las cuatro cargan este mismo script, así que
+   la elección viaja de una a otra sin repetirla.
+
+   Qué cambia y qué no: las superficies oscuras por diseño (barra superior,
+   hero con su velo, banda de cierre, cierre y pie, más el botón de WhatsApp y
+   los botones sólidos) se quedan igual; lo que se invierte son las superficies
+   claras: cuerpo, tarjetas, secciones informativas, cabecera y campos. Ningún
+   componente cambia de forma, de tamaño ni de posición, y quien no toque el
+   interruptor sigue viendo el tema claro aunque su sistema esté en oscuro.
+   ============================================================================= */
+
+html[data-tema='oscuro'] {
+    /* Superficies: el cuerpo y las tarjetas, un paso por encima de las
+       secciones oscuras; los informativos, un paso por encima del cuerpo. */
+    --fondo: #141C42;
+    --fondo-suave: #1B2452;
+    --fondo-cabecera: rgba(11, 16, 44, 0.95);
+    /* Las superficies oscuras se hunden un poco más: así el ritmo entre las dos
+       superficies se mantiene también en oscuro. */
+    --indigo: #101A42;
+    --indigo-2: #0A1130;
+    /* Texto, bordes y acentos: los mismos papeles, aclarados para leerse. */
+    --tinta: #E8ECFA;
+    --gris: #A3AECF;
+    --linea: #2A3462;
+    --acento: #A9BCF2;
+    --ambar-oscuro: #F2BE55;
+    --sombra: 0 18px 45px -30px rgba(0, 0, 0, 0.75);
+    --sombra-alta: 0 30px 60px -34px rgba(0, 0, 0, 0.85);
+
+    /* Barras de desplazamiento, campos y autocompletado del navegador. */
+    color-scheme: dark;
+}
+
+/* El plano de la academia se dibujó con la paleta clara y no lee variables CSS:
+   sin esto aparece como un rectángulo blanco que deslumbra. Se invierte con un
+   filtro en vez de mantener dos versiones del archivo. Las fotografías no se
+   tocan: son fotos, no gráficos de la interfaz. */
+html[data-tema='oscuro'] .mapa img {
+    filter: invert(1) hue-rotate(180deg) saturate(0.9) brightness(0.95);
 }
 
 /* =============================================================================

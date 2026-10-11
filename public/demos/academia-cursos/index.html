@@ -1,8 +1,36 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="no-js" data-tema="claro">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada, por dos razones: al recargar en oscuro
+    no se ve el destello claro y las cosas que no funcionan sin JavaScript (el
+    interruptor y los controles del slider) quedan ocultas hasta que haya JS.
+
+    La elección se guarda bajo 'academia-cursos-tema', así que viaja entre las
+    cuatro páginas del sitio. Sin nada guardado se arranca en claro, aunque el
+    sistema del visitante esté en oscuro: el modo oscuro solo se pone si lo pide.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('academia-cursos-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
 
 <!--
     Demostración de la plantilla «Academia de Cursos» del Banco de Plantillas
@@ -88,19 +116,42 @@
             </span>
         </a>
 
-        <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
-            <span class="sr-solo">Abrir menú</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-        </button>
+        <!-- A la derecha de la marca: el menú, el interruptor de tema y el
+             botón que despliega el menú en móvil. -->
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html" aria-current="page">Inicio</a></li>
+                    <li><a href="cursos.html">Cursos</a></li>
+                    <li><a href="matricula.html#visitanos">Visítanos</a></li>
+                    <li><a href="matricula.html" class="menu__matricula">Matricularme</a></li>
+                </ul>
+            </nav>
 
-        <nav class="menu" id="menu-principal" aria-label="Principal">
-            <ul>
-                <li><a href="index.html" aria-current="page">Inicio</a></li>
-                <li><a href="cursos.html">Cursos</a></li>
-                <li><a href="matricula.html#visitanos">Visítanos</a></li>
-                <li><a href="matricula.html" class="menu__matricula">Matricularme</a></li>
-            </ul>
-        </nav>
+            <!--
+                Interruptor de tema claro / oscuro.
+
+                Cambia el atributo data-tema del <html> y recuerda la elección;
+                los colores los pone el CSS y el icono que se ve es el del modo
+                al que se va (luna en claro, sol en oscuro). El texto del botón
+                lo deja en consonancia el script del sitio, para quien lo use con
+                lector de pantalla. Sin JavaScript no se muestra.
+            -->
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+        </div>
     </div>
 </header>
 

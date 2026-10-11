@@ -128,6 +128,7 @@ return [
             'resumen' => 'Landing para consultorio odontológico: tratamientos, equipo, horarios y reserva de cita.',
             'incluye' => [
                 'Hero a pantalla completa con slider de tres fotos y llamada a reservar',
+                'Modo claro y oscuro con interruptor en la cabecera',
                 'Seis tratamientos con su descripción',
                 'Bloque de confianza: años, pacientes y especialidades',
                 'Horarios de atención y datos de contacto',
@@ -189,6 +190,7 @@ return [
             'resumen' => 'Sitio de academia con catálogo de cursos, temario por módulos, docentes, certificación y matrícula en línea.',
             'incluye' => [
                 'Hero a pantalla completa con slider de tres fotos, áreas y cifras de confianza',
+                'Modo claro y oscuro con interruptor, recordado entre las páginas del sitio',
                 'Catálogo de ocho cursos con precios, duración y fechas de inicio',
                 'Filtros por área, modalidad y búsqueda por texto',
                 'Ficha de curso con temario por módulos en acordeones',

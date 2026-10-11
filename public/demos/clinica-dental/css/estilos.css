@@ -25,13 +25,41 @@
    ============================================================================= */
 
 :root {
+    /*
+       Paleta. El reparto importa, porque el modo oscuro se hace redefiniendo
+       variables (ver «Tema claro y oscuro», al final del archivo):
+
+       - Constantes: no cambian de tema. `--oscuro` es la superficie oscura por
+         diseño (barra superior, hero, sección oscura y cierre), `--blanco` es
+         el texto y los iconos que van encima de ella y `--verde` /
+         `--verde-profundo` son el fondo de los botones sólidos.
+       - Superficies: `--fondo` (cuerpo, tarjetas, cabecera y campos),
+         `--fondo-suave` (secciones informativas) y `--fondo-cabecera`. En
+         oscuro pasan a la versión oscura de la misma paleta.
+       - Texto y acentos: `--tinta` y `--gris` (texto), `--linea` (bordes) y
+         `--verde-oscuro` (enlaces y acentos), que sobre fondo oscuro se aclara.
+    */
+
+    /* --- Constantes: iguales en los dos temas ----------------------------- */
+
     --verde: #0E9F8A;
-    --verde-oscuro: #0A7A6B;
+    --verde-profundo: #0A7A6B;
+    --oscuro: #10231F;
+    --blanco: #FFFFFF;
+
+    /* --- Superficies que cambian con el tema ------------------------------ */
+
+    --fondo: #FFFFFF;
+    --fondo-suave: #F1F8F6;
+    --fondo-cabecera: rgba(255, 255, 255, 0.96);
+
+    /* --- Texto, bordes y acentos sobre esas superficies ------------------- */
+
     --tinta: #10231F;
     --gris: #5C6E6A;
     --linea: #E1EBE8;
-    --menta: #F1F8F6;
-    --blanco: #FFFFFF;
+    --verde-oscuro: #0A7A6B;
+
     --sombra: 0 18px 45px -30px rgba(16, 35, 31, 0.45);
     --sombra-alta: 0 30px 60px -35px rgba(16, 35, 31, 0.55);
     --radio: 1.25rem;
@@ -64,7 +92,7 @@ body {
     font-size: 1rem;
     line-height: 1.65;
     color: var(--tinta);
-    background: var(--blanco);
+    background: var(--fondo);
     -webkit-font-smoothing: antialiased;
 }
 
@@ -141,7 +169,7 @@ a {
     transform: translate(-50%, -120%);
     z-index: 60;
     padding: 0.75rem 1.25rem;
-    background: var(--tinta);
+    background: var(--oscuro);
     color: var(--blanco);
     text-decoration: none;
     border-radius: 0 0 var(--radio-chico) var(--radio-chico);
@@ -166,7 +194,7 @@ a {
 }
 
 .sello--claro {
-    background: var(--menta);
+    background: var(--fondo-suave);
 }
 
 .sello--oscuro {
@@ -224,8 +252,8 @@ html.js .revelar.visible {
 }
 
 .boton--principal:hover {
-    background: var(--verde-oscuro);
-    border-color: var(--verde-oscuro);
+    background: var(--verde-profundo);
+    border-color: var(--verde-profundo);
     transform: translateY(-2px);
 }
 
@@ -243,7 +271,7 @@ html.js .revelar.visible {
 .boton--borde {
     border-color: var(--linea);
     color: var(--tinta);
-    background: var(--blanco);
+    background: var(--fondo);
 }
 
 .boton--borde:hover {
@@ -270,7 +298,7 @@ html.js .revelar.visible {
    ============================================================================= */
 
 .barra {
-    background: var(--tinta);
+    background: var(--oscuro);
     color: rgba(255, 255, 255, 0.82);
     font-size: 0.8125rem;
 }
@@ -359,7 +387,7 @@ html.js .revelar.visible {
     position: sticky;
     top: 0;
     z-index: 40;
-    background: rgba(255, 255, 255, 0.96);
+    background: var(--fondo-cabecera);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--linea);
     transition: box-shadow 0.25s ease;
@@ -377,6 +405,81 @@ html.js .revelar.visible {
     min-height: var(--alto-cabecera);
 }
 
+/* A la derecha van el menú, el interruptor de tema y el botón del menú móvil.
+   Forman un grupo propio para que la marca quede sola a la izquierda y el
+   grupo pegado al borde derecho. */
+.cabecera__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/*
+   Interruptor de tema claro / oscuro.
+
+   Muestra el icono del modo AL QUE SE VA al pulsar: en claro se ve una luna
+   (pasa a oscuro) y en oscuro un sol (vuelve a claro). Los dos iconos están
+   siempre en el DOM y se cruzan con una transición, así que el botón no se
+   reconstruye al cambiar de tema: el estado vive en el atributo data-tema del
+   <html> y solo el CSS decide cuál se ve.
+*/
+.tema-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 2.75rem = 44 px: el área táctil mínima, igual que el botón del menú. */
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border: 1px solid var(--linea);
+    border-radius: 0.85rem;
+    background: var(--fondo);
+    color: var(--tinta);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.tema-switch:hover {
+    border-color: var(--verde);
+    color: var(--verde-oscuro);
+}
+
+.tema-switch__icono {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.22s ease-out, transform 0.3s ease-out;
+}
+
+.tema-switch svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tema-switch__icono--sol {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--sol {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--luna {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. La clase
+   `no-js` la quita el script del <head> cuando el navegador ejecuta JS. */
+html.no-js .tema-switch {
+    display: none;
+}
+
 .marca {
     display: inline-flex;
     align-items: center;
@@ -392,7 +495,7 @@ html.js .revelar.visible {
     width: 2.6rem;
     height: 2.6rem;
     border-radius: 0.9rem;
-    background: var(--menta);
+    background: var(--fondo-suave);
     color: var(--verde-oscuro);
 }
 
@@ -424,7 +527,7 @@ html.js .revelar.visible {
     height: 2.75rem;
     border: 1px solid var(--linea);
     border-radius: 0.85rem;
-    background: var(--blanco);
+    background: var(--fondo);
     color: var(--tinta);
     cursor: pointer;
 }
@@ -466,7 +569,7 @@ html.js .revelar.visible {
 }
 
 .menu__cita:hover {
-    background: var(--verde-oscuro);
+    background: var(--verde-profundo);
 }
 
 /* Móvil: el menú se despliega desde el botón. */
@@ -486,7 +589,7 @@ html.js .revelar.visible {
         */
         inset: 100% 0 auto 0;
         padding: 0.75rem 1.5rem 2rem;
-        background: var(--blanco);
+        background: var(--fondo);
         border-bottom: 1px solid var(--linea);
         box-shadow: var(--sombra-alta);
         transform: translateY(-102%);
@@ -552,7 +655,7 @@ html.js .revelar.visible {
     min-height: 88vh;
     min-height: min(88svh, 60rem);
     padding: clamp(2.75rem, 7vw, 5.5rem) 0 clamp(5rem, 9vw, 7rem);
-    background: var(--tinta);
+    background: var(--oscuro);
     color: rgba(255, 255, 255, 0.86);
     overflow: hidden;
 }
@@ -800,7 +903,7 @@ html.js .portada__controles {
 /* Cifras de confianza: viven en su propia banda, justo debajo del hero, así
    que el hero puede ocupar la pantalla completa sin números encima. */
 .banda-cifras {
-    background: var(--blanco);
+    background: var(--fondo);
     border-bottom: 1px solid var(--linea);
 }
 
@@ -847,11 +950,11 @@ html.js .portada__controles {
 }
 
 .seccion--menta {
-    background: var(--menta);
+    background: var(--fondo-suave);
 }
 
 .seccion--oscura {
-    background: var(--tinta);
+    background: var(--oscuro);
     color: rgba(255, 255, 255, 0.86);
 }
 
@@ -934,7 +1037,7 @@ html.js .portada__controles {
     padding: 1.6rem 1.5rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
@@ -952,7 +1055,7 @@ html.js .portada__controles {
     height: 2.75rem;
     margin-bottom: 0.85rem;
     border-radius: 0.85rem;
-    background: var(--menta);
+    background: var(--fondo-suave);
     color: var(--verde-oscuro);
 }
 
@@ -1079,7 +1182,7 @@ html.js .portada__controles {
     padding: 1.6rem 1.5rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
 }
 
@@ -1111,7 +1214,7 @@ html.js .portada__controles {
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 50%;
-    background: var(--menta);
+    background: var(--fondo-suave);
     color: var(--verde-oscuro);
     font-weight: 800;
     letter-spacing: 0.02em;
@@ -1155,7 +1258,7 @@ html.js .portada__controles {
     padding: 1.85rem 1.6rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
 }
 
@@ -1265,7 +1368,7 @@ html.js .portada__controles {
     width: 2.4rem;
     height: 2.4rem;
     border-radius: 0.75rem;
-    background: var(--menta);
+    background: var(--fondo-suave);
     color: var(--verde-oscuro);
     flex-shrink: 0;
 }
@@ -1280,7 +1383,7 @@ html.js .portada__controles {
     border: 1px solid var(--linea);
     border-radius: var(--radio);
     overflow: hidden;
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra);
 }
 
@@ -1299,7 +1402,7 @@ html.js .portada__controles {
     padding: 1.85rem 1.6rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio);
-    background: var(--blanco);
+    background: var(--fondo);
     box-shadow: var(--sombra-alta);
 }
 
@@ -1347,7 +1450,7 @@ html.js .portada__controles {
     padding: 0.75rem 0.9rem;
     border: 1px solid var(--linea);
     border-radius: var(--radio-chico);
-    background: var(--blanco);
+    background: var(--fondo);
     font: inherit;
     font-size: 0.9375rem;
     color: var(--tinta);
@@ -1427,7 +1530,7 @@ html.js .portada__controles {
 .preguntas details {
     border: 1px solid var(--linea);
     border-radius: var(--radio-chico);
-    background: var(--blanco);
+    background: var(--fondo);
     padding: 0.35rem 1.1rem;
 }
 
@@ -1465,7 +1568,7 @@ html.js .portada__controles {
 
 .cierre {
     padding: 3.5rem 0;
-    background: linear-gradient(120deg, var(--verde-oscuro) 0%, #0C5E52 60%, #10403A 100%);
+    background: linear-gradient(120deg, var(--verde-profundo) 0%, #0C5E52 60%, #10403A 100%);
     color: var(--blanco);
 }
 
@@ -1631,6 +1734,69 @@ html.js .portada__controles {
     100% {
         opacity: 0;
     }
+}
+
+/* =============================================================================
+   Tema claro y oscuro
+   =============================================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto (la
+   plantilla tal como se diseñó) y oscuro solo si el visitante lo pide con el
+   interruptor de la cabecera. La elección se guarda en localStorage bajo la
+   clave 'clinica-dental-tema' —una por plantilla, porque en este repositorio
+   todas las demos comparten origen— y el script del <head> la aplica antes de
+   pintar, así que al recargar en oscuro no se ve un destello claro.
+
+   Qué cambia y qué no: las superficies oscuras por diseño (barra superior,
+   hero, sección oscura, cierre y pie, más el botón de WhatsApp) se quedan
+   igual; lo que se invierte son las superficies claras: cuerpo, tarjetas,
+   secciones informativas, cabecera y campos. Ningún componente cambia de forma,
+   de tamaño ni de posición, y quien no toque el interruptor sigue viendo el
+   tema claro aunque su sistema esté en oscuro.
+   ============================================================================= */
+
+html[data-tema='oscuro'] {
+    /* Superficies: el cuerpo y las tarjetas, un paso por encima de las
+       secciones oscuras; las informativas, un paso por encima del cuerpo. */
+    --fondo: #0F211C;
+    --fondo-suave: #143028;
+    --fondo-cabecera: rgba(9, 25, 21, 0.94);
+    /* Las secciones oscuras se hunden un poco más: así el ritmo entre las dos
+       superficies se mantiene también en oscuro. */
+    --oscuro: #081512;
+    /* Texto, bordes y acentos: los mismos papeles, aclarados para leerse. */
+    --tinta: #E7F2EF;
+    --gris: #9FB5B0;
+    --linea: #27463E;
+    --verde-oscuro: #62DCC6;
+    --sombra: 0 18px 45px -30px rgba(0, 0, 0, 0.75);
+    --sombra-alta: 0 30px 60px -35px rgba(0, 0, 0, 0.85);
+
+    /* Barras de desplazamiento, campos y autocompletado del navegador. */
+    color-scheme: dark;
+}
+
+/* El rojo de los avisos del formulario no se lee sobre fondo oscuro. */
+html[data-tema='oscuro'] .campo__error {
+    color: #FFA79C;
+}
+
+/*
+   El plano. Es el único gráfico de la página con fondo propio: se dibujó con
+   esta misma paleta y no lee variables CSS, así que en oscuro aparece como un
+   rectángulo blanco que deslumbra. Se invierte con un filtro —y se gira el tono
+   para que el verde de marca vuelva a quedar verde— en vez de mantener dos
+   versiones del archivo: así el SVG sigue siendo el mismo y el día que se
+   reemplace por el mapa embebido del cliente no hay nada que deshacer.
+
+   Las fotografías no se tocan: son fotos, no gráficos de la interfaz.
+*/
+html[data-tema='oscuro'] .mapa img {
+    filter: invert(1) hue-rotate(180deg) saturate(0.9) brightness(0.95);
+}
+
+html[data-tema='oscuro'] .campo--error input,
+html[data-tema='oscuro'] .campo--error select {
+    border-color: #FFA79C;
 }
 
 /* =============================================================================

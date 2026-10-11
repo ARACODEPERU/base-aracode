@@ -15,6 +15,69 @@ Antes de dar por buena una portada nueva: avanzar el slider a mano, revisarla a
 1440 px y a 390 px y repetir la revisión con `prefers-reduced-motion` activado,
 que debe apagar el paso automático sin romper los controles.
 
+## Regla de tema claro / oscuro
+
+Aclaración vigente del banco: **toda landing y todo sitio web lleva modo claro y
+modo oscuro, con un interruptor que funciona igual que el del sitio independiente
+de Pichanguero**. No es un extra opcional ni una variante de la plantilla: es el
+punto 10 de la lista obligatoria de más abajo y se comprueba antes de publicar.
+
+La referencia es `resources/views/pichanguero/` y su documentación
+(`resources/views/pichanguero/README.md`, apartado «Tema claro y oscuro»). Como
+cada plantilla es un proyecto independiente que se copia a su propio dominio, el
+interruptor **no se comparte**: se implementa dentro de cada una, igual que hacen
+Pichanguero, KiraFact y Kapta. Lo que sí es idéntico es su interfaz y su
+comportamiento:
+
+| Pieza | Convención |
+| --- | --- |
+| Estado | atributo `data-tema` del `<html>`, con `claro` (valor con el que se sirve) y `oscuro` (solo si el visitante lo eligió) |
+| Interruptor | botón en la cabecera, visible también en móvil; si hay panel de menú móvil se repite dentro, porque el panel tapa la cabecera |
+| Icono | el del modo AL QUE SE VA: luna en claro, sol en oscuro. Los dos iconos van siempre en el DOM y se cruzan con una transición |
+| Etiqueta | «Cambiar a modo oscuro» en claro y «Cambiar a modo claro» en oscuro, en `aria-label` y `title` |
+| Accesibilidad | `aria-pressed` en `true` solo con el modo oscuro activo; el botón se trata por clase o atributo (`[data-tema-switch]`), nunca por `id`, porque se repite en la misma página |
+| Antes de pintar | un script en línea en el `<head>` aplica la elección guardada antes de la primera pintada: al recargar en oscuro no se ve un destello claro |
+| Memoria | `localStorage` con **una clave por plantilla**, `<slug>-tema` (p. ej. `clinica-dental-tema`), más el evento `storage` para que las otras pestañas se pongan al día. En una demo de varias páginas la misma clave hace que el tema elegido viaje de una a otra |
+| Sin JavaScript | el interruptor no haría nada, así que se oculta (clase `no-js` en el `<html>`): el sitio se ve completo y en claro |
+| Detalles nativos | en oscuro, `color-scheme: dark` para que barras de desplazamiento y campos acompañen |
+
+**Qué cambia y qué no.** El tema es un atributo del documento y los colores los
+pone el CSS: el JavaScript solo cambia ese atributo y actualiza el texto del botón.
+Lo que se invierte son las **superficies claras** (el fondo del cuerpo y las
+secciones de información), que pasan a una versión oscura de la propia paleta;
+las secciones que ya son oscuras por diseño —el hero con su velo, la barra
+superior, la cabecera, el pie y el botón de WhatsApp— se quedan igual. Ningún
+componente cambia de forma, de tamaño ni de posición entre los dos temas, y nadie
+que no toque el interruptor recibe el tema oscuro del sistema operativo.
+
+**Sin destello, sin salto.** El guardado se lee en el `<head>`, antes del CSS
+de la página. El error típico —aplicar la clase al final del cuerpo— produce el
+flash blanco al recargar en oscuro.
+
+**Estado.** Las dos demostraciones publicadas ya lo traen: `clinica-dental`
+(landing) y `academia-cursos` (sitio web de cuatro páginas, donde la elección
+viaja de una página a otra porque las cuatro comparten la misma clave). Las
+cuatro plantillas que aún no tienen demo (`restaurante-carta`, `estudio-contable`,
+`inmobiliaria-propiedades` y `portafolio-creativo`) ya nacen con el interruptor,
+que es obligatorio para publicar. Lo vigila la prueba
+`tests/Unit/CatalogoPlantillasTest.php` → «trae el interruptor de tema claro /
+oscuro en toda demostración publicada», que además exige una clave de
+`localStorage` distinta por plantilla.
+
+Antes de dar por buena una plantilla nueva, la revisión del tema es: alternar el
+interruptor en la cabecera y en el panel de móvil, recargar y comprobar que no
+hay destello y que gana la elección guardada, abrir una segunda pestaña y
+comprobar que se sincroniza, mirar que ningún texto quede sobre fondo del mismo
+color, que el interruptor siga visible con el menú móvil abierto y que sin
+JavaScript el interruptor no se muestre y la página se lea completa.
+
+**Los gráficos con fondo propio.** Una fotografía no se toca nunca. Un gráfico
+dibujado —como el plano de la ubicación, que es un SVG con la paleta clara— sí
+aparece como un rectángulo claro sobre la página oscura: en las dos demos
+publicadas se invierte con un filtro (`invert` + giro de tono) y se comprueba a
+tamaño real que su detalle y su marca siguen leyéndose. Si un gráfico nuevo
+invirtiera mal, es mejor dejarlo tal cual que publicar una mancha oscura.
+
 ## Piezas de la sección
 
 | Pieza | Archivo | Qué hace |
@@ -66,7 +129,7 @@ páginas). Las dos llevan sus créditos de fotos y su lista de reemplazos en `CR
 ### Lista obligatoria de toda demostración
 
 Lo que sigue es el estándar del banco: una plantilla nueva no se publica sin
-cumplirlo. Los 10 puntos se comprueban antes de enlazarla desde la ficha.
+cumplirlo. Los 11 puntos se comprueban antes de enlazarla desde la ficha.
 
 1. **Portada: hero o slider, a pantalla completa.** Es lo primero que se mira y
    lo que decide si el visitante sigue: ninguna plantilla se publica con una
@@ -110,10 +173,19 @@ cumplirlo. Los 10 puntos se comprueban antes de enlazarla desde la ficha.
 9. **Rendimiento y aislamiento.** Sin frameworks, sin CDN y sin scripts de
    terceros (mapas o analítica): todo local. Cada imagen por debajo de unos
    250 KB y el JavaScript del sitio en un solo archivo.
-10. **Comprobación final.** 200 en la carpeta y en cada archivo (CSS, JS,
+10. **Modo claro y oscuro.** Interruptor en la cabecera (y en el panel de móvil)
+   que cambia el atributo `data-tema` del `<html>` entre `claro` y `oscuro`, con
+   el mismo comportamiento y las mismas etiquetas que el de Pichanguero: icono
+   del modo al que se va (luna en claro, sol en oscuro), `aria-pressed`, elección
+   recordada en `localStorage` bajo `<slug>-tema`, aplicación antes de pintar
+   (sin destello al recargar) y oculto sin JavaScript. Las secciones oscuras por
+   diseño no cambian: lo que se invierte son las superficies claras. El detalle
+   completo está en «Regla de tema claro / oscuro».
+11. **Comprobación final.** 200 en la carpeta y en cada archivo (CSS, JS,
    imágenes), consola sin errores, revisión a 1400 px y a 390 px —con el slider
-   avanzado a mano para ver la segunda foto en las dos medidas— y la ficha del
-   catálogo enlazando la demo.
+   avanzado a mano para ver la segunda foto en las dos medidas—, el interruptor
+   probado en los dos temas con recarga de por medio, y la ficha del catálogo
+   enlazando la demo.
 
 ### Reglas de convivencia con el sitio corporativo
 

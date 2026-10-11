@@ -432,6 +432,97 @@ it('deja el slider del hero utilizable a mano, con teclado y sin JavaScript', fu
     }
 });
 
+it('trae el interruptor de tema claro / oscuro en toda demostración publicada', function () {
+    $demos = array_values(array_filter(
+        CatalogoPlantillas::todas(),
+        fn (array $plantilla) => CatalogoPlantillas::tieneDemo($plantilla)
+    ));
+
+    expect($demos)->not->toBeEmpty();
+
+    $claves = [];
+
+    foreach ($demos as $plantilla) {
+        $slug = $plantilla['demo'];
+        $raiz = public_path('demos/'.$slug);
+        $css = file_get_contents($raiz.'/css/estilos.css');
+        $js = file_get_contents($raiz.'/js/app.js');
+
+        // Regla del banco (docs/BANCO_PLANTILLAS.md): toda landing y todo sitio
+        // web lleva modo claro / oscuro con el mismo interruptor que el sitio
+        // independiente de Pichanguero. Se comprueba en los archivos de la
+        // demo, no solo en el documento: no se publica una plantilla sin él.
+        $clave = $slug.'-tema';
+
+        // Una clave de localStorage por plantilla: en este repositorio todas las
+        // demos comparten origen, así que una clave repetida haría que el tema
+        // de una arrastrara a la otra.
+        expect($claves)->not->toContain($clave, 'la clave '.$clave.' ya la usa otra demo');
+        $claves[] = $clave;
+
+        // La elección se aplica en el <head>, antes del CSS de la página: al
+        // recargar en oscuro no se ve el destello claro. Y se repite en todas
+        // las páginas de la demo, para que el tema viaje de una a otra.
+        $paginas = glob($raiz.'/*.html');
+
+        expect($paginas)->not->toBeEmpty();
+
+        foreach ($paginas as $archivo) {
+            $html = file_get_contents($archivo);
+            $pagina = basename($archivo);
+
+            expect($html)->toContain('<html lang="es" class="no-js" data-tema="claro">');
+
+            $script = strpos($html, $clave);
+
+            expect($script)->not->toBeFalse($pagina.': no aplica el tema guardado');
+            expect($script)->toBeLessThan(
+                strpos($html, '<link rel="stylesheet"'),
+                $pagina.': el script del tema va antes del CSS'
+            );
+
+            // Interruptor: se trata por atributo y no por id, porque puede
+            // repetirse en la misma página, y lleva el texto de quien usa
+            // lector de pantalla. Los dos iconos están siempre en el DOM.
+            expect($html)->toContain('data-tema-switch')
+                ->and($html)->toContain('aria-pressed="false"')
+                ->and($html)->toContain('aria-label="Cambiar a modo oscuro"')
+                ->and($html)->toContain('tema-switch__icono--luna')
+                ->and($html)->toContain('tema-switch__icono--sol');
+        }
+
+        // CSS: el tema oscuro se redefine como atributo del <html>, hay una
+        // versión oscura de las superficies y el botón no se muestra sin JS.
+        expect($css)->toContain("html[data-tema='oscuro']")
+            ->and($css)->toContain('color-scheme: dark')
+            ->and($css)->toMatch('/html\.no-js \.tema-switch \{\s*display:\s*none;/');
+
+        // 2.75rem = 44 px de área táctil, como el botón del menú.
+        preg_match('/\.tema-switch \{([^}]*)\}/s', $css, $bloque);
+
+        expect($bloque[1] ?? '')->toContain('width: 2.75rem;')
+            ->and($bloque[1] ?? '')->toContain('height: 2.75rem;');
+
+        // El icono que se ve es el del modo al que se va: luna en claro, sol en
+        // oscuro. Si los dos se vieran a la vez, el botón mentiría.
+        expect($css)->toContain("html[data-tema='oscuro'] .tema-switch__icono--sol")
+            ->and($css)->toContain("html[data-tema='oscuro'] .tema-switch__icono--luna");
+
+        // JS: cambia el atributo del documento, deja el botón en consonancia y
+        // se pone al día si el tema se cambia en otra pestaña.
+        expect($js)->toContain($clave)
+            ->and($js)->toContain('[data-tema-switch]')
+            ->and($js)->toContain("setAttribute('data-tema'")
+            ->and($js)->toContain('aria-pressed')
+            ->and($js)->toContain("addEventListener('storage'");
+    }
+
+    // Una clave distinta por demo publicada: si alguien copia una plantilla
+    // para crear la siguiente y se olvida de cambiar la clave, se ve aquí.
+    expect($claves)->toHaveCount(count($demos))
+        ->and(array_unique($claves))->toHaveCount(count($demos));
+});
+
 it('abre la demostración con un 302 a su carpeta y 404 si todavía no está', function () {
     $respuesta = $this->get('/demo/clinica-dental');
 
