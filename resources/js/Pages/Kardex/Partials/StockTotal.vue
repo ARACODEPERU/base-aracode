@@ -15,6 +15,17 @@ const dataStock = useForm({
 
 const hasData = ref(false);
 
+// Sin stock inicial la division daria NaN/Infinity y la tarjeta mostraba
+// "NaN%": cuando no hay base, el avance se informa como 0.00%.
+const percentageOf = (value, base) => {
+  const baseValue = parseFloat(base);
+  if (!baseValue) {
+    return '0.00';
+  }
+
+  return ((parseFloat(value) / baseValue) * 100).toFixed(2);
+};
+
 onMounted(async () => {
   try {
     const response = await axios.get(route('generalstock'));
@@ -24,9 +35,9 @@ onMounted(async () => {
       dataStock.stock_sales = data.stock_sales;
       dataStock.stock_today = data.stock_today;
       dataStock.stock_input = data.stock_input;
-      dataStock.stock_input_p = ((parseFloat(data.stock_input) / parseFloat(data.stock_old)) * 100).toFixed(2);
-      dataStock.stock_sales_p = ((parseFloat(data.stock_sales) / parseFloat(data.stock_old)) * 100).toFixed(2);
-      dataStock.stock_today_p = ((parseFloat(data.stock_today)  / parseFloat(data.stock_old)) * 100).toFixed(2);
+      dataStock.stock_input_p = percentageOf(data.stock_input, data.stock_old);
+      dataStock.stock_sales_p = percentageOf(data.stock_sales, data.stock_old);
+      dataStock.stock_today_p = percentageOf(data.stock_today, data.stock_old);
       dataStock.local = data.local;
       hasData.value = true;
     }

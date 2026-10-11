@@ -24,47 +24,41 @@ class KardexController extends Controller
     {
         $establishments = LocalSale::all();
         $local_id = request()->input('local_id');
-        if ($local_id != null && $local_id != 0) {
-            $kardexes = Kardex::join('products', 'kardexes.product_id', 'products.id')
-                ->join('local_sales', 'kardexes.local_id', 'local_sales.id')
-                ->select(
-                    'products.*',
-                    'local_sales.id AS local_id',
-                    'local_sales.description AS local_names'
-                )
-                ->selectRaw('CONVERT(SUM(quantity), SIGNED INTEGER) AS kardex_stock')
-                ->groupBy(
-                    'products.id',
-                    'local_sales.description',
-                    'local_sales.id'
-                )
-                ->where('products.interne', '=', request()->input('search'))
-                ->orWhere('products.description', 'Like', '%' . request()->input('search') . '%')
-                ->where(function ($query) use ($local_id) {
-                    $query->where('kardexes.local_id', $local_id);
-                })
-                ->orderBy('local_sales.description')
-                ->paginate(20);
-        } else {
-            $kardexes = Kardex::join('products', 'kardexes.product_id', 'products.id')
-                ->join('local_sales', 'kardexes.local_id', 'local_sales.id')
-                ->select(
-                    'products.*',
-                    'local_sales.id AS local_id',
-                    'local_sales.description AS local_names'
-                )
-                ->selectRaw('CONVERT(SUM(quantity), SIGNED INTEGER) AS kardex_stock')
-                ->groupBy(
-                    'products.id',
-                    'local_sales.description',
-                    'local_sales.id'
-                )
-                ->where('products.interne', '=', request()->input('search'))
-                ->orWhere('products.description', 'Like', '%' . request()->input('search') . '%')
-                ->orderBy('local_sales.description')
-                ->paginate(20);
+        $search = request()->input('search');
+
+        $query = Kardex::join('products', 'kardexes.product_id', 'products.id')
+            ->join('local_sales', 'kardexes.local_id', 'local_sales.id')
+            ->select(
+                'products.*',
+                'local_sales.id AS local_id',
+                'local_sales.description AS local_names'
+            )
+            ->selectRaw('CONVERT(SUM(kardexes.quantity), SIGNED INTEGER) AS kardex_stock')
+            ->groupBy(
+                'products.id',
+                'local_sales.description',
+                'local_sales.id'
+            )
+            // El inventario y el kardex son solo para productos fisicos: los
+            // servicios (is_product = false) no manejan stock ni movimientos.
+            ->where('products.is_product', true)
+            ->orderBy('local_sales.description')
+            ->orderBy('products.description');
+
+        if ($search !== null && $search !== '') {
+            // El criterio de busqueda va agrupado para que el filtro del local
+            // siga aplicandose (un orWhere suelto se saltaba ese filtro).
+            $query->where(function ($subquery) use ($search) {
+                $subquery->where('products.interne', '=', $search)
+                    ->orWhere('products.description', 'Like', '%' . $search . '%');
+            });
         }
 
+        if ($local_id != null && $local_id != 0) {
+            $query->where('kardexes.local_id', $local_id);
+        }
+
+        $kardexes = $query->paginate(20)->withQueryString();
 
         return Inertia::render('Kardex/List', [
             'establishments' => $establishments,

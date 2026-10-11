@@ -26,6 +26,31 @@ class EventEditionTeamPlayer extends Model
     ];
     // Deshabilita los auto-incrementales ya que es una clave compuesta
     public $incrementing = false;
+
+    /**
+     * La tabla no tiene columna `id`: su clave primaria es la terna
+     * (edition_id, team_id, person_id). Sin esto, Eloquent filtraba por `id`
+     * en update(), delete(), refresh() y fresh(), y esas operaciones fallaban
+     * con "Unknown column 'id'" (guardar o quitar un jugador no hacía nada).
+     */
+    protected function setKeysForSelectQuery($query)
+    {
+        return $this->setCompositeKeys($query);
+    }
+
+    protected function setKeysForSaveQuery($query)
+    {
+        return $this->setCompositeKeys($query);
+    }
+
+    private function setCompositeKeys($query)
+    {
+        return $query
+            ->where('edition_id', $this->getAttribute('edition_id'))
+            ->where('team_id', $this->getAttribute('team_id'))
+            ->where('person_id', $this->getAttribute('person_id'));
+    }
+
     // Define las relaciones para acceder fácilmente a los objetos:
     public function edition()
     {

@@ -30,6 +30,43 @@ class EditionTeamPlayerService
             ->all();
     }
 
+    /**
+     * Lista todos los jugadores de la edición (opcionalmente filtrados).
+     *
+     * Se usa desde la app móvil para ubicar jugadores sin recorrer equipo por
+     * equipo; cada fila incluye el equipo al que pertenece.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listForEdition(int $editionId, ?string $search = null): array
+    {
+        EventEdition::findOrFail($editionId);
+
+        $query = EventEditionTeamPlayer::with(['person', 'team'])
+            ->where('edition_id', $editionId);
+
+        $term = trim((string) $search);
+
+        if ($term !== '') {
+            $query->whereHas('person', function ($personQuery) use ($term) {
+                $personQuery->where('full_name', 'like', '%'.$term.'%')
+                    ->orWhere('number', 'like', '%'.$term.'%');
+            });
+        }
+
+        return $query->get()
+            ->map(function (EventEditionTeamPlayer $player) {
+                $row = $this->formatPlayer($player);
+                $row['team_name'] = $player->team?->name;
+                $row['team_short_name'] = $player->team?->short_name;
+
+                return $row;
+            })
+            ->sortBy(fn (array $row) => ($row['team_name'] ?? '').'|'.($row['full_name'] ?? ''))
+            ->values()
+            ->all();
+    }
+
     public function linkExisting(int $editionId, int $teamId, int $personId): EventEditionTeamPlayer
     {
         $this->assertTeamInEdition($editionId, $teamId);
@@ -63,6 +100,7 @@ class EditionTeamPlayerService
             'mother_lastname' => 'required|string|max:255',
             'names' => 'required|string|max:255',
             'dni' => 'required|string|max:20|unique:people,number',
+            'telephone' => 'nullable|string|max:20',
             'gender' => 'required|in:M,F',
             'jersey_number' => 'nullable|string|max:10',
             'position' => 'nullable|string|max:100',
@@ -84,6 +122,7 @@ class EditionTeamPlayerService
             'full_name' => trim($validated['father_lastname'].' '.$validated['mother_lastname'].' '.$validated['names']),
             'document_type_id' => '1',
             'number' => trim($validated['dni']),
+            'telephone' => ! empty($validated['telephone']) ? trim($validated['telephone']) : null,
             'father_lastname' => trim($validated['father_lastname']),
             'mother_lastname' => trim($validated['mother_lastname']),
             'names' => trim($validated['names']),
@@ -120,15 +159,21 @@ class EditionTeamPlayerService
     {
         $player = $this->findPlayerOrFail($editionId, $teamId, $personId);
 
+        // El móvil envía los campos del formulario tal como están en pantalla:
+        // un jugador registrado solo con "full_name" (o al que aún no se le
+        // completan los apellidos) llega con esos campos vacíos. Se aceptan como
+        // null para no rechazar la edición en plena cancha; el nombre completo
+        // solo se recalcula cuando hay al menos una parte del nombre.
         $validated = Validator::make($data, [
-            'father_lastname' => 'sometimes|string|max:255',
-            'mother_lastname' => 'sometimes|string|max:255',
-            'names' => 'sometimes|string|max:255',
-            'dni' => 'sometimes|string|max:20|unique:people,number,'.$personId,
-            'gender' => 'sometimes|in:M,F',
-            'jersey_number' => 'nullable|string|max:10',
-            'position' => 'nullable|string|max:100',
-            'role_in_team' => 'nullable|in:Ninguno,Capitán,Sub-Capitán',
+            'father_lastname' => 'sometimes|nullable|string|max:255',
+            'mother_lastname' => 'sometimes|nullable|string|max:255',
+            'names' => 'sometimes|nullable|string|max:255',
+            'dni' => 'sometimes|nullable|string|max:20|unique:people,number,'.$personId,
+            'telephone' => 'sometimes|nullable|string|max:20',
+            'gender' => 'sometimes|nullable|in:M,F',
+            'jersey_number' => 'sometimes|nullable|string|max:10',
+            'position' => 'sometimes|nullable|string|max:100',
+            'role_in_team' => 'sometimes|nullable|in:Ninguno,Capitán,Sub-Capitán',
         ], [
             'dni.unique' => 'El DNI ya está registrado en el sistema',
         ])->validate();
@@ -136,29 +181,73 @@ class EditionTeamPlayerService
         $person = Person::findOrFail($personId);
         $personData = [];
 
-        foreach (['father_lastname', 'mother_lastname', 'names', 'gender'] as $field) {
+        foreach (['father_lastname', 'mother_lastname', 'names'] as $field) {
             if (array_key_exists($field, $validated)) {
-                $personData[$field] = $validated[$field];
+                $value = $validated[$field];
+                $personData[$field] = $value === null ? null : trim((string) $value);
             }
         }
 
-        if (isset($validated['dni'])) {
-            $personData['number'] = $validated['dni'];
+        if (array_key_exists('telephone', $validated)) {
+            $telephone = $validated['telephone'];
+            $personData['telephone'] = $telephone === null ? null : trim((string) $telephone);
+        }
+
+        if (! empty($validated['gender'])) {
+            $personData['gender'] = $validated['gender'];
+        }
+
+        if (! empty($validated['dni'])) {
+            $personData['number'] = trim((string) $validated['dni']);
         }
 
         if ($personData) {
-            $father = $validated['father_lastname'] ?? $person->father_lastname;
-            $mother = $validated['mother_lastname'] ?? $person->mother_lastname;
-            $names = $validated['names'] ?? $person->names;
-            $personData['full_name'] = trim($father.' '.$mother.' '.$names);
+            // El nombre completo solo se recalcula cuando el formulario envió
+            // alguna de sus partes; editar únicamente el teléfono no debe
+            // alterar el nombre del jugador.
+            $nameParts = array_intersect_key($validated, array_flip([
+                'father_lastname',
+                'mother_lastname',
+                'names',
+            ]));
+
+            if ($nameParts) {
+                $father = $personData['father_lastname'] ?? $person->father_lastname;
+                $mother = $personData['mother_lastname'] ?? $person->mother_lastname;
+                $names = $personData['names'] ?? $person->names;
+
+                $fullName = trim(preg_replace(
+                    '/\s+/',
+                    ' ',
+                    trim((string) $father).' '.trim((string) $mother).' '.trim((string) $names)
+                ));
+
+                // Nunca se deja el nombre en blanco: si no hay ninguna parte se
+                // conserva el nombre que la persona ya tenía registrado.
+                $personData['full_name'] = $fullName !== '' ? $fullName : $person->full_name;
+            }
+
             $person->update($personData);
         }
 
-        $player->update([
-            'jersey_number' => $validated['jersey_number'] ?? $player->jersey_number,
-            'position' => $validated['position'] ?? $player->position,
-            'role_in_team' => $validated['role_in_team'] ?? $player->role_in_team,
-        ]);
+        $playerData = [];
+
+        if (array_key_exists('jersey_number', $validated)) {
+            $playerData['jersey_number'] = (string) ($validated['jersey_number'] ?? '');
+        }
+
+        if (array_key_exists('position', $validated)) {
+            $playerData['position'] = (string) ($validated['position'] ?? '');
+        }
+
+        // El rol siempre tiene un valor (la columna no admite vacíos).
+        if (! empty($validated['role_in_team'])) {
+            $playerData['role_in_team'] = $validated['role_in_team'];
+        }
+
+        if ($playerData) {
+            $player->update($playerData);
+        }
 
         return $player->fresh('person');
     }
@@ -255,6 +344,7 @@ class EditionTeamPlayerService
             'mother_lastname' => $person?->mother_lastname ?? '',
             'names' => $person?->names ?? '',
             'dni' => $person?->number ?? '',
+            'telephone' => $person?->telephone ?? '',
             'gender' => $person?->gender ?? '',
             'image_url' => $person?->image ? asset('storage/'.$person->image) : null,
             'jersey_number' => $player->jersey_number ?? '',

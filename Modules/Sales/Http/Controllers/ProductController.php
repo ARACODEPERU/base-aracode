@@ -569,6 +569,16 @@ class ProductController extends Controller
         }
 
         $product = Product::find($request->get('product_id'));
+
+        // Solo los productos fisicos generan movimiento de inventario: si llega
+        // el id de un servicio se rechaza en vez de ensuciar el kardex.
+        if (! $product || ! $product->is_product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo los productos fisicos generan movimientos de inventario.',
+            ], 422);
+        }
+
         $tallas = $product->sizes;
 
         $t = 0;
@@ -752,8 +762,14 @@ class ProductController extends Controller
     {
 
         $search = $request->get('search');
-        $products = Product::where('interne', $search)
-            ->orWhere('description', 'like', '%' . $search . '%')
+        // Buscador de la lista de productos: alimenta las entradas, salidas y
+        // traslados de stock, por lo que solo puede devolver productos fisicos
+        // (un servicio no tiene inventario ni kardex).
+        $products = Product::where('is_product', true)
+            ->where(function ($query) use ($search) {
+                $query->where('interne', $search)
+                    ->orWhere('description', 'like', '%' . $search . '%');
+            })
             ->get();
 
         $success = false;
@@ -801,6 +817,16 @@ class ProductController extends Controller
             ], [
                 'item.*.quantity_relocate.required' => 'Ingrese cantidad de traslado'
             ]);
+        }
+
+        // Los traslados mueven stock entre locales: un servicio no participa.
+        $productToRelocate = Product::find($request->get('product_id'));
+
+        if (! $productToRelocate || ! $productToRelocate->is_product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo los productos fisicos pueden trasladarse entre locales.',
+            ], 422);
         }
 
         try {

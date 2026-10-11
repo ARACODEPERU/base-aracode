@@ -15,6 +15,7 @@ import {
     faFileCircleQuestion,
     faCircleDollarToSlot,
     faHandHoldingDollar,
+    faWarehouse,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSales = [
@@ -79,6 +80,15 @@ const menuSales = [
                         badge: "Nuevo",
                     },
                 ]
+            },
+            {
+                // Inventario / kardex: stock por local con detalle por talla.
+                // Solo productos físicos (is_product = true).
+                route: route("kardex_index"),
+                status: false,
+                text: "Inventario",
+                permissions: "productos",
+                icom: faWarehouse,
             },
             {
                 route: route("establishments.index"),
