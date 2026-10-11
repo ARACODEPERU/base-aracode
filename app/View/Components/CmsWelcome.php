@@ -21,6 +21,6 @@ class CmsWelcome extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.cms-welcome');
+        return view('aracode.components.cms-welcome');
     }
 }

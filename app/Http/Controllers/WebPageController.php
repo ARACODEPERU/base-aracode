@@ -76,15 +76,15 @@ class WebPageController extends Controller
                 $evento->editions->loadCount('equipos');
             });
 
-            return view('pages.torneos', compact('eventos'));
+            return view('aracode.pages.torneos', compact('eventos'));
         }
 
-        return view('pages.home');
+        return view('aracode.pages.home');
     }
 
     public function academy()
     {
-        return view('pages.academy');
+        return view('aracode.pages.academy');
     }
 
     public function landing($slug)
@@ -120,7 +120,7 @@ class WebPageController extends Controller
 
         $p = 12; //numero de cursos mostrados PAGINACION
 
-        return view('pages.landing', [
+        return view('aracode.pages.landing', [
             'courses' => $courses,
             'categories' => $categories,
             'title' => $title,
@@ -168,7 +168,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.nosotros', [
+        return view('aracode.pages.nosotros', [
             'banner' => $banner,
             'visions' => $visions,
             'lider' => $lider
@@ -177,62 +177,62 @@ class WebPageController extends Controller
 
     public function about()
     {
-        return view('pages.about');
+        return view('aracode.pages.about');
     }
 
     public function contact()
     {
-        return view('pages.contact');
+        return view('aracode.pages.contact');
     }
 
     public function teachers()
     {
-        return view('pages.teachers');
+        return view('aracode.pages.teachers');
     }
 
     public function bookamauta()
     {
-        return view('pages/book-description');
+        return view('aracode.pages.book-description');
     }
 
     public function subscriptions()
     {
-        return view('pages/subscriptions');
+        return view('aracode.pages.subscriptions');
     }
 
     public function privacypolicies()
     {
-        return view('pages/privacy-policies');
+        return view('aracode.pages.privacy-policies');
     }
 
     public function politicas_devoluciones()
     {
-        return view('pages/politicas_devoluciones');
+        return view('aracode.pages.politicas_devoluciones');
     }
 
     public function terms()
     {
-        return view('pages/terms');
+        return view('aracode.pages.terms');
     }
 
     public function storeonline()
     {
-        return view('pages/store-online');
+        return view('aracode.pages.store-online');
     }
 
     public function cms()
     {
-        return view('pages/cms');
+        return view('aracode.pages.cms');
     }
     public function lms()
     {
-        return view('pages/lms');
+        return view('aracode.pages.lms');
     }
 
 
     public function billing()
     {
-        return view('pages/billing');
+        return view('aracode.pages.billing');
     }
 
 
@@ -269,7 +269,7 @@ class WebPageController extends Controller
 
         $p = 12; //numero de cursos mostrados PAGINACION
 
-        return view('pages.courses', [
+        return view('aracode.pages.courses', [
             'courses' => $courses,
             //'categories' => $categories,
             // 'banner' => $banner,
@@ -302,7 +302,7 @@ class WebPageController extends Controller
                 ->take(3);
 
 
-            return view('pages.course-description', [
+            return view('aracode.pages.course-description', [
                 'course' => $course,
                 'item' => $item,
                 'latest_courses' => $latest_courses
@@ -526,7 +526,7 @@ class WebPageController extends Controller
             ->shuffle()
             ->take(3);
 
-        return view('pages.course-description', [
+        return view('aracode.pages.course-description', [
             'course' => $course,
             'item' => $item,
             'onli_item_id' => $item?->id,
@@ -547,7 +547,7 @@ class WebPageController extends Controller
             $exchangeRate = null;
         }
 
-        return view('pages.shop-cart', [
+        return view('aracode.pages.shop-cart', [
             'documentTypes' => DB::table('identity_document_type')->get(),
             'multiCurrencyEnabled' => app(\Modules\Sales\Services\ExchangeRateService::class)->isMultiCurrencyEnabled(),
             'exchangeRate' => $exchangeRate,
@@ -1034,7 +1034,7 @@ class WebPageController extends Controller
 
     public function accounts()
     {
-        return view('pages.accounts');
+        return view('aracode.pages.accounts');
     }
 
     public function servicios()
@@ -1060,7 +1060,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.servicios', [
+        return view('aracode.pages.servicios', [
             'banner' => $banner,
             'title' => $title
         ]);
@@ -1089,7 +1089,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.capacitacion', [
+        return view('aracode.pages.capacitacion', [
             'banner' => $banner,
             'title' => $title
         ]);
@@ -1118,7 +1118,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.suscripcion', [
+        return view('aracode.pages.suscripcion', [
             'banner' => $banner,
             'title' => $title
         ]);
@@ -1147,7 +1147,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.automatizacion', [
+        return view('aracode.pages.automatizacion', [
             'banner' => $banner,
             'title' => $title
         ]);
@@ -1176,7 +1176,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.agencia', [
+        return view('aracode.pages.agencia', [
             'banner' => $banner,
             'title' => $title
         ]);
@@ -1205,7 +1205,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->get();
 
-        return view('pages.imagen-profesional', [
+        return view('aracode.pages.imagen-profesional', [
             'banner' => $banner,
             'title' => $title
         ]);
@@ -1216,7 +1216,7 @@ class WebPageController extends Controller
     public function carrito()
     {
 
-        return view('pages.carrito');
+        return view('aracode.pages.carrito');
     }
 
     // ==========================================
@@ -1225,37 +1225,42 @@ class WebPageController extends Controller
 
     public function home()
     {
-        return view('pages.home');
+        return view('aracode.pages.home');
     }
 
     public function soluciones()
     {
-        return view('pages.soluciones');
+        return view('aracode.pages.soluciones');
     }
 
     public function solucionKapta()
     {
-        return view('pages.kapta');
+        return view('aracode.products.kapta.index');
     }
 
     public function solucionFacturacion()
     {
-        return view('pages.facturacion');
+        return view('aracode.products.kirafact.index');
+    }
+
+    public function solucionPichanguero()
+    {
+        return view('aracode.products.pichanguero.index');
     }
 
     public function solucionDesarrollo()
     {
-        return view('pages.desarrollo');
+        return view('aracode.pages.desarrollo');
     }
 
     public function empresa()
     {
-        return view('pages.empresa');
+        return view('aracode.pages.empresa');
     }
 
     public function contacto()
     {
-        return view('pages.contacto');
+        return view('aracode.pages.contacto');
     }
 
     public function contactoStore(Request $request)
@@ -1408,7 +1413,7 @@ class WebPageController extends Controller
             ->take(5)
             ->get();
 
-        return view('pages.blog', [
+        return view('aracode.pages.blog', [
             'categories' => $categories,
             'articles' => $articles,
             'popular_articles' => $popular_articles,
@@ -1511,7 +1516,7 @@ class WebPageController extends Controller
                 ->get();
         }
 
-        return view('pages.blog-articulo', [
+        return view('aracode.pages.blog-articulo', [
             'article' => $article,
             'categories' => $categories,
             'latest_articles' => $latest_articles,
@@ -1551,52 +1556,52 @@ class WebPageController extends Controller
 
     public function casosExito()
     {
-        return view('pages.casos-exito');
+        return view('aracode.pages.casos-exito');
     }
 
     public function faq()
     {
-        return view('pages.faq');
+        return view('aracode.pages.faq');
     }
 
     public function trabajaNosotros()
     {
-        return view('pages.trabaja-nosotros');
+        return view('aracode.pages.trabaja-nosotros');
     }
 
     public function politicaPrivacidad()
     {
-        return view('pages.politica-privacidad');
+        return view('aracode.pages.politica-privacidad');
     }
 
     public function terminosCondiciones()
     {
-        return view('pages.terminos-condiciones');
+        return view('aracode.pages.terminos-condiciones');
     }
 
     public function libroReclamaciones()
     {
-        return view('pages.libro-reclamaciones');
+        return view('aracode.pages.libro-reclamaciones');
     }
 
     public function politicaCookies()
     {
-        return view('pages.politica-cookies');
+        return view('aracode.pages.politica-cookies');
     }
 
     public function portafolio()
     {
-        return view('pages.portafolio');
+        return view('aracode.pages.portafolio');
     }
 
     public function precios()
     {
-        return view('pages.precios');
+        return view('aracode.pages.precios');
     }
 
     public function equipo()
     {
-        return view('pages.equipo');
+        return view('aracode.pages.equipo');
     }
 
 
@@ -1744,7 +1749,7 @@ class WebPageController extends Controller
         }
 
 
-        return view('pages/pagar', [
+        return view('aracode.pages.pagar', [
             'preference' => $preference_id,
             'products' => $products,
             'total' => $total,
@@ -1928,7 +1933,7 @@ class WebPageController extends Controller
             $response = $e->getApiResponse();
         }
 
-        return view('pages/pagar', [
+        return view('aracode.pages.pagar', [
             'preference' => $preference_id,
             'products' => $products,
             'total' => $total,
@@ -1964,7 +1969,7 @@ class WebPageController extends Controller
                 $total = 0;
             }
 
-            return view('pages.thanks', [
+            return view('aracode.pages.thanks', [
                 'sale' => $sale,
                 'courses' => $courses,
                 'total' => round($total, 2),
@@ -1990,7 +1995,7 @@ class WebPageController extends Controller
             ->orderBy('cms_section_items.position')
             ->first();
 
-        return view('pages.politicas-de-privacidad', [
+        return view('aracode.pages.politicas-de-privacidad', [
             'banner' => $banner
         ]);
     }
@@ -1998,7 +2003,7 @@ class WebPageController extends Controller
     public function claims()
     {
 
-        return view('pages/complaints-book');
+        return view('aracode.pages.complaints-book');
     }
 
     public function eclaims()
@@ -2009,7 +2014,7 @@ class WebPageController extends Controller
 
     public function construction()
     {
-        return view('pages.construction');
+        return view('aracode.pages.construction');
     }
 
     public function processPayment(Request $request, $id)
@@ -2101,7 +2106,7 @@ class WebPageController extends Controller
             ];
         }
 
-        return view('pages.gracias', [
+        return view('aracode.pages.gracias', [
             'products' => $products,
             'sale' => $sale,
             'person' => $person,

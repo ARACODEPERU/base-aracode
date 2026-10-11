@@ -21,6 +21,6 @@ class LmsWelcome extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.lms-welcome');
+        return view('aracode.components.lms-welcome');
     }
 }

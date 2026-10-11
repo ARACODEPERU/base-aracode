@@ -21,6 +21,6 @@ class LmsBenefits extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.lms-benefits');
+        return view('aracode.components.lms-benefits');
     }
 }

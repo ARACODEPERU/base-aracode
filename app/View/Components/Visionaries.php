@@ -21,6 +21,6 @@ class Visionaries extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.visionaries');
+        return view('aracode.components.visionaries');
     }
 }

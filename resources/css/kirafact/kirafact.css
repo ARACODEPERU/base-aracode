@@ -1,0 +1,1189 @@
+/*
+ * Hoja de estilos fuente del sitio KIRAFACT.
+ * Se compila con: npm run build:kirafact
+ * Salida servible: public/themes/kirafact/css/kirafact.css
+ *
+ * Organización:
+ *   1. Base y superficies        6. Funcionalidades y beneficios
+ *   2. Tipografía                7. Planes (sin publicar) y notas
+ *   3. Botones y etiquetas       8. Preguntas frecuentes y utilidades
+ *   4. Navegación                9. Movimiento ligado al scroll
+ *   5. Marca y composición      10. Tema claro y oscuro
+ *
+ * Las clases propias van en CSS plano (fuera de @layer) a propósito: así
+ * Tailwind nunca las descarta por no detectarlas y el sitio queda autocontenido.
+ *
+ * Idea central: cada contenedor declara una "superficie" (blanca, gris claro o
+ * azul marino) y los componentes leen variables CSS. La misma tarjeta, etiqueta
+ * o botón funciona sobre blanco, sobre gris y sobre azul marino sin duplicar
+ * estilos: solo hay que marcar la sección con kf-surface-light, kf-surface-mist
+ * o kf-surface-dark.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   1. Base y superficies
+   ============================================================ */
+:root {
+    /* Tokens de marca: los mismos nombres que en tailwind.config.js */
+    --kf-navy: #0b1b3a;
+    --kf-navy-2: #12274f;
+    --kf-navy-3: #17305f;
+    --kf-blue: #168cf0;
+    --kf-blue-ink: #0e6fc4;
+    --kf-blue-deep: #0b5a9e;
+    --kf-blue-soft: #7cc1fa;
+    --kf-mist: #f3f6fa;
+    --kf-line: #e2e8f0;
+    --kf-ink: #182338;
+    --kf-slate: #5b6b82;
+    --kf-muted: #a9b6c7;
+
+    /* Curva de aceleración del sitio: un ease-out largo, sin rebotes. */
+    --kf-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Al saltar a una sección, la cabecera fija no debe tapar el título */
+section[id] {
+    scroll-margin-top: 5.5rem;
+}
+
+body {
+    @apply bg-white font-kf text-kf-ink antialiased;
+}
+
+::selection {
+    background: rgba(22, 140, 240, 0.25);
+    color: var(--kf-navy);
+}
+
+/* Foco visible y consistente (navegación por teclado) */
+:focus-visible {
+    outline: 2px solid var(--kf-focus, var(--kf-blue-deep));
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+}
+
+/* Superficies: redefinen las variables que consumen los componentes */
+.kf-surface-light {
+    --kf-surface-bg: #ffffff;
+    --kf-surface-ink: var(--kf-ink);
+    --kf-surface-slate: var(--kf-slate);
+    --kf-surface-line: var(--kf-line);
+    --kf-card-bg: #ffffff;
+    --kf-card-shadow: 0 18px 40px -30px rgba(11, 27, 58, 0.32);
+    --kf-accent: var(--kf-blue-ink);
+    --kf-accent-strong: var(--kf-blue-deep);
+    --kf-icon-bg: rgba(22, 140, 240, 0.1);
+    --kf-icon-ink: var(--kf-blue-ink);
+    --kf-badge-bg: rgba(22, 140, 240, 0.08);
+    --kf-badge-line: rgba(22, 140, 240, 0.24);
+    --kf-badge-ink: var(--kf-blue-deep);
+    --kf-btn-outline: #ccd8e5;
+    --kf-slot-line: #9fb3cd;
+    --kf-slot-ink: var(--kf-slate);
+    --kf-mock-bg: #ffffff;
+    --kf-mock-bar-bg: var(--kf-mist);
+    --kf-mock-line: var(--kf-line);
+    --kf-bar-bg: #e4ebf3;
+    --kf-focus: var(--kf-blue-deep);
+
+    background-color: var(--kf-surface-bg);
+    color: var(--kf-surface-ink);
+}
+
+.kf-surface-mist {
+    --kf-surface-bg: var(--kf-mist);
+    --kf-surface-ink: var(--kf-ink);
+    --kf-surface-slate: var(--kf-slate);
+    --kf-surface-line: #dde5ee;
+    --kf-card-bg: #ffffff;
+    --kf-card-shadow: 0 18px 40px -32px rgba(11, 27, 58, 0.3);
+    --kf-accent: var(--kf-blue-ink);
+    --kf-accent-strong: var(--kf-blue-deep);
+    --kf-icon-bg: #ffffff;
+    --kf-icon-ink: var(--kf-blue-ink);
+    --kf-badge-bg: #ffffff;
+    --kf-badge-line: #d8e2ee;
+    --kf-badge-ink: var(--kf-blue-deep);
+    --kf-btn-outline: #ccd8e5;
+    --kf-slot-line: #9fb3cd;
+    --kf-slot-ink: var(--kf-slate);
+    --kf-mock-bg: #ffffff;
+    --kf-mock-bar-bg: var(--kf-mist);
+    --kf-mock-line: var(--kf-line);
+    --kf-bar-bg: #e4ebf3;
+    --kf-focus: var(--kf-blue-deep);
+
+    background-color: var(--kf-surface-bg);
+    color: var(--kf-surface-ink);
+}
+
+/* El menú móvil es una superficie oscura a pantalla completa, aunque no use la
+   clase de superficie: comparte las mismas variables para que los componentes
+   (botón deshabilitado, tarjetas, notas) se lean igual que sobre azul marino. */
+.kf-surface-dark,
+.kf-mobile-menu {
+    --kf-surface-bg: var(--kf-navy);
+    --kf-surface-ink: #ffffff;
+    --kf-surface-slate: var(--kf-muted);
+    --kf-surface-line: rgba(255, 255, 255, 0.12);
+    --kf-card-bg: rgba(255, 255, 255, 0.05);
+    --kf-card-shadow: none;
+    --kf-accent: var(--kf-blue);
+    --kf-accent-strong: var(--kf-blue-soft);
+    --kf-icon-bg: rgba(22, 140, 240, 0.16);
+    --kf-icon-ink: #7cc1fa;
+    --kf-badge-bg: rgba(22, 140, 240, 0.14);
+    --kf-badge-line: rgba(22, 140, 240, 0.36);
+    --kf-badge-ink: #9ed2fc;
+    --kf-btn-outline: rgba(255, 255, 255, 0.34);
+    --kf-slot-line: rgba(255, 255, 255, 0.3);
+    --kf-slot-ink: #c7d5e6;
+    --kf-mock-bg: #0e2148;
+    --kf-mock-bar-bg: rgba(255, 255, 255, 0.06);
+    --kf-mock-line: rgba(255, 255, 255, 0.14);
+    --kf-bar-bg: rgba(255, 255, 255, 0.14);
+    --kf-focus: var(--kf-blue-soft);
+
+    background-color: var(--kf-surface-bg);
+    color: var(--kf-surface-ink);
+}
+
+.kf-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+.kf-section {
+    @apply py-16 sm:py-20 lg:py-24;
+}
+
+.kf-section-tight {
+    @apply py-12 sm:py-14 lg:py-16;
+}
+
+/* ============================================================
+   2. Tipografía
+   ============================================================ */
+h1,
+h2,
+h3,
+h4 {
+    @apply font-kf font-extrabold;
+    letter-spacing: -0.02em;
+}
+
+.kf-h1 {
+    @apply font-extrabold;
+    font-size: clamp(2rem, 1.3rem + 2.9vw, 3.4rem);
+    line-height: 1.08;
+    text-wrap: balance;
+}
+
+.kf-h2 {
+    @apply font-extrabold;
+    font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.35rem);
+    line-height: 1.15;
+    text-wrap: balance;
+}
+
+.kf-h3 {
+    @apply text-lg font-bold sm:text-xl;
+    line-height: 1.3;
+}
+
+.kf-lead {
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: var(--kf-surface-slate);
+}
+
+@media (min-width: 640px) {
+    .kf-lead {
+        font-size: 1.125rem;
+    }
+}
+
+.kf-copy {
+    max-width: 62ch;
+}
+
+.kf-slate {
+    color: var(--kf-surface-slate);
+}
+
+.kf-ink {
+    color: var(--kf-surface-ink);
+}
+
+/* Acento de marca: sobre azul marino funciona como degradado; sobre claro es
+   azul profundo sólido, porque el azul de marca con texto no llega a AA. */
+.kf-accent {
+    color: var(--kf-accent);
+}
+
+.kf-surface-dark .kf-accent {
+    background-image: linear-gradient(92deg, #168cf0 0%, #7cc1fa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* ============================================================
+   3. Botones y etiquetas
+   ============================================================ */
+.kf-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-center
+           font-semibold transition-all duration-200;
+}
+
+.kf-btn-primary {
+    background-color: var(--kf-blue-ink);
+    color: #ffffff;
+    box-shadow: 0 16px 30px -18px rgba(14, 111, 196, 0.65);
+}
+
+.kf-btn-primary:hover {
+    background-color: var(--kf-blue);
+    transform: translateY(-1px);
+}
+
+.kf-btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Respuesta táctil/click: se hunde ligeramente sin mover el diseño */
+.kf-btn:active {
+    scale: 0.985;
+}
+
+/* Contorno: se adapta a la superficie donde esté */
+.kf-btn-secondary {
+    border: 1.5px solid var(--kf-btn-outline);
+    color: var(--kf-surface-ink);
+    background-color: transparent;
+}
+
+.kf-btn-secondary:hover {
+    border-color: var(--kf-accent);
+    color: var(--kf-accent);
+    background-color: rgba(22, 140, 240, 0.06);
+}
+
+.kf-btn-sm {
+    @apply rounded-lg px-4 py-2.5 text-sm;
+}
+
+.kf-btn-lg {
+    @apply px-7 py-3.5 text-base sm:text-lg;
+}
+
+.kf-btn-block {
+    @apply w-full;
+}
+
+/* En pantallas táctiles ningún botón baja de 44 px de alto */
+@media (max-width: 767px) {
+    .kf-btn {
+        min-height: 2.75rem;
+    }
+}
+
+/* En pantallas muy estrechas se recorta el relleno lateral para que el texto
+   del botón siga entrando en una sola línea */
+@media (max-width: 479px) {
+    .kf-btn {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .kf-btn-lg {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+.kf-link {
+    color: var(--kf-accent);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgba(22, 140, 240, 0.45);
+    text-underline-offset: 3px;
+}
+
+.kf-link:hover {
+    color: var(--kf-accent-strong);
+    text-decoration-color: currentColor;
+}
+
+.kf-badge {
+    @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs
+           font-bold uppercase tracking-wide;
+    background-color: var(--kf-badge-bg);
+    border-color: var(--kf-badge-line);
+    color: var(--kf-badge-ink);
+}
+
+.kf-badge-neutral {
+    background-color: transparent;
+    border-color: var(--kf-surface-line);
+    color: var(--kf-surface-slate);
+}
+
+/* ============================================================
+   4. Navegación
+   ============================================================ */
+
+/* Arriba va transparente sobre la banda azul marino; al desplazar pasa a
+   blanco con borde y sombra. El color del texto y del hueco del logotipo
+   cambian solos porque leen estas variables. */
+.kf-nav {
+    --kf-nav-ink: #ffffff;
+    --kf-nav-ink-hover: var(--kf-blue-soft);
+    --kf-nav-line: rgba(255, 255, 255, 0.28);
+    --kf-slot-line: rgba(255, 255, 255, 0.5);
+    --kf-slot-ink: #c7d5e6;
+
+    /* La cabecera no es una superficie con clase propia: declara aquí lo que
+       consumen los botones para que no hereden colores de texto pensados para
+       fondos claros. */
+    --kf-surface-ink: #ffffff;
+    --kf-surface-slate: #c7d5e6;
+    --kf-btn-outline: rgba(255, 255, 255, 0.34);
+    @apply fixed inset-x-0 top-0 z-50 transition-all duration-300;
+    border-bottom: 1px solid transparent;
+}
+
+.kf-nav.is-scrolled {
+    --kf-nav-ink: var(--kf-ink);
+    --kf-nav-ink-hover: var(--kf-blue-ink);
+    --kf-nav-line: var(--kf-line);
+    --kf-slot-line: #9fb3cd;
+    --kf-slot-ink: var(--kf-slate);
+    --kf-surface-ink: var(--kf-ink);
+    --kf-surface-slate: var(--kf-slate);
+    --kf-btn-outline: #ccd8e5;
+    background-color: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border-bottom-color: var(--kf-line);
+    box-shadow: 0 12px 30px -26px rgba(11, 27, 58, 0.6);
+}
+
+.kf-nav-inner {
+    @apply flex h-[4.5rem] items-center justify-between gap-4;
+}
+
+.kf-nav-link {
+    @apply relative py-2 text-sm font-semibold transition-colors duration-200;
+    color: var(--kf-nav-ink);
+}
+
+.kf-nav-link:hover {
+    color: var(--kf-nav-ink-hover);
+}
+
+.kf-nav-link.is-active {
+    color: var(--kf-nav-ink-hover);
+}
+
+.kf-nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.15rem;
+    height: 2px;
+    border-radius: 999px;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 320ms var(--kf-ease);
+}
+
+.kf-nav-link.is-active::after,
+.kf-nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+.kf-nav-toggle {
+    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition-colors;
+    border-color: var(--kf-nav-line);
+    color: var(--kf-nav-ink);
+}
+
+.kf-nav-toggle:hover {
+    border-color: var(--kf-nav-ink-hover);
+    color: var(--kf-nav-ink-hover);
+}
+
+/* Menú móvil: panel azul marino a pantalla completa */
+.kf-mobile-menu {
+    --kf-nav-ink: #ffffff;
+    --kf-nav-ink-hover: var(--kf-blue-soft);
+    --kf-nav-line: rgba(255, 255, 255, 0.28);
+    --kf-slot-line: rgba(255, 255, 255, 0.5);
+    --kf-slot-ink: #c7d5e6;
+    @apply pointer-events-none fixed inset-0 z-[60] overflow-y-auto opacity-0
+           transition-opacity duration-300;
+    background-color: rgba(11, 27, 58, 0.98);
+}
+
+.kf-mobile-menu.is-open {
+    @apply pointer-events-auto opacity-100;
+}
+
+.kf-mobile-link {
+    @apply flex min-h-[3.25rem] items-center justify-between border-b py-4 text-lg font-semibold
+           text-white transition-colors;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.kf-mobile-link:hover,
+.kf-mobile-link.is-active {
+    color: var(--kf-blue-soft);
+}
+
+/* ============================================================
+   5. Marca y composición del software
+   ============================================================ */
+.kf-brand {
+    @apply flex min-w-0 items-center gap-3 py-1.5;
+}
+
+.kf-brand-logos {
+    @apply flex items-center;
+}
+
+.kf-brand-img {
+    @apply block w-auto;
+}
+
+.kf-brand-name {
+    @apply text-lg font-extrabold tracking-tight;
+    color: var(--kf-nav-ink, var(--kf-surface-ink));
+}
+
+.kf-brand-name .kf-brand-part {
+    color: var(--kf-nav-ink-hover, var(--kf-accent));
+}
+
+/* Cuando exista el logotipo oficial se muestran sus dos versiones y aquí se
+   alterna la que corresponde según el fondo de la cabecera. */
+.kf-logo-on-light {
+    display: none;
+}
+
+.kf-nav.is-scrolled .kf-logo-on-dark {
+    display: none;
+}
+
+.kf-nav.is-scrolled .kf-logo-on-light {
+    display: block;
+}
+
+/* Hueco reservado: se usa donde falta un recurso oficial para no inventar una
+   versión definitiva (logotipo, capturas del sistema). */
+.kf-slot {
+    @apply inline-flex items-center gap-2 rounded-xl border border-dashed px-3 py-2
+           text-[0.6875rem] font-bold uppercase tracking-wide;
+    border-color: var(--kf-slot-line, #9fb3cd);
+    color: var(--kf-slot-ink, var(--kf-slate));
+}
+
+@media (max-width: 419px) {
+    .kf-brand .kf-slot > span {
+        display: none;
+    }
+
+    .kf-brand .kf-slot {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+/*
+ * Composición del software. Es HTML y CSS propios: no es una captura del
+ * sistema y no contiene RUC, nombres de clientes ni importes reales, solo la
+ * estructura de las pantallas. Va rotulada como "Imagen referencial".
+ */
+.kf-mock {
+    @apply overflow-hidden rounded-2xl border;
+    background-color: var(--kf-mock-bg);
+    border-color: var(--kf-mock-line);
+    box-shadow: 0 40px 80px -44px rgba(11, 27, 58, 0.6);
+}
+
+.kf-mock-bar {
+    @apply flex items-center gap-2 border-b px-4 py-3;
+    background-color: var(--kf-mock-bar-bg);
+    border-color: var(--kf-mock-line);
+}
+
+.kf-mock-dot {
+    @apply h-2.5 w-2.5 rounded-full;
+    background-color: var(--kf-bar-bg);
+}
+
+.kf-mock-title {
+    @apply ml-2 text-[0.6875rem] font-semibold uppercase tracking-wider;
+    color: var(--kf-surface-slate);
+}
+
+.kf-mock-body {
+    @apply p-4 sm:p-5;
+}
+
+.kf-mock-note {
+    @apply mt-3 flex items-start gap-2 text-[0.6875rem] leading-relaxed;
+    color: var(--kf-surface-slate);
+}
+
+.kf-mock-panel {
+    @apply rounded-xl border p-3;
+    border-color: var(--kf-mock-line);
+    background-color: var(--kf-surface-bg);
+}
+
+.kf-surface-dark .kf-mock-panel {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.kf-bar {
+    @apply h-1.5 w-full overflow-hidden rounded-full;
+    background-color: var(--kf-bar-bg);
+}
+
+.kf-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, var(--kf-blue), var(--kf-blue-soft));
+}
+
+/* Rejilla técnica muy tenue: decoración de fondo, sin coste de pintado */
+.kf-grid-lines {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 40%, transparent 100%);
+}
+
+.kf-halo {
+    @apply pointer-events-none absolute rounded-full;
+    background-image: radial-gradient(circle, rgba(22, 140, 240, 0.42), transparent 68%);
+    filter: blur(30px);
+}
+
+.kf-photo {
+    @apply block h-full w-full object-cover;
+}
+
+/* ============================================================
+   6. Funcionalidades y beneficios
+   ============================================================ */
+.kf-card {
+    @apply relative flex h-full flex-col rounded-[1.25rem] border p-6 sm:p-7;
+    background-color: var(--kf-card-bg);
+    border-color: var(--kf-surface-line);
+    box-shadow: var(--kf-card-shadow);
+}
+
+.kf-card-interactive {
+    @apply transition-all duration-300;
+}
+
+.kf-card-interactive:hover {
+    transform: translateY(-3px);
+    border-color: rgba(22, 140, 240, 0.45);
+    box-shadow: 0 26px 52px -32px rgba(11, 27, 58, 0.42);
+}
+
+.kf-icon-box {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-xl;
+    background-color: var(--kf-icon-bg);
+    color: var(--kf-icon-ink);
+}
+
+.kf-rail {
+    @apply grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4;
+}
+
+.kf-rail-item {
+    @apply flex items-start gap-3;
+}
+
+@media (min-width: 1024px) {
+    .kf-rail-item + .kf-rail-item {
+        padding-left: 2rem;
+        border-left: 1px solid var(--kf-surface-line);
+    }
+}
+
+.kf-benefit {
+    @apply grid grid-cols-1 items-start gap-6 border-b py-8 lg:grid-cols-[auto_1fr_auto] lg:gap-8;
+    border-color: var(--kf-surface-line);
+}
+
+.kf-benefit:last-child {
+    @apply border-b-0;
+}
+
+.kf-check-item {
+    @apply flex items-start gap-3 text-sm leading-relaxed;
+    color: var(--kf-surface-slate);
+}
+
+.kf-check-item svg {
+    @apply mt-0.5 h-4 w-4 shrink-0;
+    color: var(--kf-accent);
+}
+
+.kf-step-number {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold;
+    background-color: var(--kf-icon-bg);
+    color: var(--kf-icon-ink);
+}
+
+/* ============================================================
+   7. Planes (sin publicar) y notas
+   ============================================================ */
+.kf-plan {
+    @apply relative flex h-full flex-col rounded-[1.25rem] border p-6 sm:p-7;
+    background-color: var(--kf-card-bg);
+    border-color: var(--kf-surface-line);
+    box-shadow: var(--kf-card-shadow);
+}
+
+.kf-plan-name {
+    @apply text-lg font-extrabold;
+    color: var(--kf-surface-ink);
+}
+
+.kf-plan-price {
+    @apply font-extrabold;
+    font-size: 2.35rem;
+    line-height: 1.05;
+    color: var(--kf-accent);
+}
+
+.kf-plan-list {
+    @apply mt-6 space-y-3;
+}
+
+.kf-plan-list li {
+    @apply flex items-start gap-3 text-sm leading-relaxed;
+    color: var(--kf-surface-slate);
+}
+
+.kf-plan-list svg {
+    @apply mt-0.5 h-4 w-4 shrink-0;
+    color: var(--kf-accent);
+}
+
+.kf-note {
+    @apply rounded-2xl border p-5 text-sm leading-relaxed;
+    border-color: var(--kf-surface-line);
+    background-color: rgba(22, 140, 240, 0.05);
+    color: var(--kf-surface-slate);
+}
+
+/* ============================================================
+   8. Preguntas frecuentes y utilidades
+   ============================================================ */
+.kf-faq {
+    @apply rounded-2xl border px-5 py-1;
+    background-color: var(--kf-card-bg);
+    border-color: var(--kf-surface-line);
+}
+
+.kf-faq summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-base font-bold sm:text-lg;
+    color: var(--kf-surface-ink);
+}
+
+.kf-faq summary::-webkit-details-marker {
+    display: none;
+}
+
+.kf-faq[open] summary {
+    color: var(--kf-accent);
+}
+
+.kf-faq summary::after {
+    content: '+';
+    @apply text-xl font-normal leading-none;
+    color: var(--kf-accent);
+}
+
+.kf-faq[open] summary::after {
+    content: '\2212';
+}
+
+.kf-faq .kf-faq-body {
+    @apply pb-5 text-sm leading-relaxed sm:text-base;
+    color: var(--kf-surface-slate);
+    max-width: 70ch;
+}
+
+/* Enlaces del pie: con relleno vertical para que el área táctil sea cómoda */
+.kf-footer-links a {
+    @apply inline-block py-1;
+}
+
+/* Aparición al hacer scroll. Solo se ocultan los bloques cuando hay JS
+   (html.js): sin JavaScript el contenido se muestra normalmente.
+
+   El retardo lo pone el JS con --kf-delay para que los bloques hermanos
+   entren escalonados (0 ms, 70 ms, 140 ms…) en lugar de todos a la vez. */
+.js .kf-reveal {
+    opacity: 0;
+    transform: translateY(22px) scale(0.985);
+    transition: opacity 620ms var(--kf-ease), transform 720ms var(--kf-ease);
+    transition-delay: var(--kf-delay, 0ms);
+    will-change: opacity, transform;
+}
+
+.js .kf-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ============================================================
+   9. Movimiento ligado al scroll
+   ============================================================
+   Dos mecanismos, cada uno dueño de sus propiedades para que no se pisen:
+
+   - El revelado de bloques (.kf-reveal) lo dirige el JS con una transición:
+     funciona en cualquier navegador y se puede medir.
+   - Los efectos continuos (barra de progreso, deriva del hero, riel de los
+     pasos, números que se encienden) usan animaciones nativas ligadas al
+     scroll (animation-timeline). No dependen de JS, no gastan hilo principal
+     y se apagan solos donde el navegador no las soporte.
+
+   Todo vive dentro de prefers-reduced-motion: no-preference: quien pide menos
+   movimiento no recibe ninguna de estas animaciones, ni siquiera declaradas.
+   ============================================================ */
+
+/* Barra de progreso de lectura: refleja cuánto queda de la página */
+.kf-progress {
+    @apply pointer-events-none fixed inset-x-0 top-0;
+    height: 3px;
+    z-index: 70;
+}
+
+/* Sin soporte de animación ligada al scroll la barra queda en escala 0
+   (invisible) y la mueve el JS; con soporte la mueve el compositor. */
+.kf-progress > span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background-image: linear-gradient(90deg, var(--kf-blue), var(--kf-blue-soft));
+}
+
+/* Riel y relleno de los pasos del software */
+.kf-steps {
+    @apply relative;
+}
+
+.kf-steps::before,
+.kf-steps::after {
+    content: '';
+    position: absolute;
+    left: 1.1875rem;
+    top: 1.25rem;
+    bottom: 1.25rem;
+    width: 2px;
+    border-radius: 999px;
+}
+
+.kf-steps::before {
+    background-color: var(--kf-surface-line);
+}
+
+.kf-steps::after {
+    background-image: linear-gradient(180deg, var(--kf-blue), var(--kf-blue-soft));
+    transform-origin: 50% 0;
+    transform: scaleY(0);
+}
+
+/* Los círculos numerados tapan el riel a su paso */
+.kf-step-number {
+    position: relative;
+    z-index: 1;
+}
+
+.kf-benefit-number {
+    color: var(--kf-surface-slate);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    /* Progreso de lectura: sin JS y en el compositor */
+    @supports (animation-timeline: scroll()) {
+        .kf-progress > span {
+            scale: 0 1;
+            animation: kf-progreso linear both;
+            animation-timeline: scroll(root block);
+        }
+    }
+
+    /*
+       Deriva del hero. La línea de tiempo se declara CON NOMBRE en la sección
+       y la consumen sus elementos: la sección tiene overflow:hidden para
+       recortar la decoración, y un elemento recortado no puede tener línea de
+       tiempo propia (su contenedor de scroll no se mueve, así que el progreso
+       se queda congelado). Compartiendo la línea de la sección, el panel y el
+       fondo se desplazan a distinta velocidad mientras el hero sale de pantalla.
+    */
+    @supports (animation-timeline: view()) {
+        #inicio {
+            view-timeline-name: --kf-hero;
+            view-timeline-axis: block;
+        }
+
+        /* Ojo con el orden: el atajo `animation` reinicia animation-timeline a
+           auto, así que la línea de tiempo va siempre DESPUÉS del atajo. */
+        #inicio .kf-mock {
+            animation: kf-deriva-panel linear both;
+            animation-timeline: --kf-hero;
+            animation-range: cover;
+        }
+
+        #inicio .kf-grid-lines {
+            animation: kf-deriva-fondo linear both;
+            animation-timeline: --kf-hero;
+            animation-range: cover;
+        }
+
+        #inicio .kf-halo {
+            animation: kf-deriva-halo linear both;
+            animation-timeline: --kf-hero;
+            animation-range: cover;
+        }
+
+        /* El riel de los pasos se rellena a medida que se recorre la lista */
+        .kf-steps::after {
+            animation: kf-relleno linear both;
+            animation-timeline: view();
+            animation-range: cover 25% cover 80%;
+        }
+
+        /* Los números de beneficios se encienden al pasar por el centro */
+        .kf-benefit-number {
+            animation: kf-encender linear both;
+            animation-timeline: view();
+            animation-range: cover 30% cover 45%;
+        }
+
+        /* El halo del cierre respira mientras se recorre su sección */
+        #contacto-cta {
+            view-timeline-name: --kf-cierre;
+            view-timeline-axis: block;
+        }
+
+        .kf-halo-cta {
+            animation: kf-respirar linear both;
+            animation-timeline: --kf-cierre;
+            animation-range: cover;
+        }
+    }
+
+    /* Acordeón: altura y opacidad animadas, sin JS. Donde el navegador no
+       soporte la interpolación, el acordeón abre igual (solo sin transición). */
+    @supports selector(::details-content) {
+        .kf-faq {
+            interpolate-size: allow-keywords;
+        }
+
+        .kf-faq::details-content {
+            block-size: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: block-size 300ms var(--kf-ease), opacity 240ms var(--kf-ease),
+                content-visibility 300ms allow-discrete;
+        }
+
+        .kf-faq[open]::details-content {
+            block-size: auto;
+            opacity: 1;
+        }
+    }
+}
+
+@keyframes kf-progreso {
+    from {
+        scale: 0 1;
+    }
+    to {
+        scale: 1 1;
+    }
+}
+
+@keyframes kf-deriva-panel {
+    from {
+        transform: translateY(26px);
+    }
+    to {
+        transform: translateY(-26px);
+    }
+}
+
+@keyframes kf-deriva-fondo {
+    from {
+        transform: translateY(-1.5%);
+    }
+    to {
+        transform: translateY(4%);
+    }
+}
+
+@keyframes kf-deriva-halo {
+    from {
+        transform: translate3d(0, 0, 0);
+        opacity: 0.95;
+    }
+    to {
+        transform: translate3d(-46px, 70px, 0);
+        opacity: 0.5;
+    }
+}
+
+@keyframes kf-relleno {
+    from {
+        transform: scaleY(0);
+    }
+    to {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes kf-encender {
+    from {
+        color: var(--kf-surface-slate);
+        scale: 0.86;
+    }
+    to {
+        color: var(--kf-accent);
+        scale: 1;
+    }
+}
+
+@keyframes kf-respirar {
+    from {
+        transform: translate3d(-50%, 34px, 0) scale(0.9);
+        opacity: 0.55;
+    }
+    to {
+        transform: translate3d(-50%, -34px, 0) scale(1.06);
+        opacity: 0.95;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .js .kf-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    /* La barra de progreso es solo un adorno: sin movimiento no se muestra */
+    .kf-progress {
+        display: none;
+    }
+
+    .kf-card-interactive:hover,
+    .kf-btn-primary:hover {
+        transform: none;
+    }
+
+    .kf-btn:active {
+        scale: 1;
+    }
+
+    .kf-nav-link::after {
+        transition: none;
+    }
+}
+
+/* ============================================================
+   10. Tema claro y oscuro
+   ============================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto y oscuro
+   solo cuando el visitante lo elige con el interruptor de la cabecera. La
+   elección se recuerda en localStorage, y el layout la aplica antes de pintar,
+   así que al recargar no se ve un destello claro.
+
+   El modo oscuro no es una hoja aparte: el sitio ya está construido sobre
+   variables por superficie, así que basta con redefinir esas mismas variables.
+   Solo se reescribe lo que no lee variables: el fondo del documento, la cabecera
+   pegada al scroll y el panel del menú móvil.
+
+   Criterio de color: en claro, el blanco es la superficie más clara y el azul
+   marino la más profunda. En oscuro la jerarquía se mantiene pero se invierte
+   (las secciones claras suben a azul profundo y el azul marino baja a casi
+   negro), para que la página conserve relieve en lugar de ser un plano único.
+   ============================================================ */
+
+/* Interruptor: muestra el icono del modo AL QUE SE VA (luna en claro, sol en
+   oscuro). Los dos iconos están siempre en el DOM y se cruzan con una
+   transición, así que no hay que reconstruir el botón al cambiar de tema. */
+.kf-tema-switch {
+    position: relative;
+}
+
+.kf-tema-switch .kf-tema-icono {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 220ms var(--kf-ease), transform 300ms var(--kf-ease);
+}
+
+.kf-tema-icono-sol {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .kf-tema-icono-sol {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .kf-tema-icono-luna {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. */
+.no-js .kf-tema-switch {
+    display: none;
+}
+
+/* Paleta del tema oscuro: un solo sitio donde ajustarla. */
+html[data-tema='oscuro'] {
+    /* Los controles nativos (barras de desplazamiento, relleno automático)
+       acompañan al tema en lugar de quedarse claros. */
+    color-scheme: dark;
+
+    --kf-noche-bg: #0d1730;
+    --kf-noche-surface: #111d38;
+    --kf-noche-card: #17243f;
+    --kf-noche-deep: #060c1c;
+    --kf-noche-ink: #e9eff9;
+    --kf-noche-slate: #a4b4cc;
+    --kf-noche-line: rgba(255, 255, 255, 0.12);
+    --kf-noche-accent: #6fbbfb;
+    --kf-noche-accent-strong: #a5d6ff;
+    --kf-noche-outline: rgba(255, 255, 255, 0.24);
+}
+
+html[data-tema='oscuro'] body {
+    background-color: var(--kf-noche-bg);
+    color: var(--kf-noche-ink);
+}
+
+/* Superficies que en claro son blancas o gris muy claro. */
+html[data-tema='oscuro'] .kf-surface-light,
+html[data-tema='oscuro'] .kf-surface-mist {
+    --kf-surface-ink: var(--kf-noche-ink);
+    --kf-surface-slate: var(--kf-noche-slate);
+    --kf-surface-line: var(--kf-noche-line);
+    --kf-card-bg: var(--kf-noche-card);
+    --kf-card-shadow: 0 22px 46px -34px rgba(0, 0, 0, 0.85);
+    --kf-accent: var(--kf-noche-accent);
+    --kf-accent-strong: var(--kf-noche-accent-strong);
+    --kf-icon-bg: rgba(22, 140, 240, 0.18);
+    --kf-icon-ink: var(--kf-blue-soft);
+    --kf-badge-bg: rgba(22, 140, 240, 0.14);
+    --kf-badge-line: rgba(22, 140, 240, 0.38);
+    --kf-badge-ink: #9ed2fc;
+    --kf-btn-outline: var(--kf-noche-outline);
+    --kf-slot-line: rgba(255, 255, 255, 0.28);
+    --kf-slot-ink: #c7d5e6;
+    --kf-mock-bg: #0e1d38;
+    --kf-mock-bar-bg: rgba(255, 255, 255, 0.05);
+    --kf-mock-line: var(--kf-noche-line);
+    --kf-bar-bg: rgba(255, 255, 255, 0.16);
+    --kf-focus: var(--kf-noche-accent);
+}
+
+/* Cada superficie conserva su propio fondo: "light" sube y "mist" se queda con
+   el fondo del documento, igual que en claro. */
+html[data-tema='oscuro'] .kf-surface-light {
+    --kf-surface-bg: var(--kf-noche-surface);
+}
+
+html[data-tema='oscuro'] .kf-surface-mist {
+    --kf-surface-bg: var(--kf-noche-bg);
+}
+
+/* Azul marino: sigue siendo la superficie más profunda, ahora casi negra. */
+html[data-tema='oscuro'] .kf-surface-dark,
+html[data-tema='oscuro'] .kf-mobile-menu {
+    --kf-surface-bg: var(--kf-noche-deep);
+    --kf-card-bg: rgba(255, 255, 255, 0.06);
+    --kf-mock-bg: #08122a;
+    --kf-mock-bar-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* La sombra del panel del software era azul marino: sobre fondo oscuro no se ve
+   y el borde queda solo. Se cambia por una sombra negra, que sí separa. */
+html[data-tema='oscuro'] .kf-surface-dark .kf-mock {
+    box-shadow: 0 40px 80px -44px rgba(0, 0, 0, 0.95);
+}
+
+html[data-tema='oscuro'] .kf-mobile-menu {
+    background-color: rgba(6, 12, 28, 0.98);
+}
+
+/* Cabecera pegada al scroll: mismas variables, resueltas para oscuro. */
+html[data-tema='oscuro'] .kf-nav.is-scrolled {
+    --kf-nav-ink: var(--kf-noche-ink);
+    --kf-nav-ink-hover: var(--kf-blue-soft);
+    --kf-nav-line: var(--kf-noche-line);
+    --kf-slot-line: rgba(255, 255, 255, 0.28);
+    --kf-slot-ink: #c7d5e6;
+    --kf-surface-ink: var(--kf-noche-ink);
+    --kf-surface-slate: var(--kf-noche-slate);
+    --kf-btn-outline: var(--kf-noche-outline);
+    background-color: rgba(13, 23, 48, 0.94);
+    border-bottom-color: var(--kf-noche-line);
+    box-shadow: 0 12px 30px -26px rgba(0, 0, 0, 0.9);
+}
+
+/* Azul al 5 % y al 6 %: pensados para fondos blancos, se pierden en oscuro. */
+html[data-tema='oscuro'] .kf-note {
+    background-color: rgba(22, 140, 240, 0.1);
+}
+
+html[data-tema='oscuro'] .kf-btn-secondary:hover {
+    background-color: rgba(22, 140, 240, 0.14);
+}
+
+/* El texto seleccionado se leía en azul marino sobre azul translúcido. */
+html[data-tema='oscuro'] ::selection {
+    background: rgba(22, 140, 240, 0.42);
+    color: #ffffff;
+}
+
+/* Movimiento: el interruptor se queda quieto, pero sigue cambiando de icono.
+   Va al final a propósito, después de declarar la transición del interruptor. */
+@media (prefers-reduced-motion: reduce) {
+    .kf-tema-switch .kf-tema-icono {
+        transition: none;
+    }
+}

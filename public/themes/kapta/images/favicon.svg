@@ -1,0 +1,13 @@
+<!--
+    Marca de posición del sitio de KAPTA LMS.
+
+    NO es el logotipo oficial: es un cuadro neutro con los colores de la marca
+    para que el icono de la pestaña no quede vacío mientras llega el archivo
+    oficial. No contiene letras, monogramas ni ninguna reinterpretación del
+    isotipo. Cuando exista el logotipo, se sustituye este archivo por el suyo
+    (o se apunta el layout al nuevo recurso).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="KAPTA LMS">
+  <rect width="64" height="64" rx="14" fill="#0B1740"/>
+  <rect x="14" y="14" width="36" height="36" rx="8" fill="none" stroke="#42C5F5" stroke-width="4" opacity="0.85"/>
+</svg>

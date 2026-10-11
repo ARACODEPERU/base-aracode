@@ -21,6 +21,6 @@ class CmsBenefits extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.cms-benefits');
+        return view('aracode.components.cms-benefits');
     }
 }

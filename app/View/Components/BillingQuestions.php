@@ -21,6 +21,6 @@ class BillingQuestions extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.billing-questions');
+        return view('aracode.components.billing-questions');
     }
 }

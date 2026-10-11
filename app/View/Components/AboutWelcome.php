@@ -21,6 +21,6 @@ class AboutWelcome extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.about-welcome');
+        return view('aracode.components.about-welcome');
     }
 }

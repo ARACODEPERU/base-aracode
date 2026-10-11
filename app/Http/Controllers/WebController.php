@@ -285,7 +285,7 @@ class WebController extends Controller
     {
         $products[0] = null;
         $sale = OnliSale::where('id', $id)->with('details.item')->first();
-        return view('pages/gracias-compra', [
+        return view('aracode.pages.gracias-compra', [
             'products' => $products,
             'sale' => $sale
         ]);

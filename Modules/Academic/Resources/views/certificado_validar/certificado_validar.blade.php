@@ -1,4 +1,4 @@
-@extends('layouts.webpage')
+@extends('aracode.layouts.webpage')
 {{-- @section('title', '- Validar Certificado') <-- Agrega esta línea --}}
 @section('content')
 

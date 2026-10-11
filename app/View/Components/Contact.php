@@ -21,6 +21,6 @@ class Contact extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.contact');
+        return view('aracode.components.contact');
     }
 }

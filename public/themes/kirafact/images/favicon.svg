@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="KIRAFACT">
+  <!--
+    Icono de pestaña PROVISIONAL.
+
+    No reproduce ningún símbolo de marca de KIRAFACT: es solo una marca de color
+    en los colores del sitio, a la espera del favicon oficial derivado del
+    logotipo. Cuando el propietario entregue el logotipo, este archivo se
+    reemplaza (ver README).
+  -->
+  <rect width="64" height="64" rx="14" fill="#0B1B3A"/>
+  <rect x="17" y="17" width="30" height="30" rx="9" fill="none" stroke="#168CF0" stroke-width="3"/>
+</svg>

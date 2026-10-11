@@ -21,6 +21,6 @@ class HomeCustomers extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.home-customers');
+        return view('aracode.components.home-customers');
     }
 }

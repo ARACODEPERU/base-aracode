@@ -21,6 +21,6 @@ class HomeTape extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.home-tape');
+        return view('aracode.components.home-tape');
     }
 }

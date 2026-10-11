@@ -21,6 +21,6 @@ class StoreOnlineWelcome extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.store-online-welcome');
+        return view('aracode.components.store-online-welcome');
     }
 }

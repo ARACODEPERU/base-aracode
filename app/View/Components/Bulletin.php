@@ -21,6 +21,6 @@ class Bulletin extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.bulletin');
+        return view('aracode.components.bulletin');
     }
 }
