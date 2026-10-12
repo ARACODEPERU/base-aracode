@@ -18,12 +18,19 @@ use Modules\Health\Entities\HealSetting;
 use Modules\Health\Support\AppointmentDuration;
 use Modules\Health\Support\HealthPhoneNumber;
 use Modules\Health\Support\PendingSignatureReminder;
+use Modules\Health\Services\DoctorGoogleCalendarService;
+use Modules\Health\Support\GoogleCalendarOptions;
 
 class HealAgendaController extends Controller
 {
     private const SLOT_MINUTES = 15;
     private const ATTENTION_BLOCK_MINUTES = 60;
     private const ON_TIME_GRACE_MINUTES = 5;
+
+    public function __construct(
+        private readonly DoctorGoogleCalendarService $doctorGoogle,
+    ) {
+    }
 
     private function workingHours(): array
     {
@@ -73,6 +80,10 @@ class HealAgendaController extends Controller
             'appointmentDurationOptions' => AppointmentDuration::options(),
             'attentionBlockMinutes' => self::ATTENTION_BLOCK_MINUTES,
             'pendingSignatures' => PendingSignatureReminder::items(),
+            // Enlace de Google Calendar de la agenda del doctor que usa la pantalla.
+            'doctorGoogle' => $currentDoctor ? $this->doctorGoogle->status($currentDoctor->id) : null,
+            'doctorGoogleCanEnlace' => $this->canChooseDoctor() || $this->doctorGoogle->allowSelfConnect(),
+            'doctorGoogleConfirmMinutes' => GoogleCalendarOptions::read()['confirm_minutes'],
         ]);
     }
 

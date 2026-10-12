@@ -7,6 +7,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Modules\Health\Support\GoogleCalendarAccount;
 use Modules\Health\Support\GoogleCalendarEventMissingException;
 use Modules\Health\Support\GoogleCalendarSyncTokenExpiredException;
 use RuntimeException;
@@ -60,9 +61,16 @@ class GoogleCalendarService
      */
     public function isConfigured(): bool
     {
-        return $this->clientId() !== null
-            && $this->clientSecret() !== null
+        return $this->hasClientCredentials()
             && $this->refreshToken() !== null;
+    }
+
+    /**
+     * true si estan el Client ID y el Client Secret (lo que necesita cualquier cuenta, tambien la de un doctor).
+     */
+    public function hasClientCredentials(): bool
+    {
+        return $this->clientId() !== null && $this->clientSecret() !== null;
     }
 
     /**
@@ -208,6 +216,26 @@ class GoogleCalendarService
      */
     public function exchangeCode(string $code): array
     {
+        $data = $this->tokenFromCode($code);
+
+        $this->storeRefreshToken((string) $data['refresh_token']);
+
+        $accessToken = $data['access_token'] ?? null;
+
+        if (is_string($accessToken) && $accessToken !== '') {
+            $this->cacheAccessToken($accessToken, (int) ($data['expires_in'] ?? 3600));
+        }
+
+        return $data;
+    }
+
+    /**
+     * Canjea el codigo de autorizacion SIN guardar nada (lo usa el enlace por doctor).
+     *
+     * @return array<string, mixed> Respuesta de Google, con `refresh_token` garantizado
+     */
+    public function tokenFromCode(string $code): array
+    {
         $data = $this->tokenRequest([
             'code' => $code,
             'redirect_uri' => $this->redirectUri(),
@@ -220,14 +248,6 @@ class GoogleCalendarService
             throw new RuntimeException(
                 'Google no devolvio un refresh token. Vuelve a conectar la cuenta aceptando los permisos del calendario.'
             );
-        }
-
-        $this->storeRefreshToken($refreshToken);
-
-        $accessToken = $data['access_token'] ?? null;
-
-        if (is_string($accessToken) && $accessToken !== '') {
-            $this->cacheAccessToken($accessToken, (int) ($data['expires_in'] ?? 3600));
         }
 
         return $data;
@@ -282,6 +302,14 @@ class GoogleCalendarService
             return;
         }
 
+        $this->revokeToken($token);
+    }
+
+    /**
+     * Revoca un refresh token concreto (la agenda principal o la de un doctor).
+     */
+    public function revokeToken(string $token): void
+    {
         try {
             $response = Http::asForm()
                 ->timeout((int) $this->config('timeout', 30))
@@ -325,7 +353,7 @@ class GoogleCalendarService
         ];
 
         if ($account['email'] === null) {
-            $profile = $this->fetchAccount();
+            $profile = $this->fetchAccount(is_string($tokenData['access_token'] ?? null) ? $tokenData['access_token'] : null);
 
             if ($profile !== null) {
                 $account = [
@@ -347,10 +375,16 @@ class GoogleCalendarService
      *
      * @return array{email: ?string, name: ?string, picture: ?string}|null
      */
-    public function fetchAccount(): ?array
+    public function fetchAccount(?string $accessToken = null): ?array
     {
+        // Con el token de la respuesta se consulta la cuenta que acaba de
+        // autorizarse (no la principal del consultorio).
         try {
-            $response = $this->send('get', (string) $this->config('userinfo_url', 'https://openidconnect.googleapis.com/v1/userinfo'));
+            $userinfoUrl = (string) $this->config('userinfo_url', 'https://openidconnect.googleapis.com/v1/userinfo');
+
+            $response = $accessToken !== null && $accessToken !== ''
+                ? Http::withToken($accessToken)->timeout((int) $this->config('timeout', 30))->acceptJson()->get($userinfoUrl)
+                : $this->send('get', $userinfoUrl);
         } catch (\Throwable) {
             return null;
         }
@@ -425,18 +459,22 @@ class GoogleCalendarService
      *
      * @throws RuntimeException cuando no hay credenciales o Google las rechaza.
      */
-    public function accessToken(bool $forceRefresh = false): string
+    public function accessToken(bool $forceRefresh = false, ?GoogleCalendarAccount $account = null): string
     {
+        $cacheKey = $this->accessTokenCacheKey($account);
+
         if (! $forceRefresh) {
-            $cached = Cache::get(self::ACCESS_TOKEN_CACHE_KEY);
+            $cached = Cache::get($cacheKey);
 
             if (is_string($cached) && $cached !== '') {
                 return $cached;
             }
         }
 
+        // Sin cuenta se usa el refresh token de la agenda principal; con una
+        // cuenta de doctor, el suyo.
         $data = $this->tokenRequest([
-            'refresh_token' => (string) $this->refreshToken(),
+            'refresh_token' => (string) ($account?->refreshToken ?? $this->refreshToken()),
             'grant_type' => 'refresh_token',
         ], 'renovar el token de acceso');
 
@@ -446,9 +484,45 @@ class GoogleCalendarService
             throw new RuntimeException('Google no devolvio un token de acceso.');
         }
 
-        $this->cacheAccessToken($token, (int) ($data['expires_in'] ?? 3600));
+        $this->cacheAccessToken($token, (int) ($data['expires_in'] ?? 3600), $cacheKey);
 
         return $token;
+    }
+
+    /**
+     * Olvida el access token en cache de una cuenta (al desconectarla).
+     */
+    public function forgetAccessToken(?GoogleCalendarAccount $account = null): void
+    {
+        Cache::forget($this->accessTokenCacheKey($account));
+    }
+
+    /**
+     * Id real del calendario principal de una cuenta (su correo).
+     *
+     * El alias `primary` depende de la cuenta, asi que se resuelve una vez al
+     * conectar y se guarda: asi dos cuentas nunca comparten el mismo calendario
+     * en la tabla de mapeo.
+     */
+    public function primaryCalendarIdWithToken(string $accessToken): string
+    {
+        try {
+            $response = Http::withToken($accessToken)
+                ->timeout((int) $this->config('timeout', 30))
+                ->acceptJson()
+                ->get($this->apiUrl() . '/users/me/calendarList/primary');
+        } catch (\Throwable $exception) {
+            throw new RuntimeException('No se pudo conectar con Google Calendar: ' . $exception->getMessage(), 0, $exception);
+        }
+
+        $data = $this->decode($response, 'leer el calendario principal de la cuenta');
+        $id = $this->firstString($data['id'] ?? null);
+
+        if ($id === null) {
+            throw new RuntimeException('Google no devolvio el identificador del calendario principal de la cuenta.');
+        }
+
+        return $id;
     }
 
     /**
@@ -457,9 +531,9 @@ class GoogleCalendarService
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
-    public function insertEvent(array $payload): array
+    public function insertEvent(array $payload, ?GoogleCalendarAccount $account = null): array
     {
-        return $this->api('post', $this->eventsUrl(), ['json' => $payload], 'crear el evento');
+        return $this->api('post', $this->eventsUrl($account), ['json' => $payload], 'crear el evento', $account);
     }
 
     /**
@@ -470,9 +544,9 @@ class GoogleCalendarService
      *
      * @throws GoogleCalendarEventMissingException cuando el evento ya no existe.
      */
-    public function updateEvent(string $eventId, array $payload): array
+    public function updateEvent(string $eventId, array $payload, ?GoogleCalendarAccount $account = null): array
     {
-        $response = $this->send('patch', $this->eventUrl($eventId), ['json' => $payload]);
+        $response = $this->send('patch', $this->eventUrl($eventId, $account), ['json' => $payload], $account);
 
         if (in_array($response->status(), [404, 410], true)) {
             throw new GoogleCalendarEventMissingException('El evento ' . $eventId . ' ya no existe en Google Calendar.');
@@ -484,9 +558,9 @@ class GoogleCalendarService
     /**
      * Borra un evento. Un evento que ya no existe se considera borrado.
      */
-    public function deleteEvent(string $eventId): void
+    public function deleteEvent(string $eventId, ?GoogleCalendarAccount $account = null): void
     {
-        $response = $this->send('delete', $this->eventUrl($eventId));
+        $response = $this->send('delete', $this->eventUrl($eventId, $account), [], $account);
 
         if ($response->successful() || in_array($response->status(), [404, 410], true)) {
             return;
@@ -606,6 +680,16 @@ class GoogleCalendarService
     }
 
     /**
+     * Agenda principal del consultorio como cuenta de escritura (null si no esta conectada).
+     */
+    public function principalAccount(): ?GoogleCalendarAccount
+    {
+        $token = $this->refreshToken();
+
+        return $token === null ? null : new GoogleCalendarAccount($token, $this->calendarId());
+    }
+
+    /**
      * Peticion al endpoint de tokens de Google (form-urlencoded).
      *
      * @param array<string, mixed> $body
@@ -640,9 +724,9 @@ class GoogleCalendarService
      * @param array<string, mixed> $options
      * @return array<string, mixed>
      */
-    private function api(string $method, string $url, array $options, string $action): array
+    private function api(string $method, string $url, array $options, string $action, ?GoogleCalendarAccount $account = null): array
     {
-        return $this->decode($this->send($method, $url, $options), $action);
+        return $this->decode($this->send($method, $url, $options, $account), $action);
     }
 
     /**
@@ -650,11 +734,11 @@ class GoogleCalendarService
      *
      * @param array<string, mixed> $options
      */
-    private function send(string $method, string $url, array $options = []): Response
+    private function send(string $method, string $url, array $options = [], ?GoogleCalendarAccount $account = null): Response
     {
         // Fuera del try: si falta configuracion el error debe ser ese, no un
         // "no se pudo conectar".
-        $token = $this->accessToken();
+        $token = $this->accessToken(false, $account);
 
         try {
             return Http::withToken($token)
@@ -688,17 +772,31 @@ class GoogleCalendarService
     /**
      * URL del recurso de eventos del calendario configurado.
      */
-    private function eventsUrl(): string
+    private function eventsUrl(?GoogleCalendarAccount $account = null): string
     {
-        return $this->apiUrl() . '/calendars/' . rawurlencode($this->calendarId()) . '/events';
+        $calendarId = $account?->calendarId ?? $this->calendarId();
+
+        return $this->apiUrl() . '/calendars/' . rawurlencode($calendarId) . '/events';
     }
 
     /**
      * URL de un evento puntual.
      */
-    private function eventUrl(string $eventId): string
+    private function eventUrl(string $eventId, ?GoogleCalendarAccount $account = null): string
     {
-        return $this->eventsUrl() . '/' . rawurlencode($eventId);
+        return $this->eventsUrl($account) . '/' . rawurlencode($eventId);
+    }
+
+    /**
+     * Clave de cache del access token: la principal conserva la clave original.
+     */
+    private function accessTokenCacheKey(?GoogleCalendarAccount $account): string
+    {
+        if ($account === null || $account->isPrincipal()) {
+            return self::ACCESS_TOKEN_CACHE_KEY;
+        }
+
+        return self::ACCESS_TOKEN_CACHE_KEY . '.' . $account->cacheKey();
     }
 
     private function apiUrl(): string
@@ -709,11 +807,11 @@ class GoogleCalendarService
     /**
      * Guarda el access token en cache hasta poco antes de que expire.
      */
-    private function cacheAccessToken(string $token, int $expiresIn): void
+    private function cacheAccessToken(string $token, int $expiresIn, string $cacheKey = self::ACCESS_TOKEN_CACHE_KEY): void
     {
         $ttl = max(60, $expiresIn - 60);
 
-        Cache::put(self::ACCESS_TOKEN_CACHE_KEY, $token, now()->addSeconds($ttl));
+        Cache::put($cacheKey, $token, now()->addSeconds($ttl));
     }
 
     /**

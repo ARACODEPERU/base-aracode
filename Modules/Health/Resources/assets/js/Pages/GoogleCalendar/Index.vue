@@ -142,6 +142,25 @@ const flash = (icon, title, text) => {
     });
 };
 
+// Enlazar la agenda principal expone las citas de TODOS los doctores en esa
+// cuenta de Google: se pide confirmación clara antes de salir a Google.
+const confirmPrincipalConnect = async (url) => {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Vas a enlazar la agenda principal',
+        html: 'Esta cuenta de Google es la <strong>agenda principal del consultorio</strong>. Las citas de <strong>todos los doctores</strong> se verán en ese calendario.<br><br>Si solo quieres enlazar la agenda de un doctor, hazlo desde su propia agenda (Agendas › Conectar mi Google Calendar).',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, enlazar agenda principal',
+        cancelButtonText: 'Cancelar',
+        customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-danger', cancelButton: 'btn btn-outline-secondary' },
+        buttonsStyling: false,
+    });
+
+    if (result.isConfirmed) {
+        window.location.href = url;
+    }
+};
+
 // Avisos y resultado del diagnóstico.
 //
 // Inertia reutiliza el componente de la página en las peticiones POST, así que
@@ -525,6 +544,7 @@ const discard = (item) => {
                             v-if="!connected && credentialsReady"
                             :href="route('heal_google_calendar_connect')"
                             class="btn btn-primary"
+                            @click.prevent="confirmPrincipalConnect(route('heal_google_calendar_connect'))"
                         >
                             Continuar con Google
                         </a>

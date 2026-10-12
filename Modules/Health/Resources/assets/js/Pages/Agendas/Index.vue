@@ -13,6 +13,7 @@ import IconPlus from '@/Components/vristo/icon/icon-plus.vue';
 import IconX from '@/Components/vristo/icon/icon-x.vue';
 import PendingSignatureReminder from '../../Components/PendingSignatureReminder.vue';
 import EstablishmentBadge from '../../Components/EstablishmentBadge.vue';
+import DoctorGoogleLinkModal from '../../Components/DoctorGoogleLinkModal.vue';
 
 const props = defineProps({
     doctors: {
@@ -73,6 +74,19 @@ const props = defineProps({
     pendingSignatures: {
         type: Array,
         default: () => [],
+    },
+    // Enlace de Google Calendar del doctor que usa la pantalla (null si no es doctor).
+    doctorGoogle: {
+        type: Object,
+        default: null,
+    },
+    doctorGoogleCanEnlace: {
+        type: Boolean,
+        default: false,
+    },
+    doctorGoogleConfirmMinutes: {
+        type: Number,
+        default: 5,
     },
 });
 
@@ -197,6 +211,12 @@ const form = useForm({
 });
 
 const selectedDoctorName = computed(() => selectedDoctor.value?.name || 'Sin doctor');
+
+// true cuando la agenda en pantalla es la del propio doctor (no la de otro doctor).
+const isOwnAgenda = computed(() => !!props.currentDoctor && selectedDoctor.value?.code === props.currentDoctor.code);
+// El botón solo aparece en la agenda propia, mientras no esté enlazada y el admin lo permita.
+const showGoogleLinkButton = computed(() => isOwnAgenda.value && props.doctorGoogleCanEnlace && !props.doctorGoogle?.connected);
+const googleLinkOpen = ref(false);
 
 const getDayLayoutedEvents = (dayData) => {
     if (!dayData?.events?.length) return [];
@@ -1014,6 +1034,23 @@ onBeforeUnmount(() => {
                         </button>
                     </div>
                 </div>
+
+                <!-- Enlace de la agenda del doctor con su propio Google Calendar (no es la agenda principal). -->
+                <div
+                    v-if="showGoogleLinkButton"
+                    class="mt-4 flex flex-col gap-3 rounded border border-dashed border-primary/50 bg-primary/5 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <p>
+                        <strong>Tu agenda no está enlazada con tu Google Calendar.</strong>
+                        Enlázala para que tus citas se escriban en tu propio calendario.
+                    </p>
+                    <button type="button" class="btn btn-outline-primary btn-sm shrink-0" @click="googleLinkOpen = true">
+                        Conectar mi Google Calendar
+                    </button>
+                </div>
+                <p v-else-if="isOwnAgenda && doctorGoogle?.connected" class="mt-3 text-xs text-success">
+                    Tu agenda está enlazada con Google Calendar ({{ doctorGoogle.email || 'cuenta conectada' }}). Puedes desenlazarla en Salud › Parámetros.
+                </p>
             </div>
 
             <div class="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_320px]">
@@ -1403,6 +1440,14 @@ onBeforeUnmount(() => {
                 </div>
             </Dialog>
         </TransitionRoot>
+
+        <DoctorGoogleLinkModal
+            :open="googleLinkOpen"
+            :doctor-id="currentDoctor?.code ?? null"
+            :doctor-name="currentDoctor?.name || ''"
+            :confirm-minutes="doctorGoogleConfirmMinutes"
+            @close="googleLinkOpen = false"
+        />
     </AppLayout>
 </template>
 

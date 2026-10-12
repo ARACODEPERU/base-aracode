@@ -11,7 +11,8 @@ import {
     faGear,
     faBell,
     faCalendarCheck,
-    faCalendarWeek
+    faCalendarWeek,
+    faSliders
 } from "@fortawesome/free-solid-svg-icons";
 import menuDental from 'Modules/Dental/Resources/assets/js/Menu.js';
 
@@ -120,6 +121,14 @@ const menuHealth = {
             text: 'Registro de Actividades',
             icom: faClipboardList,
             permissions: 'heal_actividades_listado',
+        },
+        {
+            route: route('heal_parameters'),
+            status: false,
+            text: 'Parámetros',
+            icom: faSliders,
+            // Cada doctor ve su enlace de Google Calendar; el admin, el de todos.
+            permissions: 'heal_citas_listado',
         },
         {
             route: route('heal_settings'),

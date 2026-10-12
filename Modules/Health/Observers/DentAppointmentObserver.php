@@ -59,7 +59,7 @@ class DentAppointmentObserver
             return;
         }
 
-        if ($appointmentId <= 0 || ! $this->sync->ready()) {
+        if ($appointmentId <= 0 || ! $this->sync->outboundReady()) {
             return;
         }
 
