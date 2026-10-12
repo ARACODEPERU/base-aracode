@@ -4,20 +4,25 @@
     La imagen diseñada del producto es lo que se ve primero: va arriba, entera,
     con su proporción reservada por CSS (sin saltos al cargar) y sin ningún velo
     encima. Debajo, sobre el navy de la tarjeta, va la información escaneable:
-    categoría, nombre, prestaciones y el enlace.
+    categoría, nombre, el resumen y el enlace.
 
     Antes la imagen era el fondo de TODA la tarjeta y dos degradados navy la
-    cubrían para que el texto se leyera: el diseño apenas se apreciaba. Por eso
-    la frase corta de apoyo ya no se pinta —repetía el nombre, las prestaciones
-    y lo que la propia imagen comunica— y sobrevive como texto alternativo de la
-    imagen (ver abajo), así que no se pierde ni para lectores de pantalla ni para
-    los buscadores.
+    cubrían para que el texto se leyera: el diseño apenas se apreciaba.
+
+    El resumen de la tarjeta se cuenta por UNA sola vía, y `compacta` decide
+    cuál: el catálogo (/soluciones) lista las prestaciones y, en el home, tres
+    tarjetas por fila con la frase corta. Las dos a la vez —prestaciones y frase—
+    repetían lo mismo y alargaban la tarjeta; la frase sigue siendo, además, el
+    texto alternativo de la imagen cuando no se pasa `imageAlt`.
 
     Propiedades:
     - `image`: URL de la imagen diseñada del producto. La proporción la fija
       `.ara-product-card` en webpage-v2.css (16/9; 3/2 en móvil).
-    - `description`: frase corta del producto. No se pinta: es el texto
-      alternativo de la imagen cuando no se pasa `imageAlt`.
+    - `description`: frase corta del producto. Se pinta como párrafo en la
+      tarjeta compacta y es el texto alternativo de la imagen cuando no se pasa
+      `imageAlt`.
+    - `compacta`: tarjeta chica, para rejillas de tres por fila. Ignora
+      `features` y muestra la frase corta en su lugar.
     - `imageAlt`: texto alternativo explícito, para cuando el diseño de la
       imagen necesite una descripción distinta de la frase comercial.
     - `nuevaPestana`: el destino es el sitio del producto (otra web). Se avisa
@@ -35,13 +40,18 @@
     'delay' => 0,
     'nuevaPestana' => false,
     'etiqueta' => 'Conocer Más',
+    'compacta' => false,
 ])
 
 @php
     $textoAlternativo = $imageAlt ?? $description ?? $title;
+
+    // La tarjeta compacta resume con la frase corta, no con la lista: si se
+    // pasaran las dos cosas se pintarían dos veces lo mismo.
+    $features = $compacta ? [] : $features;
 @endphp
 
-<article class="ara-product-card reveal reveal-delay-{{ $delay }}">
+<article class="ara-product-card {{ $compacta ? 'ara-product-card--compacta' : '' }} reveal reveal-delay-{{ $delay }}">
     @if ($image)
         <div class="ara-product-media">
             <img src="{{ $image }}" alt="{{ $textoAlternativo }}" loading="lazy" decoding="async">
@@ -60,6 +70,10 @@
         @endif
 
         <h3 class="ara-product-title">{{ $title }}</h3>
+
+        @if ($compacta && $description)
+            <p class="ara-product-text">{{ $description }}</p>
+        @endif
 
         @if (count($features) > 0)
             <ul class="ara-product-features">

@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\CatalogoPlantillas;
+use App\Support\ServicioWeb;
 use Tests\TestCase;
 
 /*
@@ -742,10 +743,14 @@ it('comparte la captura como imagen social de la ficha, con la frase de la propi
     $sinCaptura = CatalogoPlantillas::porSlug('portafolio-creativo');
     $sinCaptura['imagen'] = null;
 
+    // Se renderiza la vista a mano, así que se le pasan las mismas variables que
+    // el controlador: sin el plan del servicio la vista no se puede compilar.
     $html = view('plantillas.ficha', [
         'plantilla' => $sinCaptura,
         'urlDemo' => null,
         'relacionadas' => [],
+        'planServicio' => ServicioWeb::plan($sinCaptura['tipo']),
+        'urlServicio' => ServicioWeb::url(),
     ])->render();
 
     expect($html)->toContain(asset('themes/webpage/images/logo.png'))

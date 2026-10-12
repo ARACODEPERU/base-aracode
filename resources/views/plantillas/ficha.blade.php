@@ -243,7 +243,20 @@
 
                             <div>
                                 <dt>Formato</dt>
-                                <dd>{{ $plantilla['tipo_nombre'] !== '' ? $plantilla['tipo_nombre'] : 'Plantilla web' }}</dd>
+                                <dd>
+                                    {{ $plantilla['tipo_nombre'] !== '' ? $plantilla['tipo_nombre'] : 'Plantilla web' }}
+
+                                    {{-- Publicar esta plantilla cuesta el plan de su
+                                         formato: el precio y el plazo se ven aquí
+                                         mismo, sin obligar a ir a otra página.
+                                         Los importes salen de config/servicio_web.php
+                                         vía App\Support\ServicioWeb. --}}
+                                    @if ($planServicio)
+                                        <a href="{{ $urlServicio }}" class="block mt-1 text-sm text-ara-blue hover:underline">
+                                            Publicada desde {{ $planServicio['precio_mensual'] }}/mes · entrega en {{ $planServicio['entrega'] }}
+                                        </a>
+                                    @endif
+                                </dd>
                             </div>
 
                             <div>

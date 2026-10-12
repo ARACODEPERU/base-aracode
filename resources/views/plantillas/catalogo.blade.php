@@ -175,6 +175,55 @@
             </div>
         </section>
 
+        {{-- ===================== EL SERVICIO =====================
+             El visitante que ya vio la plantilla que le gusta se entera aquí de
+             que publicarla es un plan mensual o anual, sin salir del catálogo:
+             los precios salen de config/servicio_web.php (los mismos de la
+             página del servicio), no se escriben en esta vista.
+        --}}
+        <section class="py-16 lg:py-20 bg-ara-slate-50 border-t border-ara-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-3xl mb-10 reveal">
+                    <span class="ara-badge ara-badge-blue mb-4 inline-block">Publicación</span>
+
+                    <h2 class="text-2xl lg:text-3xl font-bold text-ara-slate-700">
+                        ¿Y después de elegir la plantilla?
+                    </h2>
+
+                    <p class="mt-3 text-ara-slate-400">
+                        La publicamos nosotros con tu marca y tu dominio. Es un plan mensual o anual
+                        —dominio, hosting y cambios incluidos—, no un proyecto por cotizar.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    @foreach ($planesServicio as $plan)
+                        <div class="ara-card reveal reveal-delay-{{ $loop->index + 1 }}">
+                            <h3 class="text-lg font-bold text-ara-slate-700 mb-2">{{ $plan['nombre'] }}</h3>
+
+                            <p class="text-ara-slate-400 text-sm leading-relaxed mb-4">{{ $plan['resumen'] }}</p>
+
+                            <p class="text-ara-slate-500 text-sm">
+                                <span class="text-2xl font-bold text-ara-blue">{{ $plan['precio_mensual'] }}</span>/mes
+                                <span class="block text-ara-slate-400 mt-1">
+                                    o {{ $plan['precio_anual'] }} al año · entrega en {{ $plan['entrega'] }}
+                                </span>
+                            </p>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mt-10 reveal">
+                    <a href="{{ $urlServicio }}" class="ara-btn ara-btn-primary ara-btn-lg">
+                        Ver los planes del servicio
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
         {{-- ===================== CTA ===================== --}}
         <x-v2.cta-section
             title="¿Quieres una plantilla con tu marca?"

@@ -1,0 +1,42 @@
+== /paginas-web a 1440 px ==
+   ancho del documento: 1440 px (ventana 1440)
+   planes publicados: 3
+   · plan 1: mensual sí · anual sí — Landing #Landing · 3 plantillas disponibles S/ 89 /mes o S/ 
+   · plan 2: mensual sí · anual sí — Más elegido Sitio web #SitioWeb · 3 plantillas disponibles S
+   · plan 3: mensual sí · anual sí — Tienda en línea #Tienda · 1 plantilla disponible S/ 199 /mes
+   preguntas frecuentes: 7 · acordeón abre sí («La landing es una sola página: todo el c») y cierra sí
+   enlaces a plantillas por formato: 3
+   fuera del ancho: ninguno
+   bloque «sección 1» empieza en 0 px
+   bloque «De la plantilla a tu dominio» empieza en 792 px
+   bloque «Una sola tarifa, todo inclui» empieza en 1581 px
+   bloque «Elige el formato y mira las » empieza en 3106 px
+   bloque «Preguntas sobre el servicio» empieza en 3973 px
+   bloque «¿Empezamos por tu página?» empieza en 4839 px
+== /paginas-web a 390 px ==
+   ancho del documento: 390 px (ventana 390)
+   planes publicados: 3
+   fuera del ancho: ninguno
+   bloque «sección 1» empieza en 0 px
+   bloque «De la plantilla a tu dominio» empieza en 844 px
+   bloque «Una sola tarifa, todo inclui» empieza en 2423 px
+   bloque «Elige el formato y mira las » empieza en 5691 px
+   bloque «Preguntas sobre el servicio» empieza en 7173 px
+   bloque «¿Empezamos por tu página?» empieza en 8131 px
+== bloque del servicio dentro de /plantillas ==
+   presente: sí · debajo de la rejilla: sí
+   tarjetas de plan: 3 · enlace: http://base-aracode.test/paginas-web · elementos desbordados: 0
+== el servicio dentro de /soluciones ==
+   tarjeta: sí · medalla: SERVICIOS · título: Páginas Web
+   precio de entrada visible: sí · prestaciones: 3
+   botón: http://base-aracode.test/paginas-web (dentro de la tarjeta: sí)
+   degradado morado: sí · medida: 592 × 686 · elementos desbordados: 0
+== tarjetas de producto de la portada ==
+   1440 px: 3 tarjetas · 3 compactas · 3 con frase · 0 con lista
+   medida: 389 × 419 px · filas: 1 · en la primera: 3
+   imágenes cargadas: 3 de 3
+   800 px: filas: 2 · en la primera: 2
+   390 px: filas: 3 · en la primera: 1
+== consola y red ==
+   errores de consola: ninguno
+   peticiones fallidas: ninguna

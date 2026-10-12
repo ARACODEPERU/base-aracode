@@ -107,7 +107,12 @@
                 :light="false"
             />
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {{-- Tres por fila y compactas: el home presenta, no compara. La
+                 lista de prestaciones vive en /soluciones, que es donde el
+                 visitante ya está eligiendo; aquí basta la frase del producto.
+                 La tarjeta compacta ignora `features`, así que no hace falta
+                 pasar ninguna. --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {{-- KAPTA LMS --}}
                 <x-v2.product-card
                     title="KAPTA LMS"
@@ -115,8 +120,8 @@
                     :href="route('solucion_kapta')"
                     image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
                     badge="Plataforma SaaS"
-                    :features="['Gestión de cursos y módulos', 'Aulas virtuales con contenido multimedia', 'Certificación automática', 'Panel administrativo con métricas']"
                     :delay="1"
+                    :compacta="true"
                 />
 
                 {{-- KIRAFACT: misma grafía que en /soluciones y en el sitio del
@@ -127,8 +132,8 @@
                     :href="route('solucion_facturacion')"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
                     badge="SUNAT"
-                    :features="['Facturas, boletas y notas de crédito', 'Integración directa con SUNAT', 'Panel comercial con reportes', 'XML y PDF automáticos']"
                     :delay="2"
+                    :compacta="true"
                 />
 
                 {{-- Pichanguero --}}
@@ -138,8 +143,8 @@
                     :href="route('solucion_pichanguero')"
                     image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
                     badge="App móvil"
-                    :features="['Fixture automático y calendario', 'Tabla de posiciones y desempates', 'Estadísticas de jugadores', 'Resultados en vivo y app móvil']"
                     :delay="3"
+                    :compacta="true"
                 />
             </div>
         </div>

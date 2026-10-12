@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\CatalogoPlantillas;
+use App\Support\ServicioWeb;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -42,6 +43,31 @@ class PlantillasController extends Controller
             'categoria' => $categoria,
             'busqueda' => $busqueda,
             'total' => count(CatalogoPlantillas::todas()),
+            // Los planes del servicio, para el bloque que cierra el catálogo:
+            // el visitante que ya vio la plantilla que le gusta encuentra ahí
+            // cómo publicarla sin salir de la página.
+            'planesServicio' => ServicioWeb::planes(),
+            'urlServicio' => ServicioWeb::url(),
+        ]);
+    }
+
+    /**
+     * Página del servicio: los planes con que se publica una plantilla.
+     *
+     * Vive aquí y no en WebPageController porque es la otra mitad de la misma
+     * sección: el catálogo muestra lo que se puede publicar y esta página, cómo
+     * y por cuánto. Los planes salen de config/servicio_web.php a través de
+     * App\Support\ServicioWeb; los formatos (`#Landing`, `#SitioWeb`), del
+     * catálogo, para enlazar cada plan con las plantillas de ese formato.
+     */
+    public function paginasWeb(): View
+    {
+        return view('aracode.pages.paginas-web', [
+            'planes' => ServicioWeb::planes(),
+            'precioDesde' => ServicioWeb::precioDesde(),
+            'incluyeSiempre' => ServicioWeb::incluyeSiempre(),
+            'notaPago' => ServicioWeb::notaPago(),
+            'tipos' => CatalogoPlantillas::tipos(),
         ]);
     }
 
@@ -59,6 +85,11 @@ class PlantillasController extends Controller
             'plantilla' => $plantilla,
             'urlDemo' => CatalogoPlantillas::urlDemo($plantilla),
             'relacionadas' => CatalogoPlantillas::deLaMismaCategoria($slug),
+            // El plan con que se publica esta plantilla, según su formato: es el
+            // dato que convierte la visita en venta, así que se ve en la ficha y
+            // no solo en la página del servicio.
+            'planServicio' => ServicioWeb::plan($plantilla['tipo']),
+            'urlServicio' => ServicioWeb::url(),
         ]);
     }
 

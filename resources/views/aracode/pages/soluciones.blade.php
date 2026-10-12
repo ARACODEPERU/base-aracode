@@ -34,6 +34,18 @@
         'kirafact' => \App\Support\SitiosProducto::url('kirafact'),
         'pichanguero' => \App\Support\SitiosProducto::url('pichanguero'),
     ];
+
+    /*
+        El servicio que publica una plantilla del Banco de Plantillas
+        (/paginas-web) es el quinto bloque del ecosistema. Enlaza a una página
+        del propio sitio, así que abre en la misma pestaña.
+
+        El precio de entrada sale de config/servicio_web.php a través de
+        App\Support\ServicioWeb, igual que en /paginas-web y en el catálogo: aquí
+        no se escribe ningún importe.
+    */
+    $precioDesdeServicio = \App\Support\ServicioWeb::precioDesde();
+    $urlServicioWeb = \App\Support\ServicioWeb::url();
 @endphp
 
 @section('content')
@@ -178,6 +190,52 @@
                         </p>
                         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-green ara-product-cta">
                             Conocer Más
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+
+                {{-- Páginas Web: el servicio que publica una plantilla del Banco de
+                     Plantillas con la marca y el dominio del cliente. Es un
+                     servicio, así que lleva la franja con degradado e icono en
+                     vez de una imagen diseñada, y su propio color (morado): el
+                     azul y el verde ya son de Automatización e IA.
+
+                     El enlace es interno (misma pestaña) y el precio de entrada
+                     sale de config/servicio_web.php: el mismo que publican
+                     /paginas-web, el catálogo y la ficha de cada plantilla. --}}
+                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-7">
+                    <div class="ara-product-media ara-product-media--morado">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3c2.4 2.4 3.6 5.4 3.6 9s-1.2 6.6-3.6 9c-2.4-2.4-3.6-5.4-3.6-9S9.6 5.4 12 3z"/>
+                        </svg>
+                        <span class="ara-product-badge">Servicios</span>
+                    </div>
+
+                    <div class="ara-product-content">
+                        <h3 class="ara-product-title">Páginas Web</h3>
+                        <p class="ara-product-text">
+                            Elige una plantilla de nuestro catálogo y la publicamos con tu marca y tu dominio.
+                            Desde {{ $precioDesdeServicio }} al mes, sin costo de implementación.
+                        </p>
+                        <ul class="ara-product-features">
+                            <li>
+                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Dominio, hosting y certificado de seguridad incluidos
+                            </li>
+                            <li>
+                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Publicada en 3 a 10 días según el formato
+                            </li>
+                            <li>
+                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Cambios de contenido incluidos todo el año
+                            </li>
+                        </ul>
+                        <a href="{{ $urlServicioWeb }}" class="ara-btn ara-btn-primary ara-product-cta">
+                            Ver los planes
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
