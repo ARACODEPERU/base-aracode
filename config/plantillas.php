@@ -82,6 +82,12 @@ return [
             'descripcion' => 'Varias páginas enlazadas (inicio, servicios, fichas o listados) con menú de navegación.',
         ],
 
+        'tienda' => [
+            'nombre' => 'Tienda en línea',
+            'hashtag' => '#Tienda',
+            'descripcion' => 'Catálogo con filtros, ficha de producto, canasta que recuerda lo elegido y pedido por WhatsApp.',
+        ],
+
     ],
 
     'categorias' => [
@@ -114,6 +120,11 @@ return [
         'portafolio' => [
             'nombre' => 'Portafolios y creativos',
             'descripcion' => 'Estudios de diseño, fotografía y profesionales que muestran su trabajo.',
+        ],
+
+        'comercio' => [
+            'nombre' => 'Comercio y tiendas',
+            'descripcion' => 'Tiendas y marcas que venden productos: catálogo, precios, canasta y pedido en línea.',
         ],
 
     ],
@@ -245,17 +256,47 @@ return [
             'etiquetas' => ['portafolio', 'diseño', 'proyectos', 'estudio'],
             'resumen' => 'Portafolio para estudio de diseño: proyectos, servicios y contacto, con foco en las piezas.',
             'incluye' => [
-                'Portada a pantalla completa con el trabajo principal',
-                'Rejilla de proyectos filtrable',
-                'Servicios y forma de trabajo',
-                'Contacto y enlaces a redes',
+                'Diseño «pliego de taller»: retícula de doce columnas dibujada como filetes, titulares en sans mayúscula y cuerpo en serif con un solo acento magenta',
+                'Hero a pantalla completa con slider de tres fotos y cinta de servicios en movimiento',
+                'Modo claro y oscuro con interruptor en la cabecera',
+                'Índice de seis proyectos filtrable por tipo, con la pieza al pasar el ratón',
+                'Tarifas de referencia en tabla de trabajos, con presupuesto por WhatsApp en cada fila',
+                'Tres planes con tabla comparativa punto por punto',
+                'Bloque del estudio con la cita del equipo y dos bandas del taller',
+                'Tres opiniones con valoración, ubicación con plano propio y preguntas frecuentes',
+                'Formulario de encargo con validación en el navegador',
             ],
             'tecnologias' => ['HTML5', 'CSS3', 'JavaScript'],
-            'imagen' => null,
-            'demo' => null,
+            'imagen' => 'themes/plantillas/images/portafolio-creativo.jpg',
+            'demo' => 'portafolio-creativo',
             'destacada' => true,
             'publicada' => true,
-            'actualizada' => '2026-10-10',
+            'actualizada' => '2026-10-12',
+        ],
+
+        'tienda-online' => [
+            'nombre' => 'Tienda en línea',
+            'categoria' => 'comercio',
+            'tipo' => 'tienda',
+            'etiquetas' => ['tienda', 'catálogo', 'carrito', 'canasta', 'productos', 'envíos'],
+            'resumen' => 'Tienda de productos para el hogar: catálogo con filtros por ambiente, ficha con variantes, canasta que recuerda lo elegido y pedido por WhatsApp.',
+            'incluye' => [
+                'Diseño «tienda de casa moderna»: lienzo casi blanco con un solo acento naranja teja, precio en el texto —no una pegatina—, descuentos en porcentaje sobre la foto y botón de añadir sólido',
+                'Hero a pantalla completa con slider de tres fotos, buscador de productos dentro de la portada y cinta de promesas en movimiento',
+                'Modo claro y oscuro con interruptor en la cabecera, recordado entre las páginas de la tienda',
+                'Catálogo de doce productos con filtros por ambiente y precio máximo, orden por precio o nombre y el estado del filtro en la URL',
+                'Ficha de producto con galería de tiras, variantes de color y tamaño, cantidad y productos relacionados',
+                'Canasta que recuerda lo elegido entre páginas, con cantidades, barra de envío gratis y pedido por WhatsApp con su detalle y su total',
+                'Envíos, cambios y pagos de referencia, y preguntas frecuentes',
+                'Tres opiniones con valoración, el equipo de la tienda y ubicación con plano propio y enlace a Google Maps',
+                'Pedido con validación campo por campo en el navegador y recibo que se copia tal cual al WhatsApp',
+            ],
+            'tecnologias' => ['HTML5', 'CSS3', 'JavaScript'],
+            'imagen' => 'themes/plantillas/images/tienda-online.jpg',
+            'demo' => 'tienda-online',
+            'destacada' => true,
+            'publicada' => true,
+            'actualizada' => '2026-10-12',
         ],
 
     ],

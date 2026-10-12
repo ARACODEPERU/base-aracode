@@ -28,6 +28,7 @@ use Modules\Academic\Entities\AcaStudentSubscription;
 use Modules\Onlineshop\Entities\OnliSaleDetail;
 use Illuminate\Support\Facades\Mail;
 use Modules\Onlineshop\Jobs\ProcessCompra;
+use Modules\Academic\Jobs\SendProfileWebhook;
 
 class MercadopagoController extends Controller
 {
@@ -444,6 +445,14 @@ class MercadopagoController extends Controller
             // Enviar datos de la compra a N8N via Integrationhub (async)
             if ($payment->status === 'approved') {
                 ProcessCompra::dispatch($sale->id, 'carrito_autenticado');
+
+                // Aviso de compra con los cursos en el bloque 'cursos'. Solo sale si la
+                // persona ya tenia su cuenta con el perfil completado; si es la primera
+                // vez, el aviso sale al terminar su perfil obligatorio (perfil_completado),
+                // que tambien lleva sus cursos.
+                if ($sale->person_id) {
+                    SendProfileWebhook::dispatchCompraOnce('compra:sale:'.$sale->id, (int) $sale->person_id);
+                }
             }
 
             return response()->json([

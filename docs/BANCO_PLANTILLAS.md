@@ -8,13 +8,19 @@ demostración y qué hacer el día que una demo se mude a su propio subdominio.
 
 Aclaración vigente del banco: **toda landing y todo sitio web abre con un hero o
 un slider a pantalla completa, moderno y responsive**. Es el punto 1 de la lista
-obligatoria de más abajo, y las cinco demostraciones publicadas ya lo cumplen:
-`clinica-dental` y `restaurante-carta` (landings), y `academia-cursos`,
-`estudio-contable` e `inmobiliaria-propiedades` (sitios web) abren con un slider
-de tres fotos cada una.
+obligatoria de más abajo, y las siete demostraciones publicadas ya lo cumplen:
+`clinica-dental`, `restaurante-carta` y `portafolio-creativo` (landings), y
+`academia-cursos`, `estudio-contable`, `inmobiliaria-propiedades` y
+`tienda-online` (sitios web; la última, del tipo `tienda`, de cuatro páginas)
+abren con un slider de tres fotos cada una.
 Antes de dar por buena una portada nueva: avanzar el slider a mano, revisarla a
 1440 px y a 390 px y repetir la revisión con `prefers-reduced-motion` activado,
 que debe apagar el paso automático sin romper los controles.
+Esa segunda pasada se puede hacer de verdad en Chrome por el protocolo de
+DevTools, que sí emula la preferencia: `storage/tmp/repaso-movimiento.mjs` abre la
+demo con y sin `reduce`, espera más que el intervalo del slider y avisa de si el
+paso automático se apagó, de si el control a mano sigue respondiendo y de si la
+cinta y el latido del WhatsApp quedaron en `animation-name: none`.
 
 ## Regla de tema claro / oscuro
 
@@ -55,13 +61,14 @@ que no toque el interruptor recibe el tema oscuro del sistema operativo.
 de la página. El error típico —aplicar la clase al final del cuerpo— produce el
 flash blanco al recargar en oscuro.
 
-**Estado.** Las cuatro demostraciones publicadas ya lo traen: `clinica-dental` y
-`restaurante-carta` (landings) y `academia-cursos` (sitio de cuatro páginas) y
-`estudio-contable` (sitio de cinco páginas), en los dos sitios con la elección
-viajando de una página a otra porque todas comparten la misma clave. Las dos
-plantillas que aún no tienen demo (`inmobiliaria-propiedades` y
-`portafolio-creativo`) ya nacen con el interruptor, que es obligatorio para
-publicar. Lo vigila la prueba
+**Estado.** Las siete demostraciones publicadas lo traen: `clinica-dental`,
+`restaurante-carta` y `portafolio-creativo` (landings) y `academia-cursos` (sitio
+de cuatro páginas), `estudio-contable` (sitio de cinco páginas),
+`inmobiliaria-propiedades` (sitio de cinco) y `tienda-online` (tienda de cuatro
+páginas), en los cuatro sitios con la elección viajando de una página a otra
+porque todas comparten la misma clave. No queda ninguna plantilla publicada sin
+demostración: la octava que llegue nace con el interruptor, que es obligatorio
+para publicar. Lo vigila la prueba
 `tests/Unit/CatalogoPlantillasTest.php` → «trae el interruptor de tema claro /
 oscuro en toda demostración publicada», que además exige una clave de
 `localStorage` distinta por plantilla.
@@ -110,14 +117,22 @@ redes sociales, las anclas de sección, y los nombres que vigilan las pruebas
 diferencia sin hablar de color ni de logo. Si la única frase posible es «cambian los colores y las
 fotos», no cumple esta regla.
 
-Las cinco demostraciones publicadas hoy son distintas entre sí y sirven de ejemplo de cinco
+Las siete demostraciones publicadas hoy son distintas entre sí y sirven de ejemplo de siete
 lenguajes: `restaurante-carta` (carta impresa, cálido y fotográfico), `clinica-dental` (landing
 clara y cercana), `academia-cursos` (institucional con tarjetas y azul profundo),
 `estudio-contable` (expediente contable: papel y tinta, titulares en serif, filetes en vez de
-tarjetas, listados como libro de entradas y secciones con margen numerado) e
+tarjetas, listados como libro de entradas y secciones con margen numerado),
+`portafolio-creativo` (pliego de taller: papel frío con un solo acento magenta, titulares en sans
+mayúscula y cuerpo en serif —el par opuesto al del expediente contable—, retícula de doce columnas
+dibujada como filetes y los proyectos como índice numerado de catálogo, no como rejilla de
+tarjetas) e
 `inmobiliaria-propiedades` (tablero de fichas técnicas: retícula de plano en las secciones de
 datos, todo lo que es dato en monoespaciada, la propiedad como ficha con sello de precio
-inclinado, franja de color por operación y buscador dentro de la portada).
+inclinado, franja de color por operación y buscador dentro de la portada) y
+`tienda-online` (tienda de casa moderna: lienzo casi blanco para que el color lo ponga la foto
+del producto, un solo acento naranja teja para lo que se toca, el precio en el texto —número
+grande con el anterior tachado al lado— y sobre la foto solo el descuento en porcentaje y la
+etiqueta del producto, y la venta resuelta en dos gestos, la canasta y el pedido por WhatsApp).
 
 ## Piezas de la sección
 
@@ -191,7 +206,7 @@ chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 \
 El `--user-data-dir` es obligatorio: sin él Chrome puede reutilizar el perfil abierto del usuario en
 vez de arrancar uno limpio. Los guiones del banco son `storage/tmp/capturas-preparar.php` (pasa los
 PNG a JPEG en su carpeta final y **se niega** si alguna no es 16/10 o no se puede leer) y
-`storage/tmp/capturas-hoja.php`, que arma una hoja de contactos para revisar las cinco de un vistazo
+`storage/tmp/capturas-hoja.php`, que arma una hoja de contactos para revisar las siete de un vistazo
 antes de publicarlas.
 
 Lo vigila la prueba `tests/Unit/CatalogoPlantillasTest.php` → «publica la captura 16/10 de cada
@@ -217,7 +232,9 @@ ficha».
 
 La demostración **no** es una variación del catálogo: es un proyecto web propio.
 La referencia terminada y usable como modelo es `public/demos/clinica-dental/` cuando la
-plantilla es una **landing** y `public/demos/academia-cursos/` cuando es un **sitio web** (varias
+plantilla es una **landing** —y `public/demos/portafolio-creativo/` cuando esa landing es un
+**portafolio de piezas**, con el trabajo mostrado como índice numerado en vez de tarjetas— y
+`public/demos/academia-cursos/` cuando es un **sitio web** (varias
 páginas); `public/demos/estudio-contable/` es el segundo sitio web y sirve de ejemplo cuando el
 negocio vende **servicios con planes** en vez de un catálogo de productos (precios en tarjetas y en
 tabla comparativa, y un formulario de consulta en lugar de uno de matrícula), y
@@ -227,6 +244,14 @@ tabla comparativa, y un formulario de consulta en lugar de uno de matrícula), y
 medidas**. Ese plano no se dibuja a mano: lo genera `storage/tmp/plano-inmobiliaria.php`, que
 declara cada ambiente en metros y **falla si la planta no cierra** (suma de superficies distinta a
 la de la planta, o dos ambientes que se solapan).
+
+En una demo de **tienda** hay una copia más que en las demás: el catálogo y los destacados están
+escritos en el HTML —los filtros leen los atributos `data-` de cada tarjeta, no la memoria del
+JavaScript— y los mismos datos viven en `PRODUCTOS` (`js/app.js`). Las dos copias las mantiene
+`node storage/tmp/casa-tarjetas.mjs`, que reescribe desde esos datos las rejillas del catálogo y del
+escaparate, los atajos de ambiente y las colecciones; es lo que hay que volver a correr después de
+tocar un producto, un precio o un recuento. El guion abre y cierra cada bloque contando `<div>`,
+así que no depende de cómo quedó la sangría la vez anterior.
 
 Las fotos de una demo se eligen en `storage/tmp/candidatas-<slug>*/` (una carpeta por ronda de
 búsqueda, con `datos.json` y una hoja de contactos), se revisan de un vistazo con

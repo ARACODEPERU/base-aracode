@@ -1,0 +1,117 @@
+<main id="contenido">
+
+<div class="contenedor">
+    <nav class="migajas" aria-label="Estás en">
+        <a href="index.html">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <span>Tienda</span>
+    </nav>
+</div>
+
+<section class="seccion" style="padding-top: 1rem;">
+    <div class="contenedor">
+        <header class="bloque">
+            <div class="bloque__titulo">
+                <p class="bloque__ceja">Doce productos · seis ambientes</p>
+                <h1>Todo para tu casa</h1>
+            </div>
+            <p class="bloque__nota">
+                Filtra por ambiente o por precio, o busca por nombre. Cada producto lleva su ficha con
+                medidas, materiales, cuidados y la foto real de lo que llega a tu puerta.
+            </p>
+        </header>
+
+        <!-- Sin JavaScript el catálogo se lee completo, pero los filtros y la
+             canasta no funcionan: se avisa en vez de dejar botones muertos. -->
+        <div class="aviso aviso-js">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <p>
+                <strong>Sin JavaScript el catálogo se lee completo</strong>, con sus doce productos y sus
+                precios, pero los filtros, la búsqueda y la canasta no funcionan: el pedido se cierra
+                por WhatsApp con el botón de la esquina.
+            </p>
+        </div>
+
+        <!-- Filtros: se resuelven en el navegador y dejan el estado en la URL. -->
+        <form class="filtros solo-js" data-filtros novalidate>
+            <div class="campo">
+                <label for="f-q">Buscar por nombre o detalle</label>
+                <input id="f-q" name="q" type="search" placeholder="sartén, lino, lámpara…">
+            </div>
+
+            <div class="campo">
+                <label for="f-categoria">Ambiente</label>
+                <select id="f-categoria" name="categoria">
+                    <option value="">Todos</option>
+                    <option value="cocina">Cocina</option>
+                    <option value="mesa">Mesa</option>
+                    <option value="textil">Textil</option>
+                    <option value="orden">Orden</option>
+                    <option value="deco">Deco</option>
+                    <option value="bano">Baño</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="f-hasta">Precio máximo</label>
+                <select id="f-hasta" name="hasta">
+                    <option value="">Cualquiera</option>
+                    <option value="100">Hasta S/ 100</option>
+                    <option value="200">Hasta S/ 200</option>
+                    <option value="300">Hasta S/ 300</option>
+                    <option value="500">Hasta S/ 500</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="f-orden">Ordenar por</label>
+                <select id="f-orden" name="orden">
+                    <option value="recomendado">Recomendado</option>
+                    <option value="precio">Precio, de menor a mayor</option>
+                    <option value="precio_desc">Precio, de mayor a menor</option>
+                    <option value="nombre">Nombre, A a Z</option>
+                </select>
+            </div>
+
+            <div class="filtros__acciones">
+                <button class="boton" type="submit">Aplicar</button>
+                <a class="boton boton--fantasma" href="tienda.html">Limpiar</a>
+            </div>
+        </form>
+
+        <!-- El mismo filtro por ambiente, como atajo de un toque. -->
+        <div class="chips">
+        </div>
+
+        <div class="resumen-busqueda" data-resumen role="status" aria-live="polite"></div>
+
+        <div class="catalogo-vacio" data-vacio>
+            <h2>No hay productos con esos filtros</h2>
+            <p style="margin-top: 0.75rem; color: var(--tinta-2);">
+                Prueba con otro ambiente o quita el precio máximo. Entra mercadería cada mes, así que
+                si algo no aparece puede que esté por llegar.
+            </p>
+            <p style="margin-top: 1.25rem;">
+                <a class="boton boton--fantasma" href="tienda.html">Ver todo el catálogo</a>
+            </p>
+        </div>
+
+        <!-- La rejilla del catálogo: cada tarjeta lleva sus datos en atributos
+             (`data-`), que es de donde leen los filtros y el orden. La escribe el
+             mismo guion que mantiene los destacados del escaparate. -->
+        <div class="productos" data-rejilla>
+        </div>
+
+        <!-- Honestidad de la demostración: la canasta funciona, el pedido no sale. -->
+        <div class="aviso" style="margin-top: 2.5rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5 3 20h18L12 3.5Z"/><path d="M12 10v4M12 17h.01"/></svg>
+            <p>
+                <strong>Demostración:</strong> los productos, los precios y los proveedores son de ejemplo. La
+                canasta funciona de verdad en tu navegador, pero el pedido no se envía: en tu tienda
+                llega a tu WhatsApp o a tu correo, con su número de pedido.
+            </p>
+        </div>
+    </div>
+</section>
+
+</main>

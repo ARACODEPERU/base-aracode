@@ -1,0 +1,67 @@
+== Escaparate · 1440 px (claro) ==
+  desborde lateral: 0 px · fuera de la ventana: ninguno
+  áreas táctiles: punto 44×44 px · interruptor 44×44 px · canasta 44×44 px · menú oculto · WhatsApp 56×56 px
+  portada: 792 px de 900 de ventana · página 8852 px
+  controles del slider: terminan en 873 px (se ven)
+  portada: {"diapositivas":3,"puntos":3,"activa":0,"fotos":["img/portada-salon.webp","img/portada-cocina.webp","img/portada-comedor.webp"],"cinta":"cinta"}
+  tras el clic en «siguiente»: {"activa":1,"transform":"translateX(-100%)"}
+  tema oscuro: {"tema":"oscuro","guardado":"oscuro","etiqueta":"Cambiar a modo claro","pulsado":"true","papel":"rgb(21, 18, 15)","titulo":"rgb(247, 240, 232)","filtroPlano":"invert(1) hue-rotate(180deg)"}
+  canasta desde una tarjeta: {"cuenta":"2","oculta":false,"guardado":[{"slug":"sarten-hierro","variante":"","cantidad":2}]}
+  panel de la canasta: {"abierto":true,"ariaOculto":"false","lineas":1,"resumen":"S/ 378"}
+
+== Catálogo · catálogo completo (tienda.html) ==
+  {"visibles":12,"nombres":["Jabón de manos de oliva","Vaso de vidrio soplado","Taza de gres · 320 ml","Cucharones de madera · juego de 3","Maceta de cerámica con plato","Organizador de cajón","Tabla de cortar de madera","Jarrón de gres mate","Cesta de fibra con tapa","Manta tejida de algodón","Sartén de hierro fundido","Juego de sábanas de lino"],"precioPrimero":29,"resumen":"12 de 12 productos en toda la tienda","chip":"Todo el catálogo","vacio":false,"orden":"recomendado","categoria":""}
+
+== Catálogo · filtro por cocina (tienda.html?categoria=cocina) ==
+  {"visibles":3,"nombres":["Cucharones de madera · juego de 3","Tabla de cortar de madera","Sartén de hierro fundido"],"precioPrimero":59,"resumen":"3 de 12 productos en CocinaVer todo","chip":"Cocina","vacio":false,"orden":"recomendado","categoria":"cocina"}
+
+== Catálogo · búsqueda «tabla» (tienda.html?q=tabla) ==
+  {"visibles":1,"nombres":["Tabla de cortar de madera"],"precioPrimero":95,"resumen":"1 de 12 productos que dicen «tabla»Ver todo","chip":"Todo el catálogo","vacio":false,"orden":"recomendado","categoria":""}
+
+== Catálogo · orden por precio (tienda.html?orden=precio) ==
+  {"visibles":12,"nombres":["Jabón de manos de oliva","Vaso de vidrio soplado","Taza de gres · 320 ml","Cucharones de madera · juego de 3","Maceta de cerámica con plato","Organizador de cajón","Tabla de cortar de madera","Jarrón de gres mate","Cesta de fibra con tapa","Manta tejida de algodón","Sartén de hierro fundido","Juego de sábanas de lino"],"precioPrimero":29,"resumen":"12 de 12 productos en toda la tienda","chip":"Todo el catálogo","vacio":false,"orden":"precio","categoria":""}
+
+== Catálogo · precio máximo + deco (tienda.html?hasta=100&categoria=deco) ==
+  {"visibles":1,"nombres":["Maceta de cerámica con plato"],"precioPrimero":79,"resumen":"1 de 12 productos en Deco, de hasta S/ 100Ver todo","chip":"Deco","vacio":false,"orden":"recomendado","categoria":"deco"}
+
+== Catálogo · filtros en vivo ==
+  antes de filtrar: 12 piezas visibles
+  tras filtrar por textil: {"visibles":2,"url":"?categoria=textil&orden=precio","chipActivo":"Textil"}
+
+== Ficha · producto.html?p=sabanas-lino ==
+  {"titulo":"Juego de sábanas de lino — Casa Lume · Demostración de plantilla","nombre":"Juego de sábanas de lino","categoria":"Textil","precio":"S/459 S/ 549","variantes":7,"colores":["Crudo","Arena","Verde oliva","Terracota","1½ plazas","2 plazas","King"],"medidas":"Sábana bajera, encimera y dos fundas","foto":"img/producto-sabanas-lino.webp","relacionados":3,"migaja":"Juego de sábanas de lino"}
+  tras elegir variante y subir la cantidad: {"elegida":"Arena","cantidad":"2","dataCantidad":"2"}
+  tras agregar: {"panelAbierto":true,"linea":{"slug":"sabanas-lino","variante":"Arena · 1½ plazas","cantidad":2},"aviso":"Añadido a la canasta: 2 unidad(es).","cuenta":"2"}
+
+== Canasta · con una taza y entrega en Lima ==
+  {"lineas":1,"vacia":true,"totales":["Subtotal (1 producto)S/ 48","Recojo en la tiendasin costo","TotalS/ 48"],"recibo":"PEDIDO · CASA LUME","distritoOculto":true}
+  con delivery en Lima: {"totales":["Subtotal (1 producto)S/ 48","Delivery en LimaS/ 12","TotalS/ 60"],"distritoVisible":true,"nota":"Te faltan S/ 151 para el delivery sin costo en Lima."}
+  pasando el umbral de envío gratis: {"totales":["Subtotal (4 productos)S/ 192","Delivery en LimaS/ 12","TotalS/ 204"],"linea":{"slug":"taza-gres","variante":"","cantidad":4}}
+  pedido sin datos: {"camposMarcados":6,"casillaMarcada":1,"aviso":"Revisa los 7 campos marcados para cerrar el pedido.","foco":"p-nombre"}
+  pedido sin datos y con recojo: {"camposMarcados":4,"distritoMarcado":false,"direccionMarcada":false,"aviso":"Revisa los 5 campos marcados para cerrar el pedido."}
+  pedido completo: {"camposMarcados":0,"aviso":"Demostración: el pedido no se envía. En tu tienda este botón abre tu WhatsApp con el detalle de abajo, y el pedido queda registrado con su número.","reciboPrimeras":["PEDIDO · CASA LUME","------------------------------"],"reciboUltimas":["Subtotal: S/ 192","Delivery en Lima: S/ 12","TOTAL: S/ 204"]}
+
+== Escaparate · 390 px ==
+  desborde lateral: 0 px · fuera de la ventana: ninguno
+  áreas táctiles: punto 44×44 px · interruptor 44×44 px · canasta 44×44 px · menú 44×44 px · WhatsApp 56×56 px
+  portada: 1045 px de 844 de ventana · página 14442 px
+  controles del slider: terminan en 1138 px (FUERA de la ventana)
+  bloques de la portada (dónde terminan): {"h1":322,"buscador":539,"acciones":619,"garantias":733,"oferta":1033,"controles":1138,"ventana":844}
+  caja de la portada: {"portada":[117,1162],"contenido":[117,1081],"controles":[1081,1138],"recorta":"hidden","desbordado":false}
+  foto tras avanzar a mano en el celular: {"activa":1,"transform":"translateX(-100%)"}
+
+== Catálogo · 390 px ==
+  desborde lateral: 0 px · fuera de la ventana: ninguno
+  áreas táctiles: punto oculto · interruptor 44×44 px · canasta 44×44 px · menú 44×44 px · WhatsApp 56×56 px
+  portada: null px de 844 de ventana · página 8396 px
+  controles del slider: ocultos
+  menú: {"menuOculto":true,"botonVisible":true,"aria":"false"}
+  menú abierto: {"abierto":true,"aria":"true","interruptorDentro":true,"alto":390}
+
+== Escaparate · 1440 px con movimiento reducido ==
+  {"reducido":true,"cinta":"none","pista":"1e-06s","puntos":3,"activa":0}
+  tras avanzar a mano: {"activa":1}
+
+== Peticiones de la página ==
+  orígenes cargados: ["http://127.0.0.1:8123"]
+  consola: (sin mensajes ni excepciones)

@@ -31,7 +31,42 @@ const props = defineProps({
     // TC vigente para mostrar el equivalente en soles cuando la negociacion es USD.
     multiCurrencyEnabled: { type: Boolean, default: false },
     exchangeRate: { type: Number, default: null },
+    // Enlaces legales configurables en Comercial > Configuracion: los documentos que el
+    // cliente debe aceptar antes de enviar sus datos.
+    legalLinks: { type: Object, default: () => ({}) },
 });
+
+// Documentos legales que el cliente debe leer y aceptar antes de enviar sus datos. El
+// texto de cada check es el enlace al documento (se abre en otra pestana).
+const legalChecks = [
+    { field: "accepted_terminos", linkKey: "terminos", label: "He leído los términos y condiciones" },
+    { field: "accepted_devoluciones", linkKey: "devoluciones", label: "He leído Política de devoluciones y Reembolsos - CPA Academy" },
+    { field: "accepted_privacidad", linkKey: "privacidad", label: "He leído la Política de Privacidad" },
+];
+
+const legalLink = (key) => props.legalLinks?.[key] ?? "#";
+
+// Sin las tres aceptaciones no se envia ni se guarda nada: se le dice al cliente que
+// documentos le faltan revisar.
+const validateLegalChecks = () => {
+    const faltantes = legalChecks.filter((check) => !form[check.field]);
+
+    if (faltantes.length === 0) {
+        return true;
+    }
+
+    Swal2.fire({
+        title: "Debes aceptar los documentos",
+        html: `<p style="text-align:left;">Para continuar, marca las siguientes casillas:</p><ul style="text-align:left;margin-top:8px;">${faltantes
+            .map((check) => `<li>${check.label}</li>`)
+            .join("")}</ul>`,
+        icon: "warning",
+        padding: "2em",
+        customClass: "sweet-alerts",
+    });
+
+    return false;
+};
 
 const company = usePage().props.company;
 const baseUrl = assetUrl;
@@ -44,6 +79,10 @@ const ubigeoSelected = ref(null);
 
 const form = useForm({
     accepted: false,
+    // Aceptaciones obligatorias de los documentos legales.
+    accepted_terminos: false,
+    accepted_devoluciones: false,
+    accepted_privacidad: false,
     invoice_type: "boleta",
     document_type_id: "1",
     number: null,
@@ -512,6 +551,7 @@ const setMpPaymentMode = (mode) => {
 const summaryModal = ref(null);
 
 const submit = () => {
+    if (!validateLegalChecks()) return;
     if (!validateRucBeforeSubmit()) return;
     if (!validateDniBeforeSubmit()) return;
     if (!validateClientRucBeforeSubmit()) return;
@@ -594,6 +634,11 @@ const toggleBoletaTercero = (checked) => {
 };
 
 const confirmNegotiation = () => {
+    // El pago con tarjeta llega aqui directo (el ladrillo de Mercado Pago llama a esta
+    // funcion al aprobarse el cobro): se revisan igual las aceptaciones legales para
+    // que nunca se guarde sin los tres documentos.
+    if (!validateLegalChecks()) return;
+
     form.accepted = true;
     onlyNumbers();
 
@@ -1404,6 +1449,40 @@ watch(brickFormVisible, async (visible) => {
                                 <img v-if="voucherPreview" :src="voucherPreview" alt="Voucher" class="mt-3 max-h-48 rounded-md border border-gray-200 object-contain dark:border-gray-700" />
                             </div>
                             <InputError :message="form.errors.voucher" class="mt-2" />
+                        </div>
+
+                        <!-- Documentos legales obligatorios: el texto de cada check es el enlace -->
+                        <div class="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
+                            <p class="mb-1 text-sm font-semibold text-gray-800 dark:text-white">
+                                Documentos legales
+                            </p>
+                            <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                                Debes leer y aceptar los tres documentos para enviar tus datos.
+                            </p>
+
+                            <div class="space-y-3">
+                                <div v-for="check in legalChecks" :key="check.field" class="flex items-start gap-3">
+                                    <input
+                                        :id="check.field"
+                                        v-model="form[check.field]"
+                                        type="checkbox"
+                                        class="form-checkbox mt-0.5 shrink-0 text-primary"
+                                    />
+                                    <a
+                                        :href="legalLink(check.linkKey)"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-sm text-gray-600 hover:underline dark:text-gray-300"
+                                    >
+                                        {{ check.label }}
+                                    </a>
+                                </div>
+                            </div>
+
+                            <InputError
+                                :message="form.errors.accepted_terminos || form.errors.accepted_devoluciones || form.errors.accepted_privacidad"
+                                class="mt-2"
+                            />
                         </div>
 
                         <div v-if="showVoucherUpload" class="mt-6 flex justify-end">

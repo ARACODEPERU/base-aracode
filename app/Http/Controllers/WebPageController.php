@@ -2293,6 +2293,12 @@ class WebPageController extends Controller
             ]));
             // 3. CONFIRMACIÓN (COMMIT)
             DB::commit();
+
+            // El registro de curso gratis o webinar siempre crea una cuenta nueva con el
+            // perfil pendiente, asi que aqui no se avisa a n8n: el aviso sale cuando la
+            // persona complete su perfil obligatorio, y ese payload ya lleva este curso
+            // en el bloque 'cursos'.
+
             // 🔹 MENSAJE DE ÉXITO
             return redirect()->back()->with('success', 'Registro completado exitosamente, Revisa tu correo donde recibirás mas información.');
 

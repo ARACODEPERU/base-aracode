@@ -1,0 +1,28 @@
+{
+    "horizontal": [
+        "living room interior",
+        "modern kitchen",
+        "minimalist bedroom",
+        "dining room table",
+        "home interior plant",
+        "apartment living room sofa"
+    ],
+    "vertical": [
+        "home interior vertical",
+        "kitchen interior"
+    ],
+    "producto": [
+        "ceramic tableware",
+        "cast iron skillet",
+        "glass jars kitchen",
+        "linen sheets bed",
+        "table lamp",
+        "wicker basket",
+        "plant pot",
+        "wooden cutting board",
+        "vase flowers",
+        "throw blanket couch",
+        "coffee maker kitchen",
+        "kitchen utensils"
+    ]
+}

@@ -27,6 +27,8 @@ $slugs = [
     'academia-cursos',
     'estudio-contable',
     'inmobiliaria-propiedades',
+    'portafolio-creativo',
+    'tienda-online',
 ];
 
 if (! is_dir(DESTINO) && ! mkdir(DESTINO, 0775, true) && ! is_dir(DESTINO)) {

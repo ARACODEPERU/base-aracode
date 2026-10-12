@@ -1,0 +1,37 @@
+
+== 1440 px (tema claro) ==
+  desborde lateral: 0 px · elementos fuera de la ventana: li.portada__diapositiva, img., li.portada__diapositiva, img.
+  área táctil: punto del slider 44 px · interruptor de tema 44 px
+  tabla con desplazamiento propio: no · plano cargado: sí
+  alto: portada 855 px · página 11797 px (h1 en 212 px de alto)
+  previo del índice al pasar el ratón: pieza 352×265 px, opacidad 1
+  la foto del previo: cargada true (natural 1000 px) en la caja 969, 327, 350, 263
+
+== 1440 px (tema oscuro) ==
+  data-tema: oscuro · guardado: oscuro · botón: «Cambiar a modo claro»
+  papel rgb(20, 20, 23) · titulares rgb(242, 241, 237) · cuerpo rgb(188, 187, 194)
+  filtro del plano: invert(1) hue-rotate(180deg)
+
+== 1024 px (tema claro) ==
+  desborde lateral: 0 px · elementos fuera de la ventana: li.portada__diapositiva, img., li.portada__diapositiva, img., div.cinta__pista, span., span., span.
+  área táctil: punto del slider 44 px · interruptor de tema 44 px
+  tabla con desplazamiento propio: no · plano cargado: sí
+  alto: portada 792 px · página 11604 px (h1 en 108 px de alto)
+  previo del índice al pasar el ratón: pieza 352×265 px, opacidad 1
+  la foto del previo: cargada true (natural 1000 px) en la caja 649, 327, 350, 263
+
+== 1024 px (tema oscuro) ==
+  data-tema: oscuro · guardado: oscuro · botón: «Cambiar a modo claro»
+  papel rgb(20, 20, 23) · titulares rgb(242, 241, 237) · cuerpo rgb(188, 187, 194)
+  filtro del plano: invert(1) hue-rotate(180deg)
+
+== 390 px (tema claro) ==
+  desborde lateral: 0 px · elementos fuera de la ventana: li.portada__diapositiva, img., li.portada__diapositiva, img., div.cinta__pista, span., span., span.
+  área táctil: punto del slider 44 px · interruptor de tema 44 px
+  tabla con desplazamiento propio: sí · plano cargado: sí
+  alto: portada 1023 px · página 18101 px (h1 en 118 px de alto)
+  menú de escritorio: oculto · botón de menú: visible
+  menú móvil abierto: sí · interruptor de tema visible dentro de la cabecera: sí
+  formulario vacío: campos marcados = 5 · aviso: «Revisa los campos marcados para continuar.»
+  formulario completo: aviso: «Demostración: el formulario funciona, pero no envía datos. En tu sitio el encargo llega a tu WhatsApp o a tu correo, y queda registrado con su número.»
+  filtro «mural»: filas visibles = 1

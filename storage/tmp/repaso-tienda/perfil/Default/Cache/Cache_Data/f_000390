@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Tema claro / oscuro: se aplica antes del CSS, sin destello al recargar. -->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('tienda-online-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado: se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Catálogo de la demostración «Tienda en línea»: las nueve piezas, con sus
+    filtros, su orden y su botón para agregar a la canasta sin salir de la lista.
+    Los filtros se resuelven en el navegador y el estado viaja en la URL
+    (`tienda.html?categoria=ceramica&orden=precio`), así que un enlace puede
+    llegar con el filtro puesto; sin JavaScript el catálogo se lee completo y un
+    aviso lo dice.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Catálogo de la demostración Tienda en línea: nueve piezas hechas a mano con filtros por categoría y precio, orden por precio o nombre, y ficha de producto.">
+
+<title>Tienda — Casa Lume · Demostración de plantilla</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23fbf6ec'/><rect y='18' width='100' height='14' fill='%23cf3d19'/><rect y='32' width='100' height='14' fill='%2314604a'/><rect y='46' width='100' height='14' fill='%23dda22a'/><rect y='60' width='100' height='14' fill='%23241f1a'/></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h13v10H4zM17 10h3l1 3v4h-4"/><circle cx="8" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>
+            Delivery en Lima en 24 a 48 h y envío a todo el Perú
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (01) 000 0000
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de la casa">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la casa">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la casa">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la casa">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la casa">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Casa Lume, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"/><path d="M9.5 20v-5.5h5V20"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Casa Lume</strong>
+                <span>casa y objetos</span>
+            </span>
+        </a>
+
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <a href="index.html">Inicio</a>
+                <a href="tienda.html" aria-current="page">Tienda</a>
+                <a href="index.html#categorias">Categorías</a>
+                <a href="index.html#taller">Estudio</a>
+                <a href="index.html#recojo">Recojo</a>
+                <a class="menu__cta" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20consultar%20por%20una%20pieza">Consultar</a>
+            </nav>
+
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false" aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>
+                </span>
+            </button>
+
+            <button class="canasta-boton" type="button" data-canasta-abrir aria-label="Abrir la canasta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                <span class="canasta-boton__cuenta" data-canasta-cuenta hidden>0</span>
+            </button>
+
+            <button class="menu-boton" id="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir el menú">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+<div class="contenedor">
+    <nav class="migajas" aria-label="Estás en">
+        <a href="index.html">Inicio</a>
+        <span aria-hidden="true">/</span>
+        <span>Tienda</span>
+    </nav>
+</div>
+
+<section class="seccion" style="padding-top: 1rem;">
+    <div class="contenedor">
+        <header class="bloque">
+            <div class="bloque__titulo">
+                <p class="bloque__ceja">Nueve piezas · cinco oficios</p>
+                <h1>Todo lo que hay en la casa</h1>
+            </div>
+            <p class="bloque__nota">
+                Filtra por oficio o por precio, o busca por nombre. Cada pieza lleva su ficha con
+                medidas, materiales y el taller donde se hizo.
+            </p>
+        </header>
+
+        <!-- Sin JavaScript el catálogo se lee completo, pero los filtros y la
+             canasta no funcionan: se avisa en vez de dejar botones muertos. -->
+        <div class="aviso aviso-js">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <p>
+                <strong>Sin JavaScript el catálogo se lee completo</strong>, con sus nueve piezas y sus
+                precios, pero los filtros, la búsqueda y la canasta no funcionan: el pedido se cierra
+                por WhatsApp con el botón de la esquina.
+            </p>
+        </div>
+
+        <!-- Filtros: se resuelven en el navegador y dejan el estado en la URL. -->
+        <form class="filtros solo-js" data-filtros novalidate>
+            <div class="campo">
+                <label for="f-q">Buscar por nombre o detalle</label>
+                <input id="f-q" name="q" type="search" placeholder="taza, lana, tabla…">
+            </div>
+
+            <div class="campo">
+                <label for="f-categoria">Oficio</label>
+                <select id="f-categoria" name="categoria">
+                    <option value="">Todos</option>
+                    <option value="ceramica">Cerámica</option>
+                    <option value="textiles">Textiles</option>
+                    <option value="madera">Madera</option>
+                    <option value="aromas">Aromas</option>
+                    <option value="cesteria">Cestería</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="f-hasta">Precio máximo</label>
+                <select id="f-hasta" name="hasta">
+                    <option value="">Cualquiera</option>
+                    <option value="40">Hasta S/ 40</option>
+                    <option value="80">Hasta S/ 80</option>
+                    <option value="150">Hasta S/ 150</option>
+                    <option value="250">Hasta S/ 250</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="f-orden">Ordenar por</label>
+                <select id="f-orden" name="orden">
+                    <option value="recomendado">Recomendado</option>
+                    <option value="precio">Precio, de menor a mayor</option>
+                    <option value="precio_desc">Precio, de mayor a menor</option>
+                    <option value="nombre">Nombre, A a Z</option>
+                </select>
+            </div>
+
+            <div class="filtros__acciones">
+                <button class="boton" type="submit">Aplicar</button>
+                <a class="boton boton--fantasma" href="tienda.html">Limpiar</a>
+            </div>
+        </form>
+
+        <!-- El mismo filtro por oficio, como atajo de un toque. -->
+        <div class="chips">
+            <a class="chip chip--activo" href="tienda.html" data-chip-categoria="">Todas las piezas</a>
+            <a class="chip" href="tienda.html?categoria=ceramica" data-chip-categoria="ceramica">Cerámica</a>
+            <a class="chip" href="tienda.html?categoria=textiles" data-chip-categoria="textiles">Textiles</a>
+            <a class="chip" href="tienda.html?categoria=madera" data-chip-categoria="madera">Madera</a>
+            <a class="chip" href="tienda.html?categoria=aromas" data-chip-categoria="aromas">Aromas</a>
+            <a class="chip" href="tienda.html?categoria=cesteria" data-chip-categoria="cesteria">Cestería</a>
+        </div>
+
+        <div class="resumen-busqueda" data-resumen role="status" aria-live="polite"></div>
+
+        <div class="catalogo-vacio" data-vacio>
+            <h2>No hay piezas con esos filtros</h2>
+            <p style="margin-top: 0.75rem; color: var(--tinta-2);">
+                Prueba con otro oficio o quita el precio máximo. El catálogo cambia cada mes, así que
+                si algo no aparece puede que esté en el estudio.
+            </p>
+            <p style="margin-top: 1.25rem;">
+                <a class="boton boton--fantasma" href="tienda.html">Ver todo el catálogo</a>
+            </p>
+        </div>
+
+        <div class="productos" data-rejilla>
+            <article class="pieza" data-pieza data-producto="taza-gres" data-categoria="ceramica" data-precio="48" data-nombre="Taza de gres" data-buscar="taza de gres esmaltada a mano, de 320 ml. cada una sale distinta. ceramica taza-gres">
+                <a class="pieza__marco" href="producto.html?p=taza-gres">
+                    <img src="img/pieza-taza.webp" alt="Taza de cerámica esmaltada sobre una mesa de madera" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>48</span>
+                    <span class="pieza__insignia">La más vendida</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Cerámica</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=taza-gres">Taza de gres</a></h3>
+                    <p class="pieza__detalle">Gres esmaltado a mano, de 320 ml. Cada una sale distinta.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.8 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="taza-gres" aria-label="Añadir Taza de gres a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="jarron-gres" data-categoria="ceramica" data-precio="120" data-nombre="Jarrón de gres" data-buscar="jarron de gres jarron alto para ramas secas, con el cuello estrecho. ceramica jarron-gres">
+                <a class="pieza__marco" href="producto.html?p=jarron-gres">
+                    <img src="img/pieza-jarron.webp" alt="Jarrón de gres con flores secas" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>120</span>
+                    <span class="pieza__insignia">Recién horneado</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Cerámica</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=jarron-gres">Jarrón de gres</a></h3>
+                    <p class="pieza__detalle">Jarrón alto para ramas secas, con el cuello estrecho.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.9 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="jarron-gres" aria-label="Añadir Jarrón de gres a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="chal-lana" data-categoria="textiles" data-precio="180" data-nombre="Chal de lana" data-buscar="chal de lana tejido en telar de cintura, 100 % lana de oveja. textiles chal-lana">
+                <a class="pieza__marco" href="producto.html?p=chal-lana">
+                    <img src="img/pieza-chal.webp" alt="Chal de lana doblado sobre una silla" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta etiqueta--oferta"><span class="etiqueta__moneda">S/</span>180 <span class="etiqueta__antes">S/ 220</span></span>
+                    <span class="pieza__insignia">Oferta de temporada</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Textiles</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=chal-lana">Chal de lana</a></h3>
+                    <p class="pieza__detalle">Tejido en telar de cintura, 100 % lana de oveja.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.7 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="chal-lana" aria-label="Añadir Chal de lana a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="ovillos-lana" data-categoria="textiles" data-precio="36" data-nombre="Ovillos de lana" data-buscar="ovillos de lana lana de oveja hilada a mano, 100 g por ovillo. textiles ovillos-lana">
+                <a class="pieza__marco" href="producto.html?p=ovillos-lana">
+                    <img src="img/pieza-ovillos.webp" alt="Ovillo de lana teñido a mano" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta etiqueta--oferta"><span class="etiqueta__moneda">S/</span>36 <span class="etiqueta__antes">S/ 45</span></span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Textiles</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=ovillos-lana">Ovillos de lana</a></h3>
+                    <p class="pieza__detalle">Lana de oveja hilada a mano, 100 g por ovillo.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.6 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="ovillos-lana" aria-label="Añadir Ovillos de lana a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="tabla-olivo" data-categoria="madera" data-precio="95" data-nombre="Tabla de servir" data-buscar="tabla de servir madera de olivo aceitada, con canaleta para jugos. madera tabla-olivo">
+                <a class="pieza__marco" href="producto.html?p=tabla-olivo">
+                    <img src="img/pieza-tabla.webp" alt="Tabla de madera con hierbas encima" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>95</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Madera</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=tabla-olivo">Tabla de servir</a></h3>
+                    <p class="pieza__detalle">Madera de olivo aceitada, con canaleta para jugos.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.9 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="tabla-olivo" aria-label="Añadir Tabla de servir a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="cucharones-palo" data-categoria="madera" data-precio="42" data-nombre="Cucharones de palo" data-buscar="cucharones de palo juego de tres cucharones tallados a cuchillo. madera cucharones-palo">
+                <a class="pieza__marco" href="producto.html?p=cucharones-palo">
+                    <img src="img/pieza-cucharones.webp" alt="Cucharones de madera dentro de un cuenco" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>42</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Madera</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=cucharones-palo">Cucharones de palo</a></h3>
+                    <p class="pieza__detalle">Juego de tres cucharones tallados a cuchillo.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.8 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="cucharones-palo" aria-label="Añadir Cucharones de palo a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="vela-soya" data-categoria="aromas" data-precio="38" data-nombre="Vela de soya" data-buscar="vela de soya cera de soya y mecha de algodón, 40 horas de luz. aromas vela-soya">
+                <a class="pieza__marco" href="producto.html?p=vela-soya">
+                    <img src="img/pieza-vela.webp" alt="Vela de soya encendida en su vaso de vidrio" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>38</span>
+                    <span class="pieza__insignia">La más regalada</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Aromas</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=vela-soya">Vela de soya</a></h3>
+                    <p class="pieza__detalle">Cera de soya y mecha de algodón, 40 horas de luz.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.7 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="vela-soya" aria-label="Añadir Vela de soya a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="jabon-artesanal" data-categoria="aromas" data-precio="22" data-nombre="Jabón artesanal" data-buscar="jabon artesanal saponificado en frío, con avena y aceite de oliva. aromas jabon-artesanal">
+                <a class="pieza__marco" href="producto.html?p=jabon-artesanal">
+                    <img src="img/pieza-jabon.webp" alt="Pastilla de jabón artesanal sobre una tabla" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>22</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Aromas</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=jabon-artesanal">Jabón artesanal</a></h3>
+                    <p class="pieza__detalle">Saponificado en frío, con avena y aceite de oliva.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.9 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="jabon-artesanal" aria-label="Añadir Jabón artesanal a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="pieza" data-pieza data-producto="canasta-mimbre" data-categoria="cesteria" data-precio="140" data-nombre="Canasta de mimbre" data-buscar="canasta de mimbre tejida a mano en mimbre, con asa forrada. cesteria canasta-mimbre">
+                <a class="pieza__marco" href="producto.html?p=canasta-mimbre">
+                    <img src="img/pieza-canasta.webp" alt="Canasta de mimbre tejida a mano" width="900" height="675" loading="lazy" decoding="async">
+                    <span class="etiqueta pieza__etiqueta"><span class="etiqueta__moneda">S/</span>140</span>
+                    <span class="pieza__insignia">Últimas piezas</span>
+                </a>
+                <div class="pieza__cuerpo">
+                    <p class="pieza__categoria">Cestería</p>
+                    <h3 class="pieza__nombre"><a href="producto.html?p=canasta-mimbre">Canasta de mimbre</a></h3>
+                    <p class="pieza__detalle">Tejida a mano en mimbre, con asa forrada.</p>
+                    <div class="pieza__pie">
+                        <span class="estrellas" role="img" aria-label="4.8 de 5 estrellas">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 3 2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8Z"/></svg>
+                        </span>
+                        <div class="pieza__acciones">
+                            <button type="button" class="pieza__agregar" data-agregar="canasta-mimbre" aria-label="Añadir Canasta de mimbre a la canasta">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9.5 8V6.5a2.5 2.5 0 0 1 5 0V8"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+    </div>
+</section>
+
+    <!-- Aviso de honestidad de la demo: todo lo que se ve es de ejemplo. -->
+    <div class="aviso" style="margin-top: 2rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 3.5 3 20h18L12 3.5Z"/><path d="M12 10v4M12 17h.01"/></svg>
+        <p>
+            <strong>Demostración:</strong> las piezas, los precios y los talleres son de ejemplo. La
+            canasta funciona de verdad en tu navegador, pero el pedido no se envía: en tu tienda
+            llega a tu WhatsApp o a tu correo, con su número de pedido.
+        </p>
+    </div>
+</section>
+
+</main>
+
+
+
+<footer class="pie">
+    <div class="contenedor">
+        <div class="pie__rejilla">
+            <div class="pie__marca">
+                <h2>Casa Lume</h2>
+                <p>
+                    Objetos hechos a mano para la casa, de talleres peruanos con nombre y apellido.
+                    Tienda y estudio en Barranco desde 2020.
+                </p>
+            </div>
+
+            <div>
+                <h3>Tienda</h3>
+                <ul class="pie__lista">
+                    <li><a href="tienda.html">Todas las piezas</a></li>
+                    <li><a href="tienda.html?categoria=ceramica">Cerámica</a></li>
+                    <li><a href="tienda.html?categoria=textiles">Textiles</a></li>
+                    <li><a href="tienda.html?categoria=madera">Madera</a></li>
+                    <li><a href="tienda.html?categoria=aromas">Aromas</a></li>
+                    <li><a href="tienda.html?categoria=cesteria">Cestería</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>Ayuda</h3>
+                <ul class="pie__lista">
+                    <li><a href="canasta.html">Tu canasta</a></li>
+                    <li><a href="index.html#envios">Envíos y tarifas</a></li>
+                    <li><a href="index.html#preguntas">Cambios y devoluciones</a></li>
+                    <li><a href="index.html#contacto">Escríbenos</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h3>El estudio</h3>
+                <ul class="pie__lista">
+                    <li><a href="index.html#taller">Quién hace las piezas</a></li>
+                    <li><a href="index.html#recojo">Recojo y ubicación</a></li>
+                    <li><a href="producto.html?p=canasta-mimbre">Una pieza de ejemplo</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pie__base">
+            <span>© 2026 Casa Lume · Demostración de la plantilla «Tienda en línea» del Banco de Plantillas Web de ARACODE.</span>
+            <span>Datos y precios de ejemplo · <a href="CREDITOS.md">Créditos de las fotos</a></span>
+        </div>
+    </div>
+</footer>
+
+<div class="velo-panel" id="velo-canasta"></div>
+
+<aside class="canasta-panel" id="panel-canasta" aria-hidden="true" aria-label="Tu canasta">
+    <header class="canasta-panel__cabecera">
+        <strong>Tu canasta</strong>
+        <button class="canasta-panel__cerrar" type="button" data-canasta-cerrar aria-label="Cerrar la canasta">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+    </header>
+
+    <div class="canasta-panel__cuerpo" data-panel-lineas></div>
+
+    <div class="canasta-panel__pie">
+        <div data-panel-resumen></div>
+        <a class="boton boton--ancho" href="canasta.html" style="margin-top: 1rem;">Cerrar el pedido</a>
+        <p class="nota-precios">Los precios son de demostración y el envío se calcula en la canasta.</p>
+    </div>
+</aside>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20consultar%20por%20una%20pieza%20de%20Casa%20Lume" target="_blank" rel="noopener" aria-label="Escribir a Casa Lume por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js"></script>
+</body>
+</html>

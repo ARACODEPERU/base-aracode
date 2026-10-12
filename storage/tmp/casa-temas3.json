@@ -1,0 +1,28 @@
+{
+    "horizontal": [
+        "Unsplash living room",
+        "Unsplash kitchen interior",
+        "Unsplash dining room",
+        "Unsplash bedroom",
+        "Unsplash apartment interior",
+        "Unsplash home interior"
+    ],
+    "vertical": [
+        "Unsplash plant interior",
+        "Unsplash interior design"
+    ],
+    "producto": [
+        "Unsplash tableware",
+        "Unsplash table lamp",
+        "Unsplash plant pot",
+        "Unsplash basket",
+        "Unsplash vase",
+        "Unsplash bed linen",
+        "Unsplash dishes",
+        "Unsplash kitchen utensils",
+        "Unsplash coffee",
+        "Unsplash candle",
+        "Unsplash wooden board",
+        "Unsplash blanket"
+    ]
+}

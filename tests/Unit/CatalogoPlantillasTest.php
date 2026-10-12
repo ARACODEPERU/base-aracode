@@ -66,15 +66,18 @@ it('devuelve la ficha de una plantilla publicada y null para una que no existe',
 
 it('resuelve la demostración dentro de public/demos', function () {
     $conDemo = CatalogoPlantillas::porSlug('clinica-dental');
-    $sinDemo = CatalogoPlantillas::porSlug('portafolio-creativo');
 
     // La carpeta de la config es relativa a public/demos/: el enlace no puede
     // quedar en /clinica-dental/ (la raíz del sitio) sino en /demos/...
     expect(CatalogoPlantillas::urlDemo($conDemo))->toEndWith('/demos/clinica-dental/');
     expect(CatalogoPlantillas::tieneDemo($conDemo))->toBeTrue();
 
-    // Una plantilla cuya carpeta todavía no está no publica enlace.
-    expect(CatalogoPlantillas::urlDemo($sinDemo))->toBeNull();
+    // Una plantilla sin demostración —o cuya carpeta todavía no existe— no
+    // publica enlace. El caso se arma a mano porque las seis publicadas ya la
+    // tienen: la regla es la misma para la séptima que llegue.
+    expect(CatalogoPlantillas::urlDemo(['demo' => null]))->toBeNull()
+        ->and(CatalogoPlantillas::urlDemo(['demo' => 'todavia-no-existe']))->toBeNull()
+        ->and(CatalogoPlantillas::tieneDemo(['demo' => '']))->toBeFalse();
 });
 
 it('publica el catálogo con una tarjeta por plantilla publicada', function () {
@@ -222,9 +225,11 @@ it('solo publica la demostración de las plantillas que la tienen de verdad', fu
         expect(is_file(public_path('demos/'.$plantilla['demo'].'/index.html')))->toBeTrue();
     }
 
-    // Las cinco demostraciones publicadas se resuelven: las dos landings y los
+    // Las seis demostraciones publicadas se resuelven: las tres landings y los
     // tres sitios web de varias páginas.
-    expect(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('academia-cursos')))
+    expect(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('portafolio-creativo')))
+        ->toEndWith('/demos/portafolio-creativo/')
+        ->and(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('academia-cursos')))
         ->toEndWith('/demos/academia-cursos/')
         ->and(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('estudio-contable')))
         ->toEndWith('/demos/estudio-contable/')
@@ -591,8 +596,13 @@ it('abre la demostración con un 302 a su carpeta y 404 si todavía no está', f
     expect($this->get('/demo/estudio-contable')->headers->get('Location'))
         ->toEndWith('/demos/estudio-contable/');
 
-    // Y una plantilla que todavía no tiene demo no publica enlace: 404.
-    $this->get('/demo/portafolio-creativo')->assertNotFound();
+    // La sexta demostración también se abre desde su carpeta: con ella el banco
+    // queda sin ninguna plantilla en preparación.
+    expect($this->get('/demo/portafolio-creativo')->headers->get('Location'))
+        ->toEndWith('/demos/portafolio-creativo/');
+
+    // Un slug que no está en el catálogo sigue respondiendo 404: la ruta nunca
+    // inventa una demostración.
     $this->get('/demo/no-existe')->assertNotFound();
 });
 
@@ -678,8 +688,16 @@ it('publica la captura 16/10 de cada demostración y deja el mosaico solo donde 
         expect($html)->toContain('src="'.CatalogoPlantillas::urlImagen($plantilla).'"');
     }
 
-    expect(substr_count($html, 'plt-card__sin-captura'))->toBe(count($todas) - count($demos))
-        ->and($html)->toContain('Captura en preparación');
+    expect(substr_count($html, 'plt-card__sin-captura'))->toBe(count($todas) - count($demos));
+
+    // El mosaico de «Captura en preparación» solo se pinta donde falta la
+    // captura, y hoy no falta en ninguna: la regla se comprueba en la tarjeta,
+    // que es donde vive el mensaje.
+    $tarjeta = file_get_contents(resource_path('views/components/plantillas/tarjeta.blade.php'));
+
+    expect(substr_count($html, 'Captura en preparación'))->toBe(count($todas) - count($demos))
+        ->and($tarjeta)->toContain('plt-card__sin-captura')
+        ->and($tarjeta)->toContain('Captura en preparación');
 });
 
 it('comparte la captura como imagen social de la ficha, con la frase de la propia ficha', function () {
@@ -718,8 +736,17 @@ it('comparte la captura como imagen social de la ficha, con la frase de la propi
     }
 
     // Sin captura no se anuncian medidas ni un archivo que no existe: la ficha
-    // cae en la imagen social del sitio y no promete una tarjeta grande.
-    $html = $this->get('/plantillas/portafolio-creativo')->assertOk()->getContent();
+    // cae en la imagen social del sitio y no promete una tarjeta grande. Las seis
+    // plantillas publicadas ya tienen captura, así que el caso se arma sobre la
+    // vista, que es donde vive la regla.
+    $sinCaptura = CatalogoPlantillas::porSlug('portafolio-creativo');
+    $sinCaptura['imagen'] = null;
+
+    $html = view('plantillas.ficha', [
+        'plantilla' => $sinCaptura,
+        'urlDemo' => null,
+        'relacionadas' => [],
+    ])->render();
 
     expect($html)->toContain(asset('themes/webpage/images/logo.png'))
         ->and($html)->not->toContain('og:image:width')

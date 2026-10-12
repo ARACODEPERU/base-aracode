@@ -495,8 +495,11 @@ ejemplo sin carpeta pasó a ser `inmobiliaria-propiedades`.)
 
 Pendiente de este estándar: **las tres plantillas restantes** (Portafolio Creativo, Estudio Contable
 e Inmobiliaria) todavía no tienen demostración. Cada una es un proyecto web completo y se construye
-con la lista obligatoria, una por entrega. (Desde la 4.9 quedan dos: Portafolio Creativo e
-Inmobiliaria.)
+con la lista obligatoria, una por entrega. Las tres se publicaron después: Estudio Contable en la
+4.9, Inmobiliaria en `public/demos/inmobiliaria-propiedades/` (cuyas reglas propias —plano con
+medidas generado por `storage/tmp/plano-inmobiliaria.php`, buscador y favoritos— están escritas en
+[BANCO_PLANTILLAS.md](BANCO_PLANTILLAS.md)) y Portafolio Creativo en la 4.10. **Hoy no queda
+ninguna plantilla publicada sin demostración.**
 
 ### 4.9 La demo de Estudio Contable: el segundo sitio web, rediseñado de cero
 
@@ -576,3 +579,92 @@ prueba del banco sobre los archivos y por el respeto de la preferencia en el pro
 Queda pendiente, como en las otras demos, lo que no depende de código: que un diseñador valide la
 hoja a ojo en un monitor grande, y reemplazar la foto vertical (`img/equipo.webp`, una persona con
 el rostro visible) por una del equipo real del cliente cuando esta plantilla se venda.
+
+### 4.10 La demo de Portafolio Creativo: la tercera landing y el catálogo como índice
+
+Pedido: la siguiente plantilla del banco. Elegida **Portafolio Creativo** (categoría `portafolio`,
+`tipo: landing`), la última que quedaba sin demostración. Obliga a resolver un caso que las otras
+dos landings no cubren: mostrar **piezas** de trabajo —no servicios ni platos— y hacerlo sin
+repetir la rejilla de tarjetas que ya usan la academia, el expediente contable y la inmobiliaria.
+
+`public/demos/portafolio-creativo/` es un proyecto independiente de una sola página
+(`index.html`), con su `css/estilos.css`, su `js/app.js`, doce fotos locales en WebP (CC0, de los
+lotes de Unsplash en Commons), un plano propio en SVG (`img/mapa.svg`) y `CREDITOS.md` con la
+procedencia de cada foto y la lista de reemplazos al venderla. Cumple la lista obligatoria de 11
+puntos de [BANCO_PLANTILLAS.md](BANCO_PLANTILLAS.md).
+
+**Lenguaje de la plantilla: «pliego de taller».** Papel frío y tinta casi negra con un solo acento
+magenta, titulares en sans muy pesada y en mayúsculas con el cuerpo en serif —el par opuesto al del
+expediente contable—, etiquetas en monoespaciada, la retícula de doce columnas **dibujada** como
+filetes en vez de insinuada, el número de sección en el margen y cero esquinas redondeadas y cero
+sombras: al pasar el ratón la pieza no se levanta, se pinta de magenta.
+
+| Pieza | Archivos |
+| --- | --- |
+| Página | `index.html` |
+| Estilos | `css/estilos.css` |
+| JavaScript | `js/app.js` (revelado escalonado, slider, filtro del índice, validación por reglas) |
+| Fotografías | `img/` (doce WebP CC0: 16/9 en la portada, 4/3 en las piezas, 3/2 en las bandas y 3/4 en la vertical del estudio) |
+| Plano | `img/mapa.svg` (dibujo propio vectorial, sin scripts de mapas de terceros) |
+| Créditos | `CREDITOS.md` |
+
+Lo que aporta al banco, además de la plantilla:
+
+- **El catálogo como índice, no como rejilla.** Los seis proyectos se leen como el índice numerado
+de un catálogo de exposiciones (número, título, cliente, año y tipo alineados en columna) y en
+escritorio, al pasar el ratón por una fila, **aparece la pieza**: la foto entra donde el índice
+tiene su hueco y no hay que abrir la ficha para ver el trabajo.
+- **Un filtro que deja el índice legible sin JavaScript.** Los tipos de pieza filtran las filas
+del índice (`data-filtro`), el estado no se pierde y, sin JavaScript, el índice se lee completo con
+un aviso que lo dice.
+- **Las tarifas como tabla de trabajos** (encargo, entregables, plazo y precio, con presupuesto por
+WhatsApp en cada fila), que en el celular se desplaza dentro de su contenedor en vez de apretar las
+columnas, más tres planes con tabla comparativa punto por punto.
+- **La portada suma una cinta de servicios en movimiento** al slider de tres fotos: el hero sigue
+siendo el mismo mecanismo obligatorio del banco, pero el oficio del estudio se lee antes de bajar.
+
+**Verificado.** `php artisan test --filter=CatalogoPlantillas`: **18 pruebas y 787 aserciones en
+verde**, con las pruebas del banco corridas ya sobre esta demo (hero con tres fotos distintas por
+huella de píxeles, slider usable a mano y sin JavaScript, interruptor de tema con clave propia,
+captura 16/10, imagen social de la ficha y enlaces internos). La suite Unit completa queda en
+**274 pruebas y 2105 aserciones**, con **un** fallo que no es del banco:
+`PermissionCatalogConsistencyTest` reclama dos permisos del módulo Commercial
+(`comm_configuracion_editar`, `comm_configuracion_ver`) que existen por migración y no están en
+`PermissionsReconcileSeeder::ORPHANS`; viene de los cambios de ese módulo que están a medio camino
+en el árbol de trabajo, no de estos archivos.
+
+Comprobado en Chrome real por el protocolo de DevTools (el panel de vista previa no deja fijar el
+ancho de la ventana), a 1440, 1024 y 390 px: **0 px de desborde lateral** —lo único que sobresale
+de la ventana son la pista del slider y la cinta en movimiento, que lo hacen a propósito—, los
+puntos del slider y el interruptor de tema miden 44 × 44 px, la tabla de trabajos se desplaza dentro
+de su contenedor en el celular, el plano carga, el índice filtra (`mural` deja una fila), el previo
+del ratón funciona (pieza de 352 × 265 px con la foto descargada, opacidad 1), el tema oscuro
+guarda `portafolio-creativo-tema`, cambia la etiqueta del botón y `color-scheme`, el menú de móvil
+abre con el interruptor dentro y el formulario de encargo marca sus cinco campos vacío y avisa de
+que la demo no envía datos cuando se completa. Y —lo que las entregas anteriores habían dado por no
+comprobable— el comportamiento con **movimiento reducido** sí se pudo emular por el protocolo
+(`Emulation.setEmulatedMedia`, guion `storage/tmp/repaso-movimiento.mjs`): con
+`prefers-reduced-motion: reduce` el navegador declara la preferencia, el paso automático **no**
+avanza en 10 s (más que el intervalo de 6 s), la cinta y el latido del WhatsApp quedan en
+`animation-name: none` y el control a mano sigue respondiendo —mueve a la diapositiva 2—; sin la
+preferencia, el slider avanza solo a la 2 en esos 10 s y las dos animaciones vuelven a correr. La
+consola no registró ningún mensaje en ninguna de las dos sesiones.
+
+Por HTTP, con `php artisan serve`: 200 en la carpeta y en cada archivo, 302 de
+`/demo/portafolio-creativo` a `/demos/portafolio-creativo/` y sin peticiones a terceros (solo el
+documento, la hoja de estilos, el script, las doce fotos, el plano y el favicon en `data:`). La
+captura 1600 × 1000 entra en el catálogo como JPEG de 192 KB.
+
+**Un defecto encontrado y corregido: el plano no se leía en oscuro.** El dibujo es un SVG con la
+paleta clara y el tema oscuro lo invierte con filtro (`invert(1) hue-rotate(180deg)`, la misma
+receta que las otras demos). Con los trazos en grises claros, invertidos quedaban casi negros sobre
+el fondo negro: el plano se veía como un rectángulo oscuro. Se rehízo el SVG con **tinta oscura**
+(trazos `#55534b`, rótulos `#3a3934`), de modo que al invertir el dibujo queda claro sobre oscuro
+y el marcador magenta sigue leyéndose. Como en esta sesión el panel de vista previa dejó de componer
+fotogramas, la comprobación se hizo **por números**: `storage/tmp/repaso-plano.mjs` captura solo el
+plano en los dos temas por el protocolo de DevTools y `storage/tmp/repaso-plano.php` lo dibuja en
+ASCII y resume su luminancia. Resultado: la separación entre el décimo y el nonagésimo percentil de
+gris es de **53 niveles en claro y 53 en oscuro** —el dibujo invertido conserva calles, manzanas,
+ejes de calle, marcador, rótulo y cartela, que es exactamente lo que se veía en el ASCII—, y el
+contraste entre los trazos invertidos y las superficies ronda **7:1**, por encima del 3:1 que pide
+una gráfica con significado.
