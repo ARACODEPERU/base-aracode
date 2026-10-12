@@ -5,11 +5,10 @@ namespace Modules\Commercial\Support;
 use App\Models\Person;
 use App\Models\SaleDocument;
 use App\Models\User;
-use App\Services\JobOffersAccess;
 use Carbon\Carbon;
-use Modules\Academic\Entities\AcaCapRegistration;
 use Modules\Academic\Entities\AcaStudent;
 use Modules\Commercial\Entities\CommercialNegotiation;
+use Modules\Integrationhub\Support\PersonWebhookPayload;
 
 /**
  * JSON que el ultimo paso del proceso de negociacion envia a n8n
@@ -33,19 +32,6 @@ class NegotiationWebhookPayload
         $student = AcaStudent::where('person_id', $person->id)->first();
         $invoice = $negotiation->invoice;
         $document = $negotiation->sale_document_id ? SaleDocument::find($negotiation->sale_document_id) : null;
-
-        // Cargo u ocupacion, profesion, empresa e industria: manda lo que el cliente
-        // declaro en el formulario de esta negociacion (client_data), que es el dato del
-        // acuerdo; la ficha solo rellena lo que la negociacion dejo vacio, para que ningun
-        // campo viaje en null cuando el sistema ya conoce el dato de la persona.
-        $profile = $negotiation->client_data ?? [];
-        $occupation = ($profile['ocupacion'] ?? null) ?: $person->ocupacion;
-        $occupationId = ($profile['occupation_id'] ?? null) ?: $person->occupation_id;
-        $profession = ($profile['profesion'] ?? null) ?: $person->profession;
-        $professionId = ($profile['profession_id'] ?? null) ?: $person->profession_id;
-        $company = ($profile['company'] ?? null) ?: $person->company;
-        $industry = ($profile['industry'] ?? null) ?: $person->industry;
-        $industryId = ($profile['industry_id'] ?? null) ?: $person->industry_id;
 
         return [
             'evento' => 'negociacion_aprobada',
@@ -78,45 +64,11 @@ class NegotiationWebhookPayload
                 'aprobado_por_email' => $negotiation->verifier?->email,
                 'aprobado_en' => $negotiation->verified_at?->toIso8601String(),
             ],
-            'persona' => [
-                'id' => $person->id,
-                'nombre_completo' => $person->full_name ?: $person->short_name,
-                'nombres' => $person->names,
-                'apellido_paterno' => $person->father_lastname,
-                'apellido_materno' => $person->mother_lastname,
-                'tipo_documento' => $person->document_type_id,
-                'numero_documento' => $person->number,
-                'email' => $person->email,
-                'telefono' => $person->telephone,
-                'genero' => $person->gender,
-                'ocupacion' => $occupation,
-                'ocupacion_id' => $occupationId,
-                // Los tres campos de profesion llevan la profesion declarada por el
-                // cliente en el formulario (mismo id y mismo texto). El cargo viaja
-                // aparte en ocupacion/ocupacion_id; ya no se mezclan.
-                'profesion_id' => $professionId,
-                'profesion' => $profession,
-                'profesion_texto' => $profession,
-                'empresa' => $company,
-                'industria' => $industry,
-                'industria_id' => $industryId,
-                'fecha_nacimiento' => $person->birthdate,
-                'direccion' => $person->address,
-                'ubigeo' => $person->ubigeo,
-                'ciudad' => $person->ubigeo_description,
-                'pais_extranjero_id' => $person->foreign_country_id,
-                'departamento_estado' => $person->foreign_state,
-                'ciudad_extranjera' => $person->foreign_city,
-            ],
-            'usuario' => [
-                'id' => $user?->id,
-                'email' => $user?->email,
-            ],
-            'estudiante' => [
-                'id' => $student?->id,
-                'codigo' => $student?->student_code,
-                'carrera' => self::career($student),
-            ],
+            // Los tres bloques los define PersonWebhookPayload: es el mismo contrato
+            // que usa Academic, asi que no hay dos listas de campos que se separen.
+            'persona' => PersonWebhookPayload::person($person, $negotiation->client_data ?? []),
+            'usuario' => PersonWebhookPayload::user($user),
+            'estudiante' => PersonWebhookPayload::student($student),
             'comprobante' => [
                 'tipo' => $invoice?->invoice_type,
                 'ruc' => $invoice?->ruc,
@@ -140,35 +92,6 @@ class NegotiationWebhookPayload
                 'entidad' => $item->entity_name_product,
             ])->values()->toArray(),
         ];
-    }
-
-    /**
-     * Carrera del alumno: los estudios de nivel programa en los que esta matriculado
-     * (aca_cap_registrations + aca_courses.type_description). Los talleres y webinars
-     * de horas sueltas son cursos, no carrera, y quedan fuera. El tipo que identifica
-     * un programa es el mismo que usa JobOffersAccess para habilitar Ofertas Laborales.
-     *
-     * Lo que la persona declara en su ficha (ocupacion, profesion) no se mezcla aqui:
-     * viaja en 'persona', que es su lugar para cualquier contacto, sea alumno o no.
-     *
-     * @return array<int, string>
-     */
-    private static function career(?AcaStudent $student): array
-    {
-        if (! $student) {
-            return [];
-        }
-
-        return AcaCapRegistration::query()
-            ->join('aca_courses', 'aca_courses.id', '=', 'aca_cap_registrations.course_id')
-            ->where('aca_cap_registrations.student_id', $student->id)
-            ->where('aca_courses.type_description', JobOffersAccess::SPECIALIZATION_TYPE)
-            ->orderBy('aca_cap_registrations.id')
-            ->pluck('aca_courses.description')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
     }
 
     /**

@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
 use Illuminate\Validation\Rule;
+use Modules\Academic\Jobs\SendProfileWebhook;
+use Modules\Academic\Support\ProfileWebhookPayload;
 use Modules\Security\Rules\ValidationPersonUser;
 
 class PersonController extends Controller
@@ -196,6 +198,10 @@ class PersonController extends Controller
 
         $user = User::where('person_id', $person_id)->first();
 
+        // updated_information en false significa que es la primera vez que la persona
+        // completa su perfil obligatorio: esa transicion es la que avisa a n8n.
+        $wasUpdatedInformation = (bool) ($user?->updated_information);
+
         $isForeign = IdentityDocumentType::isForeign($request->get('document_type_id'));
 
         $rules = [
@@ -208,6 +214,14 @@ class PersonController extends Controller
             'names'             => 'required|max:255',
             'father_lastname'   => 'required|max:255',
             'mother_lastname'   => 'required|max:255',
+            // Cargo, profesion, empresa, industria y genero: son los campos que el
+            // payload a n8n envia en el bloque 'persona'. Se piden con el mismo
+            // criterio que en el formulario publico de una negociacion.
+            'gender'            => 'nullable|in:M,F',
+            'occupation_id'     => 'nullable|integer|exists:occupations,id',
+            'profession_id'     => 'nullable|integer|exists:professions,id',
+            'industry_id'       => 'nullable|integer|exists:industries,id',
+            'company'           => 'nullable|max:200',
         ];
 
         if ($isForeign) {
@@ -219,6 +233,12 @@ class PersonController extends Controller
         }
 
         $this->validate($request, $rules);
+
+        // El texto que se guarda en people sale del catalogo y no de lo que venga en
+        // la peticion, para que la ficha y el payload queden con el nombre oficial.
+        [$occupationId, $occupation] = $this->resolveCatalogValue($request->get('occupation_id'), 'occupations');
+        [$professionId, $profession] = $this->resolveCatalogValue($request->get('profession_id'), 'professions');
+        [$industryId, $industry] = $this->resolveCatalogValue($request->get('industry_id'), 'industries');
 
         $path = null;
         $destination = 'uploads/students';
@@ -262,6 +282,15 @@ class PersonController extends Controller
             'names'                 => trim($request->get('names')),
             'father_lastname'       => trim($request->get('father_lastname')),
             'mother_lastname'       => trim($request->get('mother_lastname')),
+            // Mismos campos de la ficha que viajan en el bloque 'persona' del payload.
+            'gender'                => $request->get('gender'),
+            'ocupacion'             => $occupation,
+            'occupation_id'         => $occupationId,
+            'profession'            => $profession,
+            'profession_id'         => $professionId,
+            'company'               => $request->get('company'),
+            'industry'              => $industry,
+            'industry_id'           => $industryId,
         ];
 
         if ($isForeign) {
@@ -294,14 +323,56 @@ class PersonController extends Controller
             'student_code'  => $request->get('number'),
         ]);
 
+        // Primera vez que la persona completa su perfil obligatorio: se envian todos
+        // sus datos y sus cursos a n8n. En las ediciones posteriores
+        // updated_information ya venia en true, asi que no se reenvia.
+        if (! $wasUpdatedInformation) {
+            $webhookPersonId = (int) ($person_id ?: $user?->person_id);
+
+            if ($webhookPersonId > 0) {
+                SendProfileWebhook::dispatchOnce(
+                    'perfil:'.$webhookPersonId,
+                    $webhookPersonId,
+                    ProfileWebhookPayload::PERFIL_COMPLETADO
+                );
+            }
+        }
+
         return redirect()->route('aca_mycourses')
             ->with('updateMessageStudent', __('Informacion del estudiante actualizado con éxito'));
+    }
+
+    /**
+     * Valor de catalogo elegido en el perfil obligatorio (cargo u ocupacion,
+     * profesion, industria). Devuelve el id junto al texto oficial del catalogo;
+     * un id vacio o inexistente no guarda nada.
+     *
+     * @return array{0: ?int, 1: ?string}
+     */
+    private function resolveCatalogValue($id, string $table): array
+    {
+        if (blank($id)) {
+            return [null, null];
+        }
+
+        $description = DB::table($table)->where('id', $id)->value('description');
+
+        if ($description === null) {
+            return [null, null];
+        }
+
+        return [(int) $id, $description];
     }
 
     public function createdOrUpdated(Request $request)
     {
         $person_id = $request->get('id');
         $user = Auth::user();
+
+        // Si ya habia completado sus datos antes, este guardado es una edicion y no
+        // debe reenviarse el aviso a n8n.
+        $wasUpdatedInformation = (bool) $user->updated_information;
+        $webhookPersonId = null;
 
         $isForeign = IdentityDocumentType::isForeign($request->get('document_type_id'));
 
@@ -383,6 +454,8 @@ class PersonController extends Controller
                 'name' => trim($request->input('names')),
                 'updated_information' => true
             ]);
+
+            $webhookPersonId = $person->id;
             }
         } else {
             $person = Person::updateOrCreate(
@@ -418,7 +491,20 @@ class PersonController extends Controller
                 'person_id' => $person->id,
                 'updated_information' => true
             ]);
+
+            $webhookPersonId = $person->id;
         }
+
+        // Primera vez que la persona completa sus datos: mismo aviso a n8n que el
+        // formulario de perfil obligatorio, con sus cursos incluidos.
+        if (! $wasUpdatedInformation && $webhookPersonId) {
+            SendProfileWebhook::dispatchOnce(
+                'perfil:'.$webhookPersonId,
+                $webhookPersonId,
+                ProfileWebhookPayload::PERFIL_COMPLETADO
+            );
+        }
+
         return redirect()->route('dashboard');
     }
 

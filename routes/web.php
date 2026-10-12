@@ -14,6 +14,7 @@ use App\Http\Controllers\ParametersController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\UserController;
 use App\Models\District;
+use App\Models\Industry;
 use App\Models\Person;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -175,11 +176,22 @@ Route::middleware('auth')->group(function () {
         try {
             $countries = \App\Models\Country::where('status', true)->orderBy('description')->get();
 
+            // Catalogos del perfil obligatorio: el mismo cargo, profesion e industria
+            // que declara el cliente en el formulario publico de una negociacion.
+            // Se guardan en people junto a su id para que el payload a n8n mande el
+            // texto oficial del catalogo.
+            $occupations = DB::table('occupations')->select('id', 'description')->orderBy('description')->get();
+            $professions = DB::table('professions')->select('id', 'description')->orderBy('description')->get();
+            $industries = Industry::select('id', 'description')->orderBy('description')->get();
+
             return Inertia::render('Person/UpdateInformation', [
                 'person' => $person,
                 'identityDocumentTypes' => $identityDocumentTypes,
                 'ubigeo' => $ubigeo,
-                'countries' => $countries
+                'countries' => $countries,
+                'occupations' => $occupations,
+                'professions' => $professions,
+                'industries' => $industries
             ]);
         } catch (\Throwable $e) {
 
