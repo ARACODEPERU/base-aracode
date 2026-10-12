@@ -85,24 +85,26 @@
         </Navigation>
         <div class="mt-5">
             <!-- FAQ -->
-            <div class="w-full px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+            <div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
                 <!-- Grid -->
-                <div class="grid grid-cols-6 gap-10">
-                    <div class="col-span-6 sm:col-span-2">
-                        <div class="max-w-xs">
-                            <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">Banco de Consultas</h2>
-                            <p class="mt-1 hidden md:block text-gray-600 dark:text-neutral-400">Respuestas a las preguntas más frecuentes.</p>
-                        </div>
+                <div class="grid grid-cols-6 gap-8">
+                    <!-- Encabezado: ocupa todo el ancho para que el título destaque -->
+                    <div class="col-span-6 border-b border-[#e0e6ed] pb-6 dark:border-[#1b2e4b]">
+                        <h2 class="text-3xl font-extrabold text-gray-900 md:text-4xl dark:text-white">Banco de Consultas</h2>
+                        <p class="mt-2 text-base text-gray-600 dark:text-neutral-400">Respuestas a las preguntas más frecuentes.</p>
+                        <p class="mt-3 text-sm font-medium text-gray-500 dark:text-neutral-500">
+                            {{ Object.keys(ibanks).length }} {{ Object.keys(ibanks).length === 1 ? 'pregunta' : 'preguntas' }}
+                        </p>
                     </div>
                     <!-- End Col -->
 
-                    <div class="col-span-6 sm:col-span-4">
+                    <div class="col-span-6">
                         <!-- Accordion -->
-                        <div class="space-y-2 font-semibold">
+                        <div class="space-y-4">
                             <template v-for="(ibank, key) in ibanks">
-                                <div class="bg-white border border-[#d3d3d3] dark:border-[#1b2e4b] rounded">
+                                <div class="overflow-hidden rounded-xl border border-[#e0e6ed] bg-white shadow-sm transition-shadow hover:shadow-md dark:border-[#1b2e4b] dark:bg-[#0e1726]">
                                     <button
-                                        class="p-4 w-full flex items-center text-white-dark dark:bg-[#1b2e4b]"
+                                        class="flex w-full items-center gap-3 px-5 py-4 text-left text-gray-900 transition-colors hover:bg-gray-50 dark:bg-[#1b2e4b] dark:text-white dark:hover:bg-[#22385c]"
                                         :class="{ '!text-primary': accordians === key }"
                                         @click="accordians === key ? (accordians = null) : (accordians = key)"
                                     >
@@ -110,12 +112,12 @@
                                             <path fill="currentColor" d="M80 160c0-35.3 28.7-64 64-64l32 0c35.3 0 64 28.7 64 64l0 3.6c0 21.8-11.1 42.1-29.4 53.8l-42.2 27.1c-25.2 16.2-40.4 44.1-40.4 74l0 1.4c0 17.7 14.3 32 32 32s32-14.3 32-32l0-1.4c0-8.2 4.2-15.8 11-20.2l42.2-27.1c36.6-23.6 58.8-64.1 58.8-107.7l0-3.6c0-70.7-57.3-128-128-128l-32 0C73.3 32 16 89.3 16 160c0 17.7 14.3 32 32 32s32-14.3 32-32zm80 320a40 40 0 1 0 0-80 40 40 0 1 0 0 80z"/>
                                         </svg>
 
-                                        <div class="text-left" v-html="ibank.question_text"></div>
+                                        <div class="flex-1 text-lg font-bold leading-snug md:text-xl" v-html="ibank.question_text"></div>
                                         <svg :class="{ 'rotate-180': accordians === key }" class="shrink-0 size-5 text-gray-600 group-hover:text-gray-500 dark:text-neutral-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                                     </button>
                                     <vue-collapsible :isOpen="accordians === key">
                                         <div
-                                            class="space-y-2 p-4 text-white-dark text-[13px] border-t border-[#d3d3d3] dark:border-[#1b2e4b]"
+                                            class="space-y-4 border-t border-[#e0e6ed] bg-gray-50/60 px-5 py-5 dark:border-[#1b2e4b] dark:bg-[#0e1726]"
 
                                         >
                                             <div v-can="'crm_dudas_comunes_edicion'" class="flex justify-end">
@@ -145,11 +147,16 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                        <div v-html="ibank.response_text"></div>
+                                        <div class="text-base leading-relaxed text-gray-700 dark:text-neutral-300 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_a]:text-primary [&_a]:underline" v-html="ibank.response_text"></div>
                                         </div>
                                     </vue-collapsible>
                                 </div>
                             </template>
+
+                            <!-- Estado vacío: se muestra cuando todavía no hay preguntas -->
+                            <div v-if="Object.keys(ibanks).length === 0" class="rounded-xl border border-dashed border-[#d3d3d3] p-10 text-center text-gray-500 dark:border-[#1b2e4b] dark:text-neutral-400">
+                                Aún no hay preguntas en el banco de consultas.
+                            </div>
                         </div>
                         <!-- End Accordion -->
                     </div>
