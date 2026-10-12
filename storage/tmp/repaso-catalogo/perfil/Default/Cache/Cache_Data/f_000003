@@ -1,0 +1,1712 @@
+/* =============================================
+   ARACODE SMART SOLUTIONS — Website V2
+   Custom styles & animations
+   ============================================= */
+
+/* Google Fonts - Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* =============================================
+   Base & Reset
+   ============================================= */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    color: #1E293B;
+    background-color: #ffffff;
+}
+
+/* =============================================
+   Scrollbar
+   ============================================= */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #060E2D;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #0188EE;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #016bc4;
+}
+
+/* =============================================
+   Selection
+   ============================================= */
+::selection {
+    background-color: #0188EE;
+    color: #ffffff;
+}
+
+/* =============================================
+   Animations - Intersection Observer
+   ============================================= */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-40px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-left.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-right {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-right.revealed {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.reveal-scale {
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal-scale.revealed {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Staggered delays */
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+.reveal-delay-6 { transition-delay: 0.6s; }
+
+/* =============================================
+   Navbar
+   ============================================= */
+.ara-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.ara-nav.scrolled {
+    background: rgba(6, 14, 45, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 0.75rem 0;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
+}
+
+.ara-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.ara-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #0188EE;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.ara-nav .nav-link:hover {
+    color: #ffffff;
+}
+
+.ara-nav .nav-link:hover::after {
+    width: 60%;
+}
+
+.ara-nav .nav-link.active {
+    color: #ffffff;
+    background: rgba(1, 136, 238, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.ara-nav .nav-link.active::after {
+    width: 60%;
+    background: #0188EE;
+    height: 3px;
+}
+
+/* Mobile menu */
+.ara-mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100vh;
+    background: #060E2D;
+    z-index: 9999;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 5rem 2rem 2rem;
+}
+
+.ara-mobile-menu.active {
+    right: 0;
+}
+
+.ara-mobile-menu .nav-link {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.25rem;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: block;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.ara-mobile-menu .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1.5rem;
+    width: 0;
+    height: 3px;
+    background: #0188EE;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.ara-mobile-menu .nav-link:hover {
+    color: #0188EE;
+}
+
+.ara-mobile-menu .nav-link.active {
+    color: #ffffff;
+    background: rgba(1, 136, 238, 0.15);
+    border-radius: 0.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.ara-mobile-menu .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: #00b4d8;
+    border-radius: 2px;
+}
+
+/* =============================================
+   Hero
+   ============================================= */
+.ara-hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #060E2D 0%, #0c1a40 50%, #060E2D 100%);
+    overflow: hidden;
+}
+
+.ara-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(1, 136, 238, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.ara-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(78, 174, 51, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Geometric grid pattern */
+.ara-hero-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(1, 136, 238, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(1, 136, 238, 0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+}
+
+/* Hero Particles Canvas */
+.ara-hero-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+
+/* Floating orbs */
+.ara-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+}
+
+.ara-orb-blue {
+    background: rgba(1, 136, 238, 0.2);
+}
+
+.ara-orb-green {
+    background: rgba(78, 174, 51, 0.15);
+    animation-delay: -3s;
+}
+
+/* =============================================
+   Buttons
+   ============================================= */
+.ara-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    gap: 0.5rem;
+}
+
+.ara-btn-primary {
+    background: #0188EE;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(1, 136, 238, 0.3);
+}
+
+.ara-btn-primary:hover {
+    background: #016bc4;
+    box-shadow: 0 6px 20px rgba(1, 136, 238, 0.4);
+    transform: translateY(-2px);
+}
+
+.ara-btn-secondary {
+    background: transparent;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.ara-btn-secondary:hover {
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ara-btn-ghost {
+    background: transparent;
+    color: #0188EE;
+    border: 1px solid #0188EE;
+}
+
+.ara-btn-ghost:hover {
+    background: #0188EE;
+    color: #ffffff;
+}
+
+.ara-btn-green {
+    background: #4EAE33;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(78, 174, 51, 0.3);
+}
+
+.ara-btn-green:hover {
+    background: #3d8b29;
+    box-shadow: 0 6px 20px rgba(78, 174, 51, 0.4);
+    transform: translateY(-2px);
+}
+
+.ara-btn-lg {
+    padding: 1rem 2.5rem;
+    font-size: 1rem;
+}
+
+.ara-btn-sm {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+}
+
+/* =============================================
+   Cards
+   ============================================= */
+.ara-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 2rem;
+    border: 1px solid #E8ECF1;
+    transition: all 0.3s ease;
+}
+
+.ara-card:hover {
+    border-color: #0188EE;
+    box-shadow: 0 10px 40px rgba(1, 136, 238, 0.1);
+    transform: translateY(-4px);
+}
+
+.ara-card-dark {
+    background: rgba(6, 14, 45, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ara-card-dark:hover {
+    border-color: rgba(1, 136, 238, 0.5);
+    background: rgba(6, 14, 45, 0.7);
+}
+
+/* =============================================
+   Product Cards (catálogo de /soluciones y home)
+   ---------------------------------------------------------------
+   La imagen diseñada de cada producto es lo primero que se ve: ocupa la
+   parte superior de la tarjeta, entera, con su proporción reservada y SIN
+   veladuras encima. Debajo, sobre el navy de la tarjeta, va el texto
+   escaneable (categoría, nombre, prestaciones y enlace).
+
+   Antes la imagen era el fondo de toda la tarjeta y dos degradados navy (uno
+   del 60 % al 92 % y otro del 55 %) la cubrían para que el texto se pudiera
+   leer: el diseño apenas se apreciaba y todo se leía mal.
+
+   Para cambiar la proporción de las imágenes basta esta variable: los diseños
+   del ecosistema se preparan en 16/9 (1600 × 900 px como mínimo).
+   ============================================= */
+.ara-product-card {
+    --ara-product-media-ratio: 16 / 9;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    background: linear-gradient(160deg, #0A1740 0%, #060E2D 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(6, 14, 45, 0.25);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.ara-product-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(1, 136, 238, 0.45);
+    box-shadow: 0 20px 55px rgba(1, 136, 238, 0.18);
+}
+
+/* --- Imagen del producto --- */
+.ara-product-card .ara-product-media {
+    position: relative;
+    aspect-ratio: var(--ara-product-media-ratio);
+    overflow: hidden;
+    background: #081130;
+    flex-shrink: 0;
+}
+
+.ara-product-card .ara-product-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.6s ease;
+}
+
+.ara-product-card:hover .ara-product-media img {
+    transform: scale(1.03);
+}
+
+/* Categoría sobre la imagen. Fondo sólido a propósito: los .ara-badge son
+   traslúcidos (pensados para el navy de la página) y sobre un diseño con
+   colores propios no siempre se leerían. */
+.ara-product-card .ara-product-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    background: rgba(6, 14, 45, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.ara-product-card .ara-product-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4EAE33;
+}
+
+/* --- Texto --- */
+.ara-product-card .ara-product-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1.75rem 1.75rem 2rem;
+}
+
+.ara-product-card .ara-product-title {
+    margin: 0 0 1.25rem;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.ara-product-card .ara-product-text {
+    margin: 0 0 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ara-product-card .ara-product-features {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.ara-product-card .ara-product-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.ara-product-card .ara-product-features svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+    color: #4EAE33;
+}
+
+/* El enlace se ancla abajo: las tarjetas de una misma fila lo alinean aunque
+   unas listen más prestaciones que otras. */
+.ara-product-card .ara-product-cta {
+    margin-top: auto;
+    align-self: flex-start;
+}
+
+.ara-product-card .ara-product-cta svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* --- Variante sin imagen (servicios): la franja superior lleva un degradado
+       y el icono del servicio, para conservar la proporción y la alineación
+       de la fila de tarjetas. --- */
+.ara-product-card--plano .ara-product-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ara-product-card--plano .ara-product-media--azul {
+    background: linear-gradient(135deg, #0A1740 0%, #0188EE 100%);
+}
+
+.ara-product-card--plano .ara-product-media--verde {
+    background: linear-gradient(135deg, #0A1740 0%, #4EAE33 100%);
+}
+
+.ara-product-card--plano .ara-product-media svg {
+    width: 4.5rem;
+    height: 4.5rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* =============================================
+   Service Icons
+   ============================================= */
+.ara-icon-box {
+    width: 64px;
+    height: 64px;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188EE;
+    transition: all 0.3s ease;
+}
+
+.ara-icon-box:hover {
+    background: #0188EE;
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.ara-icon-box-green {
+    background: rgba(78, 174, 51, 0.1);
+    color: #4EAE33;
+}
+
+.ara-icon-box-green:hover {
+    background: #4EAE33;
+    color: #ffffff;
+}
+
+/* =============================================
+   Stats Counter
+   ============================================= */
+.ara-stat {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.ara-stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0188EE;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.ara-stat-label {
+    font-size: 0.9rem;
+    color: #64748B;
+    font-weight: 500;
+}
+
+/* =============================================
+   CTA Section
+   ============================================= */
+.ara-cta {
+    background: linear-gradient(135deg, #060E2D 0%, #0c1a40 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.ara-cta::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(1, 136, 238, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* =============================================
+   Footer
+   ============================================= */
+.ara-footer {
+    background: #060E2D;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.ara-footer a {
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s ease;
+    text-decoration: none;
+}
+
+.ara-footer a:hover {
+    color: #0188EE;
+}
+
+.ara-footer-link {
+    display: block;
+    padding: 0.375rem 0;
+    font-size: 0.9rem;
+}
+
+/* =============================================
+   Client Logos
+   ============================================= */
+.ara-clients-track {
+    display: flex;
+    animation: scroll 30s linear infinite;
+}
+
+.ara-client-logo {
+    filter: grayscale(100%);
+    opacity: 0.6;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.dark .ara-client-logo {
+    filter: brightness(0) invert(1);
+    opacity: 0.7;
+}
+
+.dark .ara-client-logo:hover {
+    filter: brightness(0) invert(1) drop-shadow(0 0 6px rgba(1, 136, 238, 0.3));
+    opacity: 1;
+}
+
+/* Dark: Empresa client cards */
+.dark #clientes .border {
+    border-color: #334155 !important;
+}
+
+.dark #clientes .border:hover {
+    border-color: rgba(1, 136, 238, 0.4) !important;
+}
+
+.ara-client-logo:hover {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+@keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* =============================================
+   Feature Item
+   ============================================= */
+.ara-feature {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.ara-feature::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #0188EE;
+}
+
+/* =============================================
+   Form Styles
+   ============================================= */
+.ara-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid #CBD2DC;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.ara-input:focus {
+    outline: none;
+    border-color: #0188EE;
+    box-shadow: 0 0 0 3px rgba(1, 136, 238, 0.1);
+}
+
+.ara-input::placeholder {
+    color: #9DA6B4;
+}
+
+.ara-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* =============================================
+   Badge
+   ============================================= */
+.ara-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ara-badge-blue {
+    background: rgba(1, 136, 238, 0.1);
+    color: #0188EE;
+}
+
+.ara-badge-green {
+    background: rgba(78, 174, 51, 0.1);
+    color: #4EAE33;
+}
+
+/* =============================================
+   Section Divider
+   ============================================= */
+.ara-divider {
+    width: 60px;
+    height: 3px;
+    background: #0188EE;
+    border-radius: 2px;
+    margin: 1rem 0;
+}
+
+.ara-divider-green {
+    background: #4EAE33;
+}
+
+/* =============================================
+   Responsive Adjustments
+   ============================================= */
+@media (max-width: 768px) {
+    .ara-hero {
+        min-height: auto;
+        padding-top: 6rem;
+        padding-bottom: 3rem;
+    }
+
+    .ara-stat-number {
+        font-size: 2rem;
+    }
+
+    /* En móvil la tarjeta es más estrecha: la imagen gana proporción para
+       que el diseño se siga apreciando. */
+    .ara-product-card {
+        --ara-product-media-ratio: 3 / 2;
+    }
+
+    .ara-product-card .ara-product-content {
+        padding: 1.5rem;
+    }
+
+    .ara-product-card .ara-product-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* =============================================
+   Utility Classes
+   ============================================= */
+.text-gradient {
+    background: linear-gradient(135deg, #0188EE 0%, #4EAE33 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.bg-grid {
+    background-image: 
+        linear-gradient(rgba(1, 136, 238, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(1, 136, 238, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* =============================================
+   Dark Mode Toggle
+   ============================================= */
+.ara-theme-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.ara-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: rotate(15deg);
+}
+
+.ara-theme-toggle svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+
+.ara-theme-toggle .icon-moon {
+    display: block;
+}
+
+.ara-theme-toggle .icon-sun {
+    display: none;
+}
+
+.dark .ara-theme-toggle .icon-moon {
+    display: none;
+}
+
+.dark .ara-theme-toggle .icon-sun {
+    display: block;
+}
+
+/* =============================================
+   Dark Mode Styles
+   ============================================= */
+.dark body,
+.dark {
+    color: #e2e8f0;
+    background-color: #0f172a;
+}
+
+/* Dark: Cards */
+.dark .ara-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.dark .ara-card:hover {
+    border-color: #0188EE;
+    box-shadow: 0 10px 40px rgba(1, 136, 238, 0.15);
+}
+
+/* Dark: Sections */
+.dark .bg-white {
+    background-color: #0f172a;
+}
+
+.dark .bg-ara-slate-50 {
+    background-color: #1e293b;
+}
+
+.dark .bg-ara-navy {
+    background-color: #020817;
+}
+
+/* Dark: Text */
+.dark .text-ara-slate-700 {
+    color: #f1f5f9;
+}
+
+.dark .text-ara-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .text-ara-slate-400 {
+    color: #94a3b8;
+}
+
+.dark .text-ara-slate-300 {
+    color: #64748b;
+}
+
+/* Dark: Borders */
+.dark .border-ara-slate-100 {
+    border-color: #1e293b;
+}
+
+.dark .border-t.border-ara-slate-100 {
+    border-color: #1e293b;
+}
+
+/* Dark: Inputs */
+.dark .ara-input {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.dark .ara-input:focus {
+    border-color: #0188EE;
+    box-shadow: 0 0 0 3px rgba(1, 136, 238, 0.2);
+}
+
+.dark .ara-input::placeholder {
+    color: #64748b;
+}
+
+/* Dark: Badges */
+.dark .ara-badge-blue {
+    background: rgba(1, 136, 238, 0.2);
+    color: #38bdf8;
+}
+
+.dark .ara-badge-green {
+    background: rgba(78, 174, 51, 0.2);
+    color: #4ade80;
+}
+
+/* Dark: Hero orbs */
+.dark .ara-orb-blue {
+    background: rgba(1, 136, 238, 0.25);
+}
+
+.dark .ara-orb-green {
+    background: rgba(78, 174, 51, 0.2);
+}
+
+/* Dark: Clients section */
+.dark .bg-ara-slate-50.border-y.border-ara-slate-100 {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+/* Dark: Stats section */
+.dark .bg-white.border-y.border-ara-slate-100 {
+    background-color: #0f172a;
+    border-color: #1e293b;
+}
+
+/* Dark: Prose */
+.dark .prose {
+    color: #cbd5e1;
+}
+
+.dark .prose h1, .dark .prose h2, .dark .prose h3,
+.dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    color: #f1f5f9;
+}
+
+.dark .prose a {
+    color: #38bdf8;
+}
+
+.dark .prose strong {
+    color: #f1f5f9;
+}
+
+.dark .prose img {
+    border-radius: 0.75rem;
+}
+
+/* Dark: Blog cards */
+.dark .ara-card .ara-badge {
+    background: rgba(1, 136, 238, 0.25);
+}
+
+/* Dark: Category filter */
+.dark .bg-white.border-b.border-ara-slate-100 {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+/* Blog category tabs */
+.blog-category-tabs a {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 9999px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.blog-category-tabs a:not(.active-tab) {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.blog-category-tabs a:not(.active-tab):hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.blog-category-tabs a.active-tab {
+    background: #0188EE;
+    color: #ffffff;
+}
+
+.dark .blog-category-tabs a:not(.active-tab) {
+    background: #334155;
+    color: #94a3b8;
+}
+
+.dark .blog-category-tabs a:not(.active-tab):hover {
+    background: #475569;
+    color: #f1f5f9;
+}
+
+/* Blog sidebar */
+.blog-cat-link {
+    text-decoration: none;
+}
+
+.dark .blog-cat-link {
+    color: #94a3b8;
+}
+
+.dark .blog-cat-link:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+.dark .blog-cat-link span.bg-ara-slate-100 {
+    background: #334155;
+}
+
+/* Dark: Sidebar cards */
+.dark .blog-sidebar-content .ara-card:not(.bg-gradient-to-br) {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Dark: Search input */
+.dark .blog-sidebar-content input[type="text"] {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.dark .blog-sidebar-content input[type="text"]::placeholder {
+    color: #64748b;
+}
+
+.dark .blog-sidebar-content input[type="text"]:focus {
+    border-color: #0188EE;
+}
+
+/* Dark: Newsletter - keeps dark gradient in both modes */
+.ara-card-newsletter {
+    background: linear-gradient(135deg, #060E2D 0%, #0188EE 100%) !important;
+}
+
+/* Newsletter button - always visible */
+.ara-card-newsletter button[type="submit"],
+section form button[type="submit"] {
+    background-color: #ffffff !important;
+    color: #060E2D !important;
+}
+
+.ara-card-newsletter button[type="submit"]:hover,
+section form button[type="submit"]:hover {
+    background-color: #f1f5f9 !important;
+}
+
+/* Mobile sidebar toggle */
+.blog-sidebar-toggle {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .blog-sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 1rem;
+        background: #ffffff;
+        border: 1px solid #E8ECF1;
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .blog-sidebar-toggle:hover {
+        border-color: #0188EE;
+    }
+    
+    .dark .blog-sidebar-toggle {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    
+    .blog-sidebar-content {
+        display: none;
+    }
+    
+    .blog-sidebar-content.active {
+        display: block;
+    }
+}
+
+.dark [class*="bg-ara-slate-50"] {
+    background-color: #1e293b !important;
+}
+
+.dark [class*="bg-white"] {
+    background-color: #0f172a !important;
+}
+
+.dark [class*="border-ara-slate-100"] {
+    border-color: #334155 !important;
+}
+
+.dark [class*="text-ara-slate-700"] {
+    color: #f1f5f9 !important;
+}
+
+.dark [class*="text-ara-slate-500"] {
+    color: #94a3b8 !important;
+}
+
+.dark [class*="text-ara-slate-400"] {
+    color: #94a3b8 !important;
+}
+
+/* Dark: Pricing cards */
+.dark .ring-2.ring-ara-blue {
+    box-shadow: 0 0 0 2px #0188EE, 0 10px 40px rgba(1, 136, 238, 0.2);
+}
+
+/* Dark: Sidebar */
+.dark aside .ara-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+/* Dark: Sidebar links */
+.dark aside .ara-card a span,
+.dark aside .ara-card h4 {
+    color: #e2e8f0;
+}
+
+.dark aside .ara-card .text-ara-slate-400 {
+    color: #94a3b8;
+}
+
+/* Dark: Mobile menu */
+.dark .ara-mobile-menu {
+    background: #020817;
+}
+
+/* Dark: Alert messages */
+.dark .bg-green-50 {
+    background-color: #052e16 !important;
+}
+
+.dark .border-green-200 {
+    border-color: #166534 !important;
+}
+
+.dark .text-green-700 {
+    color: #4ade80 !important;
+}
+
+.dark .bg-red-50 {
+    background-color: #450a0a !important;
+}
+
+.dark .border-red-200 {
+    border-color: #7f1d1d !important;
+}
+
+.dark .text-red-700 {
+    color: #fca5a5 !important;
+}
+
+.dark .text-red-600 {
+    color: #f87171 !important;
+}
+
+/* Dark: Navbar scrolled */
+.dark .ara-nav.scrolled {
+    background: rgba(2, 8, 23, 0.98);
+}
+
+/* Dark: Pagination */
+.dark nav .pagination .active span {
+    background: #0188EE;
+    color: #ffffff;
+}
+
+.dark nav .pagination a {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+.dark nav .pagination a:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+/* Dark: Select */
+.dark select.ara-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* =============================================
+   Article Content (Prose styles)
+   ============================================= */
+.prose {
+    color: #334155;
+    line-height: 1.75;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: #1e293b;
+    font-weight: 700;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    line-height: 1.3;
+}
+
+.prose h1 { font-size: 2em; }
+.prose h2 { font-size: 1.5em; }
+.prose h3 { font-size: 1.25em; }
+.prose h4 { font-size: 1.125em; }
+
+.prose p {
+    margin-top: 0;
+    margin-bottom: 1em;
+}
+
+.prose a {
+    color: #0188EE;
+    text-decoration: underline;
+}
+
+.prose a:hover {
+    color: #016bc4;
+}
+
+.prose strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.prose ul, .prose ol {
+    margin-top: 0.5em;
+    margin-bottom: 1em;
+    padding-left: 1.5em;
+}
+
+.prose ul { list-style-type: disc; }
+.prose ol { list-style-type: decimal; }
+
+.prose li {
+    margin-bottom: 0.5em;
+}
+
+.prose blockquote {
+    border-left: 4px solid #0188EE;
+    padding-left: 1em;
+    margin: 1.5em 0;
+    color: #64748b;
+    font-style: italic;
+}
+
+.prose img {
+    border-radius: 0.75rem;
+    margin: 1.5em 0;
+    max-width: 100%;
+    height: auto;
+}
+
+.prose pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1em;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5em 0;
+}
+
+.prose code {
+    background: #f1f5f9;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+}
+
+.prose pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+}
+
+.prose th, .prose td {
+    border: 1px solid #e2e8f0;
+    padding: 0.75em 1em;
+    text-align: left;
+}
+
+.prose th {
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+/* Dark mode prose */
+.dark .prose {
+    color: #cbd5e1;
+}
+
+.dark .prose h1, .dark .prose h2, .dark .prose h3,
+.dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    color: #f1f5f9;
+}
+
+.dark .prose strong {
+    color: #f1f5f9;
+}
+
+.dark .prose a {
+    color: #38bdf8;
+}
+
+.dark .prose blockquote {
+    color: #94a3b8;
+    border-color: #0188EE;
+}
+
+.dark .prose code {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.dark .prose pre {
+    background: #0f172a;
+}
+
+.dark .prose th {
+    background: #1e293b;
+}
+
+.dark .prose th, .dark .prose td {
+    border-color: #334155;
+}
+
+/* =============================================
+   Article Sidebar Dark Mode
+   ============================================= */
+
+/* Dark: Newsletter input */
+.dark aside input[type="email"] {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.dark aside input[type="email"]::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.dark aside input[type="email"]:focus {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Dark: Newsletter button */
+.dark aside .bg-white.text-ara-navy {
+    background: rgba(255, 255, 255, 0.95);
+    color: #060E2D;
+}
+
+.dark aside .bg-white.text-ara-navy:hover {
+    background: #ffffff;
+}
+
+/* Dark: CTA card */
+.dark aside .border-2.border-ara-blue\/20 {
+    background: #1e293b;
+    border-color: rgba(1, 136, 238, 0.3);
+}
+
+.dark aside .border-2.border-ara-blue\/20 .text-ara-slate-700 {
+    color: #f1f5f9;
+}
+
+.dark aside .border-2.border-ara-blue\/20 .text-ara-slate-400 {
+    color: #94a3b8;
+}
+
+/* Dark: Popular articles */
+.dark aside .bg-ara-slate-100 {
+    background: #334155;
+}
+
+.dark aside .line-clamp-2 {
+    color: #e2e8f0;
+}
+
+/* Dark: Categories list */
+.dark aside .hover\:bg-ara-slate-50:hover {
+    background: #334155;
+}
+
+.dark aside .bg-ara-slate-100.text-ara-slate-500 {
+    background: #334155;
+    color: #94a3b8;
+}
+
+/* Dark: Share buttons */
+.dark .bg-ara-slate-100 {
+    background: #334155;
+}
+
+.dark .text-ara-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .hover\:bg-ara-blue:hover {
+    background: #0188EE;
+}
+
+/* Dark: Article meta */
+.dark .flex.items-center.gap-2.text-sm.text-white\/60 {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Dark: Breadcrumb */
+.dark nav.text-sm.text-white\/50 {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Dark: All remaining text fixes */
+.dark .text-ara-slate-600 {
+    color: #94a3b8;
+}
+
+.dark .text-ara-slate-500 {
+    color: #94a3b8;
+}
+
+.dark .bg-ara-slate-50 {
+    background-color: #1e293b;
+}
+
+/* Dark: Article section bg */
+.dark section.bg-white {
+    background-color: #0f172a;
+}
+
+/* Dark: Share section border */
+.dark .border-t.border-ara-slate-100 {
+    border-color: #334155;
+}
+
+
+/* =============================================
+   Scroll-to-Top Button
+   ============================================= */
+.ara-scroll-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 999;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0188EE;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(1, 136, 238, 0.3);
+    border: none;
+}
+.ara-scroll-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.ara-scroll-top:hover {
+    background: #016bc4;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(1, 136, 238, 0.4);
+}
+.ara-scroll-top svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+}
+.ara-scroll-top:hover svg {
+    transform: rotate(180deg);
+}
+
+/* Scroll Progress Bar */
+.ara-scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0188EE, #4EAE33);
+    z-index: 10000;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+/* Boton flotante de contacto: telefono moderno con resplandor tipo radar */
+.ara-whatsapp-float {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    z-index: 999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, #34e07a 0%, #25D366 48%, #12b76a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+    transition: transform 0.3s ease;
+    text-decoration: none;
+    border: none;
+    animation: ara-phone-glow 2.8s ease-out infinite;
+}
+
+/* Ondas que se expanden desde el boton (efecto radar) */
+.ara-phone-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(37, 211, 102, 0.8);
+    pointer-events: none;
+    animation: ara-radar 2.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+.ara-phone-ring:nth-of-type(2) {
+    animation-delay: 1.4s;
+}
+
+/* Icono de telefono (trazo, no relleno) */
+.ara-phone-icon {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ara-whatsapp-float:hover {
+    transform: scale(1.08);
+}
+.ara-whatsapp-float:focus-visible {
+    outline: 3px solid rgba(37, 211, 102, 0.45);
+    outline-offset: 4px;
+}
+
+@keyframes ara-radar {
+    0% { transform: scale(1); opacity: 0.7; }
+    70% { transform: scale(1.9); opacity: 0; }
+    100% { transform: scale(1.9); opacity: 0; }
+}
+@keyframes ara-phone-glow {
+    0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5), 0 6px 18px rgba(37, 211, 102, 0.35); }
+    70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0), 0 6px 18px rgba(37, 211, 102, 0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0), 0 6px 18px rgba(37, 211, 102, 0.35); }
+}
+
+/* Accesibilidad: sin animacion si el usuario pide menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+    .ara-whatsapp-float,
+    .ara-phone-ring {
+        animation: none;
+    }
+}
+
+/* Dark mode - scroll buttons */
+.dark .ara-scroll-top {
+    background: rgba(1, 136, 238, 0.9);
+}
+.dark .ara-whatsapp-float {
+    background: linear-gradient(140deg, #34e07a 0%, #25D366 48%, #12b76a 100%);
+}
+
+/* Hide on small mobile if needed */
+@media (max-width: 480px) {
+    .ara-scroll-top {
+        bottom: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+    }
+    .ara-whatsapp-float {
+        bottom: 1rem;
+        left: 1rem;
+        width: 50px;
+        height: 50px;
+    }
+    .ara-phone-icon {
+        width: 23px;
+        height: 23px;
+    }
+}

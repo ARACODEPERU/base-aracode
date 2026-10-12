@@ -186,6 +186,12 @@ La tarjeta del catálogo y el encabezado de la ficha se comparan por la **captur
 demostración: es lo primero que mira quien elige plantilla. Por eso, apenas una demo se publica, se
 captura y se escribe su ruta en `imagen` de `config/plantillas.php`.
 
+La captura se pinta **limpia, sin etiquetas encima**: el formato (`#Landing`, `#SitioWeb`), el rubro
+y «Destacada» abren el cuerpo de la tarjeta en una sola fila, debajo de la captura y encima del
+nombre. Eso lo mide `storage/tmp/revisar-catalogo-etiquetas.mjs` en Chrome real a 1440 y a 390 px:
+comprueba que la fila quede entre la captura y el nombre, que dentro de la captura no quede más que
+la imagen o el mosaico, y que ninguna etiqueta se salga ni se solape.
+
 - **Formato:** 16/10 exacto, 1600 × 1000 px, JPEG calidad 82 (entre 90 y 210 KB). Es la proporción
 de `.plt-card__media`, que pinta la imagen con `object-fit: cover` y `object-position: top center`:
 con otra medida se recortaría el diseño capturado.
