@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1040" width="1100" height="1040" role="img" aria-labelledby="titulo-plano desc-plano" font-family="ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace">
+    <title id="titulo-plano">Plano del departamento AL-2401</title>
+    <desc id="desc-plano">Plano de un departamento de 120 metros cuadrados: sala y comedor con balcón al frente, cocina con lavandería, estudio, hall de distribución, tres dormitorios (el principal con baño propio y vestidor), dos baños completos, escritorio, closet y depósito. Las medidas están anotadas en metros.</desc>
+    <defs>
+        <marker id="punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 10 5 0 10z" fill="#4C6C0F"/>
+        </marker>
+    </defs>
+    <g>
+        <text x="140" y="42" font-size="20" font-weight="700" fill="#171B20" letter-spacing="2">PLANO DE REFERENCIA · AL-2401 · PISO 6</text>
+        <text x="140" y="64" font-size="14" fill="#5B646E" letter-spacing="1">Medidas de eje a eje, en metros. Planta de 120,00 m² y balcón de 4,62 m².</text>
+        <rect x="890" y="26" width="150" height="44" rx="8" fill="none" stroke="#DEE4D8" stroke-width="2"/>
+        <text x="910" y="54" font-size="15" fill="#5B646E" letter-spacing="1">ESCALA 1:100</text>
+    </g>
+    <g>
+        <rect x="140" y="150" width="840" height="700" fill="#EDF0EA"/>
+        <rect x="140" y="73" width="294" height="77" fill="#DDE3D6"/>
+    </g>
+    <!-- Tabiques interiores -->
+    <g stroke="#171B20" stroke-width="3" fill="none">
+        <rect x="140" y="150" width="392" height="280"/>
+        <rect x="532" y="150" width="182" height="182"/>
+        <rect x="532" y="332" width="182" height="98"/>
+        <rect x="714" y="150" width="266" height="280"/>
+        <rect x="140" y="430" width="840" height="84"/>
+        <rect x="140" y="514" width="210" height="210"/>
+        <rect x="140" y="724" width="210" height="126"/>
+        <rect x="350" y="514" width="210" height="210"/>
+        <rect x="350" y="724" width="210" height="126"/>
+        <rect x="560" y="514" width="154" height="154"/>
+        <rect x="560" y="668" width="154" height="182"/>
+        <rect x="714" y="514" width="266" height="210"/>
+        <rect x="714" y="724" width="133" height="126"/>
+        <rect x="847" y="724" width="133" height="126"/>
+    </g>
+    <!-- Muros exteriores y balcón -->
+    <g fill="none" stroke="#171B20">
+        <rect x="140" y="150" width="840" height="700" stroke-width="7"/>
+        <rect x="140" y="73" width="294" height="77" stroke-width="5"/>
+    </g>
+    <g stroke="#4C6C0F" stroke-width="2">
+        <line x1="154" y1="97.5" x2="420" y2="97.5"/>
+        <line x1="154" y1="122" x2="420" y2="122"/>
+    </g>
+    <!-- Huecos de puertas y ventanas -->
+    <g stroke="#EDF0EA" stroke-linecap="butt">
+        <line x1="182" y1="150" x2="294" y2="150" stroke-width="9"/>
+        <line x1="322" y1="150" x2="392" y2="150" stroke-width="9"/>
+        <line x1="560" y1="150" x2="686" y2="150" stroke-width="9"/>
+        <line x1="756" y1="150" x2="952" y2="150" stroke-width="9"/>
+        <line x1="140" y1="570" x2="140" y2="710" stroke-width="9"/>
+        <line x1="980" y1="542" x2="980" y2="696" stroke-width="9"/>
+        <line x1="182" y1="850" x2="308" y2="850" stroke-width="9"/>
+        <line x1="602" y1="850" x2="686" y2="850" stroke-width="9"/>
+        <line x1="742" y1="850" x2="826" y2="850" stroke-width="9"/>
+        <line x1="434" y1="150" x2="504" y2="150" stroke-width="9"/>
+        <line x1="560" y1="430" x2="630" y2="430" stroke-width="6"/>
+        <line x1="532" y1="248" x2="532" y2="318" stroke-width="6"/>
+        <line x1="770" y1="430" x2="840" y2="430" stroke-width="6"/>
+        <line x1="210" y1="514" x2="280" y2="514" stroke-width="6"/>
+        <line x1="420" y1="514" x2="490" y2="514" stroke-width="6"/>
+        <line x1="616" y1="514" x2="672" y2="514" stroke-width="6"/>
+        <line x1="770" y1="514" x2="840" y2="514" stroke-width="6"/>
+        <line x1="210" y1="724" x2="280" y2="724" stroke-width="6"/>
+        <line x1="420" y1="724" x2="490" y2="724" stroke-width="6"/>
+        <line x1="616" y1="668" x2="672" y2="668" stroke-width="6"/>
+        <line x1="742" y1="724" x2="812" y2="724" stroke-width="6"/>
+        <line x1="847" y1="745" x2="847" y2="801" stroke-width="6"/>
+    </g>
+    <!-- Ventanas -->
+    <g stroke="#4C6C0F" stroke-width="2.5">
+        <line x1="182" y1="150" x2="294" y2="150"/>
+        <line x1="322" y1="150" x2="392" y2="150"/>
+        <line x1="560" y1="150" x2="686" y2="150"/>
+        <line x1="756" y1="150" x2="952" y2="150"/>
+        <line x1="140" y1="570" x2="140" y2="710"/>
+        <line x1="980" y1="542" x2="980" y2="696"/>
+        <line x1="182" y1="850" x2="308" y2="850"/>
+        <line x1="602" y1="850" x2="686" y2="850"/>
+        <line x1="742" y1="850" x2="826" y2="850"/>
+    </g>
+    <!-- Puertas: hoja y arco de apertura -->
+    <g fill="none" stroke="#4C6C0F" stroke-width="2" stroke-linejoin="round">
+        <path d="M434 220 L444.95 219.14 L455.63 216.57 L465.78 212.37 L475.14 206.63 L483.5 199.5 L490.63 191.14 L496.37 181.78 L500.57 171.63 L503.14 160.95 L504 150" stroke-dasharray="6 5"/>
+        <line x1="434" y1="150" x2="434" y2="220"/>
+        <path d="M560 360 L570.95 360.86 L581.63 363.43 L591.78 367.63 L601.14 373.37 L609.5 380.5 L616.63 388.86 L622.37 398.22 L626.57 408.37 L629.14 419.05 L630 430" stroke-dasharray="6 5"/>
+        <line x1="560" y1="430" x2="560" y2="360"/>
+        <path d="M462 248 L462.86 258.95 L465.43 269.63 L469.63 279.78 L475.37 289.14 L482.5 297.5 L490.86 304.63 L500.22 310.37 L510.37 314.57 L521.05 317.14 L532 318" stroke-dasharray="6 5"/>
+        <line x1="532" y1="248" x2="462" y2="248"/>
+        <path d="M770 360 L780.95 360.86 L791.63 363.43 L801.78 367.63 L811.14 373.37 L819.5 380.5 L826.63 388.86 L832.37 398.22 L836.57 408.37 L839.14 419.05 L840 430" stroke-dasharray="6 5"/>
+        <line x1="770" y1="430" x2="770" y2="360"/>
+        <path d="M210 584 L220.95 583.14 L231.63 580.57 L241.78 576.37 L251.14 570.63 L259.5 563.5 L266.63 555.14 L272.37 545.78 L276.57 535.63 L279.14 524.95 L280 514" stroke-dasharray="6 5"/>
+        <line x1="210" y1="514" x2="210" y2="584"/>
+        <path d="M420 584 L430.95 583.14 L441.63 580.57 L451.78 576.37 L461.14 570.63 L469.5 563.5 L476.63 555.14 L482.37 545.78 L486.57 535.63 L489.14 524.95 L490 514" stroke-dasharray="6 5"/>
+        <line x1="420" y1="514" x2="420" y2="584"/>
+        <path d="M616 570 L624.76 569.31 L633.3 567.26 L641.42 563.9 L648.92 559.3 L655.6 553.6 L661.3 546.92 L665.9 539.42 L669.26 531.3 L671.31 522.76 L672 514" stroke-dasharray="6 5"/>
+        <line x1="616" y1="514" x2="616" y2="570"/>
+        <path d="M770 584 L780.95 583.14 L791.63 580.57 L801.78 576.37 L811.14 570.63 L819.5 563.5 L826.63 555.14 L832.37 545.78 L836.57 535.63 L839.14 524.95 L840 514" stroke-dasharray="6 5"/>
+        <line x1="770" y1="514" x2="770" y2="584"/>
+        <path d="M210 794 L220.95 793.14 L231.63 790.57 L241.78 786.37 L251.14 780.63 L259.5 773.5 L266.63 765.14 L272.37 755.78 L276.57 745.63 L279.14 734.95 L280 724" stroke-dasharray="6 5"/>
+        <line x1="210" y1="724" x2="210" y2="794"/>
+        <path d="M420 794 L430.95 793.14 L441.63 790.57 L451.78 786.37 L461.14 780.63 L469.5 773.5 L476.63 765.14 L482.37 755.78 L486.57 745.63 L489.14 734.95 L490 724" stroke-dasharray="6 5"/>
+        <line x1="420" y1="724" x2="420" y2="794"/>
+        <path d="M616 724 L624.76 723.31 L633.3 721.26 L641.42 717.9 L648.92 713.3 L655.6 707.6 L661.3 700.92 L665.9 693.42 L669.26 685.3 L671.31 676.76 L672 668" stroke-dasharray="6 5"/>
+        <line x1="616" y1="668" x2="616" y2="724"/>
+        <path d="M742 794 L752.95 793.14 L763.63 790.57 L773.78 786.37 L783.14 780.63 L791.5 773.5 L798.63 765.14 L804.37 755.78 L808.57 745.63 L811.14 734.95 L812 724" stroke-dasharray="6 5"/>
+        <line x1="742" y1="724" x2="742" y2="794"/>
+        <path d="M903 745 L902.31 753.76 L900.26 762.3 L896.9 770.42 L892.3 777.92 L886.6 784.6 L879.92 790.3 L872.42 794.9 L864.3 798.26 L855.76 800.31 L847 801" stroke-dasharray="6 5"/>
+        <line x1="847" y1="745" x2="903" y2="745"/>
+    </g>
+    <!-- Muebles de referencia: cocina -->
+    <g fill="#DDE3D6" stroke="#171B20" stroke-width="2">
+        <rect x="539" y="158.4" width="168" height="42"/>
+        <rect x="588" y="279.5" width="84" height="49"/>
+    </g>
+    <!-- Nombre y medida de cada ambiente -->
+    <g letter-spacing="1.2">
+        <text x="336" y="288" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">SALA Y COMEDOR</text>
+        <text x="336" y="306" font-size="12" fill="#5B646E" text-anchor="middle">5,60 × 4,00</text>
+        <text x="623" y="221.5" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">COCINA</text>
+        <text x="623" y="239.5" font-size="12" fill="#5B646E" text-anchor="middle">2,60 × 2,60</text>
+        <text x="623" y="379" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">LAVANDERÍA</text>
+        <text x="623" y="397" font-size="12" fill="#5B646E" text-anchor="middle">2,60 × 1,40</text>
+        <text x="847" y="288" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">ESTUDIO</text>
+        <text x="847" y="306" font-size="12" fill="#5B646E" text-anchor="middle">3,80 × 4,00</text>
+        <text x="560" y="477" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">HALL · ANCHO 1,20 m</text>
+        <text x="245" y="617" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">DORMITORIO 2</text>
+        <text x="245" y="635" font-size="12" fill="#5B646E" text-anchor="middle">3,00 × 3,00</text>
+        <text x="245" y="785" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">ESCRITORIO</text>
+        <text x="245" y="803" font-size="12" fill="#5B646E" text-anchor="middle">3,00 × 1,80</text>
+        <text x="455" y="617" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">DORMITORIO 3</text>
+        <text x="455" y="635" font-size="12" fill="#5B646E" text-anchor="middle">3,00 × 3,00</text>
+        <text x="455" y="785" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">CLOSET</text>
+        <text x="455" y="803" font-size="12" fill="#5B646E" text-anchor="middle">3,00 × 1,80</text>
+        <text x="637" y="589" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">BAÑO 1</text>
+        <text x="637" y="607" font-size="12" fill="#5B646E" text-anchor="middle">2,20 × 2,20</text>
+        <text x="637" y="757" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">DEPÓSITO</text>
+        <text x="637" y="775" font-size="12" fill="#5B646E" text-anchor="middle">2,20 × 2,60</text>
+        <text x="847" y="617" font-size="15" font-weight="700" fill="#171B20" text-anchor="middle">DORM. PRINCIPAL</text>
+        <text x="847" y="635" font-size="12" fill="#5B646E" text-anchor="middle">3,80 × 3,00</text>
+        <text x="780.5" y="785" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">BAÑO PRINCIPAL</text>
+        <text x="780.5" y="803" font-size="12" fill="#5B646E" text-anchor="middle">1,90 × 1,80</text>
+        <text x="913.5" y="785" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">VESTIDOR</text>
+        <text x="913.5" y="803" font-size="12" fill="#5B646E" text-anchor="middle">1,90 × 1,80</text>
+        <text x="287" y="116.5" font-size="13" font-weight="700" fill="#171B20" text-anchor="middle">BALCÓN 4,20 × 1,10</text>
+    </g>
+    <text x="486.5" y="128" font-size="13" fill="#4C6C0F" letter-spacing="1">INGRESO</text>
+    <!-- Cotas -->
+    <g stroke="#4C6C0F" stroke-width="2" fill="#4C6C0F">
+        <line x1="140" y1="892" x2="980" y2="892"/>
+        <line x1="140" y1="884" x2="140" y2="900"/>
+        <text x="336" y="878" font-size="13" text-anchor="middle">5,60</text>
+        <line x1="532" y1="884" x2="532" y2="900"/>
+        <text x="623" y="878" font-size="13" text-anchor="middle">2,60</text>
+        <line x1="714" y1="884" x2="714" y2="900"/>
+        <text x="847" y="878" font-size="13" text-anchor="middle">3,80</text>
+        <line x1="980" y1="884" x2="980" y2="900"/>
+        <line x1="140" y1="932" x2="980" y2="932" marker-start="url(#punta)" marker-end="url(#punta)"/>
+        <text x="560" y="958" font-size="16" letter-spacing="1.5" text-anchor="middle">FRENTE 12,00 m</text>
+        <line x1="80" y1="150" x2="80" y2="850" marker-start="url(#punta)" marker-end="url(#punta)"/>
+        <line x1="94" y1="150" x2="134" y2="150"/>
+        <line x1="94" y1="850" x2="134" y2="850"/>
+        <text x="58" y="500" font-size="16" letter-spacing="1.5" text-anchor="middle" transform="rotate(-90 58 500)">FONDO 10,00 m</text>
+        <line x1="80" y1="73" x2="80" y2="150"/>
+        <text x="58" y="111.5" font-size="13" text-anchor="middle" transform="rotate(-90 58 111.5)">1,10</text>
+    </g>
+    <g transform="translate(1040 930)">
+        <circle cx="0" cy="0" r="30" fill="none" stroke="#DEE4D8" stroke-width="2"/>
+        <path d="M0 -22 8 8 0 2 -8 8z" fill="#4C6C0F"/>
+        <text x="0" y="26" font-size="14" fill="#5B646E" text-anchor="middle">N</text>
+    </g>
+    <g fill="#5B646E" font-size="13" letter-spacing="1">
+        <text x="80" y="994">Cotas en metros, de eje a eje. La superficie de la planta es de 120,00 m² y el balcón no está incluido.</text>
+        <text x="80" y="1014">Los baños interiores ventilan por ducto. Plano de referencia de la demostración, no es un plano municipal.</text>
+    </g>
+</svg>

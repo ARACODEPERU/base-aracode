@@ -19,9 +19,13 @@
     <meta property="og:site_name" content="ARACODE Smart Solutions">
     
     {{-- Twitter Card --}}
+    {{-- La imagen va aquí además de en og:image: X mostraba la tarjeta sin
+         miniatura, porque no todas las arañas de enlaces leen las dos familias.
+         Las dos salen del mismo dato, así que no pueden contradecirse. --}}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('og_title', 'ARACODE Smart Solutions')">
     <meta name="twitter:description" content="@yield('og_description', 'Soluciones digitales potenciadas con IA para empresas y organizaciones.')">
+    <meta name="twitter:image" content="@yield('og_image', asset('themes/webpage/images/logo.png'))">
     {{-- URL canónica --}}
     {{--
         Cada página es su propia canónica: evita que variantes con parámetros

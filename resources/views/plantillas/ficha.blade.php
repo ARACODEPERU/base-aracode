@@ -15,6 +15,29 @@
     $urlCatalogo = route('plantillas.catalogo');
 @endphp
 
+{{--
+    Tarjeta social. El título y la descripción son los mismos que ya usa la
+    página (`meta_title` y `resumen`), para que el enlace compartido no diga algo
+    distinto de lo que se lee al abrirlo, y la imagen es la captura 16/10 de la
+    plantilla, que es la proporción de la tarjeta grande. Se declara solo cuando
+    la captura existe: sin ella manda la imagen social del sitio, y no se
+    anuncian medidas que no son. El 1600 × 1000 no es un dato suelto: es la
+    medida en que se preparan las capturas (docs/BANCO_PLANTILLAS.md) y la
+    prueba del catálogo la exige.
+--}}
+@if ($imagen)
+    @section('og_title', $plantilla['nombre'].' — Plantilla web | ARACODE Smart Solutions')
+    @section('og_description', $plantilla['resumen'])
+    @section('og_image', $imagen)
+
+    @push('head')
+        <meta property="og:image:type" content="image/jpeg">
+        <meta property="og:image:width" content="1600">
+        <meta property="og:image:height" content="1000">
+        <meta property="og:image:alt" content="Vista previa de la plantilla {{ $plantilla['nombre'] }}">
+    @endpush
+@endif
+
 @push('head')
     <link rel="stylesheet" href="{{ asset('themes/plantillas/css/plantillas.css') }}">
 @endpush
