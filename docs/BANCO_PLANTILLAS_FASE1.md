@@ -435,6 +435,144 @@ Lo que aporta al banco, además de la plantilla:
   demostración y no manda datos. El curso elegido llega preseleccionado desde la ficha
   (`matricula.html?curso=desarrollo-web`).
 
-Pendiente de este estándar: **las cuatro plantillas restantes** (Restaurante y carta digital,
-Portafolio Creativo, Estudio Contable e Inmobiliaria) todavía no tienen demostración. Cada una es
-un proyecto web completo y se construye con la lista obligatoria, una por entrega.
+### 4.8 La demo de Restaurante y carta digital: la categoría de gastronomía
+
+Pedido: la siguiente plantilla del banco. Elegida **Restaurante y carta digital** (categoría
+gastronomía, `tipo: landing`), que hasta ahora era la única categoría del catálogo sin ninguna
+temática cubierta y además el caso más frecuente del rubro: carta con precios y reserva por
+WhatsApp, todo pensado para el celular.
+
+`public/demos/restaurante-carta/` es un proyecto independiente de una sola página (`index.html`) con
+su `css/estilos.css`, su `js/app.js`, seis fotos locales en WebP (dominio público y CC0), plano
+propio en SVG y `CREDITOS.md` con la procedencia de cada foto. Cumple la lista obligatoria de 11
+puntos de [BANCO_PLANTILLAS.md](BANCO_PLANTILLAS.md).
+
+Lo que aporta al banco, además de la plantilla:
+
+- **La plantilla como documento comercial.** La carta es el corazón de la página: plato estrella con
+  foto, precio y pedido directo por WhatsApp, y cuatro bloques de platos (entradas, fondos y
+  parrilla, postres y bebidas) construidos con una línea de puntos entre el nombre y el precio, el
+  mismo recurso de una carta impresa. Los tres avisos de «precios de referencia» y «promociones de
+  ejemplo» dejan claro qué se reemplaza al publicar.
+- **Un formulario que no es solo de contacto.** La reserva pide personas, hora y día con
+  `select`/`date`, valida campo por campo en el navegador y, al enviarse bien, declara que es una
+  demostración en vez de simular una mesa reservada.
+- **La primera demo con dos fotos de detalle** en la misma sección (la causa y los postres), además
+  de la vertical del chef: el hero de tres fotos y la sección oscura «Nuestra cocina» no repiten
+  ninguna imagen.
+
+Verificado: 200 y tipo MIME correcto en la carpeta y en cada archivo (HTML, CSS, JS, seis WebP, el
+SVG del plano y el propio `CREDITOS.md`), sin peticiones de terceros —solo el documento, los dos
+recursos de la página, las seis fotos, el plano y el favicon en `data:`— y con la consola sin
+errores; `/demo/restaurante-carta` redirige 302 a `/demos/restaurante-carta/` y la ficha
+`/plantillas/restaurante-carta` ya enlaza la demo, con la tarjeta marcada «Destacada».
+
+Comprobado en el navegador a 1440 px y a 390 px: sin desbordamiento horizontal (1423 px de ancho de
+documento en una ventana de 1440, y 373 en una de 390), el hero mide 88 unidades de viewport a
+1440 px y crece en móvil en vez de recortar el texto, la pastilla de control baja debajo del texto,
+los puntos miden 44 × 44 px, el botón del menú también y el menú móvil abre y cierra con
+`aria-expanded` al día sin salirse de la pantalla ni tapar contenido cuando está cerrado. El slider
+se avanzó a mano en las dos medidas (cambia a la segunda foto, la del pollo a la brasa) y mantiene
+`aria-hidden` y `aria-current` en su sitio. El interruptor de tema se probó en los dos sentidos y
+con recarga de por medio: en claro se ve la luna, en oscuro el sol, `aria-pressed` y la etiqueta
+acompañan, `color-scheme` pasa a `dark`, el plano se invierte con su filtro y la elección se
+guarda en `restaurante-carta-tema` (el script del tema sigue leyéndose antes del CSS, así que no hay
+destello al recargar). El formulario de reserva, enviado vacío, marca sus seis campos y deja el foco
+en el primero sin recargar; enviado completo, avisa de que la demo no manda datos. El salto a un
+ancla no deja el título tapado por la cabecera pegada y el botón flotante de WhatsApp (56 × 56) no
+se superpone al envío del formulario.
+
+Limitación del entorno, no del cambio: en esta sesión el panel de vista previa no compuso fotogramas,
+así que la revisión fue por medidas del DOM y estilos calculados en lugar de por capturas, y
+`prefers-reduced-motion` no se pudo emular (esa parte queda cubierta por la prueba del banco sobre
+los archivos y por ser la misma lógica ya verificada en la plantilla de referencia).
+
+En esta entrega también se actualizaron las pruebas que daban por hecho que esta plantilla no tenía
+demo (`tests/Unit/CatalogoPlantillasTest.php`), que ahora usan `estudio-contable` como el ejemplo
+sin carpeta; la suite Unit queda en **262 pruebas y 1613 aserciones en verde** (16 pruebas y 340
+aserciones las del catálogo). (Cuando `estudio-contable` publicó su demostración —ver 4.9— el
+ejemplo sin carpeta pasó a ser `inmobiliaria-propiedades`.)
+
+Pendiente de este estándar: **las tres plantillas restantes** (Portafolio Creativo, Estudio Contable
+e Inmobiliaria) todavía no tienen demostración. Cada una es un proyecto web completo y se construye
+con la lista obligatoria, una por entrega. (Desde la 4.9 quedan dos: Portafolio Creativo e
+Inmobiliaria.)
+
+### 4.9 La demo de Estudio Contable: el segundo sitio web, rediseñado de cero
+
+La primera versión de `public/demos/estudio-contable/` se construyó sobre la demo de la academia
+—mismo esqueleto de página, misma hoja de estilos, mismo JavaScript— cambiando la paleta a azul
+marino y dorado y los textos. Funcionaba y cumplía la lista obligatoria, pero incumplía la regla de
+diferenciación que quedó escrita en `docs/BANCO_PLANTILLAS.md`: al abrir las dos demos a la vez se
+veía la misma plantilla con otro color. Esta entrega rehace el diseño completo.
+
+**Lenguaje de la plantilla: «expediente contable».** El sitio se lee como el informe de un
+despacho: papel cálido (`#F7F4ED`) y tinta (`#171C1D`), verde de sello para la acción y ocre para
+los marcadores; titulares en serif (Georgia y equivalentes del sistema) con el cuerpo en sans;
+filetes de un píxel en lugar de tarjetas con sombra y esquinas casi rectas (radio de 2 px); cifras
+tabulares alineadas en columna en precios, plazos y datos. La arquitectura también cambia: cada
+sección tiene un **margen numerado** (el número y el título viven en una columna a la izquierda,
+pegajosa en escritorio, y el contenido ocupa la derecha), los servicios se leen como un **libro de
+entradas** (tabla con asiento, nombre, área, plazo y precio) y los planes como una **hoja de
+precios** en tres columnas separadas por filetes. En móvil el libro pasa a fichas apiladas y la
+hoja de precios a una lista, con el plan recomendado sobre el papel más oscuro.
+
+| Pieza | Archivos |
+| --- | --- |
+| Páginas | `index.html`, `servicios.html`, `servicio-asesoria-mensual.html`, `planes.html`, `contacto.html` |
+| Estilos | `css/estilos.css` (hoja nueva, 2.900 líneas) |
+| JavaScript | `js/app.js` (reescrito: pista con `transform`, revelado escalonado, filtros del libro, validación por reglas) |
+| Fotografías | `img/` (las siete CC0 de Commons, ya documentadas en `CREDITOS.md`) |
+
+**Lo que se conserva, y por qué.** La lista obligatoria (portada con slider de tres fotos, fotos
+reales, WhatsApp y ubicación, prueba social, precios, redes, movimiento, tema claro/oscuro) y los
+nombres que vigilan las pruebas del banco: `.portada`, `data-carrusel`, `portada__fondo`,
+`portada__velo`, `portada__contenido`, `.portada__diapositiva`, `.carrusel__punto`,
+`[data-carrusel-anterior|siguiente|punto]`, `.tema-switch`, `html.js`/`html.no-js` y la clave
+`estudio-contable-tema`. Son la interfaz mínima del banco, no el diseño: el slider sigue siendo
+obligatorio, pero aquí la pista se mueve con `transform`, los controles son un contador `01 / 03`
+con flechas y rayas, y el velo es un degradado lateral en vez de un oscurecido plano.
+
+**Verificado.** `php artisan test --filter=CatalogoPlantillas`: **16 pruebas y 458 aserciones en
+verde**, incluidas las que ahora corren sobre esta demo (hero con tres fotos distintas por huella
+de píxeles, slider usable a mano y sin JavaScript, interruptor de tema en las cinco páginas con
+clave propia, enlaces internos sin roturas y ninguna página huérfana). La suite Unit completa queda
+en **262 pruebas y 1731 aserciones**.
+
+Por HTTP, con `php artisan serve` en 8123: 200 en la carpeta y en cada archivo (las cinco páginas,
+la hoja de estilos, el JavaScript, las siete fotos, el plano y el `CREDITOS.md`), 302 de
+`/demo/estudio-contable` a `/demos/estudio-contable/`, y la ficha `/plantillas/estudio-contable`
+enlazando la demostración. Sin peticiones a terceros: solo el documento, los dos recursos de la
+página, las fotos, el plano y el favicon en `data:`.
+
+**Un defecto encontrado y corregido.** En el celular la tabla comparativa (42rem de ancho mínimo)
+estiraba la rejilla de la sección: el documento medía **692 px en una ventana de 312 px**, con scroll
+lateral en toda la página. La causa es la conocida de CSS: un hijo de grid tiene `min-width: auto`,
+así que el contenido ancho agranda la columna aunque el contenedor declare `overflow-x: auto`. Se
+corrigió con `min-width: 0` en las columnas de `.seccion__rejilla`, `.ficha`, `.visitanos` y
+`.encabezado__rejilla`; ahora el documento mide 373 px en una ventana de 390 y la tabla se desplaza
+dentro de su contenedor (672 px dentro de 333 px). En la misma pasada se corrigió el contraste del
+autor en oscuro (el verde fijo del sello pasó a la variable de acento en el menú activo, los bordes
+del botón secundario, la pestaña de servicio activa y las tablas), se dejó el menú del celular
+utilizable sin JavaScript (los enlaces se muestran envueltos y el botón se oculta) y se llevaron los
+campos y las casillas del formulario a 44 px de alto.
+
+Comprobado además en el navegador a 1440 px y a 390 px: sin desbordamiento horizontal en ninguna de
+las cinco páginas; el hero mide 88 unidades de viewport (792 px de 900) y crece en móvil en vez de
+recortar el texto; los puntos del slider y el botón del menú miden 44 × 44 px; la pastilla de
+control (contador, flechas y puntos) queda dentro de la portada debajo del texto en móvil; el
+margen numerado se pega al hacer scroll solo a partir de 1000 px; el panel de la ficha es
+pegajoso; el formulario, enviado vacío, marca sus seis reglas y deja el foco en el primer campo, y
+enviado completo avisa de que es una demostración; y el tema elegido viaja entre las cinco páginas
+(localStorage) con `aria-pressed`, la etiqueta del botón y `color-scheme: dark` en consonancia.
+
+Limitación del entorno, no del cambio: durante buena parte de la sesión el panel de vista previa
+dejó de componer fotogramas («no frames»), así que la revisión final fue por medidas del DOM y
+estilos calculados en lugar de por capturas —el hero, el libro de servicios, la hoja de precios, el
+banda con la foto vertical y el modo oscuro del inicio sí se alcanzaron a ver en captura antes de
+que el panel se detuviera— y `prefers-reduced-motion` no se pudo emular (queda cubierto por la
+prueba del banco sobre los archivos y por el respeto de la preferencia en el propio JavaScript).
+
+Queda pendiente, como en las otras demos, lo que no depende de código: que un diseñador valide la
+hoja a ojo en un monitor grande, y reemplazar la foto vertical (`img/equipo.webp`, una persona con
+el rostro visible) por una del equipo real del cliente cuando esta plantilla se venda.

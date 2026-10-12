@@ -1,0 +1,62 @@
+[
+    {
+        "archivo": "portada.webp",
+        "medidas": "1024x704",
+        "kb": 94,
+        "origen": "File:Ceviche de pescado (La Punta, Callao).jpg",
+        "original": "1632x1224",
+        "autor": "Jorge G. Mori",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Ceviche_de_pescado_(La_Punta,_Callao).jpg"
+    },
+    {
+        "archivo": "parrilla.webp",
+        "medidas": "1024x704",
+        "kb": 75,
+        "origen": "File:Pollo a la brasa pierna con papas.JPG",
+        "original": "3072x2304",
+        "autor": "Dtarazona",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Pollo_a_la_brasa_pierna_con_papas.JPG"
+    },
+    {
+        "archivo": "comedor.webp",
+        "medidas": "1024x704",
+        "kb": 95,
+        "origen": "File:Eat at the Flamingo Restaurant (53468120609).jpg",
+        "original": "6720x4480",
+        "autor": "evergladesnps",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Eat_at_the_Flamingo_Restaurant_(53468120609).jpg"
+    },
+    {
+        "archivo": "cocina.webp",
+        "medidas": "819x1024",
+        "kb": 108,
+        "origen": "File:Yes, Chef! (8658138).jpg",
+        "original": "3669x5504",
+        "autor": "U.S. Air Force photo by Airman 1st Class Zachary Jakel",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Yes,_Chef!_(8658138).jpg"
+    },
+    {
+        "archivo": "causa.webp",
+        "medidas": "1200x750",
+        "kb": 97,
+        "origen": "File:Causa limeña 2023.jpg",
+        "original": "3132x2193",
+        "autor": "GORE Callao",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Causa_lime%C3%B1a_2023.jpg"
+    },
+    {
+        "archivo": "postres.webp",
+        "medidas": "1200x750",
+        "kb": 185,
+        "origen": "File:Los Canarios, restaurant, dessert selection.jpg",
+        "original": "3886x2921",
+        "autor": "Gerda Arendt",
+        "licencia": "CC0",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Los_Canarios,_restaurant,_dessert_selection.jpg"
+    }
+]

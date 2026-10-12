@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro: se aplica antes de pintar, con la misma clave que el
+    resto del sitio ('estudio-contable-tema'), así que el tema elegido viaja de
+    una página a otra y al recargar en oscuro no se ve el destello claro.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('estudio-contable-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!-- Inicio de la demo «Estudio Contable», de formato SITIO WEB (cinco páginas
+     enlazadas): inicio, listado de servicios, ficha de servicio, planes y
+     contacto. El diseño es propio de esta plantilla: papel y tinta, titulares
+     en serif, filetes en vez de tarjetas y secciones con margen numerado. -->
+
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Estudio contable en Nuevo Chimbote: contabilidad mensual, declaraciones ante Sunat, planillas y constitución de empresas, con precio mensual fijo y un contador asignado a cada cliente.">
+
+<title>Estudio Contable Vega — Contadores en Nuevo Chimbote</title>
+
+<link rel="preload" as="image" href="img/reunion.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:30 a 18:00 · sábados de 9:00 a 13:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 003
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales del estudio contable">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Estudio Contable Vega, inicio">
+            <span class="marca__sello" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><rect x="7.5" y="6.5" width="9" height="3.2" rx="1"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.4h2M11 16.4h2M14.5 16.4h2"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Vega</strong>
+                <span>Contadores</span>
+            </span>
+        </a>
+
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html" aria-current="page">Inicio</a></li>
+                    <li><a href="servicios.html">Servicios</a></li>
+                    <li><a href="planes.html">Planes</a></li>
+                    <li><a href="#visitanos">Visítanos</a></li>
+                    <li><a href="contacto.html" class="menu__contacto">Consulta gratis</a></li>
+                </ul>
+            </nav>
+
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== PORTADA ===================== -->
+
+    <section class="portada" aria-label="Presentación del estudio">
+        <div class="portada__fondo">
+            <ul class="portada__pista" data-carrusel>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/reunion.webp" width="1024" height="704" fetchpriority="high" decoding="async"
+                         alt="Sala de reuniones del estudio contable, con la mesa de trabajo al centro">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/oficina.webp" width="1024" height="704" loading="lazy" decoding="async"
+                         alt="Oficina del estudio contable con ventanales y vista a la ciudad">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/escritorio.webp" width="1024" height="704" loading="lazy" decoding="async"
+                         alt="Escritorio de trabajo con laptop, cámara y cuaderno de apuntes">
+                </li>
+            </ul>
+        </div>
+
+        <div class="portada__velo" aria-hidden="true"></div>
+
+        <div class="contenedor portada__contenido">
+            <div class="portada__texto">
+                <p class="portada__etiqueta">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="width:0.9rem;height:0.9rem"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                    Contadores públicos en Nuevo Chimbote
+                </p>
+
+                <h1>Tus números en orden y tus impuestos a tiempo</h1>
+
+                <p class="portada__lead">
+                    Llevamos la contabilidad, las planillas y las declaraciones de negocios y
+                    profesionales. Un contador asignado a tu caso, aviso antes de cada
+                    vencimiento y todo explicado en simple, sin tecnicismos.
+                </p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--principal" href="contacto.html">
+                        Agendar una consulta gratis
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a class="boton boton--claro" href="servicios.html">Ver servicios y precios</a>
+                </div>
+
+                <ul class="portada__datos">
+                    <li>
+                        <dt>Negocios atendidos</dt>
+                        <dd><span data-contador="320" data-prefijo="+">+320</span></dd>
+                    </li>
+                    <li>
+                        <dt>Años en el oficio</dt>
+                        <dd><span data-contador="14">14</span></dd>
+                    </li>
+                    <li>
+                        <dt>Declaraciones al año</dt>
+                        <dd><span data-contador="3400" data-miles="1">3.400</span></dd>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="portada__controles" role="group" aria-label="Fotos de la portada">
+                <p class="carrusel__cuenta"><strong>01</strong> / 03</p>
+
+                <button class="carrusel__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+
+                <ul class="carrusel__puntos">
+                    <li><button class="carrusel__punto" type="button" data-carrusel-punto="0" aria-label="Ver la foto 1" aria-current="true"></button></li>
+                    <li><button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-label="Ver la foto 2"></button></li>
+                    <li><button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-label="Ver la foto 3"></button></li>
+                </ul>
+
+                <button class="carrusel__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 01 · ÁREAS ===================== -->
+
+    <section class="seccion" id="areas">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">01</span> Áreas</p>
+                <h2>En qué te podemos ayudar</h2>
+                <p class="seccion__entrada">
+                    Cuatro áreas de trabajo, cada una con sus servicios y su precio a la vista.
+                    Si no sabes en cuál estás, empieza por la consulta: te orientamos sin costo.
+                </p>
+            </header>
+
+            <ul class="areas">
+                <li class="area revelar">
+                    <span class="area__num">01</span>
+                    <h3>Tributario</h3>
+                    <p>Declaraciones mensuales y anuales, elección de régimen y devoluciones.</p>
+                    <a class="boton boton--enlace" href="servicios.html?area=tributario">
+                        Ver servicios tributarios
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                </li>
+                <li class="area revelar">
+                    <span class="area__num">02</span>
+                    <h3>Contable</h3>
+                    <p>Libros al día, conciliaciones bancarias y estados financieros que se entienden.</p>
+                    <a class="boton boton--enlace" href="servicios.html?area=contable">
+                        Ver servicios contables
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                </li>
+                <li class="area revelar">
+                    <span class="area__num">03</span>
+                    <h3>Laboral</h3>
+                    <p>Planillas, T-Registro, boletas, CTS y liquidaciones de personal.</p>
+                    <a class="boton boton--enlace" href="servicios.html?area=laboral">
+                        Ver servicios laborales
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                </li>
+                <li class="area revelar">
+                    <span class="area__num">04</span>
+                    <h3>Societario</h3>
+                    <p>Constitución de empresas, actas, poderes y trámites en Sunarp.</p>
+                    <a class="boton boton--enlace" href="servicios.html?area=societario">
+                        Ver servicios societarios
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== 02 · SERVICIOS DESTACADOS ===================== -->
+
+    <section class="seccion seccion--papel2" id="servicios">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">02</span> Servicios</p>
+                <h2>Los más pedidos</h2>
+                <p class="seccion__entrada">
+                    Cada servicio dice qué incluye, en cuánto tiempo se entrega y cuánto cuesta.
+                    Los ocho están en el listado completo, con filtros por área y por tipo de atención.
+                </p>
+                <p class="acciones-fila">
+                    <a class="boton boton--borde" href="servicios.html">Ver los ocho servicios</a>
+                </p>
+            </header>
+
+            <div class="revelar">
+                <table class="libro">
+                    <caption class="sr-solo">Servicios más pedidos del estudio contable</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Servicio</th>
+                            <th scope="col">Entrega</th>
+                            <th scope="col">Precio</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="servicio" data-slug="asesoria-mensual" data-area="contable" data-atencion="mensual">
+                            <td>
+                                <span class="libro__entrada">01</span>
+                                <a class="libro__nombre" href="servicio-asesoria-mensual.html">Asesoría contable mensual</a>
+                                <span class="libro__resumen">Libros, declaraciones y avisos de vencimiento. Es el plan de la mayoría de nuestros clientes.</span>
+                            </td>
+                            <td class="libro__dato"><span class="libro__dato-etiqueta">Entrega: </span>Todos los meses</td>
+                            <td class="libro__precio"><span class="libro__dato-etiqueta">Precio: </span>S/ 220</td>
+                            <td>
+                                <a class="boton boton--enlace" href="servicio-asesoria-mensual.html">
+                                    Ficha
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr class="servicio" data-slug="declaracion-anual" data-area="tributario" data-atencion="puntual">
+                            <td>
+                                <span class="libro__entrada">02</span>
+                                <a class="libro__nombre" href="servicios.html?area=tributario">Declaración anual de renta</a>
+                                <span class="libro__resumen">El formulario que se presenta una vez al año, con la deducción que te corresponde.</span>
+                            </td>
+                            <td class="libro__dato"><span class="libro__dato-etiqueta">Entrega: </span>De 2 a 5 días</td>
+                            <td class="libro__precio"><span class="libro__dato-etiqueta">Precio: </span>S/ 380</td>
+                            <td>
+                                <a class="boton boton--enlace" href="servicios.html?area=tributario">
+                                    Ficha
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr class="servicio" data-slug="planillas" data-area="laboral" data-atencion="mensual">
+                            <td>
+                                <span class="libro__entrada">03</span>
+                                <a class="libro__nombre" href="servicios.html?area=laboral">Planillas y boletas de pago</a>
+                                <span class="libro__resumen">T-Registro, boletas, CTS, gratificaciones y liquidaciones, sin que se te pase un plazo.</span>
+                            </td>
+                            <td class="libro__dato"><span class="libro__dato-etiqueta">Entrega: </span>Todos los meses</td>
+                            <td class="libro__precio"><span class="libro__dato-etiqueta">Precio: </span>S/ 120</td>
+                            <td>
+                                <a class="boton boton--enlace" href="servicios.html?area=laboral">
+                                    Ficha
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr class="servicio" data-slug="constitucion-empresa" data-area="societario" data-atencion="puntual">
+                            <td>
+                                <span class="libro__entrada">04</span>
+                                <a class="libro__nombre" href="servicios.html?area=societario">Constitución de empresa</a>
+                                <span class="libro__resumen">De la minuta a la partida registral y el RUC, con el régimen tributario ya elegido.</span>
+                            </td>
+                            <td class="libro__dato"><span class="libro__dato-etiqueta">Entrega: </span>De 10 a 15 días</td>
+                            <td class="libro__precio"><span class="libro__dato-etiqueta">Precio: </span>S/ 650</td>
+                            <td>
+                                <a class="boton boton--enlace" href="servicios.html?area=societario">
+                                    Ficha
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr class="servicio" data-slug="orden-cuentas" data-area="contable" data-atencion="puntual">
+                            <td>
+                                <span class="libro__entrada">05</span>
+                                <a class="libro__nombre" href="servicios.html?area=contable">Orden y revisión de cuentas</a>
+                                <span class="libro__resumen">Para negocios con meses atrasados: ponemos al día los libros y te decimos qué está pendiente.</span>
+                            </td>
+                            <td class="libro__dato"><span class="libro__dato-etiqueta">Entrega: </span>De 5 a 10 días</td>
+                            <td class="libro__precio"><span class="libro__dato-etiqueta">Precio: </span>S/ 480</td>
+                            <td>
+                                <a class="boton boton--enlace" href="servicios.html?area=contable">
+                                    Ficha
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 03 · CÓMO TRABAJAMOS ===================== -->
+
+    <section class="seccion" id="proceso">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">03</span> Método</p>
+                <h2>Cómo trabajamos cada mes</h2>
+                <p class="seccion__entrada">
+                    El mes tiene cuatro pasos y siempre van en el mismo orden. Tú sigues atendiendo
+                    tu negocio: de los papeles nos ocupamos nosotros.
+                </p>
+            </header>
+
+            <div>
+                <ol class="proceso">
+                    <li class="paso revelar">
+                        <h3>Nos envías tus comprobantes</h3>
+                        <p>Facturas, boletas y extractos del banco, por WhatsApp o por una carpeta compartida. Si te faltó algo, te lo pedimos el mismo día.</p>
+                    </li>
+                    <li class="paso revelar">
+                        <h3>Registramos y revisamos</h3>
+                        <p>Entran a los libros de ventas y compras y los conciliamos con el banco. Ahí aparecen las diferencias que después cuestan una multa.</p>
+                    </li>
+                    <li class="paso revelar">
+                        <h3>Presentamos ante Sunat</h3>
+                        <p>Declaramos con cinco días de anticipación y te mandamos la constancia. Si toca pago, te avisamos del monto antes de la fecha.</p>
+                    </li>
+                    <li class="paso revelar">
+                        <h3>Te enviamos el informe</h3>
+                        <p>Una hoja: cuánto vendiste, cuánto gastaste, cuánto se pagó de impuestos y qué viene el mes siguiente. Sin jerga contable.</p>
+                    </li>
+                </ol>
+
+                <figure class="marco" style="margin-top:2.5rem">
+                    <img src="img/asistencia.webp" width="1200" height="800" loading="lazy" decoding="async"
+                         alt="Laptop con los lentes del contador sobre una mesa de madera, en el escritorio de trabajo">
+                    <figcaption>La revisión mensual se hace sobre los comprobantes del mes, uno por uno.</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 04 · COMPROMISO (banda con foto vertical) ===================== -->
+
+    <section class="seccion seccion--compacta" id="compromiso">
+        <div class="contenedor">
+            <div class="banda-foto revelar">
+                <figure>
+                    <img src="img/equipo.webp" width="819" height="1024" loading="lazy" decoding="async"
+                         alt="Persona trabajando en su laptop en una oficina, con los puestos de trabajo al fondo">
+                    <figcaption>La oficina, en la Av. Pardo 890. Tres contadores y una sola forma de trabajar.</figcaption>
+                </figure>
+
+                <div class="banda-foto__texto">
+                    <p class="sello"><span class="sello__num">04</span> Compromiso</p>
+                    <h2>Un contador con nombre, no un conmutador</h2>
+                    <p>
+                        Cada cliente trabaja con la misma persona de principio a fin. Si tienes una
+                        inspección, si te llega una notificación o si quieres saber si te conviene
+                        cambiar de régimen, hablas con quien lleva tus papeles y te responde el
+                        mismo día hábil.
+                    </p>
+
+                    <ul class="cifras" style="margin-top:2rem">
+                        <li class="cifra">
+                            <span class="cifra__valor"><span data-contador="99">99</span> %</span>
+                            <span class="cifra__etiqueta">Vencimientos a tiempo</span>
+                        </li>
+                        <li class="cifra">
+                            <span class="cifra__valor"><span data-contador="2100" data-miles="1">2.100</span></span>
+                            <span class="cifra__etiqueta">Planillas al año</span>
+                        </li>
+                        <li class="cifra">
+                            <span class="cifra__valor"><span data-contador="48">48</span> h</span>
+                            <span class="cifra__etiqueta">Para responderte</span>
+                        </li>
+                        <li class="cifra">
+                            <span class="cifra__valor"><span data-contador="5">5</span> días</span>
+                            <span class="cifra__etiqueta">De aviso antes de cada plazo</span>
+                        </li>
+                    </ul>
+
+                    <blockquote class="cita">
+                        <p>
+                            «Nadie monta un negocio para aprenderse el Código Tributario. Para eso
+                            estamos: tú llevas el negocio y nosotros la parte formal.»
+                        </p>
+                        <cite>Marisol V., socia fundadora</cite>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 05 · EQUIPO ===================== -->
+
+    <section class="seccion" id="equipo">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">05</span> Equipo</p>
+                <h2>Quién te va a atender</h2>
+                <p class="seccion__entrada">
+                    Tres contadores con su especialidad. En la demo los avatares son iniciales:
+                    no se usan caras de terceros.
+                </p>
+            </header>
+
+            <ul class="equipo">
+                <li class="persona revelar">
+                    <span class="avatar" aria-hidden="true">MV</span>
+                    <div class="persona__datos">
+                        <h3>Marisol V.</h3>
+                        <span class="persona__cargo">Contadora pública · socia fundadora</span>
+                        <p>14 años en tributario. Lleva las empresas y los casos que tienen algo pendiente con Sunat. Atiende los martes y los jueves, con cita.</p>
+                    </div>
+                </li>
+                <li class="persona revelar">
+                    <span class="avatar" aria-hidden="true">RC</span>
+                    <div class="persona__datos">
+                        <h3>Renato C.</h3>
+                        <span class="persona__cargo">Contador · planillas y laboral</span>
+                        <p>9 años liquidando planillas. Es el que revisa T-Registro, CTS y gratificaciones, y quien te avisa antes de cada vencimiento laboral.</p>
+                    </div>
+                </li>
+                <li class="persona revelar">
+                    <span class="avatar" aria-hidden="true">JL</span>
+                    <div class="persona__datos">
+                        <h3>Julissa L.</h3>
+                        <span class="persona__cargo">Contadora · auditoría interna</span>
+                        <p>7 años ordenando contabilidades atrasadas y preparando informes para el banco. Es la que entra cuando un negocio llega con meses sin presentar.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== 06 · OPINIONES ===================== -->
+
+    <section class="seccion seccion--papel2" id="opiniones">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">06</span> Opiniones</p>
+                <h2>Lo que dicen los clientes</h2>
+                <p class="seccion__entrada">Testimonios de la ficha del negocio. En la demo son de ejemplo.</p>
+            </header>
+
+            <ul class="opiniones">
+                <li class="opinion revelar">
+                    <div class="opinion__estrellas" role="img" aria-label="Valoración: 5 de 5">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                    </div>
+                    <blockquote>Llegué con dos años de libros sin presentar. En tres semanas estaba al día y con la multa rebajada. Me explicaron cada paso antes de darlo.</blockquote>
+                    <figcaption>
+                        <strong>Rosa Q.</strong>
+                        Minimarket en Nuevo Chimbote · clienta desde 2022
+                    </figcaption>
+                </li>
+                <li class="opinion revelar">
+                    <div class="opinion__estrellas" role="img" aria-label="Valoración: 5 de 5">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                    </div>
+                    <blockquote>Nos analizaron con números en la mano si convenía pasar al régimen MYPE. El ahorro del año pagó el servicio completo.</blockquote>
+                    <figcaption>
+                        <strong>Luis A.</strong>
+                        Taller de metalmecánica · cliente desde 2019
+                    </figcaption>
+                </li>
+                <li class="opinion revelar">
+                    <div class="opinion__estrellas" role="img" aria-label="Valoración: 4 de 5">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3.5 14.6 9l6 .7-4.4 4.1 1.2 5.9L12 16.9l-5.4 2.8 1.2-5.9L3.4 9.7 9.4 9 12 3.5Z"/></svg>
+                    </div>
+                    <blockquote>Lo que más valoro es que preguntan antes de decidir. Cuando no llegué con los comprobantes del mes, me llamaron en vez de dejarlo pasar.</blockquote>
+                    <figcaption>
+                        <strong>Sandra M.</strong>
+                        Consultora independiente · clienta desde 2023
+                    </figcaption>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== 07 · PLANES ===================== -->
+
+    <section class="seccion" id="planes">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">07</span> Precios</p>
+                <h2>Tres planes mensuales</h2>
+                <p class="seccion__entrada">
+                    Precios en soles, sin costo de inscripción ni cobros por consulta. El plan se
+                    elige según el tamaño de tu negocio y se puede cambiar cuando crezca.
+                </p>
+                <p class="acciones-fila">
+                    <a class="boton boton--borde" href="planes.html">Comparar los tres planes</a>
+                </p>
+            </header>
+
+            <div>
+                <ul class="planes">
+                    <li class="plan revelar">
+                        <h3 class="plan__nombre">Básico</h3>
+                        <p class="plan__precio"><span class="plan__moneda">S/</span> 160 <small>/mes</small></p>
+                        <p class="plan__nota">Para negocios que recién empiezan y están en RUS o RER.</p>
+                        <ul class="plan__lista">
+                            <li>Declaraciones mensuales</li>
+                            <li>Libro de ventas y de compras</li>
+                            <li>Aviso antes de cada vencimiento</li>
+                            <li>Consultas por WhatsApp en horario de oficina</li>
+                        </ul>
+                        <a class="boton boton--borde boton--bloque" href="contacto.html?plan=basico">Quiero el plan Básico</a>
+                    </li>
+
+                    <li class="plan plan--destacado revelar">
+                        <p class="plan__marca">El más pedido</p>
+                        <h3 class="plan__nombre">Emprende</h3>
+                        <p class="plan__precio"><span class="plan__moneda">S/</span> 280 <small>/mes</small></p>
+                        <p class="plan__nota">Para MYPES y profesionales con movimiento todos los meses.</p>
+                        <ul class="plan__lista">
+                            <li>Todo lo del plan Básico</li>
+                            <li>Planilla de hasta 3 trabajadores</li>
+                            <li>Estados financieros cada tres meses</li>
+                            <li>Contador asignado con nombre y teléfono</li>
+                        </ul>
+                        <a class="boton boton--principal boton--bloque" href="contacto.html?plan=emprende">Quiero el plan Emprende</a>
+                    </li>
+
+                    <li class="plan revelar">
+                        <h3 class="plan__nombre">Empresa</h3>
+                        <p class="plan__precio"><span class="plan__moneda">S/</span> 480 <small>/mes</small></p>
+                        <p class="plan__nota">Para empresas con planilla, varias cuentas bancarias y reportes a la gerencia.</p>
+                        <ul class="plan__lista">
+                            <li>Todo lo del plan Emprende</li>
+                            <li>Planilla sin límite de trabajadores</li>
+                            <li>Reunión mensual con el contador asignado</li>
+                            <li>Informes para el banco y declaración anual incluidas</li>
+                        </ul>
+                        <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20plan%20Empresa" target="_blank" rel="noopener">Pedir informes</a>
+                    </li>
+                </ul>
+
+                <p class="planes__aviso">
+                    Precios de referencia de la demostración, en soles y con el IGV incluido. No hay
+                    costo de inscripción ni cobro por cambiar de plan; los trabajos puntuales
+                    (constitución, orden de cuentas) se cotizan aparte.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 08 · VISÍTANOS ===================== -->
+
+    <section class="seccion seccion--papel2" id="visitanos">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">08</span> Visítanos</p>
+                <h2>La oficina</h2>
+                <p class="seccion__entrada">
+                    Tercer piso, oficina 302, con ascensor. Se atiende sin cita previa, pero si
+                    vienes con tus papeles adelantas la revisión.
+                </p>
+            </header>
+
+            <div class="visitanos">
+                <div class="revelar">
+                    <ul class="datos-contacto">
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Dirección</strong>
+                                Av. Pardo 890, oficina 302, Nuevo Chimbote
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Horarios de atención</strong>
+                                Lunes a viernes de 8:30 a 18:00 · sábados de 9:00 a 13:00
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                            </span>
+                            <span>
+                                <strong>Teléfono y WhatsApp</strong>
+                                <a href="tel:+51900000000">(043) 000 003</a> · <a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Correo</strong>
+                                <a href="mailto:contacto@estudiovega.demo">contacto@estudiovega.demo</a>
+                            </span>
+                        </li>
+                    </ul>
+
+                    <p class="acciones-fila">
+                        <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20saber%20c%C3%B3mo%20llegar%20a%20la%20oficina" target="_blank" rel="noopener">Avisar que voy a pasar</a>
+                    </p>
+                </div>
+
+                <figure class="mapa revelar">
+                    <img src="img/mapa.svg" width="900" height="560" loading="lazy" decoding="async"
+                         alt="Plano de la ubicación del estudio contable en la Av. Pardo 890, oficina 302, a media cuadra del banco">
+                    <figcaption>
+                        <a class="boton boton--borde boton--bloque" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Pardo+890%2C+Nuevo+Chimbote" target="_blank" rel="noopener">
+                            Abrir en Google Maps
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                        </a>
+                    </figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== 09 · PREGUNTAS ===================== -->
+
+    <section class="seccion" id="preguntas">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">09</span> Preguntas</p>
+                <h2>Lo que nos preguntan siempre</h2>
+                <p class="seccion__entrada">
+                    Cuatro respuestas cortas. Si tu caso es otro, escríbenos: la consulta inicial
+                    no tiene costo y no compromete nada.
+                </p>
+            </header>
+
+            <div class="preguntas revelar">
+                <details>
+                    <summary>¿Qué documentos tengo que enviar cada mes?</summary>
+                    <p>Las facturas y boletas que emitiste y las que te emitieron, los extractos del banco y —si tienes trabajadores— la planilla del mes. Una vez al año pedimos el inventario y los estados de cuenta de cierre.</p>
+                </details>
+                <details>
+                    <summary>¿Atienden a distancia?</summary>
+                    <p>Sí. La mitad de nuestros clientes están fuera de Chimbote: se manda todo por WhatsApp o por una carpeta compartida y las reuniones se hacen por videollamada. La firma de documentos es digital.</p>
+                </details>
+                <details>
+                    <summary>Estoy en un régimen que ya no me conviene, ¿puedo cambiarlo?</summary>
+                    <p>Se revisa cómo estás y se compara con los otros regímenes usando tus números del año. Si el cambio conviene, se hace en el plazo que fija Sunat; si no, te decimos por qué y no se cobra nada por el análisis.</p>
+                </details>
+                <details>
+                    <summary>¿Qué pasa si me llega una notificación de Sunat?</summary>
+                    <p>Se revisa el expediente, se te explica en qué consiste y qué plazos tienes, y preparamos la respuesta o el descargo. El trámite está incluido en los planes mensuales; el pago de tributos, obviamente, es aparte.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>Empecemos con una consulta sin costo</h2>
+                <p>Revisamos tu situación en Sunat, te decimos qué está pendiente y cuánto costaría resolverlo. Escríbenos y te respondemos el mismo día hábil.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="contacto.html">
+                    Agendar una consulta
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+                <a class="boton boton--claro" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20agendar%20una%20consulta" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__sello" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><rect x="7.5" y="6.5" width="9" height="3.2" rx="1"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.4h2M11 16.4h2M14.5 16.4h2"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Vega</strong>
+                    <span>Contadores</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Estudio contable en Nuevo Chimbote. Llevamos la contabilidad, las planillas y los
+                impuestos de negocios y profesionales, con precio mensual fijo y un contador
+                asignado a cada cliente.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales del estudio contable">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Servicios">
+            <h3>Servicios</h3>
+            <ul>
+                <li><a href="servicios.html?area=tributario">Tributario</a></li>
+                <li><a href="servicios.html?area=contable">Contable</a></li>
+                <li><a href="servicios.html?area=laboral">Laboral</a></li>
+                <li><a href="servicios.html?area=societario">Societario</a></li>
+                <li><a href="servicios.html">Todos los servicios</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="El estudio">
+            <h3>El estudio</h3>
+            <ul>
+                <li><a href="#equipo">Equipo</a></li>
+                <li><a href="planes.html">Planes mensuales</a></li>
+                <li><a href="#preguntas">Preguntas frecuentes</a></li>
+                <li><a href="#visitanos">Ubicación y horarios</a></li>
+                <li><a href="contacto.html">Agendar una consulta</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul class="pie__contacto">
+                <li>Av. Pardo 890, oficina 302, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 003</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:contacto@estudiovega.demo">contacto@estudiovega.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Estudio Contable Vega. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20agendar%20una%20consulta" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

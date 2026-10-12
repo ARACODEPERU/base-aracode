@@ -66,7 +66,7 @@ it('devuelve la ficha de una plantilla publicada y null para una que no existe',
 
 it('resuelve la demostración dentro de public/demos', function () {
     $conDemo = CatalogoPlantillas::porSlug('clinica-dental');
-    $sinDemo = CatalogoPlantillas::porSlug('restaurante-carta');
+    $sinDemo = CatalogoPlantillas::porSlug('inmobiliaria-propiedades');
 
     // La carpeta de la config es relativa a public/demos/: el enlace no puede
     // quedar en /clinica-dental/ (la raíz del sitio) sino en /demos/...
@@ -222,49 +222,93 @@ it('solo publica la demostración de las plantillas que la tienen de verdad', fu
         expect(is_file(public_path('demos/'.$plantilla['demo'].'/index.html')))->toBeTrue();
     }
 
-    // Las dos demostraciones publicadas se resuelven: la landing y el sitio web.
+    // Las cuatro demostraciones publicadas se resuelven: las dos landings y los
+    // dos sitios web de varias páginas.
     expect(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('academia-cursos')))
-        ->toEndWith('/demos/academia-cursos/');
+        ->toEndWith('/demos/academia-cursos/')
+        ->and(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('estudio-contable')))
+        ->toEndWith('/demos/estudio-contable/')
+        ->and(CatalogoPlantillas::urlDemo(CatalogoPlantillas::porSlug('restaurante-carta')))
+        ->toEndWith('/demos/restaurante-carta/');
 });
 
 it('no deja enlaces internos rotos en una demo de varias páginas', function () {
-    // La academia es la primera demo de tipo sitio: sus páginas se enlazan entre
-    // sí y con rutas relativas, así que una página mal nombrada se lleva al
-    // visitante a un 404 dentro de la demostración.
-    $demo = public_path('demos/academia-cursos');
-    $archivos = glob($demo.'/*.html');
+    // Las demos de tipo sitio enlazan sus páginas entre sí con rutas relativas,
+    // así que una página mal nombrada —o renombrada a medias— se lleva al
+    // visitante a un 404 dentro de la propia demostración. El catálogo solo
+    // guarda la carpeta de la demo, no sus páginas: por eso esta prueba mira los
+    // enlaces y no una lista escrita a mano.
+    $sitios = array_values(array_filter(
+        CatalogoPlantillas::todas(),
+        fn (array $plantilla) => $plantilla['tipo'] === 'sitio'
+    ));
 
-    expect($archivos)->toHaveCount(4);
+    expect($sitios)->not->toBeEmpty();
 
-    $paginas = array_map(fn (string $ruta) => basename($ruta), $archivos);
-    $enlaces = [];
+    foreach ($sitios as $plantilla) {
+        if (! CatalogoPlantillas::tieneDemo($plantilla)) {
+            continue;
+        }
 
-    foreach ($archivos as $archivo) {
-        preg_match_all('/href="([^":]+?\.html)(?:[?#][^"]*)?"/i', file_get_contents($archivo), $coincidencias);
+        $demo = public_path('demos/'.$plantilla['demo']);
+        $archivos = glob($demo.'/*.html');
 
-        foreach ($coincidencias[1] as $destino) {
-            $enlaces[basename($archivo).' → '.$destino] = $destino;
+        // Un sitio web tiene varias páginas: con una sola sería una landing.
+        expect(count($archivos))->toBeGreaterThan(1, $plantilla['slug'].': un sitio necesita varias páginas');
+
+        $paginas = array_map(fn (string $ruta) => basename($ruta), $archivos);
+        $enlaces = [];
+
+        foreach ($archivos as $archivo) {
+            preg_match_all('/href="([^":]+?\.html)(?:[?#][^"]*)?"/i', file_get_contents($archivo), $coincidencias);
+
+            foreach ($coincidencias[1] as $destino) {
+                $enlaces[basename($archivo).' → '.$destino] = $destino;
+            }
+        }
+
+        expect($enlaces)->not->toBeEmpty();
+
+        // Cada página enlazada existe y es una del propio sitio. Si una se rompe,
+        // el mensaje de la prueba dice desde qué página se enlazaba.
+        $rotos = [];
+
+        foreach ($enlaces as $descripcion => $destino) {
+            if (! in_array($destino, $paginas, true) || ! is_file($demo.'/'.$destino)) {
+                $rotos[] = $descripcion;
+            }
+        }
+
+        expect($rotos)->toBe([], 'Enlaces internos rotos en '.$plantilla['slug'].': '.implode(', ', $rotos));
+
+        // Y ninguna página queda huérfana: todas se alcanzan desde la portada.
+        // El enlace de la marca a su propia página no cuenta, claro.
+        $desdeInicio = array_values(array_unique(array_filter(
+            $enlaces,
+            fn (string $destino, string $descripcion) => str_starts_with($descripcion, 'index.html →')
+                && $destino !== 'index.html',
+            ARRAY_FILTER_USE_BOTH
+        )));
+
+        expect($desdeInicio)->toEqualCanonicalizing(array_values(array_diff($paginas, ['index.html'])));
+
+        if ($plantilla['slug'] === 'academia-cursos') {
+            // En la academia el menú lleva a las tres secciones: inicio, catálogo
+            // y matrícula.
+            expect(array_values($enlaces))->toContain('cursos.html');
+            expect(array_values($enlaces))->toContain('matricula.html');
+            expect(array_values($enlaces))->toContain('curso-desarrollo-web.html');
+        }
+
+        if ($plantilla['slug'] === 'estudio-contable') {
+            // En el estudio contable el menú lleva a los servicios, los planes y
+            // la consulta, más la ficha de un servicio.
+            expect(array_values($enlaces))->toContain('servicios.html');
+            expect(array_values($enlaces))->toContain('planes.html');
+            expect(array_values($enlaces))->toContain('contacto.html');
+            expect(array_values($enlaces))->toContain('servicio-asesoria-mensual.html');
         }
     }
-
-    expect($enlaces)->not->toBeEmpty();
-
-    // Cada página enlazada existe y es una de las cuatro de la demo. Si una se
-    // rompe, el mensaje de la prueba dice desde qué página se enlazaba.
-    $rotos = [];
-
-    foreach ($enlaces as $descripcion => $destino) {
-        if (! in_array($destino, $paginas, true) || ! is_file($demo.'/'.$destino)) {
-            $rotos[] = $descripcion;
-        }
-    }
-
-    expect($rotos)->toBe([], 'Enlaces internos rotos: '.implode(', ', $rotos));
-
-    // Y el menú lleva a las tres secciones: inicio, catálogo y matrícula.
-    expect(array_values($enlaces))->toContain('cursos.html');
-    expect(array_values($enlaces))->toContain('matricula.html');
-    expect(array_values($enlaces))->toContain('curso-desarrollo-web.html');
 });
 
 it('abre cada demostración publicada con un hero o slider a pantalla completa', function () {
@@ -532,6 +576,11 @@ it('abre la demostración con un 302 a su carpeta y 404 si todavía no está', f
     // y sin ella el servidor tendría que redirigir otra vez.
     expect($respuesta->headers->get('Location'))->toEndWith('/demos/clinica-dental/');
 
-    $this->get('/demo/restaurante-carta')->assertNotFound();
+    // El sitio web de varias páginas también se abre desde su carpeta.
+    expect($this->get('/demo/estudio-contable')->headers->get('Location'))
+        ->toEndWith('/demos/estudio-contable/');
+
+    // Y una plantilla que todavía no tiene demo no publica enlace: 404.
+    $this->get('/demo/inmobiliaria-propiedades')->assertNotFound();
     $this->get('/demo/no-existe')->assertNotFound();
 });

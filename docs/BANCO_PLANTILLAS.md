@@ -8,9 +8,9 @@ demostración y qué hacer el día que una demo se mude a su propio subdominio.
 
 Aclaración vigente del banco: **toda landing y todo sitio web abre con un hero o
 un slider a pantalla completa, moderno y responsive**. Es el punto 1 de la lista
-obligatoria de más abajo, y las dos demostraciones publicadas ya lo cumplen:
-`clinica-dental` (landing) y `academia-cursos` (sitio web) abren con un slider de
-tres fotos cada una.
+obligatoria de más abajo, y las cuatro demostraciones publicadas ya lo cumplen:
+`clinica-dental` y `restaurante-carta` (landings), y `academia-cursos` y
+`estudio-contable` (sitios web) abren con un slider de tres fotos cada una.
 Antes de dar por buena una portada nueva: avanzar el slider a mano, revisarla a
 1440 px y a 390 px y repetir la revisión con `prefers-reduced-motion` activado,
 que debe apagar el paso automático sin romper los controles.
@@ -54,12 +54,13 @@ que no toque el interruptor recibe el tema oscuro del sistema operativo.
 de la página. El error típico —aplicar la clase al final del cuerpo— produce el
 flash blanco al recargar en oscuro.
 
-**Estado.** Las dos demostraciones publicadas ya lo traen: `clinica-dental`
-(landing) y `academia-cursos` (sitio web de cuatro páginas, donde la elección
-viaja de una página a otra porque las cuatro comparten la misma clave). Las
-cuatro plantillas que aún no tienen demo (`restaurante-carta`, `estudio-contable`,
-`inmobiliaria-propiedades` y `portafolio-creativo`) ya nacen con el interruptor,
-que es obligatorio para publicar. Lo vigila la prueba
+**Estado.** Las cuatro demostraciones publicadas ya lo traen: `clinica-dental` y
+`restaurante-carta` (landings) y `academia-cursos` (sitio de cuatro páginas) y
+`estudio-contable` (sitio de cinco páginas), en los dos sitios con la elección
+viajando de una página a otra porque todas comparten la misma clave. Las dos
+plantillas que aún no tienen demo (`inmobiliaria-propiedades` y
+`portafolio-creativo`) ya nacen con el interruptor, que es obligatorio para
+publicar. Lo vigila la prueba
 `tests/Unit/CatalogoPlantillasTest.php` → «trae el interruptor de tema claro /
 oscuro en toda demostración publicada», que además exige una clave de
 `localStorage` distinta por plantilla.
@@ -77,6 +78,42 @@ aparece como un rectángulo claro sobre la página oscura: en las dos demos
 publicadas se invierte con un filtro (`invert` + giro de tono) y se comprueba a
 tamaño real que su detalle y su marca siguen leyéndose. Si un gráfico nuevo
 invirtiera mal, es mejor dejarlo tal cual que publicar una mancha oscura.
+
+## Regla de diferenciación (cada plantilla es distinta)
+
+Aclaración vigente del banco: **todas las plantillas son diferentes entre sí**. La lista
+obligatoria de más abajo es el mínimo común —lo que el cliente espera encontrar—, no una plantilla
+compartida que se rellena cambiando textos y colores. Una demostración que se construye copiando la
+hoja de estilos y el JavaScript de la anterior y ajustando detalles (paleta, tipografías de sistema
+y textos) **no es una plantilla nueva**: es la misma con otro traje, y se nota al poner las dos
+demos a la vez.
+
+Lo que tiene que cambiar de una plantilla a otra son los cuatro ejes del diseño, y no solo el
+primero:
+
+| Eje | Qué se decide ahí |
+| --- | --- |
+| Color | La paleta **y su reparto**: cuánto papel, cuánta tinta, dónde va el acento y qué superficie se lleva el contraste. Dos plantillas pueden compartir el azul y aun así no parecerse. |
+| Tipografía | Familias (se admiten pilas del sistema: no hay CDN), tamaños y jerarquía. Serif en titulares y sans en el cuerpo se lee muy distinto de sans en todo. |
+| Arquitectura | Cómo se recorre la página: dónde vive el título, si hay margen numerado, si el resumen va en columna, cómo se listan los productos o servicios (tarjetas, tabla, acordeón). |
+| Forma y movimiento | Esquinas rectas o redondeadas, filetes o sombras, precio en tarjeta o en hoja de precios, y qué se anima (aparición, contadores, cabecera). |
+
+Sí puede repetirse, porque es el contrato del banco y no su diseño: el hero con slider a pantalla
+completa, el botón de WhatsApp, el mapa con enlace, la prueba social, los precios de referencia, las
+redes sociales, las anclas de sección, y los nombres que vigilan las pruebas
+(`.portada`/`data-carrusel`/`.portada__diapositiva`, `[data-carrusel-anterior]`,
+`[data-carrusel-siguiente]`, `[data-carrusel-punto]`, `.carrusel__punto`, `.tema-switch`,
+`<slug>-tema`, `html.no-js`). Son las piezas que el estándar exige, no la piel.
+
+**Comprobación antes de publicar:** con las dos demos abiertas a 1440 px y a 390 px, describir la
+diferencia sin hablar de color ni de logo. Si la única frase posible es «cambian los colores y las
+fotos», no cumple esta regla.
+
+Las cuatro demostraciones publicadas hoy son distintas entre sí y sirven de ejemplo de cuatro
+lenguajes: `restaurante-carta` (carta impresa, cálido y fotográfico), `clinica-dental` (landing
+clara y cercana), `academia-cursos` (institucional con tarjetas y azul profundo) y
+`estudio-contable` (expediente contable: papel y tinta, titulares en serif, filetes en vez de
+tarjetas, listados como libro de entradas y secciones con margen numerado).
 
 ## Piezas de la sección
 
@@ -124,7 +161,10 @@ menú de escritorio del navbar desaparece. Lo vigila la prueba
 La demostración **no** es una variación del catálogo: es un proyecto web propio.
 La referencia terminada y usable como modelo es `public/demos/clinica-dental/` cuando la
 plantilla es una **landing** y `public/demos/academia-cursos/` cuando es un **sitio web** (varias
-páginas). Las dos llevan sus créditos de fotos y su lista de reemplazos en `CREDITOS.md`.
+páginas); `public/demos/estudio-contable/` es el segundo sitio web y sirve de ejemplo cuando el
+negocio vende **servicios con planes** en vez de un catálogo de productos (precios en tarjetas y en
+tabla comparativa, y un formulario de consulta en lugar de uno de matrícula). Todas llevan sus
+créditos de fotos y su lista de reemplazos en `CREDITOS.md`.
 
 ### Lista obligatoria de toda demostración
 
@@ -166,7 +206,10 @@ cumplirlo. Los 11 puntos se comprueban antes de enlazarla desde la ficha.
    los perfiles del negocio.
 7. **Diseño y movimiento.** Aparición al hacer scroll, contadores animados donde
    haya cifras, cabecera con sombra al bajar, hover en tarjetas y botones,
-   `:focus-visible` visible y respeto de `prefers-reduced-motion`.
+   `:focus-visible` visible y respeto de `prefers-reduced-motion`. Si hay una
+   tabla comparativa (planes, precios, características), se desplaza en
+   horizontal dentro de su contenedor en el celular en vez de apretar las
+   columnas, y el `body` no gana scroll lateral.
 8. **Honestidad de la demo.** Todo dato inventado (teléfonos, precios,
    testimonios, dirección) es de ejemplo, el WhatsApp usa un número que no
    existe y el formulario avisa de que no envía datos.

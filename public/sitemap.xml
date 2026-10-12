@@ -53,6 +53,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://aracodeperu.com/plantillas/restaurante-carta</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aracodeperu.com/plantillas/estudio-contable</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://aracodeperu.com/soluciones/desarrollo</loc>
     <lastmod>2026-10-09</lastmod>
     <changefreq>monthly</changefreq>

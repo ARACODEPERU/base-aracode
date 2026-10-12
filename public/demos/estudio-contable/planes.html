@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro: se aplica antes de pintar, con la misma clave que el
+    resto del sitio ('estudio-contable-tema'), así que el tema elegido viaja de
+    una página a otra y al recargar en oscuro no se ve el destello claro.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('estudio-contable-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!-- Planes mensuales de la demo. Los mismos tres precios están en las tarjetas
+     del inicio y en la tabla comparativa de abajo: si se cambia uno hay que
+     tocar los tres sitios, o la página se contradice. -->
+
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Planes mensuales del estudio contable desde S/ 160: qué incluye cada uno, la tabla comparativa punto por punto, cómo se paga y qué pasa si el negocio crece.">
+
+<title>Planes mensuales — Estudio Contable Vega</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:30 a 18:00 · sábados de 9:00 a 13:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 003
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales del estudio contable">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Estudio Contable Vega, inicio">
+            <span class="marca__sello" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><rect x="7.5" y="6.5" width="9" height="3.2" rx="1"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.4h2M11 16.4h2M14.5 16.4h2"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Vega</strong>
+                <span>Contadores</span>
+            </span>
+        </a>
+
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="servicios.html">Servicios</a></li>
+                    <li><a href="planes.html" aria-current="page">Planes</a></li>
+                    <li><a href="contacto.html#visitanos">Visítanos</a></li>
+                    <li><a href="contacto.html" class="menu__contacto">Consulta gratis</a></li>
+                </ul>
+            </nav>
+
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== ENCABEZADO ===================== -->
+
+    <section class="encabezado">
+        <div class="contenedor">
+            <nav aria-label="Ruta de navegación">
+                <ol class="migajas">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li aria-current="page">Planes</li>
+                </ol>
+            </nav>
+
+            <div class="encabezado__rejilla">
+                <div>
+                    <h1>Tres planes, un precio fijo</h1>
+                    <p class="encabezado__lead">
+                        Se paga lo mismo todos los meses y no se cobra la consulta, ni la reunión, ni
+                        la rectificación de algo que preparamos nosotros. El plan se elige por el
+                        tamaño del negocio y se cambia cuando haga falta.
+                    </p>
+                </div>
+
+                <dl class="datos">
+                    <div>
+                        <dt>Planes</dt>
+                        <dd>3, desde S/ 160</dd>
+                    </div>
+                    <div>
+                        <dt>Permanencia</dt>
+                        <dd>Ninguna</dd>
+                    </div>
+                    <div>
+                        <dt>Cambio de plan</dt>
+                        <dd>Sin costo</dd>
+                    </div>
+                    <div>
+                        <dt>IGV</dt>
+                        <dd>Incluido en el precio</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== HOJA DE PRECIOS ===================== -->
+
+    <section class="seccion">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">01</span> Precios</p>
+                <h2>Qué incluye cada plan</h2>
+                <p class="seccion__entrada">
+                    Todos los planes incluyen las declaraciones mensuales, los libros y el aviso
+                    antes de cada vencimiento. Lo que cambia es la planilla, los informes y quién
+                    atiende tu caso.
+                </p>
+            </header>
+
+            <div>
+                <ul class="planes">
+                    <li class="plan revelar">
+                        <h3 class="plan__nombre">Básico</h3>
+                        <p class="plan__precio"><span class="plan__moneda">S/</span> 160 <small>/mes</small></p>
+                        <p class="plan__nota">Para negocios que recién empiezan y están en RUS o RER.</p>
+                        <ul class="plan__lista">
+                            <li>Declaraciones mensuales de IGV y renta</li>
+                            <li>Libro de ventas y libro de compras</li>
+                            <li>Aviso antes de cada vencimiento</li>
+                            <li>Consultas por WhatsApp en horario de oficina</li>
+                            <li>Constancia de cada declaración presentada</li>
+                        </ul>
+                        <a class="boton boton--borde boton--bloque" href="contacto.html?plan=basico">Quiero el plan Básico</a>
+                    </li>
+
+                    <li class="plan plan--destacado revelar">
+                        <p class="plan__marca">El más pedido</p>
+                        <h3 class="plan__nombre">Emprende</h3>
+                        <p class="plan__precio"><span class="plan__moneda">S/</span> 280 <small>/mes</small></p>
+                        <p class="plan__nota">Para MYPES y profesionales con movimiento todos los meses.</p>
+                        <ul class="plan__lista">
+                            <li>Todo lo del plan Básico</li>
+                            <li>Planilla de hasta 3 trabajadores</li>
+                            <li>Estados financieros cada tres meses</li>
+                            <li>Contador asignado con nombre y teléfono</li>
+                            <li>Reunión de quince minutos al mes, si la pides</li>
+                        </ul>
+                        <a class="boton boton--principal boton--bloque" href="contacto.html?plan=emprende">Quiero el plan Emprende</a>
+                    </li>
+
+                    <li class="plan revelar">
+                        <h3 class="plan__nombre">Empresa</h3>
+                        <p class="plan__precio"><span class="plan__moneda">S/</span> 480 <small>/mes</small></p>
+                        <p class="plan__nota">Para empresas con planilla, varias cuentas bancarias y reportes a la gerencia.</p>
+                        <ul class="plan__lista">
+                            <li>Todo lo del plan Emprende</li>
+                            <li>Planilla sin límite de trabajadores</li>
+                            <li>Reunión mensual con el contador asignado</li>
+                            <li>Informes para el banco y para la gerencia</li>
+                            <li>Declaración anual de renta incluida</li>
+                        </ul>
+                        <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20plan%20Empresa" target="_blank" rel="noopener">Pedir informes</a>
+                    </li>
+                </ul>
+
+                <p class="planes__aviso">
+                    Precios de referencia de la demostración, en soles y con el IGV incluido. No hay
+                    costo de inscripción ni cobro por cambiar de plan; los trabajos puntuales
+                    (constitución de empresa, orden de cuentas, inspecciones) se cotizan aparte.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== COMPARACIÓN ===================== -->
+
+    <section class="seccion seccion--papel2" id="comparacion">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">02</span> Comparación</p>
+                <h2>Los tres planes, punto por punto</h2>
+                <p class="seccion__entrada">
+                    Lo mismo que está arriba, en una tabla, para comparar sin releer. En el celular
+                    la tabla se desplaza en horizontal.
+                </p>
+            </header>
+
+            <div class="revelar">
+                <div class="tabla">
+                    <table>
+                        <caption class="sr-solo">Comparación de los tres planes mensuales del estudio</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Qué incluye</th>
+                                <th scope="col">Básico</th>
+                                <th scope="col">Emprende</th>
+                                <th scope="col">Empresa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row">Declaración mensual de IGV y renta</th>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Libros de ventas y compras</th>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Aviso antes de cada vencimiento</th>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Conciliación bancaria</th>
+                                <td><span class="tabla__no">No</span></td>
+                                <td>Una cuenta</td>
+                                <td>Todas las cuentas</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Planilla (T-Registro, boletas, CTS)</th>
+                                <td><span class="tabla__no">No</span></td>
+                                <td>Hasta 3 trabajadores</td>
+                                <td>Sin límite</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Estados financieros</th>
+                                <td><span class="tabla__no">No</span></td>
+                                <td>Cada tres meses</td>
+                                <td>Mensuales</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Contador asignado</th>
+                                <td>Equipo de turno</td>
+                                <td><span class="tabla__si">Sí</span></td>
+                                <td><span class="tabla__si">Sí</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Reunión con el contador</th>
+                                <td><span class="tabla__no">No</span></td>
+                                <td>Cada mes, si la pides</td>
+                                <td>Mensual, fija</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Respuesta a notificaciones de Sunat</th>
+                                <td>Se cotiza aparte</td>
+                                <td>Incluida</td>
+                                <td>Incluida</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Informes para el banco</th>
+                                <td><span class="tabla__no">No</span></td>
+                                <td>Uno al año</td>
+                                <td>Los que necesites</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Declaración anual de renta</th>
+                                <td>Se cotiza aparte</td>
+                                <td>Se cotiza aparte</td>
+                                <td><span class="tabla__si">Incluida</span></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Precio al mes</th>
+                                <td><strong>S/ 160</strong></td>
+                                <td><strong>S/ 280</strong></td>
+                                <td><strong>S/ 480</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="acciones-fila">
+                    <a class="boton boton--principal" href="contacto.html">
+                        Que me recomienden un plan
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CÓMO SE PAGA ===================== -->
+
+    <section class="seccion seccion--tinta" id="pagos">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello sello--claro"><span class="sello__num">03</span> Pagos</p>
+                <h2>Cómo se paga el mes</h2>
+                <p class="seccion__entrada">
+                    El plan se paga por adelantado, entre el 1 y el 5 de cada mes. Si empiezas a
+                    mitad de mes, se cobra la mitad.
+                </p>
+            </header>
+
+            <div>
+                <ol class="proceso">
+                    <li class="paso revelar" style="border-color: rgba(247,244,237,.18)">
+                        <h3>Se emite la boleta el día 1</h3>
+                        <p>Te llega por correo con el detalle del mes anterior. Si el plan cambió, se explica por qué.</p>
+                    </li>
+                    <li class="paso revelar" style="border-color: rgba(247,244,237,.18)">
+                        <h3>Pagas entre el 1 y el 5</h3>
+                        <p>Por transferencia, con Yape o en la oficina con tarjeta. Te enviamos la constancia el mismo día.</p>
+                    </li>
+                    <li class="paso revelar" style="border-color: rgba(247,244,237,.18)">
+                        <h3>Presentamos el mes</h3>
+                        <p>Con la documentación completa, las declaraciones van con cinco días de anticipación y te llega la constancia.</p>
+                    </li>
+                    <li class="paso revelar" style="border-color: rgba(247,244,237,.18)">
+                        <h3>Te llega el informe</h3>
+                        <p>Una hoja con las ventas, los gastos, los impuestos pagados y lo que viene. Si algo pide una decisión tuya, va anotado al final.</p>
+                    </li>
+                </ol>
+
+                <p class="acciones-fila">
+                    <a class="boton boton--principal" href="contacto.html?plan=emprende">Empezar con el plan Emprende</a>
+                    <a class="boton boton--claro" href="servicios.html">Ver los servicios puntuales</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">04</span> Preguntas</p>
+                <h2>Dudas sobre los planes</h2>
+                <p class="seccion__entrada">Las cuatro que más nos repiten antes de firmar.</p>
+            </header>
+
+            <div class="preguntas revelar">
+                <details>
+                    <summary>¿Cómo sé qué plan me toca?</summary>
+                    <p>Por el volumen de ventas, la cantidad de trabajadores y las cuentas bancarias. En la consulta miramos los últimos tres meses y te decimos en qué plan caes; no se contrata el plan equivocado para después subir el precio.</p>
+                </details>
+                <details>
+                    <summary>¿Puedo cambiar de plan a mitad de mes?</summary>
+                    <p>Sí, y sin costo. El cambio se aplica al mes siguiente y se prorratea la diferencia. Bajar de plan también se puede: solo pedimos que nos avises antes del día 25.</p>
+                </details>
+                <details>
+                    <summary>¿Qué pasa si un mes no tuve movimientos?</summary>
+                    <p>Se paga el plan igual: el trabajo de revisar que no haya nada pendiente se hace igual y las declaraciones en cero se presentan igual. Hay negocios de temporada que pausan el plan tres meses; eso se conversa en la consulta.</p>
+                </details>
+                <details>
+                    <summary>¿La consulta y la revisión inicial tienen costo?</summary>
+                    <p>No. La revisión de tus últimos 12 meses en Sunat y la propuesta de plan son gratuitas y no obligan a contratar. Si decides no seguir, la información que preparamos queda contigo.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>Te decimos qué plan te conviene, gratis</h2>
+                <p>Con tu clave SOL de consulta revisamos los últimos meses y te proponemos el plan con el número real, no con un estimado.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="contacto.html">
+                    Pedir la propuesta
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </a>
+                <a class="boton boton--claro" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20saber%20qu%C3%A9%20plan%20me%20conviene" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__sello" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><rect x="7.5" y="6.5" width="9" height="3.2" rx="1"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.4h2M11 16.4h2M14.5 16.4h2"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Vega</strong>
+                    <span>Contadores</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Estudio contable en Nuevo Chimbote. Llevamos la contabilidad, las planillas y los
+                impuestos de negocios y profesionales, con precio mensual fijo y un contador
+                asignado a cada cliente.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales del estudio contable">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Servicios">
+            <h3>Servicios</h3>
+            <ul>
+                <li><a href="servicios.html?area=tributario">Tributario</a></li>
+                <li><a href="servicios.html?area=contable">Contable</a></li>
+                <li><a href="servicios.html?area=laboral">Laboral</a></li>
+                <li><a href="servicios.html?area=societario">Societario</a></li>
+                <li><a href="servicios.html">Todos los servicios</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="El estudio">
+            <h3>El estudio</h3>
+            <ul>
+                <li><a href="index.html#equipo">Equipo</a></li>
+                <li><a href="planes.html">Planes mensuales</a></li>
+                <li><a href="index.html#preguntas">Preguntas frecuentes</a></li>
+                <li><a href="contacto.html#visitanos">Ubicación y horarios</a></li>
+                <li><a href="contacto.html">Agendar una consulta</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul class="pie__contacto">
+                <li>Av. Pardo 890, oficina 302, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 003</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:contacto@estudiovega.demo">contacto@estudiovega.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Estudio Contable Vega. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20saber%20qu%C3%A9%20plan%20me%20conviene" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>
