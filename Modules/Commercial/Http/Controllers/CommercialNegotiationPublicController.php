@@ -22,6 +22,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Modules\Commercial\Entities\CommercialNegotiation;
 use Modules\Commercial\Entities\CommercialNegotiationInvoice;
+use Modules\Commercial\Support\CommercialLegalLinks;
 use Modules\Commercial\Support\NegotiationConfirmedRecipients;
 
 class CommercialNegotiationPublicController extends Controller
@@ -73,6 +74,9 @@ class CommercialNegotiationPublicController extends Controller
             'ubigeo' => $this->ubigeo(),
             'paymentMethodCatalog' => PaymentMethod::with('bankAccount.bank')->get(),
             'bankAccounts' => BankAccount::with('bank')->where('status', 1)->get(),
+            // Enlaces legales que el cliente debe aceptar: se configuran en
+            // Comercial > Configuracion y aqui llegan ya como URL utilizable.
+            'legalLinks' => CommercialLegalLinks::all(),
         ]);
     }
 
@@ -96,6 +100,10 @@ class CommercialNegotiationPublicController extends Controller
 
         $data = $request->validate([
             'accepted' => ['required', 'accepted'],
+            // Los tres documentos legales que el cliente acepta antes de enviar sus datos.
+            'accepted_terminos' => ['required', 'accepted'],
+            'accepted_devoluciones' => ['required', 'accepted'],
+            'accepted_privacidad' => ['required', 'accepted'],
             // Mercado Pago: 'card' (pago con tarjeta) o 'evidence' (el cliente ya pago
             // por fuera y adjunta la captura). En los otros medios no se envia.
             'payment_option' => ['nullable', Rule::in(['card', 'evidence'])],
@@ -263,6 +271,8 @@ class CommercialNegotiationPublicController extends Controller
                     // Mercado Pago liquidado por fuera: el cliente declara el pago y
                     // adjunta su evidencia, no hay transaccion procesada en el sistema.
                     'payment_declared' => $this->paymentDeclared($negotiation, $data['payment_option'] ?? null),
+                    // Constancia de los tres documentos legales aceptados.
+                    'legal_accepted' => $this->legalAcceptance(),
                 ]),
                 'voucher_path' => $voucherPath ?: $negotiation->voucher_path,
                 // La fecha de emision del comprobante por defecto es la fecha en que el
@@ -556,6 +566,29 @@ class CommercialNegotiationPublicController extends Controller
     private function paymentDeclared(CommercialNegotiation $negotiation, ?string $paymentOption): bool
     {
         return $negotiation->payment_method === 'mercadopago' && $paymentOption === 'evidence';
+    }
+
+    /**
+     * Constancia de las aceptaciones legales: que documento acepto el cliente, en que
+     * enlace lo leyo y cuando lo hizo. Queda en el client_data de la negociacion como
+     * respaldo; no agrega claves al payload que viaja a n8n.
+     *
+     * @return array<string, mixed>
+     */
+    private function legalAcceptance(): array
+    {
+        $aceptaciones = [];
+
+        foreach (CommercialLegalLinks::all() as $key => $url) {
+            $aceptaciones[$key] = [
+                'aceptado' => true,
+                'url' => $url,
+            ];
+        }
+
+        $aceptaciones['aceptado_en'] = now()->toIso8601String();
+
+        return $aceptaciones;
     }
 
     /**

@@ -2,6 +2,7 @@ import {
     faGauge,
     faBriefcase,
     faFileSignature,
+    faGear,
     faHandshake,
     faUsers,
 } from "@fortawesome/free-solid-svg-icons";
@@ -44,6 +45,13 @@ const menuCommercial = {
             text: "Negociaciones",
             icom: faHandshake,
             permissions: "comm_negociaciones_listado",
+        },
+        {
+            route: menuRoute("comm_settings"),
+            status: false,
+            text: "Configuración",
+            icom: faGear,
+            permissions: "comm_configuracion_ver",
         },
     ],
 };
