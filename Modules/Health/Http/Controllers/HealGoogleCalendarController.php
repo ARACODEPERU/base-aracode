@@ -71,6 +71,12 @@ class HealGoogleCalendarController extends Controller
             return back()->with('error', 'Registra el Client ID y el Client Secret (una sola vez) en Parámetros del sistema antes de conectar.');
         }
 
+        // Google responde "Error 400: redirect_uri_mismatch" y no devuelve al
+        // sistema cuando la URL de callback no es válida para su consola.
+        if (($problem = $this->google->redirectUriProblem()) !== null) {
+            return back()->with('error', $problem);
+        }
+
         $state = Str::random(40);
 
         session([self::STATE_SESSION_KEY => $state]);

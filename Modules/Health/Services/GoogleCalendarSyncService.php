@@ -942,6 +942,8 @@ class GoogleCalendarSyncService
             'Se registran una sola vez en Parametros del sistema: Google Cloud Console > APIs y servicios > Credenciales > ID de cliente de OAuth (Aplicacion web).'
         );
 
+        $checks[] = $this->redirectUriCheck();
+
         // Sin credenciales no tiene sentido seguir: todo lo demas depende de ellas.
         if (! $credentialsReady) {
             return $checks;
@@ -969,6 +971,28 @@ class GoogleCalendarSyncService
         $checks[] = $this->webhookCheck();
 
         return $checks;
+    }
+
+    /**
+     * Comprobacion de la URL de callback (la que Google debe tener registrada).
+     *
+     * No necesita credenciales ni cuenta conectada: si la URL no sirve, el
+     * consentimiento nunca vuelve al sistema, Google muestra "Error 400:
+     * redirect_uri_mismatch" y en el sistema no queda rastro del intento.
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function redirectUriCheck(): array
+    {
+        $problem = $this->google->redirectUriProblem();
+
+        return $this->check(
+            'redirect_uri',
+            'URL de callback',
+            $problem === null,
+            $problem ?? 'Google debe tener registrada esta dirección: ' . $this->google->redirectUri(),
+            'Es la misma dirección en "URIs de redireccionamiento autorizados" de la credencial (SC-00011), sin barra final: si falta un tramo de la ruta (por ejemplo /health), Google responde redirect_uri_mismatch.'
+        );
     }
 
     /**
@@ -1094,7 +1118,9 @@ class GoogleCalendarSyncService
         }
 
         if (str_contains($lower, 'redirect_uri_mismatch')) {
-            return 'La URL de callback no esta registrada en la credencial de Google Cloud. Agregala como URI de redireccionamiento autorizado: ' . $this->google->redirectUri();
+            return 'La URL de callback no esta registrada (o no coincide letra por letra) en la credencial de Google Cloud. '
+                . 'Agregala como URI de redireccionamiento autorizado, completa y sin barra final: ' . $this->google->redirectUri()
+                . '. Google solo admite http:// en localhost o 127.0.0.1; en un dominio propio la dirección tiene que ser https://.';
         }
 
         if (str_contains($lower, 'accessnotconfigured')

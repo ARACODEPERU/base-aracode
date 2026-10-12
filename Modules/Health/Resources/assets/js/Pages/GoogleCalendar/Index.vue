@@ -646,6 +646,24 @@ const discard = (item) => {
                     reemplazarlos, hazlo desde
                     <a :href="parametersUrl" class="underline">Parámetros del sistema</a>.
                 </p>
+
+                <!-- La URL de callback se muestra siempre, no solo al registrar la
+                     credencial: con las credenciales ya puestas (el caso normal) no
+                     aparecía en ninguna parte y se confundía con la de notificaciones. -->
+                <div class="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <span class="block text-xs uppercase text-gray-400">
+                        URL de callback: la única que se registra en Google
+                    </span>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Debe estar tal cual en <em>URIs de redireccionamiento autorizados</em> del ID de cliente de OAuth.
+                        Si el sistema se abre con y sin <code>www</code>, agrega las dos variantes. El error de Google
+                        <strong>redirect_uri_mismatch</strong> significa que esta dirección falta o no coincide letra por letra.
+                    </p>
+                    <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <code class="break-all rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700">{{ redirectUri || '—' }}</code>
+                        <button type="button" class="btn btn-sm btn-outline-primary" @click="copyRedirectUri">Copiar</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Diagnóstico -->
@@ -699,8 +717,12 @@ const discard = (item) => {
                 </div>
 
                 <div class="mt-4 rounded border border-gray-200 p-3 text-xs dark:border-gray-700">
-                    <span class="block uppercase text-gray-400">URL de notificaciones</span>
+                    <span class="block uppercase text-gray-400">URL de notificaciones push (no se registra en Google)</span>
                     <code class="break-all">{{ channel.webhookUrl || channel.routeUrl || '—' }}</code>
+                    <p class="mt-2 text-warning">
+                        Esta dirección la usa el sistema para recibir los cambios; no se pega en Google Cloud. Lo que se pega en
+                        Google es la URL de callback que está arriba, en «Credenciales de la aplicación».
+                    </p>
                     <p v-if="!channel.publicWebhook" class="mt-2 text-warning">
                         Google solo entrega notificaciones a una URL HTTPS pública. En local no hay push: los cambios llegan por la
                         reconciliación programada cada {{ reconcileMinutes }} minutos.

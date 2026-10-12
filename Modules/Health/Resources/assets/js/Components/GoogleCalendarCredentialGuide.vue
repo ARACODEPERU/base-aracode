@@ -132,9 +132,13 @@ const copyCallbackUrl = async () => {
                         <li>Google <strong>exige HTTPS</strong>: solo admite <code>http://</code> en <code>localhost</code> y <code>127.0.0.1</code>.</li>
                         <li v-if="httpWarning">
                             Tu sistema está configurado en una dirección <code>http://</code> que Google no va a aceptar
-                            tal cual. Para probar en local usa un túnel HTTPS y ajusta <code>APP_URL</code> a esa
-                            dirección (el mismo túnel sirve para las notificaciones push con
-                            <code>HEALTH_GOOGLE_WEBHOOK_URL</code>); o conecta directamente desde el sistema publicado.
+                            tal cual: por eso, al pulsar «Continuar con Google», aparece
+                            <strong>Error 400: redirect_uri_mismatch</strong>. Para probar en local, entra al sistema
+                            por <code>http://localhost</code> o <code>http://127.0.0.1</code> (las únicas direcciones
+                            <code>http://</code> que Google admite) y registra esa misma dirección; si no, usa un túnel
+                            HTTPS y ajusta <code>APP_URL</code> a esa dirección (el mismo túnel sirve para las
+                            notificaciones push con <code>HEALTH_GOOGLE_WEBHOOK_URL</code>); o conecta directamente desde
+                            el sistema publicado por HTTPS.
                         </li>
                     </ul>
                 </div>

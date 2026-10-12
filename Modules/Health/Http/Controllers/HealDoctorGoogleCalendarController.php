@@ -67,6 +67,12 @@ class HealDoctorGoogleCalendarController extends Controller
             ], 403);
         }
 
+        // Sin esto, el doctor acaba en la pantalla "Acceso bloqueado" de Google
+        // sin entender por qué. Mejor explicarlo aquí, antes de salir.
+        if (($problem = $this->google->redirectUriProblem()) !== null) {
+            return response()->json(['message' => $problem], 409);
+        }
+
         $user = $request->user();
 
         if (! Hash::check($data['password'], (string) $user->password)) {
@@ -98,6 +104,10 @@ class HealDoctorGoogleCalendarController extends Controller
 
         if (! $this->canEnlace()) {
             return back()->with('error', 'El administrador desactivó que los doctores enlacen su agenda de Google.');
+        }
+
+        if (($problem = $this->google->redirectUriProblem()) !== null) {
+            return back()->with('error', $problem);
         }
 
         if (! $this->confirmationValid($request, $doctor)) {

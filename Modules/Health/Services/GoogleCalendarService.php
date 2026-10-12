@@ -188,6 +188,41 @@ class GoogleCalendarService
     }
 
     /**
+     * Explica por que Google va a rechazar la URL de callback (null si sirve).
+     *
+     * Google solo exime de HTTPS a localhost y a 127.0.0.1: una URL http://
+     * sobre cualquier otro dominio no se puede registrar como URI de
+     * redireccionamiento autorizado. Si se manda igual, el consentimiento
+     * termina en la pantalla de Google "Error 400: redirect_uri_mismatch" y el
+     * usuario nunca vuelve al sistema. Conviene detenerse antes y explicarlo.
+     */
+    public function redirectUriProblem(): ?string
+    {
+        $uri = $this->redirectUri();
+
+        if ($uri === '') {
+            return 'No se pudo calcular la dirección de callback del sistema. Revisa APP_URL y las rutas de Salud.';
+        }
+
+        // Todo lo que no sea http:// sirve (HTTPS, y en local localhost).
+        if (! str_starts_with(strtolower($uri), 'http://')) {
+            return null;
+        }
+
+        $host = strtolower((string) parse_url($uri, PHP_URL_HOST));
+
+        if ($host === 'localhost' || $host === '127.0.0.1' || $host === '::1') {
+            return null;
+        }
+
+        return 'Google rechazó la conexión (Error 400: redirect_uri_mismatch) porque el sistema está configurado '
+            . 'en ' . $uri . ', y Google solo admite http:// en localhost o 127.0.0.1; en cualquier otro dominio '
+            . 'exige HTTPS. Para el sistema publicado, entra por su dirección HTTPS y registra esa misma dirección '
+            . 'en "URIs de redireccionamiento autorizados" de la credencial de Google (SC-00011). Para probar en '
+            . 'local, abre el sistema en http://localhost o http://127.0.0.1 y registra esa dirección.';
+    }
+
+    /**
      * URL del consentimiento de Google para conectar la cuenta.
      */
     public function authorizationUrl(string $state): string
