@@ -104,6 +104,11 @@ class GoogleCalendarService
             'inbound' => $this->isInboundEnabled(),
             'configured' => $this->isConfigured(),
             'clientId' => $this->clientId() !== null,
+            // El Client ID no es un secreto: viaja en la URL de consentimiento
+            // que ve el navegador. Se expone para poder comprobar que la URI de
+            // redireccionamiento se registra en ESE cliente de Google Cloud
+            // (el Client Secret y el refresh token siguen sin mostrarse nunca).
+            'clientIdValue' => $this->clientId(),
             'clientSecret' => $this->clientSecret() !== null,
             'refreshToken' => $this->refreshToken() !== null,
             'channelToken' => $this->channelToken() !== null,

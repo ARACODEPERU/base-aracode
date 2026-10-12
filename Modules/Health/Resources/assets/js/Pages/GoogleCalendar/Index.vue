@@ -647,9 +647,22 @@ const discard = (item) => {
                     <a :href="parametersUrl" class="underline">Parámetros del sistema</a>.
                 </p>
 
-                <!-- La URL de callback se muestra siempre, no solo al registrar la
-                     credencial: con las credenciales ya puestas (el caso normal) no
-                     aparecía en ninguna parte y se confundía con la de notificaciones. -->
+                <!-- La URL de callback y el Client ID en uso se muestran siempre,
+                     no solo al registrar la credencial: con las credenciales ya
+                     puestas (el caso normal) no aparecían en ninguna parte, y el
+                     error redirect_uri_mismatch casi siempre es una de estas dos
+                     cosas: falta la URI, o se registro en otro cliente de Google. -->
+                <div class="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <span class="block text-xs uppercase text-gray-400">
+                        Client ID en uso (no es secreto)
+                    </span>
+                    <code class="mt-1 block break-all rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700">{{ channel.clientIdValue || '—' }}</code>
+                    <p class="mt-1 text-xs text-gray-500">
+                        La URI de callback de abajo debe estar registrada <strong>en este mismo ID de cliente de OAuth</strong>
+                        de Google Cloud. El Client Secret y el refresh token nunca se muestran.
+                    </p>
+                </div>
+
                 <div class="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
                     <span class="block text-xs uppercase text-gray-400">
                         URL de callback: la única que se registra en Google
