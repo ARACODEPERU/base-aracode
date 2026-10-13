@@ -107,11 +107,11 @@
                 :light="false"
             />
 
-            {{-- Tres por fila y compactas: el home presenta, no compara. La
-                 lista de prestaciones vive en /soluciones, que es donde el
-                 visitante ya está eligiendo; aquí basta la frase del producto.
-                 La tarjeta compacta ignora `features`, así que no hace falta
-                 pasar ninguna. --}}
+            {{-- Tres por fila y con la misma tarjeta compacta de /soluciones:
+                 el ecosistema se presenta igual en la portada y en el catálogo.
+                 La tarjeta compacta resume con la frase del producto —que es
+                 además el texto alternativo de su imagen— e ignora `features`,
+                 así que no hace falta pasar ninguna. --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {{-- KAPTA LMS --}}
                 <x-v2.product-card

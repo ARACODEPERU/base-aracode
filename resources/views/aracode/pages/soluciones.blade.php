@@ -70,7 +70,12 @@
     {{-- Products --}}
     <section class="py-20 lg:py-28 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {{-- Tres por fila y con la misma tarjeta compacta del home: el
+                 ecosistema se presenta igual en la portada y en el catálogo.
+                 La tarjeta compacta resume con la frase del producto —que es
+                 además el texto alternativo de su imagen— e ignora `features`,
+                 así que no hace falta pasar la lista de prestaciones. --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {{-- KAPTA LMS --}}
                 <x-v2.product-card
                     title="KAPTA LMS"
@@ -79,15 +84,8 @@
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s1.jpg') }}"
                     badge="Plataforma SaaS"
-                    :features="[
-                        'Gestión completa de cursos y módulos',
-                        'Aulas virtuales con contenido multimedia',
-                        'Certificación automática personalizada',
-                        'Control de matrículas y seguimiento',
-                        'Integración con pasarelas de pago',
-                        'Panel administrativo con métricas IA'
-                    ]"
                     :delay="1"
+                    :compacta="true"
                 />
 
                 {{-- KIRAFACT: el nombre comercial se escribe como el producto lo
@@ -100,15 +98,8 @@
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s2.jpg') }}"
                     badge="SUNAT"
-                    :features="[
-                        'Facturas, boletas y notas de crédito/débito',
-                        'Integración directa con SUNAT',
-                        'Panel comercial con reportes de ventas',
-                        'Generación automática de XML y PDF',
-                        'Alertas y validaciones avanzadas',
-                        'Seguridad y cumplimiento normativo'
-                    ]"
                     :delay="2"
+                    :compacta="true"
                 />
 
                 {{-- Desarrollo --}}
@@ -118,15 +109,8 @@
                     :href="route('solucion_desarrollo')"
                     image="{{ asset('themes/webpage/images/misc/s3.jpg') }}"
                     badge="Personalizado"
-                    :features="[
-                        'Análisis y diseño de soluciones',
-                        'Arquitectura moderna y escalable',
-                        'Integraciones con sistemas existentes',
-                        'Testing y garantía de calidad',
-                        'Soporte y mantenimiento continuo',
-                        'Documentación técnica completa'
-                    ]"
                     :delay="3"
+                    :compacta="true"
                 />
 
                 {{-- Pichanguero --}}
@@ -137,22 +121,16 @@
                     :nuevaPestana="true"
                     image="{{ asset('themes/webpage/images/misc/s4.webp') }}"
                     badge="App móvil"
-                    :features="[
-                        'Fixture automático y calendario de fechas',
-                        'Tabla de posiciones y desempates',
-                        'Estadísticas de jugadores y rankings',
-                        'Resultados en vivo y landing pública',
-                        'Inscripciones, cupos y pagos',
-                        'App móvil para equipos y jugadores'
-                    ]"
                     :delay="4"
+                    :compacta="true"
                 />
 
                 {{-- Automatización: servicio, no producto con web propia. Usa la
-                     misma estructura que las tarjetas de producto (franja
-                     superior + texto debajo) para que la fila se alinee; en la
-                     franja va un degradado con el icono, no una imagen. --}}
-                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-5">
+                     misma tarjeta compacta del resto y su misma estructura
+                     (franja superior + texto debajo) para que la fila se
+                     alinee; en la franja va un degradado con el icono, no una
+                     imagen. --}}
+                <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-5">
                     <div class="ara-product-media ara-product-media--azul">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -175,7 +153,7 @@
                 </article>
 
                 {{-- IA: mismo caso que Automatización. --}}
-                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-6">
+                <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-6">
                     <div class="ara-product-media ara-product-media--verde">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"/>
@@ -205,8 +183,10 @@
 
                      El enlace es interno (misma pestaña) y el precio de entrada
                      sale de config/servicio_web.php: el mismo que publican
-                     /paginas-web, el catálogo y la ficha de cada plantilla. --}}
-                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-7">
+                     /paginas-web, el catálogo y la ficha de cada plantilla.
+                     Lo que incluye el plan se detalla en /paginas-web: aquí
+                     basta la frase con el precio, como en el resto. --}}
+                <article class="ara-product-card ara-product-card--plano ara-product-card--compacta reveal reveal-delay-7">
                     <div class="ara-product-media ara-product-media--morado">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3c2.4 2.4 3.6 5.4 3.6 9s-1.2 6.6-3.6 9c-2.4-2.4-3.6-5.4-3.6-9S9.6 5.4 12 3z"/>
@@ -220,20 +200,6 @@
                             Elige una plantilla de nuestro catálogo y la publicamos con tu marca y tu dominio.
                             Desde {{ $precioDesdeServicio }} al mes, sin costo de implementación.
                         </p>
-                        <ul class="ara-product-features">
-                            <li>
-                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                Dominio, hosting y certificado de seguridad incluidos
-                            </li>
-                            <li>
-                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                Publicada en 3 a 10 días según el formato
-                            </li>
-                            <li>
-                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                Cambios de contenido incluidos todo el año
-                            </li>
-                        </ul>
                         <a href="{{ $urlServicioWeb }}" class="ara-btn ara-btn-primary ara-product-cta">
                             Ver los planes
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

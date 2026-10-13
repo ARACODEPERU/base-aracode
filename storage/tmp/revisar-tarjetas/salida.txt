@@ -1,0 +1,17 @@
+== /soluciones · tarjetas del ecosistema, 1440 px ==
+   tarjetas: 7 (3 servicios con franja sin imagen) · compactas: 7 · con frase: 7 · con lista: 0
+   filas: 3 · en la primera: 3 · medida de la tarjeta: 389 × 441 px
+   imágenes cargadas: 4 de 4 · franja 1.778 frente al diseño 1 (recorte de alto: 43.8% )
+   botón dentro de la tarjeta: sí · elementos fuera del ancho: 0
+== /soluciones, 800 px ==
+   filas: 4 · en la primera: 2 · medida: 364 × 427 px
+== /soluciones, 390 px ==
+   filas: 7 · en la primera: 1 · medida: 358 × 444 px
+== portada · tarjetas de producto, 1440 px ==
+   tarjetas: 3 · compactas: 3 · con frase: 3 · con lista: 0
+   filas: 1 · en la primera: 3 · medida de la tarjeta: 389 × 419 px
+== consola y red ==
+   errores de consola: ninguno
+   peticiones fallidas: ninguna
+
+Sin problemas: el catálogo presenta el mismo formato que la portada.

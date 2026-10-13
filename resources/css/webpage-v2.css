@@ -427,7 +427,7 @@ body {
    La imagen diseñada de cada producto es lo primero que se ve: ocupa la
    parte superior de la tarjeta, entera, con su proporción reservada y SIN
    veladuras encima. Debajo, sobre el navy de la tarjeta, va el texto
-   escaneable (categoría, nombre, prestaciones y enlace).
+   escaneable (categoría, nombre, resumen y enlace).
 
    Antes la imagen era el fondo de toda la tarjeta y dos degradados navy (uno
    del 60 % al 92 % y otro del 55 %) la cubrían para que el texto se pudiera
@@ -572,9 +572,9 @@ body {
     height: 1rem;
 }
 
-/* --- Variante compacta (home): tarjeta chica, pensada para rejillas de tres
-       por fila. El producto se resume con su frase corta en vez de con la lista
-       de prestaciones (que es la que compara, y vive en /soluciones). --- */
+/* --- Variante compacta (home y /soluciones): tarjeta chica, pensada para
+       rejillas de tres por fila. El producto se resume con su frase corta en
+       vez de con la lista de prestaciones, que alargaba las tarjetas. --- */
 .ara-product-card--compacta .ara-product-content {
     padding: 1.35rem 1.35rem 1.5rem;
 }

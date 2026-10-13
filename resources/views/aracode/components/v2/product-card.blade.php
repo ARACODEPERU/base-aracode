@@ -9,11 +9,11 @@
     Antes la imagen era el fondo de TODA la tarjeta y dos degradados navy la
     cubrían para que el texto se leyera: el diseño apenas se apreciaba.
 
-    El resumen de la tarjeta se cuenta por UNA sola vía, y `compacta` decide
-    cuál: el catálogo (/soluciones) lista las prestaciones y, en el home, tres
-    tarjetas por fila con la frase corta. Las dos a la vez —prestaciones y frase—
-    repetían lo mismo y alargaban la tarjeta; la frase sigue siendo, además, el
-    texto alternativo de la imagen cuando no se pasa `imageAlt`.
+    El resumen de la tarjeta se cuenta por UNA sola vía: la frase corta de
+    `description`, que además es el texto alternativo de la imagen cuando no se
+    pasa `imageAlt`. La lista de prestaciones sigue disponible para tarjetas que
+    la necesiten, pero la variante compacta la ignora a propósito: las dos a la
+    vez repetían lo mismo y alargaban la tarjeta.
 
     Propiedades:
     - `image`: URL de la imagen diseñada del producto. La proporción la fija
@@ -21,8 +21,8 @@
     - `description`: frase corta del producto. Se pinta como párrafo en la
       tarjeta compacta y es el texto alternativo de la imagen cuando no se pasa
       `imageAlt`.
-    - `compacta`: tarjeta chica, para rejillas de tres por fila. Ignora
-      `features` y muestra la frase corta en su lugar.
+    - `compacta`: tarjeta chica, para rejillas de tres por fila —la que usan
+      el home y /soluciones—. Ignora `features` y muestra la frase corta.
     - `imageAlt`: texto alternativo explícito, para cuando el diseño de la
       imagen necesite una descripción distinta de la frase comercial.
     - `nuevaPestana`: el destino es el sitio del producto (otra web). Se avisa
