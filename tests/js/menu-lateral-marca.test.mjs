@@ -33,7 +33,7 @@ const fuente = completo
     .replace(/^\s*\/\/.*$/gm, '');
 
 /** Clases base de las dos filas de opción del panel: la expandible y la simple. */
-const clasesBaseDeFila = [...fuente.matchAll(/class="group[^"]*border border-transparent[^"]*"/g)].map(
+const clasesBaseDeFila = [...fuente.matchAll(/class="group[^"]*rounded-xl border [^"]*"/g)].map(
     (coincidencia) => coincidencia[0]
 );
 
@@ -62,8 +62,24 @@ test('el fondo base de una fila no compite con el fondo de su estado activo', ()
 
     assert.match(
         fuente,
-        /return 'bg-white\/70 dark:bg-slate-800\/80';/,
-        'El fondo base de las filas debe decidirse en la rama inactiva de optionLinkClasses.'
+        /return 'border-transparent bg-white\/70 dark:bg-slate-800\/80';/,
+        'El fondo y el borde base de las filas deben decidirse en la rama inactiva de optionLinkClasses.'
+    );
+});
+
+test('el borde base de una fila no compite con el borde de sus estados destacados', () => {
+    for (const clase of clasesBaseDeFila) {
+        assert.doesNotMatch(
+            clase,
+            /border-transparent/,
+            'La fila volvió a fijar su borde en la clase base: el borde de marca del estado activo o abierto podría quedar anulado.'
+        );
+    }
+
+    assert.match(
+        fuente,
+        /return 'border-secondary\/40 bg-secondary-light text-secondary/,
+        'La opción abierta del menú dejó de llevar el borde del color secundario.'
     );
 });
 
@@ -92,6 +108,27 @@ test('las filas activas del panel y sus iconos se pintan con la marca', () => {
         'La fila activa del panel perdió su fondo de marca en modo oscuro.'
     );
     assert.match(fuente, /bg-primary-light text-primary shadow-sm/, 'El recuadro del icono activo dejó de usar la marca.');
+});
+
+test('el hover y la opción abierta del menú usan el color secundario', () => {
+    assert.match(
+        fuente,
+        /hover:border-secondary\/40 hover:bg-secondary-light hover:shadow-secondary\/15/,
+        'El hover de las filas del menú dejó de usar el color secundario.'
+    );
+    assert.match(
+        fuente,
+        /group-hover:bg-secondary-light group-hover:text-secondary/,
+        'El recuadro del icono dejó de seguir el color secundario al pasar el mouse.'
+    );
+    assert.match(
+        fuente,
+        /return 'border-secondary\/40 bg-secondary-light text-secondary/,
+        'La opción abierta del menú dejó de usar el color secundario.'
+    );
+    // El naranja era el color del hover en el diseño original: si vuelve, el menú
+    // deja de seguir la identidad del cliente.
+    assert.doesNotMatch(codigoDelMenu, /orange-/, 'El menú volvió al naranja fijo del tema original.');
 });
 
 test('el tooltip de los módulos usa el color secundario de la marca', () => {

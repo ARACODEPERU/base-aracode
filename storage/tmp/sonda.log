@@ -1,0 +1,65 @@
+== paso 1: iniciar sesión ==
+   sesión iniciada: sí
+== paso 2: Configuraciones → Branding ==
+   pantalla montada con dos selectores: sí
+   url: /branding/show
+   colores de los selectores: #0188ee y #4eae33
+   botón primario de la vista previa: rgb(1, 136, 238)
+   botón secundario de la vista previa: rgb(78, 174, 51)
+== paso 3: la marca en el resto del ERP ==
+   /company/show · botón primario: rgb(1, 136, 238) · texto primario: rgb(1, 136, 238)
+== paso 4: el menú lateral (sidebar) con el color primario ==
+   menú montado con sus opciones: NO
+   /dashboard · --brand-primary: 1 136 238 → rgb(1, 136, 238) · tinte: rgb(230, 243, 253)
+   módulo activo (a): fondo rgb(1, 136, 238) · texto rgb(255, 255, 255)
+   opción activa: fondo null · texto null · color de fondo liso
+      sin clase
+   ¿queda algún azul fijo en el menú? no
+   fondos pintados dentro del menú:
+      div · rgb(255, 255, 255) · bg-white dark:bg-slate-800 h-full flex overflow-hidden
+      div · rgb(230, 243, 253) · flex flex-col w-[70px] min-w-[70px] items-center bg-primary-ligh
+      div · rgb(230, 243, 253) · mb-6 flex h-10 w-10 items-center justify-center rounded-xl bg-pr
+      a · rgb(1, 136, 238) · group relative w-12 h-12 rounded-xl flex items-center justify-ce
+      div · rgb(74, 222, 128) · absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-400 borde
+      div · rgb(170, 170, 170) · ps__thumb-x
+      div · rgb(221, 221, 221) · ps__thumb-y
+      div · rgb(230, 243, 253) · h-10 w-10 rounded-full ring-2 ring-primary/30 dark:ring-primary/
+      div · rgba(248, 250, 252, 0.8) · relative flex min-w-[195px] flex-1 flex-col overflow-hidden bg-s
+      div · rgb(1, 136, 238) · flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-
+      div · rgba(255, 255, 255, 0.7) · rounded-xl border border-dashed border-slate-200 bg-white/70 py-
+      div · rgb(170, 170, 170) · ps__thumb-x
+   con --brand-primary forzado a 23 99 61 (#17633D):
+   la variable se declara en: .main-section
+   antes: rgb(1, 136, 238) · forzado: rgb(23, 99, 61) · devuelto: rgb(1, 136, 238)
+   en modo oscuro · fondo: rgb(1, 136, 238) · texto: rgb(255, 255, 255)
+   de vuelta en claro · fondo: rgb(1, 136, 238) · texto: rgb(255, 255, 255)
+   módulo Configuraciones resaltado: sí
+   opción «Branding»: fondo rgb(230, 243, 253) · texto rgb(1, 136, 238) · borde rgba(1, 136, 238, 0.4)
+      group relative block w-full overflow-hidden rounded-xl border px-3 py-
+== paso 5: el tooltip de los módulos con el color secundario ==
+   tooltip «Configuraciones» · fondo rgb(78, 174, 51)
+   --brand-secondary del documento: 78 174 51 → rgb(78, 174, 51)
+   con --brand-secondary forzado a 200 20 120 → rgb(200, 20, 120) · devuelto: rgb(78, 174, 51)
+== paso 6: el hover de las filas del menú con el color secundario ==
+   panel · /branding/show «Laravel - Branding» · ancho 300px · filas 9 · estado vacío no
+   filas de opción en el panel: 9
+   se probará con «Empresa» · fondo en reposo rgba(255, 255, 255, 0.7)
+   ninguna fila quedó con el mouse encima
+   este panel no tiene opciones desplegables que pulsar
+== paso 7: las franjas de las tarjetas del panel con el color primario ==
+   panel montado con tarjetas: sí
+   tarjetas con franja: 3 · --brand-primary: 1 136 238 → rgb(1, 136, 238)
+      rgb(1, 136, 238) (4px) · 
+      rgb(1, 136, 238) (4px) · 
+      rgb(1, 136, 238) (4px) · ResumenDíaSemanaMes
+== consola y red ==
+   errores de consola: ninguno
+   respuestas con error: 404 http://base-aracode.test/storage//img/isotipo.png | 419 http://base-aracode.test/person/birthdays | 419 http://base-aracode.test/sales/dashboard/total/summary/document | 419 http://base-aracode.test/sales/dashboard/total/balance/table
+
+AVISOS (preexistentes, ajenos a la marca):
+ - 404 http://base-aracode.test/storage//img/isotipo.png
+ - 419 http://base-aracode.test/person/birthdays
+ - 419 http://base-aracode.test/sales/dashboard/total/summary/document
+ - 419 http://base-aracode.test/sales/dashboard/total/balance/table
+
+Sin problemas de marca: los colores se guardan y el ERP se pinta con ellos.

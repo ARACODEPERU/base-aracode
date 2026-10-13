@@ -34,12 +34,24 @@
    en modo oscuro · fondo: rgb(1, 136, 238) · texto: rgb(255, 255, 255)
    de vuelta en claro · fondo: rgb(1, 136, 238) · texto: rgb(255, 255, 255)
    módulo Configuraciones resaltado: sí
-   opción «Branding»: fondo rgb(230, 243, 253) · texto rgb(1, 136, 238)
-      group relative block w-full overflow-hidden rounded-xl border border-t
+   opción «Branding»: fondo rgb(230, 243, 253) · texto rgb(1, 136, 238) · borde rgba(1, 136, 238, 0.4)
+      group relative block w-full overflow-hidden rounded-xl border px-3 py-
 == paso 5: el tooltip de los módulos con el color secundario ==
    tooltip «Configuraciones» · fondo rgb(78, 174, 51)
    --brand-secondary del documento: 78 174 51 → rgb(78, 174, 51)
    con --brand-secondary forzado a 200 20 120 → rgb(200, 20, 120) · devuelto: rgb(78, 174, 51)
+== paso 6: el hover de las filas del menú con el color secundario ==
+   panel · /branding/show «Laravel - Branding» · ancho 300px · filas 9 · estado vacío no
+   filas de opción en el panel: 9
+   se probará con «Empresa» · fondo en reposo rgba(255, 255, 255, 0.7)
+   ninguna fila quedó con el mouse encima
+   este panel no tiene opciones desplegables que pulsar
+== paso 7: las franjas de las tarjetas del panel con el color primario ==
+   panel montado con tarjetas: sí
+   tarjetas con franja: 3 · --brand-primary: 1 136 238 → rgb(1, 136, 238)
+      rgb(1, 136, 238) (4px) · 
+      rgb(1, 136, 238) (4px) · 
+      rgb(1, 136, 238) (4px) · ResumenDíaSemanaMes
 == consola y red ==
    errores de consola: ninguno
-   respuestas con error: 404 http://base-aracode.test/storage//img/isotipo.png | 419 http://base-aracode.test/sales/dashboard/total/balance/table | 419 http://base-aracode.test/sales/dashboard/total/summary/document | 419 http://base-aracode.test/person/birthdays
+   respuestas con error: 404 http://base-aracode.test/storage//img/isotipo.png | 419 http://base-aracode.test/person/birthdays | 419 http://base-aracode.test/sales/dashboard/total/summary/document | 419 http://base-aracode.test/sales/dashboard/total/balance/table

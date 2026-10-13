@@ -421,10 +421,11 @@
     /*
      * Clases del enlace de una opción del menú.
      *
-     * Las ramas son excluyentes a propósito: el fondo de la fila activa lleva la
-     * marca y no puede convivir con el fondo base (`bg-white/70` en claro,
-     * `bg-slate-800/80` en oscuro) en la misma lista de clases. Cuando convivían,
-     * ganaba el fondo base y el estado activo se quedaba sin su color.
+     * Las ramas son excluyentes a propósito: ni el fondo ni el borde del estado
+     * activo pueden convivir con los de la fila en reposo (`bg-white/70` y
+     * `border-transparent` en claro, `bg-slate-800/80` en oscuro). Cuando
+     * convivían, ganaba la clase base y los estados destacados se quedaban sin
+     * su color de marca.
      */
     const optionLinkClasses = (option) => {
         if (isDashboardOption(option)) {
@@ -441,10 +442,10 @@
         }
 
         if (isOptionExpanded(option)) {
-            return 'border-orange-200 bg-orange-50 text-orange-800 shadow-sm shadow-orange-100 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-100 dark:shadow-orange-950/30';
+            return 'border-secondary/40 bg-secondary-light text-secondary shadow-sm shadow-secondary/15 dark:border-secondary/40 dark:bg-secondary/20 dark:text-white dark:shadow-secondary/20';
         }
 
-        return 'bg-white/70 dark:bg-slate-800/80';
+        return 'border-transparent bg-white/70 dark:bg-slate-800/80';
     };
 
     const optionIconBoxClasses = (option) => {
@@ -456,7 +457,7 @@
 
         return isOptionActive(option)
             ? 'bg-primary/15 text-primary dark:bg-primary/25 dark:text-white'
-            : 'bg-slate-100 text-slate-500 group-hover:bg-orange-100 group-hover:text-orange-600 dark:bg-slate-700 dark:text-slate-300 dark:group-hover:bg-orange-900/50 dark:group-hover:text-orange-300';
+            : 'bg-slate-100 text-slate-500 group-hover:bg-secondary-light group-hover:text-secondary dark:bg-slate-700 dark:text-slate-300 dark:group-hover:bg-secondary/20 dark:group-hover:text-white';
     };
 
     const optionIconClasses = (option) => {
@@ -752,7 +753,7 @@
                                 <template v-if="isExpandableOption(option)">
                                     <button
                                         @click="handleOptionClick(option.text, true)"
-                                        class="group w-full rounded-xl border border-transparent px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
+                                        class="group w-full rounded-xl border px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-secondary/40 hover:bg-secondary-light hover:shadow-secondary/15 dark:shadow-slate-950/20 dark:hover:border-secondary/40 dark:hover:bg-secondary/20"
                                         :class="optionLinkClasses(option)"
                                     >
                                         <div class="flex items-center justify-between gap-3">
@@ -794,7 +795,7 @@
                                     <Link
                                         :href="option.route"
                                         @click="handleOptionClick(option.text)"
-                                        class="group relative block w-full overflow-hidden rounded-xl border border-transparent px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-orange-200 hover:bg-orange-50 hover:shadow-orange-100/70 dark:shadow-slate-950/20 dark:hover:border-orange-900/60 dark:hover:bg-orange-950/30"
+                                        class="group relative block w-full overflow-hidden rounded-xl border px-3 py-2.5 text-left shadow-sm shadow-slate-100/80 transition-all duration-200 hover:border-secondary/40 hover:bg-secondary-light hover:shadow-secondary/15 dark:shadow-slate-950/20 dark:hover:border-secondary/40 dark:hover:bg-secondary/20"
                                         :class="optionLinkClasses(option)"
                                     >
                                         <div class="relative flex items-center justify-between gap-3">
@@ -857,7 +858,7 @@
                                         <Link
                                                 :href="subOption.route"
                                                 @click="handleSubOptionClick(option.text, subOption.text)"
-                                                class="block cursor-pointer rounded-lg px-3 py-2 text-sm text-slate-600 transition-all duration-200 hover:bg-orange-50 hover:text-orange-700 dark:text-slate-300 dark:hover:bg-orange-950/30 dark:hover:text-orange-200"
+                                                class="block cursor-pointer rounded-lg px-3 py-2 text-sm text-slate-600 transition-all duration-200 hover:bg-secondary-light hover:text-secondary dark:text-slate-300 dark:hover:bg-secondary/20 dark:hover:text-white"
                                                 :style="{ transitionDelay: `${Math.min(subIndex * 35, 140)}ms` }"
                                                 :class="{
                                                     'bg-primary-light text-primary shadow-sm shadow-primary/15 dark:bg-primary/20 dark:text-white dark:shadow-primary/20': activeSubOption === subOption.text

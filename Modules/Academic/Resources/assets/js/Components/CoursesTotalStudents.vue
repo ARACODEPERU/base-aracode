@@ -96,7 +96,7 @@
     });
 </script>
 <template>
-    <div class="bg-white border border-gray-200 border-t-4 border-t-blue-600 shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-blue-500 dark:shadow-neutral-700/70">
+    <div class="bg-white border border-gray-200 border-t-4 border-t-primary shadow-2xs rounded-xl dark:bg-neutral-900 dark:border-neutral-700 dark:border-t-primary dark:shadow-neutral-700/70">
         <div class="p-4 md:p-5">
             <template v-if="displayChartBar">
                 <div class="flex items-center justify-between">

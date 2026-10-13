@@ -15,6 +15,8 @@
 
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 const BASE = (process.argv[2] ?? 'http://base-aracode.test').replace(/\/$/, '');
 const LOGIN = BASE + '/login';
@@ -26,7 +28,21 @@ const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const PUERTO = 9356;
 
 await mkdir(SALIDA, { recursive: true });
-await rm(SALIDA + 'perfil', { recursive: true, force: true });
+
+/*
+ * El perfil de Chrome vive en la carpeta temporal del sistema, no en el
+ * proyecto: dentro del repositorio dejaba miles de archivos del navegador en
+ * `git status`. Se borra el de la corrida anterior para arrancar limpio y, si
+ * Windows lo tiene bloqueado (Defender, un Chrome zombi), se usa uno nuevo.
+ */
+let PERFIL = path.join(tmpdir(), 'revisar-branding-empresa-perfil');
+
+try {
+    await rm(PERFIL, { recursive: true, force: true });
+} catch (error) {
+    PERFIL = path.join(tmpdir(), 'revisar-branding-empresa-perfil-' + Date.now());
+    console.warn(`aviso: no se pudo limpiar el perfil anterior (${error.code ?? error.message}); se usa uno nuevo.`);
+}
 
 /** Credenciales del .env, sin exponerlas: nunca se imprimen ni se guardan. */
 async function credenciales() {
@@ -57,7 +73,7 @@ const credencialesLogin = await credenciales();
 const chrome = spawn(CHROME, [
     '--headless=new',
     `--remote-debugging-port=${PUERTO}`,
-    '--user-data-dir=' + SALIDA.replace(/\//g, '\\') + 'perfil',
+    '--user-data-dir=' + PERFIL.replace(/\//g, '\\'),
     '--host-resolver-rules=MAP base-aracode.test 127.0.0.1',
     '--hide-scrollbars',
     '--no-first-run',
@@ -142,6 +158,25 @@ const anota = (linea) => {
     console.log(linea);
 };
 
+/*
+ * El informe puede estar abierto en un visor y Windows bloquea la escritura: se
+ * reintenta y, si no se puede guardar, queda igualmente en la salida de consola.
+ */
+async function guardarInforme() {
+    for (let intento = 1; intento <= 3; intento++) {
+        try {
+            await writeFile(SALIDA + 'informe.txt', informe.join('\n') + '\n');
+
+            return true;
+        } catch (error) {
+            console.warn(`aviso: no se pudo guardar informe.txt (intento ${intento}, ${error.code ?? error.message})`);
+            await esperar(400 * intento);
+        }
+    }
+
+    return false;
+}
+
 async function abrir(ancho, alto, url) {
     const { targetId } = await cdp('Target.createTarget', { url: 'about:blank' });
     const { sessionId } = await cdp('Target.attachToTarget', { targetId, flatten: true });
@@ -159,10 +194,27 @@ async function abrir(ancho, alto, url) {
     return sessionId;
 }
 
+/*
+ * Guarda una captura. En Windows el archivo puede estar abierto por un visor o
+ * por el indexador y la escritura falla con un error genérico: se reintenta y,
+ * si sigue bloqueado, la revisión continúa sin esa imagen en lugar de abortar.
+ */
 async function captura(sessionId, archivo) {
     const { data } = await cdp('Page.captureScreenshot', { format: 'png' }, sessionId);
+    const bytes = Buffer.from(data, 'base64');
 
-    await writeFile(SALIDA + archivo, Buffer.from(data, 'base64'));
+    for (let intento = 1; intento <= 3; intento++) {
+        try {
+            await writeFile(SALIDA + archivo, bytes);
+
+            return true;
+        } catch (error) {
+            anota(`   aviso: no se pudo guardar ${archivo} (intento ${intento}, ${error.code ?? error.message})`);
+            await esperar(400 * intento);
+        }
+    }
+
+    return false;
 }
 
 async function esperarA(sessionId, expresion, limite = 20000) {
@@ -216,7 +268,7 @@ anota(`   sesión iniciada: ${entro ? 'sí' : 'NO'}`);
 if (!entro) {
     anota(`   la página se quedó en: ${await evaluar(sesion, 'return location.pathname;')}`);
     await captura(sesion, 'login-no-entro.png');
-    await writeFile(SALIDA + 'informe.txt', informe.join('\n') + '\n');
+    await guardarInforme();
     ws.close();
     chrome.kill();
     process.exit(1);
@@ -470,6 +522,7 @@ const opcionBranding = await evaluar(sesion, `
     }
 
     const estilo = getComputedStyle(enlace);
+    const canales = (getComputedStyle(document.documentElement).getPropertyValue('--brand-primary') || '').trim();
 
     return {
         hay: true,
@@ -478,13 +531,15 @@ const opcionBranding = await evaluar(sesion, `
         fondo: estilo.backgroundColor,
         gradiente: estilo.backgroundImage === 'none' ? null : estilo.backgroundImage.slice(0, 80),
         texto: estilo.color,
+        borde: estilo.borderColor,
+        bordeEsperado: canales ? 'rgba(' + canales.split(/\\s+/).join(', ') + ', 0.4)' : null,
     };
 `);
 
 anota(`   módulo Configuraciones resaltado: ${opcionBranding.modulo ? 'sí' : 'NO'}`);
 
 if (opcionBranding.hay) {
-    anota(`   opción «Branding»: fondo ${opcionBranding.fondo} · texto ${opcionBranding.texto}`);
+    anota(`   opción «Branding»: fondo ${opcionBranding.fondo} · texto ${opcionBranding.texto} · borde ${opcionBranding.borde}`);
     anota(`      ${opcionBranding.clase}`);
 } else {
     anota('   opción «Branding»: NO aparece en el menú');
@@ -567,6 +622,243 @@ const tooltipForzado = await evaluar(sesion, `
 
 anota(`   con --brand-secondary forzado a 200 20 120 → ${tooltipForzado.fondo} · devuelto: ${tooltipForzado.devuelto}`);
 
+anota('== paso 6: el hover de las filas del menú con el color secundario ==');
+
+await evaluar(sesion, `localStorage.setItem('sidebar', 'true'); return true;`);
+await cdp('Page.navigate', { url: BRANDING }, sesion);
+await esperarA(sesion, "document.querySelector('.sidebar-option-item')", 20000);
+
+// Las filas del panel solo existen cuando el módulo activo tiene opciones: se
+// comprueba en qué estado quedó el menú antes de elegir la fila de prueba.
+const estadoDelPanel = await evaluar(sesion, `
+    const sidebar = document.querySelector('.sidebar');
+
+    return {
+        url: location.pathname,
+        titulo: document.title,
+        ancho: sidebar ? getComputedStyle(sidebar).width : null,
+        filas: document.querySelectorAll('.sidebar-option-item a, .sidebar-option-item button').length,
+        vacio: !!document.querySelector('.sidebar .border-dashed'),
+        modulo: localStorage.getItem('activeModule'),
+        menu: localStorage.getItem('menu'),
+        recogido: localStorage.getItem('sidebar'),
+        texto: (document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 160),
+    };
+`);
+
+anota(`   panel · ${estadoDelPanel.url} «${estadoDelPanel.titulo}» · ancho ${estadoDelPanel.ancho} · filas ${estadoDelPanel.filas} · estado vacío ${estadoDelPanel.vacio ? 'sí' : 'no'}`);
+
+if (!estadoDelPanel.ancho) {
+    anota(`   la página no montó el menú: ${estadoDelPanel.texto}`);
+}
+
+// Plan B cuando el módulo en curso no tiene opciones: se abren los módulos del
+// rail (solo los botones: los enlaces cambiarían de página) hasta que aparezcan.
+if (estadoDelPanel.filas === 0) {
+    const abrioModulo = await evaluar(sesion, `
+        const botones = [...document.querySelectorAll('.sidebar button')];
+
+        for (const boton of botones) {
+            boton.click();
+
+            await new Promise((r) => setTimeout(r, 700));
+
+            if (document.querySelector('.sidebar-option-item a, .sidebar-option-item button')) {
+                return true;
+            }
+        }
+
+        return false;
+    `);
+
+    anota(`   se abrió un módulo con opciones: ${abrioModulo ? 'sí' : 'NO'}`);
+}
+
+const filaElegida = await evaluar(sesion, `
+    const filas = [...document.querySelectorAll('.sidebar-option-item a, .sidebar-option-item button')];
+    const retrato = (el) => ({
+        fondo: getComputedStyle(el).backgroundColor,
+        clase: String(el.className || '').replace(/\\s+/g, ' ').slice(0, 70),
+    });
+    // Fila en reposo: la que se queda con el fondo base del panel; las que llevan
+    // la marca encima (activa, abierta o con el mouse) no sirven de referencia.
+    const fila = filas.find((el) => ['rgba(255, 255, 255, 0.7)', 'rgba(30, 41, 59, 0.8)'].includes(getComputedStyle(el).backgroundColor));
+
+    if (!fila) {
+        return { sinFila: true, retratos: filas.map(retrato) };
+    }
+
+    // La fila tiene que estar a la vista para que el puntero del navegador caiga
+    // de verdad sobre ella.
+    fila.scrollIntoView({ block: 'center' });
+
+    await new Promise((r) => setTimeout(r, 300));
+
+    const caja = fila.getBoundingClientRect();
+    const icono = fila.querySelector('.rounded-lg');
+
+    return {
+        sinFila: false,
+        texto: (fila.textContent || '').trim().slice(0, 40),
+        filas: filas.length,
+        x: Math.round(caja.left + caja.width / 2),
+        y: Math.round(caja.top + caja.height / 2),
+        fondoAntes: getComputedStyle(fila).backgroundColor,
+        fondoDelIconoAntes: icono ? getComputedStyle(icono).backgroundColor : null,
+    };
+`);
+
+anota(`   filas de opción en el panel: ${filaElegida?.filas ?? 0}`);
+
+if (filaElegida?.sinFila) {
+    anota('   ninguna fila quedó en reposo; así está el panel:');
+
+    for (const retrato of filaElegida.retratos) {
+        anota(`      ${retrato.fondo} · ${retrato.clase}`);
+    }
+}
+
+if (filaElegida && !filaElegida.sinFila) {
+    anota(`   se probará con «${filaElegida.texto}» · fondo en reposo ${filaElegida.fondoAntes}`);
+
+    // El estado `:hover` de CSS solo lo activa el ratón del navegador, así que el
+    // puntero se mueve por el protocolo de DevTools y no con eventos armados
+    // dentro de la página. El movimiento se repite un poco desplazado porque el
+    // primer aviso puede caer antes de que el panel termine de colocarse.
+    for (let intento = 1; intento <= 3; intento++) {
+        await cdp(
+            'Input.dispatchMouseEvent',
+            { type: 'mouseMoved', x: filaElegida.x + intento - 1, y: filaElegida.y + intento - 1 },
+            sesion
+        );
+        await esperar(500 + intento * 200);
+
+        const hayHover = await evaluar(sesion, "return !!document.querySelector('.sidebar-option-item a:hover, .sidebar-option-item button:hover');");
+
+        if (hayHover) {
+            break;
+        }
+    }
+}
+
+const hover = await evaluar(sesion, `
+    const fila = document.querySelector('.sidebar-option-item a:hover, .sidebar-option-item button:hover');
+    const icono = fila ? fila.querySelector('.rounded-lg') : null;
+    const canales = (getComputedStyle(document.documentElement).getPropertyValue('--brand-secondary') || '').trim();
+    const conPeso = (peso) => canales
+        ? 'rgb(' + canales.split(/\\s+/).map((c) => Math.round(Number(c) + (255 - Number(c)) * peso)).join(', ') + ')'
+        : null;
+
+    return {
+        texto: fila ? (fila.textContent || '').trim().slice(0, 40) : null,
+        fondo: fila ? getComputedStyle(fila).backgroundColor : null,
+        borde: fila ? getComputedStyle(fila).borderColor : null,
+        fondoDelIcono: icono ? getComputedStyle(icono).backgroundColor : null,
+        colorDelIcono: icono ? getComputedStyle(icono).color : null,
+        secundario: conPeso(0),
+        tinte: conPeso(0.9),
+    };
+`);
+
+if (hover.texto) {
+    anota(`   con el mouse encima de «${hover.texto}»:`);
+    anota(`      fondo ${hover.fondo} (tinte del secundario: ${hover.tinte})`);
+    anota(`      borde ${hover.borde} · icono ${hover.colorDelIcono} sobre ${hover.fondoDelIcono}`);
+} else {
+    anota('   ninguna fila quedó con el mouse encima');
+}
+
+await captura(sesion, 'sidebar-hover-1440.png');
+
+// La opción abierta (con sus subopciones desplegadas) es el otro estado
+// destacado del panel: antes era naranja y ahora comparte el color secundario.
+/*
+ * La otra fila destacada del panel es la que el usuario acaba de pulsar: una
+ * opción con subopciones queda seleccionada y desplegada a la vez. Se comprueba
+ * que toma el color primario con su borde, que es lo que antes se quedaba sin
+ * pintar porque el borde base ganaba la partida.
+ */
+const seleccionada = await evaluar(sesion, `
+    const desplegables = () => [...document.querySelectorAll('.sidebar-option-item button')];
+
+    // Si el módulo en curso no tiene opciones desplegables, se abren los del rail
+    // (solo los botones: los enlaces cambiarían de página) hasta encontrar uno.
+    if (desplegables().length === 0) {
+        const modulos = [...document.querySelectorAll('.sidebar button')].filter((el) => !el.closest('.sidebar-option-item'));
+
+        for (const modulo of modulos) {
+            modulo.click();
+
+            await new Promise((r) => setTimeout(r, 800));
+
+            if (desplegables().length > 0) {
+                break;
+            }
+        }
+    }
+
+    const fila = desplegables()[0];
+
+    if (!fila) {
+        return { hay: false };
+    }
+
+    fila.click();
+
+    await new Promise((r) => setTimeout(r, 900));
+
+    return {
+        hay: true,
+        texto: (fila.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 40),
+        fondo: getComputedStyle(fila).backgroundColor,
+        borde: getComputedStyle(fila).borderColor,
+        color: getComputedStyle(fila).color,
+    };
+`);
+
+const bordePrimario = menu.variable ? 'rgba(' + menu.variable.split(/\s+/).join(', ') + ', 0.4)' : null;
+
+if (seleccionada.hay) {
+    anota(`   opción pulsada «${seleccionada.texto}» · fondo ${seleccionada.fondo} (tinte del primario: ${menu.tinte}) · borde ${seleccionada.borde} · texto ${seleccionada.color}`);
+    await captura(sesion, 'sidebar-opcion-seleccionada-1440.png');
+} else {
+    anota('   este panel no tiene opciones desplegables que pulsar');
+}
+
+anota('== paso 7: las franjas de las tarjetas del panel con el color primario ==');
+
+await cdp('Page.navigate', { url: BASE + '/dashboard' }, sesion);
+const panelListo = await esperarA(sesion, "document.querySelector('.border-t-4')", 30000);
+
+anota(`   panel montado con tarjetas: ${panelListo ? 'sí' : 'NO'}`);
+
+// El borde superior de las tarjetas era un azul fijo de Tailwind. Se compara el
+// color computado con la variable de marca que resuelve el propio elemento: con
+// el azul de Tailwind (37, 99, 235) la comparación falla, con la marca no.
+const franjas = await evaluar(sesion, `
+    const tarjetas = [...document.querySelectorAll('.border-t-4')];
+    const canales = (getComputedStyle(tarjetas[0] ?? document.documentElement).getPropertyValue('--brand-primary') || '').trim();
+
+    return {
+        cuantas: tarjetas.length,
+        variable: canales,
+        esperado: canales ? 'rgb(' + canales.split(/\\s+/).join(', ') + ')' : null,
+        lista: tarjetas.slice(0, 8).map((el) => ({
+            borde: getComputedStyle(el).borderTopColor,
+            ancho: getComputedStyle(el).borderTopWidth,
+            texto: (el.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 28),
+        })),
+    };
+`);
+
+anota(`   tarjetas con franja: ${franjas.cuantas} · --brand-primary: ${franjas.variable} → ${franjas.esperado}`);
+
+for (const franja of franjas.lista ?? []) {
+    anota(`      ${franja.borde} (${franja.ancho}) · ${franja.texto}`);
+}
+
+await captura(sesion, 'dashboard-franjas-1440.png');
+
 anota('== consola y red ==');
 anota(`   errores de consola: ${consola.length === 0 ? 'ninguno' : consola.join(' | ')}`);
 
@@ -577,7 +869,7 @@ const avisos = red.filter((linea) => !linea.includes('favicon'));
 
 anota(`   respuestas con error: ${avisos.length === 0 ? 'ninguna' : avisos.join(' | ')}`);
 
-await writeFile(SALIDA + 'informe.txt', informe.join('\n') + '\n');
+await guardarInforme();
 
 ws.close();
 chrome.kill();
@@ -596,6 +888,9 @@ const problemas = [
     ...(opcionBranding.hay && opcionBranding.fondo === menu.tinte
         ? []
         : [`la fila activa del menú quedó con fondo ${opcionBranding?.fondo}, no en el tinte de la marca ${menu.tinte}`]),
+    ...(opcionBranding.hay && opcionBranding.borde !== opcionBranding.bordeEsperado
+        ? [`la fila activa del menú quedó con borde ${opcionBranding.borde}, no con el primario ${opcionBranding.bordeEsperado}`]
+        : []),
     ...(oscuro.fondo === menu.esperado && oscuro.texto === 'rgb(255, 255, 255)'
         ? []
         : [`en modo oscuro el ítem activo quedó en fondo ${oscuro.fondo} con texto ${oscuro.texto}, no en el primario ${menu.esperado}`]),
@@ -611,6 +906,24 @@ const problemas = [
     ...(tooltip.hay && (tooltipForzado.fondo !== 'rgb(200, 20, 120)' || tooltipForzado.devuelto !== tooltip.fondo)
         ? [`al forzar --brand-secondary el tooltip pasó por ${tooltipForzado.fondo} y volvió a ${tooltipForzado.devuelto}`]
         : []),
+    ...(filaElegida && !filaElegida.sinFila ? [] : ['no se encontró una fila tranquila del menú para probar el hover']),
+    ...(filaElegida && !filaElegida.sinFila && hover.fondo === hover.tinte
+        ? []
+        : [`la fila con el mouse encima quedó en ${hover.fondo}, no en el tinte del secundario ${hover.tinte}`]),
+    ...(filaElegida && !filaElegida.sinFila && hover.colorDelIcono === hover.secundario
+        ? []
+        : [`el icono de la fila con el mouse encima quedó en ${hover.colorDelIcono}, no en el secundario ${hover.secundario}`]),
+    ...(seleccionada.hay && seleccionada.fondo !== menu.tinte
+        ? [`la opción pulsada quedó con fondo ${seleccionada.fondo}, no en el tinte del primario ${menu.tinte}`]
+        : []),
+    ...(seleccionada.hay && seleccionada.borde !== bordePrimario
+        ? [`el borde de la opción pulsada quedó en ${seleccionada.borde}, no en el primario ${bordePrimario}`]
+        : []),
+    ...(franjas.cuantas === 0
+        ? ['no se encontró ninguna tarjeta con franja superior en el panel del dashboard']
+        : (franjas.lista ?? []).every((franja) => franja.borde === franjas.esperado)
+            ? []
+            : [`las franjas del panel quedaron en ${(franjas.lista ?? []).map((f) => f.borde).join(', ')}, no en el primario ${franjas.esperado}`]),
     ...(medidas.botonVistaPrevia === 'rgb(1, 136, 238)' ? [] : [`la vista previa quedó en ${medidas.botonVistaPrevia}, no en el azul guardado`]),
     ...(fuera.boton === 'rgb(1, 136, 238)' ? [] : [`el botón primario del ERP quedó en ${fuera.boton}, no en el azul guardado`]),
 ];
