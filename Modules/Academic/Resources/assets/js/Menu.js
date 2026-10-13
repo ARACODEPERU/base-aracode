@@ -24,7 +24,8 @@ import {
     faBell,
     faQrcode,
     faMoneyBillWave,
-    faSliders
+    faSliders,
+    faFlask
 
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -241,6 +242,9 @@ const colegioGroup = {
         'aca_school_porteria_escaner',
         'aca_school_porteria_reporte',
         'aca_school_sms_configuracion',
+        // Permiso exclusivo del rol admin (llenar/borrar datos de prueba y
+        // dejar el sistema en modo produccion).
+        'aca_school_modo_prueba',
     ],
     items: [
         {
@@ -546,6 +550,27 @@ const colegioGroup = {
                         <li>🔔 <span>Interruptor general y avisos por entrada, salida, tardanza o salida anticipada.</span></li>
                         <li>✍️ <span>Mensajes editables con variables como {alumno}, {hora} y {colegio}.</span></li>
                         <li>🧪 <span>Vista previa y SMS de prueba.</span></li>
+                    </ul>
+                `,
+                placement: 'right'
+            },
+        },
+        {
+            route: route('aca_school_test_mode'),
+            status: false,
+            text: 'Modos de Prueba',
+            icom: faFlask,
+            permissions: 'aca_school_modo_prueba',
+            info: {
+                title: 'Modos de Prueba',
+                content: `
+                    <p class="text-sm text-gray-500 mb-3">
+                        Solo para el rol admin: probar el sistema con el colegio lleno de datos:
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                        <li>🧪 <span>Llenar niveles, grados, secciones, alumnos, docentes y auxiliares de prueba.</span></li>
+                        <li>🗑️ <span>Borrar los datos de prueba y todo lo generado con ellos.</span></li>
+                        <li>🚀 <span>Dejar en modo producción: borra y bloquea definitivamente el llenado.</span></li>
                     </ul>
                 `,
                 placement: 'right'

@@ -42,6 +42,7 @@ use Modules\Academic\Http\Controllers\AcaSmsParametersController;
 use Modules\Academic\Http\Controllers\AcaSchoolScheduleController;
 use Modules\Academic\Http\Controllers\AcaSchoolStudentController;
 use Modules\Academic\Http\Controllers\AcaSchoolStructureController;
+use Modules\Academic\Http\Controllers\AcaSchoolTestModeController;
 use Modules\Academic\Http\Controllers\AcaSchoolTeacherGradesController;
 use Modules\Academic\Http\Controllers\AcaSchoolAttendanceController;
 use Modules\Academic\Http\Controllers\AcaSchoolTeacherCompetencyController;
@@ -1031,6 +1032,26 @@ Route::middleware(['auth', 'verified', 'invalid_updated_information', 'user_acti
             ->name('aca_school_sms_parameters_preview');
         Route::post('school/sms/test', [AcaSmsParametersController::class, 'test'])
             ->name('aca_school_sms_parameters_test');
+    });
+
+    /*
+     * Modos de prueba del colegio: llenar la base con informacion de prueba
+     * (niveles, grados, secciones, alumnos, docentes, auxiliares y demas),
+     * borrarla junto con lo generado a partir de ella y dejar el sistema en
+     * modo produccion (bloqueo definitivo). Solo la ve el rol admin: el permiso
+     * aca_school_modo_prueba se concede unicamente a ese rol. Ademas, el
+     * controlador exige que el tipo de negocio sea Colegio (5) o Colegio y
+     * capacitaciones (6).
+     */
+    Route::middleware(['middleware' => 'permission:aca_school_modo_prueba'])->group(function () {
+        Route::get('school/test-mode', [AcaSchoolTestModeController::class, 'index'])
+            ->name('aca_school_test_mode');
+        Route::post('school/test-mode/fill', [AcaSchoolTestModeController::class, 'fill'])
+            ->name('aca_school_test_mode_fill');
+        Route::post('school/test-mode/purge', [AcaSchoolTestModeController::class, 'purge'])
+            ->name('aca_school_test_mode_purge');
+        Route::post('school/test-mode/production', [AcaSchoolTestModeController::class, 'production'])
+            ->name('aca_school_test_mode_production');
     });
 
     // Registro de evaluacion por competencias CNEB (formato SIAGIE)
