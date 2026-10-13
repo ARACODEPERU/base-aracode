@@ -14,6 +14,12 @@ return new class extends Migration
     private const CATALOGO_ANTERIOR = '[{"value": "1","label": "Aracode Principal"},{"value": "2","label": "Aracode torneos"}]';
 
     /**
+     * Valores que ofrecía el catálogo anterior. Es la referencia para saber si
+     * la portada guardada significa lo mismo después de ampliar el catálogo.
+     */
+    private const CATALOGO_ANTERIOR_VALORES = ['1', '2'];
+
+    /**
      * Publica en el parámetro PW00001 las portadas que el sistema ofrece como
      * página principal.
      *
@@ -23,9 +29,12 @@ return new class extends Migration
      * elegir desde Parámetros.
      *
      * No cambia la portada publicada: quien ya tenía elegida la corporativa o la
-     * de torneos la conserva. Solo se corrige el valor si guarda uno que ya no
-     * existe en el catálogo, porque en ese caso el sitio muestra la portada por
-     * defecto y conviene que el parámetro diga lo que de verdad se publica.
+     * de torneos la conserva. Solo se escribe el valor por defecto cuando lo
+     * guardado NO era una de las dos portadas del catálogo anterior: en ese caso
+     * el sitio mostraba la portada corporativa (el código solo distinguía el 2),
+     * así que se guarda el 1 para seguir publicando exactamente lo mismo. Si no,
+     * un valor como «4» —que antes no significaba nada— pasaría a publicar la
+     * portada de KIRAFACT sin que nadie lo pidiera.
      *
      * Idempotente: se puede volver a ejecutar sin cambiar nada.
      */
@@ -51,7 +60,7 @@ return new class extends Migration
 
         $cambios = ['json_query_data' => PaginaPrincipal::opcionesJson()];
 
-        if (! in_array(trim((string) $parameter->value_default), array_keys(PaginaPrincipal::paginas()), true)) {
+        if (! in_array(trim((string) $parameter->value_default), self::CATALOGO_ANTERIOR_VALORES, true)) {
             $cambios['value_default'] = PaginaPrincipal::POR_DEFECTO;
         }
 
