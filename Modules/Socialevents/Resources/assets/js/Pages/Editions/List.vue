@@ -17,6 +17,7 @@ const props = defineProps({
         default: () => ({}),
         required: true,
     },
+    sportsMode: { type: Boolean, default: false },
     filters: {
         type: Object,
         default: () => ({}),
@@ -179,7 +180,7 @@ const getPositionLabel = (position) => {
 </script>
 <template>
     <AppLayout title="Ediciones de Torneos">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos sociales'"
             :data="[
                 {title: 'Ediciones'}
             ]"

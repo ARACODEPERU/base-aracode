@@ -15,6 +15,7 @@ use Inertia\Inertia;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
+use Modules\Socialevents\Services\SportsOrganizationService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\UploadedFile;
 class EventEditionTeamPlayerController extends Controller
@@ -32,8 +33,11 @@ class EventEditionTeamPlayerController extends Controller
      */
     public function teamPlayersCreate($eId, $tId)
     {
-        $edicion = EventEdition::find($eId);
-        $equipo = EventTeam::find($tId);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEditionTeam(request()->user(), (int) $eId, (int) $tId);
+        $edicion = EventEdition::findOrFail($eId);
+        $equipo = EventTeam::findOrFail($tId);
         $players = EventEditionTeamPlayer::with('person')->where('edition_id', $eId)->where('team_id',$tId)->get();
 
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
@@ -60,6 +64,9 @@ class EventEditionTeamPlayerController extends Controller
      */
     public function teamPlayersStore(Request $request)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEditionTeam($request->user(), (int) $request->input('edition_id'), (int) $request->input('team_id'));
         $this->validate(
             $request,
             [
@@ -111,6 +118,9 @@ class EventEditionTeamPlayerController extends Controller
      */
     public function teamPlayersUpdate(Request $request)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEditionTeam($request->user(), (int) $request->input('edition_id'), (int) $request->input('team_id'));
         $this->validate(
             $request,
             [
@@ -156,6 +166,9 @@ class EventEditionTeamPlayerController extends Controller
      */
     public function teamPlayersDestroy($eId, $tId, $pId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEditionTeam(request()->user(), (int) $eId, (int) $tId);
         $message = null;
         $success = false;
         try {
@@ -209,7 +222,13 @@ class EventEditionTeamPlayerController extends Controller
             ]
         );
 
-        $person = Person::find($request->player_id);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $editionId = (int) $request->input('edition_id');
+        $teamId = (int) $request->input('team_id');
+        $sports->assertOwnedEditionTeam($request->user(), $editionId, $teamId);
+        abort_unless(EventEditionTeamPlayer::where('edition_id', $editionId)->where('team_id', $teamId)->where('person_id', $request->player_id)->exists(), 404);
+        $person = Person::findOrFail($request->player_id);
 
         $base64Image = $request->get('image');
 

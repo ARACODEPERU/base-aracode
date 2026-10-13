@@ -69,6 +69,12 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $request->user() ? $request->user()->roles->pluck('name') : [],
                 'permissions' => $request->user() ? $request->user()->getPermissionsViaRoles()->pluck('name') : [],
             ],
+            'sportsOrganization' => fn () => [
+                'mode' => app(\Modules\Socialevents\Services\SportsOrganizationService::class)->sportsMode(),
+                'organization_id' => $request->user()?->socialevent_organization_id,
+                'can_read' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->canRead($request->user()) : false,
+                'can_write' => $request->user() ? app(\Modules\Socialevents\Services\SportsOrganizationService::class)->canWrite($request->user()) : false,
+            ],
             'hasActiveSubscription' => fn () => JobOffersAccess::hasActiveSubscription(
                 JobOffersAccess::studentId($request->user())
             ),

@@ -19,6 +19,7 @@ class EditionTeamPlayerService
 
     public function listForTeam(int $editionId, int $teamId): array
     {
+        app(SportsOrganizationService::class)->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         $this->assertTeamInEdition($editionId, $teamId);
 
         return EventEditionTeamPlayer::with('person')
@@ -40,6 +41,7 @@ class EditionTeamPlayerService
      */
     public function listForEdition(int $editionId, ?string $search = null): array
     {
+        app(SportsOrganizationService::class)->assertOwnedApiEdition(auth()->user(), $editionId);
         EventEdition::findOrFail($editionId);
 
         $query = EventEditionTeamPlayer::with(['person', 'team'])
@@ -69,6 +71,9 @@ class EditionTeamPlayerService
 
     public function linkExisting(int $editionId, int $teamId, int $personId): EventEditionTeamPlayer
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         $this->assertTeamInEdition($editionId, $teamId);
         Person::findOrFail($personId);
 
@@ -93,6 +98,9 @@ class EditionTeamPlayerService
      */
     public function createWithPerson(int $editionId, int $teamId, array $data): EventEditionTeamPlayer
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         $this->assertTeamInEdition($editionId, $teamId);
 
         $validated = Validator::make($data, [
@@ -157,6 +165,9 @@ class EditionTeamPlayerService
      */
     public function update(int $editionId, int $teamId, int $personId, array $data): EventEditionTeamPlayer
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         $player = $this->findPlayerOrFail($editionId, $teamId, $personId);
 
         // El móvil envía los campos del formulario tal como están en pantalla:
@@ -254,6 +265,9 @@ class EditionTeamPlayerService
 
     public function uploadPhoto(int $editionId, int $teamId, int $personId, string $base64Image): Person
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         $this->findPlayerOrFail($editionId, $teamId, $personId);
         $person = Person::findOrFail($personId);
 
@@ -278,12 +292,16 @@ class EditionTeamPlayerService
 
     public function delete(int $editionId, int $teamId, int $personId): void
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         $player = $this->findPlayerOrFail($editionId, $teamId, $personId);
         $player->delete();
     }
 
     public function searchPersonByDocument(int $documentTypeId, string $number): ?Person
     {
+        app(SportsOrganizationService::class)->assertCanRead(auth()->user());
         return Person::where('document_type_id', $documentTypeId)
             ->where('number', $number)
             ->first();
@@ -294,6 +312,8 @@ class EditionTeamPlayerService
      */
     public function savePerson(array $data): Person
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
         $validated = Validator::make($data, [
             'document_type_id' => 'required|integer',
             'number' => 'required|string|max:20',

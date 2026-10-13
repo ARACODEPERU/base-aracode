@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionMedia;
+use Modules\Socialevents\Services\SportsOrganizationService;
 use Modules\Socialevents\Support\SavesBase64Image;
 use Modules\Socialevents\Support\TournamentDateLabels;
 use Modules\Socialevents\Support\TournamentLandingCache;
@@ -27,6 +28,7 @@ class EditionGalleryAdminController extends Controller
 
     public function index(Request $request, int $editionId): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertOwnedApiEdition($request->user(), $editionId);
         EventEdition::findOrFail($editionId);
 
         $query = EventEditionMedia::with(['match.equipolocal', 'match.equipovisitante'])
@@ -52,6 +54,9 @@ class EditionGalleryAdminController extends Controller
 
     public function store(Request $request, int $editionId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiEdition($request->user(), $editionId);
         EventEdition::findOrFail($editionId);
 
         $validated = $request->validate([
@@ -130,8 +135,11 @@ class EditionGalleryAdminController extends Controller
         ], $saved ? 201 : 422);
     }
 
-    public function destroy(int $editionId, int $mediaId): JsonResponse
+    public function destroy(Request $request, int $editionId, int $mediaId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiEdition($request->user(), $editionId);
         $media = EventEditionMedia::where('id', $mediaId)
             ->where('edition_id', $editionId)
             ->first();

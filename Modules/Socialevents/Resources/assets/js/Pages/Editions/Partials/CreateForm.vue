@@ -23,6 +23,8 @@
     const editorImageUploadUrl = route('even_editor_upload_image');
 
     const props = defineProps({
+        sportsMode: { type: Boolean, default: false },
+        canManageRates: { type: Boolean, default: false },
         eventos: {
             type: Object,
             default: () => ({}),
@@ -65,6 +67,7 @@
         score_points_draw: 1,
         score_points_loss: 0,
         inscription_fee: null,
+        match_rate: null,
         min_players_per_team: null,
         max_players_per_team: null,
         // Tiempos del torneo (configurables; estos son solo el preset inicial)
@@ -186,11 +189,11 @@
 <template>
     <FormSection @submitted="createNow" class="">
         <template #title>
-            Edicion Detalles
+            {{ sportsMode ? 'Datos de la edición del torneo' : 'Edicion Detalles' }}
         </template>
 
         <template #description>
-            Crear Edicion, Los campos con * son obligatorios
+            {{ sportsMode ? 'Configura el calendario, formato y reglas deportivas de la edición.' : 'Crear Edicion, Los campos con * son obligatorios' }}
         </template>
 
         <template #form>
@@ -198,7 +201,7 @@
                 <div class="col-span-6 lg:col-span-4">
                     <div class="grid sm:grid-cols-6 gap-6">
                         <div class="col-span-6">
-                            <InputLabel for="event_name" value="Evento *" class="mb-1" />
+                            <InputLabel for="event_name" :value="sportsMode ? 'Torneo *' : 'Evento *'" class="mb-1" />
                             <Multiselect
                                 id="event_name"
                                 :model-value="eventSelected"
@@ -231,17 +234,17 @@
                             <InputError :message="form.errors.year" class="mt-2" />
                         </div>
                         <div class="sm:col-span-4">
-                            <InputLabel for="name" value="Nombre *" class="mb-1" />
+                            <InputLabel for="name" :value="sportsMode ? 'Nombre de la edición / torneo *' : 'Nombre *'" class="mb-1" />
                             <TextInput v-model="form.name" />
                             <InputError :message="form.errors.name" class="mt-2" />
                         </div>
                         <div class="sm:col-span-2">
-                            <InputLabel for="date_range" value="Fechas desde - hasta *" class="mb-1" />
+                            <InputLabel for="date_range" :value="sportsMode ? 'Fechas de inicio y fin de la competición *' : 'Fechas desde - hasta *'" class="mb-1" />
                             <flat-pickr id="date_range" v-model="dateRangeSelected" @on-change="selectDates" class="form-input" :config="basic"></flat-pickr>
                             <InputError :message="form.errors.start_date" class="mt-2" />
                         </div>
                         <div class="sm:col-span-2">
-                            <InputLabel for="fforma" value="Formato de la competencia*" class="mb-1" />
+                            <InputLabel for="fforma" :value="sportsMode ? 'Formato del torneo *' : 'Formato de la competencia*'" class="mb-1" />
                             <select v-model="form.competition_format" class="form-select">
                                 <option
                                     v-for="fforma in formats"
@@ -261,11 +264,11 @@
                             <InputError :message="form.errors.competition_format" class="mt-2" />
                         </div>
                         <div class="sm:col-span-6">
-                            <InputLabel for="details" value="Detalles" class="mb-1" />
+                            <InputLabel for="details" :value="sportsMode ? 'Reglamento e información de la edición' : 'Detalles'" class="mb-1" />
                             <EditorAracode
                                 v-model="form.details"
                                 minHeight="320px"
-                                placeholder="Detalles de la edición..."
+                                :placeholder="sportsMode ? 'Reglamento, sedes, requisitos y notas del torneo...' : 'Detalles de la edición...'"
                                 :imageUploadUrl="editorImageUploadUrl"
                             />
                             <InputError :message="form.errors.details" class="mt-2" />
@@ -343,9 +346,15 @@
                             <InputError :message="form.errors.score_points_loss" class="mt-2" />
                         </div>
                         <div>
-                            <InputLabel for="inscription_fee" value="Precio de inscripción *" class="mb-1" />
+                            <InputLabel for="inscription_fee" :value="sportsMode ? 'Cuota de inscripción por equipo (S/) *' : 'Precio de inscripción *'" class="mb-1" />
                             <input v-model="form.inscription_fee" id="inscription_fee" class="form-input text-right" v-maska="'########'" placeholder="_____" maxlength="8" type="text" />
                             <InputError :message="form.errors.inscription_fee" class="mt-2" />
+                        </div>
+                        <div v-if="sportsMode && canManageRates">
+                            <InputLabel for="match_rate" value="Tarifa por equipo y partido (S/)" class="mb-1" />
+                            <p class="text-xs text-gray-500">El administrador puede definir aquí una tarifa especial; de lo contrario se aplica la tarifa configurada para la organización.</p>
+                            <input v-model="form.match_rate" id="match_rate" class="form-input text-right" v-maska="'########'" placeholder="Usar tarifa organizacional" maxlength="12" type="number" min="0" step="0.01" />
+                            <InputError :message="form.errors.match_rate" class="mt-2" />
                         </div>
                         <div>
                             <InputLabel for="min_players_per_team" value="Cantidad jugadores en campo *" class="mb-1" />
@@ -358,7 +367,7 @@
                             <InputError :message="form.errors.max_players_per_team" class="mt-2" />
                         </div>
                         <div class="col-span-3">
-                            <h4 class="text-lg font-bold mt-6 mb-2">Tiempos del torneo</h4>
+                            <h4 class="text-lg font-bold mt-6 mb-2">{{ sportsMode ? 'Configuración del partido' : 'Tiempos del torneo' }}</h4>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                 Los minutos por tiempo son configurables. La prórroga es opcional y solo aplica en fases de
                                 eliminación directa; si no la habilitas, un empate es un resultado válido.
@@ -385,7 +394,7 @@
                             <InputError :message="form.errors.extra_halves" class="mt-2" />
                         </div>
                         <div>
-                            <InputLabel for="max_substitutions" value="Límite de cambios (solo aviso)" class="mb-1" />
+                            <InputLabel for="max_substitutions" :value="sportsMode ? 'Máximo de sustituciones por equipo' : 'Límite de cambios (solo aviso)'" class="mb-1" />
                             <input v-model="form.max_substitutions" id="max_substitutions" class="form-input text-right" v-maska="'##'" placeholder="Sin límite" maxlength="2" type="text" />
                             <InputError :message="form.errors.max_substitutions" class="mt-2" />
                         </div>

@@ -20,6 +20,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Modules\Socialevents\Services\PositionTableService;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionMatchReportController extends Controller
 {
@@ -37,12 +38,15 @@ class EventEditionMatchReportController extends Controller
 
     public function editionMinutes($id)
     {
-        $edicion = EventEdition::find($id);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edicion = EventEdition::findOrFail($id);
         $minutesMatch = EventEditionMatchReport::with([
             'partido.equipolocal.manager',
             'partido.equipovisitante.manager',
             'partido.edicion.evento',
-        ])->get();
+        ])->whereHas('partido', fn ($query) => $query->where('edition_id', $id))->get();
 
         $newMinutesMatch = $minutesMatch->map(function ($minutes) {
             // 1. Convertimos a array para que acepte propiedades nuevas sin restricciones
@@ -94,7 +98,7 @@ class EventEditionMatchReportController extends Controller
 
         $minutesGenerals = EventEditionAccordance::with([
             'edicion.evento',
-        ])->get();
+        ])->where('edition_id', $id)->get();
 
         $newMinutesGenerals = $minutesGenerals->map(function ($minutes) {
             // 1. Convertimos a array para que acepte propiedades nuevas sin restricciones
@@ -136,6 +140,8 @@ class EventEditionMatchReportController extends Controller
     public function generateTemporaryPdf(Request $request)
     {
         $acta = $request->get('acta');
+        $report = EventEditionMatchReport::findOrFail((int) ($acta['id'] ?? 0));
+        app(SportsOrganizationService::class)->assertOwnedMatch($request->user(), (int) $report->match_id);
         //dd($acta);
         $type = $acta['minutes_type'];
 
@@ -175,6 +181,7 @@ class EventEditionMatchReportController extends Controller
      */
     public function updateReportSolution(Request $request)
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         // dd($request->all());
         $this->validate($request, [
             'resolution_details' => 'required|string'
@@ -194,7 +201,8 @@ class EventEditionMatchReportController extends Controller
 
         try {
             DB::transaction(function () use ($request, $id, $edition_id, $match_id, $shouldChangeScore, $shouldApplySanction) {
-                $report = EventEditionMatchReport::find($id);
+                $report = EventEditionMatchReport::findOrFail($id);
+                app(SportsOrganizationService::class)->assertOwnedMatch($request->user(), (int) $report->match_id);
 
                 $report->update([
                     // Si el acta tiene reclamo se marca como resuelto; si no tiene
@@ -302,12 +310,14 @@ class EventEditionMatchReportController extends Controller
      */
     public function destroyProtestFile(Request $request)
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         $validated = $request->validate([
             'report_id' => 'required|integer',
             'index' => 'required|integer',
         ]);
 
         $report = EventEditionMatchReport::findOrFail($validated['report_id']);
+        app(SportsOrganizationService::class)->assertOwnedMatch($request->user(), (int) $report->match_id);
         $files = $report->protest_files ?? [];
         $index = (int) $validated['index'];
 
@@ -327,6 +337,7 @@ class EventEditionMatchReportController extends Controller
 
     public function updateReportFile(Request $request)
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         // 1. Validación inicial
         $request->validate([
             'acta_id' => 'required|exists:event_edition_match_reports,id',
@@ -336,7 +347,7 @@ class EventEditionMatchReportController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $report = EventEditionMatchReport::findOrFail($request->acta_id);
-                $match = EventEditionMatch::findOrFail($report->match_id);
+                $match = app(SportsOrganizationService::class)->assertOwnedMatch($request->user(), (int) $report->match_id);
 
                 if ($match->status === 'closed') {
                     // Usamos ValidationException para que sea nativo de los formularios
@@ -373,11 +384,14 @@ class EventEditionMatchReportController extends Controller
 
     public function edit($id){
 
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
         $accordance = EventEditionMatchReport::with([
             'partido.equipolocal.manager',
             'partido.equipovisitante.manager',
             'partido.edicion.evento',
-        ])->where('id', $id)->first();
+        ])->where('id', $id)->firstOrFail();
+        $sports->assertOwnedMatch(request()->user(), (int) $accordance->match_id);
             //dd($accordance);
         $edicion = EventEdition::find($accordance->partido->edition_id);
         $resolutionStatus = getEnumValues('event_edition_match_reports','protest_status');
@@ -401,9 +415,10 @@ class EventEditionMatchReportController extends Controller
     }
     public function update(Request $request)
     {
-
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         $id = $request->get('id');
         $report = EventEditionMatchReport::findOrFail($id);
+        app(SportsOrganizationService::class)->assertOwnedMatch($request->user(), (int) $report->match_id);
 
         $report->update([
             'observations' => $request->get('observations'),

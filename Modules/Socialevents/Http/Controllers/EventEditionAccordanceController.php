@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Modules\Socialevents\Entities\EventEditionAccordance;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Modules\Socialevents\Services\SportsOrganizationService;
 use Illuminate\Support\Facades\Storage;
 
 class EventEditionAccordanceController extends Controller
@@ -36,6 +37,9 @@ class EventEditionAccordanceController extends Controller
      */
     public function create($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
         $edicion = EventEdition::find($id);
         $typeSessions = getEnumValues('event_edition_accordances','minutes_type');
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
@@ -61,6 +65,8 @@ class EventEditionAccordanceController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         // 1. Validación de campos
         $request->validate([
             'edition_id'      => 'required|exists:event_editions,id',
@@ -76,6 +82,7 @@ class EventEditionAccordanceController extends Controller
             'participants.*.full_name' => 'nullable|string',
         ]);
 
+        $sports->assertOwnedEdition($request->user(), (int) $request->input('edition_id'));
         try {
             DB::transaction(function () use ($request) {
                 EventEditionAccordance::create([
@@ -112,7 +119,10 @@ class EventEditionAccordanceController extends Controller
      */
     public function edit($id)
     {
-        $accordance = EventEditionAccordance::find($id);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $accordance = EventEditionAccordance::findOrFail($id);
+        $sports->assertOwnedEdition(request()->user(), (int) $accordance->edition_id);
         $edicion = EventEdition::find($accordance->edition_id);
         $typeSessions = getEnumValues('event_edition_accordances','minutes_type');
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
@@ -139,6 +149,8 @@ class EventEditionAccordanceController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $request->validate([
             'edition_id'      => 'required|exists:event_editions,id',
             'minutes_subject' => 'required|string|max:255',
@@ -156,7 +168,10 @@ class EventEditionAccordanceController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $id = $request->get('id');
-                EventEditionAccordance::find($id)->update([
+                $accordance = EventEditionAccordance::findOrFail($id);
+                app(SportsOrganizationService::class)->assertOwnedEdition($request->user(), (int) $accordance->edition_id);
+                app(SportsOrganizationService::class)->assertOwnedEdition($request->user(), (int) $request->input('edition_id'));
+                $accordance->update([
                     'edition_id'      => $request->get('edition_id'),
                     'minutes_subject' => $request->get('minutes_subject'),
                     'minutes_type'    => $request->get('minutes_type'),
@@ -180,6 +195,8 @@ class EventEditionAccordanceController extends Controller
     public function generateAccordancePdf(Request $request)
     {
         $acta = $request->get('acta');
+        $accordance = EventEditionAccordance::findOrFail((int) ($acta['id'] ?? 0));
+        app(SportsOrganizationService::class)->assertOwnedEdition($request->user(), (int) $accordance->edition_id);
         //dd($acta);
         $pdf = Pdf::loadView('socialevents::minutes.pdf.minutes_accordance', [
             'acta' => $acta

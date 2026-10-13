@@ -12,6 +12,8 @@ class EditionTeamService
 {
     public function listForEdition(int $editionId): array
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertOwnedApiEdition(auth()->user(), $editionId);
         EventEdition::findOrFail($editionId);
 
         return EventEditionTeam::with('equipo')
@@ -27,6 +29,9 @@ class EditionTeamService
 
     public function assign(int $editionId, int $teamId): EventEditionTeam
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         EventEdition::findOrFail($editionId);
         EventTeam::findOrFail($teamId);
 
@@ -46,6 +51,9 @@ class EditionTeamService
 
     public function unassign(int $editionId, int $teamId): void
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $sports->assertOwnedApiTeam(auth()->user(), $editionId, $teamId);
         DB::transaction(function () use ($editionId, $teamId) {
             $item = EventEditionTeam::where('edition_id', $editionId)
                 ->where('team_id', $teamId)

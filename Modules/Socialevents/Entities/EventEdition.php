@@ -17,6 +17,7 @@ class EventEdition extends Model
      */
     protected $fillable = [
         'event_id',
+        'match_rate',
         'year',
         'name',
         'start_date',
@@ -70,6 +71,7 @@ class EventEdition extends Model
         'app_downloads' => 'integer',
         'branding' => 'array',
         'inscription_fee' => 'decimal:2',
+        'match_rate' => 'decimal:2',
         'yellow_price' => 'decimal:2',
         'direct_red_price' => 'decimal:2',
         'double_yellow_price' => 'decimal:2',

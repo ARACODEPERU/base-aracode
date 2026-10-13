@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -59,6 +61,16 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function socialeventOrganization(): BelongsTo
+    {
+        return $this->belongsTo(\Modules\Socialevents\Entities\SocialeventOrganization::class, 'socialevent_organization_id');
+    }
+
+    public function socialeventOrganizationUsers(): HasMany
+    {
+        return $this->hasMany(\Modules\Socialevents\Entities\SocialeventOrganizationUser::class, 'user_id');
+    }
     public function company(): HasOne
     {
         return $this->hasOne(Company::class, 'id', 'company_id');

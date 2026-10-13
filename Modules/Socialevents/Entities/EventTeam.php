@@ -15,6 +15,7 @@ class EventTeam extends Model
     use HasFactory;
 
     protected $fillable = [
+        'organization_id',
         'name',
         'short_name',
         'ubigeo',
@@ -24,6 +25,11 @@ class EventTeam extends Model
         'champion',
         'status'
     ];
+    public function organization()
+    {
+        return $this->belongsTo(SocialeventOrganization::class, 'organization_id');
+    }
+
     public function manager(): HasOne
     {
         return $this->hasOne(Person::class, 'id', 'manager_id');

@@ -9,14 +9,14 @@ import {
     faKitMedical,
     faGlobe
  } from "@fortawesome/free-solid-svg-icons";
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import menuAcademic from '../../../Modules/Academic/Resources/assets/js/Menu.js';
 import menuRestaurant from '../../../Modules/Restaurant/Resources/assets/js/Menu.js';
 import menuSales from '../../../Modules/Sales/Resources/assets/js/Menu.js';
 import menuPurchases from '../../../Modules/Purchases/Resources/assets/js/Menu.js';
 import menuConfig from '../../../Modules/Security/Resources/assets/js/Menu.js';
 import menuCMS from '../../../Modules/CMS/Resources/assets/js/Menu.js';
-import menuSocialevents from '../../../Modules/Socialevents/Resources/assets/js/Menu.js';
+import menuSocialevents, { configureSocialeventsMenu } from '../../../Modules/Socialevents/Resources/assets/js/Menu.js';
 import menuHelpdesk from '../../../Modules/Helpdesk/Resources/assets/js/Menu.js';
 import menuHealth from '../../../Modules/Health/Resources/assets/js/Menu.js';
 
@@ -26,6 +26,8 @@ const props = defineProps({
         default: false
     }
 });
+const page = usePage();
+const sportsMode = Boolean(page.props.sportsOrganization?.mode);
 const emit = defineEmits(['activateCakeButton'])
 const closeSidebarToggle = async () => {
     emit('activateCakeButton', false)
@@ -47,7 +49,12 @@ const menu = ref([
     menuHealth,
     menuAcademic,
     menuRestaurant,
-    menuSocialevents
+    {
+        ...configureSocialeventsMenu(sportsMode),
+        items: configureSocialeventsMenu(sportsMode).items.filter((item) =>
+            !item.superAdminOnly || (page.props.auth?.roles || []).some((role) => ['admin', 'Administrador'].includes(role))
+        ),
+    }
 ]);
 
 const toggleSubItems = (index) => {
@@ -108,7 +115,7 @@ const xasset = assetUrl;
                                 <div v-show="item.status" v-if="item.items && item.items.length > 0" class="overflow-hidden transition-opacity duration-500">
                                     <ul class="mt-4 mb-5.5 flex flex-col gap-2.5 pl-6">
                                         <template v-for="(subItem, subIndex) in item.items" :key="subIndex">
-                                            <li v-can="subItem.permissions">
+                                            <li v-if="!(sportsMode && subItem.sportsHidden)" v-can="subItem.permissions">
                                                 <a v-if="subItem.route == null"
                                                     href="#"
                                                     @click.prevent="subItem.status = !subItem.status"

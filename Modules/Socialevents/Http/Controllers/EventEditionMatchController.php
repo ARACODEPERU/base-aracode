@@ -30,6 +30,7 @@ use Modules\Socialevents\Services\TournamentService;
 use Modules\Socialevents\Services\PositionTableService;
 use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 
 class EventEditionMatchController extends Controller
@@ -43,7 +44,10 @@ class EventEditionMatchController extends Controller
 
     public function editionFixtures($id)
     {
-        $edition = EventEdition::find($id);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edition = EventEdition::findOrFail($id);
         $teams = EventEditionTeam::with('equipo')->where('edition_id', $id)->get();
         $locales = EvenLocal::where('status', true)->get();
 
@@ -193,8 +197,11 @@ class EventEditionMatchController extends Controller
      */
     public function editionMatchScore($id, $matchId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $sports->assertOwnedMatch(request()->user(), (int) $matchId);
         $edition = EventEdition::findOrFail($id);
-
         $match = EventEditionMatch::with(['equipolocal', 'equipovisitante'])
             ->where('edition_id', $id)
             ->findOrFail($matchId);
@@ -210,7 +217,10 @@ class EventEditionMatchController extends Controller
      */
     public function editionFixturesCreate($id)
     {
-        $edition = EventEdition::find($id);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edition = EventEdition::findOrFail($id);
         $teams = EventEditionTeam::with('equipo')
             ->where('edition_id', $id)
             ->whereHas('equipo', fn ($q) => $q->where('status', true))
@@ -231,6 +241,9 @@ class EventEditionMatchController extends Controller
      */
     public function editionFixturesGenerate(Request $request, $id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), (int) $id);
         $request->validate([
             'teams' => 'required|array|min:2',
             'format' => 'required|string',
@@ -238,9 +251,19 @@ class EventEditionMatchController extends Controller
             'teams.required' => 'No se han seleccionado equipos para generar el torneo.',
             'teams.min' => 'Necesitas al menos 2 equipos.'
         ]);
+        $editionId = (int) $id;
+        foreach ((array) $request->get('teams') as $teamId) {
+            $sports->assertOwnedEditionTeam($request->user(), $editionId, (int) $teamId);
+        }
+        $teamIds = collect((array) $request->get('teams'))->map(fn ($teamId) => (int) $teamId);
+        abort_unless($teamIds->unique()->count() === $teamIds->count(), 422, 'No se puede inscribir el mismo equipo varias veces.');
+        $registeredTeamIds = EventEditionTeam::where('edition_id', $editionId)->whereIn('team_id', $teamIds)->pluck('team_id')->map(fn ($teamId) => (int) $teamId)->all();
+        abort_unless(count($registeredTeamIds) === $teamIds->count(), 404);
+
         $service = new TournamentService();
-        // Si pasa la validación, entonces llamas a tu método
-        $service->generate($request->get('edition_id'), $request->get('format'), $request->get('teams'));
+        $service->generate($editionId, $request->get('format'), $teamIds->all(), function ($matches) use ($sports, $request) {
+            $sports->chargeMatches($matches, $request->user());
+        });
     }
 
     /**
@@ -248,6 +271,8 @@ class EventEditionMatchController extends Controller
      */
     public function editionFixturesStore(Request $request)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         // dd($request->all());
         // 1. Validación de campos básicos
         $validated = $request->validate([
@@ -262,6 +287,10 @@ class EventEditionMatchController extends Controller
         ], [
             'team_h.different' => 'Un equipo no puede jugar contra sí mismo.',
         ]);
+
+        $sports->assertOwnedEditionTeam($request->user(), (int) $validated['edition_id'], (int) $validated['team_h']);
+        $sports->assertOwnedEditionTeam($request->user(), (int) $validated['edition_id'], (int) $validated['team_a']);
+        $sports->assertCanCreateMatch($request->user(), (int) $validated['edition_id'], 2);
 
         // 1.1 Validación de que ambos equipos estén inscritos en la edición
         $inscritos = EventEditionTeam::where('edition_id', $validated['edition_id'])
@@ -296,8 +325,10 @@ class EventEditionMatchController extends Controller
             ]);
         }
 
-        // 3. Registro con Eloquent
-        EventEditionMatch::create([
+        // 3. Registro y débito del prepago en una sola transacción
+        DB::transaction(function () use ($request, $validated, $sports) {
+            $sports->assertCanCreateMatch($request->user(), (int) $validated['edition_id'], 2);
+            $match = EventEditionMatch::create([
             'edition_id'   => $validated['edition_id'],
             'team_h_id'    => $validated['team_h'],
             'team_a_id'    => $validated['team_a'],
@@ -307,7 +338,9 @@ class EventEditionMatchController extends Controller
             'match_date'   => $validated['match_date'],
             'location'     => $validated['location'],
             'status'       => 'pending', // Por defecto
-        ]);
+            ]);
+            $sports->chargeMatch($match, $request->user());
+        });
 
         TournamentLandingCache::forget((int) $validated['edition_id']);
     }
@@ -317,6 +350,8 @@ class EventEditionMatchController extends Controller
      */
     public function editionFixturesUpdate(Request $request, $id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $request->validate([
             'round_number' => 'required|max:2',
             //'group_name' => 'required|string',
@@ -331,19 +366,53 @@ class EventEditionMatchController extends Controller
             return back()->withErrors(['equipo_h_id' => 'El equipo local y visitante no pueden ser el mismo.']);
         }
 
-        $match = EventEditionMatch::find($id);
-        $match->update([
+        $match = $sports->assertOwnedMatch($request->user(), (int) $id);
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort_unless((int) $request->input('round_number') === (int) $match->round_number, 422, 'La edición de una fecha programada no se puede cambiar después de crear el partido.');
+            if ($match->team_h_id && $match->team_a_id) {
+                abort_unless(! DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists(), 422, 'No se pueden modificar los equipos de un partido que ya fue cobrado.');
+            }
+        }
+        $teamH = $request->input('equipo_h_id', $match->team_h_id);
+        $teamA = $request->input('equipo_a_id', $match->team_a_id);
+        if ($teamH) $sports->assertOwnedEditionTeam($request->user(), (int) $match->edition_id, (int) $teamH);
+        if ($teamA) $sports->assertOwnedEditionTeam($request->user(), (int) $match->edition_id, (int) $teamA);
+        $teamsChanged = (int) $teamH !== (int) $match->team_h_id || (int) $teamA !== (int) $match->team_a_id;
+        if ($teamsChanged && (! $teamH || ! $teamA) && $sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort(422, 'No se puede dejar un partido sin ambos equipos después de registrarlo.');
+        }
+        if ($teamsChanged && $teamH && $teamA) {
+            if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user()) && $match->status === 'pending') {
+                abort_unless(! DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists(), 422, 'No se pueden cambiar equipos de un partido ya cobrado.');
+                $sports->assertCanCreateMatch($request->user(), (int) $match->edition_id, 2);
+            }
+            DB::transaction(function () use ($match, $teamH, $teamA, $request, $sports) {
+                $match->update([
+                    'team_h_id' => $teamH,
+                    'team_a_id' => $teamA,
+                    'round_number' => $request->get('round_number'),
+                    'group_name' => $request->get('group_name') ?? null,
+                    'match_date' => $request->get('match_date'),
+                    'location' => $request->get('location') ?? null,
+                    'status' => $request->get('status') ?? 'pending',
+                    'placeholder_h' => null,
+                    'placeholder_a' => null,
+                ]);
+                if ($match->status === 'pending') $sports->chargeMatch($match, $request->user());
+            });
+        } else {
+            $match->update([
+                'team_h_id' => $teamH,
+                'team_a_id' => $teamA,
                 'round_number' => $request->get('round_number'),
                 'group_name' => $request->get('group_name') ?? null,
                 'match_date' => $request->get('match_date'),
                 'location' => $request->get('location') ?? null,
                 'status' => $request->get('status') ?? 'pending',
-                'team_h_id' => $request->get('equipo_h_id') ?? null,
-                'team_a_id' => $request->get('equipo_a_id') ?? null,
                 'placeholder_h' => null,
                 'placeholder_a' => null,
             ]);
-
+        }
         $score_h = $request->get('score_h') ?? 0;
         $score_a = $request->get('score_a') ?? 0;
 
@@ -365,6 +434,8 @@ class EventEditionMatchController extends Controller
     }
 
     public function editionMatchScoreStore(Request $request){
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $request->validate([
             'substitutions_h' => 'nullable|array',
             'substitutions_a' => 'nullable|array',
@@ -410,7 +481,7 @@ class EventEditionMatchController extends Controller
             'extra_half_minutes_override.min' => 'Los minutos del tiempo suplementario deben ser al menos 1.',
         ]);
 
-        $match = EventEditionMatch::findOrFail($request->get('id'));
+        $match = $sports->assertOwnedMatch($request->user(), (int) $request->get('id'));
 
         // Bloqueo: jugadores suspendidos no pueden participar en el acta
         $suspendedPlaying = app(PlayerSuspensionService::class)->findSuspendedParticipating(
@@ -444,6 +515,11 @@ class EventEditionMatchController extends Controller
         $teamHId = (int) $request->get('equipo_h_id');
         $teamAId = (int) $request->get('equipo_a_id');
         $editionId = (int) $match->edition_id;
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort_unless($teamHId > 0 && $teamAId > 0, 422, 'No se puede guardar el acta sin ambos equipos inscritos.');
+            $sports->assertOwnedEditionTeam($request->user(), $editionId, $teamHId);
+            $sports->assertOwnedEditionTeam($request->user(), $editionId, $teamAId);
+        }
 
         $subsH = $performance->prepareSubstitutions($request->get('substitutions_h') ?: [], [
             'team_id' => $teamHId,
@@ -707,6 +783,9 @@ class EventEditionMatchController extends Controller
      */
     public function destroy($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedMatch(request()->user(), (int) $id);
         $message = null;
         $success = false;
         try {
@@ -772,13 +851,15 @@ class EventEditionMatchController extends Controller
 
     public function storeMatchReport(Request $request)
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         $request->validate([
             'match_id' => 'required|exists:event_edition_matches,id',
             'equipo_h_id' => 'required',
             'equipo_a_id' => 'required',
         ]);
 
-        DB::transaction(function () use ($request) {
+        $match = app(SportsOrganizationService::class)->assertOwnedMatch($request->user(), (int) $request->match_id);
+        DB::transaction(function () use ($request, $match) {
             // 1. Creamos o actualizamos el acta (MatchReport)
             EventEditionMatchReport::updateOrCreate(
                 ['match_id' => $request->match_id],
@@ -810,6 +891,11 @@ class EventEditionMatchController extends Controller
 
     public function printMatchSheet($editionId, $matchId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $editionId);
+        $match = $sports->assertOwnedMatch(request()->user(), (int) $matchId);
+        abort_unless((int) $match->edition_id === (int) $editionId, 404);
         $edition = EventEdition::with('evento')->findOrFail($editionId);
         $match = EventEditionMatch::with(['equipolocal.manager', 'equipovisitante.manager'])->findOrFail($matchId);
 

@@ -19,6 +19,7 @@ use Modules\Socialevents\Http\Controllers\EventEditionTeamController;
 use Modules\Socialevents\Http\Controllers\EventEditionTeamPlayerController;
 use Modules\Socialevents\Http\Controllers\EventTeamController;
 use Modules\Socialevents\Http\Controllers\SocialeventsEditorController;
+use Modules\Socialevents\Http\Controllers\SportsOrganizationAdminController;
 use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 
 /*
@@ -32,8 +33,13 @@ use Modules\Socialevents\Http\Controllers\TournamentLandingController;
 |
 */
 
-Route::middleware(['auth', 'verified'])->prefix('socialevents')->group(function () {
+Route::middleware(['auth', 'verified', 'socialevents.access:read'])->prefix('socialevents')->group(function () {
     Route::get('dashboard', 'SocialeventsController@index')->name('even_dashboard');
+    Route::middleware('role:admin|Administrador')->prefix('organizations')->name('even_organizations.')->group(function () {
+        Route::get('/', [SportsOrganizationAdminController::class, 'index'])->name('index');
+        Route::put('/defaults', [SportsOrganizationAdminController::class, 'updateDefaults'])->name('defaults');
+        Route::put('/{organizationId}', [SportsOrganizationAdminController::class, 'updateOrganization'])->name('update');
+    });
     Route::post('editor/upload-image', [SocialeventsEditorController::class, 'uploadImage'])->name('even_editor_upload_image');
 
     Route::middleware(['middleware' => 'permission:even_categoria_listado'])->get('categories', [EvenCategoryController::class, 'index'])->name('even_categories_list');

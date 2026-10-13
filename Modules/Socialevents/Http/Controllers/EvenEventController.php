@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Socialevents\Entities\EvenEventExhibitor;
 use Modules\Socialevents\Entities\EvenEventLocal;
 use Modules\Socialevents\Entities\EvenTicketType;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EvenEventController extends Controller
 {
@@ -34,7 +35,13 @@ class EvenEventController extends Controller
     }
     public function index()
     {
-        $events = (new EvenEvent())->newQuery();
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $events = (new EvenEvent())->newQuery()
+            ->when(
+                $sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()),
+                fn ($query) => $query->where('organization_id', $sports->organizationId(request()->user()))
+            );
 
         if (request()->has('search')) {
             $events->where('title', 'Like', '%' . request()->input('search') . '%');
@@ -48,6 +55,7 @@ class EvenEventController extends Controller
         $types = EvenTicketType::all();
 
         return Inertia::render('Socialevents::Events/List', [
+            'sportsMode' => $sports->sportsMode(),
             'socialevents' => $events,
             'filters' => request()->all('search'),
             'types' => $types
@@ -59,16 +67,18 @@ class EvenEventController extends Controller
      */
     public function create()
     {
-        $categories = EvenCategory::with('subcategories.subcategories')
-            ->where('status', true)
-            ->whereNull('main_category_id')
-            ->get();
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $categories = $sports->sportsMode()
+            ? collect()
+            : EvenCategory::with('subcategories.subcategories')->where('status', true)->whereNull('main_category_id')->get();
         //$instructors = AcaTeacher::with('person')->get();
         $instructors = Person::all();
 
         $locales = EvenLocal::where('status', true)->get();
 
         return Inertia::render('Socialevents::Events/Create', [
+            'sportsMode' => $sports->sportsMode(),
             'categories' => $categories,
             'instructors'   => $instructors,
             'locales' => $locales
@@ -80,10 +90,12 @@ class EvenEventController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $this->validate(
             $request,
             [
-                'category_id' => 'required',
+                'category_id' => $sports->sportsMode() ? 'nullable' : 'required',
                 'title' => 'required',
                 'description' => 'required',
                 'advertising_video' => 'required',
@@ -97,7 +109,8 @@ class EvenEventController extends Controller
         $days = Carbon::parse($ds)->diffInDays(Carbon::parse($de));
 
         $event = EvenEvent::create([
-            'category_id' => $request->get('category_id'),
+            'organization_id' => $sports->sportsMode() ? ($sports->isSuperAdmin($request->user()) ? $sports->legacyOrganizationId() : $sports->organizationId($request->user())) : null,
+            'category_id' => $sports->sportsMode() ? $sports->sportsCategoryId() : $request->get('category_id'),
             'title' => $request->get('title'),
             'description' => $request->get('description'),
             'iframe_transmission' => $request->get('iframe_transmission'),
@@ -112,8 +125,8 @@ class EvenEventController extends Controller
         ]);
 
 
-        $locales = $request->get('locales');
-        $exhibitors = $request->get('exhibitors');
+        $locales = $request->get('locales') ?? [];
+        $exhibitors = $request->get('exhibitors') ?? [];
 
         if (count($locales) > 0) {
             foreach ($locales as $local) {
@@ -185,16 +198,19 @@ class EvenEventController extends Controller
      */
     public function edit($id)
     {
-        $categories = EvenCategory::where('status', true)->get();
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEvent(request()->user(), (int) $id);
+        $event = EvenEvent::query()->findOrFail($id);
+        $categories = $sports->sportsMode() ? collect() : EvenCategory::where('status', true)->get();
         //$instructors = AcaTeacher::with('person')->get();
         $instructors = Person::all();
         $locales = EvenLocal::where('status', true)->get();
-        $event = EvenEvent::find($id);
-
         $eventLocales = EvenEventLocal::where('event_id', $id)->pluck('local_id');
         $eventExhibitors = EvenEventExhibitor::where('event_id', $id)->pluck('exhibitor_id');
 
         return Inertia::render('Socialevents::Events/Edit', [
+            'sportsMode' => $sports->sportsMode(),
             'categories' => $categories,
             'instructors'   => $instructors,
             'locales' => $locales,
@@ -209,10 +225,12 @@ class EvenEventController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $this->validate(
             $request,
             [
-                'category_id' => 'required',
+                'category_id' => $sports->sportsMode() ? 'nullable' : 'required',
                 'title' => 'required',
                 'description' => 'required',
                 'advertising_video' => 'required',
@@ -221,12 +239,13 @@ class EvenEventController extends Controller
             ]
         );
 
-        $event = EvenEvent::findOrFail($request->get('id'));
+        $sports->assertOwnedEvent($request->user(), (int) $request->get('id'));
+        $event = EvenEvent::query()->findOrFail($request->get('id'));
         [$ds, $de] = $this->parseEventDateRange($request);
         $days = Carbon::parse($ds)->diffInDays(Carbon::parse($de));
 
         $event->update([
-            'category_id' => $request->get('category_id'),
+            'category_id' => $sports->sportsMode() ? $sports->sportsCategoryId() : $request->get('category_id'),
             'title' => $request->get('title'),
             'description' => $request->get('description'),
             'iframe_transmission' => $request->get('iframe_transmission'),
@@ -339,6 +358,9 @@ class EvenEventController extends Controller
 
             // Verificamos si existe.
             $item = EvenEvent::findOrFail($id);
+            $sports = app(SportsOrganizationService::class);
+            $sports->assertCanWrite(request()->user());
+            $sports->assertOwnedEvent(request()->user(), (int) $item->id);
 
             // Si no hay detalles asociados, eliminamos.
             $item->delete();

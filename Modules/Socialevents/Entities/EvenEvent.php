@@ -17,6 +17,7 @@ class EvenEvent extends Model
      */
     protected $fillable = [
         'category_id',
+        'organization_id',
         'title',
         'description',
         'iframe_transmission',
@@ -52,6 +53,11 @@ class EvenEvent extends Model
     public function prices(): HasMany
     {
         return $this->hasMany(EvenEventTicketPrice::class, 'event_id');
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(SocialeventOrganization::class, 'organization_id');
     }
 
     public function category(): BelongsTo

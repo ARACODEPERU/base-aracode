@@ -37,7 +37,8 @@
         types: {
             type: Object,
             default: () => ({}),
-        }
+        },
+        sportsMode: { type: Boolean, default: false },
     });
 
     const form = useForm({
@@ -182,10 +183,10 @@
 </script>
 
 <template>
-    <AppLayout title="Eventos">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+    <AppLayout :title="sportsMode ? 'Torneos' : 'Eventos'">
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos sociales'"
             :data="[
-                {title: 'Eventos'}
+                {title: sportsMode ? 'Torneos' : 'Eventos'}
             ]"
         />
         <div class="pt-5">
@@ -198,15 +199,15 @@
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                     <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
                                 </div>
-                                <input v-model="form.search" type="text" class="block pl-10 form-input w-80" placeholder="Buscar por Descripción">
+                                <input v-model="form.search" type="text" class="block pl-10 form-input w-80"  :placeholder="sportsMode ? 'Buscar torneo' : 'Buscar por Descripción'">
                             </div>
                         </form>
                     </div>
                     <div class="col-span-3 sm:col-span-2">
                         <Keypad>
                             <template #botones>
-                                <Link v-can="'even_local_nuevo'" :href="route('even_eventos_create')" class="flex items-center justify-center inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
-                                    Nuevo
+                                <Link v-can="'even_evento_nuevo'" :href="route('even_eventos_create')" class="flex items-center justify-center inline-block px-6 py-2.5 bg-blue-900 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">
+                                    {{ sportsMode ? 'Nuevo torneo' : 'Nuevo' }}
                                 </Link>
                             </template>
                         </Keypad>
@@ -228,14 +229,14 @@
                                     <th>
                                         Nombre
                                     </th>
-                                    <th>
+                                    <th v-if="!sportsMode">
                                         Locales
                                     </th>
-                                    <th>
+                                    <th v-if="!sportsMode">
                                         Expositores
                                     </th>
                                     <th>
-                                        Cantidad de Entradas
+                                        {{ sportsMode ? 'Cupo equipos/personas' : 'Cantidad de Entradas' }}
                                     </th>
                                 </tr>
                             </thead>
@@ -254,7 +255,7 @@
                                                             Editar
                                                         </Link>
                                                         </MenuItem>
-                                                        <MenuItem>
+                                                        <MenuItem v-if="!sportsMode">
                                                             <button v-can="'even_evento_precios'" @click="openModalPrices(socialevent)" type="Link">
                                                                 Precios
                                                             </button>
@@ -277,12 +278,12 @@
                                         <td>
                                             {{ socialevent.title }}
                                         </td>
-                                        <td>
+                                        <td v-if="!sportsMode">
                                             <div v-for="(item, index) in socialevent.locales" :key="index">
                                                 <Badge :text="item.local.names" :color="colors[index].color" />
                                             </div>
                                         </td>
-                                        <td>
+                                        <td v-if="!sportsMode">
                                             <AvatarGroup :max-count="2" :max-style="{ color: '#f56a00', backgroundColor: '#fde3cf' }">
                                                 <template v-for="(row, ky) in socialevent.exhibitors">
                                                     <Tooltip :title="row.exhibitor.full_name" placement="top">

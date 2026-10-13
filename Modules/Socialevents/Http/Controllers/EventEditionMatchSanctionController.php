@@ -20,6 +20,7 @@ use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionMatch;
 use Modules\Socialevents\Entities\EventEditionMatchSanction;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionMatchSanctionController extends Controller
 {
@@ -28,7 +29,10 @@ class EventEditionMatchSanctionController extends Controller
      */
     public function collectionPenalties($id)
     {
-        $edicion = EventEdition::find($id);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edicion = EventEdition::findOrFail($id);
         $players = EventEditionTeamPlayer::with(['team', 'person', 'sanctions' => function($q) { $q->with('match')->where('is_paid', false); }])
         ->where('edition_id', $id)
         ->whereHas('sanctions', fn($q) => $q->where('is_paid', false))
@@ -124,6 +128,9 @@ class EventEditionMatchSanctionController extends Controller
      */
     public function printSanctionsPdf($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
         $edicion = EventEdition::with('evento')->findOrFail($id);
 
         $players = EventEditionTeamPlayer::with(['team', 'person', 'sanctions' => function ($q) {
@@ -184,7 +191,11 @@ class EventEditionMatchSanctionController extends Controller
 
     public function paySanctions(Request $request)
     {
-        $playerId = $request->player_id; // ID de event_edition_team_players
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
+        $playerId = $request->player_id;
+        $editionId = EventEditionTeamPlayer::where('person_id', $playerId)->value('edition_id');
+        abort_unless($editionId, 404);
+        app(SportsOrganizationService::class)->assertOwnedEdition($request->user(), (int) $editionId); // ID de event_edition_team_players
 
         EventEditionMatchSanction::where('player_id', $playerId)
             ->where('is_paid', false)
@@ -203,6 +214,9 @@ class EventEditionMatchSanctionController extends Controller
      */
     public function registerCard(Request $request, int $editionId): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), $editionId);
         $validated = $request->validate([
             'match_id' => 'required|integer|exists:event_edition_matches,id',
             'player_id' => 'required|integer|exists:people,id',
@@ -227,6 +241,7 @@ class EventEditionMatchSanctionController extends Controller
         if (! $match) {
             return back()->withErrors(['match_id' => 'El partido seleccionado no pertenece a esta edición o aún no tiene resultado registrado.']);
         }
+        $sports->assertOwnedMatch($request->user(), (int) $match->id);
 
         // El jugador debe estar inscrito en la edición.
         $exists = EventEditionTeamPlayer::where('edition_id', $editionId)
@@ -282,6 +297,10 @@ class EventEditionMatchSanctionController extends Controller
 
     public function paymentStore(Request $request)
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
+        $playerEditionId = EventEditionTeamPlayer::where('person_id', $request->input('player_id'))->value('edition_id');
+        abort_unless($playerEditionId, 404);
+        app(SportsOrganizationService::class)->assertOwnedEdition($request->user(), (int) $playerEditionId);
 
         //dd($request->all());
         try {

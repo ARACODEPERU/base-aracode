@@ -12,9 +12,6 @@ class EventEditionMatch extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'edition_id',
         'team_h_id',
@@ -32,11 +29,9 @@ class EventEditionMatch extends Model
         'original_score',
         'penalty_rounds',
         'penalties',
-        // Override de tiempos solo para este partido (null = usa la edición)
         'half_minutes_override',
         'halves_override',
         'extra_half_minutes_override',
-        // Prórroga jugada y marcador al final del tiempo reglamentario
         'extra_time_played',
         'score_regular_h',
         'score_regular_a',
@@ -55,10 +50,12 @@ class EventEditionMatch extends Model
     {
         return $this->belongsTo(EventTeam::class, 'team_h_id', 'id');
     }
+
     public function equipovisitante(): BelongsTo
     {
         return $this->belongsTo(EventTeam::class, 'team_a_id', 'id');
     }
+
     public function edicion(): BelongsTo
     {
         return $this->belongsTo(EventEdition::class, 'edition_id', 'id');
@@ -69,12 +66,8 @@ class EventEditionMatch extends Model
         return $this->hasMany(EventEditionMatchSubstitution::class, 'match_id', 'id');
     }
 
-    /**
-     * Goles del partido con su tiempo y minuto (uno por fila).
-     */
     public function goals(): HasMany
     {
         return $this->hasMany(EventEditionMatchGoal::class, 'match_id', 'id')->orderBy('minute')->orderBy('id');
     }
-
 }

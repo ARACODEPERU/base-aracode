@@ -17,6 +17,7 @@ use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Entities\EventEditionTeamBonusPoint;
 use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Services\PositionTableService;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionTeamController extends Controller
 {
@@ -25,7 +26,12 @@ class EventEditionTeamController extends Controller
      */
     public function index($id)
     {
-        $teams = EventTeam::get();
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $teams = EventTeam::query()
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()), fn ($query) => $query->where('organization_id', $sports->organizationId(request()->user())))
+            ->get();
 
         $currentEquipment = EventEditionTeam::with('equipo')
             ->where('edition_id', $id)
@@ -48,7 +54,7 @@ class EventEditionTeamController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        $edicion = EventEdition::find($id);
+        $edicion = EventEdition::findOrFail($id);
 
         return Inertia::render('Socialevents::Editions/Teams', [
             'teams' => $teams,
@@ -61,6 +67,8 @@ class EventEditionTeamController extends Controller
 
     public function store(Request $request)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $this->validate(
             $request,
             [
@@ -69,6 +77,9 @@ class EventEditionTeamController extends Controller
             ]
         );
 
+        $sports->assertOwnedEdition(request()->user(), (int) $request->input('edition_id'));
+        $sports->assertOwnedTeam(request()->user(), (int) $request->input('team_id'));
+        abort_unless(EventEdition::findOrFail((int) $request->input('edition_id'))->equipos()->where('team_id', (int) $request->input('team_id'))->doesntExist(), 409);
         EventEditionTeam::create([
             'edition_id' => $request->get('edition_id'),
             'team_id' => $request->get('team_id')
@@ -80,6 +91,7 @@ class EventEditionTeamController extends Controller
      */
     public function show($id)
     {
+        app(SportsOrganizationService::class)->assertOwnedEdition(request()->user(), (int) $id);
         return view('socialevents::show');
     }
 
@@ -96,6 +108,8 @@ class EventEditionTeamController extends Controller
      */
     public function update(Request $request, $id): RedirectResponse
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
+        app(SportsOrganizationService::class)->assertOwnedEdition($request->user(), (int) $id);
         //
     }
 
@@ -104,6 +118,9 @@ class EventEditionTeamController extends Controller
      */
     public function destroy($eId, $tId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEditionTeam(request()->user(), (int) $eId, (int) $tId);
         $message = null;
         $success = false;
         try {
@@ -141,6 +158,9 @@ class EventEditionTeamController extends Controller
 
     public function printTeamRoster($editionId, $teamId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEditionTeam(request()->user(), (int) $editionId, (int) $teamId);
         $edition = EventEdition::with('evento')->findOrFail($editionId);
         $editionTeam = EventEditionTeam::with('equipo.manager')->where('edition_id', $editionId)->where('team_id', $teamId)->firstOrFail();
         $team = $editionTeam->equipo;
@@ -174,6 +194,9 @@ class EventEditionTeamController extends Controller
      */
     public function bonusPointsIndex($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
         $bonus = EventEditionTeamBonusPoint::with('team')
             ->where('edition_id', $id)
             ->orderByDesc('id')
@@ -197,6 +220,9 @@ class EventEditionTeamController extends Controller
      */
     public function bonusPointsStore(Request $request, $editionId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), (int) $editionId);
         $validated = $request->validate([
             'teams' => ['required', 'array', 'min:1'],
             'teams.*' => ['required', 'integer'],
@@ -208,6 +234,9 @@ class EventEditionTeamController extends Controller
             DB::beginTransaction();
 
             $teamIds = array_values(array_unique(array_map('intval', $validated['teams'])));
+            foreach ($teamIds as $teamId) {
+                $sports->assertOwnedEditionTeam($request->user(), (int) $editionId, $teamId);
+            }
 
             // Validar que los equipos pertenezcan a la edicion.
             $inscritos = EventEditionTeam::where('edition_id', $editionId)
@@ -261,6 +290,9 @@ class EventEditionTeamController extends Controller
      */
     public function bonusPointsDestroy($editionId, $bonusId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $editionId);
         $message = null;
         $success = false;
 
@@ -301,6 +333,9 @@ class EventEditionTeamController extends Controller
      */
     public function recalculateTable($editionId)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $editionId);
         try {
             $edition = EventEdition::findOrFail($editionId);
             app(PositionTableService::class)->updateTablePositions($editionId);

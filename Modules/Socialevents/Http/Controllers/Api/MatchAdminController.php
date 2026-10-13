@@ -19,6 +19,7 @@ use Modules\Socialevents\Services\MatchPerformanceService;
 use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Services\PositionTableService;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class MatchAdminController extends Controller
 {
@@ -31,6 +32,9 @@ class MatchAdminController extends Controller
 
     public function index(Request $request, int $editionId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertOwnedApiEdition($request->user(), $editionId);
+
         // Accept both query param and body param
         $status = $request->get('status') ?? $request->input('status', 'all');
 
@@ -66,6 +70,9 @@ class MatchAdminController extends Controller
 
     public function store(Request $request, int $editionId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiEdition($request->user(), $editionId);
         $validated = $request->validate([
             'status' => 'required|in:pending,live,finished,closed,walk_over,cancelled,no_points',
             'match_date' => 'nullable|date',
@@ -73,11 +80,23 @@ class MatchAdminController extends Controller
             'team_h_id' => 'nullable|integer',
             'team_a_id' => 'nullable|integer',
             'phase' => 'required|in:league,groups,round_16,quarter,semi,final,third_place',
+            'placeholder_h' => 'nullable|string|max:255',
+            'placeholder_a' => 'nullable|string|max:255',
             'group_name' => 'nullable|string|max:255',
             'round_number' => 'nullable|integer|min:1',
             'score_h' => 'nullable|integer|min:0',
             'score_a' => 'nullable|integer|min:0',
         ]);
+        if (! empty($validated['team_h_id']) xor ! empty($validated['team_a_id'])) {
+            return response()->json(['success' => false, 'message' => 'Se requieren dos equipos para registrar un partido cobrable.'], 422);
+        }
+
+        if (! empty($validated['team_h_id'])) $sports->assertOwnedApiTeam($request->user(), $editionId, (int) $validated['team_h_id']);
+        if (! empty($validated['team_a_id'])) $sports->assertOwnedApiTeam($request->user(), $editionId, (int) $validated['team_a_id']);
+        if (! empty($validated['team_h_id']) && ! empty($validated['team_a_id'])) {
+            abort_unless(EventEditionTeam::where('edition_id', $editionId)->whereIn('team_id', [$validated['team_h_id'], $validated['team_a_id']])->count() === 2, 404);
+            $sports->assertCanCreateMatch($request->user(), $editionId);
+        }
 
         if ($request->team_h_id && $request->team_a_id && $request->team_h_id == $request->team_a_id) {
             return response()->json([
@@ -86,7 +105,8 @@ class MatchAdminController extends Controller
             ], 422);
         }
 
-        $match = EventEditionMatch::create([
+        $match = DB::transaction(function () use ($editionId, $validated, $request, $sports) {
+            $match = EventEditionMatch::create([
             'edition_id' => $editionId,
             'status' => $validated['status'],
             'match_date' => $validated['match_date'] ?? null,
@@ -98,7 +118,12 @@ class MatchAdminController extends Controller
             'round_number' => $validated['round_number'] ?? null,
             'score_h' => $validated['score_h'] ?? null,
             'score_a' => $validated['score_a'] ?? null,
-        ]);
+            'placeholder_h' => $validated['placeholder_h'] ?? null,
+            'placeholder_a' => $validated['placeholder_a'] ?? null,
+            ]);
+            if (! empty($match->team_h_id) && ! empty($match->team_a_id)) $sports->chargeMatch($match, $request->user());
+            return $match;
+        });
 
         return response()->json([
             'success' => true,
@@ -109,7 +134,10 @@ class MatchAdminController extends Controller
 
     public function update(Request $request, int $match): JsonResponse
     {
-        $match = EventEditionMatch::with(['equipolocal', 'equipovisitante'])->findOrFail($match);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $match = $sports->assertOwnedApiMatch($request->user(), $match);
+        $match->load(['equipolocal', 'equipovisitante']);
 
         $validated = $request->validate([
             'status' => 'sometimes|in:pending,live,finished,closed,walk_over,cancelled,no_points',
@@ -118,12 +146,21 @@ class MatchAdminController extends Controller
             'team_h_id' => 'nullable|integer',
             'team_a_id' => 'nullable|integer',
             'phase' => 'sometimes|in:league,groups,round_16,quarter,semi,final,third_place',
+            'placeholder_h' => 'nullable|string|max:255',
+            'placeholder_a' => 'nullable|string|max:255',
             'group_name' => 'nullable|string|max:255',
             'round_number' => 'nullable|integer|min:1',
             'score_h' => 'nullable|integer|min:0',
             'score_a' => 'nullable|integer|min:0',
         ]);
 
+        if (! empty($validated['team_h_id'])) $sports->assertOwnedApiTeam($request->user(), (int) $match->edition_id, (int) $validated['team_h_id']);
+        if (! empty($validated['team_a_id'])) $sports->assertOwnedApiTeam($request->user(), (int) $match->edition_id, (int) $validated['team_a_id']);
+        $teamH = $validated['team_h_id'] ?? $match->team_h_id;
+        $teamA = $validated['team_a_id'] ?? $match->team_a_id;
+        if (! empty($teamH) && ! empty($teamA)) {
+            abort_unless(EventEditionTeam::where('edition_id', $match->edition_id)->whereIn('team_id', [$teamH, $teamA])->count() === 2, 404);
+        }
         if (isset($validated['team_h_id']) && isset($validated['team_a_id']) &&
             $validated['team_h_id'] == $validated['team_a_id']) {
             return response()->json([
@@ -132,7 +169,22 @@ class MatchAdminController extends Controller
             ], 422);
         }
 
-        $match->update($validated);
+        $teamAssignmentChanged = ($teamH !== $match->team_h_id || $teamA !== $match->team_a_id);
+        $hasCompleteTeams = $teamH !== null && $teamA !== null;
+        if ($teamAssignmentChanged && ! $hasCompleteTeams && $sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort(422, 'No se puede dejar un partido sin ambos equipos después de registrarlo.');
+        }
+        if ($teamAssignmentChanged && $hasCompleteTeams && $sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort_unless(! DB::table('socialevent_organization_ledger')->where('match_id', $match->id)->where('entry_type', 'match_charge')->exists(), 422, 'No se pueden cambiar equipos de un partido ya cobrado.');
+            $sports->assertCanCreateMatch($request->user(), (int) $match->edition_id);
+        }
+
+        DB::transaction(function () use ($match, $validated, $sports, $request, $teamAssignmentChanged, $hasCompleteTeams) {
+            $match->update($validated);
+            if ($teamAssignmentChanged && $hasCompleteTeams) {
+                $sports->chargeMatch($match, $request->user());
+            }
+        });
 
         return response()->json([
             'success' => true,
@@ -141,9 +193,11 @@ class MatchAdminController extends Controller
         ]);
     }
 
-    public function destroy(int $match): JsonResponse
+    public function destroy(Request $request, int $match): JsonResponse
     {
-        $match = EventEditionMatch::findOrFail($match);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $match = $sports->assertOwnedApiMatch($request->user(), $match);
 
         if ($match->status !== 'pending') {
             return response()->json([
@@ -152,7 +206,15 @@ class MatchAdminController extends Controller
             ], 422);
         }
 
-        $match->delete();
+        DB::transaction(function () use ($match) {
+            EventEditionMatchSanction::where('match_id', $match->id)->delete();
+            EventEditionMatchPlayerStat::where('match_id', $match->id)->delete();
+            EventEditionMatchParticipation::where('match_id', $match->id)->delete();
+            EventEditionMatchReport::where('match_id', $match->id)->delete();
+            $match->goals()->delete();
+            $match->substitutions()->delete();
+            $match->delete();
+        });
 
         return response()->json([
             'success' => true,
@@ -160,8 +222,10 @@ class MatchAdminController extends Controller
         ]);
     }
 
-    public function teams(int $editionId): JsonResponse
+    public function teams(Request $request, int $editionId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertOwnedApiEdition($request->user(), $editionId);
         $teams = EventEditionTeam::with('equipo')
             ->where('edition_id', $editionId)
             ->get()
@@ -186,8 +250,9 @@ class MatchAdminController extends Controller
         ]);
     }
 
-    public function locations(): JsonResponse
+    public function locations(Request $request): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertCanRead($request->user());
         $locations = EvenLocal::orderBy('names', 'asc')
             ->get(['id', 'names']);
 
@@ -245,11 +310,10 @@ class MatchAdminController extends Controller
         ];
     }
 
-    public function getMatchPlayers(int $matchId): JsonResponse
+    public function getMatchPlayers(Request $request, int $matchId): JsonResponse
     {
-        $match = EventEditionMatch::with(['equipolocal', 'equipovisitante'])
-            ->findOrFail($matchId);
-
+        $match = app(SportsOrganizationService::class)->assertOwnedApiMatch($request->user(), $matchId);
+        $match->load(['equipolocal', 'equipovisitante']);
         $players = ['home' => [], 'away' => []];
 
         foreach (['equipolocal', 'equipovisitante'] as $teamType) {
@@ -340,7 +404,9 @@ class MatchAdminController extends Controller
 
     public function saveMatchResult(Request $request, int $matchId): JsonResponse
     {
-        $match = EventEditionMatch::findOrFail($matchId);
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $match = $sports->assertOwnedApiMatch($request->user(), $matchId);
 
         $validated = $request->validate([
             'score_h' => 'required|integer|min:0',
@@ -399,6 +465,8 @@ class MatchAdminController extends Controller
             'halves_override' => 'nullable|integer|min:1|max:4',
             'extra_half_minutes_override' => 'nullable|integer|min:1|max:60',
         ]);
+
+        abort_unless((int) $validated['edition_id'] === (int) $match->edition_id, 404);
 
         // Bloqueo: jugadores suspendidos no pueden participar en el acta
         $suspendedPlaying = app(\Modules\Socialevents\Services\PlayerSuspensionService::class)
@@ -710,6 +778,7 @@ class MatchAdminController extends Controller
 
     public function closeMatchReport(Request $request, int $matchId): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         $request->validate([
             'observations' => 'nullable|string|max:5000',
             'local_has_protest' => 'nullable|boolean',
@@ -718,7 +787,8 @@ class MatchAdminController extends Controller
             'visitor_protest_details' => 'nullable|string|max:5000',
         ]);
 
-        $match = EventEditionMatch::with(['equipolocal', 'equipovisitante'])->find($matchId);
+        $match = app(SportsOrganizationService::class)->assertOwnedApiMatch($request->user(), $matchId);
+        $match->load(['equipolocal', 'equipovisitante']);
 
         if (!$match) {
             return response()->json([

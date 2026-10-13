@@ -17,6 +17,7 @@ use Modules\Socialevents\Entities\EventEditionTeam;
 use Modules\Socialevents\Services\PositionTableService;
 use Modules\Socialevents\Support\EditionSlugService;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionController extends Controller
 {
@@ -38,14 +39,18 @@ class EventEditionController extends Controller
 
     public function index()
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
         $editions = EventEdition::with([
             'evento',
             'equipos'
         ])
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()), fn ($query) => $query->whereHas('evento', fn ($eventQuery) => $eventQuery->where('organization_id', $sports->organizationId(request()->user()))))
             ->orderBy('start_date', 'DESC')
             ->paginate(20);
 
         return Inertia::render('Socialevents::Editions/List',[
+            'sportsMode' => $sports->sportsMode(),
             'editions' => $editions
         ]);
     }
@@ -54,9 +59,15 @@ class EventEditionController extends Controller
      */
     public function create()
     {
-        $events = EvenEvent::get();
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $events = EvenEvent::query()
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()), fn ($query) => $query->where('organization_id', $sports->organizationId(request()->user())))
+            ->get();
         $formats = getEnumValues('event_editions','competition_format');
         return Inertia::render('Socialevents::Editions/Create',[
+            'sportsMode' => $sports->sportsMode(),
+            'canManageRates' => $sports->isSuperAdmin(request()->user()),
             'eventos' => $events,
             'formats' => $formats,
         ]);
@@ -67,6 +78,13 @@ class EventEditionController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $this->validate($request, ['event_id' => 'required|integer|exists:even_events,id']);
+        $sports->assertOwnedEvent($request->user(), (int) $request->input('event_id'));
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort_unless(DB::table('even_events')->where('id', $request->input('event_id'))->where('organization_id', $sports->organizationId($request->user()))->exists(), 404);
+        }
         //dd($request->all());
         $this->validate(
             $request,
@@ -81,6 +99,9 @@ class EventEditionController extends Controller
                 'inscription_fee'   => 'required',
                 'min_players_per_team'   => 'required',
                 'max_players_per_team'   => 'required',
+                'match_rate' => $sports->sportsMode()
+                    ? ($sports->isSuperAdmin($request->user()) ? 'nullable|numeric|min:0|max:999999.99' : 'prohibited')
+                    : 'nullable|numeric|min:0|max:999999.99',
                 // Tiempos del torneo (configurables, no hay minutos fijos)
                 'regular_half_minutes'   => 'nullable|integer|min:1|max:200',
                 'regular_halves'   => 'nullable|integer|min:1|max:4',
@@ -101,6 +122,9 @@ class EventEditionController extends Controller
 
         $edition = EventEdition::create([
             'event_id' => $request->get('event_id'),
+            'match_rate' => ! $sports->sportsMode() || $sports->isSuperAdmin($request->user())
+                ? ($request->filled('match_rate') ? $request->input('match_rate') : null)
+                : null,
             'year' => $request->get('year'),
             'name' => $request->get('name'),
             'start_date' => $request->get('start_date'),
@@ -167,11 +191,19 @@ class EventEditionController extends Controller
      */
     public function edit($id)
     {
-        $events = EvenEvent::get();
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edition = EventEdition::with('evento')->findOrFail($id);
+        $events = EvenEvent::query()
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()), fn ($query) => $query->where('organization_id', $sports->organizationId(request()->user())))
+            ->get();
         $formats = getEnumValues('event_editions','competition_format');
-        $edicion = EventEdition::with('evento')->where('id', $id)->first();
+        $edicion = $edition;
 
         return Inertia::render('Socialevents::Editions/Edit',[
+            'sportsMode' => $sports->sportsMode(),
+            'canManageRates' => $sports->isSuperAdmin(request()->user()),
             'eventos' => $events,
             'formats' => $formats,
             'edicion' => $edicion
@@ -183,6 +215,8 @@ class EventEditionController extends Controller
      */
     public function update(Request $request)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $id = $request->get('id');
 
         $this->validate(
@@ -198,6 +232,9 @@ class EventEditionController extends Controller
                 'inscription_fee'   => 'required',
                 'min_players_per_team'   => 'required',
                 'max_players_per_team'   => 'required',
+                'match_rate' => $sports->sportsMode()
+                    ? ($sports->isSuperAdmin($request->user()) ? 'nullable|numeric|min:0|max:999999.99' : 'prohibited')
+                    : 'nullable|numeric|min:0|max:999999.99',
                 // Tiempos del torneo (configurables, no hay minutos fijos)
                 'regular_half_minutes'   => 'nullable|integer|min:1|max:200',
                 'regular_halves'   => 'nullable|integer|min:1|max:4',
@@ -216,9 +253,19 @@ class EventEditionController extends Controller
         $prize_details = $request->get('prize_details');
         $details = $request->get('details');
 
+        $sports->assertOwnedEdition($request->user(), (int) $id);
+        $this->validate($request, ['event_id' => 'required|integer|exists:even_events,id']);
+        $sports->assertOwnedEvent($request->user(), (int) $request->input('event_id'));
+        if ($sports->sportsMode() && ! $sports->isSuperAdmin($request->user())) {
+            abort_unless(DB::table('even_events')->where('id', $request->input('event_id'))->where('organization_id', $sports->organizationId($request->user()))->exists(), 404);
+        }
+        abort_unless((int) EventEdition::findOrFail($id)->event_id === (int) $request->input('event_id'), 422, 'Una edición existente no se puede mover a otro evento.');
         $edition = EventEdition::findOrFail($id);
         $edition->update([
             'event_id' => $request->get('event_id'),
+            'match_rate' => ! $sports->sportsMode() || $sports->isSuperAdmin($request->user())
+                ? ($request->filled('match_rate') ? $request->input('match_rate') : null)
+                : null,
             'year' => $request->get('year'),
             'name' => $request->get('name'),
             'start_date' => $request->get('start_date'),
@@ -258,6 +305,10 @@ class EventEditionController extends Controller
      */
     public function destroy($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), (int) $id);
+        $edition = EventEdition::findOrFail($id);
         $message = null;
         $success = false;
         try {
@@ -266,6 +317,7 @@ class EventEditionController extends Controller
 
             // Verificamos si existe.
             $item = EventEdition::findOrFail($id);
+            $sports->assertOwnedEdition(request()->user(), (int) $item->id);
 
             // Si no hay detalles asociados, eliminamos.
             $item->delete();
@@ -290,10 +342,13 @@ class EventEditionController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $request->validate([
             'status' => 'required|in:finished',
         ]);
 
+        $sports->assertOwnedEdition($request->user(), (int) $id);
         $edition = EventEdition::findOrFail($id);
 
         if ($edition->status !== 'in_progress') {

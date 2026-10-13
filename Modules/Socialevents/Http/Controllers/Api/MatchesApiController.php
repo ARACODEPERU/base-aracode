@@ -22,6 +22,7 @@ class MatchesApiController extends Controller
         if ($edition instanceof JsonResponse) {
             return $edition;
         }
+        abort_unless($edition->landing_published || ! app(\Modules\Socialevents\Services\SportsOrganizationService::class)->sportsMode(), 404);
 
         return response()->json([
             'success' => true,

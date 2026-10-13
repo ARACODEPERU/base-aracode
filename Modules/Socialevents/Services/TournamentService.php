@@ -8,7 +8,7 @@ use Modules\Socialevents\Entities\EventEditionMatch;
 
 class TournamentService
 {
-    public function generate($editionId, $format, array $teamIds)
+    public function generate($editionId, $format, array $teamIds, ?callable $afterGenerate = null)
     {
         if (empty($teamIds)) {
             throw ValidationException::withMessages([
@@ -16,7 +16,7 @@ class TournamentService
             ]);
         }
 
-        return DB::transaction(function () use ($editionId, $format, $teamIds) {
+        return DB::transaction(function () use ($editionId, $format, $teamIds, $afterGenerate) {
             // Borra partidos pendientes antes de crear nuevos
             EventEditionMatch::where('edition_id', $editionId)
                 ->where('status', 'pending')
@@ -24,7 +24,7 @@ class TournamentService
 
             shuffle($teamIds);
 
-            return match($format) {
+            match($format) {
                 'round_robin'              => $this->generateRoundRobin($teamIds, $editionId),
                 'round_robin_playoff'      => $this->generateHybridFormat($teamIds, $editionId),
                 'group_stage_and_playoffs' => $this->generateGroupStage($teamIds, $editionId),
@@ -32,6 +32,13 @@ class TournamentService
                 'single_elimination'       => $this->generateSingleElimination($teamIds, $editionId),
                 default                    => throw new \Exception("Formato no reconocido"),
             };
+
+            $matches = EventEditionMatch::where('edition_id', $editionId)
+                ->where('status', 'pending')
+                ->get();
+            if ($afterGenerate) $afterGenerate($matches);
+
+            return $matches;
         });
     }
 

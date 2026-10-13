@@ -5,12 +5,21 @@
     import VueCollapsible from 'vue-height-collapsible/vue3';
     import { Link, usePage } from '@inertiajs/vue3';
     import menuData from './MenuData.js';
+    import { configureSocialeventsMenu } from 'Modules/Socialevents/Resources/assets/js/Menu.js';
     import { Tooltip, Popover } from 'ant-design-vue'
     import { useSidebarEditor } from 'Modules/Security/Resources/assets/js/Composables/useSidebarEditor';
 
     const store = useAppStore();
     const xasset = assetUrl;
     const page = usePage();
+    const sportsOrganization = computed(() => page.props.sportsOrganization || {});
+
+    watch(sportsOrganization, (state) => {
+        const index = menuData.value.findIndex((menu) => menu.permissions === 'even_dashboard');
+        if (index >= 0) {
+            menuData.value[index] = configureSocialeventsMenu(Boolean(state.mode));
+        }
+    }, { immediate: true, deep: true });
 
 
     // Colapsado por defecto en modo collapsible-vertical; expandido al activar toggle (store.sidebar)
@@ -60,7 +69,11 @@
     };
 
     const visibleOptions = computed(() => {
-        return (moduleSelected.value?.items || []).filter((option) => editor.reveals(option.permissions));
+        return (moduleSelected.value?.items || []).filter((option) =>
+            editor.reveals(option.permissions)
+            && !(sportsOrganization.value.mode && option.sportsHidden)
+            && !(option.superAdminOnly && !(page.props.auth?.roles || []).some((role) => ['admin', 'Administrador'].includes(role)))
+        );
     });
 
     /** Módulos del rail izquierdo: sin permiso no se monta Tooltip ni wrapper (evita huecos). */
@@ -69,7 +82,10 @@
     });
 
     const visibleSubOptions = (option) => {
-        return (option?.items || []).filter((subOption) => editor.reveals(subOption.permissions));
+        return (option?.items || []).filter((subOption) =>
+            editor.reveals(subOption.permissions)
+            && !(subOption.superAdminOnly && !(page.props.auth?.roles || []).some((role) => ['admin', 'Administrador'].includes(role)))
+        );
     };
 
     const isExpandableOption = (option) => visibleSubOptions(option).length > 0;

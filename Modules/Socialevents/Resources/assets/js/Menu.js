@@ -8,6 +8,7 @@ import {
     faBoltLightning,
     faGauge,
     faHouseChimney,
+    faFutbol,
 } from "@fortawesome/free-solid-svg-icons";
 
 const menuSocialevents = {
@@ -31,6 +32,7 @@ const menuSocialevents = {
             text: "Categorías",
             permissions: "even_categoria_listado",
             icom: faLayerGroup,
+            sportsHidden: true,
         },
         {
             route: route("even_local_list"),
@@ -50,6 +52,7 @@ const menuSocialevents = {
             route: route("even_eventos_list"),
             status: false,
             text: "Eventos",
+            sportsText: "Torneos",
             permissions: "even_evento_listado",
             icom: faElevator,
         },
@@ -73,7 +76,36 @@ const menuSocialevents = {
             text: "Ticket Vendidos",
             permissions: "even_ventas_listado",
             icom: faTicket,
+            sportsHidden: true,
+        },
+        {
+            route: route("even_organizations.index"),
+            status: false,
+            text: "Organizaciones y tarifas",
+            permissions: "even_dashboard",
+            sportsOnly: true,
+            superAdminOnly: true,
+            icom: faBuildingFlag,
         },
     ],
 };
+
+export const configureSocialeventsMenu = (sportsMode) => {
+    if (! sportsMode) {
+        return menuSocialevents;
+    }
+
+    return {
+        ...menuSocialevents,
+        text: "GESTIÓN DEPORTIVA",
+        icom: faFutbol,
+        items: menuSocialevents.items
+            .filter((item) => ! item.sportsHidden && (! item.sportsOnly || sportsMode))
+            .map((item) => ({
+                ...item,
+                text: item.sportsText ?? item.text,
+            })),
+    };
+};
+
 export default menuSocialevents;

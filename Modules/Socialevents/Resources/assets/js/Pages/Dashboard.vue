@@ -32,6 +32,7 @@ const props = defineProps({
     upcoming_matches: { type: Array, default: () => [] },
     integration: { type: Object, default: null },
     quick_links: { type: Array, default: () => [] },
+    sportsMode: { type: Boolean, default: false },
 });
 
 const page = usePage();
@@ -51,13 +52,17 @@ const hasAnyModule = computed(() => showSports.value || showRentals.value);
 
 const introMessage = computed(() => {
     if (showSports.value && showRentals.value) {
-        return 'Panel operativo de Eventos sociales: gestiona torneos y ediciones deportivas, y el flujo de alquiler de local con reservas, pagos y notas de venta.';
+        return props.sportsMode
+            ? 'Panel de Gestión Deportiva para organizar torneos, equipos, ediciones y partidos.'
+            : 'Panel operativo de Eventos sociales: gestiona torneos y ediciones deportivas, y el flujo de alquiler de local con reservas, pagos y notas de venta.';
     }
     if (showRentals.value) {
         return 'Panel de alquiler de local: reservas, adelantos, abonos, saldos pendientes y emisión de notas de venta.';
     }
     if (showSports.value) {
-        return 'Este módulo está pensado para varios tipos de evento. Hoy el flujo operativo es deportes y torneos (ediciones, fixture, landing y API móvil).';
+        return props.sportsMode
+            ? 'Crea tu primer torneo para comenzar a configurar ediciones, equipos y partidos.'
+            : 'Este módulo está pensado para varios tipos de evento. Hoy el flujo operativo es deportes y torneos (ediciones, fixture, landing y API móvil).';
     }
     return 'No tienes acceso a resúmenes operativos en este módulo. Contacta al administrador para asignarte permisos de listado.';
 });
@@ -236,10 +241,10 @@ const typeIcon = (icon) => {
 </script>
 
 <template>
-    <AppLayout title="Eventos">
+    <AppLayout :title="sportsMode ? 'Gestión Deportiva' : 'Eventos'">
         <Navigation
             :routeModule="route('even_dashboard')"
-            titleModule="Eventos"
+            :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos'"
             :data="[{ title: 'Dashboard' }]"
         />
 
@@ -296,6 +301,13 @@ const typeIcon = (icon) => {
                 >
                     {{ link.label }}
                 </Link>
+            </div>
+
+            <div v-if="sportsMode && !recent_editions.length && hasPermission('even_evento_nuevo')" class="panel border border-primary/20 p-6 text-center">
+                <FontAwesomeIcon :icon="faFutbol" class="mb-3 h-8 w-8 text-primary" />
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Comienza con tu primer torneo</h2>
+                <p class="mt-1 text-sm text-gray-500">Tu espacio está listo. Registra un torneo y luego crea su edición, equipos y fixture.</p>
+                <Link :href="route('even_eventos_create')" class="btn btn-primary mt-4">Crear torneo</Link>
             </div>
 
             <!-- Bloque deportes -->
@@ -358,7 +370,7 @@ const typeIcon = (icon) => {
                                 <tbody>
                                     <tr v-if="!recent_editions.length">
                                         <td colspan="5" class="px-4 py-8 text-center text-gray-500">
-                                            No hay ediciones activas. Crea una desde Ediciones.
+                                            {{ sportsMode ? 'Aún no tienes torneos activos. Crea una edición para iniciar la competición.' : 'No hay ediciones activas. Crea una desde Ediciones.' }}
                                         </td>
                                     </tr>
                                     <tr

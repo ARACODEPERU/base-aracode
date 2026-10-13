@@ -25,7 +25,17 @@ class TeamRegistrationService
             'logo_path' => 'nullable|string',
         ])->validate();
 
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(auth()->user());
+        $organizationId = null;
+        if ($sports->sportsMode()) {
+            $organizationId = $sports->isSuperAdmin(auth()->user())
+                ? $sports->legacyOrganizationId()
+                : $sports->organizationId(auth()->user());
+        }
+
         $team = EventTeam::create([
+            'organization_id' => $sports->sportsMode() ? $organizationId : $sports->legacyOrganizationId(),
             'name' => $validated['name'],
             'short_name' => $validated['short_name'],
             'ubigeo' => $validated['ubigeo'] ?? null,

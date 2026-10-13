@@ -9,6 +9,7 @@ use Modules\Socialevents\Entities\EvenEvent;
 use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Services\TournamentStandingsService;
 use Modules\Socialevents\Support\TournamentMedia;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventApiController extends Controller
 {
@@ -23,12 +24,19 @@ class EventApiController extends Controller
      */
     public function getActiveEvents(): JsonResponse
     {
-        $events = EvenEvent::whereIn('status', ['PR', 'PE'])
+        $sportsMode = app(SportsOrganizationService::class)->sportsMode();
+        $publicEdition = fn ($query) => $query->where(fn ($publication) => $publication->where('landing_published', true)->orWhere('mobile_enabled', true));
+        $events = EvenEvent::query()
+            ->whereIn('status', ['PR', 'PE'])
+            ->when($sportsMode, fn ($query) => $query->whereHas('editions', $publicEdition))
             ->orderBy('created_at', 'desc')
             ->get();
 
         if ($events->isEmpty()) {
-            $events = EvenEvent::orderBy('created_at', 'desc')->get();
+            $events = EvenEvent::query()
+                ->when($sportsMode, fn ($query) => $query->whereHas('editions', $publicEdition))
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
 
         $eventsData = [];
@@ -36,6 +44,7 @@ class EventApiController extends Controller
         foreach ($events as $event) {
             $edition = EventEdition::where('event_id', $event->id)
                 ->whereNotIn('status', ['CA'])
+                ->when($sportsMode, $publicEdition)
                 ->orderBy('created_at', 'desc')
                 ->first();
 
@@ -84,12 +93,19 @@ class EventApiController extends Controller
      */
     public function getCurrentEvent(): JsonResponse
     {
-        $event = EvenEvent::whereIn('status', ['PR', 'PE'])
+        $sportsMode = app(SportsOrganizationService::class)->sportsMode();
+        $publicEdition = fn ($query) => $query->where(fn ($publication) => $publication->where('landing_published', true)->orWhere('mobile_enabled', true));
+        $event = EvenEvent::query()
+            ->whereIn('status', ['PR', 'PE'])
+            ->when($sportsMode, fn ($query) => $query->whereHas('editions', $publicEdition))
             ->orderBy('created_at', 'desc')
             ->first();
 
         if (!$event) {
-            $event = EvenEvent::orderBy('created_at', 'desc')->first();
+            $event = EvenEvent::query()
+                ->when($sportsMode, fn ($query) => $query->whereHas('editions', $publicEdition))
+                ->orderBy('created_at', 'desc')
+                ->first();
         }
 
         if (!$event) {
@@ -102,6 +118,7 @@ class EventApiController extends Controller
 
         $edition = EventEdition::where('event_id', $event->id)
             ->whereNotIn('status', ['CA'])
+            ->when($sportsMode, $publicEdition)
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -128,7 +145,11 @@ class EventApiController extends Controller
      */
     public function getEventById(int $id): JsonResponse
     {
-        $event = EvenEvent::find($id);
+        $sportsMode = app(SportsOrganizationService::class)->sportsMode();
+        $publicEdition = fn ($query) => $query->where(fn ($publication) => $publication->where('landing_published', true)->orWhere('mobile_enabled', true));
+        $event = EvenEvent::query()
+            ->when($sportsMode, fn ($query) => $query->whereHas('editions', $publicEdition))
+            ->find($id);
 
         if (!$event) {
             return response()->json([
@@ -140,6 +161,7 @@ class EventApiController extends Controller
 
         $edition = EventEdition::where('event_id', $event->id)
             ->whereNotIn('status', ['CA'])
+            ->when($sportsMode, $publicEdition)
             ->orderBy('created_at', 'desc')
             ->first();
 
@@ -165,8 +187,10 @@ class EventApiController extends Controller
      */
     public function getCurrentEdition(): JsonResponse
     {
+        $sportsMode = app(SportsOrganizationService::class)->sportsMode();
         $edition = EventEdition::with('evento')
             ->whereNotIn('status', ['CA'])
+            ->when($sportsMode, fn ($query) => $query->where(fn ($public) => $public->where('landing_published', true)->orWhere('mobile_enabled', true)))
             ->orderBy('created_at', 'desc')
             ->first();
 

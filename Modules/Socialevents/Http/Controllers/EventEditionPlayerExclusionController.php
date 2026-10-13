@@ -11,6 +11,7 @@ use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionPlayerExclusion;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionPlayerExclusionController extends Controller
 {
@@ -19,6 +20,9 @@ class EventEditionPlayerExclusionController extends Controller
      */
     public function index(int $editionId): Response
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), $editionId);
         $edicion = EventEdition::findOrFail($editionId);
 
         $exclusions = EventEditionPlayerExclusion::with('player')
@@ -63,6 +67,9 @@ class EventEditionPlayerExclusionController extends Controller
      */
     public function store(Request $request, int $editionId): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), $editionId);
         $validated = $request->validate([
             'player_id' => 'required|integer',
             'reason' => 'required|string|max:500',
@@ -101,6 +108,9 @@ class EventEditionPlayerExclusionController extends Controller
      */
     public function destroy(Request $request, int $editionId, int $exclusionId): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), $editionId);
         $exclusion = EventEditionPlayerExclusion::where('edition_id', $editionId)
             ->findOrFail($exclusionId);
 

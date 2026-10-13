@@ -81,6 +81,7 @@ class Kernel extends HttpKernel
         'localhost.only' => \App\Http\Middleware\EnsureLocalhostRequest::class,
         'internal.api' => \App\Http\Middleware\ValidateInternalApiSecret::class,
         'socialevents.admin' => \Modules\Socialevents\Http\Middleware\EnsureSocialeventsAdmin::class,
+        'socialevents.access' => \Modules\Socialevents\Http\Middleware\EnforceSportsOrganization::class,
         'super.editor' => \Modules\Security\Http\Middleware\EnsureSuperEditorSession::class,
     ];
 }

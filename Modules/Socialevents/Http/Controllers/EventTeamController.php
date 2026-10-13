@@ -13,6 +13,7 @@ use Modules\Socialevents\Entities\EventTeam;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Socialevents\Services\TeamShieldAiService;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventTeamController extends Controller
 {
@@ -21,7 +22,11 @@ class EventTeamController extends Controller
      */
     public function index()
     {
-        $teams = EventTeam::with(['manager', 'editions', 'players'])
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $teams = EventTeam::query()
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin(request()->user()), fn ($query) => $query->where('organization_id', $sports->organizationId(request()->user())))
+            ->with(['manager', 'editions', 'players'])
             ->orderBy('name')
             ->paginate(20);
         //dd($teams);
@@ -35,6 +40,7 @@ class EventTeamController extends Controller
      */
     public function create()
     {
+        app(SportsOrganizationService::class)->assertCanWrite(request()->user());
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
@@ -56,6 +62,8 @@ class EventTeamController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $this->validate(
             $request,
             [
@@ -67,6 +75,7 @@ class EventTeamController extends Controller
         $logoPath = null;
 
         $team = EventTeam::create([
+            'organization_id' => $sports->sportsMode() && ! $sports->isSuperAdmin($request->user()) ? $sports->organizationId($request->user()) : $sports->legacyOrganizationId(),
             'name' => $request->get('name'),
             'short_name' => $request->get('short_name'),
             'ubigeo' => $request->get('ubigeo'),
@@ -121,6 +130,9 @@ class EventTeamController extends Controller
      */
     public function edit($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedTeam(request()->user(), (int) $id);
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(
@@ -131,7 +143,7 @@ class EventTeamController extends Controller
 
         $documentTypes = DB::table('identity_document_type')->whereNotIn('id',['6'])->get();
 
-        $team = EventTeam::with('manager')->where('id', $id)->first();
+        $team = EventTeam::with('manager')->where('id', $id)->firstOrFail();
         return Inertia::render('Socialevents::Teams/Edit',[
             'ubigeo' => $ubigeo,
             'documentTypes' => $documentTypes,
@@ -144,7 +156,10 @@ class EventTeamController extends Controller
      */
     public function update(Request $request)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
         $id = $request->get('id');
+        $sports->assertOwnedTeam($request->user(), (int) $id);
 
         $this->validate(
             $request,
@@ -156,8 +171,7 @@ class EventTeamController extends Controller
 
         $logoPath = null;
 
-        $team = EventTeam::find($id);
-
+        $team = EventTeam::findOrFail($id);
         $team->update([
             'name' => $request->get('name'),
             'short_name' => $request->get('short_name'),
@@ -212,6 +226,7 @@ class EventTeamController extends Controller
 
     public function generateShield(Request $request, TeamShieldAiService $shieldAiService)
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
         $validated = $request->validate([
             'prompt' => 'required|string|max:2000',
         ]);
@@ -238,6 +253,9 @@ class EventTeamController extends Controller
      */
     public function destroy($id)
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedTeam(request()->user(), (int) $id);
         $message = null;
         $success = false;
         try {

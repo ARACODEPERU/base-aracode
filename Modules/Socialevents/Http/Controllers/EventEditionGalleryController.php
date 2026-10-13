@@ -14,6 +14,7 @@ use Modules\Socialevents\Entities\EventEditionMedia;
 use Modules\Socialevents\Support\TournamentDateLabels;
 use Modules\Socialevents\Support\TournamentLandingCache;
 use Modules\Socialevents\Support\TournamentMedia;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionGalleryController extends Controller
 {
@@ -21,6 +22,9 @@ class EventEditionGalleryController extends Controller
 
     public function index(int $editionId): Response
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), $editionId);
         $edition = EventEdition::with(['evento'])->findOrFail($editionId);
 
         $matches = EventEditionMatch::with(['equipolocal', 'equipovisitante'])
@@ -51,6 +55,9 @@ class EventEditionGalleryController extends Controller
 
     public function store(Request $request, int $editionId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), $editionId);
         $edition = EventEdition::findOrFail($editionId);
 
         $request->validate([
@@ -137,6 +144,9 @@ class EventEditionGalleryController extends Controller
 
     public function destroy(int $editionId, int $mediaId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite(request()->user());
+        $sports->assertOwnedEdition(request()->user(), $editionId);
         $media = EventEditionMedia::where('id', $mediaId)
             ->where('edition_id', $editionId)
             ->firstOrFail();

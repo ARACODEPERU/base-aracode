@@ -11,6 +11,7 @@ use Modules\Socialevents\Entities\EventEdition;
 use Modules\Socialevents\Entities\EventEditionTeamPlayer;
 use Modules\Socialevents\Services\PlayerSuspensionService;
 use Modules\Socialevents\Support\TournamentLandingCache;
+use Modules\Socialevents\Services\SportsOrganizationService;
 
 class EventEditionPlayerSuspensionController extends Controller
 {
@@ -23,6 +24,9 @@ class EventEditionPlayerSuspensionController extends Controller
      */
     public function index(int $editionId): Response
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead(request()->user());
+        $sports->assertOwnedEdition(request()->user(), $editionId);
         $edicion = EventEdition::findOrFail($editionId);
 
         $suspensions = \Modules\Socialevents\Entities\EventEditionPlayerSuspension::with('player')
@@ -67,6 +71,9 @@ class EventEditionPlayerSuspensionController extends Controller
      */
     public function store(Request $request, int $editionId): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), $editionId);
         $validated = $request->validate([
             'player_id' => 'required|integer',
             'type' => 'required|in:definitive,matches,date_range',
@@ -112,6 +119,9 @@ class EventEditionPlayerSuspensionController extends Controller
      */
     public function destroy(Request $request, int $editionId, int $suspensionId): RedirectResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedEdition($request->user(), $editionId);
         $suspension = \Modules\Socialevents\Entities\EventEditionPlayerSuspension::where('edition_id', $editionId)
             ->findOrFail($suspensionId);
 

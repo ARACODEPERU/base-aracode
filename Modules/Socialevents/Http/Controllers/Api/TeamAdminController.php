@@ -13,6 +13,7 @@ use Modules\Socialevents\Entities\EventTeam;
 use Modules\Socialevents\Services\EditionTeamPlayerService;
 use Modules\Socialevents\Services\EditionTeamService;
 use Modules\Socialevents\Services\TeamRegistrationService;
+use Modules\Socialevents\Services\SportsOrganizationService;
 use RuntimeException;
 
 class TeamAdminController extends Controller
@@ -23,9 +24,13 @@ class TeamAdminController extends Controller
         private EditionTeamPlayerService $editionTeamPlayer,
     ) {}
 
-    public function catalog(): JsonResponse
+    public function catalog(Request $request): JsonResponse
     {
-        $teams = EventTeam::with('manager')
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanRead($request->user());
+        $teams = EventTeam::query()
+            ->when($sports->sportsMode() && ! $sports->isSuperAdmin($request->user()), fn ($query) => $query->where('organization_id', $sports->organizationId($request->user())))
+            ->with('manager')
             ->orderBy('name')
             ->get()
             ->map(fn (EventTeam $team) => $this->teamRegistration->formatTeam($team));
@@ -40,6 +45,8 @@ class TeamAdminController extends Controller
     public function storeTeam(Request $request): JsonResponse
     {
         try {
+            $sports = app(SportsOrganizationService::class);
+            $sports->assertCanWrite($request->user());
             $result = $this->teamRegistration->create($request->all());
 
             return response()->json([
@@ -57,8 +64,9 @@ class TeamAdminController extends Controller
         }
     }
 
-    public function editionTeams(int $editionId): JsonResponse
+    public function editionTeams(Request $request, int $editionId): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertOwnedApiEdition($request->user(), $editionId);
         $edition = EventEdition::findOrFail($editionId);
         $teams = $this->editionTeam->listForEdition($editionId);
 
@@ -78,9 +86,13 @@ class TeamAdminController extends Controller
 
     public function assignTeam(Request $request, int $editionId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiEdition($request->user(), $editionId);
         $validated = $request->validate([
             'team_id' => 'required|integer|exists:event_teams,id',
         ]);
+        $sports->assertOwnedTeam($request->user(), (int) $validated['team_id']);
 
         try {
             $row = $this->editionTeam->assign($editionId, (int) $validated['team_id']);
@@ -99,8 +111,11 @@ class TeamAdminController extends Controller
         }
     }
 
-    public function unassignTeam(int $editionId, int $teamId): JsonResponse
+    public function unassignTeam(Request $request, int $editionId, int $teamId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         try {
             $this->editionTeam->unassign($editionId, $teamId);
 
@@ -116,8 +131,9 @@ class TeamAdminController extends Controller
         }
     }
 
-    public function players(int $editionId, int $teamId): JsonResponse
+    public function players(Request $request, int $editionId, int $teamId): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         try {
             $players = $this->editionTeamPlayer->listForTeam($editionId, $teamId);
 
@@ -139,6 +155,7 @@ class TeamAdminController extends Controller
      */
     public function editionPlayers(Request $request, int $editionId): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertOwnedApiEdition($request->user(), $editionId);
         try {
             $players = $this->editionTeamPlayer->listForEdition(
                 $editionId,
@@ -160,6 +177,9 @@ class TeamAdminController extends Controller
 
     public function linkPlayer(Request $request, int $editionId, int $teamId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         $validated = $request->validate([
             'person_id' => 'required|integer|exists:people,id',
         ]);
@@ -187,6 +207,9 @@ class TeamAdminController extends Controller
 
     public function createPlayer(Request $request, int $editionId, int $teamId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         try {
             $player = $this->editionTeamPlayer->createWithPerson($editionId, $teamId, $request->all());
             $player->load('person');
@@ -208,6 +231,9 @@ class TeamAdminController extends Controller
 
     public function updatePlayer(Request $request, int $editionId, int $teamId, int $personId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         try {
             $player = $this->editionTeamPlayer->update($editionId, $teamId, $personId, $request->all());
 
@@ -228,6 +254,9 @@ class TeamAdminController extends Controller
 
     public function uploadPlayerPhoto(Request $request, int $editionId, int $teamId, int $personId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         $validated = $request->validate([
             'image' => 'required|string',
         ]);
@@ -255,8 +284,11 @@ class TeamAdminController extends Controller
         }
     }
 
-    public function deletePlayer(int $editionId, int $teamId, int $personId): JsonResponse
+    public function deletePlayer(Request $request, int $editionId, int $teamId, int $personId): JsonResponse
     {
+        $sports = app(SportsOrganizationService::class);
+        $sports->assertCanWrite($request->user());
+        $sports->assertOwnedApiTeam($request->user(), $editionId, $teamId);
         try {
             $this->editionTeamPlayer->delete($editionId, $teamId, $personId);
 
@@ -274,6 +306,8 @@ class TeamAdminController extends Controller
 
     public function searchPerson(Request $request): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertCanRead($request->user());
+        abort_if(app(SportsOrganizationService::class)->sportsMode(), 404);
         $validated = $request->validate([
             'document_type_id' => 'required|integer',
             'number' => 'required|string|max:20',
@@ -307,6 +341,8 @@ class TeamAdminController extends Controller
 
     public function savePerson(Request $request): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertCanWrite($request->user());
+        abort_if(app(SportsOrganizationService::class)->sportsMode(), 404);
         try {
             $person = $this->editionTeamPlayer->savePerson($request->all());
 
@@ -325,8 +361,10 @@ class TeamAdminController extends Controller
         }
     }
 
-    public function ubigeo(): JsonResponse
+    public function ubigeo(Request $request): JsonResponse
     {
+        app(SportsOrganizationService::class)->assertCanRead($request->user());
+        abort_if(app(SportsOrganizationService::class)->sportsMode(), 404);
         $ubigeo = District::join('provinces', 'province_id', 'provinces.id')
             ->join('departments', 'provinces.department_id', 'departments.id')
             ->select(

@@ -5,6 +5,8 @@
     import Navigation from '@/Components/vristo/layout/Navigation.vue';
 
     const props = defineProps({
+        sportsMode: { type: Boolean, default: false },
+        canManageRates: { type: Boolean, default: false },
         eventos: {
             type: Object,
             default: () => ({}),
@@ -21,10 +23,10 @@
 </script>
 
 <template>
-    <AppLayout title="Ediciones">
-        <Navigation :routeModule="route('even_dashboard')" :titleModule="'Eventos sociales'"
+    <AppLayout :title="sportsMode ? 'Gestión Deportiva' : 'Ediciones'">
+        <Navigation :routeModule="route('even_dashboard')" :titleModule="sportsMode ? 'GESTIÓN DEPORTIVA' : 'Eventos sociales'"
             :data="[
-                {route: route('even_ediciones_listado'), title: 'Ediciones',
+                {route: route('even_ediciones_listado'), title: sportsMode ? 'Torneos' : 'Ediciones',
                     children: [
                         { route: route('even_ediciones_equipos', edicion.id), title: 'Equipos', permissions: 'even_ediciones_equipos'},
                         { route: route('even_ediciones_fixtures', edicion.id), title: 'Partidos', permissions: 'even_ediciones_fixtures'},
@@ -39,6 +41,8 @@
         />
         <div class="mt-6 w-full">
             <EditForm
+                :sportsMode="sportsMode"
+                :canManageRates="canManageRates"
                 :eventos="eventos"
                 :formats="formats"
                 :edicion="edicion"
