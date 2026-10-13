@@ -233,6 +233,14 @@ const colegioGroup = {
         'aca_school_listado',
         'aca_school_horario_listado',
         'aca_school_horario_docente',
+        // Permisos escolares que NO vienen del paquete de administracion: se
+        // conceden sueltos a roles concretos (Portero = solo escaner, y
+        // Administrador = escaner + reporte + parametros SMS). Sin listarlos
+        // aqui, el grupo Colegio se ocultaba para esos usuarios y con el sus
+        // pantallas, aunque el backend si las autorizara.
+        'aca_school_porteria_escaner',
+        'aca_school_porteria_reporte',
+        'aca_school_sms_configuracion',
     ],
     items: [
         {
@@ -688,7 +696,17 @@ const menuAcademic = {
     text: "Académico",
     icom: faGraduationCap,
     route: 'module',
-    permissions: "aca_dashboard",
+    // Lista con semantica OR: entra quien tenga el permiso general del modulo
+    // o cualquiera de los permisos escolares sueltos. El rol Portero solo
+    // tiene 'aca_school_porteria_escaner', asi que con el permiso unico
+    // 'aca_dashboard' el modulo entero desaparecia del rail y no habia forma
+    // de llegar a la pantalla de escaneo (el backend si lo autoriza).
+    permissions: [
+        'aca_dashboard',
+        'aca_school_porteria_escaner',
+        'aca_school_porteria_reporte',
+        'aca_school_sms_configuracion',
+    ],
     items: academicItems,
 };
 
