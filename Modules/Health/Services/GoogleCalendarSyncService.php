@@ -15,7 +15,9 @@ use Modules\Health\Entities\HealGoogleCalendarEvent;
 use Modules\Health\Entities\HealGoogleCalendarState;
 use Modules\Health\Entities\HealPatient;
 use Modules\Health\Support\AppointmentEventMapper;
+use Modules\Health\Support\GoogleCalendarAccount;
 use Modules\Health\Support\GoogleCalendarEventMissingException;
+use Modules\Health\Support\GoogleCalendarOptions;
 use Modules\Health\Support\GoogleCalendarSyncGuard;
 use Modules\Health\Support\GoogleCalendarSyncTokenExpiredException;
 use RuntimeException;
@@ -50,6 +52,7 @@ class GoogleCalendarSyncService
     public function __construct(
         private readonly GoogleCalendarService $google,
         private readonly AppointmentEventMapper $mapper,
+        private readonly DoctorGoogleCalendarService $doctors,
     ) {
     }
 
@@ -59,6 +62,16 @@ class GoogleCalendarSyncService
     public function ready(): bool
     {
         return $this->tablesReady() && $this->google->isActive() && $this->google->isConfigured();
+    }
+
+    /**
+     * true si se puede escribir citas en Google, ya sea en la agenda principal o
+     * en la agenda de un doctor (que solo necesita el cliente OAuth, no el token
+     * de la principal).
+     */
+    public function outboundReady(): bool
+    {
+        return $this->tablesReady() && $this->google->isActive() && $this->google->hasClientCredentials();
     }
 
     /**
@@ -256,11 +269,10 @@ class GoogleCalendarSyncService
      */
     public function push(DentAppointment $appointment): void
     {
-        if (! $this->ready()) {
+        if (! $this->outboundReady()) {
             return;
         }
 
-        $calendarId = $this->google->calendarId();
         $timezone = $this->google->timezone();
         $mapping = $this->mappingForAppointment($appointment->id);
 
@@ -274,39 +286,53 @@ class GoogleCalendarSyncService
 
         $appointment->loadMissing(['patient', 'doctor']);
 
+        // Agenda que recibe la cita: la del doctor si enlazo la suya; si no, la
+        // principal (solo con la opcion de respaldo encendida).
+        $target = $this->targetFor($appointment);
+
+        if ($target === null) {
+            // Sin agenda destino, el evento que tuviera la cita se retira de su agenda anterior.
+            if ($mapping && $mapping->isLinked()) {
+                $this->deleteRemoteEvent($mapping);
+            }
+
+            return;
+        }
+
+        $calendarId = $target->calendarId;
         $payload = $this->mapper->payload($appointment, $timezone);
         $hash = $this->mapper->hash($this->mapper->fieldsFromPayload($payload));
 
-        // Mismo contenido que la ultima vez que escribimos: no se vuelve a
+        // Mismo contenido en la misma agenda que la ultima vez: no se vuelve a
         // tocar el evento (defensa contra el eco propio).
-        if ($mapping && $mapping->isLinked() && $mapping->pushed_hash === $hash) {
+        if ($mapping && $mapping->isLinked() && (string) $mapping->calendar_id === $calendarId && $mapping->pushed_hash === $hash) {
             $mapping->forceFill(['last_synced_at' => now()])->save();
 
             return;
         }
 
-        $eventId = $mapping && $mapping->sync_state !== HealGoogleCalendarEvent::STATE_DELETED
-            ? trim((string) $mapping->google_event_id)
-            : '';
-
         try {
+            $eventId = $this->eventIdForCalendar($mapping, $calendarId);
+
             if ($eventId !== '') {
                 try {
-                    $event = $this->google->updateEvent($eventId, $payload);
+                    $event = $this->google->updateEvent($eventId, $payload, $target);
                 } catch (GoogleCalendarEventMissingException) {
                     // El evento desaparecio en Google: se crea de nuevo.
-                    $event = $this->google->insertEvent($payload);
+                    $event = $this->google->insertEvent($payload, $target);
                 }
             } else {
-                $event = $this->google->insertEvent($payload);
+                $event = $this->google->insertEvent($payload, $target);
             }
         } catch (\Throwable $exception) {
             $this->markError($mapping, $appointment, $calendarId, $exception);
+            $this->recordDoctorSync($target, $exception->getMessage());
 
             throw $exception;
         }
 
         $this->storeMapping($mapping, $appointment, $calendarId, $payload, $event, $hash);
+        $this->recordDoctorSync($target, null);
     }
 
     /**
@@ -314,7 +340,7 @@ class GoogleCalendarSyncService
      */
     public function pushDelete(int $appointmentId): void
     {
-        if (! $this->ready()) {
+        if (! $this->outboundReady()) {
             return;
         }
 
@@ -916,6 +942,8 @@ class GoogleCalendarSyncService
             'Se registran una sola vez en Parametros del sistema: Google Cloud Console > APIs y servicios > Credenciales > ID de cliente de OAuth (Aplicacion web).'
         );
 
+        $checks[] = $this->redirectUriCheck();
+
         // Sin credenciales no tiene sentido seguir: todo lo demas depende de ellas.
         if (! $credentialsReady) {
             return $checks;
@@ -943,6 +971,28 @@ class GoogleCalendarSyncService
         $checks[] = $this->webhookCheck();
 
         return $checks;
+    }
+
+    /**
+     * Comprobacion de la URL de callback (la que Google debe tener registrada).
+     *
+     * No necesita credenciales ni cuenta conectada: si la URL no sirve, el
+     * consentimiento nunca vuelve al sistema, Google muestra "Error 400:
+     * redirect_uri_mismatch" y en el sistema no queda rastro del intento.
+     *
+     * @return array{code: string, label: string, ok: bool, message: string, hint: ?string}
+     */
+    private function redirectUriCheck(): array
+    {
+        $problem = $this->google->redirectUriProblem();
+
+        return $this->check(
+            'redirect_uri',
+            'URL de callback',
+            $problem === null,
+            $problem ?? 'Google debe tener registrada esta dirección: ' . $this->google->redirectUri(),
+            'Es la misma dirección en "URIs de redireccionamiento autorizados" de la credencial (SC-00011), sin barra final: si falta un tramo de la ruta (por ejemplo /health), Google responde redirect_uri_mismatch.'
+        );
     }
 
     /**
@@ -1068,7 +1118,9 @@ class GoogleCalendarSyncService
         }
 
         if (str_contains($lower, 'redirect_uri_mismatch')) {
-            return 'La URL de callback no esta registrada en la credencial de Google Cloud. Agregala como URI de redireccionamiento autorizado: ' . $this->google->redirectUri();
+            return 'La URL de callback no esta registrada (o no coincide letra por letra) en la credencial de Google Cloud. '
+                . 'Agregala como URI de redireccionamiento autorizado, completa y sin barra final: ' . $this->google->redirectUri()
+                . '. Google solo admite http:// en localhost o 127.0.0.1; en un dominio propio la dirección tiene que ser https://.';
         }
 
         if (str_contains($lower, 'accessnotconfigured')
@@ -1348,8 +1400,14 @@ class GoogleCalendarSyncService
         $eventId = trim((string) $mapping->google_event_id);
 
         if ($eventId !== '' && $mapping->sync_state !== HealGoogleCalendarEvent::STATE_DELETED) {
+            // Sin cuenta que pueda borrarlo (el doctor se desconecto), el evento se
+            // queda en su agenda: no se intenta borrar con otra cuenta.
+            $account = $this->accountForCalendarId((string) $mapping->calendar_id);
+
             try {
-                $this->google->deleteEvent($eventId);
+                if ($account !== null) {
+                    $this->google->deleteEvent($eventId, $account);
+                }
             } catch (\Throwable $exception) {
                 $mapping->forceFill([
                     'sync_state' => HealGoogleCalendarEvent::STATE_ERROR,
@@ -1370,6 +1428,85 @@ class GoogleCalendarSyncService
             'error_message' => null,
             'last_synced_at' => now(),
         ])->save();
+    }
+
+    /**
+     * Agenda a la que se escribe la cita.
+     *
+     * Si el doctor enlazo su propia agenda, va ahi. Si no, va a la principal solo
+     * cuando la opcion de respaldo esta encendida. Devuelve null si no hay destino
+     * (la cita no se envia a Google).
+     */
+    private function targetFor(DentAppointment $appointment): ?GoogleCalendarAccount
+    {
+        $doctorAccount = $this->doctors->activeAccount((int) $appointment->doctor_id);
+
+        if ($doctorAccount !== null) {
+            return $doctorAccount;
+        }
+
+        if (! GoogleCalendarOptions::read()['principal_fallback']) {
+            return null;
+        }
+
+        return $this->google->principalAccount();
+    }
+
+    /**
+     * Cuenta que escribe en el calendario indicado (null si ya no tenemos acceso a el).
+     */
+    private function accountForCalendarId(string $calendarId): ?GoogleCalendarAccount
+    {
+        if ($calendarId === '') {
+            return null;
+        }
+
+        if ($calendarId === $this->google->calendarId()) {
+            return $this->google->principalAccount();
+        }
+
+        return $this->doctors->accountForCalendar($calendarId);
+    }
+
+    /**
+     * Id del evento a actualizar en la agenda destino.
+     *
+     * Si la cita cambio de agenda (otro doctor o la principal), el evento anterior
+     * se borra de su agenda y se devuelve '' para crear uno nuevo en la nueva.
+     */
+    private function eventIdForCalendar(?HealGoogleCalendarEvent $mapping, string $calendarId): string
+    {
+        if ($mapping === null || $mapping->sync_state === HealGoogleCalendarEvent::STATE_DELETED) {
+            return '';
+        }
+
+        $eventId = trim((string) $mapping->google_event_id);
+
+        if ((string) $mapping->calendar_id === $calendarId) {
+            return $eventId;
+        }
+
+        $previous = $eventId !== '' ? $this->accountForCalendarId((string) $mapping->calendar_id) : null;
+
+        // Sin cuenta para la agenda anterior, el evento se queda donde esta: ya no
+        // podemos tocarlo.
+        if ($previous !== null) {
+            $this->google->deleteEvent($eventId, $previous);
+        }
+
+        return '';
+    }
+
+    /**
+     * Registra el resultado del envio en la cuenta del doctor (si la cita fue a su agenda).
+     */
+    private function recordDoctorSync(GoogleCalendarAccount $target, ?string $error): void
+    {
+        if ($target->isPrincipal()) {
+            return;
+        }
+
+        $this->doctors->recordSync((int) $target->doctorId, $error);
     }
 
     /**

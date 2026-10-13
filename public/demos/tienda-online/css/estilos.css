@@ -1,0 +1,2921 @@
+/*
+    Casa Lume — demostración de la plantilla «Tienda en línea».
+
+    Lenguaje visual: hogar cálido contemporáneo. Lienzo hueso, superficies
+    blancas, tinta carbón y un solo acento de arcilla para la acción y los
+    precios; verde profundo para las categorías. Esquinas suaves, sombras bajas y
+    foto grande. El contraste lo llevan el tamaño, el aire y la tipografía, no los
+    filetes: no hay cintas, sellos ni papeles pegados.
+
+    Sin frameworks y sin CDN: todo local, una sola hoja y un solo JavaScript.
+    Orden: 01 variables · 02 base · 03 barra · 04 cabecera · 05 tema ·
+    06 portada y slider · 07 precios e insignias · 08 ventajas y categorías ·
+    09 productos · 10 estudio, bandas y cifras · 11 opiniones y tarifas ·
+    12 recojo, formulario y pie · 13 ficha · 14 canasta · 15 pie y WhatsApp ·
+    16 aparición y avisos · 17 responsive · 18 movimiento reducido.
+*/
+
+/* ---------------------------------------------------------- 01. Variables */
+
+:root {
+    /* Lienzo y superficies: casi blanco, para que la foto del producto sea lo
+       único que lleva color. */
+    --papel: #fdfcfa;
+    --papel-2: #f5f2ee;
+    --papel-3: #ebe6e0;
+    --blanco: #ffffff;
+    --tinta: #1c1917;
+    --tinta-2: #6b625b;
+    --tinta-3: #9a918a;
+    --linea: rgba(28, 25, 23, 0.09);
+    --linea-fuerte: rgba(28, 25, 23, 0.17);
+
+    /* Acento: naranja teja. Es el color que vende —botones, precio, descuentos—
+       y no se usa para nada más. */
+    --acento: #e0491f;
+    --acento-oscuro: #bd3814;
+    --acento-suave: #fdeae3;
+    --acento-tinta: #ffffff;
+
+    /* Verde profundo para las categorías y los datos que no piden acción. */
+    --verde: #24483b;
+    --verde-suave: #e7efea;
+
+    /* Superficies que son oscuras por diseño: portada, banda y pie. No cambian
+       con el tema claro / oscuro. */
+    --fijo-oscuro: #1b1713;
+    --fijo-oscuro-2: #241f19;
+    --fijo-claro: #fff8f1;
+    --fijo-texto: #e8ded2;
+    --fijo-texto-2: #b3a89c;
+    --fijo-linea: rgba(255, 248, 241, 0.18);
+
+    --sombra-1: 0 1px 2px rgba(34, 28, 23, 0.06), 0 2px 6px rgba(34, 28, 23, 0.04);
+    --sombra-2: 0 24px 48px -28px rgba(34, 28, 23, 0.4), 0 4px 12px rgba(34, 28, 23, 0.05);
+    --sombra-3: 0 40px 80px -40px rgba(34, 28, 23, 0.5);
+
+    --radio: 18px;
+    --radio-corto: 12px;
+    --radio-pastilla: 999px;
+
+    --ancho: 1200px;
+    --curva: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    --fuente: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+        Arial, 'Noto Sans', sans-serif;
+    color-scheme: light;
+}
+
+/* Modo oscuro: se redefinen las superficies claras. Las secciones que ya son
+   oscuras (portada, banda, pie) se quedan igual y ningún componente cambia de
+   forma, de tamaño ni de posición. */
+html[data-tema='oscuro'] {
+    --papel: #15120f;
+    --papel-2: #1d1915;
+    --papel-3: #262019;
+    --blanco: #1f1a16;
+    --tinta: #f7f0e8;
+    --tinta-2: #bdb1a5;
+    --tinta-3: #8d8175;
+    --linea: rgba(247, 240, 232, 0.13);
+    --linea-fuerte: rgba(247, 240, 232, 0.22);
+
+    /* El acento se aclara para seguir legible sobre fondo oscuro. */
+    --acento: #e0745a;
+    --acento-oscuro: #ef8b72;
+    --acento-suave: #38231c;
+    --acento-tinta: #1b1210;
+
+    --verde: #93bda6;
+    --verde-suave: #1e2a24;
+
+    --sombra-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --sombra-2: 0 24px 48px -28px rgba(0, 0, 0, 0.75);
+
+    color-scheme: dark;
+}
+
+/* ------------------------------------------------- 02. Base y utilidades */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: var(--fuente);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: clamp(2.35rem, 5.6vw, 4.1rem);
+}
+
+h2 {
+    font-size: clamp(1.65rem, 3.2vw, 2.5rem);
+}
+
+h3 {
+    font-size: 1.05rem;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+}
+
+p {
+    margin: 0;
+}
+
+/* Los párrafos de apoyo respiran: es lo que hace moderna una página densa. */
+p + p {
+    margin-top: 0.9rem;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+img {
+    height: auto;
+}
+
+ul,
+ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+strong {
+    font-weight: 700;
+}
+
+/* El foco se ve siempre y fuera de la pieza: es el mismo anillo en todo el
+   sitio, sobre superficie clara y sobre foto. */
+:focus-visible {
+    outline: 2px solid var(--acento);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.contenedor {
+    width: min(var(--ancho), 100% - 3rem);
+    margin-inline: auto;
+}
+
+.seccion {
+    padding: 5.5rem 0;
+}
+
+.seccion--papel {
+    background: var(--papel-2);
+}
+
+.seccion--hondo {
+    background: var(--fijo-oscuro);
+    color: var(--fijo-texto);
+}
+
+.seccion--hondo h2,
+.seccion--hondo h3,
+.seccion--hondo strong {
+    color: var(--fijo-claro);
+}
+
+.seccion--hondo .bloque__nota,
+.seccion--hondo p {
+    color: var(--fijo-texto-2);
+}
+
+/* Cabecera de sección: ceja, titular y una nota o un enlace a la derecha. */
+.bloque {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+}
+
+.bloque__titulo {
+    max-width: 40rem;
+}
+
+.bloque__ceja {
+    margin-bottom: 0.6rem;
+    color: var(--acento);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.bloque__nota {
+    max-width: 26rem;
+    color: var(--tinta-2);
+    font-size: 0.95rem;
+}
+
+/* Botones: pastilla sólida para la acción principal, contorno para la segunda.
+   Altura mínima de 48 px: se tocan con el pulgar sin apuntar. */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.4rem;
+    border: 1px solid transparent;
+    border-radius: var(--radio-pastilla);
+    background: var(--acento);
+    color: var(--acento-tinta);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-align: center;
+    transition: background 0.2s var(--curva), transform 0.2s var(--curva),
+        box-shadow 0.2s var(--curva);
+}
+
+.boton:hover {
+    background: var(--acento-oscuro);
+    transform: translateY(-1px);
+    box-shadow: var(--sombra-1);
+}
+
+.boton--fantasma {
+    background: transparent;
+    border-color: var(--linea-fuerte);
+    color: var(--tinta);
+}
+
+.boton--fantasma:hover {
+    background: var(--papel-2);
+    border-color: var(--tinta-3);
+}
+
+.boton--claro {
+    background: var(--fijo-claro);
+    color: #221c17;
+}
+
+.boton--claro:hover {
+    background: #ffffff;
+}
+
+.boton--ancho {
+    width: 100%;
+}
+
+.enlace-flecha {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    color: var(--acento);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s var(--curva), gap 0.2s var(--curva);
+}
+
+.enlace-flecha:hover {
+    border-color: currentColor;
+    gap: 0.7rem;
+}
+
+.enlace-flecha svg {
+    flex: none;
+}
+
+/* Los iconos dentro de un botón o una pastilla miden siempre lo mismo: si no,
+   un svg sin ancho se estira hasta llenar el contenedor. */
+.boton svg,
+.chip svg,
+.aviso svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex: none;
+}
+
+.salto-contenido {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 60;
+    padding: 0.75rem 1.1rem;
+    background: var(--acento);
+    color: var(--acento-tinta);
+    border-radius: var(--radio-corto);
+    font-weight: 600;
+    transition: top 0.2s var(--curva);
+}
+
+.salto-contenido:focus {
+    top: 1rem;
+}
+
+.migajas {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding: 1.6rem 0 0;
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+}
+
+.migajas a:hover {
+    color: var(--acento);
+}
+
+.estrellas {
+    display: inline-flex;
+    gap: 0.12rem;
+    color: var(--acento);
+}
+
+.estrellas svg {
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+/* Avisos de la demostración: fondo suave, nunca un borde duro. */
+.aviso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--acento-suave);
+    color: var(--acento-oscuro);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* El aviso se lee SOLO sin JavaScript; lo que funciona solo CON JavaScript (los
+   filtros del catálogo, la página de la canasta) se oculta cuando no lo hay. */
+.aviso.aviso-js {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    margin: 1.25rem 0 0;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radio-corto);
+    background: var(--papel-2);
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+.aviso-js strong {
+    color: var(--tinta);
+}
+
+.aviso-js svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.2rem;
+    flex: none;
+    color: var(--acento);
+}
+
+html.js .aviso-js {
+    display: none;
+}
+
+html.no-js .solo-js {
+    display: none;
+}
+
+.nota-precios {
+    margin-top: 0.75rem;
+    color: var(--tinta-2);
+    font-size: 0.85rem;
+}
+
+/* Números de confianza: se leen como datos, no como adornos. */
+.cifras {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.cifra strong {
+    display: block;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.cifra span {
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+}
+
+/* ------------------------------------------------------- 03. Barra superior */
+
+.barra {
+    background: var(--fijo-oscuro);
+    color: var(--fijo-texto);
+    font-size: 0.83rem;
+}
+
+.barra__interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 2.75rem;
+}
+
+.barra__dato {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.barra__dato svg,
+.barra__tel svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+}
+
+.barra__derecha {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.barra__tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+}
+
+.barra__tel:hover {
+    color: var(--fijo-claro);
+}
+
+.redes {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.redes a {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radio-pastilla);
+    color: var(--fijo-texto);
+    transition: background 0.2s var(--curva), color 0.2s var(--curva);
+}
+
+.redes a:hover {
+    background: rgba(255, 248, 241, 0.12);
+    color: var(--fijo-claro);
+}
+
+.redes svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+/* ---------------------------------------------------- 04. Cabecera y menú */
+
+.cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--papel) 86%, transparent);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s var(--curva), box-shadow 0.2s var(--curva);
+}
+
+.cabecera--pegada {
+    border-bottom-color: var(--linea);
+    box-shadow: 0 8px 24px -20px rgba(34, 28, 23, 0.5);
+}
+
+.cabecera__interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 4.5rem;
+}
+
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.marca__icono {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 14px;
+    background: var(--acento);
+    color: var(--acento-tinta);
+    transition: transform 0.25s var(--curva);
+}
+
+.marca__icono svg {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.marca:hover .marca__icono {
+    transform: rotate(-6deg);
+}
+
+.marca__texto {
+    display: grid;
+    line-height: 1.15;
+}
+
+.marca__texto strong {
+    font-size: 1.15rem;
+    letter-spacing: -0.035em;
+}
+
+.marca__texto span {
+    color: var(--tinta-2);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.cabecera__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.menu {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.menu a {
+    position: relative;
+    padding: 0.55rem 0.85rem;
+    border-radius: var(--radio-pastilla);
+    font-size: 0.925rem;
+    font-weight: 500;
+    color: var(--tinta-2);
+    transition: color 0.2s var(--curva), background 0.2s var(--curva);
+}
+
+.menu a:hover {
+    color: var(--tinta);
+    background: var(--papel-2);
+}
+
+.menu a[aria-current='page'] {
+    color: var(--tinta);
+    font-weight: 600;
+}
+
+.menu__cta {
+    margin-left: 0.4rem;
+    background: var(--tinta);
+    color: var(--papel) !important;
+    font-weight: 600;
+}
+
+.menu__cta:hover {
+    background: var(--acento);
+    color: var(--acento-tinta) !important;
+}
+
+/* ------------------------------------------------- 05. Interruptor de tema */
+
+.tema-switch {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-pastilla);
+    color: var(--tinta);
+    transition: border-color 0.2s var(--curva), color 0.2s var(--curva),
+        background 0.2s var(--curva);
+}
+
+.tema-switch:hover {
+    border-color: var(--tinta-3);
+    background: var(--papel-2);
+}
+
+.tema-switch__icono {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    transition: opacity 0.25s var(--curva), transform 0.25s var(--curva);
+}
+
+.tema-switch__icono svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+/* El icono que se ve es el del modo AL QUE SE VA: luna en claro, sol en oscuro. */
+.tema-switch__icono--luna {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.tema-switch__icono--sol {
+    opacity: 0;
+    transform: rotate(-35deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--luna {
+    opacity: 0;
+    transform: rotate(35deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--sol {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+/* Sin JavaScript el interruptor no haría nada: se oculta y el sitio se lee igual. */
+html.no-js .tema-switch {
+    display: none;
+}
+
+/* La canasta de la cabecera: número sobre el icono, con aviso al cambiar. */
+.canasta-boton {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-pastilla);
+    transition: border-color 0.2s var(--curva), transform 0.2s var(--curva);
+}
+
+.canasta-boton:hover {
+    border-color: var(--tinta-3);
+}
+
+.canasta-boton svg {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.canasta-boton__cuenta {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    display: grid;
+    place-items: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.3rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--acento);
+    color: var(--acento-tinta);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.canasta-boton--nueva {
+    animation: latido 0.6s var(--curva);
+}
+
+@keyframes latido {
+    50% {
+        transform: scale(1.12);
+    }
+}
+
+.menu-boton {
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-pastilla);
+}
+
+.menu-boton svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* ------------------------------------------------- 06. Portada y slider */
+
+.portada {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 88vh;
+    min-height: min(88svh, 900px);
+    background: var(--fijo-oscuro);
+    color: var(--fijo-texto);
+    overflow: hidden;
+}
+
+.portada__fondo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.portada__pista {
+    display: flex;
+    height: 100%;
+    transition: transform 0.75s var(--curva);
+    will-change: transform;
+}
+
+/* Cada diapositiva ocupa el ancho completo de la pista y la foto se recorta
+   para llenarla: ninguna foto se deforma. */
+.portada__diapositiva {
+    position: relative;
+    flex: 0 0 100%;
+    height: 100%;
+}
+
+.portada__diapositiva img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Dos velos: uno vertical, que asegura el contraste del titular arriba y de la
+   pastilla abajo, y otro lateral, que sostiene el bloque de texto cuando la foto
+   es clara o muy cargada de detalle. */
+.portada__velo {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        linear-gradient(180deg, rgba(20, 16, 12, 0.72) 0%, rgba(20, 16, 12, 0.28) 34%, rgba(20, 16, 12, 0.86) 100%),
+        linear-gradient(94deg, rgba(20, 16, 12, 0.86) 0%, rgba(20, 16, 12, 0.5) 48%, rgba(20, 16, 12, 0.06) 80%);
+}
+
+.portada h1 {
+    color: var(--fijo-claro);
+}
+
+.portada__contenido {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 2.5rem;
+    width: min(var(--ancho), 100% - 3rem);
+    padding: 7rem 0 7rem;
+}
+
+.portada__texto {
+    max-width: 40rem;
+}
+
+.portada__ceja {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.1rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--fijo-linea);
+    border-radius: var(--radio-pastilla);
+    background: rgba(20, 16, 12, 0.35);
+    color: var(--fijo-claro);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.portada__lead {
+    margin-top: 1.25rem;
+    max-width: 32rem;
+    font-size: 1.05rem;
+    color: var(--fijo-texto);
+}
+
+.portada__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+}
+
+.portada__garantias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 2rem;
+    color: var(--fijo-texto-2);
+    font-size: 0.875rem;
+}
+
+.portada__garantias li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.portada__garantias svg {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    color: var(--fijo-claro);
+}
+
+/* Buscador de la portada: una pastilla clara con el botón dentro. */
+.buscador {
+    display: flex;
+    gap: 0.4rem;
+    max-width: 30rem;
+    margin-top: 1.5rem;
+    padding: 0.35rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--blanco);
+    box-shadow: var(--sombra-2);
+}
+
+.buscador input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 1rem;
+    border: 0;
+    border-radius: var(--radio-pastilla);
+    background: transparent;
+    color: var(--tinta);
+}
+
+.buscador input::placeholder {
+    color: var(--tinta-3);
+}
+
+.buscador input:focus {
+    outline: none;
+}
+
+.buscador .boton {
+    min-height: 2.75rem;
+    padding-inline: 1.35rem;
+}
+
+/* Oferta: tarjeta blanca flotando sobre la foto, con la promesa del mes. */
+.oferta {
+    position: relative;
+    width: 19rem;
+    padding: 1.5rem;
+    border-radius: var(--radio);
+    background: var(--blanco);
+    color: var(--tinta);
+    box-shadow: var(--sombra-3);
+}
+
+.oferta__rotulo {
+    margin-bottom: 0.5rem;
+    color: var(--acento);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.oferta strong {
+    display: block;
+    font-size: 1.25rem;
+    line-height: 1.25;
+    letter-spacing: -0.03em;
+}
+
+.oferta p {
+    margin-top: 0.6rem;
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+}
+
+.oferta__pie {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--linea);
+}
+
+.oferta__pie span {
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--papel-2);
+    color: var(--tinta-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* Controles del slider: una pastilla oscura abajo a la izquierda, alineada con
+   el texto. Arriba a la derecha queda la tarjeta de oferta y en la esquina el
+   botón de WhatsApp: así ninguno se pisa. */
+.portada__controles {
+    position: absolute;
+    left: clamp(1.5rem, 5vw, 5.5rem);
+    bottom: 2.25rem;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem;
+    border: 1px solid var(--fijo-linea);
+    border-radius: var(--radio-pastilla);
+    background: rgba(20, 16, 12, 0.6);
+    backdrop-filter: blur(8px);
+}
+
+/* Sin JavaScript las flechas y los puntos no hacen nada: no se muestran. */
+html.no-js .portada__controles {
+    display: none;
+}
+
+html.js .portada__controles {
+    display: flex;
+}
+
+.carrusel__flecha {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radio-pastilla);
+    color: var(--fijo-claro);
+    transition: background 0.2s var(--curva), color 0.2s var(--curva);
+}
+
+.carrusel__flecha svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.carrusel__flecha:hover {
+    background: var(--acento);
+    color: var(--acento-tinta);
+}
+
+.carrusel__puntos {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+/* 2.75rem = 44 px de área táctil: el relleno visible es más chico y se pinta
+   con `background-clip`, así el dedo acierta aunque el punto se vea fino. */
+.carrusel__punto {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 1.2rem 0.55rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--fijo-texto-2);
+    background-clip: content-box;
+    border: 0;
+    transition: background 0.2s var(--curva), padding 0.2s var(--curva);
+}
+
+.carrusel__punto:hover {
+    background: var(--fijo-claro);
+    background-clip: content-box;
+}
+
+/* El punto activo es una barra: se ve de un vistazo en qué foto se está. */
+.carrusel__punto[aria-current='true'] {
+    background: var(--acento);
+    background-clip: content-box;
+    padding-inline: 0.95rem;
+}
+
+/* Cinta de promesas: una franja fina que se mueve sola y se apaga con
+   prefers-reduced-motion. */
+.cinta {
+    background: var(--fijo-oscuro-2);
+    color: var(--fijo-texto);
+    border-top: 1px solid var(--fijo-linea);
+    overflow: hidden;
+}
+
+.cinta__pista {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.85rem 0;
+    width: max-content;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    animation: cinta 30s linear infinite;
+}
+
+.cinta__pista span:nth-child(even) {
+    color: var(--acento);
+}
+
+@keyframes cinta {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.cinta__pista span:last-child {
+    margin-right: 1.5rem;
+}
+
+/* ------------------------------------------------- 07. Precios e insignias */
+
+/* El precio es el dato que más se mira de una tienda: va grande, en negrita y
+   pegado a la foto, sobre una pastilla blanca. */
+.etiqueta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--blanco);
+    color: var(--tinta);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    box-shadow: var(--sombra-1);
+}
+
+.etiqueta__moneda {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--tinta-2);
+}
+
+.etiqueta__antes {
+    color: var(--tinta-3);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: line-through;
+}
+
+/* En oferta la pastilla se pinta de acento: es lo que engancha en la rejilla. */
+.etiqueta--oferta {
+    background: var(--acento);
+    color: var(--acento-tinta);
+}
+
+/* En la ficha el precio no es una pastilla: es un precio, grande y solo. */
+.ficha__precio {
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--acento);
+    font-size: 1.75rem;
+    letter-spacing: -0.03em;
+}
+
+.ficha__precio .etiqueta__moneda {
+    color: var(--acento);
+    opacity: 0.75;
+}
+
+.ficha__precio.etiqueta--oferta {
+    background: none;
+    color: var(--acento);
+}
+
+.ficha__precio.etiqueta--oferta .etiqueta__antes {
+    color: var(--tinta-3);
+}
+
+.etiqueta--oferta .etiqueta__moneda,
+.etiqueta--oferta .etiqueta__antes {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+/* Insignia: la etiqueta de «la más vendida», en verde y siempre arriba. */
+.insignia {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--verde);
+    color: #f2f7f3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ----------------------------------------- 08. Ventajas y categorías */
+
+.ventajas {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.ventaja {
+    padding: 1.5rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    transition: transform 0.25s var(--curva), box-shadow 0.25s var(--curva),
+        border-color 0.25s var(--curva);
+}
+
+.ventaja:hover {
+    transform: translateY(-3px);
+    border-color: transparent;
+    box-shadow: var(--sombra-2);
+}
+
+.ventaja svg {
+    width: 1.6rem;
+    height: 1.6rem;
+    margin-bottom: 0.9rem;
+    color: var(--acento);
+}
+
+.ventaja strong {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.ventaja p {
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+}
+
+/* Categorías: tarjetas grandes con la foto implícita del color del papel; el
+   acento aparece al pasar el ratón. */
+.categorias {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.categoria {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.5rem 1.35rem 1.35rem;
+    min-height: 9.5rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    overflow: hidden;
+    transition: transform 0.25s var(--curva), box-shadow 0.25s var(--curva),
+        border-color 0.25s var(--curva);
+}
+
+.categoria::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 3px;
+    background: var(--acento);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--curva);
+}
+
+.categoria:hover {
+    transform: translateY(-3px);
+    border-color: transparent;
+    box-shadow: var(--sombra-2);
+}
+
+.categoria:hover::after {
+    transform: scaleX(1);
+}
+
+.categoria strong {
+    font-size: 1.1rem;
+    letter-spacing: -0.03em;
+}
+
+.categoria span {
+    color: var(--tinta-2);
+    font-size: 0.85rem;
+}
+
+.categoria .categoria__linea {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    color: var(--acento);
+    font-size: 1.05rem;
+    font-weight: 700;
+    transition: transform 0.25s var(--curva);
+}
+
+.categoria__linea::before {
+    content: '→';
+}
+
+.categoria:hover .categoria__linea {
+    transform: translateX(4px);
+}
+
+/* --------------------------------------------- 09. Productos y rejilla */
+
+.productos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+.productos--destacados {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.productos--tres {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pieza {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radio);
+    background: var(--blanco);
+    overflow: hidden;
+    transition: transform 0.25s var(--curva), box-shadow 0.25s var(--curva);
+}
+
+.pieza:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sombra-2);
+}
+
+/* La foto manda: 4/3, esquinas suaves y un zoom muy leve al pasar el ratón. */
+.pieza__marco {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    background: var(--papel-2);
+    overflow: hidden;
+}
+
+.pieza__marco img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s var(--curva);
+}
+
+.pieza:hover .pieza__marco img {
+    transform: scale(1.04);
+}
+
+/* Sobre la foto solo quedan las dos señales de la rejilla: el descuento, si lo
+   hay, y la etiqueta del producto. El precio va abajo, con el texto. */
+.pieza__oferta {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--acento);
+    color: var(--acento-tinta);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: var(--sombra-1);
+}
+
+.pieza__insignia {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+}
+
+/* Precio: el dato que decide la compra. Número grande en tinta y, si hay oferta,
+   el precio anterior tachado al lado. */
+.pieza__precio {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+}
+
+.pieza__precio strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.pieza__precio s {
+    color: var(--tinta-3);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.pieza__cuerpo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 1.1rem 1.15rem 1.25rem;
+}
+
+.pieza__categoria {
+    color: var(--verde);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.pieza__nombre {
+    margin-top: 0.4rem;
+}
+
+.pieza__nombre a:hover {
+    color: var(--acento);
+}
+
+.pieza__detalle {
+    margin-top: 0.4rem;
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+}
+
+.pieza__pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+/* Añadir a la canasta: botón sólido, con la palabra a la vista. Es la acción
+   que tiene que encontrarse sin buscarla. */
+.pieza__agregar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    padding: 0 1.1rem;
+    border: 1px solid var(--tinta);
+    border-radius: var(--radio-pastilla);
+    background: var(--tinta);
+    color: var(--blanco);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background 0.2s var(--curva), color 0.2s var(--curva),
+        border-color 0.2s var(--curva);
+}
+
+.pieza__agregar::after {
+    content: 'Añadir';
+}
+
+.pieza__agregar svg {
+    display: none;
+}
+
+.pieza__agregar:hover {
+    background: var(--acento);
+    border-color: var(--acento);
+    color: var(--acento-tinta);
+}
+
+.pieza__agregar--hecho {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: #f2f7f3;
+}
+
+.pieza__agregar--hecho::after {
+    content: 'Añadido';
+}
+
+.pieza__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Filtros del catálogo: una barra pegajosa bajo la cabecera, con los cuatro
+   campos alineados y las acciones a la derecha. En el celular se apilan. */
+.filtros {
+    position: sticky;
+    top: 4.75rem;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1rem;
+    align-items: end;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: color-mix(in srgb, var(--blanco) 92%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--sombra-1);
+}
+
+.filtros__acciones {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.filtros__acciones .boton {
+    flex: 0 0 auto;
+    min-width: 9rem;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-pastilla);
+    background: var(--blanco);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s var(--curva), border-color 0.2s var(--curva),
+        color 0.2s var(--curva);
+}
+
+.chip:hover {
+    border-color: var(--tinta-3);
+}
+
+.chip--activo {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: var(--papel);
+    font-weight: 600;
+}
+
+.resumen-busqueda {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--linea);
+    color: var(--tinta-2);
+}
+
+.resumen-busqueda strong {
+    color: var(--tinta);
+}
+
+.catalogo-vacio {
+    display: none;
+    padding: 3rem 1.5rem;
+    border: 1px dashed var(--linea-fuerte);
+    border-radius: var(--radio);
+    text-align: center;
+    color: var(--tinta-2);
+}
+
+.catalogo-vacio--visible {
+    display: block;
+}
+
+/* --------------------------------- 10. Estudio, bandas y cifras */
+
+.estudio__rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 3rem;
+    align-items: start;
+}
+
+.estudio__texto p {
+    color: var(--tinta-2);
+    font-size: 1.02rem;
+}
+
+.estudio__texto .cifras {
+    margin-top: 2rem;
+}
+
+.estudio__cita {
+    margin: 1.75rem 0 0;
+    padding: 1.15rem 1.5rem;
+    border-left: 3px solid var(--acento);
+    border-radius: 0 var(--radio-corto) var(--radio-corto) 0;
+    background: var(--blanco);
+    font-size: 1.05rem;
+    letter-spacing: -0.015em;
+}
+
+.estudio__cita cite {
+    display: block;
+    margin-top: 0.6rem;
+    color: var(--tinta-2);
+    font-size: 0.85rem;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.estudio__foto {
+    position: relative;
+    margin: 0;
+    border-radius: var(--radio);
+    overflow: hidden;
+    box-shadow: var(--sombra-2);
+}
+
+.estudio__foto img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+}
+
+.estudio__foto .insignia {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+}
+
+.estudio__foto figcaption {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 2.5rem 1.25rem 1.1rem;
+    background: linear-gradient(transparent, rgba(20, 16, 12, 0.82));
+    color: #fff8f1;
+    font-size: 0.875rem;
+}
+
+/* Banda: foto a sangre, velo oscuro y el texto centrado encima. */
+.banda {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 26rem;
+    padding: 4rem 0;
+    color: var(--fijo-claro);
+    overflow: hidden;
+}
+
+.banda > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.banda__velo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(20, 16, 12, 0.72), rgba(20, 16, 12, 0.84));
+}
+
+.banda__texto {
+    position: relative;
+    z-index: 2;
+    width: min(46rem, 100% - 3rem);
+    text-align: center;
+}
+
+.banda__texto h2 {
+    color: var(--fijo-claro);
+}
+
+.banda__texto p {
+    margin-top: 1rem;
+    color: var(--fijo-texto);
+    font-size: 1.02rem;
+}
+
+.banda__pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+}
+
+/* ------------------------------------------- 11. Opiniones y tarifas */
+
+.opiniones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.opinion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 1.75rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    transition: transform 0.25s var(--curva), box-shadow 0.25s var(--curva);
+}
+
+.opinion:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sombra-2);
+}
+
+.opinion blockquote {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.opinion figcaption {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.opinion__inicial {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--verde-suave);
+    color: var(--verde);
+    font-weight: 700;
+}
+
+.tarifas {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.tarifas p {
+    color: var(--tinta-2);
+}
+
+/* Tabla de tarifas: filas limpias con la cifra alineada a la derecha. */
+.recibo-tabla {
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    overflow: hidden;
+}
+
+.recibo-tabla__cabecera,
+.recibo-tabla__fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.35rem;
+}
+
+.recibo-tabla__cabecera {
+    background: var(--papel-2);
+    color: var(--tinta-2);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.recibo-tabla__fila + .recibo-tabla__fila,
+.recibo-tabla__fila:first-of-type {
+    border-top: 1px solid var(--linea);
+}
+
+.recibo-tabla__fila span {
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+}
+
+.recibo-tabla__precio {
+    color: var(--tinta) !important;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.pagos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.pagos li {
+    padding: 0.45rem 0.95rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--blanco);
+    border: 1px solid var(--linea);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Preguntas frecuentes: acordeón nativo, sin JavaScript. */
+.preguntas {
+    display: grid;
+    gap: 0.65rem;
+    max-width: 52rem;
+    margin-inline: auto;
+}
+
+.pregunta {
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-corto);
+    background: var(--blanco);
+    transition: border-color 0.2s var(--curva), box-shadow 0.2s var(--curva);
+}
+
+.pregunta[open] {
+    border-color: var(--linea-fuerte);
+    box-shadow: var(--sombra-1);
+}
+
+.pregunta summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.35rem;
+    min-height: 3rem;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    list-style: none;
+}
+
+.pregunta summary::-webkit-details-marker {
+    display: none;
+}
+
+.pregunta summary::after {
+    content: '+';
+    flex: none;
+    color: var(--acento);
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.pregunta[open] summary::after {
+    content: '–';
+}
+
+.pregunta p {
+    padding: 0 1.35rem 1.25rem;
+    color: var(--tinta-2);
+    font-size: 0.95rem;
+}
+
+/* ------------------------------------ 12. Recojo, formulario y pie */
+
+.recojo__rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+}
+
+.recojo__datos h3 {
+    margin-bottom: 1rem;
+}
+
+.recojo__datos > p {
+    color: var(--fijo-texto-2);
+}
+
+.recojo__plano {
+    margin: 0;
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: var(--fijo-oscuro-2);
+}
+
+.recojo__plano img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+/* En oscuro el plano —un SVG dibujado con la paleta clara— se invierte: queda
+   claro sobre el fondo oscuro y su rotulación se sigue leyendo. */
+html[data-tema='oscuro'] .recojo__plano img {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+.recojo__plano figcaption {
+    padding: 0.9rem 1.15rem;
+    color: var(--fijo-texto-2);
+    font-size: 0.85rem;
+}
+
+.recojo__plano figcaption a {
+    color: var(--fijo-claro);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Formularios: dos columnas en escritorio, una en el celular, y el error
+   escrito debajo del campo que lo tiene. */
+.formulario {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.formulario__ancho {
+    grid-column: 1 / -1;
+}
+
+.campo {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.campo label,
+.campo > .variantes__rotulo {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tinta-2);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-corto);
+    background: var(--blanco);
+    transition: border-color 0.2s var(--curva), box-shadow 0.2s var(--curva);
+}
+
+.campo textarea {
+    min-height: 7rem;
+    resize: vertical;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    outline: none;
+    border-color: var(--acento);
+    box-shadow: 0 0 0 4px var(--acento-suave);
+}
+
+.campo__error {
+    display: none;
+    color: var(--acento);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.campo--error input,
+.campo--error select,
+.campo--error textarea {
+    border-color: var(--acento);
+}
+
+.campo--error .campo__error {
+    display: block;
+}
+
+.casilla {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+}
+
+.casilla input {
+    width: 1.35rem;
+    height: 1.35rem;
+    min-height: 0;
+    margin-top: 0.1rem;
+    accent-color: var(--acento);
+    flex: none;
+}
+
+.casilla--error {
+    color: var(--acento);
+}
+
+html[data-tema='oscuro'] .casilla--error {
+    color: var(--acento);
+}
+
+/* Formas de entrega y de pago: filas que se pueden tocar enteras. */
+.entrega {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.entrega__opcion {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-corto);
+    background: var(--blanco);
+    cursor: pointer;
+    transition: border-color 0.2s var(--curva), box-shadow 0.2s var(--curva);
+}
+
+.entrega__opcion:hover {
+    border-color: var(--tinta-3);
+}
+
+.entrega__opcion:has(input:checked) {
+    border-color: var(--acento);
+    box-shadow: 0 0 0 4px var(--acento-suave);
+}
+
+.entrega__opcion input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.15rem;
+    accent-color: var(--acento);
+    flex: none;
+}
+
+.entrega__opcion span {
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+}
+
+.entrega__opcion strong {
+    display: block;
+    color: var(--tinta);
+}
+
+.aviso-formulario {
+    display: none;
+    grid-column: 1 / -1;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radio-corto);
+    background: var(--verde-suave);
+    color: var(--verde);
+    font-weight: 600;
+}
+
+.aviso-formulario--visible {
+    display: block;
+}
+
+.aviso-formulario--error {
+    background: var(--acento-suave);
+    color: var(--acento-oscuro);
+}
+
+/* Pie: bloque oscuro, cuatro columnas y la base con lo legal. */
+.pie {
+    background: var(--fijo-oscuro);
+    color: var(--fijo-texto);
+    padding: 4rem 0 2rem;
+}
+
+.pie__rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+    gap: 2.5rem;
+} 
+
+.pie__marca strong {
+    display: block;
+    font-size: 1.15rem;
+    color: var(--fijo-claro);
+    letter-spacing: -0.03em;
+}
+
+.pie__marca p {
+    margin-top: 0.75rem;
+    color: var(--fijo-texto-2);
+    font-size: 0.9rem;
+    max-width: 20rem;
+}
+
+.pie__lista h3 {
+    margin-bottom: 0.85rem;
+    color: var(--fijo-claro);
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.pie__lista li + li {
+    margin-top: 0.5rem;
+}
+
+.pie__lista a,
+.pie__lista span {
+    color: var(--fijo-texto-2);
+    font-size: 0.9rem;
+}
+
+.pie__lista a:hover {
+    color: var(--fijo-claro);
+}
+
+.pie__base {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--fijo-linea);
+    color: var(--fijo-texto-2);
+    font-size: 0.82rem;
+}
+
+/* --------------------------------------------- 13. Ficha de producto */
+
+.ficha__rejilla {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 3rem;
+    align-items: start;
+    padding: 1.5rem 0 5rem;
+}
+
+.galeria {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.galeria__principal {
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: var(--papel-3);
+}
+
+.galeria__principal img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+.galeria__tiras {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.galeria__tira {
+    padding: 0;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-corto);
+    overflow: hidden;
+    background: var(--papel-3);
+    transition: border-color 0.2s var(--curva), transform 0.2s var(--curva);
+}
+
+.galeria__tira img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.galeria__tira:hover {
+    transform: translateY(-2px);
+}
+
+.galeria__tira[aria-current='true'] {
+    border-color: var(--acento);
+    box-shadow: 0 0 0 3px var(--acento-suave);
+}
+
+.ficha__detalles {
+    position: sticky;
+    top: 5.75rem;
+}
+
+.ficha__ceja {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.ficha__ceja .chip {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--verde);
+    background: var(--verde-suave);
+    border-color: transparent;
+}
+
+.ficha__ceja .insignia {
+    letter-spacing: 0.08em;
+}
+
+.ficha__datos h1 {
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+}
+
+.ficha__precio-fila {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.15rem;
+}
+
+.ficha__precio {
+    padding: 0.55rem 1.1rem;
+    font-size: 1.5rem;
+    border-radius: var(--radio-pastilla);
+    background: var(--papel-2);
+    box-shadow: none;
+}
+
+.ficha__precio .etiqueta__moneda {
+    font-size: 0.95rem;
+}
+
+.ficha__valoracion {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--tinta-2);
+    font-size: 0.9rem;
+}
+
+.ficha__descripcion {
+    margin-top: 1.15rem;
+    color: var(--tinta-2);
+}
+
+.variantes {
+    display: grid;
+    gap: 1.1rem;
+    margin-top: 1.5rem;
+}
+
+.variantes__grupo {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.variantes__rotulo {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tinta-2);
+}
+
+.variante {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    margin-right: 0.4rem;
+    padding: 0 1.05rem;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-pastilla);
+    background: var(--blanco);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: border-color 0.2s var(--curva), background 0.2s var(--curva),
+        color 0.2s var(--curva);
+}
+
+.variante:hover {
+    border-color: var(--tinta-3);
+}
+
+.variante[aria-pressed='true'] {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: var(--papel);
+}
+
+.ficha__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+}
+
+/* Cantidad: una pastilla con menos, la cifra y más. */
+.cantidad {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--linea-fuerte);
+    border-radius: var(--radio-pastilla);
+    overflow: hidden;
+}
+
+.cantidad button {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: var(--tinta);
+    transition: background 0.2s var(--curva), color 0.2s var(--curva);
+}
+
+.cantidad button:hover {
+    background: var(--papel-2);
+    color: var(--acento);
+}
+
+.cantidad input {
+    width: 3rem;
+    min-height: 2.75rem;
+    border: 0;
+    background: transparent;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.cantidad input:focus {
+    outline: none;
+}
+
+.garantias-ficha {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--linea);
+}
+
+.garantia {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+}
+
+.garantia svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-top: 0.2rem;
+    flex: none;
+    color: var(--verde);
+}
+
+/* Datos de la pieza: rótulo arriba, valor en negrita. */
+.ficha__detalles .dato,
+.dato {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--linea);
+}
+
+.dato span {
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+}
+
+.dato strong {
+    text-align: right;
+    font-size: 0.9rem;
+}
+
+/* --------------------------------------------- 14. Canasta y recibo */
+
+.canasta-pagina {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+    gap: 2.5rem;
+    align-items: start;
+    padding-bottom: 5rem;
+}
+
+.canasta-lista {
+    display: grid;
+    gap: 1rem;
+}
+
+.canasta-linea {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+    gap: 1.15rem;
+    align-items: center;
+    padding: 1.15rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+}
+
+.canasta-linea > img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radio-corto);
+    background: var(--papel-3);
+}
+
+.canasta-linea__datos {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+}
+
+.canasta-linea__datos .cantidad {
+    margin-top: 0.35rem;
+}
+
+.canasta-linea__cierre {
+    display: grid;
+    justify-items: end;
+    gap: 0.4rem;
+}
+
+.canasta-linea__nombre {
+    font-size: 1.02rem;
+    letter-spacing: -0.02em;
+}
+
+.canasta-linea__variante,
+.canasta-linea__datos span {
+    color: var(--tinta-2);
+    font-size: 0.875rem;
+}
+
+.canasta-linea__precio {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.canasta-linea__quitar {
+    color: var(--tinta-2);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.canasta-linea__quitar:hover {
+    color: var(--acento);
+}
+
+.canasta-vacia {
+    padding: 3rem 1.5rem;
+    border: 1px dashed var(--linea-fuerte);
+    border-radius: var(--radio);
+    text-align: center;
+}
+
+.canasta-vacia p {
+    margin: 0.75rem 0 1.25rem;
+    color: var(--tinta-2);
+}
+
+.canasta-resumen {
+    position: sticky;
+    top: 5.75rem;
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.75rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+}
+
+.canasta-totales {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.canasta-totales > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--tinta-2);
+    font-size: 0.925rem;
+}
+
+.canasta-totales > div span:last-child {
+    color: var(--tinta);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.canasta-totales__total {
+    margin-top: 0.35rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--linea);
+    font-size: 1.05rem !important;
+}
+
+.canasta-totales__total span:last-child {
+    font-size: 1.35rem;
+    font-weight: 700 !important;
+    letter-spacing: -0.03em;
+}
+
+.recibo {
+    margin: 0.6rem 0 0;
+    padding: 1.15rem;
+    border-radius: var(--radio-corto);
+    background: var(--papel-2);
+    color: var(--tinta-2);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Cajón de la canasta: hoja lateral con velo detrás. */
+.velo-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 58;
+    background: rgba(20, 16, 12, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s var(--curva), visibility 0.3s var(--curva);
+}
+
+.velo-panel--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.canasta-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 59;
+    display: flex;
+    flex-direction: column;
+    width: min(25rem, 100% - 2rem);
+    background: var(--papel);
+    border-left: 1px solid var(--linea);
+    box-shadow: var(--sombra-3);
+    transform: translateX(102%);
+    transition: transform 0.35s var(--curva);
+}
+
+.canasta-panel--abierto {
+    transform: translateX(0);
+}
+
+.canasta-panel__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--linea);
+}
+
+.canasta-panel__cabecera strong {
+    font-size: 1.1rem;
+    letter-spacing: -0.03em;
+}
+
+.canasta-panel__cerrar {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radio-pastilla);
+    transition: background 0.2s var(--curva);
+}
+
+.canasta-panel__cerrar:hover {
+    background: var(--papel-2);
+}
+
+.canasta-panel__cerrar svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.canasta-panel__cuerpo {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+}
+
+.canasta-panel__pie {
+    display: grid;
+    gap: 0.85rem;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--linea);
+    background: var(--blanco);
+}
+
+.canasta-panel .canasta-linea {
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+/* --------------------------------------------- 15. Pie y WhatsApp */
+
+.whatsapp {
+    position: fixed;
+    right: clamp(1rem, 3vw, 2rem);
+    bottom: clamp(1rem, 3vw, 2rem);
+    z-index: 45;
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: var(--radio-pastilla);
+    background: #1fa055;
+    color: #fff;
+    box-shadow: var(--sombra-2);
+    transition: transform 0.2s var(--curva), background 0.2s var(--curva);
+}
+
+.whatsapp svg {
+    width: 1.7rem;
+    height: 1.7rem;
+}
+
+.whatsapp:hover {
+    transform: translateY(-2px) scale(1.03);
+    background: #178a49;
+}
+
+.whatsapp__anillo {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 2px solid #1fa055;
+    animation: anillo 2.6s var(--curva) infinite;
+}
+
+@keyframes anillo {
+    0% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+
+    70%,
+    100% {
+        opacity: 0;
+        transform: scale(1.45);
+    }
+}
+
+/* ------------------------------------------ 16. Aparición y avisos */
+
+.revelar {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s var(--curva), transform 0.6s var(--curva);
+}
+
+.revelar--visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* Sin JavaScript no hay quien las muestre: se ven desde el principio. */
+html.no-js .revelar {
+    opacity: 1;
+    transform: none;
+}
+
+/* ------------------------------------------------ 17. Responsive */
+
+@media (max-width: 1100px) {
+    .ventajas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .categorias {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .productos,
+    .productos--destacados {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pie__rejilla {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .portada {
+        min-height: 92vh;
+        min-height: min(92svh, 860px);
+    }
+
+    .portada__contenido {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+    }
+
+    /* La pastilla baja debajo del texto y deja de flotar sobre la foto. */
+    .portada__controles {
+        position: static;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        width: max-content;
+    }
+
+    .oferta {
+        width: 100%;
+        max-width: 26rem;
+    }
+
+    .estudio__rejilla,
+    .tarifas,
+    .recojo__rejilla,
+    .ficha__rejilla,
+    .canasta-pagina {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ficha__detalles,
+    .canasta-resumen {
+        position: static;
+    }
+
+    .opiniones {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .estudio__foto {
+        max-width: 26rem;
+    }
+}
+
+@media (max-width: 960px) {
+    /* El menú de escritorio se convierte en panel desplegable: se abre debajo
+       de la cabecera, que se queda visible con el interruptor y la canasta. */
+    .menu {
+        position: fixed;
+        top: 4.5rem;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+        max-height: calc(100vh - 4.5rem);
+        overflow-y: auto;
+        padding: 1rem 1.5rem 1.5rem;
+        background: var(--papel);
+        border-bottom: 1px solid var(--linea);
+        box-shadow: var(--sombra-2);
+    }
+
+    .menu--abierto {
+        display: flex;
+    }
+
+    .menu a {
+        padding: 0.85rem 1rem;
+        border-radius: var(--radio-corto);
+        font-size: 1rem;
+    }
+
+    .menu__cta {
+        margin: 0.5rem 0 0;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .menu-boton {
+        display: grid;
+    }
+
+    .barra__dato {
+        display: none;
+    }
+
+    .barra__interior {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 720px) {
+    .contenedor {
+        width: min(var(--ancho), 100% - 2.25rem);
+    }
+
+    .seccion {
+        padding: 3.5rem 0;
+    }
+
+    .bloque {
+        margin-bottom: 1.75rem;
+    }
+
+    .categorias {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .productos,
+    .productos--destacados,
+    .productos--tres {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .pieza__cuerpo {
+        padding: 0.9rem 0.95rem 1rem;
+    }
+
+    .pieza__pie {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .pieza__agregar {
+        width: 100%;
+    }
+
+    .portada__contenido {
+        padding: 4.5rem 0 3rem;
+    }
+
+    .portada__garantias {
+        gap: 0.4rem;
+        flex-direction: column;
+    }
+
+    .formulario,
+    .ventajas,
+    .categorias,
+    .productos,
+    .productos--destacados,
+    .productos--tres,
+    .pie__rejilla,
+    .galeria__tiras,
+    .recibo-tabla__cabecera,
+    .recibo-tabla__fila,
+    .cifras {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .recibo-tabla__precio {
+        text-align: left;
+    }
+
+    .recibo-tabla__fila span {
+        grid-column: 1 / -1;
+    }
+
+    .galeria__tiras {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .canasta-linea {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .canasta-linea > img {
+        aspect-ratio: 16 / 9;
+    }
+
+    .canasta-linea__cierre {
+        grid-template-columns: 1fr auto;
+        justify-items: start;
+        align-items: center;
+    }
+
+    .filtros {
+        position: static;
+    }
+
+    .cinta__pista {
+        animation-duration: 22s;
+    }
+}
+
+/* -------------------------------------- 18. Movimiento reducido */
+
+/* Sin movimiento: se apaga la cinta, el latido del WhatsApp, el paso suave del
+   scroll, la aparición y las transiciones. El slider del hero sigue
+   funcionando a mano: solo se apaga su paso automático. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+
+    .cinta__pista,
+    .whatsapp__anillo,
+    .canasta-boton--nueva {
+        animation: none;
+    }
+
+    .revelar {
+        opacity: 1;
+        transform: none;
+    }
+}
+

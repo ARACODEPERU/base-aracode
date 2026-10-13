@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" width="900" height="560" role="img" aria-label="Plano de la ubicación del restaurante en la Av. Los Pescadores 210, Nuevo Chimbote">
+    <title>Plano de la ubicación del restaurante</title>
+
+    <!--
+        Plano propio de la demostración: dibujado a mano en SVG para no cargar
+        scripts de mapas de terceros (privacidad y peso). El botón «Abrir en
+        Google Maps» del HTML sí lleva a la dirección del negocio, así que el
+        visitante llega con indicaciones giro a giro.
+    -->
+
+    <defs>
+        <linearGradient id="agua" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#C9E2EC"/>
+            <stop offset="1" stop-color="#AFD5E3"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="900" height="560" fill="#FBF5EE"/>
+
+    <!-- Manzanas -->
+    <g fill="#F3E7DA">
+        <rect x="40" y="40" width="200" height="150" rx="10"/>
+        <rect x="270" y="40" width="230" height="150" rx="10"/>
+        <rect x="530" y="40" width="150" height="150" rx="10"/>
+        <rect x="40" y="230" width="200" height="120" rx="10"/>
+        <rect x="270" y="230" width="230" height="120" rx="10"/>
+        <rect x="530" y="230" width="150" height="120" rx="10"/>
+        <rect x="40" y="390" width="200" height="130" rx="10"/>
+        <rect x="270" y="390" width="230" height="130" rx="10"/>
+        <rect x="530" y="390" width="150" height="130" rx="10"/>
+    </g>
+
+    <!-- Bahía y avenidas -->
+    <rect x="700" y="0" width="200" height="560" fill="url(#agua)"/>
+    <rect x="0" y="200" width="900" height="20" fill="#FFFFFF"/>
+    <rect x="0" y="370" width="900" height="14" fill="#FFFFFF"/>
+    <rect x="250" y="0" width="16" height="560" fill="#FFFFFF"/>
+    <rect x="510" y="0" width="16" height="560" fill="#FFFFFF"/>
+
+    <!-- Nombres de calles -->
+    <g fill="#6E6058" font-family="Segoe UI, Roboto, sans-serif" font-size="15" font-weight="600">
+        <text x="30" y="215">Av. Los Pescadores</text>
+        <text x="30" y="384">Jr. Los Álamos</text>
+        <text x="258" y="26" transform="rotate(90 258 26)">Av. Argentina</text>
+        <text x="518" y="26" transform="rotate(90 518 26)">Av. Pardo</text>
+    </g>
+
+    <!-- Referencias del barrio -->
+    <g fill="#9A8C82" font-family="Segoe UI, Roboto, sans-serif" font-size="14">
+        <text x="70" y="120">Plaza de armas</text>
+        <text x="300" y="120">Mercado central</text>
+        <text x="556" y="120">Colegio</text>
+        <text x="70" y="300">Estacionamiento</text>
+        <text x="300" y="300">Municipalidad</text>
+        <text x="70" y="470">Farmacia</text>
+        <text x="300" y="470">Banco</text>
+    </g>
+    <text x="760" y="290" fill="#6E6058" font-family="Segoe UI, Roboto, sans-serif" font-size="14" transform="rotate(90 760 290)">Bahía de Chimbote</text>
+
+    <!-- El restaurante: marcador sobre la Av. Los Pescadores -->
+    <g transform="translate(150 232)">
+        <path d="M0 60c0-14 26-34 26-56A26 26 0 1 0-26 4c0 22 26 42 26 56Z" fill="#C4441F" transform="translate(0 -4)"/>
+        <circle cx="0" cy="-22" r="9" fill="#FFFFFF"/>
+        <!-- La olla del restaurante, el mismo símbolo de la marca -->
+        <g fill="none" stroke="#C4441F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M-6-22.6h12v1.6a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4z" fill="#C4441F" stroke="none"/>
+            <path d="M-7.4-22.6h14.8"/>
+            <path d="M-2.2-26.4c-.7 1-.2 1.8.3 2.4M2.2-26.4c-.7 1-.2 1.8.3 2.4"/>
+        </g>
+    </g>
+
+    <g font-family="Segoe UI, Roboto, sans-serif">
+        <rect x="196" y="252" width="272" height="54" rx="12" fill="#FFFFFF" stroke="#EBE0D5"/>
+        <text x="214" y="275" fill="#241B16" font-size="16" font-weight="700">Fogón Criollo</text>
+        <text x="214" y="295" fill="#6E6058" font-size="14">Av. Los Pescadores 210 · a 3 cuadras del mercado</text>
+    </g>
+
+    <!-- Brújula -->
+    <g transform="translate(838 502)" font-family="Segoe UI, Roboto, sans-serif">
+        <circle r="26" fill="#FFFFFF" stroke="#EBE0D5"/>
+        <path d="M0-14 6 6 0 2 -6 6Z" fill="#C4441F"/>
+        <text x="-4" y="-16" fill="#6E6058" font-size="11" font-weight="700">N</text>
+    </g>
+</svg>

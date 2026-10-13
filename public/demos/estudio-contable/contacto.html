@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro: se aplica antes de pintar, con la misma clave que el
+    resto del sitio ('estudio-contable-tema'), así que el tema elegido viaja de
+    una página a otra y al recargar en oscuro no se ve el destello claro.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('estudio-contable-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!-- Contacto de la demo «Estudio Contable». El formulario se valida en el
+     navegador y NO envía datos: al enviarlo bien avisa de que es una demo. -->
+
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Agenda una consulta con el estudio contable: formulario de contacto con validación, horarios de atención, ubicación con plano y preguntas frecuentes.">
+
+<title>Agendar una consulta — Estudio Contable Vega</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:30 a 18:00 · sábados de 9:00 a 13:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 003
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales del estudio contable">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Estudio Contable Vega, inicio">
+            <span class="marca__sello" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><rect x="7.5" y="6.5" width="9" height="3.2" rx="1"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.4h2M11 16.4h2M14.5 16.4h2"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Vega</strong>
+                <span>Contadores</span>
+            </span>
+        </a>
+
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="servicios.html">Servicios</a></li>
+                    <li><a href="planes.html">Planes</a></li>
+                    <li><a href="#visitanos">Visítanos</a></li>
+                    <li><a href="contacto.html" class="menu__contacto" aria-current="page">Consulta gratis</a></li>
+                </ul>
+            </nav>
+
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== ENCABEZADO ===================== -->
+
+    <section class="encabezado">
+        <div class="contenedor">
+            <nav aria-label="Ruta de navegación">
+                <ol class="migajas">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li aria-current="page">Contacto</li>
+                </ol>
+            </nav>
+
+            <div class="encabezado__rejilla">
+                <div>
+                    <h1>Agenda tu consulta</h1>
+                    <p class="encabezado__lead">
+                        Cuéntanos qué necesitas y en qué situación estás. La primera revisión no
+                        tiene costo, no compromete nada y te responde un contador, no un vendedor.
+                    </p>
+                </div>
+
+                <dl class="datos">
+                    <div>
+                        <dt>Respuesta</dt>
+                        <dd>El mismo día hábil</dd>
+                    </div>
+                    <div>
+                        <dt>Primera revisión</dt>
+                        <dd>Sin costo</dd>
+                    </div>
+                    <div>
+                        <dt>Atendemos</dt>
+                        <dd>Personas y empresas</dd>
+                    </div>
+                    <div>
+                        <dt>Oficina</dt>
+                        <dd>Av. Pardo 890, of. 302</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== QUÉ PASA DESPUÉS ===================== -->
+
+    <section class="seccion">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">01</span> La consulta</p>
+                <h2>Qué pasa después de enviar el formulario</h2>
+                <p class="seccion__entrada">
+                    Sin vueltas y sin que te llamen tres veces para lo mismo. Si en el camino no te
+                    convence el plan, se para ahí y no pasa nada.
+                </p>
+            </header>
+
+            <ol class="proceso">
+                <li class="paso revelar">
+                    <h3>Nos escribes</h3>
+                    <p>El formulario de abajo, WhatsApp o una llamada. Con saber a qué te dedicas y en qué régimen estás ya podemos orientarte.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Revisamos tu situación</h3>
+                    <p>Miramos tus declaraciones en Sunat con tu clave SOL de consulta y te decimos qué está pendiente y qué no.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Te llamamos con la propuesta</h3>
+                    <p>Qué plan te conviene, qué incluye y cuánto cuesta al mes, por escrito. La llamada dura quince minutos.</p>
+                </li>
+                <li class="paso revelar">
+                    <h3>Empezamos cuando digas</h3>
+                    <p>Se firma el servicio y el primer vencimiento ya corre por nuestra cuenta, con aviso cinco días antes.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- ===================== FORMULARIO ===================== -->
+
+    <section class="seccion seccion--papel2" id="formulario">
+        <div class="contenedor ficha">
+            <div>
+                <!-- El formulario se valida en el navegador. `data-demo="true"` es lo
+                     que hace que, al enviarse bien, avise de que no manda datos: el
+                     JavaScript envía solo cuando ese atributo no está. -->
+                <form class="formulario" id="formulario-contacto" data-demo="true" novalidate>
+                    <h2 class="formulario__titulo">Datos de la consulta</h2>
+                    <p class="formulario__nota">
+                        Los campos con asterisco son obligatorios. Usamos tus datos solo para
+                        atender esta consulta: no se comparten con terceros ni se usan para
+                        publicidad.
+                    </p>
+
+                    <!-- Trampa para robots: un robot la llena, una persona no la ve. -->
+                    <p class="sr-solo" aria-hidden="true">
+                        <label for="sitio-web">No llenar este campo</label>
+                        <input type="text" id="sitio-web" name="sitio_web" tabindex="-1" autocomplete="off">
+                    </p>
+
+                    <div class="campo-fila">
+                        <p class="campo">
+                            <label for="nombre">Nombres y apellidos *</label>
+                            <input type="text" id="nombre" name="nombre" autocomplete="name" placeholder="Ejemplo: Ana Torres Quispe">
+                            <span class="campo__error">Escribe tus nombres y apellidos completos.</span>
+                        </p>
+
+                        <p class="campo">
+                            <label for="documento">DNI o RUC</label>
+                            <input type="text" id="documento" name="documento" inputmode="numeric" placeholder="8 u 11 dígitos">
+                        </p>
+                    </div>
+
+                    <div class="campo-fila">
+                        <p class="campo">
+                            <label for="telefono">Celular o WhatsApp *</label>
+                            <input type="tel" id="telefono" name="telefono" autocomplete="tel" placeholder="9 dígitos, por ejemplo 900000000">
+                            <span class="campo__error">Escribe un celular de 9 dígitos para ubicarte.</span>
+                        </p>
+
+                        <p class="campo">
+                            <label for="correo">Correo electrónico *</label>
+                            <input type="email" id="correo" name="correo" autocomplete="email" placeholder="tucorreo@ejemplo.com">
+                            <span class="campo__error">Revisa el correo: ahí te llega la propuesta.</span>
+                        </p>
+                    </div>
+
+                    <p class="campo">
+                        <label for="servicio">Servicio o plan que te interesa *</label>
+                        <select id="servicio" name="servicio">
+                            <option value="">Elige un servicio…</option>
+                            <option value="asesoria-mensual">Asesoría contable mensual — S/ 220 al mes</option>
+                            <option value="declaracion-anual">Declaración anual de renta — S/ 380</option>
+                            <option value="planillas">Planillas y boletas de pago — S/ 120 al mes</option>
+                            <option value="cambio-regimen">Análisis y cambio de régimen — S/ 250</option>
+                            <option value="facturacion-electronica">Facturación electrónica — S/ 180</option>
+                            <option value="recibos-honorarios">Recibos por honorarios — S/ 90 al mes</option>
+                            <option value="constitucion-empresa">Constitución de empresa — S/ 650</option>
+                            <option value="orden-cuentas">Orden y revisión de cuentas — S/ 480</option>
+                            <option value="otro">Otro / todavía no lo sé</option>
+                        </select>
+                        <span class="campo__error">Elige el servicio que necesitas, aunque no estés seguro.</span>
+                    </p>
+
+                    <fieldset class="grupo-radio">
+                        <legend>¿En qué régimen estás hoy? *</legend>
+                        <div class="grupo-radio__opciones">
+                            <label for="regimen-rus"><input type="radio" id="regimen-rus" name="regimen" value="rus"> RUS</label>
+                            <label for="regimen-rer"><input type="radio" id="regimen-rer" name="regimen" value="rer"> RER</label>
+                            <label for="regimen-mype"><input type="radio" id="regimen-mype" name="regimen" value="mype"> MYPE tributario</label>
+                            <label for="regimen-general"><input type="radio" id="regimen-general" name="regimen" value="general"> Régimen general</label>
+                            <label for="regimen-nada"><input type="radio" id="regimen-nada" name="regimen" value="ninguno"> No tengo negocio todavía</label>
+                        </div>
+                        <span class="campo__error">Elige una opción: si no sabes, marca la última.</span>
+                    </fieldset>
+
+                    <div class="campo-fila">
+                        <p class="campo">
+                            <label for="preferencia">Cómo prefieres que te contactemos</label>
+                            <select id="preferencia" name="preferencia">
+                                <option value="whatsapp">Por WhatsApp</option>
+                                <option value="llamada">Por llamada</option>
+                                <option value="correo">Por correo</option>
+                            </select>
+                        </p>
+
+                        <p class="campo">
+                            <label for="horario">Mejor horario para llamarte</label>
+                            <select id="horario" name="horario">
+                                <option value="manana">Mañana (8:30 — 12:00)</option>
+                                <option value="tarde">Tarde (12:00 — 18:00)</option>
+                                <option value="sabado">Sábado por la mañana</option>
+                                <option value="cuando-sea">Cualquier hora</option>
+                            </select>
+                        </p>
+                    </div>
+
+                    <p class="campo">
+                        <label for="mensaje">Cuéntanos tu caso <span class="campo__opcional">(opcional)</span></label>
+                        <textarea id="mensaje" name="mensaje" rows="4" placeholder="Por ejemplo: tengo una panadería, dos trabajadores y no presento desde marzo. Quiero el plan mensual y saber cuánto es la multa."></textarea>
+                    </p>
+
+                    <label class="casilla" for="acepto">
+                        <input type="checkbox" id="acepto" name="acepto">
+                        <span>He leído y acepto que me contacten para responder esta consulta. *</span>
+                    </label>
+
+                    <button type="submit" class="boton boton--principal boton--bloque">Enviar mi consulta</button>
+
+                    <p class="formulario__aviso" id="aviso-formulario" role="status"></p>
+
+                    <p class="formulario__alternativa">
+                        ¿Prefieres hablar? También puedes escribir por WhatsApp o pasar por la
+                        oficina, sin cita previa, en horario de atención.
+                    </p>
+                </form>
+            </div>
+
+            <!-- ===================== PANEL DE AYUDA ===================== -->
+
+            <aside class="panel">
+                <h2 class="sr-solo">Antes de enviar tu consulta</h2>
+
+                <p class="sello"><span class="sello__num">02</span> Ten a mano</p>
+                <p>Con esto la revisión sale completa y se adelanta la propuesta:</p>
+
+                <ul class="lista-check lista-check--compacta">
+                    <li>A qué te dedicas y desde cuándo</li>
+                    <li>En qué régimen tributario estás</li>
+                    <li>Si tienes trabajadores y cuántos</li>
+                    <li>Si tienes algo pendiente o notificado por Sunat</li>
+                    <li>Tu clave SOL de consulta, si quieres que revisemos en la llamada</li>
+                </ul>
+
+                <div class="panel__acciones">
+                    <a class="boton boton--borde boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20agendar%20una%20consulta" target="_blank" rel="noopener">
+                        Escribir por WhatsApp
+                    </a>
+                    <a class="boton boton--borde boton--bloque" href="servicios.html">Ver los servicios otra vez</a>
+                </div>
+
+                <dl class="datos">
+                    <div>
+                        <dt>Respuesta</dt>
+                        <dd>El mismo día hábil</dd>
+                    </div>
+                    <div>
+                        <dt>Primera revisión</dt>
+                        <dd>Sin costo</dd>
+                    </div>
+                    <div>
+                        <dt>Atendemos</dt>
+                        <dd>Personas y empresas</dd>
+                    </div>
+                </dl>
+
+                <p class="aviso">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                    <span>
+                        Página de demostración: el formulario se valida en tu navegador y avisa de
+                        lo que falta, pero no envía datos a ningún servidor.
+                    </span>
+                </p>
+            </aside>
+        </div>
+    </section>
+
+    <!-- ===================== UBICACIÓN ===================== -->
+
+    <section class="seccion" id="visitanos">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">03</span> Visítanos</p>
+                <h2>La oficina</h2>
+                <p class="seccion__entrada">
+                    Tercer piso, oficina 302, con ascensor. Se atiende sin cita previa, pero si
+                    vienes con tus papeles adelantas la revisión.
+                </p>
+            </header>
+
+            <div class="visitanos">
+                <div class="revelar">
+                    <ul class="datos-contacto">
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Dirección</strong>
+                                Av. Pardo 890, oficina 302, Nuevo Chimbote
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Horarios de atención</strong>
+                                Lunes a viernes de 8:30 a 18:00 · sábados de 9:00 a 13:00
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                            </span>
+                            <span>
+                                <strong>Teléfono y WhatsApp</strong>
+                                <a href="tel:+51900000000">(043) 000 003</a> · <a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a>
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos-contacto__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 6.5h17v11h-17z"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Correo</strong>
+                                <a href="mailto:contacto@estudiovega.demo">contacto@estudiovega.demo</a>
+                            </span>
+                        </li>
+                    </ul>
+
+                    <p class="acciones-fila">
+                        <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20saber%20c%C3%B3mo%20llegar%20a%20la%20oficina" target="_blank" rel="noopener">Avisar que voy a pasar</a>
+                    </p>
+                </div>
+
+                <div class="revelar">
+                    <figure class="marco">
+                        <img src="img/mapa.svg" width="900" height="560" loading="lazy" decoding="async"
+                             alt="Plano de la ubicación del estudio contable en la Av. Pardo 890, oficina 302, a media cuadra del banco">
+                        <figcaption>
+                            <a class="boton boton--borde boton--bloque" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Pardo+890%2C+Nuevo+Chimbote" target="_blank" rel="noopener">
+                                Abrir en Google Maps
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                            </a>
+                        </figcaption>
+                    </figure>
+
+                    <figure class="marco" style="margin-top:1.5rem">
+                        <img src="img/archivo.webp" width="1200" height="800" loading="lazy" decoding="async"
+                             alt="Estantería con libros y carpetas de archivo en la oficina del estudio contable">
+                        <figcaption>
+                            Cada cliente tiene su carpeta física y su respaldo digital: si un
+                            expediente se pide años después, se encuentra.
+                        </figcaption>
+                    </figure>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion seccion--papel2" id="preguntas">
+        <div class="contenedor seccion__rejilla">
+            <header class="seccion__margen revelar">
+                <p class="sello"><span class="sello__num">04</span> Preguntas</p>
+                <h2>Antes de escribirnos</h2>
+                <p class="seccion__entrada">Si tu duda no está aquí, mándala por WhatsApp: contesta un contador.</p>
+            </header>
+
+            <div class="preguntas revelar">
+                <details>
+                    <summary>¿Tengo que llevar algo a la primera cita?</summary>
+                    <p>Si tienes tu clave SOL y tu DNI, con eso revisamos tu situación en el momento. Si además traes el último estado de cuenta del banco, la revisión sale más precisa.</p>
+                </details>
+                <details>
+                    <summary>¿La consulta me obliga a contratar?</summary>
+                    <p>No. La revisión es gratuita y no hay ningún compromiso: si prefieres pensarlo o consultarlo con alguien más, te dejamos la propuesta por escrito con el precio y el alcance.</p>
+                </details>
+                <details>
+                    <summary>¿Atienden fuera del horario de oficina?</summary>
+                    <p>Tenemos atención ampliada hasta las 20:00 de lunes a jueves, con cita. Los sábados por la mañana se atiende normalmente y las consultas urgentes de vencimiento se ven el mismo día.</p>
+                </details>
+                <details>
+                    <summary>¿Puedo enviar los documentos por WhatsApp?</summary>
+                    <p>Sí, para la consulta inicial y para el día a día. Los comprobantes del mes conviene enviarlos por correo o por una carpeta compartida, para que queden ordenados y no se pierdan entre mensajes.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>¿Prefieres que te llamemos nosotros?</h2>
+                <p>Déjanos tu número por WhatsApp con el horario que te acomoda y te llamamos un contador, no un contestador.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20d%C3%A9jenme%20su%20n%C3%BAmero%20para%20que%20me%20llamen" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    Escribir por WhatsApp
+                </a>
+                <a class="boton boton--claro" href="planes.html">Ver los planes</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__sello" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><rect x="7.5" y="6.5" width="9" height="3.2" rx="1"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.4h2M11 16.4h2M14.5 16.4h2"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Vega</strong>
+                    <span>Contadores</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Estudio contable en Nuevo Chimbote. Llevamos la contabilidad, las planillas y los
+                impuestos de negocios y profesionales, con precio mensual fijo y un contador
+                asignado a cada cliente.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales del estudio contable">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del estudio contable">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Servicios">
+            <h3>Servicios</h3>
+            <ul>
+                <li><a href="servicios.html?area=tributario">Tributario</a></li>
+                <li><a href="servicios.html?area=contable">Contable</a></li>
+                <li><a href="servicios.html?area=laboral">Laboral</a></li>
+                <li><a href="servicios.html?area=societario">Societario</a></li>
+                <li><a href="servicios.html">Todos los servicios</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="El estudio">
+            <h3>El estudio</h3>
+            <ul>
+                <li><a href="index.html#equipo">Equipo</a></li>
+                <li><a href="planes.html">Planes mensuales</a></li>
+                <li><a href="index.html#preguntas">Preguntas frecuentes</a></li>
+                <li><a href="#visitanos">Ubicación y horarios</a></li>
+                <li><a href="#formulario">Agendar una consulta</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul class="pie__contacto">
+                <li>Av. Pardo 890, oficina 302, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 003</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:contacto@estudiovega.demo">contacto@estudiovega.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Estudio Contable Vega. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20agendar%20una%20consulta" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

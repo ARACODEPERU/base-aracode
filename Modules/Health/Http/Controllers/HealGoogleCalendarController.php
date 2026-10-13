@@ -71,18 +71,38 @@ class HealGoogleCalendarController extends Controller
             return back()->with('error', 'Registra el Client ID y el Client Secret (una sola vez) en Parámetros del sistema antes de conectar.');
         }
 
+        // Google responde "Error 400: redirect_uri_mismatch" y no devuelve al
+        // sistema cuando la URL de callback no es válida para su consola.
+        if (($problem = $this->google->redirectUriProblem()) !== null) {
+            return back()->with('error', $problem);
+        }
+
         $state = Str::random(40);
 
         session([self::STATE_SESSION_KEY => $state]);
+        // Un enlace de consultorio no puede heredar un flujo de doctor pendiente.
+        session()->forget(HealDoctorGoogleCalendarController::FLOW_SESSION_KEY);
 
         return redirect()->away($this->google->authorizationUrl($state));
     }
 
     /**
      * Recibe el codigo de autorizacion y guarda el refresh token.
+     *
+     * La misma URL de callback sirve para la agenda principal y para la agenda
+     * de un doctor: la sesion dice cual de los dos flujos esta pendiente.
      */
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request, HealDoctorGoogleCalendarController $doctorLink): RedirectResponse
     {
+        $flow = session(HealDoctorGoogleCalendarController::FLOW_SESSION_KEY);
+
+        if (is_array($flow) && ($flow['type'] ?? '') === 'doctor') {
+            return $doctorLink->callback($request);
+        }
+
+        // La agenda principal la conecta solo quien tiene el permiso del modulo.
+        abort_unless($request->user()?->can('heal_google_calendar'), 403);
+
         $expectedState = (string) session(self::STATE_SESSION_KEY);
         $receivedState = (string) $request->query('state', '');
 

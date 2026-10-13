@@ -43,7 +43,7 @@ class SyncAppointmentToGoogleCalendar implements ShouldQueue
 
     public function handle(GoogleCalendarSyncService $sync): void
     {
-        if (! $sync->ready()) {
+        if (! $sync->outboundReady()) {
             return;
         }
 

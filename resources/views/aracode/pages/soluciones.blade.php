@@ -34,6 +34,18 @@
         'kirafact' => \App\Support\SitiosProducto::url('kirafact'),
         'pichanguero' => \App\Support\SitiosProducto::url('pichanguero'),
     ];
+
+    /*
+        El servicio que publica una plantilla del Banco de Plantillas
+        (/paginas-web) es el quinto bloque del ecosistema. Enlaza a una página
+        del propio sitio, así que abre en la misma pestaña.
+
+        El precio de entrada sale de config/servicio_web.php a través de
+        App\Support\ServicioWeb, igual que en /paginas-web y en el catálogo: aquí
+        no se escribe ningún importe.
+    */
+    $precioDesdeServicio = \App\Support\ServicioWeb::precioDesde();
+    $urlServicioWeb = \App\Support\ServicioWeb::url();
 @endphp
 
 @section('content')
@@ -78,9 +90,11 @@
                     :delay="1"
                 />
 
-                {{-- KiraFact --}}
+                {{-- KIRAFACT: el nombre comercial se escribe como el producto lo
+                     publica (config/kirafact.php «titulo_marca» y los títulos de
+                     su propio sitio). Una sola grafía en todo el ecosistema. --}}
                 <x-v2.product-card
-                    title="KiraFact"
+                    title="KIRAFACT"
                     description="Facturación electrónica y gestión comercial para empresas: ventas, inventario y comprobantes electrónicos."
                     :href="$sitiosProducto['kirafact']"
                     :nuevaPestana="true"
@@ -134,43 +148,100 @@
                     :delay="4"
                 />
 
-                {{-- Automatización --}}
-                <div class="ara-product-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-ara-navy to-ara-blue min-h-[400px] flex flex-col justify-end p-8 reveal reveal-delay-4">
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-ara-blue/20 rounded-full filter blur-3xl pointer-events-none"></div>
-                    
-                    <div class="relative z-10">
-                        <span class="ara-badge ara-badge-green mb-4 inline-block">Servicios</span>
-                        <h3 class="text-2xl lg:text-3xl font-bold text-white mb-3">Automatización de Procesos</h3>
-                        <p class="text-white/70 mb-6">
+                {{-- Automatización: servicio, no producto con web propia. Usa la
+                     misma estructura que las tarjetas de producto (franja
+                     superior + texto debajo) para que la fila se alinee; en la
+                     franja va un degradado con el icono, no una imagen. --}}
+                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-5">
+                    <div class="ara-product-media ara-product-media--azul">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span class="ara-product-badge">Servicios</span>
+                    </div>
+
+                    <div class="ara-product-content">
+                        <h3 class="ara-product-title">Automatización de Procesos</h3>
+                        <p class="ara-product-text">
                             Optimiza y automatiza los procesos manuales de tu empresa para reducir errores, ahorrar tiempo y aumentar la productividad de tu equipo.
                         </p>
-                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary">
+                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-product-cta">
                             Solicitar Asesoría
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
                         </a>
                     </div>
-                </div>
+                </article>
 
-                {{-- IA --}}
-                <div class="ara-product-card relative overflow-hidden rounded-2xl bg-gradient-to-br from-ara-navy to-ara-green min-h-[400px] flex flex-col justify-end p-8 reveal reveal-delay-5">
-                    <div class="absolute top-0 left-0 w-64 h-64 bg-ara-green/20 rounded-full filter blur-3xl pointer-events-none"></div>
-                    
-                    <div class="relative z-10">
-                        <span class="ara-badge ara-badge-green mb-4 inline-block">Innovación</span>
-                        <h3 class="text-2xl lg:text-3xl font-bold text-white mb-3">Inteligencia Artificial</h3>
-                        <p class="text-white/70 mb-6">
+                {{-- IA: mismo caso que Automatización. --}}
+                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-6">
+                    <div class="ara-product-media ara-product-media--verde">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"/>
+                        </svg>
+                        <span class="ara-product-badge">Innovación</span>
+                    </div>
+
+                    <div class="ara-product-content">
+                        <h3 class="ara-product-title">Inteligencia Artificial</h3>
+                        <p class="ara-product-text">
                             Integramos IA en cada una de nuestras soluciones para analizar datos de forma inteligente y brindar una toma de decisiones asistida.
                         </p>
-                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-green">
+                        <a href="{{ route('contacto') }}" class="ara-btn ara-btn-green ara-product-cta">
                             Conocer Más
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                             </svg>
                         </a>
                     </div>
-                </div>
+                </article>
+
+                {{-- Páginas Web: el servicio que publica una plantilla del Banco de
+                     Plantillas con la marca y el dominio del cliente. Es un
+                     servicio, así que lleva la franja con degradado e icono en
+                     vez de una imagen diseñada, y su propio color (morado): el
+                     azul y el verde ya son de Automatización e IA.
+
+                     El enlace es interno (misma pestaña) y el precio de entrada
+                     sale de config/servicio_web.php: el mismo que publican
+                     /paginas-web, el catálogo y la ficha de cada plantilla. --}}
+                <article class="ara-product-card ara-product-card--plano reveal reveal-delay-7">
+                    <div class="ara-product-media ara-product-media--morado">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3c2.4 2.4 3.6 5.4 3.6 9s-1.2 6.6-3.6 9c-2.4-2.4-3.6-5.4-3.6-9S9.6 5.4 12 3z"/>
+                        </svg>
+                        <span class="ara-product-badge">Servicios</span>
+                    </div>
+
+                    <div class="ara-product-content">
+                        <h3 class="ara-product-title">Páginas Web</h3>
+                        <p class="ara-product-text">
+                            Elige una plantilla de nuestro catálogo y la publicamos con tu marca y tu dominio.
+                            Desde {{ $precioDesdeServicio }} al mes, sin costo de implementación.
+                        </p>
+                        <ul class="ara-product-features">
+                            <li>
+                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Dominio, hosting y certificado de seguridad incluidos
+                            </li>
+                            <li>
+                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Publicada en 3 a 10 días según el formato
+                            </li>
+                            <li>
+                                <svg fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Cambios de contenido incluidos todo el año
+                            </li>
+                        </ul>
+                        <a href="{{ $urlServicioWeb }}" class="ara-btn ara-btn-primary ara-product-cta">
+                            Ver los planes
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            </svg>
+                        </a>
+                    </div>
+                </article>
             </div>
         </div>
     </section>

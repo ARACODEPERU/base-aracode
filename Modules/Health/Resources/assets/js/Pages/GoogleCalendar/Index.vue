@@ -142,6 +142,25 @@ const flash = (icon, title, text) => {
     });
 };
 
+// Enlazar la agenda principal expone las citas de TODOS los doctores en esa
+// cuenta de Google: se pide confirmación clara antes de salir a Google.
+const confirmPrincipalConnect = async (url) => {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Vas a enlazar la agenda principal',
+        html: 'Esta cuenta de Google es la <strong>agenda principal del consultorio</strong>. Las citas de <strong>todos los doctores</strong> se verán en ese calendario.<br><br>Si solo quieres enlazar la agenda de un doctor, hazlo desde su propia agenda (Agendas › Conectar mi Google Calendar).',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, enlazar agenda principal',
+        cancelButtonText: 'Cancelar',
+        customClass: { popup: 'sweet-alerts', confirmButton: 'btn btn-danger', cancelButton: 'btn btn-outline-secondary' },
+        buttonsStyling: false,
+    });
+
+    if (result.isConfirmed) {
+        window.location.href = url;
+    }
+};
+
 // Avisos y resultado del diagnóstico.
 //
 // Inertia reutiliza el componente de la página en las peticiones POST, así que
@@ -525,6 +544,7 @@ const discard = (item) => {
                             v-if="!connected && credentialsReady"
                             :href="route('heal_google_calendar_connect')"
                             class="btn btn-primary"
+                            @click.prevent="confirmPrincipalConnect(route('heal_google_calendar_connect'))"
                         >
                             Continuar con Google
                         </a>
@@ -626,6 +646,37 @@ const discard = (item) => {
                     reemplazarlos, hazlo desde
                     <a :href="parametersUrl" class="underline">Parámetros del sistema</a>.
                 </p>
+
+                <!-- La URL de callback y el Client ID en uso se muestran siempre,
+                     no solo al registrar la credencial: con las credenciales ya
+                     puestas (el caso normal) no aparecían en ninguna parte, y el
+                     error redirect_uri_mismatch casi siempre es una de estas dos
+                     cosas: falta la URI, o se registro en otro cliente de Google. -->
+                <div class="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <span class="block text-xs uppercase text-gray-400">
+                        Client ID en uso (no es secreto)
+                    </span>
+                    <code class="mt-1 block break-all rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700">{{ channel.clientIdValue || '—' }}</code>
+                    <p class="mt-1 text-xs text-gray-500">
+                        La URI de callback de abajo debe estar registrada <strong>en este mismo ID de cliente de OAuth</strong>
+                        de Google Cloud. El Client Secret y el refresh token nunca se muestran.
+                    </p>
+                </div>
+
+                <div class="mt-4 rounded border border-gray-200 p-3 dark:border-gray-700">
+                    <span class="block text-xs uppercase text-gray-400">
+                        URL de callback: la única que se registra en Google
+                    </span>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Debe estar tal cual en <em>URIs de redireccionamiento autorizados</em> del ID de cliente de OAuth.
+                        Si el sistema se abre con y sin <code>www</code>, agrega las dos variantes. El error de Google
+                        <strong>redirect_uri_mismatch</strong> significa que esta dirección falta o no coincide letra por letra.
+                    </p>
+                    <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <code class="break-all rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700">{{ redirectUri || '—' }}</code>
+                        <button type="button" class="btn btn-sm btn-outline-primary" @click="copyRedirectUri">Copiar</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Diagnóstico -->
@@ -679,8 +730,12 @@ const discard = (item) => {
                 </div>
 
                 <div class="mt-4 rounded border border-gray-200 p-3 text-xs dark:border-gray-700">
-                    <span class="block uppercase text-gray-400">URL de notificaciones</span>
+                    <span class="block uppercase text-gray-400">URL de notificaciones push (no se registra en Google)</span>
                     <code class="break-all">{{ channel.webhookUrl || channel.routeUrl || '—' }}</code>
+                    <p class="mt-2 text-warning">
+                        Esta dirección la usa el sistema para recibir los cambios; no se pega en Google Cloud. Lo que se pega en
+                        Google es la URL de callback que está arriba, en «Credenciales de la aplicación».
+                    </p>
                     <p v-if="!channel.publicWebhook" class="mt-2 text-warning">
                         Google solo entrega notificaciones a una URL HTTPS pública. En local no hay push: los cambios llegan por la
                         reconciliación programada cada {{ reconcileMinutes }} minutos.

@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada, por dos razones: al recargar en oscuro
+    no se ve el destello claro y las cosas que no funcionan sin JavaScript (el
+    interruptor y los controles del slider) quedan ocultas hasta que haya JS.
+
+    Sin nada guardado la plantilla arranca en claro, aunque el sistema del
+    visitante esté en oscuro: el modo oscuro solo se pone si lo pide.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('restaurante-carta-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Demostración de la plantilla «Restaurante y carta digital» del Banco de
+    Plantillas Web de ARACODE.
+
+    Es un proyecto web independiente: no comparte CSS, JavaScript, componentes ni
+    estructura con el sitio corporativo, con el catálogo ni con las otras
+    plantillas del banco. Sus archivos viven todos en esta carpeta (css/, js/,
+    img/) y las rutas son relativas, así que la carpeta se puede copiar a
+    cualquier servidor o a su propio subdominio sin cambiar una línea.
+
+    Trae lo que la lista obligatoria pide a toda demostración: hero a pantalla
+    completa con slider de tres fotos, fotografía real, carta con precios de
+    referencia, promociones, prueba social, ubicación con plano propio, redes
+    sociales, WhatsApp y modo claro / oscuro. La lista está en
+    docs/BANCO_PLANTILLAS.md.
+
+    noindex: la página que se indexa es la ficha de la plantilla en el catálogo;
+    la demo existe para verla funcionando.
+
+    Los datos (dirección, teléfonos, precios, platos y nombre) son inventados y
+    están marcados en el HTML para que se reemplacen en un solo paso.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Demostración de la plantilla Restaurante y carta digital: carta con precios de referencia, promociones del día, cómo se cocina, opiniones de comensales, ubicación y reserva de mesa.">
+
+<title>Fogón Criollo — Demostración de plantilla</title>
+
+<link rel="preload" as="image" href="img/portada.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍲</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<!--
+    DATOS DE LA DEMO: dirección, teléfonos, redes y horarios se repiten en la
+    barra superior, el pie y las secciones. En un sitio real salen de la ficha
+    del negocio, no del HTML.
+-->
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Martes a domingo de 12:00 a 23:00 · cocina hasta las 22:30
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 002
+            </a>
+
+            <!-- Redes sociales: en la demo apuntan a la plataforma; en el sitio
+                 real van a los perfiles del restaurante (ver CREDITOS.md). -->
+            <ul class="redes" aria-label="Redes sociales del restaurante">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del restaurante">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del restaurante">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del restaurante">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del restaurante">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="#inicio" aria-label="Fogón Criollo, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 10.5h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-3Z"/><path d="M2.8 10.5h18.4"/><path d="M9 3.5c-.9 1.4-.3 2.5.4 3.4.6.8.1 1.7-.6 2.3M14.4 3.5c-.9 1.4-.3 2.5.4 3.4.6.8.1 1.7-.6 2.3"/>
+                </svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Fogón</strong>
+                <span>Criollo</span>
+            </span>
+        </a>
+
+        <!-- A la derecha de la marca: el menú, el interruptor de tema y el
+             botón que despliega el menú en móvil. -->
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="#carta">La carta</a></li>
+                    <li><a href="#promociones">Promociones</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#opiniones">Opiniones</a></li>
+                    <li><a href="#reservas">Reservas</a></li>
+                    <li><a href="#reservas" class="menu__reserva">Reservar mesa</a></li>
+                </ul>
+            </nav>
+
+            <!--
+                Interruptor de tema claro / oscuro.
+
+                Cambia el atributo data-tema del <html> y recuerda la elección;
+                los colores los pone el CSS y el icono que se ve es el del modo
+                al que se va (luna en claro, sol en oscuro). El texto del botón
+                lo deja en consonancia el script del sitio, para quien lo use con
+                lector de pantalla. Sin JavaScript no se muestra.
+            -->
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== PORTADA ===================== -->
+
+    <!-- Hero a pantalla completa con slider de fondo: tres fotos reales del
+         restaurante (el plato estrella, la parrilla y el comedor) se turnan solas
+         y también con las flechas, los puntos, el teclado o el dedo. Sin
+         JavaScript se ve la primera y el texto se lee completo: ninguna
+         información vive solo en la foto. -->
+    <section class="portada" id="inicio" data-carrusel>
+        <div class="portada__fondo">
+            <ul class="portada__pista">
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/portada.webp" width="1024" height="704" fetchpriority="high" decoding="async"
+                         alt="Plato de ceviche de pescado con camote, choclo y lechuga, servido en el restaurante">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/parrilla.webp" width="1024" height="704" loading="lazy" decoding="async"
+                         alt="Pollo a la brasa con papas fritas y ensalada recién servido en un plato">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/comedor.webp" width="1024" height="704" loading="lazy" decoding="async"
+                         alt="Mesa del comedor preparada con platos y cubiertos para el servicio">
+                </li>
+            </ul>
+
+            <!-- Velo: sin él, un texto blanco sobre una foto clara no se lee. -->
+            <span class="portada__velo" aria-hidden="true"></span>
+        </div>
+
+        <div class="contenedor portada__contenido">
+            <div class="portada__texto revelar">
+                <p class="sello sello--oscuro">Cocina criolla y parrilla en Nuevo Chimbote</p>
+
+                <h1>Comida criolla servida como en casa</h1>
+
+                <p class="portada__lead">
+                    Ceviche del día, pollo a la brasa al carbón y guisos de la casa. Carta con
+                    precios a la vista, menú del día hasta las cuatro de la tarde y reserva de
+                    mesa por WhatsApp.
+                </p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--principal" href="#reservas">
+                        Reservar mesa
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a class="boton boton--borde-claro" href="#carta">Ver la carta y precios</a>
+                </div>
+
+                <ul class="portada__garantias">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Pescado fresco comprado cada mañana
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Porciones que se pueden compartir
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Precios a la vista, sin sorpresas
+                    </li>
+                </ul>
+            </div>
+
+            <!-- El horario va en una tarjeta de cristal sobre la foto: es el dato
+                 que más se pregunta por WhatsApp. -->
+            <div class="portada__horario revelar">
+                <span class="portada__horario-titulo">Hoy abierto</span>
+                <strong>12:00 — 23:00</strong>
+                <span>Cocina hasta las 22:30</span>
+            </div>
+        </div>
+
+        <!-- Controles del slider en una sola pastilla: en escritorio flota abajo
+             al centro y en móvil baja debajo del texto, sin taparlo. -->
+        <div class="portada__controles">
+            <button class="carrusel__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <div class="carrusel__puntos" role="group" aria-label="Elegir foto del restaurante">
+                <button class="carrusel__punto" type="button" data-carrusel-punto="0" aria-label="Ver la primera foto" aria-current="true"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-label="Ver la segunda foto"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-label="Ver la tercera foto"></button>
+            </div>
+            <button class="carrusel__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- Cifras de confianza: en su propia banda, para que el hero quede a
+         pantalla completa sin números encima de la foto. -->
+    <div class="banda-cifras">
+        <div class="contenedor">
+            <dl class="cifras">
+                <div>
+                    <dt>Años en el barrio</dt>
+                    <dd><span data-contador="12">0</span></dd>
+                </div>
+                <div>
+                    <dt>Platos en la carta</dt>
+                    <dd><span data-contador="38">0</span></dd>
+                </div>
+                <div>
+                    <dt>Mesas por servicio</dt>
+                    <dd><span data-contador="22">0</span></dd>
+                </div>
+                <div>
+                    <dt>Valoración de comensales</dt>
+                    <dd><span data-contador="48" data-divisor="10">0</span><span class="cifras__de">/5</span></dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- ===================== LA CARTA ===================== -->
+
+    <section class="seccion" id="carta">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">La carta</p>
+                <h2>Lo que hoy sale de la cocina</h2>
+                <p>Precios de referencia en soles. El plato del día y los guisos cambian según lo que llegue del mercado.</p>
+            </header>
+
+            <!-- Plato estrella: la foto a un lado y, al otro, qué es y cuánto
+                 cuesta, con el botón de pedir al lado del de reservar. -->
+            <div class="carta__estrella revelar">
+                <figure class="carta__foto">
+                    <img src="img/portada.webp" width="1024" height="704" loading="lazy" decoding="async"
+                         alt="Ceviche de pescado con camote, choclo, lechuga y salsa de ají limo">
+                </figure>
+
+                <div>
+                    <p class="sello sello--claro">Plato estrella</p>
+                    <h3>Ceviche de pescado</h3>
+                    <p>
+                        Pescado del día cortado al momento, ají limo, limón recién exprimido, camote,
+                        choclo y lechuga. Se prepara al pedir, no antes.
+                    </p>
+
+                    <p class="carta__precio">
+                        <span class="cifras__de">S/</span> 28
+                        <small>porción personal</small>
+                    </p>
+
+                    <div class="carta__acciones">
+                        <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20pedir%20un%20ceviche" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                            Pedir por WhatsApp
+                        </a>
+                        <a class="boton boton--borde" href="#reservas">Reservar mesa</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- La carta completa, en cuatro bloques: entradas, fondos, postres y
+                 bebidas. -->
+            <div class="carta__bloques">
+                <div class="carta__bloque revelar">
+                    <h3>Entradas</h3>
+                    <ul class="lista-platos">
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Causa limeña<span class="plato__etiqueta">Recomendado</span></span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 16</span>
+                            </p>
+                            <p class="plato__detalle">Papa amarilla con limón, rellena de pollo y mayonesa, con huevo y aceituna.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Tequeños de queso</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 14</span>
+                            </p>
+                            <p class="plato__detalle">Seis unidades fritas al momento, con salsa de guacamole de la casa.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Anticuchos de corazón<span class="plato__etiqueta">Picante</span></span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 18</span>
+                            </p>
+                            <p class="plato__detalle">Dos palos a la parrilla con papa dorada y salsa de ají panca.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Choclo con queso<span class="plato__etiqueta">Vegetariano</span></span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 12</span>
+                            </p>
+                            <p class="plato__detalle">Choclo serrano hervido con queso fresco andino y crema de rocoto aparte.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="carta__bloque revelar">
+                    <h3>Fondos y parrilla</h3>
+                    <ul class="lista-platos">
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Ceviche de pescado</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 28</span>
+                            </p>
+                            <p class="plato__detalle">Pescado del día, limón, ají limo, camote, choclo y lechuga.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Pollo a la brasa (1/4)</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 18</span>
+                            </p>
+                            <p class="plato__detalle">Al carbón, con papas fritas, ensalada fresca y cremas de la casa.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Lomo saltado</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 26</span>
+                            </p>
+                            <p class="plato__detalle">Carne al wok con cebolla, tomate y ají amarillo, con papas y arroz.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Arroz con pollo</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 20</span>
+                            </p>
+                            <p class="plato__detalle">Arroz verde con culantro, presa de pollo y salsa criolla.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Sudado de pescado</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 30</span>
+                            </p>
+                            <p class="plato__detalle">Filete en salsa de tomate y ají amarillo, con yuca sancochada y arroz.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Parrilla mixta<span class="plato__etiqueta">Para dos</span></span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 42</span>
+                            </p>
+                            <p class="plato__detalle">Res, pollo y chorizo criollo a la parrilla, con papas y ensalada.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="carta__bloque revelar">
+                    <h3>Postres</h3>
+                    <ul class="lista-platos">
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Suspiro limeño</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 12</span>
+                            </p>
+                            <p class="plato__detalle">Manjar blanco con merengue de oporto y canela, en copa.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Mazamorra morada</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 9</span>
+                            </p>
+                            <p class="plato__detalle">Maíz morado con frutas secas, servida tibia.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Arroz con leche</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 9</span>
+                            </p>
+                            <p class="plato__detalle">Con leche evaporada, clavo de olor y canela molida.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Combinado criollo</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 14</span>
+                            </p>
+                            <p class="plato__detalle">Media porción de mazamorra y media de arroz con leche, como se pide aquí.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="carta__bloque revelar">
+                    <h3>Bebidas</h3>
+                    <ul class="lista-platos">
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Chicha morada (jarra)</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 12</span>
+                            </p>
+                            <p class="plato__detalle">Maíz morado hervido con piña, clavo y limón. Un litro.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Limonada frozen</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 10</span>
+                            </p>
+                            <p class="plato__detalle">Limón, hierbabuena y hielo licuado, en vaso largo.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Pisco sour</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 18</span>
+                            </p>
+                            <p class="plato__detalle">Pisco quebranta, limón, jarabe y clara de huevo. Solo a mayores de edad.</p>
+                        </li>
+                        <li class="plato">
+                            <p class="plato__cabecera">
+                                <span class="plato__nombre">Café pasado</span>
+                                <span class="plato__linea" aria-hidden="true"></span>
+                                <span class="plato__precio">S/ 6</span>
+                            </p>
+                            <p class="plato__detalle">Café de Chanchamayo pasado en olla, con leche aparte.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <p class="carta__aviso">
+                Precios de referencia de la demostración, en soles y con el IGV incluido. En tu sitio
+                se cargan desde tu carta y se actualizan sin tocar el diseño.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== PROMOCIONES ===================== -->
+
+    <section class="seccion seccion--menta" id="promociones">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Promociones</p>
+                <h2>Lo que se ofrece entre semana</h2>
+                <p>Promociones vigentes solo en salón. No se combinan entre sí ni con otras rebajas.</p>
+            </header>
+
+            <ul class="promociones">
+                <li class="promocion revelar">
+                    <h3>Menú del día</h3>
+                    <p class="promocion__precio"><span class="promocion__moneda">S/</span> 16</p>
+                    <p class="promocion__nota">De lunes a viernes, de 12:00 a 16:00.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Sopa del día</li>
+                        <li>Segundo a elección de la pizarra</li>
+                        <li>Refresco natural de un litro</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="#carta">Ver la carta</a>
+                </li>
+
+                <li class="promocion promocion--destacada revelar">
+                    <p class="promocion__cinta">Lo más pedido</p>
+                    <h3>Almuerzo familiar</h3>
+                    <p class="promocion__precio"><span class="promocion__moneda">S/</span> 68</p>
+                    <p class="promocion__nota">Para cuatro personas, todos los días.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Un pollo a la brasa entero</li>
+                        <li>Cuatro guarniciones a elección</li>
+                        <li>Jarra de chicha morada</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="#reservas">Reservar mesa</a>
+                </li>
+
+                <li class="promocion revelar">
+                    <h3>Martes de ceviche</h3>
+                    <p class="promocion__precio"><span class="promocion__moneda">S/</span> 24</p>
+                    <p class="promocion__nota">Cada martes, mientras haya pescado del día.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Ceviche de pescado personal</li>
+                        <li>Chicha morada de un cuarto</li>
+                        <li>Café pasado de cortesía</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20el%20martes%20de%20ceviche" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+                </li>
+            </ul>
+
+            <p class="promociones__aviso">
+                Promociones de ejemplo. En tu sitio se activan y desactivan desde tu panel, con la
+                fecha de inicio y de fin de cada una.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== NUESTRA COCINA ===================== -->
+
+    <section class="seccion seccion--oscura" id="nosotros">
+        <div class="contenedor cocina__rejilla">
+            <div class="cocina__texto revelar">
+                <p class="sello sello--oscuro">Nuestra cocina</p>
+                <h2>Cocina de casa, con recetas que no cambian</h2>
+                <p class="cocina__lead">
+                    Empezamos a las seis de la mañana con los guisos del día y vamos al mercado por el
+                    pescado antes de abrir. La carta es corta a propósito: lo que no se prepara bien
+                    ese día, no se ofrece.
+                </p>
+
+                <ul class="lista-check">
+                    <li>Pescado comprado la misma mañana, no congelado</li>
+                    <li>Pollo a la brasa al carbón, no a gas</li>
+                    <li>Guisos del día cocinados desde temprano</li>
+                    <li>Opciones sin picante para niños, siempre disponibles</li>
+                </ul>
+
+                <figure class="cocina__foto-detalle">
+                    <img src="img/causa.webp" width="1200" height="750" alt="Porción de causa limeña con huevo duro, aceituna y lechuga" loading="lazy" decoding="async">
+                    <figcaption>La causa se arma al pedir, con papa amarilla del día.</figcaption>
+                </figure>
+
+                <figure class="cocina__foto-detalle">
+                    <img src="img/postres.webp" width="1200" height="750" alt="Bandeja con postres criollos: mazamorra morada, arroz con leche y suspiro limeño" loading="lazy" decoding="async">
+                    <figcaption>Los postres de la casa, hechos cada mañana en la misma olla.</figcaption>
+                </figure>
+            </div>
+
+            <figure class="cocina__foto revelar">
+                <img src="img/cocina.webp" width="819" height="1024" alt="Cocinero del restaurante preparando un plato en la cocina, con la olla al fuego" loading="lazy" decoding="async">
+                <figcaption>
+                    <strong>Chef Marco Bermúdez</strong>
+                    <span>Jefe de cocina · 15 años en el oficio</span>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- ===================== OPINIONES ===================== -->
+
+    <section class="seccion" id="opiniones">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Opiniones</p>
+                <h2>Lo que dicen los comensales</h2>
+                <p>Testimonios de la ficha del negocio. En la demo los avatares son iniciales: no se usan caras de terceros.</p>
+            </header>
+
+            <ul class="opiniones">
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas">
+                        <span aria-hidden="true">★★★★★</span>
+                    </p>
+                    <blockquote>El ceviche es de verdad: pescado fresco, bien cortado y con el limón justo. Pedimos también causa y nos la trajeron recién armada.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">RC</span>
+                        <span class="opinion__autor">
+                            <strong>Rosa C.</strong>
+                            <span>Ceviche y causa limeña</span>
+                        </span>
+                    </footer>
+                </li>
+
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas">
+                        <span aria-hidden="true">★★★★★</span>
+                    </p>
+                    <blockquote>Vamos con los chicos los domingos. El almuerzo familiar alcanza para cuatro y siempre nos guardan la mesa que pedimos.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">JM</span>
+                        <span class="opinion__autor">
+                            <strong>Jorge M.</strong>
+                            <span>Almuerzo familiar</span>
+                        </span>
+                    </footer>
+                </li>
+
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="4 de 5 estrellas">
+                        <span aria-hidden="true">★★★★<span class="sr-solo"> </span>★</span>
+                    </p>
+                    <blockquote>El menú del día es lo más rendidor del barrio y la chicha morada es de casa, no de sobre. A la hora punta se llena, mejor reservar.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">LT</span>
+                        <span class="opinion__autor">
+                            <strong>Lucía T.</strong>
+                            <span>Menú del día</span>
+                        </span>
+                    </footer>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== RESERVAS Y UBICACIÓN ===================== -->
+
+    <section class="seccion seccion--menta" id="reservas">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Reservas</p>
+                <h2>Dónde estamos y cómo reservar</h2>
+                <p>A tres cuadras del mercado, con estacionamiento en la misma calle y salón para grupos.</p>
+            </header>
+
+            <div class="visitanos">
+                <div class="visitanos__datos revelar">
+                    <ul class="datos">
+                        <li>
+                            <span class="datos__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Dirección</strong>
+                                Av. Los Pescadores 210, Nuevo Chimbote
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Horarios</strong>
+                                Martes a domingo 12:00 — 23:00 · lunes cerrado por descanso
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                            </span>
+                            <span>
+                                <strong>Teléfono y WhatsApp</strong>
+                                <a href="tel:+51900000000">(043) 000 002</a> · <a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a>
+                            </span>
+                        </li>
+                    </ul>
+
+                    <!-- Mapa sin servicios externos: un plano propio más un enlace
+                         a Google Maps. Así la demo funciona sin conexión y no
+                         carga scripts de terceros. -->
+                    <figure class="mapa">
+                        <img src="img/mapa.svg" width="900" height="560" alt="Plano de la ubicación del restaurante en la Av. Los Pescadores 210, a tres cuadras del mercado" loading="lazy" decoding="async">
+                        <figcaption>
+                            <a class="boton boton--borde boton--bloque" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Los+Pescadores+210%2C+Nuevo+Chimbote" target="_blank" rel="noopener">
+                                Abrir en Google Maps
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                            </a>
+                        </figcaption>
+                    </figure>
+                </div>
+
+                <!-- Reserva de mesa: en la demo no envía datos. -->
+                <form class="formulario revelar" id="formulario-reserva" action="#" method="post" novalidate data-demo="true">
+                    <h3 class="formulario__titulo">Reservar mesa</h3>
+                    <p class="formulario__nota">
+                        Déjanos tus datos y te confirmamos la mesa por WhatsApp. Para grupos de más de
+                        ocho personas, llámanos por teléfono.
+                    </p>
+
+                    <div class="campo">
+                        <label for="nombre">Nombre y apellido</label>
+                        <input id="nombre" name="nombre" type="text" autocomplete="name" required>
+                        <p class="campo__error" data-error="nombre">Escribe tu nombre completo.</p>
+                    </div>
+
+                    <div class="campo">
+                        <label for="telefono">Teléfono o WhatsApp</label>
+                        <input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" placeholder="999 999 999" required>
+                        <p class="campo__error" data-error="telefono">Escribe un teléfono de 9 dígitos.</p>
+                    </div>
+
+                    <div class="campo-fila">
+                        <div class="campo">
+                            <label for="personas">Personas</label>
+                            <select id="personas" name="personas" required>
+                                <option value="">Elige cuántas</option>
+                                <option>2 personas</option>
+                                <option>3 personas</option>
+                                <option>4 personas</option>
+                                <option>5 personas</option>
+                                <option>6 personas</option>
+                                <option>Más de 6 (lo confirmamos por WhatsApp)</option>
+                            </select>
+                            <p class="campo__error" data-error="personas">Dinos para cuántas personas.</p>
+                        </div>
+
+                        <div class="campo">
+                            <label for="hora">Hora</label>
+                            <select id="hora" name="hora" required>
+                                <option value="">Elige una hora</option>
+                                <option>12:30</option>
+                                <option>13:00</option>
+                                <option>13:30</option>
+                                <option>14:00</option>
+                                <option>19:30</option>
+                                <option>20:00</option>
+                                <option>20:30</option>
+                                <option>21:00</option>
+                            </select>
+                            <p class="campo__error" data-error="hora">Elige una hora.</p>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label for="dia">Día de la reserva</label>
+                        <input id="dia" name="dia" type="date" required>
+                        <p class="campo__error" data-error="dia">Elige el día de tu reserva.</p>
+                    </div>
+
+                    <div class="campo">
+                        <label for="mensaje">¿Algo que debamos saber? <span class="campo__opcional">(opcional)</span></label>
+                        <textarea id="mensaje" name="mensaje" rows="3" placeholder="Por ejemplo: cumpleaños, silla para bebé o alergia a algún ingrediente"></textarea>
+                    </div>
+
+                    <label class="casilla">
+                        <input type="checkbox" name="acepto" required>
+                        <span>Acepto que me contacten para confirmar la reserva.</span>
+                    </label>
+                    <p class="campo__error" data-error="acepto">Necesitamos tu permiso para contactarte.</p>
+
+                    <button class="boton boton--principal boton--bloque" type="submit">
+                        Confirmar reserva
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </button>
+
+                    <p class="formulario__aviso" id="aviso-formulario" role="status" aria-live="polite"></p>
+
+                    <p class="formulario__alternativa">
+                        ¿Prefieres escribirnos? <a href="https://wa.me/51900000000?text=Hola%2C%20quiero%20reservar%20una%20mesa" target="_blank" rel="noopener">Reservar por WhatsApp</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion" id="preguntas">
+        <div class="contenedor contenedor--angosto">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Preguntas</p>
+                <h2>Lo que más nos preguntan</h2>
+            </header>
+
+            <div class="preguntas">
+                <details>
+                    <summary>¿Hace falta reservar?</summary>
+                    <p>No es obligatorio, pero de jueves a domingo el salón se llena entre la 1 y las 3 de la tarde. Con reserva te guardamos la mesa veinte minutos.</p>
+                </details>
+                <details>
+                    <summary>¿Tienen platos sin picante o vegetarianos?</summary>
+                    <p>Sí. Casi todo se prepara sin ají si lo pides al ordenar, y en la carta hay entradas vegetarianas como el choclo con queso.</p>
+                </details>
+                <details>
+                    <summary>¿Hay estacionamiento?</summary>
+                    <p>Se estaciona en la misma calle, frente al local, y los fines de semana hay personal que ayuda a ubicar los autos.</p>
+                </details>
+                <details>
+                    <summary>¿Atienden grupos grandes?</summary>
+                    <p>El salón se reserva para grupos de hasta veinte personas con dos días de anticipación, con menú cerrado de dos o tres platos.</p>
+                </details>
+                <details>
+                    <summary>¿Cómo se puede pagar?</summary>
+                    <p>Aceptamos efectivo, Yape, Plin y tarjeta de débito o crédito. La boleta o factura se entrega al pagar.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>¿Te guardamos una mesa?</h2>
+                <p>Abrimos de martes a domingo desde el mediodía. Escríbenos por WhatsApp y te confirmamos en el momento.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20reservar%20una%20mesa" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    Escribir por WhatsApp
+                </a>
+                <a class="boton boton--borde-claro" href="tel:+51900000000">Llamar (043) 000 002</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="#inicio">
+                <span class="marca__icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-3Z"/><path d="M2.8 10.5h18.4"/><path d="M9 3.5c-.9 1.4-.3 2.5.4 3.4.6.8.1 1.7-.6 2.3M14.4 3.5c-.9 1.4-.3 2.5.4 3.4.6.8.1 1.7-.6 2.3"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Fogón</strong>
+                    <span>Criollo</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Restaurante de cocina criolla y parrilla en Nuevo Chimbote. Reserva por WhatsApp,
+                carta con precios a la vista y menú del día entre semana.
+            </p>
+
+            <ul class="redes redes--pie" aria-label="Redes sociales del restaurante">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram del restaurante">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook del restaurante">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok del restaurante">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp del restaurante">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="La carta">
+            <h3>La carta</h3>
+            <ul>
+                <li><a href="#carta">Entradas</a></li>
+                <li><a href="#carta">Fondos y parrilla</a></li>
+                <li><a href="#carta">Postres</a></li>
+                <li><a href="#carta">Bebidas</a></li>
+                <li><a href="#promociones">Promociones del día</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="El restaurante">
+            <h3>El restaurante</h3>
+            <ul>
+                <li><a href="#nosotros">Nuestra cocina</a></li>
+                <li><a href="#opiniones">Opiniones</a></li>
+                <li><a href="#reservas">Reservas</a></li>
+                <li><a href="#preguntas">Preguntas frecuentes</a></li>
+                <li><a href="#reservas">Ubicación y horarios</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul class="pie__contacto">
+                <li>Av. Los Pescadores 210, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 002</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:reservas@fogoncriollo.demo">reservas@fogoncriollo.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Fogón Criollo. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<!-- Acceso permanente a WhatsApp, como en el resto de plantillas. -->
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20reservar%20una%20mesa" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

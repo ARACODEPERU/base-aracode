@@ -1,0 +1,58 @@
+[
+    {
+        "n": 1,
+        "grupo": "hero",
+        "busqueda": "office interior desks computers work",
+        "orientacion": "horizontal",
+        "original": "5104x3751",
+        "titulo": "File:Interior view of an office ATLIB 290273.png",
+        "autor": "Godber, Albert Percy, 1875-1949",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Interior_view_of_an_office_ATLIB_290273.png",
+        "archivo": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-estudio/001.jpg",
+        "medidas": "1280x941",
+        "bytes": 521938
+    },
+    {
+        "n": 2,
+        "grupo": "hero",
+        "busqueda": "office interior desks computers work",
+        "orientacion": "horizontal",
+        "original": "2048x1536",
+        "titulo": "File:PC-Arbeitsplatz fast horizontal.JPG",
+        "autor": "User:Mattes",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:PC-Arbeitsplatz_fast_horizontal.JPG",
+        "archivo": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-estudio/002.jpg",
+        "medidas": "1280x960",
+        "bytes": 247499
+    },
+    {
+        "n": 3,
+        "grupo": "hero",
+        "busqueda": "filing cabinet office archive documents",
+        "orientacion": "horizontal",
+        "original": "3000x1972",
+        "titulo": "File:Cabinet members reading telegrams in the oval office - NARA - 194662.tif",
+        "autor": "Oliver F. Atkins",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Cabinet_members_reading_telegrams_in_the_oval_office_-_NARA_-_194662.tif",
+        "archivo": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-estudio/003.jpg",
+        "medidas": "1280x841",
+        "bytes": 229227
+    },
+    {
+        "n": 4,
+        "grupo": "hero",
+        "busqueda": "filing cabinet office archive documents",
+        "orientacion": "horizontal",
+        "original": "2960x2000",
+        "titulo": "File:Richard M. Nixon posing with his cabinet in the cabinet room in the white house. - NARA - 194353.jpg",
+        "autor": "Oliver F. Atkins",
+        "licencia": "Public domain",
+        "ficha": "https://commons.wikimedia.org/wiki/File:Richard_M._Nixon_posing_with_his_cabinet_in_the_cabinet_room_in_the_white_house._-_NARA_-_194353.jpg",
+        "archivo": "C:\\laragon\\www\\base-aracode\\storage\\tmp/candidatas-estudio/004.jpg",
+        "medidas": "1280x865",
+        "bytes": 428550
+    }
+]

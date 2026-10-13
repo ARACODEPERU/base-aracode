@@ -74,6 +74,18 @@ const genderLabel = computed(() => (props.form.gender === "F" ? "Femenino" : (pr
 
 const scheduleRows = computed(() => props.negotiation.schedule || []);
 
+// Documentos legales que el cliente acepto en el formulario: se listan para que los vea
+// otra vez antes de confirmar.
+const legalAccepted = computed(() => {
+    const documentos = [];
+
+    if (props.form.accepted_terminos) documentos.push("Terminos y condiciones");
+    if (props.form.accepted_devoluciones) documentos.push("Politica de devoluciones y Reembolsos - CPA Academy");
+    if (props.form.accepted_privacidad) documentos.push("Politica de Privacidad");
+
+    return documentos;
+});
+
 // Los datos del cliente son texto libre: se escapan antes de inyectarlos en el HTML.
 const escapeHtml = (value) => String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -146,6 +158,11 @@ const summaryHtml = () => {
         rows.push(summaryRow("Forma de pago", props.paymentEvidence ? "Declaro que ya pague (adjunto voucher)" : "Pago ahora con tarjeta"));
     }
 
+    if (legalAccepted.value.length) {
+        rows.push(summarySection("Documentos aceptados"));
+        rows.push(summaryRow("Aceptados", legalAccepted.value.join(" / ")));
+    }
+
     if (form.voucher?.name) {
         rows.push(summaryRow("Voucher adjunto", form.voucher.name));
     }
@@ -156,15 +173,17 @@ const summaryHtml = () => {
 /** Muestra el resumen y avisa si el cliente acepta o vuelve al formulario. */
 const show = () => {
     Swal2.fire({
-        title: "Revisa tus datos",
-        html: summaryHtml(),
+        // Ultima pregunta antes de guardar: el cliente confirma que esta seguro y de
+        // acuerdo con los datos que reviso, incluidos los documentos legales aceptados.
+        title: "¿Estas seguro y de acuerdo?",
+        html: `<p style="text-align:left;margin-bottom:10px;">Revisa tus datos. Al confirmar declaras que estas seguro y de acuerdo, y que aceptas los documentos legales marcados.</p>${summaryHtml()}`,
         icon: "question",
         width: 640,
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
-        confirmButtonText: "Si, mis datos son correctos",
-        cancelButtonText: "No, corregir datos",
+        confirmButtonText: "Si, estoy seguro y de acuerdo",
+        cancelButtonText: "No, revisar mis datos",
         reverseButtons: true,
         padding: "2em",
         customClass: "sweet-alerts",

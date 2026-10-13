@@ -55,13 +55,22 @@ Cada producto tiene dos páginas y cada una cubre una intención distinta:
 5. **Canónica propia** en cada ficha (`<link rel="canonical">` del layout, con
    `url()->current()`).
 6. **Datos estructurados**: cada ficha publica un `SoftwareApplication` en JSON-LD
-   con `author` y `publisher` = ARACODE y `mainEntityOfPage` = la ficha. Refuerza
-   la relación marca ↔ producto, que es justo lo que la ficha aporta.
+   con `name` tomado del mapa de productos, `author` y `publisher` = ARACODE y
+   `mainEntityOfPage` = la ficha. Refuerza la relación marca ↔ producto, que es
+   justo lo que la ficha aporta.
 7. **Sitemap**: las tres URLs siguen dentro de `public/sitemap.xml` con
    `changefreq` mensual. Se actualiza su `lastmod` cuando cambie el contenido.
 8. **La descarga vigente la publica el producto.** El botón de la app en
    `/pichanguero` manda a la página de descargas del sitio oficial, que es la que
    mantiene el APK al día y explica cómo instalarlo.
+9. **Una sola grafía por marca.** El nombre comercial de cada producto sale de
+   `config/productos.php` (`SitiosProducto::nombre()`): lo usan el título, el
+   JSON-LD y el cierre de la ficha. KIRAFACT se escribe así, en mayúsculas, como
+   lo publica el producto en su propio `<title>` y en `config/kirafact.php`
+   (`titulo_marca`); KAPTA LMS y Pichanguero, como están en el mapa. Dos grafías
+   del mismo producto (llegó a haber «KiraFact» en la home, `/soluciones`, el pie
+   y la ficha, frente a «KIRAFACT» en el sitio del producto) parten en dos la
+   entidad de marca que Google asocia a las páginas.
 
 ## El día que un producto pase a su propio dominio
 
@@ -77,7 +86,19 @@ Cada producto tiene dos páginas y cada una cubre una intención distinta:
    las mismas consultas de marca que el dominio del producto y Google elige la
    equivocada. Criterio de revisión: Search Console, 8-12 semanas después del
    lanzamiento.
-5. Si algún día se decide redirigir (mudanza de marca, retirada del producto),
+5. **Redirigir las URLs viejas del producto.** Mientras el producto vive bajo
+   `aracodeperu.com/site/kapta` se indexa en ese dominio: sus páginas son
+   canónicas de sí mismas (`url()->current()`, con `index, follow`) y Google las
+   conoce con esa URL. El día del dominio propio hay que añadir en
+   `routes/aracode.php` un 301 por cada URL publicada
+   (`Route::redirect('/site/kapta', 'https://kapta.pe', 301)` y una por página:
+   planes, descargas, contacto) y mantenerlo al menos un año, hasta que Google
+   reindexe. Sin ese paso quedan dos copias del producto, una en cada dominio.
+   La alternativa, si se prefiere que el producto no compita con su ficha
+   mientras sea una subpágina, es publicar `noindex` en `site/*`; entonces no hay
+   nada que redirigir, pero el producto tampoco aparece en Google hasta que viva
+   en su dominio.
+6. Si algún día se decide redirigir (mudanza de marca, retirada del producto),
    hacerlo sin cadenas:
    - Actualizar los 301 de entrada para que apunten al destino final
      (`/e-learning` y `/sitios-webs` al dominio del producto, no a `/kapta`).
@@ -90,9 +111,25 @@ Cada producto tiene dos páginas y cada una cubre una intención distinta:
 
 ## Verificación
 
+`tests/Unit/FichasProductoSeoTest.php` comprueba lo que promete esta decisión:
+las tres fichas responden 200, se declaran canónicas de sí mismas, publican un
+solo `SoftwareApplication` con `name` desde el mapa de productos, no contienen
+importes, su `<title>` nombra a ARACODE y enlazan al sitio oficial; y las URLs
+retiradas (`/e-learning`, `/sitios-webs`, `/facturador`, `/soluciones/kapta`,
+`/soluciones/facturacion`) siguen llegando con 301. Esa prueba crea solo las tres
+tablas del CMS que pide `WebPageController` y evita `RefreshDatabase` porque la
+suite Feature de este repositorio no arranca en sqlite: hay migraciones de otros
+módulos que solo funcionan en MySQL (`ALTER ... MODIFY`,
+`information_schema`) y abortan la creación del esquema.
+
+Comprobación manual, equivalente a la anterior y útil contra un servidor real:
+
 - `curl` a las tres fichas: 200, canónica propia, un único JSON-LD
-  `SoftwareApplication` válido, sin importes en el HTML y con el enlace al sitio
-  oficial.
+  `SoftwareApplication` válido (`name` desde el mapa de productos), sin importes
+  en el HTML y con el enlace al sitio oficial.
+- `curl -I` a `/e-learning`, `/sitios-webs`, `/facturador`,
+  `/soluciones/kapta` y `/soluciones/facturacion`: 301 y destino final, sin
+  cadenas.
 - La prueba de que no hay URLs escritas a mano en las vistas: cambiar la ruta en
   `config/productos.php`, limpiar la config y ver que cambian todos los enlaces
   (catálogo y fichas) a la vez.

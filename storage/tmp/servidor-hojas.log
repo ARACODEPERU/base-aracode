@@ -1,0 +1,91 @@
+[Mon Oct 12 12:06:57 2026] PHP 8.2.12 Development Server (http://127.0.0.1:8188) started
+[Mon Oct 12 12:06:58 2026] 127.0.0.1:57187 Accepted
+[Mon Oct 12 12:06:58 2026] 127.0.0.1:57187 [200]: GET /rejilla-portafolio-h.png
+[Mon Oct 12 12:06:58 2026] 127.0.0.1:57187 Closing
+[Mon Oct 12 12:07:27 2026] 127.0.0.1:52686 Accepted
+[Mon Oct 12 12:07:27 2026] 127.0.0.1:52686 [200]: GET /hoja-p-1.png
+[Mon Oct 12 12:07:27 2026] 127.0.0.1:52686 Closing
+[Mon Oct 12 12:07:27 2026] 127.0.0.1:52690 Accepted
+[Mon Oct 12 12:07:27 2026] 127.0.0.1:52690 [404]: GET /favicon.ico - No such file or directory
+[Mon Oct 12 12:07:27 2026] 127.0.0.1:52690 Closing
+[Mon Oct 12 12:07:42 2026] 127.0.0.1:52706 Accepted
+[Mon Oct 12 12:07:42 2026] 127.0.0.1:52706 [200]: GET /hoja-p-2.png
+[Mon Oct 12 12:07:42 2026] 127.0.0.1:52706 Closing
+[Mon Oct 12 12:07:59 2026] 127.0.0.1:64664 Accepted
+[Mon Oct 12 12:07:59 2026] 127.0.0.1:64664 [200]: GET /hoja-p-3.png
+[Mon Oct 12 12:07:59 2026] 127.0.0.1:64664 Closing
+[Mon Oct 12 12:08:19 2026] 127.0.0.1:64674 Accepted
+[Mon Oct 12 12:08:19 2026] 127.0.0.1:64674 [200]: GET /hoja-p-4.png
+[Mon Oct 12 12:08:19 2026] 127.0.0.1:64674 Closing
+[Mon Oct 12 12:08:43 2026] 127.0.0.1:52324 Accepted
+[Mon Oct 12 12:08:43 2026] 127.0.0.1:52324 [200]: GET /hoja-p-v.png
+[Mon Oct 12 12:08:43 2026] 127.0.0.1:52324 Closing
+[Mon Oct 12 12:11:13 2026] 127.0.0.1:63745 Accepted
+[Mon Oct 12 12:11:13 2026] 127.0.0.1:63745 [200]: GET /finalistas-1.png
+[Mon Oct 12 12:11:13 2026] 127.0.0.1:63745 Closing
+[Mon Oct 12 12:11:45 2026] 127.0.0.1:63753 Accepted
+[Mon Oct 12 12:11:45 2026] 127.0.0.1:63753 [200]: GET /finalistas-2.png
+[Mon Oct 12 12:11:45 2026] 127.0.0.1:63753 Closing
+[Mon Oct 12 12:15:12 2026] 127.0.0.1:49613 Accepted
+[Mon Oct 12 12:15:12 2026] 127.0.0.1:49613 [200]: GET /verificar-1.png
+[Mon Oct 12 12:15:12 2026] 127.0.0.1:49613 Closing
+[Mon Oct 12 12:17:16 2026] 127.0.0.1:62795 Accepted
+[Mon Oct 12 12:17:16 2026] 127.0.0.1:62795 [200]: GET /verificar-2.png
+[Mon Oct 12 12:17:16 2026] 127.0.0.1:62795 Closing
+[Mon Oct 12 12:37:32 2026] 127.0.0.1:54078 Accepted
+[Mon Oct 12 12:37:32 2026] 127.0.0.1:54078 [404]: GET /favicon.ico - No such file or directory
+[Mon Oct 12 12:37:32 2026] 127.0.0.1:54078 Closing
+[Mon Oct 12 12:37:33 2026] 127.0.0.1:54079 Accepted
+[Mon Oct 12 12:37:33 2026] 127.0.0.1:54079 [200]: GET /verificar-2.png
+[Mon Oct 12 12:37:33 2026] 127.0.0.1:54079 Closing
+[Mon Oct 12 12:43:00 2026] 127.0.0.1:49985 Accepted
+[Mon Oct 12 12:43:00 2026] 127.0.0.1:49985 [200]: GET /repaso/escritorio/pieza-1.png
+[Mon Oct 12 12:43:00 2026] 127.0.0.1:49985 Closing
+[Mon Oct 12 12:43:02 2026] 127.0.0.1:49988 Accepted
+[Mon Oct 12 12:43:02 2026] 127.0.0.1:49988 [404]: GET /favicon.ico - No such file or directory
+[Mon Oct 12 12:43:02 2026] 127.0.0.1:49988 Closing
+[Mon Oct 12 12:49:24 2026] 127.0.0.1:51815 Accepted
+[Mon Oct 12 12:49:24 2026] 127.0.0.1:51815 [200]: GET /repaso/esc/pieza-1.png
+[Mon Oct 12 12:49:24 2026] 127.0.0.1:51815 Closing
+[Mon Oct 12 12:49:26 2026] 127.0.0.1:51819 Accepted
+[Mon Oct 12 12:49:26 2026] 127.0.0.1:51819 [404]: GET /favicon.ico - No such file or directory
+[Mon Oct 12 12:49:26 2026] 127.0.0.1:51819 Closing
+[Mon Oct 12 12:50:26 2026] 127.0.0.1:51830 Accepted
+[Mon Oct 12 12:50:26 2026] 127.0.0.1:51830 [200]: GET /repaso/esc/pieza-2.png
+[Mon Oct 12 12:50:26 2026] 127.0.0.1:51830 Closing
+[Mon Oct 12 12:51:27 2026] 127.0.0.1:63915 Accepted
+[Mon Oct 12 12:51:27 2026] 127.0.0.1:63915 [200]: GET /repaso/esc/pieza-3.png
+[Mon Oct 12 12:51:27 2026] 127.0.0.1:63915 Closing
+[Mon Oct 12 12:52:24 2026] 127.0.0.1:63928 Accepted
+[Mon Oct 12 12:52:24 2026] 127.0.0.1:63928 [200]: GET /repaso/esc/pieza-4.png
+[Mon Oct 12 12:52:24 2026] 127.0.0.1:63928 Closing
+[Mon Oct 12 12:53:21 2026] 127.0.0.1:63949 Accepted
+[Mon Oct 12 12:53:21 2026] 127.0.0.1:63949 [200]: GET /repaso/esc/pieza-5.png
+[Mon Oct 12 12:53:21 2026] 127.0.0.1:63949 Closing
+[Mon Oct 12 12:54:17 2026] 127.0.0.1:58447 Accepted
+[Mon Oct 12 12:54:17 2026] 127.0.0.1:58447 [200]: GET /repaso/esc/pieza-7.png
+[Mon Oct 12 12:54:17 2026] 127.0.0.1:58447 Closing
+[Mon Oct 12 12:57:20 2026] 127.0.0.1:55195 Accepted
+[Mon Oct 12 12:57:20 2026] 127.0.0.1:55195 [200]: GET /repaso/mov/pieza-1.png
+[Mon Oct 12 12:57:20 2026] 127.0.0.1:55195 Closing
+[Mon Oct 12 13:05:10 2026] 127.0.0.1:62038 Accepted
+[Mon Oct 12 13:05:10 2026] 127.0.0.1:62038 [200]: GET /repaso/pup-1440-indice-hover.png
+[Mon Oct 12 13:05:10 2026] 127.0.0.1:62038 Closing
+[Mon Oct 12 13:08:15 2026] 127.0.0.1:51443 Accepted
+[Mon Oct 12 13:08:15 2026] 127.0.0.1:51443 [200]: GET /repaso/hover-vista.png
+[Mon Oct 12 13:08:15 2026] 127.0.0.1:51443 Closing
+[Mon Oct 12 13:09:55 2026] 127.0.0.1:65274 Accepted
+[Mon Oct 12 13:09:55 2026] 127.0.0.1:65274 [200]: GET /repaso/vista-oscuro-visita.png
+[Mon Oct 12 13:09:55 2026] 127.0.0.1:65274 Closing
+[Mon Oct 12 13:11:41 2026] 127.0.0.1:63197 Accepted
+[Mon Oct 12 13:11:41 2026] 127.0.0.1:63197 [200]: GET /repaso/zoom-plano-oscuro.png
+[Mon Oct 12 13:11:41 2026] 127.0.0.1:63197 Closing
+[Mon Oct 12 13:14:32 2026] 127.0.0.1:51208 Accepted
+[Mon Oct 12 13:14:32 2026] 127.0.0.1:51208 [200]: GET /repaso/zoom-plano-oscuro.png
+[Mon Oct 12 13:14:32 2026] 127.0.0.1:51208 Closing
+[Mon Oct 12 13:19:49 2026] 127.0.0.1:56926 Accepted
+[Mon Oct 12 13:19:49 2026] 127.0.0.1:56926 [200]: GET /repaso/zoom-plano-oscuro.png
+[Mon Oct 12 13:19:49 2026] 127.0.0.1:56926 Closing
+[Mon Oct 12 13:19:50 2026] 127.0.0.1:56934 Accepted
+[Mon Oct 12 13:19:50 2026] 127.0.0.1:56934 [404]: GET /favicon.ico - No such file or directory
+[Mon Oct 12 13:19:50 2026] 127.0.0.1:56934 Closing

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada, por dos razones: al recargar en oscuro
+    no se ve el destello claro y las cosas que no funcionan sin JavaScript (el
+    interruptor y los controles del slider) quedan ocultas hasta que haya JS.
+
+    La elección se guarda bajo 'academia-cursos-tema', así que viaja entre las
+    cuatro páginas del sitio. Sin nada guardado se arranca en claro, aunque el
+    sistema del visitante esté en oscuro: el modo oscuro solo se pone si lo pide.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('academia-cursos-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Catálogo de cursos de la plantilla «Academia de Cursos».
+
+    Los ocho cursos están en el HTML, uno por tarjeta, con sus datos en atributos
+    (área, modalidad, precio, horas). El filtro de js/app.js solo los muestra u
+    oculta: sin JavaScript la página sigue siendo un listado completo y legible,
+    que es como debe caer un buscador, y el aviso de <noscript> lo dice.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Catálogo de cursos de la academia: tecnología, gestión, idiomas y diseño, con precios, duración, modalidad y fechas de inicio.">
+
+<title>Catálogo de cursos — Academia Horizonte</title>
+
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Oficina: lunes a viernes de 8:00 a 21:00 · sábados de 8:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 001
+            </a>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="index.html" aria-label="Academia Horizonte, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Academia</strong>
+                <span>Horizonte</span>
+            </span>
+        </a>
+
+        <!-- A la derecha de la marca: el menú, el interruptor de tema y el
+             botón que despliega el menú en móvil. -->
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="cursos.html" aria-current="page">Cursos</a></li>
+                    <li><a href="matricula.html#visitanos">Visítanos</a></li>
+                    <li><a href="matricula.html" class="menu__matricula">Matricularme</a></li>
+                </ul>
+            </nav>
+
+            <!--
+                Interruptor de tema claro / oscuro.
+
+                Cambia el atributo data-tema del <html> y recuerda la elección;
+                los colores los pone el CSS y el icono que se ve es el del modo
+                al que se va (luna en claro, sol en oscuro). El texto del botón
+                lo deja en consonancia el script del sitio, para quien lo use con
+                lector de pantalla. Sin JavaScript no se muestra.
+            -->
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== ENCABEZADO ===================== -->
+
+    <section class="encabezado">
+        <div class="contenedor">
+            <nav aria-label="Ruta de navegación">
+                <ol class="migajas">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li aria-current="page">Cursos</li>
+                </ol>
+            </nav>
+
+            <h1>Cursos, precios y fechas de inicio</h1>
+            <p class="encabezado__lead">
+                Ocho cursos abiertos este ciclo. Filtra por área o modalidad y mira el que más
+                te sirva: cada uno indica duración, horas, nivel y cuánto cuesta.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== FILTROS Y CATÁLOGO ===================== -->
+
+    <section class="seccion seccion--compacta">
+        <div class="contenedor">
+            <div class="filtros">
+                <div class="filtros__campo">
+                    <label for="filtro-texto">Buscar un curso</label>
+                    <input type="search" id="filtro-texto" placeholder="Excel, inglés, web…" autocomplete="off">
+                </div>
+
+                <div class="filtros__campo">
+                    <label for="filtro-area">Área</label>
+                    <select id="filtro-area">
+                        <option value="">Todas las áreas</option>
+                        <option value="tecnologia">Tecnología</option>
+                        <option value="gestion">Gestión</option>
+                        <option value="idiomas">Idiomas</option>
+                        <option value="diseno">Diseño</option>
+                    </select>
+                </div>
+
+                <div class="filtros__campo">
+                    <label for="filtro-modalidad">Modalidad</label>
+                    <select id="filtro-modalidad">
+                        <option value="">Todas las modalidades</option>
+                        <option value="presencial">Presencial</option>
+                        <option value="online">Online en vivo</option>
+                        <option value="hibrido">Semipresencial</option>
+                    </select>
+                </div>
+            </div>
+
+            <p class="filtros__resumen" id="filtro-resumen" aria-live="polite">8 cursos encontrados</p>
+
+            <noscript>
+                <p class="filtros__resumen">
+                    Los filtros de arriba necesitan JavaScript para funcionar. Abajo están los
+                    ocho cursos completos, con su precio y su horario.
+                </p>
+            </noscript>
+
+            <ul class="cursos" id="lista-cursos">
+                <li class="curso revelar" data-slug="desarrollo-web" data-area="tecnologia" data-modalidad="hibrido" data-precio="1200" data-horas="288">
+                    <p class="curso__cabecera">Tecnología <span class="curso__nivel">Intermedio</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo"><a href="curso-desarrollo-web.html">Desarrollo Web Full Stack</a></h2>
+                        <p class="curso__resumen">
+                            HTML, CSS, JavaScript, PHP y base de datos. Terminas con una aplicación
+                            propia en línea y tres proyectos para mostrar.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                24 semanas · 288 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial y online en vivo
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia lunes 2 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 1.200 <small>o 2 cuotas de S/ 600</small></span>
+                            <a class="boton boton--indigo boton--chico" href="curso-desarrollo-web.html">Ver temario</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="excel-empresas" data-area="gestion" data-modalidad="presencial" data-precio="320" data-horas="32">
+                    <p class="curso__cabecera">Gestión <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Excel para empresas</h2>
+                        <p class="curso__resumen">
+                            Desde las tablas y fórmulas básicas hasta tablas dinámicas y un reporte
+                            de gestión con datos reales de tu trabajo.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                8 semanas · 32 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial, martes y jueves
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia martes 3 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 320 <small>pago único</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20Excel%20para%20empresas" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="contabilidad" data-area="gestion" data-modalidad="presencial" data-precio="420" data-horas="40">
+                    <p class="curso__cabecera">Gestión <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Contabilidad para no contadores</h2>
+                        <p class="curso__resumen">
+                            Para dueños y administradores: entender los libros, los impuestos
+                            mensuales y cómo leer el estado de resultados sin marearse.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                10 semanas · 40 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial, lunes y miércoles
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia lunes 2 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 420 <small>o 2 cuotas de S/ 210</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20Contabilidad" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="ingles" data-area="idiomas" data-modalidad="presencial" data-precio="480" data-horas="80">
+                    <p class="curso__cabecera">Idiomas <span class="curso__nivel">A2 — B1</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Inglés conversacional</h2>
+                        <p class="curso__resumen">
+                            Cinco meses hablando desde la primera clase. Enfoque en conversación
+                            para el trabajo y la atención al cliente.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                20 semanas · 80 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial, turno noche
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia miércoles 4 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 480 <small>o 5 cuotas de S/ 96</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20Ingl%C3%A9s" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="diseno-grafico" data-area="diseno" data-modalidad="online" data-precio="560" data-horas="48">
+                    <p class="curso__cabecera">Diseño <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Diseño gráfico digital</h2>
+                        <p class="curso__resumen">
+                            Composición, color y tipografía con herramientas gratuitas, más las
+                            piezas que un negocio necesita: logo, tarjeta y publicaciones.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                12 semanas · 48 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Online en vivo, sábados
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia sábado 7 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 560 <small>o 2 cuotas de S/ 280</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20de%20Dise%C3%B1o%20gr%C3%A1fico" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="marketing-digital" data-area="gestion" data-modalidad="online" data-precio="380" data-horas="24">
+                    <p class="curso__cabecera">Gestión <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Marketing digital para negocios</h2>
+                        <p class="curso__resumen">
+                            Plan de contenido, pauta en redes y medición de resultados para vender
+                            más con el presupuesto que ya tienes.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                6 semanas · 24 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Online en vivo, lunes y miércoles
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia lunes 2 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 380 <small>pago único</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20Marketing%20digital" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="soporte-tecnico" data-area="tecnologia" data-modalidad="presencial" data-precio="460" data-horas="32">
+                    <p class="curso__cabecera">Tecnología <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Reparación de computadoras</h2>
+                        <p class="curso__resumen">
+                            Diagnóstico, mantenimiento, cambio de piezas y sistema operativo.
+                            Se practica con equipos reales del taller.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                8 semanas · 32 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial, sábados por la mañana
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia sábado 7 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 460 <small>o 2 cuotas de S/ 230</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20de%20Reparaci%C3%B3n%20de%20computadoras" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="curso revelar" data-slug="dibujo-tecnico" data-area="diseno" data-modalidad="presencial" data-precio="520" data-horas="40">
+                    <p class="curso__cabecera">Diseño <span class="curso__nivel">Básico</span></p>
+                    <div class="curso__cuerpo">
+                        <h2 class="curso__titulo">Dibujo técnico y AutoCAD básico</h2>
+                        <p class="curso__resumen">
+                            Planos, vistas y acotado. Sales dibujando un proyecto pequeño completo,
+                            listo para imprimir.
+                        </p>
+                        <ul class="curso__datos">
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                                10 semanas · 40 horas
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16v12H4zM2 20h20"/></svg>
+                                Presencial, martes y jueves
+                            </li>
+                            <li>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 4v3M17 4v3M4 10h16M4 6h16v14H4z"/></svg>
+                                Inicia martes 3 de noviembre
+                            </li>
+                        </ul>
+                        <div class="curso__pie">
+                            <span class="curso__precio">S/ 520 <small>o 2 cuotas de S/ 260</small></span>
+                            <a class="boton boton--borde boton--chico" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20del%20curso%20de%20Dibujo%20t%C3%A9cnico" target="_blank" rel="noopener">Pedir informes</a>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Vacío: el JS lo muestra cuando ningún curso coincide. -->
+                <li class="cursos__vacio" id="cursos-vacio" hidden>
+                    <h2>Ningún curso coincide con esa búsqueda</h2>
+                    <p>
+                        Prueba con otra palabra o amplía el área. Si buscas algo que no damos,
+                        escríbenos y lo evaluamos para el próximo ciclo.
+                    </p>
+                    <p>
+                        <a class="boton boton--indigo" href="https://wa.me/51900000000?text=Hola%2C%20busco%20un%20curso%20que%20no%20est%C3%A1%20en%20el%20cat%C3%A1logo" target="_blank" rel="noopener">Proponer un curso</a>
+                        <a class="boton boton--borde" href="matricula.html">Ir a matrícula</a>
+                    </p>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== AYUDA PARA ELEGIR ===================== -->
+
+    <section class="seccion seccion--hielo">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Antes de matricularte</p>
+                <h2>Tres cosas que conviene saber</h2>
+            </header>
+
+            <ul class="rejilla-3">
+                <li class="tarjeta revelar">
+                    <h3>Los horarios son fijos</h3>
+                    <p>Cada curso tiene su día y su turno. Si dos te interesan y chocan, el plan mensual permite combinarlos dentro del área.</p>
+                </li>
+                <li class="tarjeta revelar">
+                    <h3>El nivel importa</h3>
+                    <p>Los cursos básicos no piden nada previo. Para los intermedios hacemos una conversación corta antes de matricularte.</p>
+                </li>
+                <li class="tarjeta revelar">
+                    <h3>Los cupos son quince</h3>
+                    <p>La matrícula se cierra cuando se llena el aula, no cuando llega la fecha de inicio.</p>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>¿No sabes cuál te conviene?</h2>
+                <p>Cuéntanos en qué trabajas o qué quieres lograr y te decimos por qué curso empezar. No te vamos a vender el más caro.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20necesito%20que%20me%20recomienden%20un%20curso" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    Pedir una recomendación
+                </a>
+                <a class="boton boton--borde" href="matricula.html">Ir a matrícula</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="index.html">
+                <span class="marca__icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 8.5 12 13l9.5-4.5L12 4Z"/><path d="M6 10.7V16c0 1.6 2.7 3 6 3s6-1.4 6-3v-5.3"/><path d="M21.5 8.5v5"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Academia</strong>
+                    <span>Horizonte</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Cursos cortos con certificado en Nuevo Chimbote. Grupos de quince alumnos,
+                clases presenciales u online y horarios para quienes trabajan.
+            </p>
+
+            <ul class="redes" aria-label="Redes sociales de la academia">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la academia">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.youtube.com/" target="_blank" rel="noopener" aria-label="Canal de YouTube de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2c-.2-1.4-.8-2.2-2.3-2.4C17.6 5.5 14.4 5.4 12 5.4s-5.6.1-7.3.4C3.2 6 2.6 6.8 2.4 8.2 2.2 9.3 2.2 10.7 2.2 12s0 2.7.2 3.8c.2 1.4.8 2.2 2.3 2.4 1.7.3 4.9.4 7.3.4s5.6-.1 7.3-.4c1.5-.2 2.1-1 2.3-2.4.2-1.1.2-2.5.2-3.8s0-2.7-.2-3.8ZM10.2 15V9l5.2 3-5.2 3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la academia">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Cursos">
+            <h3>Cursos</h3>
+            <ul>
+                <li><a href="cursos.html?area=tecnologia">Tecnología</a></li>
+                <li><a href="cursos.html?area=gestion">Gestión</a></li>
+                <li><a href="cursos.html?area=idiomas">Idiomas</a></li>
+                <li><a href="cursos.html?area=diseno">Diseño</a></li>
+                <li><a href="cursos.html">Todos los cursos</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="La academia">
+            <h3>La academia</h3>
+            <ul>
+                <li><a href="index.html#metodologia">Cómo enseñamos</a></li>
+                <li><a href="index.html#certificacion">Certificación</a></li>
+                <li><a href="index.html#docentes">Docentes</a></li>
+                <li><a href="index.html#opiniones">Opiniones</a></li>
+                <li><a href="index.html#preguntas">Preguntas frecuentes</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul>
+                <li>Av. Bolognesi 1234, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 001</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:informes@academiahorizonte.demo">informes@academiahorizonte.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Academia Horizonte. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios, docentes y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20informes%20de%20un%20curso" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

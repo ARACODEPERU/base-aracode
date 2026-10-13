@@ -37,6 +37,7 @@ use Modules\Academic\Entities\AcaStudentExam;
 use Modules\Academic\Entities\AcaStudentHistory;
 use Modules\Academic\Entities\AcaSubscriptionPayment;
 use Modules\Academic\Entities\AcaStudentAttendance;
+use Modules\Academic\Jobs\SendProfileWebhook;
 use Modules\Academic\Entities\AcaStudentParticipation;
 use Modules\Academic\Entities\AcaStudentGrade;
 use Modules\Onlineshop\Entities\OnliItem;
@@ -1198,6 +1199,16 @@ class AcaStudentController extends Controller
                     'new_student' => false
                 ]
             );
+
+            // Suscripcion gratis: cuenta como compra terminada y se envia a n8n el mismo
+            // payload con los cursos en 'cursos'. Solo sale si la persona ya tenia su
+            // cuenta con el perfil completado; si es la primera vez, el aviso sale al
+            // terminar su perfil obligatorio.
+            SendProfileWebhook::dispatchCompraOnce(
+                'compra:suscripcion:'.$per->id.':'.($type ?? ''),
+                (int) $per->id
+            );
+
             return to_route('dashboard');
         } else {
             return to_route('profile.edit');

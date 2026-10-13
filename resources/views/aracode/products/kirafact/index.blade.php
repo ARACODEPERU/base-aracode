@@ -1,7 +1,7 @@
 @extends('aracode.layouts.webpage')
 
-@section('meta_title', 'KiraFact | Facturación electrónica desarrollada por ARACODE')
-@section('meta_description', 'KiraFact es el sistema de facturación electrónica y gestión comercial de ARACODE Smart Solutions. Conoce qué resuelve en tu empresa y coordina una asesoría.')
+@section('meta_title', 'KIRAFACT | Facturación electrónica desarrollada por ARACODE')
+@section('meta_description', 'KIRAFACT es el sistema de facturación electrónica y gestión comercial de ARACODE Smart Solutions. Conoce qué resuelve en tu empresa y coordina una asesoría.')
 
 @php
     /*
@@ -12,11 +12,12 @@
         coordina una asesoría). El detalle funcional y las condiciones vigentes
         los publica el sitio del producto, que es su web oficial.
 
-        Los enlaces al sitio oficial no se escriben aquí: salen de
-        config/productos.php, el único archivo que se edita el día que KIRAFACT
-        pase a su propio dominio. Procedimiento completo en
+        El nombre comercial y los enlaces al sitio oficial no se escriben aquí:
+        salen de config/productos.php, el único archivo que se edita el día que
+        KIRAFACT pase a su propio dominio. Procedimiento completo en
         docs/SEO_ECOSISTEMA_PRODUCTOS.md.
     */
+    $nombreKirafact = \App\Support\SitiosProducto::nombre('kirafact');
     $sitioKirafact = \App\Support\SitiosProducto::url('kirafact');
     $planesKirafact = \App\Support\SitiosProducto::planes('kirafact');
 @endphp
@@ -27,7 +28,7 @@
 {
     "@@context": "https://schema.org",
     "@@type": "SoftwareApplication",
-    "name": "KiraFact",
+    "name": "{{ $nombreKirafact }}",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "inLanguage": "es-PE",
@@ -59,10 +60,10 @@
                 <div>
                     <span class="ara-badge ara-badge-blue mb-6 inline-block reveal">Producto de ARACODE</span>
                     <h1 class="text-4xl sm:text-5xl font-bold text-white mb-6 reveal reveal-delay-1">
-                        Kira<span class="text-gradient">Fact</span>
+                        KIRA<span class="text-gradient">FACT</span>
                     </h1>
                     <p class="text-lg text-white/70 mb-8 reveal reveal-delay-2">
-                        KiraFact es el sistema de facturación electrónica y gestión comercial que ARACODE Smart Solutions desarrolla para las empresas del Perú: ventas, inventario y comprobantes electrónicos con cumplimiento ante SUNAT.
+                        KIRAFACT es el sistema de facturación electrónica y gestión comercial que ARACODE Smart Solutions desarrolla para las empresas del Perú: ventas, inventario y comprobantes electrónicos con cumplimiento ante SUNAT.
                     </p>
                     <div class="flex flex-col sm:flex-row gap-4 reveal reveal-delay-3">
                         <a href="{{ route('contacto') }}" class="ara-btn ara-btn-primary ara-btn-lg">
@@ -80,7 +81,7 @@
                     </div>
                 </div>
                 <div class="hidden lg:block reveal reveal-delay-4">
-                    <img src="{{ asset('themes/webpage/images/misc/s2.jpg') }}" alt="KiraFact" class="rounded-2xl shadow-2xl w-full" loading="lazy">
+                    <img src="{{ asset('themes/webpage/images/misc/s2.jpg') }}" alt="KIRAFACT" class="rounded-2xl shadow-2xl w-full" loading="lazy">
                 </div>
             </div>
         </div>
@@ -149,7 +150,7 @@
         Antes aquí vivían tres tarjetas de planes con importes (S/ 35, S/ 50 y
         S/ 80) que config/kirafact.php declara como TARIFAS DE REFERENCIA, SIN
         PUBLICAR: la ficha corporativa publicaba precios que el propio producto
-        todavía no confirma. Ahora KiraFact no publica importes en ninguna de sus
+        todavía no confirma. Ahora KIRAFACT no publica importes en ninguna de sus
         dos páginas: las condiciones se confirman con el equipo comercial, y para
         eso enlaza al sitio oficial.
     --}}
@@ -161,7 +162,7 @@
     />
 
     <x-v2.cta-section 
-        title="¿Quieres probar KiraFact?"
+        title="¿Quieres probar KIRAFACT?"
         subtitle="Contáctanos hoy y comienza a emitir comprobantes electrónicos en cumplimiento con SUNAT."
         buttonText="Solicitar Asesoría"
     />

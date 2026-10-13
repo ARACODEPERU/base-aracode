@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es" class="no-js" data-tema="claro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+    Tema claro / oscuro.
+
+    Se aplica aquí, antes de pintar nada, por dos razones: al recargar en oscuro
+    no se ve el destello claro y las cosas que no funcionan sin JavaScript (el
+    interruptor y los controles del slider) quedan ocultas hasta que haya JS.
+
+    Sin nada guardado la plantilla arranca en claro, aunque el sistema del
+    visitante esté en oscuro: el modo oscuro solo se pone si lo pide.
+-->
+<script>
+    (function () {
+        var raiz = document.documentElement;
+
+        raiz.classList.remove('no-js');
+        raiz.classList.add('js');
+
+        try {
+            if (localStorage.getItem('clinica-dental-tema') === 'oscuro') {
+                raiz.setAttribute('data-tema', 'oscuro');
+            }
+        } catch (error) {
+            /* Almacenamiento bloqueado (navegación privada): se queda en claro. */
+        }
+    })();
+</script>
+
+<!--
+    Demostración de la plantilla «Clínica Dental» del Banco de Plantillas Web
+    de ARACODE.
+
+    Es un proyecto web independiente: no comparte CSS, JavaScript, componentes ni
+    estructura con el sitio corporativo ni con el catálogo. Sus archivos viven
+    todos en esta carpeta (css/, js/, img/) y las rutas son relativas, así que la
+    carpeta se puede copiar a cualquier servidor o a su propio subdominio sin
+    cambiar una línea.
+
+    Esta demo es la PLANTILLA DE REFERENCIA del banco: lo que trae aquí es lo que
+    debe traer toda plantilla nueva (fotografía real, WhatsApp y ubicación,
+    prueba social, precios y redes sociales). La lista obligatoria está en
+    docs/BANCO_PLANTILLAS.md.
+
+    noindex: la página que se indexa es la ficha de la plantilla en el catálogo;
+    la demo existe para verla funcionando.
+
+    Los datos (dirección, teléfonos, precios, nombre) son inventados y están
+    marcados en el HTML para que se reemplacen en un solo paso.
+-->
+<meta name="robots" content="noindex, follow">
+<meta name="description" content="Demostración de la plantilla Clínica Dental: tratamientos con precios de referencia, cómo se trabaja, opiniones de pacientes, ubicación y reserva de cita.">
+
+<title>Clínica Dental Sonrisa — Demostración de plantilla</title>
+
+<link rel="preload" as="image" href="img/portada.webp">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦷</text></svg>">
+</head>
+<body>
+
+<a class="salto-contenido" href="#contenido">Saltar al contenido</a>
+
+<!--
+    DATOS DE LA DEMO: dirección, teléfonos, correo y redes se repiten en la barra
+    superior, el pie y las secciones. En un sitio real salen de la ficha del
+    negocio, no del HTML.
+-->
+<div class="barra">
+    <div class="contenedor barra__interior">
+        <p class="barra__dato">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+            Lunes a viernes de 9:00 a 20:00 · sábados de 9:00 a 14:00
+        </p>
+
+        <div class="barra__derecha">
+            <a class="barra__tel" href="tel:+51900000000">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                (043) 000 000
+            </a>
+
+            <!-- Redes sociales: en la demo apuntan a la plataforma; en el sitio
+                 real van a los perfiles del negocio (ver checklist). -->
+            <ul class="redes" aria-label="Redes sociales de la clínica">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la clínica">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la clínica">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la clínica">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la clínica">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<header class="cabecera" id="cabecera">
+    <div class="contenedor cabecera__interior">
+        <a class="marca" href="#inicio" aria-label="Clínica Dental Sonrisa, inicio">
+            <span class="marca__icono" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5.5C10.6 4.3 9 3.7 7.6 4.1 5.6 4.7 4.4 6.6 4.6 8.9c.1 1.6.6 3 .9 4.5.3 1.6.4 3.4.8 5 .3 1.2 1 2 1.9 2 1 0 1.5-.9 1.8-2.2.3-1.3.5-2.6 1.4-2.6s1.1 1.3 1.4 2.6c.3 1.3.8 2.2 1.8 2.2.9 0 1.6-.8 1.9-2 .4-1.6.5-3.4.8-5 .3-1.5.8-2.9.9-4.5.2-2.3-1-4.2-3-4.8-1.4-.4-3 .2-4.4 1.4Z"/>
+                </svg>
+            </span>
+            <span class="marca__texto">
+                <strong>Clínica Dental</strong>
+                <span>Sonrisa</span>
+            </span>
+        </a>
+
+        <!-- A la derecha de la marca: el menú, el interruptor de tema y el
+             botón que despliega el menú en móvil. -->
+        <div class="cabecera__acciones">
+            <nav class="menu" id="menu-principal" aria-label="Principal">
+                <ul>
+                    <li><a href="#tratamientos">Tratamientos</a></li>
+                    <li><a href="#clinica">La clínica</a></li>
+                    <li><a href="#opiniones">Opiniones</a></li>
+                    <li><a href="#precios">Precios</a></li>
+                    <li><a href="#visitanos">Visítanos</a></li>
+                    <li><a href="#cita" class="menu__cita">Reservar cita</a></li>
+                </ul>
+            </nav>
+
+            <!--
+                Interruptor de tema claro / oscuro.
+
+                Cambia el atributo data-tema del <html> y recuerda la elección;
+                los colores los pone el CSS y el icono que se ve es el del modo
+                al que se va (luna en claro, sol en oscuro). El texto del botón
+                lo deja en consonancia el script del sitio, para quien lo use con
+                lector de pantalla. Sin JavaScript no se muestra.
+            -->
+            <button class="tema-switch" type="button" data-tema-switch aria-pressed="false"
+                    aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                <span class="tema-switch__icono tema-switch__icono--luna" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.7A8.6 8.6 0 0 1 9.3 3.5a8.6 8.6 0 1 0 11.2 11.2z"/></svg>
+                </span>
+                <span class="tema-switch__icono tema-switch__icono--sol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+                </span>
+            </button>
+
+            <button class="menu-boton" type="button" aria-expanded="false" aria-controls="menu-principal" id="menu-boton">
+                <span class="sr-solo">Abrir menú</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main id="contenido">
+
+    <!-- ===================== PORTADA ===================== -->
+
+    <!-- Hero a pantalla completa con slider de fondo: las tres fotos reales del
+         consultorio se turnan solas y también con las flechas, los puntos, el
+         teclado o el dedo. Sin JavaScript se ve la primera y el texto se lee
+         completo: ninguna información vive solo en la foto. -->
+    <section class="portada" id="inicio" data-carrusel>
+        <div class="portada__fondo">
+            <ul class="portada__pista">
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/portada.webp" width="1024" height="686" fetchpriority="high" decoding="async"
+                         alt="Consultorio dental con el sillón, la lámpara y los muebles de instrumental">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/consulta.webp" width="1024" height="683" loading="lazy" decoding="async"
+                         alt="Odontóloga en consulta revisando el tratamiento de una paciente con instrumental en la mano">
+                </li>
+                <li class="portada__diapositiva" data-diapositiva>
+                    <img src="img/diagnostico.webp" width="1024" height="680" loading="lazy" decoding="async"
+                         alt="Odontólogos revisando una radiografía para explicar el tratamiento a una paciente">
+                </li>
+            </ul>
+
+            <!-- Velo: sin él, un texto blanco sobre una foto clara no se lee. -->
+            <span class="portada__velo" aria-hidden="true"></span>
+        </div>
+
+        <div class="contenedor portada__contenido">
+            <div class="portada__texto revelar">
+                <p class="sello sello--oscuro">Odontología familiar en Nuevo Chimbote</p>
+
+                <h1>Tu sonrisa, en manos que explican cada paso</h1>
+
+                <p class="portada__lead">
+                    Odontología general, ortodoncia y estética dental con presupuesto por escrito
+                    antes de empezar. Atendemos niños y adultos, de lunes a sábado.
+                </p>
+
+                <div class="portada__acciones">
+                    <a class="boton boton--principal" href="#cita">
+                        Reservar cita
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </a>
+                    <a class="boton boton--borde-claro" href="#tratamientos">Ver tratamientos y precios</a>
+                </div>
+
+                <ul class="portada__garantias">
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Presupuesto por escrito antes de empezar
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Podés pagar en cuotas sin interés
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Historias clínicas digitales
+                    </li>
+                </ul>
+            </div>
+
+            <!-- El horario va en una tarjeta de cristal sobre la foto: es el dato
+                 que más se pregunta por WhatsApp. -->
+            <div class="portada__horario revelar">
+                <span class="portada__horario-titulo">Horario de hoy</span>
+                <strong>9:00 — 20:00</strong>
+                <span>Atención continua</span>
+            </div>
+        </div>
+
+        <!-- Controles del slider en una sola pastilla: en escritorio flota abajo
+             al centro y en móvil baja debajo del texto, sin taparlo. -->
+        <div class="portada__controles">
+            <button class="carrusel__flecha" type="button" data-carrusel-anterior aria-label="Foto anterior">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <div class="carrusel__puntos" role="group" aria-label="Elegir foto de la clínica">
+                <button class="carrusel__punto" type="button" data-carrusel-punto="0" aria-label="Ver la primera foto" aria-current="true"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="1" aria-label="Ver la segunda foto"></button>
+                <button class="carrusel__punto" type="button" data-carrusel-punto="2" aria-label="Ver la tercera foto"></button>
+            </div>
+            <button class="carrusel__flecha" type="button" data-carrusel-siguiente aria-label="Foto siguiente">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- Cifras de confianza: en su propia banda, para que el hero quede a
+         pantalla completa sin números encima de la foto. -->
+    <div class="banda-cifras">
+        <div class="contenedor">
+            <dl class="cifras">
+                <div>
+                    <dt>Pacientes atendidos</dt>
+                    <dd><span data-contador="3400" data-prefijo="+">+0</span></dd>
+                </div>
+                <div>
+                    <dt>Años en el barrio</dt>
+                    <dd><span data-contador="11">0</span></dd>
+                </div>
+                <div>
+                    <dt>Especialidades</dt>
+                    <dd><span data-contador="6">0</span></dd>
+                </div>
+                <div>
+                    <dt>Valoración de pacientes</dt>
+                    <dd><span data-contador="48" data-divisor="10">0</span><span class="cifras__de">/5</span></dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- ===================== TRATAMIENTOS ===================== -->
+
+    <section class="seccion" id="tratamientos">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Tratamientos</p>
+                <h2>Lo que resolvemos en consultorio</h2>
+                <p>Seis servicios con precio de referencia para que sepas en qué te metes antes de la primera cita.</p>
+            </header>
+
+            <ul class="tarjetas">
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5C10.6 4.3 9 3.7 7.6 4.1 5.6 4.7 4.4 6.6 4.6 8.9c.1 1.6.6 3 .9 4.5.3 1.6.4 3.4.8 5 .3 1.2 1 2 1.9 2 1 0 1.5-.9 1.8-2.2.3-1.3.5-2.6 1.4-2.6s1.1 1.3 1.4 2.6c.3 1.3.8 2.2 1.8 2.2.9 0 1.6-.8 1.9-2 .4-1.6.5-3.4.8-5 .3-1.5.8-2.9.9-4.5.2-2.3-1-4.2-3-4.8-1.4-.4-3 .2-4.4 1.4Z"/></svg>
+                    </span>
+                    <h3>Odontología general</h3>
+                    <p>Revisión, limpieza, curaciones y control cada seis meses.</p>
+                    <p class="tarjeta__precio">Consulta desde <strong>S/ 50</strong></p>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M8 9v10m8-10v10M3.5 5.5h17"/><circle cx="12" cy="5.5" r="2.6"/></svg>
+                    </span>
+                    <h3>Ortodoncia</h3>
+                    <p>Brackets metálicos y estéticos, con controles cada tres semanas.</p>
+                    <p class="tarjeta__precio">Desde <strong>S/ 180</strong> al mes</p>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M4.2 7.2l2.1 2.1m11.4 11.4 2.1 2.1M3 12h3m12 0h3M4.2 16.8l2.1-2.1M17.7 6.3l2.1-2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
+                    </span>
+                    <h3>Estética dental</h3>
+                    <p>Blanqueamiento en consultorio y carillas de porcelana.</p>
+                    <p class="tarjeta__precio">Blanqueamiento <strong>S/ 350</strong></p>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-6m0 0-3.5-3M12 15l3.5-3M6 3h12l-1.5 5h-9L6 3Z"/></svg>
+                    </span>
+                    <h3>Implantes</h3>
+                    <p>Reposición de piezas con corona de porcelana y control de integración.</p>
+                    <p class="tarjeta__precio">Desde <strong>S/ 1.500</strong></p>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.5c1.6 0 2.8 1.2 2.8 2.8S17.6 11 16 11"/><path d="M17 15.4c2 .5 3.5 2.2 3.5 4.6"/></svg>
+                    </span>
+                    <h3>Odontopediatría</h3>
+                    <p>Primera visita sin miedo, sellantes y control de crecimiento.</p>
+                    <p class="tarjeta__precio">Consulta <strong>S/ 50</strong></p>
+                </li>
+
+                <li class="tarjeta revelar">
+                    <span class="tarjeta__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V2"/></svg>
+                    </span>
+                    <h3>Urgencias</h3>
+                    <p>Dolor agudo, trauma o pieza rota: te atendemos el mismo día.</p>
+                    <p class="tarjeta__precio">Cupos <strong>limitados</strong> por día</p>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== LA CLÍNICA ===================== -->
+
+    <section class="seccion seccion--oscura" id="clinica">
+        <div class="contenedor clinica__rejilla">
+            <div class="clinica__texto revelar">
+                <p class="sello sello--oscuro">La clínica</p>
+                <h2>Un consultorio que se explica sin apuro</h2>
+                <p class="clinica__lead">
+                    Trabajamos con agenda espaciada: cada paciente tiene su tiempo, su diagnóstico
+                    explicado en pantalla y su presupuesto impreso. Nada de tratamientos que
+                    aparecen por sorpresa en la siguiente cita.
+                </p>
+
+                <ul class="lista-check">
+                    <li>Diagnóstico con radiografía digital en la misma visita</li>
+                    <li>Presupuesto por etapas, para decidir con calma</li>
+                    <li>Instrumental esterilizado con control por lote</li>
+                    <li>Historia clínica digital, se puede pedir copia</li>
+                </ul>
+
+                <figure class="clinica__foto-detalle">
+                    <img src="img/instrumental.webp" width="1200" height="900" alt="Detalle del instrumental de la unidad dental, con tres jeringas y la bandeja de instrumentos" loading="lazy" decoding="async">
+                    <figcaption>Instrumental de la unidad, esterilizado después de cada paciente.</figcaption>
+                </figure>
+            </div>
+
+            <figure class="clinica__foto revelar">
+                <img src="img/atencion.webp" width="681" height="1024" alt="Odontóloga atendiendo a un paciente en el sillón dental" loading="lazy" decoding="async">
+                <figcaption>
+                    <strong>Dra. Camila Ríos</strong>
+                    <span>Cirujano dentista · COP 00000</span>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- ===================== OPINIONES ===================== -->
+
+    <section class="seccion" id="opiniones">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Opiniones</p>
+                <h2>Lo que dicen los pacientes</h2>
+                <p>Testimonios de la ficha del negocio. En la demo los avatares son iniciales: no se usan caras de terceros.</p>
+            </header>
+
+            <ul class="opiniones">
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas">
+                        <span aria-hidden="true">★★★★★</span>
+                    </p>
+                    <blockquote>Me explicaron todo con la radiografía en pantalla y me dieron el presupuesto por escrito. La limpieza la hicieron sin dolor.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">MR</span>
+                        <span class="opinion__autor">
+                            <strong>María R.</strong>
+                            <span>Limpieza y curaciones</span>
+                        </span>
+                    </footer>
+                </li>
+
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas">
+                        <span aria-hidden="true">★★★★★</span>
+                    </p>
+                    <blockquote>Llevo a mis dos hijos. El trato con los niños es buenísimo y nunca esperamos más de diez minutos.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">JS</span>
+                        <span class="opinion__autor">
+                            <strong>Julio S.</strong>
+                            <span>Odontopediatría</span>
+                        </span>
+                    </footer>
+                </li>
+
+                <li class="opinion revelar">
+                    <p class="opinion__estrellas" aria-label="5 de 5 estrellas">
+                        <span aria-hidden="true">★★★★★</span>
+                    </p>
+                    <blockquote>Ortodoncia con revisiones cada tres semanas y cuotas que pude pagar. Veinte meses y el resultado se nota.</blockquote>
+                    <footer>
+                        <span class="avatar" aria-hidden="true">LP</span>
+                        <span class="opinion__autor">
+                            <strong>Lucía P.</strong>
+                            <span>Ortodoncia</span>
+                        </span>
+                    </footer>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===================== PRECIOS ===================== -->
+
+    <section class="seccion seccion--menta" id="precios">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Precios</p>
+                <h2>Tarifas de referencia</h2>
+                <p>Precios en soles, sin sorpresas: el presupuesto final se entrega por escrito tras el diagnóstico.</p>
+            </header>
+
+            <ul class="planes">
+                <li class="plan revelar">
+                    <h3>Consulta de evaluación</h3>
+                    <p class="plan__precio"><span class="plan__moneda">S/</span> 50</p>
+                    <p class="plan__nota">Se descuenta del tratamiento si lo tomas el mismo mes.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Revisión completa y radiografía</li>
+                        <li>Diagnóstico explicado en pantalla</li>
+                        <li>Presupuesto impreso por etapas</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="#cita">Reservar</a>
+                </li>
+
+                <li class="plan plan--destacado revelar">
+                    <p class="plan__cinta">Lo más pedido</p>
+                    <h3>Limpieza y profilaxis</h3>
+                    <p class="plan__precio"><span class="plan__moneda">S/</span> 120</p>
+                    <p class="plan__nota">Incluye control a los seis meses.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Destartraje con ultrasónico</li>
+                        <li>Pulido y aplicación de flúor</li>
+                        <li>Indicaciones de cepillado</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="#cita">Reservar</a>
+                </li>
+
+                <li class="plan revelar">
+                    <h3>Ortodoncia</h3>
+                    <p class="plan__precio"><span class="plan__moneda">S/</span> 180<small>/mes</small></p>
+                    <p class="plan__nota">Estudio y primera instalación se cotizan aparte.</p>
+                    <ul class="lista-check lista-check--compacta">
+                        <li>Brackets metálicos o estéticos</li>
+                        <li>Control cada tres semanas</li>
+                        <li>Retenedores al terminar</li>
+                    </ul>
+                    <a class="boton boton--principal boton--bloque" href="#cita">Reservar</a>
+                </li>
+            </ul>
+
+            <p class="planes__aviso">
+                Precios de referencia de la demostración. En tu sitio se cargan desde tu tarifario,
+                y podemos mostrar solo los tratamientos que quieras promocionar.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===================== VISÍTANOS ===================== -->
+
+    <section class="seccion" id="visitanos">
+        <div class="contenedor">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Visítanos</p>
+                <h2>Dónde estamos y cómo llegar</h2>
+                <p>A dos cuadras de la plaza, con estacionamiento en la misma cuadra.</p>
+            </header>
+
+            <div class="visitanos">
+                <div class="visitanos__datos revelar">
+                    <ul class="datos">
+                        <li>
+                            <span class="datos__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                            </span>
+                            <span>
+                                <strong>Dirección</strong>
+                                Av. Pacífico 455, Nuevo Chimbote
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+                            </span>
+                            <span>
+                                <strong>Horarios</strong>
+                                Lunes a viernes 9:00 — 20:00 · sábados 9:00 — 14:00
+                            </span>
+                        </li>
+                        <li>
+                            <span class="datos__icono" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3c0 1-.8 1.8-1.8 1.7C11 18.4 5.6 13 4.8 5.3 4.7 4.3 5.5 3.5 6.5 3.5Z"/></svg>
+                            </span>
+                            <span>
+                                <strong>Teléfono y WhatsApp</strong>
+                                <a href="tel:+51900000000">(043) 000 000</a> · <a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a>
+                            </span>
+                        </li>
+                    </ul>
+
+                    <!-- Mapa sin servicios externos: un plano propio más un enlace
+                         a Google Maps. Así la demo funciona sin conexión y no
+                         carga scripts de terceros. -->
+                    <figure class="mapa">
+                        <img src="img/mapa.svg" width="900" height="560" alt="Plano de la ubicación de la clínica en la Av. Pacífico 455, a dos cuadras de la plaza" loading="lazy" decoding="async">
+                        <figcaption>
+                            <a class="boton boton--borde boton--bloque" href="https://www.google.com/maps/search/?api=1&amp;query=Av.+Pac%C3%ADfico+455%2C+Nuevo+Chimbote" target="_blank" rel="noopener">
+                                Abrir en Google Maps
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>
+                            </a>
+                        </figcaption>
+                    </figure>
+                </div>
+
+                <!-- Reserva de cita: en la demo no envía datos. -->
+                <form class="formulario revelar" id="formulario-cita" action="#" method="post" novalidate data-demo="true">
+                    <h3 class="formulario__titulo">Reservar cita</h3>
+                    <p class="formulario__nota">
+                        Déjanos tus datos y te confirmamos por WhatsApp en el horario que elijas.
+                    </p>
+
+                    <div class="campo">
+                        <label for="nombre">Nombre y apellido</label>
+                        <input id="nombre" name="nombre" type="text" autocomplete="name" required>
+                        <p class="campo__error" data-error="nombre">Escribe tu nombre completo.</p>
+                    </div>
+
+                    <div class="campo">
+                        <label for="telefono">Teléfono o WhatsApp</label>
+                        <input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" placeholder="999 999 999" required>
+                        <p class="campo__error" data-error="telefono">Escribe un teléfono de 9 dígitos.</p>
+                    </div>
+
+                    <div class="campo-fila">
+                        <div class="campo">
+                            <label for="tratamiento">Tratamiento</label>
+                            <select id="tratamiento" name="tratamiento" required>
+                                <option value="">Elige uno</option>
+                                <option>Consulta de evaluación</option>
+                                <option>Limpieza y profilaxis</option>
+                                <option>Ortodoncia</option>
+                                <option>Estética dental</option>
+                                <option>Implantes</option>
+                                <option>Odontopediatría</option>
+                                <option>Urgencia</option>
+                            </select>
+                            <p class="campo__error" data-error="tratamiento">Elige un tratamiento.</p>
+                        </div>
+
+                        <div class="campo">
+                            <label for="dia">Día preferido</label>
+                            <input id="dia" name="dia" type="date" required>
+                            <p class="campo__error" data-error="dia">Elige un día.</p>
+                        </div>
+                    </div>
+
+                    <div class="campo">
+                        <label for="mensaje">¿Algo que debamos saber? <span class="campo__opcional">(opcional)</span></label>
+                        <textarea id="mensaje" name="mensaje" rows="3" placeholder="Por ejemplo: me duele una muela desde el fin de semana"></textarea>
+                    </div>
+
+                    <label class="casilla">
+                        <input type="checkbox" name="acepto" required>
+                        <span>Acepto que me contacten para coordinar la cita.</span>
+                    </label>
+                    <p class="campo__error" data-error="acepto">Necesitamos tu permiso para contactarte.</p>
+
+                    <button class="boton boton--principal boton--bloque" type="submit">
+                        Pedir mi cita
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                    </button>
+
+                    <p class="formulario__aviso" id="aviso-formulario" role="status" aria-live="polite"></p>
+
+                    <p class="formulario__alternativa">
+                        ¿Prefieres escribirnos? <a href="https://wa.me/51900000000?text=Hola%2C%20quiero%20reservar%20una%20cita" target="_blank" rel="noopener">Reservar por WhatsApp</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== PREGUNTAS ===================== -->
+
+    <section class="seccion seccion--menta" id="preguntas">
+        <div class="contenedor contenedor--angosto">
+            <header class="seccion__cabecera revelar">
+                <p class="sello sello--claro">Preguntas</p>
+                <h2>Lo que más nos preguntan</h2>
+            </header>
+
+            <div class="preguntas">
+                <details>
+                    <summary>¿Duele la limpieza dental?</summary>
+                    <p>No. Se hace con ultrasónico y agua tibia; si hay sensibilidad usamos gel desensibilizante antes de empezar.</p>
+                </details>
+                <details>
+                    <summary>¿Cuánto dura el tratamiento de ortodoncia?</summary>
+                    <p>Entre 18 y 24 meses en la mayoría de casos. En el estudio inicial te decimos el tiempo estimado para tu caso, no un promedio.</p>
+                </details>
+                <details>
+                    <summary>¿Atienden urgencias sin cita?</summary>
+                    <p>Reservamos cupos de urgencia todos los días. Llámanos y te decimos la hora más próxima; si es un trauma, ven de inmediato.</p>
+                </details>
+                <details>
+                    <summary>¿Puedo pagar en cuotas?</summary>
+                    <p>Sí, los tratamientos largos se dividen en cuotas mensuales que se pagan el día del control. El presupuesto incluye el detalle.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== CIERRE ===================== -->
+
+    <section class="cierre">
+        <div class="contenedor cierre__interior">
+            <div>
+                <h2>¿Reservamos tu primera consulta?</h2>
+                <p>Atendemos de lunes a sábado. Si es una urgencia, escríbenos por WhatsApp y te damos el primer cupo libre.</p>
+            </div>
+            <div class="cierre__acciones">
+                <a class="boton boton--principal" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20reservar%20una%20cita" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    Escribir por WhatsApp
+                </a>
+                <a class="boton boton--borde-claro" href="tel:+51900000000">Llamar (043) 000 000</a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="pie">
+    <div class="contenedor pie__rejilla">
+        <div class="pie__marca">
+            <a class="marca marca--pie" href="#inicio">
+                <span class="marca__icono" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5C10.6 4.3 9 3.7 7.6 4.1 5.6 4.7 4.4 6.6 4.6 8.9c.1 1.6.6 3 .9 4.5.3 1.6.4 3.4.8 5 .3 1.2 1 2 1.9 2 1 0 1.5-.9 1.8-2.2.3-1.3.5-2.6 1.4-2.6s1.1 1.3 1.4 2.6c.3 1.3.8 2.2 1.8 2.2.9 0 1.6-.8 1.9-2 .4-1.6.5-3.4.8-5 .3-1.5.8-2.9.9-4.5.2-2.3-1-4.2-3-4.8-1.4-.4-3 .2-4.4 1.4Z"/></svg>
+                </span>
+                <span class="marca__texto">
+                    <strong>Clínica Dental</strong>
+                    <span>Sonrisa</span>
+                </span>
+            </a>
+
+            <p class="pie__descripcion">
+                Consultorio odontológico familiar en Nuevo Chimbote. Agenda por WhatsApp,
+                presupuesto por escrito y controles programados.
+            </p>
+
+            <ul class="redes redes--pie" aria-label="Redes sociales de la clínica">
+                <li>
+                    <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram de la clínica">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="3.8"/><circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook de la clínica">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.6 21v-7.6h2.6l.4-3h-3V8.7c0-.9.3-1.4 1.5-1.4h1.6V4.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.1 1.5-4.1 4.2v1.7H7.5v3h2.6V21h3.5Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok de la clínica">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.3 3h2.4c.2 1.9 1.3 3.3 3.3 3.6v2.5c-1.2 0-2.3-.4-3.3-1v6c0 3.3-2.3 5.6-5.4 5.6-2.8 0-5-2-5-4.8 0-2.9 2.4-5 5.5-4.7v2.7c-1.6-.4-2.8.6-2.8 2 0 1.3 1 2.2 2.3 2.2 1.5 0 2.4-1 2.4-2.7V3Z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/51900000000" target="_blank" rel="noopener" aria-label="WhatsApp de la clínica">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <nav class="pie__columna" aria-label="Tratamientos">
+            <h3>Tratamientos</h3>
+            <ul>
+                <li><a href="#tratamientos">Odontología general</a></li>
+                <li><a href="#tratamientos">Ortodoncia</a></li>
+                <li><a href="#tratamientos">Estética dental</a></li>
+                <li><a href="#tratamientos">Implantes</a></li>
+                <li><a href="#tratamientos">Odontopediatría</a></li>
+            </ul>
+        </nav>
+
+        <nav class="pie__columna" aria-label="La clínica">
+            <h3>La clínica</h3>
+            <ul>
+                <li><a href="#clinica">Cómo trabajamos</a></li>
+                <li><a href="#opiniones">Opiniones</a></li>
+                <li><a href="#precios">Precios</a></li>
+                <li><a href="#preguntas">Preguntas frecuentes</a></li>
+                <li><a href="#visitanos">Ubicación y horarios</a></li>
+            </ul>
+        </nav>
+
+        <div class="pie__columna">
+            <h3>Contacto</h3>
+            <ul class="pie__contacto">
+                <li>Av. Pacífico 455, Nuevo Chimbote</li>
+                <li><a href="tel:+51900000000">(043) 000 000</a></li>
+                <li><a href="https://wa.me/51900000000" target="_blank" rel="noopener">+51 900 000 000</a></li>
+                <li><a href="mailto:citas@clinicasonrisa.demo">citas@clinicasonrisa.demo</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="contenedor pie__legal">
+        <p>© <span id="anio">2026</span> Clínica Dental Sonrisa. Todos los derechos reservados.</p>
+        <p class="pie__demo">
+            Demostración de plantilla de
+            <a href="https://aracodeperu.com/plantillas" target="_blank" rel="noopener">ARACODE Smart Solutions</a>:
+            los datos, precios y testimonios son de ejemplo.
+        </p>
+    </div>
+</footer>
+
+<!-- Acceso permanente a WhatsApp, como en el resto de plantillas. -->
+<a class="whatsapp" href="https://wa.me/51900000000?text=Hola%2C%20quiero%20consultar%20por%20una%20cita" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+    <span class="whatsapp__anillo" aria-hidden="true"></span>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5Zm5.2 13.4c-.2.6-1.1 1.2-1.6 1.2-.5.1-1 .1-1.6-.1-2.6-1-4.2-3.4-4.3-3.6-.2-.2-1-1.4-1-2.7 0-1.2.6-1.8.9-2.1.2-.2.4-.3.6-.3h.4c.2 0 .4 0 .5.4l.7 1.6c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.2.3 0 .5.2.3.8 1.2 1.6 1.9.8.6 1.2.7 1.4.8.2.1.4 0 .5-.1l.6-.7c.2-.2.4-.2.6-.1l1.5.7c.2.1.4.2.4.3.1.2.1.8-.1 1.3Z"/></svg>
+</a>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>

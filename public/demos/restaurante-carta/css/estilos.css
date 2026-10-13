@@ -1,0 +1,1926 @@
+/*
+   =============================================================================
+   Fogón Criollo — hoja de estilos de la demostración
+   =============================================================================
+
+   CSS propio y sin dependencias: ni framework, ni CDN, ni una sola regla del
+   sitio corporativo de ARACODE ni de las otras plantillas del banco. Todo lo
+   que se ve en esta página sale de aquí, que es lo que la hace una plantilla
+   independiente y no una variante del catálogo.
+
+   Trae lo que la lista obligatoria del banco pide a toda demostración: hero a
+   pantalla completa con slider, fotografía real, carta con precios de
+   referencia, promociones, prueba social, ubicación con plano propio, redes
+   sociales, WhatsApp y modo claro / oscuro con interruptor.
+   La lista está en docs/BANCO_PLANTILLAS.md.
+
+   Orden: variables → base → utilidades → botones → barra superior → cabecera →
+   interruptor de tema → portada (hero con slider) → cifras → secciones → carta
+   → promociones → nuestra cocina → opiniones → reservas y visita → preguntas →
+   cierre → pie → WhatsApp → tema claro y oscuro → movimiento reducido.
+*/
+
+/* =============================================================================
+   Variables
+   ============================================================================= */
+
+:root {
+    /*
+       Paleta. El reparto importa, porque el modo oscuro se hace redefiniendo
+       variables (ver «Tema claro y oscuro», al final del archivo):
+
+       - Constantes: no cambian de tema. `--oscuro` es la superficie oscura por
+         diseño (barra superior, hero, sección oscura y cierre), `--blanco` es
+         el texto y los iconos que van encima de ella y `--aji` /
+         `--brasado` son el fondo de los botones sólidos.
+       - Superficies: `--fondo` (cuerpo, tarjetas, cabecera y campos),
+         `--fondo-suave` (secciones informativas) y `--fondo-cabecera`. En
+         oscuro pasan a la versión oscura de la misma paleta.
+       - Texto y acentos: `--tinta` y `--gris` (texto), `--linea` (bordes) y
+         `--acento` (enlaces y acentos), que sobre fondo oscuro se aclara.
+    */
+
+    /* --- Constantes: iguales en los dos temas ----------------------------- */
+
+    --aji: #C4441F;
+    --brasado: #8A2C12;
+    --oscuro: #1A1412;
+    --blanco: #FFFFFF;
+
+    /* --- Superficies que cambian con el tema ------------------------------ */
+
+    --fondo: #FFFDFA;
+    --fondo-suave: #F7EFE5;
+    --fondo-cabecera: rgba(255, 253, 250, 0.96);
+
+    /* --- Texto, bordes y acentos sobre esas superficies ------------------- */
+
+    --tinta: #241B16;
+    --gris: #6E6058;
+    --linea: #EBE0D5;
+    --acento: #A83712;
+
+    --sombra: 0 18px 45px -30px rgba(36, 27, 22, 0.45);
+    --sombra-alta: 0 30px 60px -35px rgba(36, 27, 22, 0.55);
+    --radio: 1.25rem;
+    --radio-chico: 0.75rem;
+    --ancho: 72rem;
+    --fuente: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    /* Alto de la cabecera pegada: lo usan el scroll de anclas y las secciones. */
+    --alto-cabecera: 4.75rem;
+}
+
+/* =============================================================================
+   Base
+   ============================================================================= */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    /* El menú pegajoso no debe tapar el título de la sección al saltar. */
+    scroll-padding-top: calc(var(--alto-cabecera) + 0.5rem);
+}
+
+body {
+    margin: 0;
+    font-family: var(--fuente);
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--tinta);
+    background: var(--fondo);
+    -webkit-font-smoothing: antialiased;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+h1,
+h2,
+h3 {
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.75rem;
+}
+
+h1 {
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+}
+
+h2 {
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+}
+
+h3 {
+    font-size: 1.125rem;
+}
+
+p {
+    margin: 0 0 1rem;
+}
+
+a {
+    color: var(--acento);
+}
+
+:focus-visible {
+    outline: 3px solid var(--aji);
+    outline-offset: 3px;
+    border-radius: 0.35rem;
+}
+
+/* =============================================================================
+   Utilidades mínimas
+   ============================================================================= */
+
+.contenedor {
+    width: 100%;
+    max-width: var(--ancho);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.contenedor--angosto {
+    max-width: 52rem;
+}
+
+.sr-solo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.salto-contenido {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -120%);
+    z-index: 60;
+    padding: 0.75rem 1.25rem;
+    background: var(--oscuro);
+    color: var(--blanco);
+    text-decoration: none;
+    border-radius: 0 0 var(--radio-chico) var(--radio-chico);
+    transition: transform 0.2s ease;
+}
+
+.salto-contenido:focus {
+    transform: translate(-50%, 0);
+}
+
+.sello {
+    display: inline-block;
+    margin: 0 0 1rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(196, 68, 31, 0.12);
+    color: var(--acento);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sello--claro {
+    background: var(--fondo-suave);
+}
+
+.sello--oscuro {
+    background: rgba(255, 255, 255, 0.12);
+    color: #F5C09A;
+}
+
+/* Aparición al hacer scroll. Sin JavaScript queda visible: el estado base es
+   el visible y el script es el que lo anima (ver js/app.js). */
+.revelar {
+    opacity: 1;
+}
+
+html.js .revelar {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+html.js .revelar.visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* =============================================================================
+   Botones
+   ============================================================================= */
+
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.6rem;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.boton svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+}
+
+.boton--principal {
+    background: var(--aji);
+    border-color: var(--aji);
+    color: var(--blanco);
+    box-shadow: 0 14px 30px -18px rgba(196, 68, 31, 0.75);
+}
+
+.boton--principal:hover {
+    background: var(--brasado);
+    border-color: var(--brasado);
+    transform: translateY(-2px);
+}
+
+.boton--fantasma {
+    border-color: var(--linea);
+    color: var(--tinta);
+    background: transparent;
+}
+
+.boton--fantasma:hover {
+    border-color: var(--aji);
+    color: var(--acento);
+}
+
+.boton--borde {
+    border-color: var(--linea);
+    color: var(--tinta);
+    background: var(--fondo);
+}
+
+.boton--borde:hover {
+    border-color: var(--aji);
+    color: var(--acento);
+}
+
+.boton--borde-claro {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: var(--blanco);
+}
+
+.boton--borde-claro:hover {
+    border-color: var(--blanco);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.boton--bloque {
+    width: 100%;
+}
+
+/* =============================================================================
+   Barra superior
+   ============================================================================= */
+
+.barra {
+    background: var(--oscuro);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.8125rem;
+}
+
+.barra__interior {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.barra__dato {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.barra__dato svg,
+.barra__tel svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--aji);
+}
+
+.barra__derecha {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.barra__tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--blanco);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.barra__tel:hover {
+    color: #F5C09A;
+}
+
+/* Redes sociales: mismo componente en la barra y en el pie. */
+.redes {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.redes a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--blanco);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.redes a:hover {
+    background: var(--aji);
+    transform: translateY(-2px);
+}
+
+.redes svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+/* =============================================================================
+   Cabecera
+   ============================================================================= */
+
+.cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--fondo-cabecera);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--linea);
+    transition: box-shadow 0.25s ease;
+}
+
+.cabecera--pegada {
+    box-shadow: 0 12px 30px -22px rgba(36, 27, 22, 0.6);
+}
+
+.cabecera__interior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: var(--alto-cabecera);
+}
+
+/* A la derecha van el menú, el interruptor de tema y el botón del menú móvil.
+   Forman un grupo propio para que la marca quede sola a la izquierda y el
+   grupo pegado al borde derecho. */
+.cabecera__acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/*
+   Interruptor de tema claro / oscuro.
+
+   Muestra el icono del modo AL QUE SE VA al pulsar: en claro se ve una luna
+   (pasa a oscuro) y en oscuro un sol (vuelve a claro). Los dos iconos están
+   siempre en el DOM y se cruzan con una transición, así que el botón no se
+   reconstruye al cambiar de tema: el estado vive en el atributo data-tema del
+   <html> y solo el CSS decide cuál se ve.
+*/
+.tema-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 2.75rem = 44 px: el área táctil mínima, igual que el botón del menú. */
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    border: 1px solid var(--linea);
+    border-radius: 0.85rem;
+    background: var(--fondo);
+    color: var(--tinta);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.tema-switch:hover {
+    border-color: var(--aji);
+    color: var(--acento);
+}
+
+.tema-switch__icono {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.22s ease-out, transform 0.3s ease-out;
+}
+
+.tema-switch svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.tema-switch__icono--sol {
+    opacity: 0;
+    transform: rotate(-45deg) scale(0.7);
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--sol {
+    opacity: 1;
+    transform: none;
+}
+
+html[data-tema='oscuro'] .tema-switch__icono--luna {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7);
+}
+
+/* Sin JavaScript el interruptor no haría nada: mejor no ofrecerlo. La clase
+   `no-js` la quita el script del <head> cuando el navegador ejecuta JS. */
+html.no-js .tema-switch {
+    display: none;
+}
+
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.marca__icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.9rem;
+    background: var(--fondo-suave);
+    color: var(--acento);
+}
+
+.marca__icono svg {
+    width: 1.7rem;
+    height: 1.7rem;
+}
+
+.marca__texto {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.marca__texto strong {
+    font-size: 1.0625rem;
+}
+
+.marca__texto span {
+    font-size: 0.8125rem;
+    color: var(--gris);
+}
+
+.menu-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--linea);
+    border-radius: 0.85rem;
+    background: var(--fondo);
+    color: var(--tinta);
+    cursor: pointer;
+}
+
+.menu-boton svg {
+    width: 1.4rem;
+    height: 1.4rem;
+}
+
+.menu ul {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.menu a {
+    color: var(--tinta);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    padding: 0.35rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+.menu a:hover {
+    color: var(--acento);
+    border-color: var(--aji);
+}
+
+.menu__reserva {
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 9999px;
+    background: var(--aji);
+    color: var(--blanco) !important;
+    border-bottom: 0 !important;
+}
+
+.menu__reserva:hover {
+    background: var(--brasado);
+}
+
+/* Móvil: el menú se despliega desde el botón. */
+@media (max-width: 900px) {
+    .menu-boton {
+        order: 3;
+    }
+
+    .menu {
+        position: fixed;
+        /*
+           El `backdrop-filter` de la cabecera la convierte en el bloque
+           contenedor de sus hijos `fixed`, así que el menú se mide contra ella y
+           no contra el viewport: `top: 100%` lo deja justo debajo de la
+           cabecera. Con `top: 0` el panel tapaba la marca y el propio botón, y
+           el menú no se podía cerrar con el botón que lo abre.
+        */
+        inset: 100% 0 auto 0;
+        padding: 0.75rem 1.5rem 2rem;
+        background: var(--fondo);
+        border-bottom: 1px solid var(--linea);
+        box-shadow: var(--sombra-alta);
+        transform: translateY(-102%);
+        /*
+           Cerrado no se pinta: con solo el desplazamiento asomaba su borde
+           inferior por encima de la cabecera, y de paso sus enlaces no se pueden
+           enfocar con el tabulador sin abrirlo.
+        */
+        visibility: hidden;
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 30;
+    }
+
+    .menu ul {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.25rem;
+    }
+
+    .menu a {
+        display: block;
+        padding: 0.85rem 0.25rem;
+        border-bottom: 1px solid var(--linea);
+    }
+
+    .menu__reserva {
+        margin-top: 1rem;
+        text-align: center;
+    }
+
+    .menu--abierto {
+        transform: translateY(0);
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+@media (min-width: 901px) {
+    .menu-boton {
+        display: none;
+    }
+}
+
+/* =============================================================================
+   Portada: hero a pantalla completa con slider de fondo
+   =============================================================================
+
+   Las fotos van en una capa absoluta que rota; el texto se apoya encima, sobre
+   un velo oscuro que es lo que garantiza que se lea. El hero ocupa la pantalla
+   (`svh` mide el viewport sin la barra del navegador móvil, así que en el
+   celular no queda corto) y el alto nunca baja de `min-height`: si el texto no
+   cabe, la sección crece en vez de recortar.
+*/
+
+.portada {
+    position: relative;
+    display: grid;
+    align-content: center;
+    /* El desplazamiento horizontal del dedo es del slider, no del scroll; el
+       vertical y el zoom con los dedos siguen siendo del navegador. */
+    touch-action: pan-y pinch-zoom;
+    min-height: 88vh;
+    min-height: min(88svh, 60rem);
+    padding: clamp(2.75rem, 7vw, 5.5rem) 0 clamp(5rem, 9vw, 7rem);
+    background: var(--oscuro);
+    color: rgba(255, 255, 255, 0.86);
+    overflow: hidden;
+}
+
+.portada__fondo {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.portada__pista {
+    display: flex;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portada__diapositiva {
+    flex: 0 0 100%;
+    min-width: 0;
+    height: 100%;
+}
+
+.portada__diapositiva img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Velo: más denso del lado del texto que del lado de la foto. */
+.portada__velo {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        100deg,
+        rgba(12, 8, 6, 0.9) 0%,
+        rgba(12, 8, 6, 0.74) 42%,
+        rgba(12, 8, 6, 0.34) 78%,
+        rgba(12, 8, 6, 0.52) 100%
+    );
+}
+
+.portada__contenido {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 900px) {
+    .portada__contenido {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 3rem;
+    }
+}
+
+.portada__texto h1 {
+    color: var(--blanco);
+}
+
+.portada__lead {
+    font-size: 1.0625rem;
+    color: rgba(255, 255, 255, 0.84);
+    max-width: 34rem;
+}
+
+.portada__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1.75rem 0 1.5rem;
+}
+
+.portada__garantias {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9375rem;
+}
+
+.portada__garantias li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+}
+
+.portada__garantias svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.25rem;
+    color: #F8C9A6;
+    flex-shrink: 0;
+}
+
+/* Tarjeta del horario: dato sobre la foto, con fondo translúcido. */
+.portada__horario {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    justify-self: start;
+    padding: 1rem 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: var(--radio-chico);
+    background: rgba(255, 255, 255, 0.12);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+@media (min-width: 900px) {
+    .portada__horario {
+        justify-self: end;
+    }
+}
+
+.portada__horario-titulo {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #FAD2B4;
+}
+
+.portada__horario strong {
+    font-size: 1.125rem;
+    color: var(--blanco);
+}
+
+/* --- Controles del slider ---------------------------------------------- */
+
+.portada__controles {
+    position: absolute;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 2;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 9999px;
+    background: rgba(26, 20, 18, 0.5);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+/* Sin JavaScript los botones no harían nada: solo aparecen con el script
+   cargado, que es quien añade la clase `js` al <html>. */
+html.js .portada__controles {
+    display: flex;
+}
+
+.carrusel__flecha {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--blanco);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.carrusel__flecha:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.carrusel__flecha:focus-visible {
+    outline: 2px solid var(--blanco);
+    outline-offset: 2px;
+}
+
+.carrusel__flecha svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.carrusel__puntos {
+    display: flex;
+    align-items: center;
+}
+
+/* Punto con área táctil de 44 px: el círculo es la caja de contenido
+   (`background-clip`) y el relleno, zona de pulsación. */
+.carrusel__punto {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 1.15rem;
+    border: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    background-clip: content-box;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.carrusel__punto:hover {
+    background-color: rgba(255, 255, 255, 0.72);
+}
+
+.carrusel__punto[aria-current="true"] {
+    background-color: var(--blanco);
+}
+
+.carrusel__punto:focus-visible {
+    outline: 2px solid var(--blanco);
+    outline-offset: 2px;
+}
+
+/* En pantalla estrecha el velo se vuelve vertical —el texto ocupa todo el
+   ancho— y los controles bajan debajo del texto en vez de taparlo. */
+@media (max-width: 720px) {
+    .portada {
+        padding-bottom: 2.75rem;
+    }
+
+    .portada__velo {
+        background: linear-gradient(
+            180deg,
+            rgba(12, 8, 6, 0.78) 0%,
+            rgba(12, 8, 6, 0.88) 100%
+        );
+    }
+
+    .portada__controles {
+        position: static;
+        transform: none;
+        justify-self: center;
+        margin-top: 2.25rem;
+    }
+}
+
+/* Cifras de confianza: viven en su propia banda, justo debajo del hero, así
+   que el hero puede ocupar la pantalla completa sin números encima. */
+.banda-cifras {
+    background: var(--fondo);
+    border-bottom: 1px solid var(--linea);
+}
+
+/* Cifras: se animan al entrar en pantalla. */
+.cifras {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 2rem;
+    margin: 0;
+    padding: 2.25rem 0;
+}
+
+@media (min-width: 720px) {
+    .cifras {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.cifras dt {
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+.cifras dd {
+    margin: 0.25rem 0 0;
+    font-size: clamp(1.75rem, 4vw, 2.35rem);
+    font-weight: 800;
+    color: var(--acento);
+    letter-spacing: -0.02em;
+}
+
+.cifras__de {
+    font-size: 1.125rem;
+    color: var(--gris);
+    font-weight: 600;
+}
+
+/* =============================================================================
+   Secciones
+   ============================================================================= */
+
+.seccion {
+    padding: 4.5rem 0;
+}
+
+.seccion--menta {
+    background: var(--fondo-suave);
+}
+
+.seccion--oscura {
+    background: var(--oscuro);
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.seccion--oscura h2 {
+    color: var(--blanco);
+}
+
+.seccion__cabecera {
+    max-width: 42rem;
+    margin-bottom: 2.5rem;
+}
+
+.seccion__cabecera p {
+    color: var(--gris);
+    margin: 0;
+}
+
+.seccion--oscura .seccion__cabecera p {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.lista-check {
+    display: grid;
+    gap: 0.6rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lista-check li {
+    position: relative;
+    padding-left: 1.9rem;
+    line-height: 1.55;
+}
+
+.lista-check li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.35rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    background: rgba(196, 68, 31, 0.16);
+    box-shadow: inset 0 0 0 2px var(--aji);
+}
+
+.lista-check--compacta {
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+}
+
+/* =============================================================================
+   La carta
+   =============================================================================
+   La carta es lo que el visitante viene a ver, así que va con el plato estrella
+   en grande y, debajo, los cuatro bloques (entradas, fondos, postres y bebidas)
+   con el precio de referencia en cada plato.
+*/
+
+.carta__estrella {
+    display: grid;
+    gap: 1.75rem;
+    padding: 1.35rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--fondo);
+    box-shadow: var(--sombra);
+}
+
+@media (min-width: 900px) {
+    .carta__estrella {
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+        align-items: center;
+        gap: 2.5rem;
+        padding: 2rem;
+    }
+}
+
+.carta__foto {
+    margin: 0;
+    border-radius: var(--radio-chico);
+    overflow: hidden;
+}
+
+.carta__foto img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 11;
+    object-fit: cover;
+}
+
+.carta__precio {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0.5rem 0 1rem;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--tinta);
+}
+
+.carta__precio small {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gris);
+}
+
+.carta__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.carta__bloques {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 2rem;
+}
+
+@media (min-width: 860px) {
+    .carta__bloques {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.carta__bloque {
+    padding: 1.6rem 1.5rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--fondo);
+}
+
+.carta__bloque h3 {
+    margin-bottom: 1.1rem;
+}
+
+.lista-platos {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.plato {
+    padding: 0.9rem 0;
+    border-top: 1px solid var(--linea);
+}
+
+.plato:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.plato:last-child {
+    padding-bottom: 0;
+}
+
+/* Nombre a la izquierda, precio a la derecha y una línea de puntos que lleva la
+   vista de uno a otro: la carta de toda la vida, sin tabla. */
+.plato__cabecera {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+}
+
+.plato__nombre {
+    font-weight: 700;
+}
+
+.plato__linea {
+    flex: 1 1 auto;
+    border-bottom: 1px dotted var(--linea);
+    transform: translateY(-0.2rem);
+}
+
+.plato__precio {
+    font-weight: 700;
+    color: var(--acento);
+    white-space: nowrap;
+}
+
+.plato__detalle {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+/* Etiquetas del plato: picante, vegetariano, recomendado… */
+.plato__etiqueta {
+    display: inline-block;
+    margin-left: 0.45rem;
+    padding: 0.05rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(196, 68, 31, 0.12);
+    color: var(--acento);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.carta__aviso {
+    max-width: 46rem;
+    margin: 1.75rem auto 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+/* =============================================================================
+   Nuestra cocina
+   =============================================================================
+   La sección de confianza: quién cocina y cómo se trabaja, con la foto vertical
+   de la cocina y el detalle de la causa limeña al lado.
+*/
+
+.cocina__rejilla {
+    display: grid;
+    gap: 2.5rem;
+}
+
+@media (min-width: 960px) {
+    .cocina__rejilla {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 3.5rem;
+        align-items: start;
+    }
+}
+
+.cocina__lead {
+    color: rgba(255, 255, 255, 0.75);
+    max-width: 36rem;
+}
+
+.seccion--oscura .lista-check li::before {
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 0 0 2px #E08A5E;
+}
+
+.cocina__foto,
+.cocina__foto-detalle {
+    margin: 0;
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.cocina__foto img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+}
+
+.cocina__foto figcaption {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.25rem 1.25rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.cocina__foto figcaption strong {
+    color: var(--blanco);
+    font-size: 1rem;
+}
+
+.cocina__foto-detalle {
+    margin-top: 2rem;
+}
+
+.cocina__foto-detalle img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+}
+
+.cocina__foto-detalle figcaption {
+    padding: 0.85rem 1.25rem 1rem;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+/* =============================================================================
+   Opiniones
+   ============================================================================= */
+
+.opiniones {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 800px) {
+    .opiniones {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.opinion {
+    display: flex;
+    flex-direction: column;
+    padding: 1.6rem 1.5rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--fondo);
+    box-shadow: var(--sombra);
+}
+
+.opinion__estrellas {
+    margin: 0 0 0.75rem;
+    color: #D9922B;
+    letter-spacing: 0.15em;
+    font-size: 1.05rem;
+}
+
+.opinion blockquote {
+    margin: 0 0 1.25rem;
+    font-size: 0.9875rem;
+    line-height: 1.6;
+    color: var(--tinta);
+}
+
+.opinion footer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: auto;
+}
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--fondo-suave);
+    color: var(--acento);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+.opinion__autor {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+}
+
+.opinion__autor span {
+    font-size: 0.8125rem;
+    color: var(--gris);
+}
+
+/* =============================================================================
+   Promociones del día
+   ============================================================================= */
+
+.promociones {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 820px) {
+    .promociones {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: stretch;
+    }
+}
+
+.promocion {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.85rem 1.6rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--fondo);
+    box-shadow: var(--sombra);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.promocion:hover {
+    transform: translateY(-4px);
+    border-color: rgba(196, 68, 31, 0.4);
+    box-shadow: var(--sombra-alta);
+}
+
+.promocion--destacada {
+    border-color: var(--aji);
+    box-shadow: var(--sombra-alta);
+}
+
+.promocion__cinta {
+    position: absolute;
+    top: -0.85rem;
+    left: 1.6rem;
+    margin: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: var(--aji);
+    color: var(--blanco);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.promocion__precio {
+    margin: 0.25rem 0 0.35rem;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--tinta);
+    letter-spacing: -0.02em;
+}
+
+.promocion__moneda {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--acento);
+    margin-right: 0.25rem;
+}
+
+.promocion__precio small {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gris);
+}
+
+.promocion__nota {
+    font-size: 0.8125rem;
+    color: var(--gris);
+}
+
+.promocion .boton {
+    margin-top: auto;
+}
+
+.promociones__aviso {
+    max-width: 46rem;
+    margin: 1.75rem auto 0;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+/* =============================================================================
+   Visítanos: datos, mapa y formulario
+   ============================================================================= */
+
+.visitanos {
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 960px) {
+    .visitanos {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 2.5rem;
+        align-items: start;
+    }
+}
+
+.datos {
+    display: grid;
+    gap: 1rem;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.datos li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    color: var(--gris);
+    font-size: 0.9375rem;
+}
+
+.datos li strong {
+    display: block;
+    color: var(--tinta);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.datos__icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.75rem;
+    background: var(--fondo-suave);
+    color: var(--acento);
+    flex-shrink: 0;
+}
+
+.datos__icono svg {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.mapa {
+    margin: 0;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    overflow: hidden;
+    background: var(--fondo);
+    box-shadow: var(--sombra);
+}
+
+.mapa img {
+    display: block;
+    width: 100%;
+}
+
+.mapa figcaption {
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+/* Formulario */
+
+.formulario {
+    padding: 1.85rem 1.6rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--fondo);
+    box-shadow: var(--sombra-alta);
+}
+
+.formulario__titulo {
+    margin-bottom: 0.25rem;
+}
+
+.formulario__nota {
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+.campo {
+    margin-bottom: 1rem;
+}
+
+.campo-fila {
+    display: grid;
+    gap: 1rem;
+}
+
+@media (min-width: 560px) {
+    .campo-fila {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.campo label,
+.casilla span {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.campo__opcional {
+    font-weight: 400;
+    color: var(--gris);
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-chico);
+    background: var(--fondo);
+    font: inherit;
+    font-size: 0.9375rem;
+    color: var(--tinta);
+}
+
+.campo textarea {
+    resize: vertical;
+}
+
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+    border-color: var(--aji);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(196, 68, 31, 0.18);
+}
+
+.casilla {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin: 0.5rem 0 1.25rem;
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+.casilla input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.15rem;
+    accent-color: var(--aji);
+}
+
+.campo__error {
+    display: none;
+    margin: 0.35rem 0 0;
+    font-size: 0.8125rem;
+    color: #B3261E;
+}
+
+.campo--error input,
+.campo--error select {
+    border-color: #B3261E;
+}
+
+.campo--error .campo__error,
+.casilla--error + .campo__error {
+    display: block;
+}
+
+.formulario__aviso {
+    margin: 1rem 0 0;
+    font-size: 0.875rem;
+    color: var(--acento);
+    font-weight: 600;
+}
+
+.formulario__aviso:empty {
+    display: none;
+}
+
+.formulario__alternativa {
+    margin: 1rem 0 0;
+    font-size: 0.875rem;
+    color: var(--gris);
+}
+
+/* =============================================================================
+   Preguntas
+   ============================================================================= */
+
+.preguntas {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.preguntas details {
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-chico);
+    background: var(--fondo);
+    padding: 0.35rem 1.1rem;
+}
+
+.preguntas summary {
+    cursor: pointer;
+    padding: 0.85rem 0;
+    font-weight: 700;
+    list-style: none;
+}
+
+.preguntas summary::-webkit-details-marker {
+    display: none;
+}
+
+.preguntas summary::after {
+    content: "+";
+    float: right;
+    color: var(--acento);
+    font-weight: 800;
+}
+
+.preguntas details[open] summary::after {
+    content: "–";
+}
+
+.preguntas p {
+    margin: 0 0 0.85rem;
+    color: var(--gris);
+    font-size: 0.9375rem;
+}
+
+/* =============================================================================
+   Cierre
+   ============================================================================= */
+
+.cierre {
+    padding: 3.5rem 0;
+    background: linear-gradient(120deg, var(--brasado) 0%, #6E2410 60%, #4A1808 100%);
+    color: var(--blanco);
+}
+
+.cierre__interior {
+    display: grid;
+    gap: 1.75rem;
+    align-items: center;
+}
+
+@media (min-width: 860px) {
+    .cierre__interior {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    }
+}
+
+.cierre h2 {
+    color: var(--blanco);
+}
+
+.cierre p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 38rem;
+}
+
+.cierre__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+/* =============================================================================
+   Pie
+   ============================================================================= */
+
+.pie {
+    padding: 3.5rem 0 1.5rem;
+    background: #150F0C;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9375rem;
+}
+
+.pie__rejilla {
+    display: grid;
+    gap: 2rem;
+}
+
+@media (min-width: 800px) {
+    .pie__rejilla {
+        grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+    }
+}
+
+.marca--pie {
+    color: var(--blanco);
+}
+
+.marca--pie .marca__icono {
+    background: rgba(255, 255, 255, 0.1);
+    color: #F0AF8C;
+}
+
+.marca--pie .marca__texto span {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.pie__descripcion {
+    margin: 1rem 0 1.25rem;
+    max-width: 26rem;
+}
+
+.pie__columna h3 {
+    color: var(--blanco);
+    font-size: 0.9375rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.pie__columna ul {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pie a {
+    color: rgba(255, 255, 255, 0.78);
+    text-decoration: none;
+}
+
+.pie a:hover {
+    color: var(--blanco);
+    text-decoration: underline;
+}
+
+.pie__legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.8125rem;
+}
+
+.pie__legal p {
+    margin: 0;
+}
+
+.pie__demo {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* =============================================================================
+   WhatsApp flotante
+   ============================================================================= */
+
+.whatsapp {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 45;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #25D366;
+    color: var(--blanco);
+    box-shadow: 0 18px 35px -15px rgba(37, 211, 102, 0.85);
+    text-decoration: none;
+}
+
+.whatsapp svg {
+    width: 1.85rem;
+    height: 1.85rem;
+}
+
+.whatsapp:hover {
+    transform: translateY(-3px);
+}
+
+.whatsapp__anillo {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(37, 211, 102, 0.6);
+    animation: latido 2.6s ease-out infinite;
+}
+
+@keyframes latido {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    70% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* =============================================================================
+   Tema claro y oscuro
+   =============================================================================
+   El tema lo lleva el atributo data-tema del <html>: claro por defecto (la
+   plantilla tal como se diseñó) y oscuro solo si el visitante lo pide con el
+   interruptor de la cabecera. La elección se guarda en localStorage bajo la
+   clave 'restaurante-carta-tema' —una por plantilla, porque en este repositorio
+   todas las demos comparten origen— y el script del <head> la aplica antes de
+   pintar, así que al recargar en oscuro no se ve un destello claro.
+
+   Qué cambia y qué no: las superficies oscuras por diseño (barra superior,
+   hero, sección oscura, cierre y pie, más el botón de WhatsApp) se quedan
+   igual; lo que se invierte son las superficies claras: cuerpo, tarjetas,
+   secciones informativas, cabecera y campos. Ningún componente cambia de forma,
+   de tamaño ni de posición, y quien no toque el interruptor sigue viendo el
+   tema claro aunque su sistema esté en oscuro.
+   ============================================================================= */
+
+html[data-tema='oscuro'] {
+    /* Superficies: el cuerpo y las tarjetas, un paso por encima de las
+       secciones oscuras; las informativas, un paso por encima del cuerpo. */
+    --fondo: #1E1613;
+    --fondo-suave: #2A1F19;
+    --fondo-cabecera: rgba(20, 14, 11, 0.94);
+    /* Las secciones oscuras se hunden un poco más: así el ritmo entre las dos
+       superficies se mantiene también en oscuro. */
+    --oscuro: #120C0A;
+    /* Texto, bordes y acentos: los mismos papeles, aclarados para leerse. */
+    --tinta: #F6EDE6;
+    --gris: #C0AEA3;
+    --linea: #3B2C24;
+    --acento: #F0895F;
+    --sombra: 0 18px 45px -30px rgba(0, 0, 0, 0.75);
+    --sombra-alta: 0 30px 60px -35px rgba(0, 0, 0, 0.85);
+
+    /* Barras de desplazamiento, campos y autocompletado del navegador. */
+    color-scheme: dark;
+}
+
+/* El rojo de los avisos del formulario no se lee sobre fondo oscuro. */
+html[data-tema='oscuro'] .campo__error {
+    color: #FFA79C;
+}
+
+/*
+   El plano. Es el único gráfico de la página con fondo propio: se dibujó con
+   esta misma paleta y no lee variables CSS, así que en oscuro aparece como un
+   rectángulo blanco que deslumbra. Se invierte con un filtro —y se gira el tono
+   para que el verde de marca vuelva a quedar verde— en vez de mantener dos
+   versiones del archivo: así el SVG sigue siendo el mismo y el día que se
+   reemplace por el mapa embebido del cliente no hay nada que deshacer.
+
+   Las fotografías no se tocan: son fotos, no gráficos de la interfaz.
+*/
+html[data-tema='oscuro'] .mapa img {
+    filter: invert(1) hue-rotate(180deg) saturate(0.9) brightness(0.95);
+}
+
+html[data-tema='oscuro'] .campo--error input,
+html[data-tema='oscuro'] .campo--error select {
+    border-color: #FFA79C;
+}
+
+/* =============================================================================
+   Movimiento reducido
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    html.js .revelar {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .whatsapp__anillo {
+        animation: none;
+    }
+
+    .boton,
+    .promocion,
+    .opinion,
+    .redes a,
+    .whatsapp,
+    .menu,
+    .portada__pista {
+        transition: none;
+    }
+
+    .boton--principal:hover,
+    .promocion:hover,
+    .whatsapp:hover {
+        transform: none;
+    }
+}
